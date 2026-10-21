@@ -1,0 +1,48 @@
+name: clean-room-replay
+
+# This workflow runs on a self-hosted Linux runner with the language toolchains
+# (and, for Elixir/Swift, the pinned container images) already available.
+# It is manual because a full 850-case replay needs hundreds of GB and hours.
+
+on:
+  workflow_dispatch:
+    inputs:
+      language:
+        description: "Language"
+        required: true
+        type: choice
+        options: [dart, julia, kotlin, lua, perl, r, elixir, swift, arkts]
+      case:
+        description: "Case ID (e.g. DART-101)"
+        required: true
+        type: string
+      execute:
+        description: "Set to 'yes' to run the oracle command"
+        required: false
+        default: "no"
+        type: string
+
+jobs:
+  replay:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Static verification
+        run: |
+          python scripts/d4x.py verify --language ${{ inputs.language }}
+          python scripts/d4x.py oracle ${{ inputs.case }}
+      - name: Fetch source and apply patches
+        run: |
+          python scripts/d4x.py fetch ${{ inputs.case }} --out /tmp/d4x-clean
+          python scripts/d4x.py patch ${{ inputs.case }} --work /tmp/d4x-clean/${{ inputs.case }} --side buggy
+          python scripts/d4x.py patch ${{ inputs.case }} --work /tmp/d4x-clean/${{ inputs.case }} --side fixed
+      - name: Replay plan
+        run: python scripts/d4x.py plan ${{ inputs.case }} --json | tee /tmp/plan.json
+      - name: Execute (optional)
+        if: inputs.execute == 'yes'
+        run: |
+          echo "Execute the trigger command from /tmp/plan.json in the language runtime."
+          echo "The runner is expected to provide the toolchain/image; see env/."
