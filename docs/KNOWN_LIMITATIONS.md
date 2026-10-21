@@ -10,8 +10,8 @@ This repository is a **snapshot** of the 850-case release metadata and per-case 
 
 ## Packaging issues carried over from the source release
 
-1. **KOTLIN-501 evidence provenance**
-   The `evidence/KOTLIN-501` bundle in the source release was produced with Kotlin `1.0.2-blockerfix` and a workdir under `offline-20261011`. The 850-case manifest declares Kotlin `1.0.5-hfprep`. Re-run KOTLIN-501 with 1.0.5 before treating its PASS as final.
+1. **KOTLIN-501 evidence provenance (resolved)**
+   The source-release bundle was produced with Kotlin `1.0.2-blockerfix`. It has been re-run with `1.0.5-hfprep-20261015` on 2026-10-21: 3/3 strict repetitions PASS (buggy FAIL_AS_EXPECTED, fixed PASS). New evidence is in `evidence/KOTLIN-501/`; `metadata/oracle.jsonl` marks it `EVIDENCED`.
 
 2. **Older package versions in the release manifest**
    The manifest still points at Elixir `1.1.1`, R `1.0.1/r-106`, and Swift `1.1.1/99` base. Newer packages exist (Elixir 1.1.3, R-100 1.1.0, Swift 1.1.2). The per-case `case.json` records what the case needs; the manifest may lag.

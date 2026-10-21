@@ -7,8 +7,10 @@ This repository is the **source-level distribution** of Defects4X. It contains:
 - **850 active cases** across 9 languages
 - per-case `case.json` with repository, revisions, patch references, trigger identity, and validation status
 - per-case `patches/` and `environment/` metadata
+- per-case oracle rows and a unified `d4x` runner
 - reproduction guides for the source-reproducible languages
 - container/device notes for cases that require external runtimes
+- fresh KOTLIN-501 evidence (`evidence/KOTLIN-501/`)
 
 > This is a **case-level source distribution**, not a vendored copy of every upstream repository. Full upstream source is fetched at the pinned revisions with `scripts/fetch_sources.py`; patches are applied locally. This keeps the repository reviewable and avoids redistributing third-party trees.
 

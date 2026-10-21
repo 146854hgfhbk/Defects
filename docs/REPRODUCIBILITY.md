@@ -23,6 +23,12 @@ Defects4X distinguishes five levels. A claim should name the level.
 
 It does **not** run the language toolchains, Docker images, or ArkTS devices. Those are L3/L4 and require self-hosted runners.
 
+## Fresh evidence
+
+- **KOTLIN-501**: re-run 2026-10-21 with Kotlin `1.0.5-hfprep-20261015`, JDK 17.0.20.1, Gradle 8.3, Node 20.20.2, Chrome for Testing 151.0.7922.47. Result: 3/3 strict repetitions PASS; see `evidence/KOTLIN-501/`.
+
+All other cases currently have `oracle_level: DECLARED`; they are not independent clean-room results.
+
 ## Known gaps
 
 - Binary images are referenced by digest, not stored in GitHub.
