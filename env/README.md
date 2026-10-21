@@ -23,6 +23,15 @@ cat cases/<language>/<CASE_ID>/environment.lock.json
 cat cases/<language>/<CASE_ID>/environment.json
 ```
 
+For a machine-readable per-case version table, see [case-matrix.tsv](case-matrix.tsv). For expected outcomes and trigger commands, see `../metadata/oracle.jsonl`.
+
+Use the unified runner to resolve a case before installing anything:
+
+```bash
+python scripts/d4x.py show <CASE_ID>
+python scripts/d4x.py plan <CASE_ID>
+```
+
 If these disagree with the language guide, **the case lock wins**.
 
 ## Base OS

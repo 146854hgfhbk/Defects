@@ -16,7 +16,7 @@ This repository is the **source-level distribution** of Defects4X. It contains:
 
 | Language | Cases | Reproduction path | Guide |
 |---|---:|---|---|
-| ArkTS | 50 | authorized device + SDK | [env/device-arkts.md](env/device-arkts.md) |
+| ArkTS | 50 | authorized device or emulator + SDK | [env/device-arkts.md](env/device-arkts.md) |
 | Dart | 100 | native Dart SDK | [env/dart.md](env/dart.md) |
 | Elixir | 100 | container / native OTP | [env/container.md](env/container.md) |
 | Julia | 100 | native Julia | [env/julia.md](env/julia.md) |
@@ -46,12 +46,17 @@ cases/
     commands/                 # runner commands (Swift etc.)
 metadata/
   cases.jsonl                 # 850-case canonical ledger
+  oracle.jsonl                # 850 per-case expected outcomes/triggers
+  id-mapping.json             # Swift release ID <-> package ID
   final-case-ledger-fix9-overlay.jsonl
   release-manifest.json
   case-status-summary.json
+cache/index.json              # per-case dependency-cache contract
 env/                          # per-language environment guides
 docs/REPRODUCTION_GUIDE.md    # generic replay protocol
+docs/REPRODUCIBILITY.md       # L0-L5 status and CI scope
 scripts/fetch_sources.py      # fetch upstream source at pinned revisions
+scripts/d4x.py                # unified runner: list/show/fetch/patch/plan/verify
 ```
 
 Each case directory is self-contained for metadata inspection. Large upstream source trees and repository bundles are intentionally not committed; they are fetched from the recorded revisions.
@@ -62,21 +67,38 @@ Each case directory is self-contained for metadata inspection. Large upstream so
 git clone https://github.com/146854hgfhbk/Defects.git
 cd Defects
 
-# 1. choose a case
-python - <<'PY'
-import json
-for line in open('metadata/cases.jsonl'):
-    c=json.loads(line)
-    if c['case_id']=='DART-101':
-        print(json.dumps(c,indent=2))
-PY
+python scripts/d4x.py list --language dart
+python scripts/d4x.py show DART-101
+python scripts/d4x.py oracle DART-101
 
-# 2. fetch its upstream repository at the pinned revisions
-python scripts/fetch_sources.py DART-101 --out /tmp/d4x-src
+# fetch both pinned revisions
+python scripts/d4x.py fetch DART-101 --out /tmp/d4x
 
-# 3. install the toolchain from the language guide, then replay
-#    see env/dart.md and docs/REPRODUCTION_GUIDE.md
+# apply the declared trigger/production patches
+python scripts/d4x.py patch DART-101 --work /tmp/d4x/DART-101 --side buggy
+python scripts/d4x.py patch DART-101 --work /tmp/d4x/DART-101 --side fixed
+
+# print the exact replay plan
+python scripts/d4x.py plan DART-101
+
+# install the toolchain from env/dart.md, then run the trigger
 ```
+
+## Unified runner
+
+`scripts/d4x.py` is a dependency-free orchestrator:
+
+| Command | Purpose |
+|---|---|
+| `list` | list cases by language |
+| `show` | show revisions, patches, guide, oracle |
+| `oracle` | print the per-case expected outcome/trigger |
+| `fetch` | clone both pinned revisions |
+| `patch` | apply the selected trigger/production patches |
+| `plan` | print the complete replay steps |
+| `verify` | static validation of all 850 cases |
+
+It does **not** install language toolchains or run Docker for you; it resolves the case and produces a deterministic sequence that the language guide explains.
 
 ## Patch semantics
 
@@ -96,7 +118,7 @@ The benchmark distinguishes:
 - `DEVICE_REQUIRED` — authorized device/SDK/signing material is needed
 - `BLOCKED` / `PARTIAL` — recorded in the case metadata
 
-See `metadata/case-status-summary.json` for aggregate counts and each `case.json` for the per-case status. Known packaging limitations are documented in [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md).
+See [docs/REPRODUCIBILITY.md](docs/REPRODUCIBILITY.md) for L0–L5 status, [metadata/oracle.jsonl](metadata/oracle.jsonl) for per-case expectations, and [docs/KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) for packaging limitations.
 
 ## License
 

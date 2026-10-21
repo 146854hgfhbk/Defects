@@ -20,13 +20,19 @@ This repository is a **snapshot** of the 850-case release metadata and per-case 
    Historical `/data/users/...` paths were sanitized to `__REFERENCE_USER_HOME__` / `__REFERENCE_USER__`. They are provenance placeholders, not runnable paths. Use `repository_url` + revision, or the case's bundle/cache.
 
 4. **Swift ID aliases**
-   Active IDs are `SWIFT-Dxxx`; package-internal `case_id` values are older `SWIFT-xxx` / `CASES-SWIFT-xxx`. The directory name is the release ID. A mapping file is not yet included; use the directory name.
+   Active IDs are `SWIFT-Dxxx`; package-internal `case_id` values are older `SWIFT-xxx` / `CASES-SWIFT-xxx`. `metadata/id-mapping.json` is the canonical mapping; use `release_case_id` for paths/oracle and `package_case_id` only when a package script requires it.
 
 5. **R cap and Dart extras**
    The R package contains 106 source records; the active release keeps 100. Dart packages may contain 6 non-active extras. Always filter with `metadata/cases.jsonl`.
 
 6. **Perl audit status**
    Some Perl cases carry `audit.license_evidence: BLOCKED` or `status.audit` warnings. Check the case before redistribution or publication claims.
+
+7. **Dependency caches are recipes, not artifacts**
+   `cache/index.json` records the lock path for each case, but large cache tarballs are not committed. Materialize them from the language guide; set `artifact`/`status: available` only after uploading a verified archive.
+
+8. **Unified runner scope**
+   `scripts/d4x.py` orchestrates fetch/patch/plan/static verification. It does not install toolchains, pull 500GB of images, or provide an ArkTS device/emulator.
 
 ## What this repository does not contain
 

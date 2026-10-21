@@ -39,16 +39,35 @@ def deep_get(d, *keys, default=None):
     return default if cur is None else cur
 
 
+def get_field(case: dict, *names):
+    """Read a field by literal key, dotted key, or nested path."""
+    for name in names:
+        if name in case and case[name]:
+            return case[name]
+        if "." in name:
+            parts = name.split(".")
+            cur = case
+            ok = True
+            for part in parts:
+                if isinstance(cur, dict) and part in cur:
+                    cur = cur[part]
+                else:
+                    ok = False
+                    break
+            if ok and cur:
+                return cur
+    return None
+
+
 def repo_url(case: dict) -> str | None:
-    for key in ("repository_url", "repo_url", "repository", "repo"):
-        v = case.get(key)
-        if isinstance(v, str) and v:
-            return v
-        if isinstance(v, dict):
-            for k in ("url", "html_url", "clone_url"):
-                if v.get(k):
-                    return v[k]
-    for path in (("repository", "url"), ("source", "repository")):
+    v = get_field(case, "repository_url", "repo_url", "repository", "repo", "repository.url")
+    if isinstance(v, str) and v:
+        return v
+    if isinstance(v, dict):
+        for k in ("url", "html_url", "clone_url"):
+            if v.get(k):
+                return v[k]
+    for path in (("repository", "url"), ("source", "repository"), ("source", "url")):
         v = deep_get(case, *path)
         if v:
             return v
@@ -72,10 +91,11 @@ def normalize_repo(url: str) -> str:
 
 
 def revisions(case: dict) -> tuple[str | None, str | None]:
-    b = (case.get("buggy_revision") or case.get("buggy_sha")
-         or deep_get(case, "commits", "buggy") or deep_get(case, "source", "buggy_sha"))
-    f = (case.get("fixed_revision") or case.get("fixed_sha")
-         or deep_get(case, "commits", "fixed") or deep_get(case, "source", "fixed_sha"))
+    b = get_field(case, "buggy_revision", "buggy_sha", "revision.id.buggy",
+                  "revision.buggy", "commits.buggy", "source.buggy_sha")
+    f = get_field(case, "fixed_revision", "fixed_sha", "revision.id.fixed",
+                  "revision.fixed", "commits.fixed", "source.fixed_sha",
+                  "source_fix.fixed_revision")
     return b, f
 
 
@@ -110,7 +130,7 @@ def main() -> int:
 
     repo = out / "repo.git"
     if not repo.exists():
-        cmd = ["clone", "--filter=blob:none", "--no-checkout", normalize_repo(url), str(repo)]
+        cmd = ["clone", "--bare", "--filter=blob:none", "--no-checkout", normalize_repo(url), str(repo)]
         if args.depth:
             cmd.insert(1, f"--depth={args.depth}")
         print("+", "git", " ".join(cmd))

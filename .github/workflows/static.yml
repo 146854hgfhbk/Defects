@@ -1,0 +1,51 @@
+name: static-reproduction-checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate 850 cases, oracle, and Swift ID mapping
+        run: python scripts/d4x.py verify
+
+  language-smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {language: dart, case: DART-101}
+          - {language: julia, case: JULIA-002}
+          - {language: kotlin, case: KOTLIN-001}
+          - {language: lua, case: EV-LU-004}
+          - {language: perl, case: PERL-002}
+          - {language: r, case: BENCH-1}
+          - {language: elixir, case: ELIXIR-001}
+          - {language: swift, case: SWIFT-D001}
+          - {language: arkts, case: ARKTS-001}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Static case plan
+        run: |
+          python scripts/d4x.py verify --language ${{ matrix.language }}
+          python scripts/d4x.py plan ${{ matrix.case }} --json > /tmp/plan.json
+          python - <<'PY'
+          import json
+          p=json.load(open('/tmp/plan.json'))
+          assert p['expected'] == {'buggy':'FAIL','fixed':'PASS'}
+          print(p['case_id'], p['language'], p['oracle_level'])
+          PY
+
+  # Full replay needs language toolchains, 500GB of container images, and a
+  # device lab for ArkTS. It is intentionally not run on hosted runners.
