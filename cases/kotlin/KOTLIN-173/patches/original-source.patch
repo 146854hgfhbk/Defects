@@ -1,0 +1,159 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/IndentationRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/IndentationRule.kt
+index 29498833..3c083262 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/IndentationRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/IndentationRule.kt
+@@ -245,9 +245,16 @@ public class IndentationRule :
+             node.elementType == SECONDARY_CONSTRUCTOR ->
+                 visitSecondaryConstructor(node)
+ 
+-            node.elementType == PARENTHESIZED &&
+-                node.treeParent.treeParent.elementType != IF ->
+-                startIndentContext(node)
++            node.elementType == PARENTHESIZED ->
++                if (codeStyle == ktlint_official) {
++                    // Contrary to the IntelliJ IDEA default formatter, do not indent the closing RPAR
++                    startIndentContext(
++                        fromAstNode = node,
++                        lastChildIndent = "",
++                    )
++                } else if (node.treeParent.treeParent.elementType != IF) {
++                    startIndentContext(node)
++                }
+ 
+             node.elementType == BINARY_WITH_TYPE ||
+                 node.elementType == SUPER_TYPE_ENTRY ||
+@@ -1366,7 +1373,7 @@ private class StringTemplateIndenter(
+                                 it.isLiteralStringTemplateEntry() ||
+                                     it.isVariableStringTemplateEntry() ||
+                                     it.isClosingQuote()
+-                                )
++                            )
+                         ) {
+                             val (actualIndent, actualContent) =
+                                 if (it.isIndentBeforeClosingQuote()) {
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/NoSemicolonsRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/NoSemicolonsRule.kt
+index 8c399150..b651dee9 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/NoSemicolonsRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/NoSemicolonsRule.kt
+@@ -67,26 +67,25 @@ public class NoSemicolonsRule :
+         }
+     }
+ 
+-    private fun ASTNode?.doesNotRequirePreSemi(): Boolean {
+-        if (this == null) {
+-            return true
+-        }
+-        if (this is PsiWhiteSpace) {
+-            val nextLeaf =
++    private fun ASTNode?.doesNotRequirePreSemi() =
++        when {
++            this == null -> true
++
++            this is PsiWhiteSpace -> {
+                 nextLeaf {
+                     val psi = it.psi
+                     it !is PsiWhiteSpace &&
+                         it !is PsiComment &&
+                         psi.getStrictParentOfType<KDoc>() == null &&
+                         psi.getStrictParentOfType<KtAnnotationEntry>() == null
++                }.let { nextLeaf ->
++                    nextLeaf == null || // \s+ and then eof
++                        (textContains('\n') && nextLeaf.elementType != KtTokens.LBRACE)
+                 }
+-            return (
+-                nextLeaf == null || // \s+ and then eof
+-                    textContains('\n') && nextLeaf.elementType != KtTokens.LBRACE
+-                )
++            }
++
++            else -> false
+         }
+-        return false
+-    }
+ 
+     private fun isNoSemicolonRequiredAfter(node: ASTNode): Boolean {
+         val prevCodeLeaf =
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundCurlyRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundCurlyRule.kt
+index 45259e5e..fa68f7a0 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundCurlyRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundCurlyRule.kt
+@@ -51,7 +51,7 @@ public class SpacingAroundCurlyRule : StandardRule("curly-spacing") {
+                     (
+                         prevLeaf?.elementType == LPAR &&
+                             ((node as LeafPsiElement).parent is KtLambdaExpression || node.parent.parent is KtLambdaExpression)
+-                        )
++                    )
+                 spacingAfter = nextLeaf is PsiWhiteSpace || nextLeaf?.elementType == RBRACE
+                 if (prevLeaf is PsiWhiteSpace &&
+                     !prevLeaf.textContains('\n') &&
+@@ -69,7 +69,7 @@ public class SpacingAroundCurlyRule : StandardRule("curly-spacing") {
+                         prevLeaf.prevLeaf()?.let { it.elementType == RPAR || KtTokens.KEYWORDS.contains(it.elementType) } == true ||
+                             node.treeParent.elementType == CLASS_BODY ||
+                             (prevLeaf.treeParent.elementType == FUN && prevLeaf.treeNext.elementType != LAMBDA_EXPRESSION)
+-                        ) // allow newline for lambda return type
++                    ) // allow newline for lambda return type
+                 ) {
+                     emit(node.startOffset, "Unexpected newline before \"${node.text}\"", true)
+                     if (autoCorrect) {
+@@ -141,7 +141,7 @@ public class SpacingAroundCurlyRule : StandardRule("curly-spacing") {
+                 nextElementType == LBRACKET ||
+                 nextElementType == LPAR ||
+                 nextElementType == COLONCOLON
+-            )
++        )
+     }
+ }
+ 
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundParensRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundParensRule.kt
+index bdfa0fa3..10158fcd 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundParensRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundParensRule.kt
+@@ -42,11 +42,11 @@ public class SpacingAroundParensRule : StandardRule("paren-spacing") {
+                                 // Super keyword needs special-casing
+                                 prevLeaf.prevLeaf()?.elementType == SUPER_KEYWORD ||
+                                 prevLeaf.prevLeaf()?.treeParent?.elementType == PRIMARY_CONSTRUCTOR
+-                            ) &&
++                        ) &&
+                         (
+                             node.treeParent?.elementType == VALUE_PARAMETER_LIST ||
+                                 node.treeParent?.elementType == VALUE_ARGUMENT_LIST
+-                            )
++                        )
+                 } else {
+                     prevLeaf is PsiWhiteSpace && !prevLeaf.textContains('\n') &&
+                         prevLeaf.prevLeaf()?.elementType != LPAR
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/StringTemplateRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/StringTemplateRule.kt
+index 52335cd8..14b0c5a3 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/StringTemplateRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/StringTemplateRule.kt
+@@ -63,7 +63,7 @@ public class StringTemplateRule : StandardRule("string-template") {
+                         (
+                             nextSibling.elementType == LITERAL_STRING_TEMPLATE_ENTRY &&
+                                 !nextSibling.text.substring(0, 1).isPartOfIdentifier()
+-                            )
++                        )
+                 }
+             ) {
+                 emit(node.treePrev.startOffset + 2, "Redundant curly braces", true)
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/WrappingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/WrappingRule.kt
+index 706001a6..2a72cfee 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/WrappingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/WrappingRule.kt
+@@ -239,7 +239,7 @@ public class WrappingRule :
+                 numberOfArgs == 1 &&
+                     firstArg?.firstChildNode?.elementType
+                         ?.let { it == OBJECT_LITERAL || it == LAMBDA_EXPRESSION } == true
+-                )
++            )
+         ) {
+             return
+         }
+@@ -308,7 +308,7 @@ public class WrappingRule :
+             !(
+                 entries.dropLast(1).all { it.elementType == SUPER_TYPE_ENTRY } &&
+                     entries.last().elementType == SUPER_TYPE_CALL_ENTRY
+-                )
++            )
+         ) {
+             // put space after :
+             if (!node.prevLeaf().isWhiteSpaceWithNewline()) {

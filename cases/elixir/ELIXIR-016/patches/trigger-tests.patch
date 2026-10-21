@@ -1,0 +1,159 @@
+diff --git a/test/actions/bulk/bulk_create_test.exs b/test/actions/bulk/bulk_create_test.exs
+index 444b06df..a31b198c 100644
+--- a/test/actions/bulk/bulk_create_test.exs
++++ b/test/actions/bulk/bulk_create_test.exs
+@@ -596,7 +596,12 @@ defmodule Ash.Test.Actions.BulkCreateTest do
+       |> Ash.Changeset.for_create(:create, %{})
+       |> Ash.create!()
+ 
+-    assert %Ash.BulkResult{records: [%{title: "title1_stuff"}, %{title: "title2_stuff"}]} =
++    assert %Ash.BulkResult{
++             records: [
++               %{title: "title1_stuff", __metadata__: %{tenant: tenant}},
++               %{title: "title2_stuff", __metadata__: %{tenant: tenant}}
++             ]
++           } =
+              Ash.bulk_create!(
+                [%{title: "title1"}, %{title: "title2"}],
+                Post,
+@@ -606,6 +611,8 @@ defmodule Ash.Test.Actions.BulkCreateTest do
+                authorize?: false,
+                sorted?: true
+              )
++
++    assert tenant == org.id
+   end
+ 
+   test "accepts arguments" do
+diff --git a/test/actions/bulk/bulk_update_test.exs b/test/actions/bulk/bulk_update_test.exs
+index 4e24fd7d..cddbb728 100644
+--- a/test/actions/bulk/bulk_update_test.exs
++++ b/test/actions/bulk/bulk_update_test.exs
+@@ -111,6 +111,34 @@ defmodule Ash.Test.Actions.BulkUpdateTest do
+     end
+   end
+ 
++  defmodule Address do
++    @moduledoc false
++    use Ash.Resource, domain: Domain, data_layer: :embedded
++
++    attributes do
++      attribute :line1, :string, allow_nil?: false, public?: true
++      attribute :line2, :string, allow_nil?: true, public?: true
++      attribute :city, :string, allow_nil?: false, public?: true
++      attribute :state, :string, allow_nil?: false, public?: true
++      attribute :zip_code, :string, allow_nil?: false, public?: true
++      attribute :country, :string, allow_nil?: false, public?: true
++    end
++  end
++
++  defmodule Contact do
++    @moduledoc false
++    use Ash.Resource, domain: Domain, data_layer: :embedded
++
++    # actions do
++    #   defaults [:read, :create, :update, :destroy]
++    # end
++
++    attributes do
++      attribute :email, :string, allow_nil?: false, public?: true
++      attribute :address, Address, allow_nil?: false, public?: true
++    end
++  end
++
+   defmodule Author do
+     @moduledoc false
+     use Ash.Resource, domain: Domain, data_layer: Ash.DataLayer.Ets
+@@ -128,7 +156,11 @@ defmodule Ash.Test.Actions.BulkUpdateTest do
+       uuid_primary_key :id
+ 
+       attribute :name, :string do
+-        public?(true)
++        public? true
++      end
++
++      attribute :contact, Contact do
++        public? true
+       end
+     end
+ 
+@@ -285,7 +317,7 @@ defmodule Ash.Test.Actions.BulkUpdateTest do
+       end
+ 
+       update :update_with_match do
+-        validate match(:title4, ~r/^[a-z]+$/)
++        validate match(:title4, ~r/^[a-z]+$/), message: "Title must be lowercase"
+       end
+ 
+       update :update_with_filter do
+@@ -960,7 +992,10 @@ defmodule Ash.Test.Actions.BulkUpdateTest do
+ 
+   test "runs match validation with atomic_batches strategy" do
+     assert %Ash.BulkResult{
+-             error_count: 1
++             error_count: 1,
++             errors: [
++               %{errors: [%{field: :title4, message: "Title must be lowercase"}]}
++             ]
+            } =
+              Ash.bulk_create!([%{title: "title1"}], Post, :create,
+                return_stream?: true,
+@@ -1518,4 +1553,37 @@ defmodule Ash.Test.Actions.BulkUpdateTest do
+              } = tag.related_tags
+     end
+   end
++
++  describe "embedded attribute update" do
++    test "allows partially updating an embedded attribute" do
++      address = %{
++        line1: "123 Memory Lane",
++        city: "Springfield",
++        state: "NY",
++        zip_code: "06101",
++        country: "US"
++      }
++
++      contact = %{
++        email: "ashley@example.com",
++        address: address
++      }
++
++      author =
++        Author
++        |> Ash.Changeset.for_create(:create, %{name: "Name", contact: contact})
++        |> Ash.create!()
++
++      assert %Ash.BulkResult{records: [author], error_count: 0, errors: []} =
++               Ash.bulk_update!([author], :update, %{contact: %{email: "brooklyn@example.com"}},
++                 resource: Author,
++                 strategy: :stream,
++                 return_records?: true,
++                 return_errors?: true,
++                 authorize?: false
++               )
++
++      assert author.contact.email == "brooklyn@example.com"
++    end
++  end
+ end
+diff --git a/test/sort/sort_test.exs b/test/sort/sort_test.exs
+index c015aa32..e6aa6b01 100644
+--- a/test/sort/sort_test.exs
++++ b/test/sort/sort_test.exs
+@@ -132,6 +132,16 @@ defmodule Ash.Test.Sort.SortTest do
+       |> Ash.read!()
+     end
+ 
++    test "a string sort can parse calculations" do
++      {:ok, [{%Ash.Query.Calculation{}, :desc_nils_last}]} =
++        Ash.Sort.parse_input(Author, [{"name_and_private_name", {%{}, :desc_nils_last}}])
++
++      assert [{%Ash.Query.Calculation{}, :desc_nils_last}] =
++               Author
++               |> Ash.Query.sort_input([{"name_and_private_name", {%{}, :desc_nils_last}}])
++               |> Map.get(:sort)
++    end
++
+     test "a string sort can parse relationships as atoms" do
+       {:ok, [{%Ash.Query.Calculation{}, :asc}] = sort} =
+         Ash.Sort.parse_input(Post, "author.name_and_private_name": :asc)

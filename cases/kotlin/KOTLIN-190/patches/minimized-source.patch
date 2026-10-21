@@ -1,0 +1,15 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/TryCatchFinallySpacingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/TryCatchFinallySpacingRule.kt
+index 8adf9d23..bee881f0 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/TryCatchFinallySpacingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/TryCatchFinallySpacingRule.kt
+@@ -55,6 +56,10 @@ public class TryCatchFinallySpacingRule :
+         autoCorrect: Boolean,
+         emit: (offset: Int, errorMessage: String, canBeAutoCorrected: Boolean) -> Unit,
+     ) {
++        if (node.isPartOfComment() && node.treeParent.elementType in TRY_CATCH_FINALLY_TOKEN_SET) {
++            emit(node.startOffset, "No comment expected at this location", false)
++            return
++        }
+         when (node.elementType) {
+             BLOCK -> {
+                 visitBlock(node, emit, autoCorrect)

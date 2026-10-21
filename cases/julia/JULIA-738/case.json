@@ -1,0 +1,273 @@
+{
+  "bug_id": "JULIA-738",
+  "buggy_revision": "e4c92d2a0f3bdbdd0432ca95f7383628ac309764",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "685b2b06a6764fbbb70ae3af47227ded3e280341",
+  "case_id": "JULIA-738",
+  "changed_production_files": [
+    "src/conversion.jl",
+    "src/units.jl",
+    "src/utils.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "685b2b06a6764fbbb70ae3af47227ded3e280341",
+  "instance_id": "painterqubits__unitful.jl-648",
+  "issue_id": 647,
+  "issue_urls": [
+    "https://github.com/PainterQubits/Unitful.jl/issues/647"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "parent_sha": "e4c92d2a0f3bdbdd0432ca95f7383628ac309764",
+  "project": "PainterQubits/Unitful.jl",
+  "repository_url": "https://github.com/PainterQubits/Unitful.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "candidate_sha": "685b2b06a6764fbbb70ae3af47227ded3e280341",
+    "project": "PainterQubits/Unitful.jl",
+    "input_sha256": "d370f5272c514b9d4d4d2ffb86c092c9de86172d32860bf6e58b4ababa1712f1",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:38:24Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.4778177340298507,
+      "input_tokens": 9980,
+      "output_tokens": 858
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.88, \"summary\": \"Fix for Unitful.jl issue #647, where `uconvert` silently returned NaN, Inf, or 0.0 for units raised to large powers because `basefactor` computed `inex^p` separately for source and target units, letting intermediate floating point factors overflow/underflow before they could cancel. The fix restructures `convfact` to divide the units first (`absoluteunit(FreeUnits(t()))/absoluteunit(FreeUnits(s()))`) and take the base factor of the quotient, so canceling factors never materialize. A secondary `fp_overflow_underflow` guard converts genuinely unrepresentable conversion factors from silent NaN into an ArgumentError.\", \"evidence\": \"Issue #647 gives concrete reproducers with wrong numeric output (`uconvert(u\\\"kb\\\"^11, 1.0*u\\\"kb\\\"^12*u\\\"b\\\"^-1)` -> `0.0 kb^11`, `^13` case -> `NaN`), which is a violation of existing documented conversion semantics rather than a missing capability. PR #648 (\\\"Divide units instead of basefactors in convfact()\\\") states \\\"This fixes #647\\\" and matches the diff exactly: convfact now computes a single `conv_units` quotient and calls `basefactor`/`tensfactor` on it. Runtime evidence reports strict_differential=stable_differential over 3 repetitions with the full suite passing on the fixed revision, and test/runtests.jl is touched. Minimization kept 5 of 6 hunks with all_hunks_necessary=true and globally_minimal=true; the dropped hunk is cosmetic (`dpow(x,p)` spacing).\", \"missing_evidence\": \"No explicit trigger test names are listed (trigger_tests is empty; trigger_mode=dedicated_script), so the exact failing assertions on the parent commit are not visible. The test diff itself was not provided, only the file path. PR number is null in metadata, though issue_records make the linkage clear.\", \"validation_risks\": \"Part of the change adds new ArgumentError throws for true overflow cases (e.g. `uconvert(u\\\"kb^12\\\", 1u\\\"b^12\\\")`), so tests asserting the old NaN behavior would flip to a throw; the PR author acknowledges this as an intentional behavior change. `convfact` is a `@generated` function, so failures surface at compile/specialization time and error messages may be wrapped, which can complicate exact-exception matching in triggers. Floating point equality on conversion factors could be mildly platform sensitive, and the added `absoluteunit(FreeUnits(...))` path touches Affine/ContextUnits handling, so regressions there would be broader than the reported defect.\", \"suggested_tests\": \"Assert `uconvert(u\\\"kb\\\"^11, 1.0*u\\\"kb\\\"^12*u\\\"b\\\"^-1) == 1000.0*u\\\"kb\\\"^11` and the `^12`/`^13` variants return finite correct values rather than 0.0/NaN; same for the `kOe^162`/`kOe^163` cases from the issue. Assert `convfact` results are finite and exactly reciprocal for swapped argument order at large exponents. Assert `@test_throws ArgumentError uconvert(u\\\"kb^12\\\", 1u\\\"b^12\\\")` for the genuinely-overflowing factor. Add regression checks that affine units (degC/degF) and ContextUnits still convert correctly through the new `absoluteunit(FreeUnits(...))` path, and that mismatched dimensions still raise DimensionError.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.88,
+    "summary": "Fix for Unitful.jl issue #647, where `uconvert` silently returned NaN, Inf, or 0.0 for units raised to large powers because `basefactor` computed `inex^p` separately for source and target units, letting intermediate floating point factors overflow/underflow before they could cancel. The fix restructures `convfact` to divide the units first (`absoluteunit(FreeUnits(t()))/absoluteunit(FreeUnits(s()))`) and take the base factor of the quotient, so canceling factors never materialize. A secondary `fp_overflow_underflow` guard converts genuinely unrepresentable conversion factors from silent NaN into an ArgumentError.",
+    "evidence": "Issue #647 gives concrete reproducers with wrong numeric output (`uconvert(u\"kb\"^11, 1.0*u\"kb\"^12*u\"b\"^-1)` -> `0.0 kb^11`, `^13` case -> `NaN`), which is a violation of existing documented conversion semantics rather than a missing capability. PR #648 (\"Divide units instead of basefactors in convfact()\") states \"This fixes #647\" and matches the diff exactly: convfact now computes a single `conv_units` quotient and calls `basefactor`/`tensfactor` on it. Runtime evidence reports strict_differential=stable_differential over 3 repetitions with the full suite passing on the fixed revision, and test/runtests.jl is touched. Minimization kept 5 of 6 hunks with all_hunks_necessary=true and globally_minimal=true; the dropped hunk is cosmetic (`dpow(x,p)` spacing).",
+    "missing_evidence": "No explicit trigger test names are listed (trigger_tests is empty; trigger_mode=dedicated_script), so the exact failing assertions on the parent commit are not visible. The test diff itself was not provided, only the file path. PR number is null in metadata, though issue_records make the linkage clear.",
+    "validation_risks": "Part of the change adds new ArgumentError throws for true overflow cases (e.g. `uconvert(u\"kb^12\", 1u\"b^12\")`), so tests asserting the old NaN behavior would flip to a throw; the PR author acknowledges this as an intentional behavior change. `convfact` is a `@generated` function, so failures surface at compile/specialization time and error messages may be wrapped, which can complicate exact-exception matching in triggers. Floating point equality on conversion factors could be mildly platform sensitive, and the added `absoluteunit(FreeUnits(...))` path touches Affine/ContextUnits handling, so regressions there would be broader than the reported defect.",
+    "suggested_tests": "Assert `uconvert(u\"kb\"^11, 1.0*u\"kb\"^12*u\"b\"^-1) == 1000.0*u\"kb\"^11` and the `^12`/`^13` variants return finite correct values rather than 0.0/NaN; same for the `kOe^162`/`kOe^163` cases from the issue. Assert `convfact` results are finite and exactly reciprocal for swapped argument order at large exponents. Assert `@test_throws ArgumentError uconvert(u\"kb^12\", 1u\"b^12\")` for the genuinely-overflowing factor. Add regression checks that affine units (degC/degF) and ContextUnits still convert correctly through the new `absoluteunit(FreeUnits(...))` path, and that mismatched dimensions still raise DimensionError."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "SWE-rebench-V2",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "Conversion",
+      "Temperature and affine quantities",
+      "Unit string parsing",
+      "Unit and dimensional analysis",
+      "Mathematics",
+      "Fast mathematics",
+      "Rounding",
+      "Sgn, abs, &c.",
+      "Display",
+      "Show quantities",
+      "DimensionError message",
+      "Output ordered by unit exponent",
+      "User macros",
+      "Custom types",
+      "Traits",
+      "Encoding",
+      "Units aliases",
+      "Docs",
+      "Method ambiguity",
+      "Undefined exports",
+      "Compare Project.toml and test/Project.toml",
+      "Stale dependencies",
+      "Compat bounds",
+      "Project.toml formatting",
+      "Piracy"
+    ],
+    "PASS_TO_PASS": [
+      "Construction",
+      "inverse",
+      "Types"
+    ],
+    "base_commit": "e4c92d2a0f3bdbdd0432ca95f7383628ac309764",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "instance_id": "painterqubits__unitful.jl-648",
+    "issue_url": "https://github.com/PainterQubits/Unitful.jl/issues/647",
+    "patch": "diff --git a/src/conversion.jl b/src/conversion.jl\nindex a1a8bddf..8a32ac63 100644\n--- a/src/conversion.jl\n+++ b/src/conversion.jl\n@@ -1,38 +1,26 @@\n \"\"\"\n     convfact(s::Units, t::Units)\n-Find the conversion factor from unit `t` to unit `s`, e.g., `convfact(m,cm) == 1//100`.\n+Find the conversion factor from unit `t` to unit `s`, e.g., `convfact(m, cm) == 1//100`.\n \"\"\"\n @generated function convfact(s::Units, t::Units)\n-    sunits = s.parameters[1]\n-    tunits = t.parameters[1]\n-\n     # Check if conversion is possible in principle\n-    sdim = dimension(s())\n-    tdim = dimension(t())\n-    sdim != tdim && throw(DimensionError(s(),t()))\n-\n-    # first convert to base SI units.\n-    # fact1 is what would need to be multiplied to get to base SI units\n-    # fact2 is what would be multiplied to get from the result to base SI units\n-\n-    inex1, ex1 = basefactor(t())\n-    inex2, ex2 = basefactor(s())\n-\n-    a = inex1 / inex2\n-    ex = ex1 // ex2     # do overflow checking?\n+    dimension(s()) != dimension(t()) && throw(DimensionError(s(), t()))\n \n-    tens1 = mapreduce(tensfactor, +, tunits; init=0)\n-    tens2 = mapreduce(tensfactor, +, sunits; init=0)\n-\n-    pow = tens1-tens2\n+    # use absoluteunit because division is invalid for AffineUnits;\n+    # convert to FreeUnits first because absolute ContextUnits might still\n+    # promote to AffineUnits\n+    conv_units = absoluteunit(FreeUnits(t())) / absoluteunit(FreeUnits(s()))\n+    inex, ex = basefactor(conv_units)\n+    pow = tensfactor(conv_units)\n+    inex_orig = inex\n \n     fpow = 10.0^pow\n-    if fpow > typemax(Int) || 1/(fpow) > typemax(Int)\n-        a *= fpow\n+    if fpow > typemax(Int) || 1/fpow > typemax(Int)\n+        inex *= fpow\n     else\n         comp = (pow > 0 ? fpow * numerator(ex) : 1/fpow * denominator(ex))\n         if comp > typemax(Int)\n-            a *= fpow\n+            inex *= fpow\n         else\n             ex *= (10//1)^pow\n         end\n@@ -41,9 +29,15 @@ Find the conversion factor from unit `t` to unit `s`, e.g., `convfact(m,cm) == 1\n     if ex isa Rational && denominator(ex) == 1\n         ex = numerator(ex)\n     end\n-    a ≈ 1.0 ? (inex = 1) : (inex = a)\n-    y = inex * ex\n-    :($y)\n+\n+    result = (inex ≈ 1.0 ? 1 : inex) * ex\n+    if fp_overflow_underflow(inex_orig, result)\n+        throw(ArgumentError(\n+            \"Floating point overflow/underflow, probably due to large \" *\n+            \"exponents and/or SI prefixes in units\"\n+        ))\n+    end\n+    return :($result)\n end\n \n \"\"\"\ndiff --git a/src/units.jl b/src/units.jl\nindex f6a3f89a..89df1bf4 100644\n--- a/src/units.jl\n+++ b/src/units.jl\n@@ -194,7 +194,7 @@ end\n function basefactor(inex, ex, eq, tens, p)\n     # Sometimes (x::Rational)^1 can fail for large rationals because the result\n     # is of type x*x so we do a hack here\n-    function dpow(x,p)\n+    function dpow(x, p)\n         if p == 0\n             1\n         elseif p == 1\n@@ -232,19 +232,23 @@ function basefactor(inex, ex, eq, tens, p)\n             # Note that sometimes x^1 can cause an overflow error if x is large because\n             # of how power_by_squaring is implemented for Rationals, so we use dpow.\n             x = dpow(eq*ex*(10//1)^tens, p)\n-            return (inex^p, isinteger(x) ? Int(x) : x)\n+            result = (inex^p, isinteger(x) ? Int(x) : x)\n         else\n             x = dpow(ex*(10//1)^tens, p)\n-            return ((inex*eq)^p, isinteger(x) ? Int(x) : x)\n+            result = ((inex * eq)^p, isinteger(x) ? Int(x) : x)\n         end\n     else\n         if eq_is_exact && can_exact2\n-            x = dpow(eq,p)\n-            return ((inex * ex * 10.0^tens)^p, isinteger(x) ? Int(x) : x)\n+            x = dpow(eq, p)\n+            result = ((inex * ex * 10.0^tens)^p, isinteger(x) ? Int(x) : x)\n         else\n-            return ((inex * ex * 10.0^tens * eq)^p, 1)\n+            result = ((inex * ex * 10.0^tens * eq)^p, 1)\n         end\n     end\n+    if fp_overflow_underflow(inex, first(result))\n+        throw(ArgumentError(\"Floating point overflow/underflow, probably due to large exponent ($p)\"))\n+    end\n+    return result\n end\n \n \"\"\"\n@@ -257,18 +261,21 @@ reference units.\n \"\"\"\n @inline basefactor(x::Unit{U}) where {U} = basefactor(basefactors[U]..., 1, 0, power(x))\n \n-function basefactor(x::Units{U}) where {U}\n+function basefactor(::Units{U}) where {U}\n     fact1 = map(basefactor, U)\n-    inex1 = mapreduce(x->getfield(x,1), *, fact1, init=1.0)\n-    float_num = mapreduce(x->float(numerator(getfield(x,2))), *, fact1, init=1.0)\n-    float_den = mapreduce(x->float(denominator(getfield(x,2))), *, fact1, init=1.0)\n-    can_exact = (float_num < typemax(Int))\n-    can_exact &= (float_den < typemax(Int))\n+    inex1 = mapreduce(first, *, fact1, init=1.0)\n+    float_num = mapreduce(x -> float(numerator(last(x))), *, fact1, init=1.0)\n+    float_den = mapreduce(x -> float(denominator(last(x))), *, fact1, init=1.0)\n+    can_exact = float_num < typemax(Int) && float_den < typemax(Int)\n     if can_exact\n-        return inex1, mapreduce(x->getfield(x,2), *, fact1, init=1)\n+        result = (inex1, mapreduce(last, *, fact1, init=1))\n     else\n-        return inex1*float_num/float_den, 1\n+        result = (inex1 * (float_num / float_den), 1)\n+    end\n+    if any(fp_overflow_underflow(first(x), first(result)) for x in fact1)\n+        throw(ArgumentError(\"Floating point overflow/underflow, probably due to a large exponent in some of the units\"))\n     end\n+    return result\n end\n \n Base.broadcastable(x::Units) = Ref(x)\ndiff --git a/src/utils.jl b/src/utils.jl\nindex c0975ce5..28a61d16 100644\n--- a/src/utils.jl\n+++ b/src/utils.jl\n@@ -246,3 +246,6 @@ struct AffineError <: Exception\n end\n \n Base.showerror(io::IO, e::AffineError) = print(io, \"AffineError: $(e.x)\")\n+\n+fp_overflow_underflow(input, result) =\n+    isfinite(input) && !isfinite(result) || !iszero(input) && iszero(result)\n",
+    "pr_url": "https://github.com/JuliaPhysics/Unitful.jl/pull/648",
+    "problem_statement": "Converting large powers of units can result in `NaN`, `Inf`, or 0\n```julia\r\njulia> using Unitful\r\n\r\njulia> uconvert(u\"kb\"^10, 1.0 * u\"kb\"^11 * u\"b\"^-1)\r\n999.9999999999999 kb^10\r\n\r\njulia> uconvert(u\"kb\"^11, 1.0 * u\"kb\"^12 * u\"b\"^-1)\r\n0.0 kb^11\r\n\r\njulia> uconvert(u\"kb\"^12, 1.0 * u\"kb\"^13 * u\"b\"^-1)\r\nNaN kb^12\r\n\r\njulia> uconvert(u\"kOe\"^161, 1.0 * u\"kOe\"^162 * u\"Oe\"^-1)\r\n1000.0 kOe^161\r\n\r\njulia> uconvert(u\"kOe\"^162, 1.0 * u\"kOe\"^163 * u\"Oe\"^-1)\r\nInf kOe^162\r\n\r\njulia> uconvert(u\"kOe\"^163, 1.0 * u\"kOe\"^164 * u\"Oe\"^-1)\r\nNaN kOe^163\r\n```\r\n\r\nApologies for the contrived examples, but this is only an issue for units with an “inexact” conversion part `!= 1.0`, and becomes more serious the more different it is from 1. Originally, I ran into this in the context of astrophysical units (see JuliaAstro/UnitfulAstro.jl#33), but I wanted to give a more minimal example with “built-in” units.\r\n\r\nThe issue is that `inex^p` in `basefactor()`:\r\n\r\nhttps://github.com/PainterQubits/Unitful.jl/blob/bd09747409496a10ec7fab9d719f0841d8f7d5c5/src/units.jl#L229-L247\r\n\r\ncan result in `Inf` (`inex > 1`) or `0.0` (`inex < 1`) for large `p`, even though all the large factors end up canceling in the conversion. Ideally, `uconvert()` would be smarter and avoid dividing these canceling huge/tiny factors, but at a bare minimum, this should give an error instead of silently returning something wrong!",
+    "test_patch": "diff --git a/test/runtests.jl b/test/runtests.jl\nindex 00eec576..8357c2e6 100644\n--- a/test/runtests.jl\n+++ b/test/runtests.jl\n@@ -42,6 +42,19 @@ using Dates:\n \n const colon = Base.:(:)\n \n+macro test_or_throws(extype, ex)\n+    return :(\n+        try\n+            # if the first line throws, go to @test_throws in catch clause\n+            # if not: test expression normally\n+            result = $ex\n+            @test result\n+        catch\n+            @test_throws $extype $ex\n+        end\n+    )\n+end\n+\n @testset \"Construction\" begin\n     @test isa(NoUnits, FreeUnits)\n     @test typeof(𝐋) === Unitful.Dimensions{(Unitful.Dimension{:Length}(1),)}\n@@ -194,10 +207,25 @@ end\n             @test 1u\"rps\" == 2π/s\n             @test 1u\"rpm\" == 360°/minute\n             @test 1u\"rpm\" == 2π/minute\n-\n             # Issue 458:\n             @test deg2rad(360°) ≈ 2π * rad\n             @test rad2deg(2π * rad) ≈ 360°\n+            # Issue 647:\n+            @test uconvert(u\"kb^1000\", 1u\"kb^1001 * b^-1\") === 1000u\"kb^1000\"\n+            @test uconvert(u\"kOe^1000\", 1u\"kOe^1001 * Oe^-1\") === 1000u\"kOe^1000\"\n+            # Floating point overflow/underflow in uconvert can happen if the\n+            # conversion factor is large, because uconvert does not cancel\n+            # common basefactors (or just for really large exponents and/or\n+            # SI prefixes). This test makes sure that uconvert does not silently\n+            # return NaN, Inf, or 0 in these cases, i.e. either returns a finite\n+            # result or throws an error indicating that it cannot handle the\n+            # conversion.\n+            is_finite_nonzero(x) = isfinite(x) && !iszero(x)\n+            @test_or_throws ArgumentError is_finite_nonzero(uconvert(u\"kb^12\", 1u\"b^12\"))\n+            @test_or_throws ArgumentError is_finite_nonzero(uconvert(u\"ab^11\", 1u\"Tb^11\"))\n+            @test_or_throws ArgumentError is_finite_nonzero(uconvert(u\"Tb^11\", 1u\"ab^11\"))\n+            @test_or_throws ArgumentError is_finite_nonzero(uconvert(u\"b^11 * eV\", 1u\"m^22 * J\"))\n+            @test_or_throws ArgumentError is_finite_nonzero(uconvert(u\"m^22 * J\", 1u\"b^11 * eV\"))\n         end\n     end\n end\n",
+    "repo": "PainterQubits/Unitful.jl",
+    "pr_description": "This fixes #647.\r\n\r\nIn addition to the change in `convfact()` which allows the examples in #647 to work, I also added an error condition in case of floating point overflow or underflow in `basefactor()`. The latter is not actually needed for these cases anymore, but would still show up when the *real* conversion factor is actually very large/small, such as\r\n```julia\r\nuconvert(u\"kb^12\", 1u\"b^12\")\r\n# before:       NaN kb^12\r\n# with this PR: throws ArgumentError\r\n```\r\nSince the current result of `NaN` is just wrong, I’d consider this a bugfix (so the change in behavior is OK), and either way this is an obscure edge case which nobody else seems to have run into so far.",
+    "created_at": "2023-05-07 20:31:06",
+    "image_name": "docker.io/swerebenchv2/painterqubits-unitful.jl:648-e4c92d2",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "license": "custom-check-github",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.97,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue requests that uconvert avoid returning NaN, Inf, or zero for large unit exponent conversions and instead raise an error or provide correct results. The added tests directly verify this behavior and align with the described expectations. No signs of test‑suite coupling, implicit naming, missing specs, external dependencies, or hidden domain knowledge are present. Therefore the task is cleanly defined and solvable (code A).",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 4,
+      "num_modified_lines": null,
+      "pr_author": "Socob",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaPhysics/Unitful.jl/pull/648"
+    }
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "large unit powers cancel before conversion"
+      ],
+      "assertion_expression_sha256": [],
+      "f2p_tests": [
+        "large unit powers cancel before conversion"
+      ],
+      "mwe_basis": {
+        "defect": "uconvert formed overflowing intermediate base factors and silently returned NaN for conversions whose common factors should cancel",
+        "public_api": "Unitful.uconvert and unit string literals",
+        "source_evidence": {
+          "extraction": "The two finite-result regression assertions added by PR #648 for issue #647",
+          "upstream_tests_patch_sha256": "628318e3ee9c0a6d6c034060741f3e84d5d3b5d5377d575c6611a5cdeac4fada"
+        },
+        "upstream_issue": 647,
+        "upstream_pull_request": 648,
+        "upstream_test_files": [
+          "test/runtests.jl"
+        ]
+      },
+      "schema_version": 1
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "3e64ee76974c22ab390d4825ca68717ceee967ec701a6e013cafd2021094e967",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "large unit powers cancel before conversion"
+  ],
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "large unit powers cancel before conversion"
+    ],
+    "exception_types": [
+      "4a06a4ba7b3792c5afa7bd76f71b808601da6ba3f364aa61d9bb6e5cae74fb03",
+      "b09f5d06390085bd32ed7989732d1873a53a72bab5534f29be7601c0a5a8e581"
+    ],
+    "fingerprints": [
+      "4a06a4ba7b3792c5afa7bd76f71b808601da6ba3f364aa61d9bb6e5cae74fb03",
+      "b09f5d06390085bd32ed7989732d1873a53a72bab5534f29be7601c0a5a8e581"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "685b2b06a6764fbbb70ae3af47227ded3e280341",
+    "parent_sha": "e4c92d2a0f3bdbdd0432ca95f7383628ac309764",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "e83887d5e27a7b7cdd79ea305ccf8e2ee48a06a03740863175c8f62bf8cfb39e",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

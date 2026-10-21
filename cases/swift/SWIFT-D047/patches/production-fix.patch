@@ -1,0 +1,109 @@
+diff --git a/Sources/X509/CSR/CertificationRequestInfo.swift b/Sources/X509/CSR/CertificationRequestInfo.swift
+index 9f4bc65a92325daa4d16d258f58b8071a185dab7..7fa709f270c43d55a1f9b92577b0010728740dcd 100644
+--- a/Sources/X509/CSR/CertificationRequestInfo.swift
++++ b/Sources/X509/CSR/CertificationRequestInfo.swift
+@@ -61,7 +61,7 @@ extension CertificationRequestInfo: DERImplicitlyTaggable {
+     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+             let version = try CertificateSigningRequest.Version(rawValue: Int(derEncoded: &nodes))
+-            let subject = try DistinguishedName(derEncoded: &nodes)
++            let subject = try DistinguishedName.derEncoded(&nodes)
+             let spki = try Certificate.PublicKey(spki: SubjectPublicKeyInfo(derEncoded: &nodes))
+             let attributes = try CertificateSigningRequest.Attributes(
+                 DER.set(
+diff --git a/Sources/X509/CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift b/Sources/X509/CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift
+index 319dfed14a9aaadb07e017385df6846e0ccb6a40..02b67591f11955de9279df3a95f06e1a0ac81870 100644
+--- a/Sources/X509/CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift
++++ b/Sources/X509/CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift
+@@ -44,7 +44,7 @@ struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable, Sendable {
+     @inlinable
+     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+-            let issuer = try DistinguishedName(derEncoded: &nodes)
++            let issuer = try DistinguishedName.derEncoded(&nodes)
+             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)
+             return .init(issuer: issuer, serialNumber: .init(bytes: serialNumber))
+         }
+diff --git a/Sources/X509/DistinguishedName.swift b/Sources/X509/DistinguishedName.swift
+index b080a3ae3fd18a7a4a3aa0db8f0c22199aa3f0c5..9539248775e71826d1cbd1655c933ca0e9dfc143 100644
+--- a/Sources/X509/DistinguishedName.swift
++++ b/Sources/X509/DistinguishedName.swift
+@@ -176,6 +176,34 @@ extension DistinguishedName: CustomDebugStringConvertible {
+     }
+ }
+ 
++extension DistinguishedName: DERSerializable {
++    @inlinable
++    public func serialize(into coder: inout DER.Serializer) throws {
++        try coder.appendConstructedNode(identifier: .sequence) { rootCoder in
++            for element in self.rdns {
++                try element.serialize(into: &rootCoder)
++            }
++        }
++    }
++}
++
++extension DistinguishedName: DERParseable {
++    @inlinable
++    public init(derEncoded rootNode: ASN1Node) throws {
++        self.rdns = try DER.sequence(of: RelativeDistinguishedName.self, identifier: .sequence, rootNode: rootNode)
++    }
++
++    @inlinable
++    static func derEncoded(_ sequenceNodeIterator: inout ASN1NodeCollection.Iterator) throws -> DistinguishedName {
++        // This is a workaround for the fact that, even though the conformance to DERImplicitlyTaggable is
++        // deprecated, Swift still prefers calling init(derEncoded:withIdentifier:) instead of this one.
++        let dnFactory: (inout ASN1NodeCollection.Iterator) throws -> DistinguishedName =
++            DistinguishedName.init(derEncoded:)
++        return try dnFactory(&sequenceNodeIterator)
++    }
++}
++
++@available(*, deprecated, message: "Distinguished names may not be implicitly tagged")
+ extension DistinguishedName: DERImplicitlyTaggable {
+     @inlinable
+     public static var defaultIdentifier: ASN1Identifier {
+diff --git a/Sources/X509/GeneralName.swift b/Sources/X509/GeneralName.swift
+index 7a0eb5347ff8b259a40ca6f3125665a76f4e7bb6..a592257ed6e2edb817b8e9efd08519d0596055ae 100644
+--- a/Sources/X509/GeneralName.swift
++++ b/Sources/X509/GeneralName.swift
+@@ -58,7 +58,13 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
+         case Self.x400AddressTag:
+             self = .x400Address(ASN1Any(derEncoded: rootNode))
+         case Self.directoryNameTag:
+-            self = try .directoryName(DistinguishedName(derEncoded: rootNode, withIdentifier: Self.directoryNameTag))
++            self = try DER.explicitlyTagged(
++                rootNode,
++                tagNumber: Self.directoryNameTag.tagNumber,
++                tagClass: Self.directoryNameTag.tagClass
++            ) { node in
++                return try .directoryName(DistinguishedName(derEncoded: node))
++            }
+         case Self.ediPartyNameTag:
+             self = .ediPartyName(ASN1Any(derEncoded: rootNode))
+         case Self.uriTag:
+@@ -87,7 +93,7 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
+         case .x400Address(let orAddress):
+             try orAddress.serialize(into: &coder)
+         case .directoryName(let name):
+-            try name.serialize(into: &coder, withIdentifier: Self.directoryNameTag)
++            try coder.serialize(name, explicitlyTaggedWithIdentifier: Self.directoryNameTag)
+         case .ediPartyName(let name):
+             try name.serialize(into: &coder)
+         case .uniformResourceIdentifier(let name):
+diff --git a/Sources/X509/X509BaseTypes/TBSCertificate.swift b/Sources/X509/X509BaseTypes/TBSCertificate.swift
+index 074625803d8f11138d709308dbd639bd92447953..ffabe0295f233a5cd6ed93aa98dae3723cd437a2 100644
+--- a/Sources/X509/X509BaseTypes/TBSCertificate.swift
++++ b/Sources/X509/X509BaseTypes/TBSCertificate.swift
+@@ -116,9 +116,9 @@ struct TBSCertificate: DERImplicitlyTaggable, Hashable, Sendable {
+ 
+             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)
+             let signature = try AlgorithmIdentifier(derEncoded: &nodes)
+-            let issuer = try DistinguishedName(derEncoded: &nodes)
++            let issuer = try DistinguishedName.derEncoded(&nodes)
+             let validity = try Validity(derEncoded: &nodes)
+-            let subject = try DistinguishedName(derEncoded: &nodes)
++            let subject = try DistinguishedName.derEncoded(&nodes)
+             let subjectPublicKeyInfo = try SubjectPublicKeyInfo(derEncoded: &nodes)
+             let issuerUniqueID = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) {
+                 try UniqueIdentifier(derEncoded: $0)

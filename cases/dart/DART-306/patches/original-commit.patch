@@ -1,0 +1,83 @@
+diff --git a/lib/src/front_end/ast_node_visitor.dart b/lib/src/front_end/ast_node_visitor.dart
+index 678943a..36d5f4e 100644
+--- a/lib/src/front_end/ast_node_visitor.dart
++++ b/lib/src/front_end/ast_node_visitor.dart
+@@ -1574,7 +1574,8 @@ class AstNodeVisitor extends ThrowingAstVisitor<void> with PieceFactory {
+   void visitRepresentationDeclaration(RepresentationDeclaration node) {
+     pieces.visit(node.constructorName);
+ 
+-    var builder = DelimitedListBuilder(this);
++    var builder =
++        DelimitedListBuilder(this, const ListStyle(commas: Commas.nonTrailing));
+     builder.leftBracket(node.leftParenthesis);
+     builder.add(pieces.build(() {
+       writeParameter(
+diff --git a/test/tall/declaration/extension_type.unit b/test/tall/declaration/extension_type.unit
+index 43fbda9..ffdf8d1 100644
+--- a/test/tall/declaration/extension_type.unit
++++ b/test/tall/declaration/extension_type.unit
+@@ -12,7 +12,7 @@ extension type const A.name(int a) {}
+ extension type A<T extends int, R>(int a) {}
+ <<<
+ extension type A<T extends int, R>(
+-  int a,
++  int a
+ ) {}
+ >>> Indentation in body.
+ extension type A(int a) {
+@@ -39,7 +39,7 @@ extension type E(T i) implements I, J {}
+ extension type LongExtensionType(LongTypeName a) {}
+ <<<
+ extension type LongExtensionType(
+-  LongTypeName a,
++  LongTypeName a
+ ) {}
+ >>> Split in representation with implements clause.
+ extension type LongExtensionType(LongTypeName a) implements Something {
+@@ -47,7 +47,7 @@ extension type LongExtensionType(LongTypeName a) implements Something {
+ }
+ <<<
+ extension type LongExtensionType(
+-  LongTypeName a,
++  LongTypeName a
+ )
+     implements Something {
+   method() {
+diff --git a/test/tall/declaration/extension_type_comment.unit b/test/tall/declaration/extension_type_comment.unit
+index 5ece81c..1991e67 100644
+--- a/test/tall/declaration/extension_type_comment.unit
++++ b/test/tall/declaration/extension_type_comment.unit
+@@ -8,7 +8,7 @@ implements /*k*/ I1 /*l*/ , /*m*/ I2 /*n*/ { /*o*/ } /*p*/
+ extension /*b*/ type /*c*/ A
+ /*d*/ ( /*e*/
+   @ /*f*/ override /*g*/
+-  int /*h*/ a /*i*/,
++  int /*h*/ a /*i*/
+ ) /*j*/
+     implements /*k*/
+         I1 /*l*/, /*m*/
+@@ -54,7 +54,7 @@ name // j
+   @ // l
+   required // m
+   int // n
+-  a, // o
++  a // o
+ ) // p
+     implements // q
+         I // r
+diff --git a/test/tall/regression/1500/1505.unit b/test/tall/regression/1500/1505.unit
+new file mode 100644
+index 0000000..ed6b890
+--- /dev/null
++++ b/test/tall/regression/1500/1505.unit
+@@ -0,0 +1,9 @@
++>>>
++extension type JSExportedDartFunction._(
++  JSExportedDartFunctionRepType _jsExportedDartFunction
++) implements JSFunction {}
++<<<
++extension type JSExportedDartFunction._(
++  JSExportedDartFunctionRepType _jsExportedDartFunction
++)
++    implements JSFunction {}
+\ No newline at end of file

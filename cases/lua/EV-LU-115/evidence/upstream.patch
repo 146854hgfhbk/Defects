@@ -1,0 +1,288 @@
+diff --git a/spec/parser_spec.lua b/spec/parser_spec.lua
+index ad1731eeeac17c56e6fa55a72a4bb457ec382200..b34f3cd491b0f0c492f8aedc7a782e00b38d9c5e 100644
+--- a/spec/parser_spec.lua
++++ b/spec/parser_spec.lua
+@@ -86,6 +86,8 @@ describe("parser", function()
+       assert.same({tag = "Do"}, get_node("do end"))
+       assert.same({line = 1, column = 3, end_column = 3, msg = "expected 'end' near <eof>"}, get_error("do"))
+       assert.same({line = 1, column = 4, end_column = 8, msg = "expected 'end' near 'until'"}, get_error("do until false"))
++      assert.same({line = 2, column = 1, end_column = 5, msg = "expected 'end' (to close 'do' on line 1) near 'until'"},
++         get_error("do\nuntil false"))
+    end)
+ 
+    it("parses while do end correctly", function()
+@@ -96,6 +98,8 @@ describe("parser", function()
+       assert.same({line = 1, column = 6, end_column = 6, msg = "unexpected symbol near <eof>"}, get_error("while"))
+       assert.same({line = 1, column = 11, end_column = 11, msg = "expected 'do' near <eof>"}, get_error("while true"))
+       assert.same({line = 1, column = 14, end_column = 14, msg = "expected 'end' near <eof>"}, get_error("while true do"))
++      assert.same({line = 2, column = 3, end_column = 3, msg = "expected 'end' (to close 'while' on line 1) near <eof>"},
++         get_error("while true\ndo"))
+       assert.same({line = 1, column = 7, end_column = 8, msg = "unexpected symbol near 'do'"}, get_error("while do end"))
+       assert.same({line = 1, column = 11, end_column = 11, msg = "expected 'do' near ','"}, get_error("while true, false do end"))
+    end)
+@@ -106,6 +110,8 @@ describe("parser", function()
+                      {tag = "True"}
+                   }, get_node("repeat until true"))
+       assert.same({line = 1, column = 7, end_column = 7, msg = "expected 'until' near <eof>"}, get_error("repeat"))
++      assert.same({line = 3, column = 1, end_column = 1, msg = "expected 'until' (to close 'repeat' on line 1) near <eof>"},
++         get_error("repeat\n--"))
+       assert.same({line = 1, column = 13, end_column = 13, msg = "unexpected symbol near <eof>"}, get_error("repeat until"))
+       assert.same({line = 1, column = 18, end_column = 18, msg = "unexpected symbol near ','"}, get_error("repeat until true, false"))
+    end)
+@@ -119,6 +125,8 @@ describe("parser", function()
+          assert.same({line = 1, column = 3, end_column = 3, msg = "unexpected symbol near <eof>"}, get_error("if"))
+          assert.same({line = 1, column = 8, end_column = 8, msg = "expected 'then' near <eof>"}, get_error("if true"))
+          assert.same({line = 1, column = 13, end_column = 13, msg = "expected 'end' near <eof>"}, get_error("if true then"))
++         assert.same({line = 2, column = 5, end_column = 5, msg = "expected 'end' (to close 'if' on line 1) near <eof>"},
++            get_error("if true\nthen"))
+          assert.same({line = 1, column = 4, end_column = 7, msg = "unexpected symbol near 'then'"}, get_error("if then end"))
+          assert.same({line = 1, column = 8, end_column = 8, msg = "expected 'then' near ','"}, get_error("if true, false then end"))
+       end)
+@@ -130,6 +138,8 @@ describe("parser", function()
+                         {}
+                      }, get_node("if true then else end"))
+          assert.same({line = 1, column = 18, end_column = 18, msg = "expected 'end' near <eof>"}, get_error("if true then else"))
++         assert.same({line = 3, column = 1, end_column = 1, msg = "expected 'end' (to close 'else' on line 2) near <eof>"},
++            get_error("if true\nthen else\n"))
+          assert.same({line = 1, column = 19, end_column = 22, msg = "expected 'end' near 'else'"}, get_error("if true then else else end"))
+       end)
+ 
+@@ -142,6 +152,8 @@ describe("parser", function()
+                      }, get_node("if true then elseif false then end"))
+          assert.same({line = 1, column = 21, end_column = 23, msg = "unexpected symbol near 'end'"}, get_error("if true then elseif end"))
+          assert.same({line = 1, column = 21, end_column = 24, msg = "unexpected symbol near 'then'"}, get_error("if true then elseif then end"))
++         assert.same({line = 2, column = 5, end_column = 5, msg = "expected 'end' (to close 'elseif' on line 1) near <eof>"},
++            get_error("if true then elseif a\nthen"))
+       end)
+ 
+       it("parses if then elseif then else end correctly", function()
+@@ -169,6 +181,8 @@ describe("parser", function()
+          assert.same({line = 1, column = 7, end_column = 8, msg = "expected '=', ',' or 'in' near '~='"}, get_error("for i ~= 2"))
+          assert.same({line = 1, column = 11, end_column = 12, msg = "expected ',' near 'do'"}, get_error("for i = 2 do end"))
+          assert.same({line = 1, column = 15, end_column = 15, msg = "expected 'end' near <eof>"}, get_error("for i=1, #t do"))
++         assert.same({line = 2, column = 4, end_column = 4, msg = "expected 'end' (to close 'for' on line 1) near <eof>"},
++            get_error("for i=1, #t do\na()"))
+          assert.same({line = 1, column = 5, end_column = 5, msg = "expected identifier near '('"}, get_error("for (i)=1, #t do end"))
+          assert.same({line = 1, column = 5, end_column = 5, msg = "expected identifier near '3'"}, get_error("for 3=1, #t do end"))
+       end)
+@@ -218,6 +232,8 @@ describe("parser", function()
+          assert.same({line = 1, column = 11, end_column = 11, msg = "expected '(' near <eof>"}, get_error("function a"))
+          assert.same({line = 1, column = 12, end_column = 12, msg = "expected argument near <eof>"}, get_error("function a("))
+          assert.same({line = 1, column = 13, end_column = 13, msg = "expected 'end' near <eof>"}, get_error("function a()"))
++         assert.same({line = 2, column = 2, end_column = 2, msg = "expected 'end' (to close 'function' on line 1) near <eof>"},
++            get_error("function a(\n)"))
+          assert.same({line = 1, column = 10, end_column = 10, msg = "expected identifier near '('"}, get_error("function (a)()"))
+          assert.same({line = 1, column = 9, end_column = 9, msg = "expected identifier near '('"}, get_error("function() end"))
+          assert.same({line = 1, column = 11, end_column = 11, msg = "expected '(' near 'a'"}, get_error("(function a() end)"))
+@@ -245,6 +261,8 @@ describe("parser", function()
+                      }, get_node("function a(b, ...) end"))
+          assert.same({line = 1, column = 15, end_column = 15, msg = "expected argument near ')'"}, get_error("function a(b, ) end"))
+          assert.same({line = 1, column = 13, end_column = 13, msg = "expected ')' near '.'"}, get_error("function a(b.c) end"))
++         assert.same({line = 2, column = 2, end_column = 2, msg = "expected ')' (to close '(' on line 1) near '.'"},
++            get_error("function a(\nb.c) end"))
+          assert.same({line = 1, column = 12, end_column = 12, msg = "expected argument near '('"}, get_error("function a((b)) end"))
+          assert.same({line = 1, column = 15, end_column = 15, msg = "expected ')' near ','"}, get_error("function a(..., ...) end"))
+       end)
+@@ -433,6 +451,9 @@ describe("parser", function()
+                      }, get_node("(a)(b)()"))
+          assert.same({line = 1, column = 2, end_column = 2, msg = "unexpected symbol near ')'"}, get_error("()()"))
+          assert.same({line = 1, column = 3, end_column = 3, msg = "unexpected symbol near <eof>"}, get_error("a("))
++         assert.same({line = 1, column = 4, end_column = 4, msg = "expected ')' near <eof>"}, get_error("a(b"))
++         assert.same({line = 2, column = 2, end_column = 2, msg = "expected ')' (to close '(' on line 1) near <eof>"},
++            get_error("a(\nb"))
+          assert.same({line = 1, column = 1, end_column = 1, msg = "unexpected symbol near '1'"}, get_error("1()"))
+          assert.same({line = 1, column = 1, end_column = 5, msg = "unexpected symbol near ''foo''"}, get_error("'foo'()"))
+          assert.same({line = 1, column = 9, end_column = 9, msg = "expected identifier near '('"}, get_error("function() end ()"))
+@@ -528,6 +549,12 @@ describe("parser", function()
+                      }, get_expr("{a; b, c;}"))
+          assert.same({line = 1, column = 9, end_column = 9, msg = "unexpected symbol near ';'"}, get_error("return {;}"))
+          assert.same({line = 1, column = 9, end_column = 9, msg = "unexpected symbol near <eof>"}, get_error("return {"))
++         assert.same({line = 1, column = 11, end_column = 13, msg = "expected '}' near 'end'"}, get_error("return {a end"))
++         assert.same({line = 2, column = 1, end_column = 3, msg = "expected '}' (to close '{' on line 1) near 'end'"},
++            get_error("return {a\nend"))
++         assert.same({line = 1, column = 11, end_column = 11, msg = "expected ']' near <eof>"}, get_error("return {[a"))
++         assert.same({line = 2, column = 2, end_column = 2, msg = "expected ']' (to close '[' on line 1) near <eof>"},
++            get_error("return {[\na"))
+          assert.same({line = 1, column = 11, end_column = 11, msg = "unexpected symbol near ','"}, get_error("return {a,,}"))
+          assert.same({line = 1, column = 13, end_column = 13, msg = "unexpected symbol near <eof>"}, get_error("return {a = "))
+       end)
+diff --git a/src/luacheck/parser.lua b/src/luacheck/parser.lua
+index fe8667d3a2e54ad39883cedb40c312b98c72db9c..d2e53afb11a6ee612c38307d1f5ef5f2d3e98682 100644
+--- a/src/luacheck/parser.lua
++++ b/src/luacheck/parser.lua
+@@ -101,6 +101,20 @@ local function test_and_skip_token(state, token)
+    end
+ end
+ 
++local function check_closing_token(state, opening_token, closing_token, opening_line)
++   if state.token ~= closing_token then
++      local err = "expected " .. token_name(closing_token)
++
++      if opening_line ~= state.line then
++         err = err .. " (to close " .. token_name(opening_token) .. " on line " .. tostring(opening_line) .. ")"
++      end
++
++      parse_error(state, err)
++   end
++
++   skip_token(state)
++end
++
+ local function check_name(state)
+    check_token(state, "name")
+    return state.token_value
+@@ -158,7 +172,8 @@ simple_expressions["..."] = atom("Dots")
+ 
+ simple_expressions["{"] = function(state)
+    local ast_node = new_ast_node(state, "Table")
+-   skip_token(state)  -- Skip "{"
++   local start_line = state.line
++   skip_token(state)
+    local is_inside_parentheses = false
+ 
+    repeat
+@@ -185,15 +200,19 @@ simple_expressions["{"] = function(state)
+                skip_token(state)  -- Load name again.
+                rhs, is_inside_parentheses = parse_expression(state)
+             end
+-         elseif test_and_skip_token(state, "[") then
+-            -- [ `expr` ] = `expr`.
+-            lhs = parse_expression(state)
+-            check_and_skip_token(state, "]")
+-            check_and_skip_token(state, "=")
+-            rhs = parse_expression(state)
+          else
+-            -- Expression in array part.
+-            rhs, is_inside_parentheses = parse_expression(state)
++            local bracket_line = state.line
++
++            if test_and_skip_token(state, "[") then
++               -- [ `expr` ] = `expr`.
++               lhs = parse_expression(state)
++               check_closing_token(state, "[", "]", bracket_line)
++               check_and_skip_token(state, "=")
++               rhs = parse_expression(state)
++            else
++               -- Expression in array part.
++               rhs, is_inside_parentheses = parse_expression(state)
++            end
+          end
+ 
+          if lhs then
+@@ -206,13 +225,14 @@ simple_expressions["{"] = function(state)
+       end
+    until not (test_and_skip_token(state, ",") or test_and_skip_token(state, ";"))
+ 
+-   check_and_skip_token(state, "}")
++   check_closing_token(state, "{", "}", start_line)
+    opt_add_parens(ast_node, is_inside_parentheses)
+    return ast_node
+ end
+ 
+ -- Parses argument list and the statements.
+-local function parse_function(state, location_)
++local function parse_function(state, func_location)
++   local paren_line = state.line
+    check_and_skip_token(state, "(")
+    local args = {}
+ 
+@@ -229,11 +249,11 @@ local function parse_function(state, location_)
+       until not test_and_skip_token(state, ",")
+    end
+ 
+-   check_and_skip_token(state, ")")
++   check_closing_token(state, "(", ")", paren_line)
+    local body = parse_block(state)
+    local end_location = location(state)
+-   check_and_skip_token(state, "end")
+-   return init_ast_node({args, body, end_location = end_location}, location_, "Function")
++   check_closing_token(state, "function", "end", func_location.line)
++   return init_ast_node({args, body, end_location = end_location}, func_location, "Function")
+ end
+ 
+ simple_expressions["function"] = function(state)
+@@ -258,9 +278,10 @@ end
+ local calls = {}
+ 
+ calls["("] = function(state)
++   local paren_line = state.line
+    skip_token(state) -- Skip "(".
+    local args = (state.token == ")") and {} or parse_expression_list(state)
+-   check_and_skip_token(state, ")")
++   check_closing_token(state, "(", ")", paren_line)
+    return args
+ end
+ 
+@@ -279,9 +300,10 @@ suffixes["."] = function(state, lhs)
+ end
+ 
+ suffixes["["] = function(state, lhs)
++   local bracket_line = state.line
+    skip_token(state)  -- Skip "[".
+    local rhs = parse_expression(state)
+-   check_and_skip_token(state, "]")
++   check_closing_token(state, "[", "]", bracket_line)
+    return init_ast_node({lhs, rhs}, lhs.location, "Index")
+ end
+ 
+@@ -420,6 +442,8 @@ end
+ local statements = {}
+ 
+ statements["if"] = function(state, loc)
++   local start_line, start_token
++   local next_line, next_token = loc.line, "if"
+    local ast_node = init_ast_node({}, loc, "If")
+ 
+    repeat
+@@ -427,15 +451,18 @@ statements["if"] = function(state, loc)
+       local branch_location = location(state)
+       check_and_skip_token(state, "then")
+       ast_node[#ast_node+1] = parse_block(state, branch_location)
++      start_line, start_token = next_line, next_token
++      next_line, next_token = state.line, state.token
+    until not test_and_skip_token(state, "elseif")
+ 
+    if state.token == "else" then
++      start_line, start_token = next_line, next_token
+       local branch_location = location(state)
+       skip_token(state)
+       ast_node[#ast_node+1] = parse_block(state, branch_location)
+    end
+ 
+-   check_and_skip_token(state, "end")
++   check_closing_token(state, start_token, "end", start_line)
+    return ast_node
+ end
+ 
+@@ -443,13 +470,13 @@ statements["while"] = function(state, loc)
+    local condition = parse_expression(state)
+    check_and_skip_token(state, "do")
+    local block = parse_block(state)
+-   check_and_skip_token(state, "end")
++   check_closing_token(state, "while", "end", loc.line)
+    return init_ast_node({condition, block}, loc, "While")
+ end
+ 
+ statements["do"] = function(state, loc)
+    local ast_node = init_ast_node(parse_block(state), loc, "Do")
+-   check_and_skip_token(state, "end")
++   check_closing_token(state, "do", "end", loc.line)
+    return ast_node
+ end
+ 
+@@ -490,13 +517,13 @@ statements["for"] = function(state, loc)
+       parse_error(state, "expected '=', ',' or 'in'")
+    end
+ 
+-   check_and_skip_token(state, "end")
++   check_closing_token(state, "for", "end", loc.line)
+    return ast_node
+ end
+ 
+ statements["repeat"] = function(state, loc)
+    local block = parse_block(state)
+-   check_and_skip_token(state, "until")
++   check_closing_token(state, "repeat", "until", loc.line)
+    local condition = parse_expression(state, true)
+    return init_ast_node({block, condition}, loc, "Repeat")
+ end

@@ -1,0 +1,13 @@
+diff --git a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryParentheses.kt b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryParentheses.kt
+index dd0042bcfc..b5fc819a0d 100644
+--- a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryParentheses.kt
++++ b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryParentheses.kt
+@@ -74,6 +77,8 @@ class UnnecessaryParentheses(config: Config = Config.empty) : Rule(config) {
+ 
+         if (allowForUnclearPrecedence && inner.isBinaryOperationPrecedenceUnclearWithParent()) return
+ 
++        if (allowForUnclearPrecedence && expression.isUnaryOperationPrecedenceUnclear()) return
++
+         val message = "Parentheses in ${expression.text} are unnecessary and can be replaced with: " +
+             KtPsiUtil.deparenthesize(expression)?.text
+         report(CodeSmell(issue, Entity.from(expression), message))

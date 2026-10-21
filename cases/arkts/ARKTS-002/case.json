@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "ARKTS-002",
+  "status": "VALIDATED_ACTIVE",
+  "source_dataset": "ArkEval",
+  "source_instance_id": "openharmony__applications_app_samples+1126fd7d-3958",
+  "project": "openharmony/applications_app_samples",
+  "repo_url": "https://gitee.com/openharmony/applications_app_samples",
+  "title": "【sample】修复分布式应用DistributedAuthentication不能发现设备以及不能筛选过滤条件问题",
+  "pr_number": 3958,
+  "pr_url": "https://gitee.com/openharmony/applications_app_samples/pulls/3958",
+  "issue_urls": [
+    "https://gitee.com/openharmony/applications_app_samples/issues/I8SR2H"
+  ],
+  "buggy_revision": "1126fd7d26eb3e1de3bd7e8572ef196201311b4f",
+  "fixed_revision": "9a739ed888798cdfb461483a41dee924973ed10c",
+  "revision_mode": "strict_upstream_boundary",
+  "project_root": "code/SuperFeature/DistributedAppDev/DistributedAuthentication",
+  "changed_production_files": [
+    "code/SuperFeature/DistributedAppDev/DistributedAuthentication/entry/src/main/ets/model/RemoteDeviceModel.ets",
+    "code/SuperFeature/DistributedAppDev/DistributedAuthentication/entry/src/main/ets/pages/FilterOption.ets"
+  ],
+  "trigger_test_files": [
+    "code/SuperFeature/DistributedAppDev/DistributedAuthentication/entry/src/ohosTest/ets/test/DeviceDiscoveryFilter.test.ets",
+    "code/SuperFeature/DistributedAppDev/DistributedAuthentication/entry/src/ohosTest/ets/test/List.test.ets"
+  ],
+  "target": "DeviceDiscoveryFilterTest#selectedFilterOptionsShouldBeForwardedToDeviceDiscovery",
+  "runner": "/ets/TestRunner/OpenHarmonyTestRunner",
+  "bundle": "com.samples.devicemanager",
+  "patches": {
+    "upstream": "patches/upstream.patch",
+    "source": "patches/source.patch",
+    "test": "patches/test.patch",
+    "harness": null
+  },
+  "source_patch_sha256": "8266a6bc7be256aa3c196f202321b72f0b201622187ae6631028f91775232542",
+  "source_diff_payload_sha256": "544b3ffba2b06f964c0b2c3dd5bcc1a3b81a290701dd2daf889b0cadcda6dd75",
+  "test_patch_sha256": "806cb0bf653ec50bfc12433e72413e941ea01cefa637f7ba3c10605a1ac0b554",
+  "build_commands": {
+    "buggy": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api10-overlay-full-v1-s1/work/S002/buggy/code/SuperFeature/DistributedAppDev/DistributedAuthentication",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api10-overlay-full-v1-s1/work/S002/buggy/code/SuperFeature/DistributedAppDev/DistributedAuthentication",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    },
+    "fixed": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api10-overlay-full-v1-s1/work/S002/fixed/code/SuperFeature/DistributedAppDev/DistributedAuthentication",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api10-overlay-full-v1-s1/work/S002/fixed/code/SuperFeature/DistributedAppDev/DistributedAuthentication",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    }
+  },
+  "test_command_template": [
+    "hdc",
+    "-t",
+    "127.0.0.1:5555",
+    "shell",
+    "aa",
+    "test",
+    "-b",
+    "com.samples.devicemanager",
+    "-m",
+    "entry_test",
+    "-s",
+    "unittest",
+    "/ets/TestRunner/OpenHarmonyTestRunner",
+    "-s",
+    "class",
+    "DeviceDiscoveryFilterTest#selectedFilterOptionsShouldBeForwardedToDeviceDiscovery"
+  ],
+  "environment_lock": "environment.lock.json",
+  "validation": "validation/validation.json",
+  "selection_status": "ACTIVE",
+  "release_eligibility": "ACTIVE",
+  "issue_id": "I8SR2H",
+  "traceability_type": "ISSUE",
+  "bug_report_id": "I8SR2H",
+  "bug_report_url": "https://gitee.com/openharmony/applications_app_samples/issues/I8SR2H",
+  "fix_kind": "production_source",
+  "branch_specific_instance": false,
+  "shared_fix_pattern": false,
+  "duplicate": false,
+  "duplicate_of": null,
+  "minimization_method": "original_patch_already_minimal"
+}

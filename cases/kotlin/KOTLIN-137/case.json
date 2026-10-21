@@ -1,0 +1,235 @@
+{
+  "schema_version": 2,
+  "case_id": "KOTLIN-137",
+  "status": "candidate_validated",
+  "candidate_source": "Kotlin/kotlin-swe-bench",
+  "source_task_id": "detekt_detekt-5459",
+  "revision_mode": "real_upstream_commit",
+  "project": "detekt/detekt",
+  "license": "Apache-2.0",
+  "pull_request_number": 5459,
+  "pr_url": "https://github.com/detekt/detekt/pull/5459",
+  "issue_urls": [
+    "https://github.com/detekt/detekt/issues/5341"
+  ],
+  "buggy_revision": "90915e5c0ac8d5dbde479ea17e5a8b3fad0943b4",
+  "fixed_revision": "2ad733a2d80a7db49e6d289d9cd0377ac128396b",
+  "upstream_head_revision": "540634ee78611a09886d9c01ea038e293711c747",
+  "patch": "patches/minimized-source.patch",
+  "patch_sha256": "beee7a087b03f77732cf7a26c01f607f7e7959ae79685f563ea1bc4078244576",
+  "changed_production_files": [
+    "detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/ReturnCount.kt"
+  ],
+  "trigger_tests": [
+    "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.should not count labeled return of lambda with explicit label when deactivated by default()",
+    "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.excludeReturnFromLambda should take precedence over excludeLabeled()"
+  ],
+  "trigger_test_filters": {
+    "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.should not count labeled return of lambda with explicit label when deactivated by default()": "*ReturnCountSpec*should not count labeled return of lambda with explicit label when deactivated by default*",
+    "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.excludeReturnFromLambda should take precedence over excludeLabeled()": "*ReturnCountSpec*excludeReturnFromLambda should take precedence over excludeLabeled*"
+  },
+  "trigger_test_patch": "trigger-tests.patch",
+  "environment_lock": "environment.lock.json",
+  "build": {
+    "system": "Gradle Wrapper",
+    "gradle_version": "7.5.1",
+    "java_version": 17,
+    "android_sdk_required": false,
+    "compile_task": ":detekt-rules-style:testClasses",
+    "test_task": ":detekt-rules-style:test",
+    "test_results_glob": "detekt-rules-style/build/test-results/**/TEST-*.xml",
+    "build_command": ".\\gradlew.bat :detekt-rules-style:testClasses",
+    "test_command": ".\\gradlew.bat :detekt-rules-style:test"
+  },
+  "validation": {
+    "bug_id": "KOTLIN-137",
+    "issue_id": null,
+    "issue_url": "https://github.com/detekt/detekt/issues/5341",
+    "buggy_commit": "90915e5c0ac8d5dbde479ea17e5a8b3fad0943b4",
+    "fixed_commit": "2ad733a2d80a7db49e6d289d9cd0377ac128396b",
+    "patch": "patches/original-source.patch",
+    "changed_source_files": [
+      "detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/ReturnCount.kt"
+    ],
+    "triggering_test": [
+      "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.should not count labeled return of lambda with explicit label when deactivated by default()",
+      "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.excludeReturnFromLambda should take precedence over excludeLabeled()"
+    ],
+    "expected_failure": {
+      "test_count": 2,
+      "tests": [
+        "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.excludeReturnFromLambda should take precedence over excludeLabeled()",
+        "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.should not count labeled return of lambda with explicit label when deactivated by default()"
+      ],
+      "exception_types": [
+        "java.lang.AssertionError"
+      ],
+      "fingerprints": [
+        "510c0ebb39bbd4b354052d65392a69a2a66f9ffdff72dd1cc56b6089f834c42e"
+      ]
+    },
+    "fixed_test_result": "pass",
+    "build_command": [
+      ".\\gradlew",
+      ":detekt-rules-style:testClasses",
+      "--no-daemon",
+      "--console=plain",
+      "--no-build-cache",
+      "--no-configuration-cache",
+      "--max-workers=1",
+      "--stacktrace",
+      "--rerun-tasks",
+      "--offline"
+    ],
+    "test_command": [
+      ".\\gradlew",
+      ":detekt-rules-style:cleanTest",
+      ":detekt-rules-style:test",
+      "--no-daemon",
+      "--console=plain",
+      "--no-build-cache",
+      "--no-configuration-cache",
+      "--max-workers=1",
+      "--stacktrace",
+      "--offline",
+      "--tests",
+      "*ReturnCountSpec*should not count labeled return of lambda with explicit label when deactivated by default*",
+      "--tests",
+      "*ReturnCountSpec*excludeReturnFromLambda should take precedence over excludeLabeled*"
+    ],
+    "language_version": null,
+    "dependency_versions": {},
+    "operating_system_or_container": "Linux/x86_64",
+    "timezone": "UTC",
+    "reproducibility_status": "stable_differential",
+    "deprecation_reason": null,
+    "status": "stable_differential",
+    "generated_by": "validation_engine.py",
+    "generator_sha256": "8b0c95115e0d7d6457765bb9094ba12db106dd2b1f584de27491ace819bccac6",
+    "report": "validation/validation.json",
+    "report_sha256": "e717b82923217fd141bf56d64a7364e09d76e5740804917d472ab079e6370789",
+    "repetitions": 3,
+    "fresh_worktree_per_repetition": true,
+    "individual_trigger_processes": true,
+    "full_suite_valid": true,
+    "buggy_failed_test_count": 2,
+    "buggy_failed_tests": [
+      "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.excludeReturnFromLambda should take precedence over excludeLabeled()",
+      "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.should not count labeled return of lambda with explicit label when deactivated by default()"
+    ],
+    "buggy_failure_type": "java.lang.AssertionError",
+    "failure_fingerprints": [
+      "510c0ebb39bbd4b354052d65392a69a2a66f9ffdff72dd1cc56b6089f834c42e"
+    ],
+    "broken_tests": [],
+    "flaky_tests": [],
+    "order_dependent_tests": [],
+    "compile_valid": true,
+    "validated_at": "2026-08-10T14:20:49.564220+00:00",
+    "source": "validation_engine.py",
+    "manual_claims_removed": true
+  },
+  "provenance": {
+    "swe_bench_gold_patch_sha256": "e79ac8a6ae050f3279a548f17985d5ee5ba45a4670d4a97b4ebd247b433f6ede",
+    "swe_bench_trigger_patch_sha256": "03e7f8618f496506a633c649e3451a9ef8eab266cdace5bbf93d61d9ba29daa8",
+    "gold_patch_sha256": "c7dadc7a299c4b43be55e28f3adf3db6cdb0e36a8fc4f5678770eef8bad53a15",
+    "trigger_patch_sha256": "3e31b12bd4640e04c4c41a494483ac3faf3ec8a12e31cc1749740891ed945ce7",
+    "line_endings_normalized_for_git": true,
+    "real_fix_commit": "2ad733a2d80a7db49e6d289d9cd0377ac128396b",
+    "real_fix_commit_message": "Fix ReturnCount false positive when excludeReturnFromLambda is enabled (#5459)",
+    "patch_extraction": "diff buggy..real-fix limited to the fix commit file set; intermediate commits do not touch these files",
+    "fix_boundary_correction": {
+      "old_buggy": "0a3da653d770affa229eaa4f275027ffd4a2f22b",
+      "new_buggy": "90915e5c0ac8d5dbde479ea17e5a8b3fad0943b4",
+      "reason": "buggy_revision was not parent(fixed_commit); corrected to real parent",
+      "verified_patch_applies": true
+    },
+    "wrapper_environment": {
+      "audit": "fixed_commit_does_not_modify_wrapper",
+      "parent_wrapper_equals_fixed_wrapper": true,
+      "gradle_wrapper_normalization": "noop_verified",
+      "execution_environment": {
+        "wrapper_source": "parent==fixed (identical)",
+        "source_tree_normalization": []
+      }
+    },
+    "release_remediation": {
+      "remediated_at": "2026-08-15T11:41:43Z",
+      "canonical_tree": "cases",
+      "previous_status": "swe_bench_staging_unvalidated",
+      "previous_patch_path": "patches/original-source.patch",
+      "previous_patch_sha256": "daa53ad081a048f3f87c56cbfe82eb0cb80e8cf0de94bfca253641721a1a5b7b",
+      "legacy_provenance_trigger_patch_sha256": "3e31b12bd4640e04c4c41a494483ac3faf3ec8a12e31cc1749740891ed945ce7",
+      "release_trigger_patch_sha256": "3e31b12bd4640e04c4c41a494483ac3faf3ec8a12e31cc1749740891ed945ce7",
+      "trigger_historical_binding": "historically_bound",
+      "source_patch_evidence": "minimization_evidence",
+      "source_patch_evidence_file": "patches/minimization.json",
+      "package_dynamic_replayed": false,
+      "raw_run_artifacts_bundled": false,
+      "historical_snapshot": true,
+      "superseded_by_final_dynamic_acceptance": true,
+      "note_on_package_dynamic_replayed": "false records the 2026-08-15 remediation snapshot; final_dynamic_acceptance is authoritative for the 2026-08-17 replay."
+    }
+  },
+  "expected_failure": {
+    "test_count": 2,
+    "tests": [
+      "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.excludeReturnFromLambda should take precedence over excludeLabeled()",
+      "io.gitlab.arturbosch.detekt.rules.style.ReturnCountSpec$function with lambda which has explicit label.should not count labeled return of lambda with explicit label when deactivated by default()"
+    ],
+    "exception_types": [
+      "java.lang.AssertionError"
+    ],
+    "fingerprints": [
+      "510c0ebb39bbd4b354052d65392a69a2a66f9ffdff72dd1cc56b6089f834c42e"
+    ]
+  },
+  "fixed_test_result": "pass",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "issue_id": 5341,
+  "original_source_patch": "patches/original-source.patch",
+  "original_source_patch_sha256": "daa53ad081a048f3f87c56cbfe82eb0cb80e8cf0de94bfca253641721a1a5b7b",
+  "trigger_test_patch_sha256": "3e31b12bd4640e04c4c41a494483ac3faf3ec8a12e31cc1749740891ed945ce7",
+  "test_identity": {
+    "scheme": "base-revision-plus-trigger-overlay-sha256-v1",
+    "trigger_overlay_sha256": "3e31b12bd4640e04c4c41a494483ac3faf3ec8a12e31cc1749740891ed945ce7",
+    "buggy_base_revision": "90915e5c0ac8d5dbde479ea17e5a8b3fad0943b4",
+    "fixed_base_revision": "2ad733a2d80a7db49e6d289d9cd0377ac128396b",
+    "note": "Final release identity: trigger overlay bytes are bound by SHA-256 and base revisions are the final published buggy/fixed identities."
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "jvm",
+    "reason_code": null,
+    "reason": "Final dynamic acceptance pass completed from clean reconstruction; fixed passed and buggy reproduced the declared trigger differential."
+  },
+  "release_integrity": "release-integrity.json",
+  "final_dynamic_acceptance": {
+    "status": "PASS_STRICT",
+    "fresh_replay_completed": true,
+    "accepted_at": "2026-08-17T00:44:00Z",
+    "fixed_result": "PASS",
+    "buggy_trigger_result": "FAIL_AS_EXPECTED",
+    "raw_run_artifacts_bundled": false,
+    "evidence_location": "external validation server (not included in supplied archive)",
+    "repair_note": null
+  },
+  "patch_direction": "buggy_to_fixed",
+  "patch_semantics": {
+    "canonical_direction": "buggy_to_fixed",
+    "official_defects4j_reference_convention": "reverse_patch_applied_to_fixed_to_reintroduce_bug",
+    "note": "Direction is explicitly declared because this Defects4J-style Kotlin release is not byte-format-identical to the Defects4J internal patch store."
+  },
+  "defects4j_style_alignment": {
+    "dynamic_reproduction": "PASS_STRICT",
+    "patch_direction_declared": true,
+    "manual_review_adaptation": "LLM-assisted curation may replace the original Defects4J human-review stage for this dataset task"
+  },
+  "language": "Kotlin",
+  "benchmark_tier": "strict-upstream-boundary",
+  "upstream_boundary_strict_eligible": true
+}

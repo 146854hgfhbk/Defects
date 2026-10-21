@@ -1,0 +1,42 @@
+diff --git a/src/JETBase.jl b/src/JETBase.jl
+--- a/src/JETBase.jl
++++ b/src/JETBase.jl
+@@ -1046,16 +1059,30 @@ General users should use high-level entry points like [`report_package`](@ref).
+ """
+ function analyze_and_report_package!(analyzer::AbstractAnalyzer, pkgmod::Module; jetconfigs...)
+     pkgid = Base.PkgId(pkgmod)
+-    haskey(Revise.pkgdatas, pkgid) || Revise.watch_package(pkgid)
+-    if !haskey(Revise.pkgdatas, pkgid)
++    pkgdata = (@something Revise.getpkgdata(pkgid) Revise.watch_package(pkgid) begin
+         error(lazy"Package $pkgmod is not analyzable.")
+-    end
++    end)::Revise.PkgData
++
++    workitems, world = @lock Revise.revise_lock let
++        # If Revise hasn't instantiated signatures yet, populate that cache here
++        for (file, fi) in zip(Revise.srcfiles(pkgdata), pkgdata.fileinfos)
++            Revise.maybe_parse_from_cache!(pkgdata, file, fi)
++            Revise.maybe_extract_sigs!(fi)
++        end
+ 
+-    # If Revise hasn't instantiated signatures yet, populate that cache here
+-    pkgdata = Revise.pkgdatas[pkgid]
+-    for file in Revise.srcfiles(pkgdata)
+-        fi = Revise.maybe_parse_from_cache!(pkgdata, file)
+-        Revise.maybe_extract_sigs!(fi)
++        workitems = SigWorkItem[]
++        world = Base.get_world_counter()
++        for fi in pkgdata.fileinfos
++            for (_, exs_infos) in fi.mod_exs_infos, (_, exinfos) in exs_infos
++                isnothing(exinfos) && continue
++                for (i, exinfo) in enumerate(exinfos)
++                    if exinfo isa Revise.SigInfo
++                        push!(workitems, SigWorkItem(exinfos, i))
++                    end
++                end
++            end
++        end
++        workitems, world
+     end
+ 
+     start = time()

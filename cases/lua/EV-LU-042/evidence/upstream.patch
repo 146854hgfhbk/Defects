@@ -1,0 +1,75 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8a4f1a12af1dba631e10f46b854880ae4df1554a..f97ab2e1096730375951887d7e89d4149fd92d27 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -7,16 +7,13 @@ deprecation policy.
+ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) for release instructions
+ 
+ ## 1.13.0 (unreleased)
+-<<<<<<< HEAD
+  - fix: `compat.warn` raised write guard warning in OpenResty
+    [#414](https://github.com/lunarmodules/Penlight/pull/414)
+-=======
+  - feat: `utils.enum` now accepts hash tables, to enable better error handling
+    [#413](https://github.com/lunarmodules/Penlight/pull/413)
+  - feat: `utils.kpairs` new iterator over all non-integer keys
+    [#413](https://github.com/lunarmodules/Penlight/pull/413)
+ 
+->>>>>>> b38c390 (feat(utils) enum to accept hash tables as well)
+ 
+ ## 1.12.0 (2022-Jan-10)
+  - deprecate: module `pl.text` the contents have moved to `pl.stringx` (removal later)
+diff --git a/lua/pl/utils.lua b/lua/pl/utils.lua
+index fed880c72ed9d86d81e6344f19180c9c94eec1e7..39ca4464364d8541e713762b1af374c4e83ed9f0 100644
+--- a/lua/pl/utils.lua
++++ b/lua/pl/utils.lua
+@@ -360,7 +360,7 @@ function utils.enum(...)
+   if type(first) ~= "table" then
+     -- vararg with strings
+     lst = utils.pack(...)
+-    for i, value in ipairs(lst) do
++    for i, value in utils.npairs(lst) do
+       utils.assert_arg(i, value, "string")
+       enum[value] = value
+     end
+@@ -378,17 +378,15 @@ function utils.enum(...)
+       enum[value] = value
+     end
+     -- add key-ed part
+-    for key, value in pairs(first) do
+-      if not lst[key] then
+-        if type(key) ~= "string" then
+-          error(("expected key to be 'string' but got '%s'"):format(type(key)), 2)
+-        end
+-          if enum[key] then
+-          error(("duplicate entry in array and hash part: '%s'"):format(key), 2)
+-        end
+-        enum[key] = value
+-        lst[#lst+1] = key
++    for key, value in utils.kpairs(first) do
++      if type(key) ~= "string" then
++        error(("expected key to be 'string' but got '%s'"):format(type(key)), 2)
++      end
++      if enum[key] then
++        error(("duplicate entry in array and hash part: '%s'"):format(key), 2)
+       end
++      enum[key] = value
++      lst[#lst+1] = key
+     end
+   end
+ 
+diff --git a/spec/utils-enum_spec.lua b/spec/utils-enum_spec.lua
+index 21fde62740cb28c8e0e8963a9d70607cc9aa5bd8..dbe6954158faeddb6f89aa319e57b3a7793e7cdd 100644
+--- a/spec/utils-enum_spec.lua
++++ b/spec/utils-enum_spec.lua
+@@ -24,6 +24,10 @@ describe("pl.utils", function ()
+         assert.has.error(function()
+           t = enum("hello", true, "world")
+         end, "argument 2 expected a 'string', got a 'boolean'")
++        -- no holes
++        assert.has.error(function()
++          t = enum("hello", nil, "world")
++        end, "argument 2 expected a 'string', got a 'nil'")
+       end)
+ 
+ 

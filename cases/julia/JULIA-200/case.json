@@ -1,0 +1,119 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-200",
+  "bug_id": "JULIA-200",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "meggart/DiskArrays.jl",
+  "repository_url": "https://github.com/meggart/DiskArrays.jl.git",
+  "issue_urls": [
+    "https://github.com/meggart/DiskArrays.jl/issues/155"
+  ],
+  "issue_id": 155,
+  "buggy_revision": "387d910501cf5f6c37ea154e5543fca74aaa5a1c",
+  "fixed_revision": "24bbb8ede27ae9efc30d51eb1fe503011ed7c436",
+  "candidate_sha": "24bbb8ede27ae9efc30d51eb1fe503011ed7c436",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "387d910501cf5f6c37ea154e5543fca74aaa5a1c",
+  "changed_production_files": [
+    "src/diskarray.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-200 scalar dimensional bounds"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "8d4bb762b85945f21776b50dea2bbfa3d80fd07128f4da07bd1fd078fc98b601",
+    "oracle": {
+      "public_api": "DiskArrays scalar getindex",
+      "upstream_test_file": "test/runtests.jl",
+      "source_evidence": "isolated from the upstream fix assertions in test/runtests.jl",
+      "upstream_test_patch_sha256": "1bc0c33815809c20adffea9a7ff8f0cb1382f99ffbf8fe46472168641d007bd7"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "24bbb8ede27ae9efc30d51eb1fe503011ed7c436",
+    "project": "meggart/DiskArrays.jl",
+    "input_sha256": "a4379ea26273eb28b1184422b3a2340f052041df8e5b2587175e4917b76ec256",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:51:42Z",
+    "usage": {
+      "prompt_tokens": 1807,
+      "completion_tokens": 510,
+      "total_tokens": 2317
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.90,\n  \"summary\": \"The commit fixes issue #155 by adding a missing `checkbounds` call in `getindex_disk` for scalar indexing. Without this check, out-of-bounds scalar access (e.g., `a[1,2]` on a 3D array) would not throw a BoundsError as expected, violating standard Julia array indexing semantics.\",\n  \"evidence\": \"The commit subject references 'Fix 155 (#156)', indicating a bug fix for an existing issue. The production change is a single line adding `checkbounds(a, i...)` before proceeding with the disk read. The test file adds explicit checks that out-of-bounds access throws BoundsError (`@test_throws BoundsError a[1,2]`) and that valid scalar indexing still works correctly. This is a clear behavioral bug where bounds checking was missing.\",\n  \"missing_evidence\": \"The issue body for #155 is not available, so exact reproduction steps from the reporter are not visible. However, the fix and tests clearly demonstrate the defect.\",\n  \"validation_risks\": \"Low risk. The fix is a single-line addition of a standard Julia bounds check. The test is straightforward and deterministic.\",\n  \"suggested_tests\": \"Test additional out-of-bounds cases such as `a[3,2,3]` (exceeds dim 1), `a[1,4,3]` (exceeds dim 2), `a[1,2,5]` (exceeds dim 3), and negative indices like `a[0,1,1]` to ensure BoundsError is thrown consistently.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.9,
+    "summary": "The commit fixes issue #155 by adding a missing `checkbounds` call in `getindex_disk` for scalar indexing. Without this check, out-of-bounds scalar access (e.g., `a[1,2]` on a 3D array) would not throw a BoundsError as expected, violating standard Julia array indexing semantics.",
+    "evidence": "The commit subject references 'Fix 155 (#156)', indicating a bug fix for an existing issue. The production change is a single line adding `checkbounds(a, i...)` before proceeding with the disk read. The test file adds explicit checks that out-of-bounds access throws BoundsError (`@test_throws BoundsError a[1,2]`) and that valid scalar indexing still works correctly. This is a clear behavioral bug where bounds checking was missing.",
+    "missing_evidence": "The issue body for #155 is not available, so exact reproduction steps from the reporter are not visible. However, the fix and tests clearly demonstrate the defect.",
+    "validation_risks": "Low risk. The fix is a single-line addition of a standard Julia bounds check. The test is straightforward and deterministic.",
+    "suggested_tests": "Test additional out-of-bounds cases such as `a[3,2,3]` (exceeds dim 1), `a[1,4,3]` (exceeds dim 2), `a[1,2,5]` (exceeds dim 3), and negative indices like `a[0,1,1]` to ensure BoundsError is thrown consistently."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-200 scalar dimensional bounds"
+    ],
+    "exception_types": [
+      "ae8424de846c718a79c2652c384f616b1b96ba7e1cf3870f96b68bf0db6a9f7b"
+    ],
+    "fingerprints": [
+      "ae8424de846c718a79c2652c384f616b1b96ba7e1cf3870f96b68bf0db6a9f7b"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

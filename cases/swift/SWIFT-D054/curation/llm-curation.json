@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1001",
+  "technical_evidence_sha256": "a74e1d99a2e72d93d7cb311859c6be9ea1bb154dcc462a7c4d6a5773faf07036",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "149a7f94593eee4748d359322cdd2f28731f4a108bdc5b79434575acd1f6c340",
+  "reviewed_at": "2026-09-08T09:28:05.307422+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "scinfu/swiftsoup#390",
+  "rationale": "Issue #390 reports that `div[id='info-id'][data-type='info-data']` returns an empty result in v2.13.3 while working in v2.11.3, attributing it to the fast query path. The single production hunk in Sources/CssSelector.swift replaces `trimmed.lastIndex(of: \"]\")` with a forward scan for the close bracket matching the first `[`, skipping quoted content. Under the old code a compound selector like `tag[a='x'][b='y']` satisfied the guard (last `]` is the final character) and was mis-parsed as one attribute expression in the fast path; the new scan finds the first unquoted `]`, which is not the last character, so the fast path returns `.none` and the selector falls through to the general parser. That is exactly the reported regression mechanism, and the commit message and merged PR #391 traceability (fix_commit_to_merged_pr_to_issue, verified_fix_issue_numbers=[390]) tie them together. The minimized patch is identical to the production fix: one hunk, one production file, no formatting-only, config, doc, or feature changes; the two added comment lines describe the new scanning logic. Triggers are the unchanged upstream tests from the same commit and call only pre-existing APIs (`SwiftSoup.parse`, `Document.select`, `Elements.size`), no API introduced by the fix. Both triggers assert the exact reported selector shape. Strict evidence for both original and post-minimization states shows all gates passed: build.both_versions, trigger.buggy_differential reproducing both selectors, trigger.fixed_clean, trigger.deterministic (4/4 outcome groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, 38-run matrix with 3 repetitions. active_same_project_root_causes is empty and scinfu/swiftsoup#390 is the allowed verified key, so this is not a duplicate.\n\nIssue #390 reports that doc.select(\"div[id='info-id'][data-type='info-data']\") returns empty in v2.13.3 while single-attribute selectors still work, attributing it to the fast query path. The single production hunk in Sources/CssSelector.swift replaces `trimmed.lastIndex(of: \"]\")` with a forward scan for the close bracket matching the first '[' (skipping quoted content), then keeps the existing guard that the close bracket be the final character. For a compound selector like tag[a='x'][b='y'] the old lastIndex heuristic found the trailing ']' and let the fast single-attribute path swallow the whole string, whereas the new scan stops at the first unquoted ']' which is not the last character, so the function returns .none and the selector falls back to the general parser. That mechanism is exactly the regression described in the issue, so issue, fix, and triggers describe one pre-existing defect. The minimized patch is byte-identical to the production-fix patch (sha256 456a96b7...), touches only Sources/CssSelector.swift in one hunk, and contains no refactor, feature extension, doc-only, config-only, or test-only content; the two added comment lines describe the new scanning logic. Triggers are the unchanged upstream test portion of the same fixing commit (traceability path fix_commit_to_merged_pr_to_issue, verified issue 390); testCompoundAttributeSelectorWithSpecialBodyTags reproduces the issue reproducer including the reported single-attribute controls, and testCompoundAttributeSelectorSimple exercises the same compound-selector path on minimal HTML. Both call only pre-existing public API (SwiftSoup.parse, Elements.select, size), so they do not depend on any API introduced by the fix. Strict evidence for both the original and post-minimization runs reports passed=true with empty failed_checks: build.both_versions, trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean, trigger.deterministic (4/4 outcome groups over 3 repetitions, 38 matrix runs), and full_suite.fixed_all_green with buggy full-suite failures limited to the reproduced triggers. active_same_project_root_causes is empty and scinfu/swiftsoup#390 is the sole allowed verified issue key, so this root cause duplicates no active registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-08T09:27:36.302298+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "149a7f94593eee4748d359322cdd2f28731f4a108bdc5b79434575acd1f6c340",
+      "response_sha256": "84a7350c44240df7339d1c85562434085e49cca3d89c42050b645c6c0f29a61f",
+      "response_id": "msg_73849de017e14b129160d84190e03ecb",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5544050111111111,
+        "input_tokens": 13807,
+        "output_tokens": 717
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#390",
+      "rationale": "Issue #390 reports that `div[id='info-id'][data-type='info-data']` returns an empty result in v2.13.3 while working in v2.11.3, attributing it to the fast query path. The single production hunk in Sources/CssSelector.swift replaces `trimmed.lastIndex(of: \"]\")` with a forward scan for the close bracket matching the first `[`, skipping quoted content. Under the old code a compound selector like `tag[a='x'][b='y']` satisfied the guard (last `]` is the final character) and was mis-parsed as one attribute expression in the fast path; the new scan finds the first unquoted `]`, which is not the last character, so the fast path returns `.none` and the selector falls through to the general parser. That is exactly the reported regression mechanism, and the commit message and merged PR #391 traceability (fix_commit_to_merged_pr_to_issue, verified_fix_issue_numbers=[390]) tie them together. The minimized patch is identical to the production fix: one hunk, one production file, no formatting-only, config, doc, or feature changes; the two added comment lines describe the new scanning logic. Triggers are the unchanged upstream tests from the same commit and call only pre-existing APIs (`SwiftSoup.parse`, `Document.select`, `Elements.size`), no API introduced by the fix. Both triggers assert the exact reported selector shape. Strict evidence for both original and post-minimization states shows all gates passed: build.both_versions, trigger.buggy_differential reproducing both selectors, trigger.fixed_clean, trigger.deterministic (4/4 outcome groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, 38-run matrix with 3 repetitions. active_same_project_root_causes is empty and scinfu/swiftsoup#390 is the allowed verified key, so this is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "issue_evidence.body",
+        "issue_evidence.title",
+        "traceability.paths",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "minimized_patch_reference.semantic_selection",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The new quote-skipping scan does not handle backslash-escaped quotes inside attribute values, so selectors with escaped quotes remain outside the fixed behavior and outside trigger coverage.",
+        "The fix restores correctness by bailing out of the fast path for compound attribute selectors rather than supporting them there; any performance regression for such selectors is not covered by the triggers.",
+        "testCompoundAttributeSelectorWithSpecialBodyTags also asserts single-attribute selector results, which are assertions adjacent to the defect; they pass on the buggy revision, so the differential signal comes from the compound assertion only.",
+        "Issue body and reproducer HTML are paraphrased in case.json; the original upstream issue thread was not independently re-read."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-08T09:28:05.306729+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "149a7f94593eee4748d359322cdd2f28731f4a108bdc5b79434575acd1f6c340",
+      "response_sha256": "b8f5f48b5ed97ff73953fbd0f59e94dcb9e8412449f62fa73d2c93e48e5e9219",
+      "response_id": "msg_867a8fbec8a049ca87d22a52a7f2d979",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5882209579104478,
+        "input_tokens": 14195,
+        "output_tokens": 840
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#390",
+      "rationale": "Issue #390 reports that doc.select(\"div[id='info-id'][data-type='info-data']\") returns empty in v2.13.3 while single-attribute selectors still work, attributing it to the fast query path. The single production hunk in Sources/CssSelector.swift replaces `trimmed.lastIndex(of: \"]\")` with a forward scan for the close bracket matching the first '[' (skipping quoted content), then keeps the existing guard that the close bracket be the final character. For a compound selector like tag[a='x'][b='y'] the old lastIndex heuristic found the trailing ']' and let the fast single-attribute path swallow the whole string, whereas the new scan stops at the first unquoted ']' which is not the last character, so the function returns .none and the selector falls back to the general parser. That mechanism is exactly the regression described in the issue, so issue, fix, and triggers describe one pre-existing defect. The minimized patch is byte-identical to the production-fix patch (sha256 456a96b7...), touches only Sources/CssSelector.swift in one hunk, and contains no refactor, feature extension, doc-only, config-only, or test-only content; the two added comment lines describe the new scanning logic. Triggers are the unchanged upstream test portion of the same fixing commit (traceability path fix_commit_to_merged_pr_to_issue, verified issue 390); testCompoundAttributeSelectorWithSpecialBodyTags reproduces the issue reproducer including the reported single-attribute controls, and testCompoundAttributeSelectorSimple exercises the same compound-selector path on minimal HTML. Both call only pre-existing public API (SwiftSoup.parse, Elements.select, size), so they do not depend on any API introduced by the fix. Strict evidence for both the original and post-minimization runs reports passed=true with empty failed_checks: build.both_versions, trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean, trigger.deterministic (4/4 outcome groups over 3 repetitions, 38 matrix runs), and full_suite.fixed_all_green with buggy full-suite failures limited to the reproduced triggers. active_same_project_root_causes is empty and scinfu/swiftsoup#390 is the sole allowed verified issue key, so this root cause duplicates no active registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:issue_evidence",
+        "case.json:strict_original.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The new bracket scan does not handle backslash-escaped quotes inside attribute values, so exotic selectors could still take a wrong fast-path decision; existing quoted-bracket tests (div[data=\"End]\"]) remain covered only via the green full suite, not by a dedicated new assertion.",
+        "testCompoundAttributeSelectorSimple is curator-adjacent in that it is not the issue's verbatim reproducer, though it exercises the identical fast-path branch and is upstream in the same commit.",
+        "testCompoundAttributeSelectorWithSpecialBodyTags also asserts single-attribute selector behavior that already passes on the buggy revision, so its pass/fail signal is carried only by the final compound assertion.",
+        "All runtime claims rest on the supplied strict evidence; no independent build or test execution was performed here, and full_suite_repetitions is 1."
+      ]
+    }
+  ]
+}

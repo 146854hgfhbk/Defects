@@ -1,0 +1,19 @@
+diff --git a/R/namespace.R b/R/namespace.R
+index b4d93d01..22efffc5 100644
+--- a/R/namespace.R
++++ b/R/namespace.R
+@@ -401,11 +401,7 @@ warn_missing_s3_exports <- function(blocks, env) {
+ 
+   undocumented <- methods[!methods %in% s3objects]
+   srcrefs <- map(undocumented, attr, "srcref")
+-
+-  map2(undocumented, names(undocumented), function(fun, name) {
+-    warn_roxy_function(
+-      fun,
+-      "S3 method {.arg {name}} needs @export or @exportS3method tag"
+-    )
+-  })
++  messages <- paste0("S3 method `", names(undocumented) , "` needs @export or @exportS3method tag")
++  map2(undocumented, messages, warn_roxy_function)
+ }
++

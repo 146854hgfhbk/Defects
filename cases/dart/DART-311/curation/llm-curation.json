@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-311",
+  "technical_evidence_sha256": "d5a726cc3a963a725075e0eb7f88cb1e878feb11f978cde21cf14f9fa87dd9b3",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "344b72deaef1337b596b037aea54e756d2365aa7c39166e4cde857564c850c9a",
+  "reviewed_at": "2026-08-12T15:18:17.407396+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1639",
+  "rationale": "Issue #1639 reports that the formatter incorrectly inserts trailing commas in type parameter/argument lists when the list ends with comments, producing unparseable Dart code. The minimized production patch fixes this by tracking the last non-comment element index and using it for comma placement decisions in both DelimitedListBuilder and ListPiece. The trigger tests from later commit 110b9f74 add two fixture-based regression tests that match the reported defect scenario. Runtime validation confirms: (1) both triggers fail deterministically on buggy revision d76b6eeb with the illegal trailing comma behavior, (2) both pass on fixed revision b57cbcc0, (3) full test suite passes on fixed but fails on buggy only for the declared triggers, (4) AB/BA/AB matrix validation passed with 3+ repetitions across 38 runs. The patch contains no CHANGELOG, version bump, documentation, test-only, or unrelated refactor beyond the core comma-placement logic fix. No active same-project root causes were supplied, confirming no duplication.\n\nIssue #1639 describes a concrete bug where the dart_style formatter incorrectly adds a trailing comma after the last non-comment element in type parameter/argument lists that end with comments, producing syntactically invalid Dart code. The minimized production patch addresses exactly this defect by: (1) computing the index of the last non-comment element in DelimitedListBuilder, (2) threading that index through to ListPiece as a required named parameter, (3) replacing all uses of `_elements.length - 1` and `_elements.last` with `_lastNonCommentElement` when pinning commas, and (4) adding a guard for the all-comments edge case. The patch introduces no formatting changes, configuration, documentation, or test-only modifications—only the minimal logic to distinguish comment-only trailing elements from real elements for comma placement. Both trigger tests come from the same later commit (110b9f74) that cherry-picks the fix and references issue #1639 in its message. The strict runtime evidence confirms deterministic AB/BA/AB validation: both triggers fail differentially on buggy, pass on fixed, and the full suite passes on fixed while reproducing only the declared triggers on buggy. No active same-project root causes were supplied, satisfying the duplicate check.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T15:17:16.059163+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "344b72deaef1337b596b037aea54e756d2365aa7c39166e4cde857564c850c9a",
+      "response_sha256": "24939ae329a772dc9b4f5925793efcebcf696a91b8a525c46d120406dc62d802",
+      "response_id": "msg_d68d6100-59bf-4189-89",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 4883
+        },
+        "cache_creation_input_tokens": 4883,
+        "cache_read_input_tokens": 11907,
+        "input_tokens": 16012,
+        "output_tokens": 1229
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1639",
+      "rationale": "Issue #1639 reports that the formatter incorrectly inserts trailing commas in type parameter/argument lists when the list ends with comments, producing unparseable Dart code. The minimized production patch fixes this by tracking the last non-comment element index and using it for comma placement decisions in both DelimitedListBuilder and ListPiece. The trigger tests from later commit 110b9f74 add two fixture-based regression tests that match the reported defect scenario. Runtime validation confirms: (1) both triggers fail deterministically on buggy revision d76b6eeb with the illegal trailing comma behavior, (2) both pass on fixed revision b57cbcc0, (3) full test suite passes on fixed but fails on buggy only for the declared triggers, (4) AB/BA/AB matrix validation passed with 3+ repetitions across 38 runs. The patch contains no CHANGELOG, version bump, documentation, test-only, or unrelated refactor beyond the core comma-placement logic fix. No active same-project root causes were supplied, confirming no duplication.",
+      "evidence_paths": [
+        "issue_urls[0]: https://github.com/dart-lang/dart_style/issues/1639",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.passed: true",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed: true",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed: true",
+        "strict_post_minimization.checks.trigger.deterministic.passed: true",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers.passed: true",
+        "trigger_tests[0].name: tall/regression/1600/1639.unit",
+        "trigger_tests[1].name: tall/type/function_comment.stmt",
+        "traceability.verified_fix_issue_numbers: [1639]"
+      ],
+      "risks": [
+        "The minimized patch is identical to production-fix.patch, indicating CHANGELOG.md and pubspec.yaml changes were successfully stripped but were present in the original commit",
+        "Trigger tests use dart_style's fixture format (.unit/.stmt files) which encode expected output; semantic equivalence depends on the fixture driver correctly exercising the formatter's list-building code path",
+        "ListPiece constructor signature change added a required named parameter; validation confirms no compilation failures, but any out-of-tree callers would break"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T15:18:17.407093+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "344b72deaef1337b596b037aea54e756d2365aa7c39166e4cde857564c850c9a",
+      "response_sha256": "e0108f11b0a231ce0ede6ec1107245d444eef876bc2bfac45942616c3ccd0650",
+      "response_id": "msg_25b60432-62ce-49c9-98",
+      "attempts": 3,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 5230
+        },
+        "cache_creation_input_tokens": 5230,
+        "cache_read_input_tokens": 11822,
+        "input_tokens": 16012,
+        "output_tokens": 1374
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1639",
+      "rationale": "Issue #1639 describes a concrete bug where the dart_style formatter incorrectly adds a trailing comma after the last non-comment element in type parameter/argument lists that end with comments, producing syntactically invalid Dart code. The minimized production patch addresses exactly this defect by: (1) computing the index of the last non-comment element in DelimitedListBuilder, (2) threading that index through to ListPiece as a required named parameter, (3) replacing all uses of `_elements.length - 1` and `_elements.last` with `_lastNonCommentElement` when pinning commas, and (4) adding a guard for the all-comments edge case. The patch introduces no formatting changes, configuration, documentation, or test-only modifications—only the minimal logic to distinguish comment-only trailing elements from real elements for comma placement. Both trigger tests come from the same later commit (110b9f74) that cherry-picks the fix and references issue #1639 in its message. The strict runtime evidence confirms deterministic AB/BA/AB validation: both triggers fail differentially on buggy, pass on fixed, and the full suite passes on fixed while reproducing only the declared triggers on buggy. No active same-project root causes were supplied, satisfying the duplicate check.",
+      "evidence_paths": [
+        "issue_urls[0] (dart-lang/dart_style#1639)",
+        "patches/minimized-production.patch (lib/src/front_end/delimited_list_builder.dart, lib/src/piece/list.dart)",
+        "patches/trigger-tests.patch (test/tall/regression/1600/1639.unit, test/tall/type/function_comment.stmt)",
+        "strict_post_minimization.checks.trigger.buggy_differential.detail",
+        "strict_post_minimization.checks.trigger.fixed_clean.detail",
+        "strict_post_minimization.checks.trigger.deterministic.detail",
+        "traceability.later_trigger_commit",
+        "trigger_reduction.status"
+      ],
+      "risks": [
+        "ListPiece constructor signature change (added required named parameter) means any call site outside DelimitedListBuilder would break compilation; validation confirms the codebase builds at both revisions, implying no other call sites exist or were updated.",
+        "Trigger tests use dart_style's fixture format (.unit, .stmt) which encodes full expected output; any unrelated formatting drift between buggy and fixed could cause noise, but strict validation confirms deterministic fingerprints and differential behavior.",
+        "The all-comments edge case (_lastNonCommentElement == -1) is guarded in applyConstraints but not explicitly covered by the supplied trigger fixtures; however, the logic change is defensive and the supplied tests exercise the reported defect."
+      ]
+    }
+  ]
+}

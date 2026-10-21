@@ -1,0 +1,53 @@
+diff --git a/lua/pl/xml.lua b/lua/pl/xml.lua
+index 6c7bc50122bdb40169664dc01780a3dfd7875129..93b85d3377d89436d192430f4028e77f8c05a2d9 100644
+--- a/lua/pl/xml.lua
++++ b/lua/pl/xml.lua
+@@ -554,12 +554,12 @@ function _M.basic_parse(s,all_text,html)
+ 
+     local function parseargs(s)
+       local arg = {}
+-      s:gsub("([%w:]+)%s*=%s*([\"'])(.-)%2", function (w, _, a)
++      s:gsub("([%w:%-_]+)%s*=%s*([\"'])(.-)%2", function (w, _, a)
+         if html then w = w:lower() end
+         arg[w] = unescape(a)
+       end)
+       if html then
+-        s:gsub("([%w:]+)%s*=%s*([^\"']+)%s*", function (w, a)
++        s:gsub("([%w:%-_]+)%s*=%s*([^\"']+)%s*", function (w, a)
+           w = w:lower()
+           arg[w] = unescape(a)
+         end)
+diff --git a/tests/test-xml.lua b/tests/test-xml.lua
+index a279a63c68fc2f6ef7894cf69a57f6e5da9db98c..e278d28b81e8f100ac3c2eae3bdc3451d1d149f2 100644
+--- a/tests/test-xml.lua
++++ b/tests/test-xml.lua
+@@ -491,7 +491,8 @@ xml.tostring(test_attrlist),
+ "<AttrList Attr1='Value1' Attr2='Value2' Attr3='Value3'/>"
+ )
+ 
+----- commments ----
++
++-- commments
+ str = [[
+ <hello>
+ <!-- any <i>momentous</i> stuff here -->
+@@ -505,3 +506,19 @@ dolly
+ </hello>]])
+ 
+ 
++-- underscores and dashes in attributes
++
++str = [[
++<hello>
++    <tag my_attribute='my_value'>dolly</tag>
++</hello>
++]]
++doc = parse(str)
++
++print(doc)
++print(xml.tostring(doc))
++
++asserteq(xml.tostring(doc),[[
++<hello><tag my_attribute='my_value'>dolly</tag></hello>]])
++
++

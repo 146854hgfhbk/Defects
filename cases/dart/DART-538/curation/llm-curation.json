@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-538",
+  "technical_evidence_sha256": "eb71ccba654ea0a78421b81cdd231fee9206af3238e9ed4c17b251d65f87899e",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "b837f79b20ed13de71a20ffacaa098b791f9f4b13af23bf8104b74543453b6d2",
+  "reviewed_at": "2026-08-11T15:28:23.347280+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "nikosportolos/ansix#128",
+  "rationale": "Issue #128 (label 'bug', closed) reports that AnsiTable fails to emit the ANSI reset escape code on every rendered line, and the single-commit PR #129 ('#128 AnsiTable: Fix transparency', merge_commit a245db0) fixes exactly that: table.dart drops the one-shot 'if (!transparent) AnsiEscapeCodes.reset' write and instead threads the pre-existing 'transparent' flag into AnsiBorderBuilder.print, which now writes reset before each horizontal separator line and before each text line. The minimized production patch is confined to lib/src/widgets/table/builder.dart and lib/src/widgets/table/table.dart and contains only that behavioral change plus the required 'package:ansix/src/core/escape_codes.dart' import it needs; there is no formatting, documentation, configuration, or test change and no feature extension, since 'transparent' already existed on AnsiTable in the buggy revision. The triggers are the unmodified upstream test portion of the same commit: the existing 'non-transparent' test whose mock was corrected so every line begins with \\x1B[0m, and the new 'non-transparent with colored borders' test. Both exercise only pre-existing public API (AnsiTable, AnsiBorder, AnsiBorderStyle.square, AnsiBorderType.all, AnsiColor.cadetBlue, transparent, .formattedText) and never touch the new required 'transparent' parameter on the internal AnsiBorderBuilder.print, so they compile and run against the buggy revision. Machine-generated strict gates pass in both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (2/2 unique), trigger.buggy_differential with both selectors reproduced, trigger.fixed_clean, trigger.deterministic (4/4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete (38 runs) at 3 repetitions, with no failed checks. active_same_project_root_causes is empty and the proposed root cause equals the sole allowed verified issue key nikosportolos/ansix#128.\n\nIssue #128 (label 'bug', title 'AnsiTable: Fix transparency', body asking for the ANSI reset escape code on every line) is traced to the single fix commit a245db0 via PR #129 and the commit subject '#128 AnsiTable: Fix transparency'; traceability.verified_fix_issue_numbers=[128] and the path is fix_commit_to_issue. The minimized production patch is confined to the two table widget files: table.dart drops the single pre-loop 'if (!transparent) AnsiEscapeCodes.reset' write and threads the already-existing 'transparent' flag into AnsiBorderBuilder.print, which then emits AnsiEscapeCodes.reset before each horizontal separator line and before the text line. That is exactly the reported defect (reset written once, so color state leaked onto subsequent rendered lines), with no refactor, formatting-only, feature, docs, or config change; the single added import is required by the new reset writes. The trigger patch is the unchanged upstream test portion of the same commit (trigger_reduction.rationale, upstream_trigger_patch sha256 71d77a65...): the modified 'non-transparent' mock now prefixes every line with \\x1B[0m, and the added 'non-transparent with colored borders' test uses only AnsiTable, AnsiBorder, AnsiBorderStyle.square, AnsiBorderType.all, AnsiColor.cadetBlue and .formattedText, all pre-existing APIs, so it does not depend on any API introduced by the fix (the new required 'transparent' parameter is internal to AnsiBorderBuilder.print and not touched by the tests). Both strict gates (strict_original and strict_post_minimization) pass with failed_checks empty, including trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean, trigger.deterministic (4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, over 3 repetitions and a 38-run matrix. active_same_project_root_causes is empty, so #128 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T15:28:04.311937+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "b837f79b20ed13de71a20ffacaa098b791f9f4b13af23bf8104b74543453b6d2",
+      "response_sha256": "14a618c8971fe40ecf0cb14dfc6b3492c8d3f543572ae34bc498c9a2d520330b",
+      "response_id": "msg_1786462084118",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 13476,
+        "output_tokens": 1074,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nikosportolos/ansix#128",
+      "rationale": "Issue #128 (label 'bug', closed) reports that AnsiTable fails to emit the ANSI reset escape code on every rendered line, and the single-commit PR #129 ('#128 AnsiTable: Fix transparency', merge_commit a245db0) fixes exactly that: table.dart drops the one-shot 'if (!transparent) AnsiEscapeCodes.reset' write and instead threads the pre-existing 'transparent' flag into AnsiBorderBuilder.print, which now writes reset before each horizontal separator line and before each text line. The minimized production patch is confined to lib/src/widgets/table/builder.dart and lib/src/widgets/table/table.dart and contains only that behavioral change plus the required 'package:ansix/src/core/escape_codes.dart' import it needs; there is no formatting, documentation, configuration, or test change and no feature extension, since 'transparent' already existed on AnsiTable in the buggy revision. The triggers are the unmodified upstream test portion of the same commit: the existing 'non-transparent' test whose mock was corrected so every line begins with \\x1B[0m, and the new 'non-transparent with colored borders' test. Both exercise only pre-existing public API (AnsiTable, AnsiBorder, AnsiBorderStyle.square, AnsiBorderType.all, AnsiColor.cadetBlue, transparent, .formattedText) and never touch the new required 'transparent' parameter on the internal AnsiBorderBuilder.print, so they compile and run against the buggy revision. Machine-generated strict gates pass in both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (2/2 unique), trigger.buggy_differential with both selectors reproduced, trigger.fixed_clean, trigger.deterministic (4/4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete (38 runs) at 3 repetitions, with no failed checks. active_same_project_root_causes is empty and the proposed root cause equals the sole allowed verified issue key nikosportolos/ansix#128.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/widgets/table/builder.dart",
+        "lib/src/widgets/table/table.dart",
+        "case.json:issue_urls",
+        "case.json:source_candidate.issue_check.linked_issues[0]",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:trigger_tests",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The issue body states resets should be added 'if the transparent flag is set to true' while the fix branches on '!transparent'; this reads as a wording slip in the issue text, but it leaves the intended polarity slightly ambiguous from the issue alone.",
+        "Both triggers assert exact escape-sequence strings, so they are brittle to any unrelated rendering or color-index change across revisions.",
+        "AnsiBorderBuilder.print gains a required parameter, so only the test portion may be transplanted onto the buggy revision; mixing production signatures across revisions would break compilation.",
+        "Only fixed_width_table_test.dart was inspected for mock constants; other table test suites sharing output mocks were not individually reviewed, though full_suite.fixed_all_green indicates no residual failures."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T15:28:23.346951+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "b837f79b20ed13de71a20ffacaa098b791f9f4b13af23bf8104b74543453b6d2",
+      "response_sha256": "275650959320aa370a6072b8dac9f53b1f8a02040305169faa32c42c3e994e83",
+      "response_id": "msg_d2194cbe-d17b-435d-bc",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 4414
+        },
+        "cache_creation_input_tokens": 4414,
+        "cache_read_input_tokens": 9802,
+        "input_tokens": 13177,
+        "output_tokens": 1494
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nikosportolos/ansix#128",
+      "rationale": "Issue #128 (label 'bug', title 'AnsiTable: Fix transparency', body asking for the ANSI reset escape code on every line) is traced to the single fix commit a245db0 via PR #129 and the commit subject '#128 AnsiTable: Fix transparency'; traceability.verified_fix_issue_numbers=[128] and the path is fix_commit_to_issue. The minimized production patch is confined to the two table widget files: table.dart drops the single pre-loop 'if (!transparent) AnsiEscapeCodes.reset' write and threads the already-existing 'transparent' flag into AnsiBorderBuilder.print, which then emits AnsiEscapeCodes.reset before each horizontal separator line and before the text line. That is exactly the reported defect (reset written once, so color state leaked onto subsequent rendered lines), with no refactor, formatting-only, feature, docs, or config change; the single added import is required by the new reset writes. The trigger patch is the unchanged upstream test portion of the same commit (trigger_reduction.rationale, upstream_trigger_patch sha256 71d77a65...): the modified 'non-transparent' mock now prefixes every line with \\x1B[0m, and the added 'non-transparent with colored borders' test uses only AnsiTable, AnsiBorder, AnsiBorderStyle.square, AnsiBorderType.all, AnsiColor.cadetBlue and .formattedText, all pre-existing APIs, so it does not depend on any API introduced by the fix (the new required 'transparent' parameter is internal to AnsiBorderBuilder.print and not touched by the tests). Both strict gates (strict_original and strict_post_minimization) pass with failed_checks empty, including trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean, trigger.deterministic (4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, over 3 repetitions and a 38-run matrix. active_same_project_root_causes is empty, so #128 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/widgets/table/table.dart",
+        "lib/src/widgets/table/builder.dart",
+        "issue_urls[0]",
+        "traceability.verified_fix_issue_numbers",
+        "trigger_reduction.upstream_trigger_patch",
+        "strict_post_minimization.checks",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "Both triggers assert exact escape-sequence strings, so they are brittle to any unrelated future change in table rendering or color index values.",
+        "The issue body says resets should be added 'if the transparent flag is set to true' while the code branches on '!transparent'; the wording appears to be an issue-body slip and the code/test polarity is self-consistent.",
+        "AnsiBorderBuilder.print gains a required parameter, so only the test portion is transplantable between revisions; mixing production files across revisions would not compile."
+      ]
+    }
+  ]
+}

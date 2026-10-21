@@ -1,0 +1,222 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-739",
+  "bug_id": "JULIA-739",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/42"
+  ],
+  "issue_id": 42,
+  "buggy_revision": "b2372b755d194d198c31cc9fb31cb63f8938fa46",
+  "fixed_revision": "9e6392e8ddb53979c7131de4b7dd05b00a9a5c89",
+  "candidate_sha": "9e6392e8ddb53979c7131de4b7dd05b00a9a5c89",
+  "source": "SWE-rebench-V2",
+  "instance_id": "julialang__juliasyntax.jl-102",
+  "swe": {
+    "base_commit": "b2372b755d194d198c31cc9fb31cb63f8938fa46",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/102",
+    "issue_url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/42",
+    "problem_statement": "When using in REPL, `JuliaSyntax.jl` does not seem to work well with multiline parsing?\nWhen I want to type\r\n\r\n```julia\r\nmap(1:10) do x\r\n    2x\r\nend\r\n```\r\n\r\nafter I type `map(1:10) do x` and hit return, I got\r\n\r\n```julia\r\njulia> map(1:10) do\r\nERROR: ParseError:\r\nError: premature end of input\r\n@ REPL[11]:2:1\r\nmap(1:10) do\r\nError: premature end of input\r\n@ REPL[11]:2:1\r\nmap(1:10) do\r\nError: Expected `end` but got unexpected tokens\r\n@ REPL[11]:2:1\r\nmap(1:10) do\r\n```\r\n\r\nOr if I want to type\r\n\r\n```julia\r\n w = u +\r\n     v +\r\n     1\r\n```\r\n\r\nI got\r\n\r\n```julia\r\njulia> w = u +\r\nERROR: ParseError:\r\nError: premature end of input\r\n@ REPL[14]:2:1\r\nw = u +\r\n```\r\n\r\nBut I can do them with copy-paste:\r\n\r\n<img width=\"153\" alt=\"image\" src=\"https://user-images.githubusercontent.com/25192197/184258129-75b6ec6c-a101-4827-805d-a669d7121844.png\">\r\n\r\nCan we make the REPL-mode tolerate multiline code a little bit more?",
+    "patch": "diff --git a/src/hooks.jl b/src/hooks.jl\nindex 1a183a09..41499061 100644\n--- a/src/hooks.jl\n+++ b/src/hooks.jl\n@@ -1,6 +1,76 @@\n # This file provides an adaptor to match the API expected by the Julia runtime\n # code in the binding Core._parse\n \n+# Find the first error in a SyntaxNode tree, returning the index of the error\n+# within its parent and the node itself.\n+function _first_error(t::SyntaxNode)\n+    if is_error(t)\n+        return 0,t\n+    end\n+    if haschildren(t)\n+        for (i,c) in enumerate(children(t))\n+            if is_error(c)\n+                return i,c\n+            else\n+                x = _first_error(c)\n+                if x != (0,nothing)\n+                    return x\n+                end\n+            end\n+        end\n+    end\n+    return 0,nothing\n+end\n+\n+# Classify an incomplete expression, returning a Symbol compatible with\n+# Base.incomplete_tag().\n+#\n+# Roughly, the intention here is to classify which expression head is expected\n+# next if the incomplete stream was to continue. (Though this is just rough. In\n+# practice several categories are combined for the purposes of the REPL -\n+# perhaps we can/should do something more precise in the future.)\n+function _incomplete_tag(n::SyntaxNode)\n+    i,c = _first_error(n)\n+    if isnothing(c)\n+        return :none\n+    end\n+    # TODO: Check error hits last character\n+    if kind(c) == K\"error\" && begin\n+                cs = children(c)\n+                length(cs) > 0\n+            end\n+        k1 = kind(cs[1])\n+        if k1 == K\"ErrorEofMultiComment\"\n+            return :comment\n+        elseif k1 == K\"ErrorEofChar\"\n+            # TODO: Make this case into an internal node\n+            return :char\n+        end\n+        for cc in cs\n+            if kind(cc) == K\"error\"\n+                return :other\n+            end\n+        end\n+    end\n+    kp = kind(c.parent)\n+    if kp == K\"string\"\n+        return :string\n+    elseif kp == K\"cmdstring\"\n+        return :cmd\n+    elseif kp in KSet\"block quote let try\"\n+        return :block\n+    elseif kp in KSet\"for while function if\"\n+        return i == 1 ? :other : :block\n+    elseif kp in KSet\"module struct\"\n+        return i == 2 ? :other : :block\n+    elseif kp == K\"do\"\n+        return i < 3  ? :other : :block\n+    else\n+        return :other\n+    end\n+end\n+\n+#-------------------------------------------------------------------------------\n @static if isdefined(Core, :_setparser!)\n     const _set_core_parse_hook = Core._setparser!\n elseif isdefined(Core, :set_parser)\n@@ -93,11 +163,29 @@ function _core_parser_hook(code, filename, lineno, offset, options)\n         end\n \n         if any_error(stream)\n-            e = Expr(:error, ParseError(SourceFile(code, filename=filename), stream.diagnostics))\n-            ex = options === :all ? Expr(:toplevel, e) : e\n+            tree = build_tree(SyntaxNode, stream, wrap_toplevel_as_kind=K\"None\")\n+            _,err = _first_error(tree)\n+            # In the flisp parser errors are normally `Expr(:error, msg)` where\n+            # `msg` is a String. By using a ParseError for msg we can do fancy\n+            # error reporting instead.\n+            if last_byte(err) == lastindex(code)\n+                tag = _incomplete_tag(tree)\n+                # Here we replicate the particular messages \n+                msg =\n+                    tag === :string  ? \"incomplete: invalid string syntax\"     :\n+                    tag === :comment ? \"incomplete: unterminated multi-line comment #= ... =#\" :\n+                    tag === :block   ? \"incomplete: construct requires end\"    :\n+                    tag === :cmd     ? \"incomplete: invalid \\\"`\\\" syntax\"      :\n+                    tag === :char    ? \"incomplete: invalid character literal\" :\n+                                       \"incomplete: premature end of input\"\n+                error_ex = Expr(:incomplete, msg)\n+            else\n+                error_ex = Expr(:error, ParseError(stream, filename=filename))\n+            end\n+            ex = options === :all ? Expr(:toplevel, error_ex) : error_ex\n         else\n             # FIXME: Add support to lineno to this tree build (via SourceFile?)\n-            ex = build_tree(Expr, stream, filename=filename, wrap_toplevel_as_kind=K\"None\")\n+            ex = build_tree(Expr, stream; filename=filename, wrap_toplevel_as_kind=K\"None\")\n             if Meta.isexpr(ex, :None)\n                 # The None wrapping is only to give somewhere for trivia to be\n                 # attached; unwrap!\ndiff --git a/src/parser_api.jl b/src/parser_api.jl\nindex e70c62da..c05122be 100644\n--- a/src/parser_api.jl\n+++ b/src/parser_api.jl\n@@ -46,6 +46,11 @@ struct ParseError <: Exception\n     diagnostics::Vector{Diagnostic}\n end\n \n+function ParseError(stream::ParseStream; filename=nothing)\n+    source = SourceFile(sourcetext(stream), filename=filename)\n+    ParseError(source, stream.diagnostics)\n+end\n+\n function Base.showerror(io::IO, err::ParseError, bt; backtrace=false)\n     println(io, \"ParseError:\")\n     show_diagnostics(io, err.diagnostics, err.source)\n@@ -156,8 +161,7 @@ function parseall(::Type{T}, input...; rule=:toplevel, version=VERSION,\n         emit_diagnostic(stream, error=\"unexpected text after parsing $rule\")\n     end\n     if any_error(stream.diagnostics)\n-        source = SourceFile(sourcetext(stream, steal_textbuf=true), filename=filename)\n-        throw(ParseError(source, stream.diagnostics))\n+        throw(ParseError(stream, filename=filename))\n     end\n     # TODO: Figure out a more satisfying solution to the wrap_toplevel_as_kind\n     # mess that we've got here.\ndiff --git a/src/syntax_tree.jl b/src/syntax_tree.jl\nindex a9cf33e4..6ec97e6b 100644\n--- a/src/syntax_tree.jl\n+++ b/src/syntax_tree.jl\n@@ -120,6 +120,9 @@ children(node::SyntaxNode) = haschildren(node) ? node.val::Vector{SyntaxNode} :\n \n span(node::SyntaxNode) = span(node.raw)\n \n+first_byte(node::SyntaxNode) = node.position\n+last_byte(node::SyntaxNode)  = node.position + span(node) - 1\n+\n \"\"\"\n     sourcetext(node)\n \n@@ -138,7 +141,7 @@ end\n function _show_syntax_node(io, current_filename, node::SyntaxNode, indent)\n     fname = node.source.filename\n     line, col = source_location(node.source, node.position)\n-    posstr = \"$(lpad(line, 4)):$(rpad(col,3))│$(lpad(node.position,6)):$(rpad(node.position+span(node)-1,6))│\"\n+    posstr = \"$(lpad(line, 4)):$(rpad(col,3))│$(lpad(first_byte(node),6)):$(rpad(last_byte(node),6))│\"\n     val = node.val\n     nodestr = haschildren(node) ? \"[$(untokenize(head(node)))]\" :\n               isa(val, Symbol) ? string(val) : repr(val)\n",
+    "test_patch": "diff --git a/test/hooks.jl b/test/hooks.jl\nindex b93c0a17..2604e9f2 100644\n--- a/test/hooks.jl\n+++ b/test/hooks.jl\n@@ -31,8 +31,69 @@\n \n         # Check that Meta.parse throws the JuliaSyntax.ParseError rather than\n         # Meta.ParseError when Core integration is enabled.\n-        @test_throws JuliaSyntax.ParseError Meta.parse(\"[x\")\n+        @test_throws JuliaSyntax.ParseError Meta.parse(\"[x)\")\n \n         JuliaSyntax.enable_in_core!(false)\n     end\n+\n+    @testset \"Expr(:incomplete)\" begin\n+        JuliaSyntax.enable_in_core!()\n+\n+        @test Meta.isexpr(Meta.parse(\"[x\"), :incomplete)\n+\n+        for (str, tag) in [\n+                \"\"             => :none\n+                \"\\\"\"           => :string\n+                \"\\\"\\$foo\"      => :string\n+                \"#=\"           => :comment\n+                \"'\"            => :char\n+                \"'a\"           => :char\n+                \"`\"            => :cmd\n+                \"(\"            => :other\n+                \"[\"            => :other\n+                \"begin\"        => :block\n+                \"quote\"        => :block\n+                \"let\"          => :block\n+                \"let;\"         => :block\n+                \"for\"          => :other\n+                \"for x=xs\"     => :block\n+                \"function\"     => :other\n+                \"function f()\" => :block\n+                \"macro\"        => :other\n+                \"macro f()\"    => :block\n+                \"f() do\"       => :other\n+                \"f() do x\"     => :block\n+                \"module\"       => :other\n+                \"module X\"     => :block\n+                \"baremodule\"   => :other\n+                \"baremodule X\" => :block\n+                \"mutable struct\"    => :other\n+                \"mutable struct X\"  => :block\n+                \"struct\"       => :other\n+                \"struct X\"     => :block\n+                \"if\"           => :other\n+                \"if x\"         => :block\n+                \"while\"        => :other\n+                \"while x\"      => :block\n+                \"try\"          => :block\n+                # could be `try x catch exc body end` or `try x catch ; body end`\n+                \"try x catch\"  => :block\n+                \"using\"        => :other\n+                \"import\"       => :other\n+                \"local\"        => :other\n+                \"global\"       => :other\n+\n+                \"1 == 2 ?\"     => :other\n+                \"1 == 2 ? 3 :\" => :other\n+                \"1,\"           => :other\n+                \"1, \"          => :other\n+                \"1,\\n\"         => :other\n+                \"1, \\n\"        => :other\n+            ]\n+            @testset \"$(repr(str))\" begin\n+                @test Base.incomplete_tag(Meta.parse(str, raise=false)) == tag\n+            end\n+        end\n+        JuliaSyntax.enable_in_core!(false)\n+    end\n end\n",
+    "FAIL_TO_PASS": [
+      "Hooks for Core integration",
+      "Parse JuliaSyntax",
+      "Parse Base at /usr/local/julia/bin/../share/julia/base",
+      "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+    ],
+    "PASS_TO_PASS": [
+      "Tokenize",
+      "ParseStream",
+      "Trivia attachment",
+      "Unicode normalization in tree conversion",
+      "Expr conversion",
+      "Parsing values from strings"
+    ],
+    "instance_id": "julialang__juliasyntax.jl-102",
+    "repo": "JuliaLang/JuliaSyntax.jl",
+    "pr_description": "This allows REPL completion to work correctly. It works by pattern matching the parse tree, rather than hard coding incomplete expression detection into the parser itself.\r\n\r\nThis took a while because I got distracted with #88. Though doing some of those things first helped make this quite a lot cleaner. There's still more changes from #88 which would help make this nicer but for now it works.\r\n\r\nThe tests here are somewhat derived from `Base`, but I had to review them all (ie the tests pasted in https://github.com/JuliaLang/JuliaSyntax.jl/pull/71#issuecomment-1225364445) because they turn out to not really make sense.  For example, `\"begin;\"` and `\"begin\"` are both the prefix of a block construct, one of them shouldn't come out as `:other`.\r\n\r\nAlternative to #71, CC @aviatesk :-)\r\n\r\nFix #42, would close #71",
+    "created_at": "2022-09-19 09:03:07",
+    "image_name": "docker.io/swerebenchv2/julialang-juliasyntax.jl:102-b2372b7",
+    "language": "julia",
+    "interface": "Function: enable_in_core!()\nLocation: JuliaSyntax module\nInputs: None; toggles a global flag that determines whether the Julia Syntax parser is used for Core._parse integration.\nOutputs: No return value (returns `nothing`). After calling, subsequent calls to `Meta.parse` (and related Base functions like `Base.incomplete_tag`) will use the JuliaSyntax parser instead of the default Core parser.\nDescription: Enables the JuliaSyntax parser for Core integration, allowing tests (e.g., `Meta.isexpr` and `Base.incomplete_tag`) to exercise the new incomplete‑expression handling logic.\n",
+    "license": "custom-check-github",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "B4",
+        "confidence": 0.78,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": true,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "hard",
+        "external_urls": [],
+        "intent_completeness": "partial",
+        "pr_categories": [
+          "core_feat"
+        ],
+        "reasoning": "The issue asks for REPL multiline tolerance but does not specify the exact API change; the test patch expects Meta.parse to return an :incomplete expression and Base.incomplete_tag to work, which are not mentioned in the issue. The tests align with a reasonable interpretation but introduce expectations not stated, indicating ambiguous specification. No other B‑category signals are present, so the primary problem is an ambiguous spec (B4).",
+        "test_alignment_issues": [
+          "Tests assert that Meta.parse returns an Expr(:incomplete) and that Base.incomplete_tag yields specific tags, which are not described in the issue description."
+        ]
+      },
+      "num_modified_files": 4,
+      "num_modified_lines": null,
+      "pr_author": "c42f",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/102"
+    }
+  },
+  "parent_sha": "b2372b755d194d198c31cc9fb31cb63f8938fa46",
+  "changed_production_files": [
+    "src/hooks.jl",
+    "src/parser_api.jl",
+    "src/syntax_tree.jl"
+  ],
+  "changed_test_files": [
+    "test/hooks.jl"
+  ],
+  "trigger_tests": [
+    "Hooks for Core integration",
+    "Parse JuliaSyntax",
+    "Parse Base at /usr/local/julia/bin/../share/julia/base",
+    "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+  ],
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "test_patch_suite",
+    "path": "trigger/upstream-tests.patch",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "test_files": [
+      "test/hooks.jl"
+    ],
+    "test_files_sha256": {
+      "test/hooks.jl": "7132c8d686d2408ca53cecbfdaf1582336016383dbd4d29eb12d3eac3b91e36b"
+    },
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "Hooks for Core integration",
+        "Parse JuliaSyntax",
+        "Parse Base at /usr/local/julia/bin/../share/julia/base",
+        "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+      ],
+      "added_testsets": [
+        "Expr(:incomplete)",
+        "$(repr(str))"
+      ],
+      "inferred_testset_context": [
+        "enable_in_core!"
+      ],
+      "assertion_expression_sha256": [
+        "0b6afa298cdd471a97f1075f31a4e371ca8ed2ff5b56f10a66a2c481c1d1c6c9",
+        "4aa1afebcea67db8df894cacc953c1d3fd008ce5f9e0dc0f2c130c73621f10a6",
+        "e325779f3095f86a29447ffb987f32db712f48f82a6928df680d612405bded28"
+      ]
+    },
+    "sha256": "73b5c5ec87b38c7351600e28d953301dd56db788990a6eb0b2114f56e298f668"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "9e6392e8ddb53979c7131de4b7dd05b00a9a5c89",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "400eac4012b3145bc3d2a6b55546f358447bbdc847f03932b4e7c090cd490299",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:38:33Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.6216757891210615,
+      "input_tokens": 10873,
+      "output_tokens": 841
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"The commit makes the Core._parse hook return Expr(:incomplete, msg) when the parse error extends to the end of the input, instead of always returning Expr(:error, ParseError(...)). This restores the contract the Julia runtime/REPL depends on (Base.incomplete_tag), fixing issue #42 where typing multiline input such as `map(1:10) do x` or a trailing binary operator in the REPL aborted with a ParseError instead of continuing the line. Supporting helpers (_first_error, _incomplete_tag, first_byte/last_byte, a ParseError(stream) constructor) exist only to implement the classification.\", \"evidence\": \"Issue #42 documents concrete broken production behavior in the REPL with JuliaSyntax as the parser; PR #102 ('Generate Expr(:incomplete)') explicitly says 'Fix #42' and describes pattern-matching the parse tree to detect incomplete input. The production diff replaces the unconditional Expr(:error, ...) branch in _core_parser_hook with a last_byte(err) == lastindex(code) check that emits Expr(:incomplete, msg) with messages mirroring flisp's wording. test/hooks.jl is modified in the same commit, and runtime evidence reports strict_differential=stable_differential over 3 repetitions with the full suite passing after the fix, so the tests distinguish parent from fixed behavior. Minimization kept 5 of 6 hunks and reports all kept hunks necessary; the dropped hunk is the cosmetic _show_syntax_node rewrite.\", \"missing_evidence\": \"trigger_tests is empty, so the specific failing test name(s) in test/hooks.jl are not identified. The test patch itself is not shown, so I cannot confirm which inputs are asserted (e.g. per-tag coverage for :string, :cmd, :char, :comment, :block). No PR title/body/commit subject supplied for this exact SHA; linkage to PR #102 is inferred from the issue records rather than stated directly.\", \"validation_risks\": \"The hook depends on Core._setparser!/Core.set_parser availability, so behavior is Julia-version sensitive and the trigger tests may be gated by @static branches. The `last_byte(err) == lastindex(code)` check is byte/char-index mixed (lastindex on a String is a byte index for the final character start), which could make some cases version- or encoding-sensitive. Error messages are asserted as exact strings in some Base-derived tests, so message wording drift would break validation. _incomplete_tag relies on c.parent being set, which requires the SyntaxNode tree built with wrap_toplevel_as_kind=K\\\"None\\\"; an unrelated tree-shape change would shift tags.\", \"suggested_tests\": \"Assert that _core_parser_hook (or Meta.parse) on inputs ending mid-construct returns Expr(:incomplete, ...) with the expected tag-derived message: \\\"map(1:10) do x\\\" and \\\"begin\\\" -> construct requires end; \\\"w = u +\\\" -> premature end of input; \\\"\\\\\\\"abc\\\" -> invalid string syntax; \\\"`cmd\\\" -> invalid \\\\\\\"`\\\\\\\" syntax; \\\"#= comment\\\" -> unterminated multi-line comment; \\\"'a\\\" -> invalid character literal. Also assert that a genuinely invalid but complete input (e.g. \\\"a b c\\\" or \\\"1 + + \\\\n2\\\") still yields Expr(:error, ParseError) and not :incomplete, and that with options=:all the result is wrapped as Expr(:toplevel, error_ex). Include a Base.incomplete_tag round-trip check where available.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "The commit makes the Core._parse hook return Expr(:incomplete, msg) when the parse error extends to the end of the input, instead of always returning Expr(:error, ParseError(...)). This restores the contract the Julia runtime/REPL depends on (Base.incomplete_tag), fixing issue #42 where typing multiline input such as `map(1:10) do x` or a trailing binary operator in the REPL aborted with a ParseError instead of continuing the line. Supporting helpers (_first_error, _incomplete_tag, first_byte/last_byte, a ParseError(stream) constructor) exist only to implement the classification.",
+    "evidence": "Issue #42 documents concrete broken production behavior in the REPL with JuliaSyntax as the parser; PR #102 ('Generate Expr(:incomplete)') explicitly says 'Fix #42' and describes pattern-matching the parse tree to detect incomplete input. The production diff replaces the unconditional Expr(:error, ...) branch in _core_parser_hook with a last_byte(err) == lastindex(code) check that emits Expr(:incomplete, msg) with messages mirroring flisp's wording. test/hooks.jl is modified in the same commit, and runtime evidence reports strict_differential=stable_differential over 3 repetitions with the full suite passing after the fix, so the tests distinguish parent from fixed behavior. Minimization kept 5 of 6 hunks and reports all kept hunks necessary; the dropped hunk is the cosmetic _show_syntax_node rewrite.",
+    "missing_evidence": "trigger_tests is empty, so the specific failing test name(s) in test/hooks.jl are not identified. The test patch itself is not shown, so I cannot confirm which inputs are asserted (e.g. per-tag coverage for :string, :cmd, :char, :comment, :block). No PR title/body/commit subject supplied for this exact SHA; linkage to PR #102 is inferred from the issue records rather than stated directly.",
+    "validation_risks": "The hook depends on Core._setparser!/Core.set_parser availability, so behavior is Julia-version sensitive and the trigger tests may be gated by @static branches. The `last_byte(err) == lastindex(code)` check is byte/char-index mixed (lastindex on a String is a byte index for the final character start), which could make some cases version- or encoding-sensitive. Error messages are asserted as exact strings in some Base-derived tests, so message wording drift would break validation. _incomplete_tag relies on c.parent being set, which requires the SyntaxNode tree built with wrap_toplevel_as_kind=K\"None\"; an unrelated tree-shape change would shift tags.",
+    "suggested_tests": "Assert that _core_parser_hook (or Meta.parse) on inputs ending mid-construct returns Expr(:incomplete, ...) with the expected tag-derived message: \"map(1:10) do x\" and \"begin\" -> construct requires end; \"w = u +\" -> premature end of input; \"\\\"abc\" -> invalid string syntax; \"`cmd\" -> invalid \\\"`\\\" syntax; \"#= comment\" -> unterminated multi-line comment; \"'a\" -> invalid character literal. Also assert that a genuinely invalid but complete input (e.g. \"a b c\" or \"1 + + \\n2\") still yields Expr(:error, ParseError) and not :incomplete, and that with options=:all the result is wrapped as Expr(:toplevel, error_ex). Include a Base.incomplete_tag round-trip check where available."
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2"
+}

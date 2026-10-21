@@ -1,0 +1,27 @@
+diff --git a/test/specs/class_test.dart b/test/specs/class_test.dart
+index 2b0698cfe68cce54cace3a4d6ec8b4d8ca689d2f..ebf67779ca23a6345d670e59905d12ecc34a785f 100644
+--- a/test/specs/class_test.dart
++++ b/test/specs/class_test.dart
+@@ -248,6 +248,22 @@ void main() {
+     );
+   });
+ 
++  test('should create a class with a const factory constructor', () {
++    expect(
++      Class((b) => b
++        ..name = 'Foo'
++        ..constructors.add(Constructor((b) => b
++          ..factory = true
++          ..constant = true
++          ..redirect = refer('_Foo')))),
++      equalsDart(r'''
++        class Foo {
++          const factory Foo() = _Foo;
++        }
++      '''),
++    );
++  });
++
+   test('should create a class with a factory lambda constructor', () {
+     expect(
+       Class((b) => b

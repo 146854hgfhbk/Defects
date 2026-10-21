@@ -1,0 +1,129 @@
+diff --git a/Changes b/Changes
+index af661dd29a6730dafd00b8808998fb2ff2b0265d..c792fe3aeb2898a350cbaeeb9ae06939bacf5144 100644
+--- a/Changes
++++ b/Changes
+@@ -1,6 +1,11 @@
+ Revision history for URI
+ 
+ {{$NEXT}}
++    - Restore pre-5.19 query_form handling of undef/valueless params: an undef
++      value again encodes as "key=" (restoring compatibility with downstream
++      code such as HTTP::Request::Common), and a param with no "=" again decodes
++      to an empty string rather than undef, matching the WHATWG URL spec
++      (GH#133) (RT#150855)
+ 
+ 5.35      2026-06-14 23:04:12Z
+     - Strip leading zeros from port numbers in canonical URIs (GH#69) (GH#162)
+diff --git a/lib/URI/_query.pm b/lib/URI/_query.pm
+index 66d08c7cd0dc6f6e59d05d840b6fc83581787c9d..4c740e4f0e7deab9de5fc089cf75a3a7633be2a1 100644
+--- a/lib/URI/_query.pm
++++ b/lib/URI/_query.pm
+@@ -47,19 +47,15 @@ sub query_form {
+ 
+         my @query;
+         while (my($key,$vals) = splice(@_, 0, 2)) {
+-            $key = '' unless defined $key;
++            $key = q{} unless defined $key;
+ 	    $key =~ s/([;\/?:@&=+,\$\[\]%])/ URI::Escape::escape_char($1)/eg;
+ 	    $key =~ s/ /+/g;
+ 	    $vals = [_is_array($vals) ? @$vals : $vals];
+             for my $val (@$vals) {
+-                if (defined $val) {
+-                    $val =~ s/([;\/?:@&=+,\$\[\]%])/ URI::Escape::escape_char($1)/eg;
+-                    $val =~ s/ /+/g;
+-                    push(@query, "$key=$val");
+-                }
+-                else {
+-                    push(@query, $key);
+-                }
++                $val = q{} unless defined $val;
++                $val =~ s/([;\/?:@&=+,\$\[\]%])/ URI::Escape::escape_char($1)/eg;
++                $val =~ s/ /+/g;
++                push(@query, "$key=$val");
+             }
+         }
+         if (@query) {
+@@ -75,8 +71,8 @@ sub query_form {
+     }
+     return if !defined($old) || !length($old) || !defined(wantarray);
+     return unless $old =~ /=/; # not a form
+-    map { ( defined ) ? do { s/\+/ /g; uri_unescape($_) } : undef }
+-         map { /=/ ? split(/=/, $_, 2) : ($_ => undef)} split(/[&;]/, $old);
++    map { s/\+/ /g; uri_unescape($_) }
++         map { /=/ ? split(/=/, $_, 2) : ($_ => q{})} split(/[&;]/, $old);
+ }
+ 
+ # Handle ...?dog+bones type of query
+diff --git a/t/old-base.t b/t/old-base.t
+index 5364e0de066ed972169ba2b02cd91bc087756841..8b1bf11837970fc41304ea55fe1ceae0d1a69f29 100644
+--- a/t/old-base.t
++++ b/t/old-base.t
+@@ -316,14 +316,14 @@ sub parts_test {
+     );
+ 
+     $url->query_form(a => undef, a => 'foo', '&=' => '&=+');
+-    is($url->as_string, 'http://web?a&a=foo&%26%3D=%26%3D%2B', ref($url) . '->as_string');
++    is($url->as_string, 'http://web?a=&a=foo&%26%3D=%26%3D%2B', ref($url) . '->as_string');
+ 
+     my @a = $url->query_form;
+     is(scalar(@a), 6, 'length');
+     is_deeply(
+         \@a,
+         [
+-            'a', undef,
++            'a', q{},
+             'a', 'foo',
+             '&=', '&=+',
+         ],
+diff --git a/t/query.t b/t/query.t
+index 801e41765363e7eec3e4c4b74fd0318e44301e67..6f9a86ad048d1c28ba919b7991a9a98f209b9e71 100644
+--- a/t/query.t
++++ b/t/query.t
+@@ -1,7 +1,7 @@
+ use strict;
+ use warnings;
+ 
+-use Test::More tests => 37;
++use Test::More tests => 41;
+ 
+ use URI ();
+ my $u = URI->new("", "http");
+@@ -35,7 +35,7 @@ $u->query_form(a => 3, b => 4);
+ is $u, "?a=3&b=4";
+ 
+ $u->query_form(a => undef);
+-is $u, "?a";
++is $u, '?a=';
+ 
+ $u->query_form("a[=&+#] " => " [=&+#]");
+ is $u, "?a%5B%3D%26%2B%23%5D+=+%5B%3D%26%2B%23%5D";
+@@ -152,10 +152,26 @@ $u->query_form(Foo::Bar::Array->new([]));
+ }
+ is $u, "?a=1;b=2";
+ 
++# A query param with no "=" decodes to an empty-string value (per the WHATWG
++# URL spec), not undef. See RT#150855 / GH#133.
+ $u->query('a&b=2');
+ @q = $u->query_form;
+-is join(":", map { defined($_) ? $_ : '' } @q), "a::b:2";
+-ok !defined($q[1]);
++is join(':', @q), 'a::b:2';
++ok defined($q[1]), 'valueless param decodes as a defined value';
++is $q[1], q{}, 'valueless param decodes as empty string, not undef';
+ 
+ $u->query_form(@q);
+-is $u,'?a&b=2';
++is $u, '?a=&b=2', 'empty-string value round-trips with an equals sign';
++
++# Regression for RT#150855 / GH#133: an undef value must encode as "key="
++# (e.g. HTTP::Request::Common passes undef meaning an empty value), not as a
++# bare "key" with no equals sign.
++$u->query_form(foo => undef);
++is $u, '?foo=', 'scalar undef value encodes with an equals sign';
++
++$u->query_form(a => undef, a => 'foo');
++is $u, '?a=&a=foo', 'undef among multiple values keeps the equals sign';
++
++$u->query_form({ bar => 'baz', foo => undef });
++ok $u eq '?bar=baz&foo=' || $u eq '?foo=&bar=baz',
++    'undef value in a hash is encoded as empty, not dropped';

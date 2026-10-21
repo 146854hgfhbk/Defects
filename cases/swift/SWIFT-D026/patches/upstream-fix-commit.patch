@@ -1,0 +1,37 @@
+diff --git a/Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift b/Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift
+index a3aeb96..5199bd1 100644
+--- a/Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift
++++ b/Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift
+@@ -11,6 +11,7 @@ public extension DatabaseInfo {
+     var entities = [ EntityInfo ]()
+     entities.reserveCapacity(schema.tables.count + schema.views.count)
+     
++    let dbName = schema.tables.contains(where: { $0.name == name }) ? "\(name)DB" : name
+     for table in schema.tables {
+       let isWithoutRowID = table.isTableWithoutRowID
+       let indices  = schema.indices [table.name] ?? []
+@@ -56,7 +57,7 @@ public extension DatabaseInfo {
+       entities.append(entity)
+     }
+ 
+-    self.init(name: name, userVersion: schema.userVersion, entities: entities)
++    self.init(name: dbName, userVersion: schema.userVersion, entities: entities)
+   }
+ }
+ 
+diff --git a/Tests/EntityGenTests/ASTDatabaseStructGenerationTests.swift b/Tests/EntityGenTests/ASTDatabaseStructGenerationTests.swift
+index 89c2557..040a711 100644
+--- a/Tests/EntityGenTests/ASTDatabaseStructGenerationTests.swift
++++ b/Tests/EntityGenTests/ASTDatabaseStructGenerationTests.swift
+@@ -228,4 +228,11 @@ final class ASTDatabaseStructGenerationTests: XCTestCase {
+     XCTAssertTrue(source.contains(
+       "[ Person.self, Address.self, AFancyTestTable.self ]"))
+   }
++
++  func testResolveConflictedDatabaseName() throws {
++    let name   = try XCTUnwrap(Fixtures.addressSchema.tables.first?.name)
++    let dbInfo = DatabaseInfo(name: name, schema: Fixtures.addressSchema)
++
++    XCTAssertEqual(dbInfo.name, "\(name)DB")
++  }
+ }

@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1700",
+  "technical_evidence_sha256": "bf1de373255cc9458455e0ab89be9362525c6855cc615378f227375716544175",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "3a3217cd6dbeff5d17796f6ab31b328fb30f23c392a9477b17e2bf01bcab15a9",
+  "reviewed_at": "2026-09-09T15:19:41.804383+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-algorithms#161",
+  "rationale": "Issue #161 reports that chunked(by:) evaluated its predicate against the first element of the chunk instead of the immediately preceding element, contradicting the documented consecutive-element contract, with the concrete reproducer [1,2,3,4,6,7,8,9].chunked(by: { $1 - $0 == 1 }) yielding [[1,2],[3,4],[6,7],[8,9]] instead of [[1,2,3,4],[6,7,8,9]]. Traceability is fix_commit -> merged PR #162 (\"Fixes #161\") -> issue #161, and verified_fix_issue_numbers is [161]. The minimized production patch is exactly three behavioral hunks in Sources/Algorithms/Chunked.swift: endOfChunk(startingAt:) and startOfChunk(endingAt:) change `let subject` to `var subject` and advance it via `defer` inside the predicate closure, and the eager chunked(by:) loop moves `current = element` out of the boundary branch so it updates every iteration. These cover the eager, lazy-forward, and lazy-reverse paths of one defect; no new API, no signature changes, no docs-only, config-only, or test-only content. The one deleted comment line was attached to the rewritten statement it described, so it is part of the fix rather than an unrelated cleanup. The trigger is the unchanged upstream test from the same fixing commit (testChunkedByComparesConsecutiveElements) and asserts precisely the issue's reproducer plus the lazy and reversed variants; it uses only pre-existing API (chunked(by:), .lazy, .reversed(), XCTAssertEqualSequences, validateIndexTraversals), so this is a genuine behavioral FAIL_TO_PASS rather than a fix-only-API compile failure. Strict machine evidence for both the original and post-minimization states passes every gate: build.both_versions, selectors.present_and_unique (1/1 unique), trigger.buggy_differential with the declared selector reproduced, trigger.deterministic across 3 repetitions (32 matrix runs), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty, so #161 is not a duplicate, and it is the only allowed root cause id.\n\nIssue #161 reports that chunked(by:) evaluated its predicate against the first element of the chunk rather than the immediately preceding element, contradicting the documented contract, with the concrete example [1,2,3,4,6,7,8,9].chunked(by: { $1 - $0 == 1 }) yielding [[1,2],[3,4],[6,7],[8,9]] instead of [[1,2,3,4],[6,7,8,9]]. PR #162 states 'Fixes #161' and traceability resolves fix_commit_to_merged_pr_to_issue for issue 161, which matches the single allowed root cause key. All three retained hunks in Sources/Algorithms/Chunked.swift implement exactly that single root cause: endOfChunk(startingAt:) and startOfChunk(endingAt:) change 'let subject' to 'var subject' and advance it via 'defer { subject = nextSubject }' inside the predicate closure, and the eager chunked(by:) loop moves 'current = element' out of the boundary branch so it updates every iteration. Nothing else is touched: no new API, no signature or dependency changes, no doc-only or config-only edits; the single deleted comment line is the comment attached to the rewritten 'let subject' statement, not an unrelated cleanup. The trigger is the unchanged upstream test testChunkedByComparesConsecutiveElements from the same fixing commit (trigger_reduction.removed_external_dependency=false), and it exercises only pre-existing API surface: chunked(by:), .lazy.chunked(by:), .reversed(), plus the existing XCTAssertEqualSequences and validateIndexTraversals helpers, so it is not a fix-only-API compile artifact. Its assertions restate the issue's exact expected values for the eager path, the lazy forward path, and the lazy reverse path. Strict evidence confirms build.both_versions PASS, trigger.buggy_differential PASS with the single reproduced selector Tests/SwiftAlgorithmsTests/ChunkedTests.swift::testChunkedByComparesConsecutiveElements, trigger.fixed_clean PASS, trigger.deterministic across 3 repetitions, full_suite.buggy_reproduces_only_triggers PASS, and full_suite.fixed_all_green PASS, identically in strict_original and strict_post_minimization with post_minimization_validation=PASS and zero removed hunks. active_same_project_root_causes is empty, so this root cause duplicates no registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T15:19:21.247981+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "3a3217cd6dbeff5d17796f6ab31b328fb30f23c392a9477b17e2bf01bcab15a9",
+      "response_sha256": "ecd62b92994fd386a11f87542d2b23d085dba71f5b72441a667e6f1024f50089",
+      "response_id": "msg_6fcd249c30034d449ef7f46c4eb157cc",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5233825206965174,
+        "input_tokens": 18119,
+        "output_tokens": 787
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-algorithms#161",
+      "rationale": "Issue #161 reports that chunked(by:) evaluated its predicate against the first element of the chunk instead of the immediately preceding element, contradicting the documented consecutive-element contract, with the concrete reproducer [1,2,3,4,6,7,8,9].chunked(by: { $1 - $0 == 1 }) yielding [[1,2],[3,4],[6,7],[8,9]] instead of [[1,2,3,4],[6,7,8,9]]. Traceability is fix_commit -> merged PR #162 (\"Fixes #161\") -> issue #161, and verified_fix_issue_numbers is [161]. The minimized production patch is exactly three behavioral hunks in Sources/Algorithms/Chunked.swift: endOfChunk(startingAt:) and startOfChunk(endingAt:) change `let subject` to `var subject` and advance it via `defer` inside the predicate closure, and the eager chunked(by:) loop moves `current = element` out of the boundary branch so it updates every iteration. These cover the eager, lazy-forward, and lazy-reverse paths of one defect; no new API, no signature changes, no docs-only, config-only, or test-only content. The one deleted comment line was attached to the rewritten statement it described, so it is part of the fix rather than an unrelated cleanup. The trigger is the unchanged upstream test from the same fixing commit (testChunkedByComparesConsecutiveElements) and asserts precisely the issue's reproducer plus the lazy and reversed variants; it uses only pre-existing API (chunked(by:), .lazy, .reversed(), XCTAssertEqualSequences, validateIndexTraversals), so this is a genuine behavioral FAIL_TO_PASS rather than a fix-only-API compile failure. Strict machine evidence for both the original and post-minimization states passes every gate: build.both_versions, selectors.present_and_unique (1/1 unique), trigger.buggy_differential with the declared selector reproduced, trigger.deterministic across 3 repetitions (32 matrix runs), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty, so #161 is not a duplicate, and it is the only allowed root cause id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "traceability.paths[0]",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "issue_evidence and semantic_justification are null in case.json; issue text was read from the embedded source_candidate.issue_check payload rather than a separately fetched issue record.",
+        "The trigger test retains two leftover print(...) calls from upstream, which add output noise without affecting assertions.",
+        "validateIndexTraversals is a shared index-consistency harness; on the buggy revision it could trap rather than produce a clean assertion failure, though strict evidence records a deterministic FAIL across 3 repetitions.",
+        "The three hunks span eager and lazy/bidirectional paths, so a partial revert would not isolate a single failing path."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T15:19:41.804193+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "3a3217cd6dbeff5d17796f6ab31b328fb30f23c392a9477b17e2bf01bcab15a9",
+      "response_sha256": "e5a43b0f5fab987934d89d80d792aa86a9b020315f7619e96e85d538889431d6",
+      "response_id": "msg_d34b8bf5e92d43609401b48c13b22f40",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4748624390049751,
+        "input_tokens": 18231,
+        "output_tokens": 828
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-algorithms#161",
+      "rationale": "Issue #161 reports that chunked(by:) evaluated its predicate against the first element of the chunk rather than the immediately preceding element, contradicting the documented contract, with the concrete example [1,2,3,4,6,7,8,9].chunked(by: { $1 - $0 == 1 }) yielding [[1,2],[3,4],[6,7],[8,9]] instead of [[1,2,3,4],[6,7,8,9]]. PR #162 states 'Fixes #161' and traceability resolves fix_commit_to_merged_pr_to_issue for issue 161, which matches the single allowed root cause key. All three retained hunks in Sources/Algorithms/Chunked.swift implement exactly that single root cause: endOfChunk(startingAt:) and startOfChunk(endingAt:) change 'let subject' to 'var subject' and advance it via 'defer { subject = nextSubject }' inside the predicate closure, and the eager chunked(by:) loop moves 'current = element' out of the boundary branch so it updates every iteration. Nothing else is touched: no new API, no signature or dependency changes, no doc-only or config-only edits; the single deleted comment line is the comment attached to the rewritten 'let subject' statement, not an unrelated cleanup. The trigger is the unchanged upstream test testChunkedByComparesConsecutiveElements from the same fixing commit (trigger_reduction.removed_external_dependency=false), and it exercises only pre-existing API surface: chunked(by:), .lazy.chunked(by:), .reversed(), plus the existing XCTAssertEqualSequences and validateIndexTraversals helpers, so it is not a fix-only-API compile artifact. Its assertions restate the issue's exact expected values for the eager path, the lazy forward path, and the lazy reverse path. Strict evidence confirms build.both_versions PASS, trigger.buggy_differential PASS with the single reproduced selector Tests/SwiftAlgorithmsTests/ChunkedTests.swift::testChunkedByComparesConsecutiveElements, trigger.fixed_clean PASS, trigger.deterministic across 3 repetitions, full_suite.buggy_reproduces_only_triggers PASS, and full_suite.fixed_all_green PASS, identically in strict_original and strict_post_minimization with post_minimization_validation=PASS and zero removed hunks. active_same_project_root_causes is empty, so this root cause duplicates no registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "traceability.paths",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "minimized_patch_reference.post_minimization_validation",
+        "trigger_reduction.upstream_trigger_patch"
+      ],
+      "risks": [
+        "The upstream trigger retains two leftover print(...) calls, which add output noise but do not affect any assertion.",
+        "validateIndexTraversals is a shared conformance harness; on the buggy revision an index inconsistency could surface as a trap rather than a clean assertion failure, though the recorded differential shows a deterministic isolated FAIL and no other suite failures.",
+        "The single patch bundles the eager path and both lazy traversal directions, so a partial revert would not isolate one failure path; the three hunks share one root cause but are not independently minimizable.",
+        "issue_evidence and semantic_justification are null in the case record; issue content was read from the embedded source_candidate.issue_check payload rather than a separately captured issue snapshot."
+      ]
+    }
+  ]
+}

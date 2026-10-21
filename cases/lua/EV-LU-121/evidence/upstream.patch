@@ -1,0 +1,148 @@
+diff --git a/spec/lexer_spec.lua b/spec/lexer_spec.lua
+index 94873f03767d8c9a55fc26bbb72384153952b831..df6bf3425e87a50f909f3b57971ada4757c6656e 100644
+--- a/spec/lexer_spec.lua
++++ b/spec/lexer_spec.lua
+@@ -20,21 +20,22 @@ local function get_token(source)
+    return token
+ end
+ 
++local function maybe_error(lexer_state)
++   local ok, err, line, column, offset = lexer.next_token(lexer_state)
++   return not ok and {msg = err, line = line, column = column, offset = offset}
++end
++
+ local function get_error(source)
+-   local lexer_state = lexer.new_state(source)
+-   local ok, err = pcall(lexer.next_token, lexer_state)
+-   assert.is_false(ok)
+-   return err
++   return maybe_error(lexer.new_state(source))
+ end
+ 
+ local function get_last_error(source)
+    local lexer_state = lexer.new_state(source)
+-   local ok = true
+    local err
+ 
+-   while ok do
+-      ok, err = pcall(lexer.next_token, lexer_state)
+-   end
++   repeat
++      err = maybe_error(lexer_state)
++   until err
+ 
+    return err
+ end
+diff --git a/src/luacheck/lexer.lua b/src/luacheck/lexer.lua
+index 330ab0beacee85d77b0247419d64599be1b219b4..0f9e4cf88c16dbaaac3ad2de9df0f595146b920c 100644
+--- a/src/luacheck/lexer.lua
++++ b/src/luacheck/lexer.lua
+@@ -677,13 +677,18 @@ function lexer.new_state(src)
+    return state
+ end
+ 
+-function lexer.syntax_error(line, column, offset, msg)
+-   error({line = line, column = column, offset = offset, msg = msg})
++function lexer.syntax_error(location, msg)
++   error({
++      line = location.line,
++      column = location.column,
++      offset = location.offset,
++      msg = msg})
+ end
+ 
+ -- Looks for next token starting from state.line, state.line_offset, state.offset.
+--- Returns next token, its value and its location(line, column, offset).
++-- Returns next token, its value and its location (line, column, offset).
+ -- Sets state.line, state.line_offset, state.offset to token end location + 1.
++-- On error returns nil, error message, error location (line, column, offset).
+ function lexer.next_token(state)
+    local b = skip_space(state, sbyte(state.src, state.offset))
+ 
+@@ -700,17 +705,13 @@ function lexer.next_token(state)
+       token, token_value, err_offset = (byte_handlers[b] or lex_any)(state, b)
+    end
+ 
+-   if token then
+-      return token, token_value, token_line, token_column, token_offset
+-   else
+-      if err_offset then
+-         token_value = token_value .. " " .. lexer.quote(ssub(state.src, state.offset + err_offset, state.offset))
+-         token_offset = state.offset + err_offset
+-         token_column = state.offset - state.line_offset + 1 + err_offset
+-      end
+-
+-      lexer.syntax_error(token_line, token_column, token_offset, token_value)
++   if err_offset then
++      token_value = token_value .. " " .. lexer.quote(ssub(state.src, state.offset + err_offset, state.offset))
++      token_offset = state.offset + err_offset
++      token_column = state.offset - state.line_offset + 1 + err_offset
+    end
++
++   return token, token_value, token_line, token_column, token_offset
+ end
+ 
+ return lexer
+diff --git a/src/luacheck/linearize.lua b/src/luacheck/linearize.lua
+index 73b3b92a6e348119a82332344c505f70c8e27112..00a55c55ec8bb955e4bcc2c428580ae7b3758ba9 100644
+--- a/src/luacheck/linearize.lua
++++ b/src/luacheck/linearize.lua
+@@ -137,9 +137,8 @@ function LinState:leave_scope()
+          label.used = true
+       else
+          if not prev_scope or prev_scope.line ~= self.lines.top then
+-            local err_msg = (goto_.name == "break" and "'break' is not inside a loop" or
+-               "no visible label '%s'"):format(goto_.name)
+-            lexer.syntax_error(goto_.location.line, goto_.location.column, goto_.location.offset, err_msg)
++            lexer.syntax_error(goto_.location, goto_.name == "break" and
++               "'break' is not inside a loop" or ("no visible label '%s'"):format(goto_.name))
+          end
+ 
+          table.insert(prev_scope.gotos, goto_)
+@@ -206,8 +205,8 @@ end
+ function LinState:register_label(name, location)
+    if self.scopes.top.labels[name] then
+       assert(not pseudo_labels[name])
+-      lexer.syntax_error(location.line, location.column, location.offset,
+-         ("label '%s' already defined on line %d"):format(name, self.scopes.top.labels[name].location.line))
++      lexer.syntax_error(location, ("label '%s' already defined on line %d"):format(
++         name, self.scopes.top.labels[name].location.line))
+    end
+ 
+    self.scopes.top.labels[name] = new_label(self.lines.top, name, location)
+@@ -490,8 +489,7 @@ function LinState:scan_expr_Dots(item, node)
+    local dots = self:check_var(node, "access")
+ 
+    if not dots or dots.line ~= self.lines.top then
+-      lexer.syntax_error(node.location.line, node.location.column, node.location.offset,
+-         "cannot use '...' outside a vararg function")
++      lexer.syntax_error(node.location, "cannot use '...' outside a vararg function")
+    end
+ 
+    self:mark_access(item, node)
+diff --git a/src/luacheck/parser.lua b/src/luacheck/parser.lua
+index 83f08f871b3ae086b646b344f8393a47aa4f97d5..94518936ed24a19e4844d2f8e0d0184152248865 100644
+--- a/src/luacheck/parser.lua
++++ b/src/luacheck/parser.lua
+@@ -21,7 +21,9 @@ local function skip_token(state)
+    while true do
+       state.token, state.token_value, state.line, state.column, state.offset = lexer.next_token(state.lexer)
+ 
+-      if state.token == "comment" then
++      if not state.token then
++         lexer.syntax_error(state, state.token_value)
++      elseif state.token == "comment" then
+          state.comments[#state.comments+1] = {
+             contents = state.token_value,
+             location = location(state)
+@@ -69,9 +71,7 @@ local function token_repr(state)
+ end
+ 
+ local function parse_error(state, msg)
+-   lexer.syntax_error(state.line, state.column, state.offset,
+-      (msg or "syntax error") .. " near " .. token_repr(state)
+-   )
++   lexer.syntax_error(state, (msg or "syntax error") .. " near " .. token_repr(state))
+ end
+ 
+ local function check_token(state, token)

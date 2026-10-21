@@ -1,0 +1,34 @@
+diff --git a/lib/ExtUtils/MakeMaker.pm b/lib/ExtUtils/MakeMaker.pm
+index 37f52463..6a5c6a37 100644
+--- a/lib/ExtUtils/MakeMaker.pm
++++ b/lib/ExtUtils/MakeMaker.pm
+@@ -1358,14 +1358,10 @@ sub selfdocument {
+ 
+ # here so even if top_targets is overridden, these will still be defined
+ # gmake will silently still work if any are .PHONY-ed but nmake won't
+-static ::
+-	$(NOECHO) $(NOOP)
+-
+-dynamic ::
+-	$(NOECHO) $(NOOP)
+ EOF
+     push @m, join "\n", map "$_ ::\n\t\$(NOECHO) \$(NOOP)\n",
+         # config is so manifypods won't puke if no subdirs
++        grep !$self->{SKIPHASH}{$_},
+         qw(static dynamic config);
+     join "\n", @m;
+ }
+diff --git a/t/recurs.t b/t/recurs.t
+index b7fce18f..f69e6a1f 100644
+--- a/t/recurs.t
++++ b/t/recurs.t
+@@ -163,6 +163,9 @@ static :: libfcrypt$(LIB_EXT)
+ 
+ libfcrypt$(LIB_EXT) :
+ 	$(TOUCH) libfcrypt$(LIB_EXT)
++
++dynamic :
++	$(NOOP)
+ ';
+ }
+ EOF

@@ -1,0 +1,160 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-658",
+  "bug_id": "JULIA-658",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaDiff/ForwardDiff.jl",
+  "repository_url": "https://github.com/JuliaDiff/ForwardDiff.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaDiff/ForwardDiff.jl/issues/774"
+  ],
+  "issue_id": 774,
+  "buggy_revision": "2247c4a4af2e5648250521310e19309c056af121",
+  "fixed_revision": "e7c619d65fff5fda0babaebec28d4ea7f4ce456e",
+  "candidate_sha": "e7c619d65fff5fda0babaebec28d4ea7f4ce456e",
+  "source": "revision_recovery",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "2247c4a4af2e5648250521310e19309c056af121",
+  "changed_production_files": [
+    "src/partials.jl"
+  ],
+  "changed_test_files": [
+    "test/DerivativeTest.jl",
+    "test/GradientTest.jl",
+    "test/PartialsTest.jl"
+  ],
+  "trigger_tests": [
+    "NaN-safe mode",
+    "complex output",
+    "Specialized StaticArray codepaths: $T",
+    "det with branches",
+    "functions with `Dual` output",
+    "Partials{$N,$T}"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "ef809f6ba057ee43cbbfb6b42f2c2e706bcc6df5e48ecebcd9e07846c72d8cc0",
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "JULIA-658 NaN-safe mode differential MWE"
+      ],
+      "added_testsets": [
+        "NaN-safe mode",
+        "exponential function at base zero",
+        "gradient for exponential with NaNMath"
+      ],
+      "assertion_expression_sha256": [],
+      "mwe_basis": {
+        "upstream_pull_request": 777,
+        "upstream_test_files": [
+          "test/DerivativeTest.jl",
+          "test/GradientTest.jl"
+        ],
+        "defect": "NaN-safe mode does not sanitize derivative/gradient results; issue #774: ForwardDiff.derivative(log .- zero, 1.0) returns NaN instead of 0 when nansafe mode is enabled",
+        "public_api": "ForwardDiff.derivative, ForwardDiff.gradient",
+        "source_evidence": {
+          "upstream_tests_patch_sha256": "78a48dc0cdc4562f1f586ab6f0d791c6c44506fc5d01ad058b6b565b7b0fcdba",
+          "extraction": "testset blocks extracted verbatim from upstream test files at fixed revision"
+        }
+      }
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "e7c619d65fff5fda0babaebec28d4ea7f4ce456e",
+    "project": "JuliaDiff/ForwardDiff.jl",
+    "input_sha256": "1619ebc335534615415ce1802a5902ad4bb9ef3693f75eb29024cedf4c0154d5",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:38:02Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.6190832810281924,
+      "input_tokens": 5629,
+      "output_tokens": 869
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.76, \"summary\": \"The patch reworks ForwardDiff's NaN-safe partial arithmetic in src/partials.jl from a whole-tuple guard to a per-element guard. Previously the NaN-safe guards (`ifelse(!isfinite(x) && iszero(partials), one(x), x)`) only kicked in when every partial in the tuple was zero, so a Partials object mixing zero and non-zero components still produced NaN in the zero slots when scaled by a non-finite factor or divided by zero. The new `_mul_partial`/`_div_partial` helpers apply the zero-partial short circuit component-wise inside `scale_tuple`, `div_tuple_by_scalar`, and `mul_tuples`, which is the documented intent of NANSAFE_MODE. This is a behavioral correctness fix in production code, not an API addition: the new helpers are internal, and the `*`, `/`, `_mul_partials` methods are just hoisted out of the mode-conditional branch unchanged in the non-NaN-safe path.\", \"evidence\": \"Single production file (src/partials.jl), 4 hunks, all reported necessary and globally minimal. Test changes accompany the fix across test/PartialsTest.jl, test/DerivativeTest.jl, and test/GradientTest.jl, indicating observable behavior differences at both the Partials level and the derivative/gradient level. Runtime evidence reports a stable differential over 3 repetitions via a dedicated trigger script, with the full suite passing at the fixed commit. The semantics of the diff independently support a defect: the old guard's `iszero(partials)` condition is strictly weaker than the per-element `iszero(partial)` condition, so mixed zero/non-zero partial tuples were not protected.\", \"missing_evidence\": \"No PR title, body, or linked issue, so issue_commit_match cannot be established (traceability_class UNVERIFIED). The explicit trigger_tests list is empty even though a dedicated trigger script is referenced, so the exact failing test name at the parent commit is not visible. The full production patch text is not provided, only the minimized version, so it is unclear whether unrelated changes were dropped.\", \"validation_risks\": \"The fix only changes user-visible behavior when NANSAFE_MODE_ENABLED is true, which is a compile-time preference in ForwardDiff; if the harness runs with the default (disabled) setting, the trigger test may not reproduce. Note also that `mul_tuples` changes multiplication operand order from `afactor * a[i]` to `_mul_partial(a[i], afactor)`, which is semantically identical for real floats but could shift results for non-commutative or promotion-sensitive element types, so a differential failure might come from that rather than the NaN guard. Tests asserting NaN outputs are sensitive to signed zero and NaN equality semantics, so use isnan/iszero rather than == comparisons.\", \"suggested_tests\": \"1) Construct a Partials with mixed components, e.g. Partials((0.0, 1.0)), and check that multiplying by Inf and dividing by 0.0 yields 0.0 in the zero slot instead of NaN under NaN-safe mode. 2) Exercise `_mul_partials(a, b, x_a, x_b)` where only one of a or b has a zero component and one factor is non-finite, asserting the zero component stays zero. 3) End-to-end: differentiate a function whose primal hits a non-finite intermediate for one seeded direction only (the DerivativeTest/GradientTest additions likely cover this) and assert no NaN appears in the gradient entries corresponding to zero partials. 4) Regression guard: verify the non-NaN-safe path results are numerically unchanged for a representative set of Partials operations.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.76,
+    "summary": "The patch reworks ForwardDiff's NaN-safe partial arithmetic in src/partials.jl from a whole-tuple guard to a per-element guard. Previously the NaN-safe guards (`ifelse(!isfinite(x) && iszero(partials), one(x), x)`) only kicked in when every partial in the tuple was zero, so a Partials object mixing zero and non-zero components still produced NaN in the zero slots when scaled by a non-finite factor or divided by zero. The new `_mul_partial`/`_div_partial` helpers apply the zero-partial short circuit component-wise inside `scale_tuple`, `div_tuple_by_scalar`, and `mul_tuples`, which is the documented intent of NANSAFE_MODE. This is a behavioral correctness fix in production code, not an API addition: the new helpers are internal, and the `*`, `/`, `_mul_partials` methods are just hoisted out of the mode-conditional branch unchanged in the non-NaN-safe path.",
+    "evidence": "Single production file (src/partials.jl), 4 hunks, all reported necessary and globally minimal. Test changes accompany the fix across test/PartialsTest.jl, test/DerivativeTest.jl, and test/GradientTest.jl, indicating observable behavior differences at both the Partials level and the derivative/gradient level. Runtime evidence reports a stable differential over 3 repetitions via a dedicated trigger script, with the full suite passing at the fixed commit. The semantics of the diff independently support a defect: the old guard's `iszero(partials)` condition is strictly weaker than the per-element `iszero(partial)` condition, so mixed zero/non-zero partial tuples were not protected.",
+    "missing_evidence": "No PR title, body, or linked issue, so issue_commit_match cannot be established (traceability_class UNVERIFIED). The explicit trigger_tests list is empty even though a dedicated trigger script is referenced, so the exact failing test name at the parent commit is not visible. The full production patch text is not provided, only the minimized version, so it is unclear whether unrelated changes were dropped.",
+    "validation_risks": "The fix only changes user-visible behavior when NANSAFE_MODE_ENABLED is true, which is a compile-time preference in ForwardDiff; if the harness runs with the default (disabled) setting, the trigger test may not reproduce. Note also that `mul_tuples` changes multiplication operand order from `afactor * a[i]` to `_mul_partial(a[i], afactor)`, which is semantically identical for real floats but could shift results for non-commutative or promotion-sensitive element types, so a differential failure might come from that rather than the NaN guard. Tests asserting NaN outputs are sensitive to signed zero and NaN equality semantics, so use isnan/iszero rather than == comparisons.",
+    "suggested_tests": "1) Construct a Partials with mixed components, e.g. Partials((0.0, 1.0)), and check that multiplying by Inf and dividing by 0.0 yields 0.0 in the zero slot instead of NaN under NaN-safe mode. 2) Exercise `_mul_partials(a, b, x_a, x_b)` where only one of a or b has a zero component and one factor is non-finite, asserting the zero component stays zero. 3) End-to-end: differentiate a function whose primal hits a non-finite intermediate for one seeded direction only (the DerivativeTest/GradientTest additions likely cover this) and assert no NaN appears in the gradient entries corresponding to zero partials. 4) Regression guard: verify the non-NaN-safe path results are numerically unchanged for a representative set of Partials operations."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 6,
+    "tests": [
+      "NaN-safe mode",
+      "complex output",
+      "Specialized StaticArray codepaths: $T",
+      "det with branches",
+      "functions with `Dual` output",
+      "Partials{$N,$T}"
+    ],
+    "exception_types": [
+      "5c0806cccd02ff4198fd36fd67c87c687b77ec8a0f5f4af7061489016f3169c9",
+      "97eca331642f676b2ec75e46a0029c3e1c5841da3e1ec7ecc7433734a7ac52f6",
+      "b6e8d0dd97a573e55ca20c8b31fd252afadc3c41c62e78cc7094bb2dad68b9e6"
+    ],
+    "fingerprints": [
+      "5c0806cccd02ff4198fd36fd67c87c687b77ec8a0f5f4af7061489016f3169c9",
+      "97eca331642f676b2ec75e46a0029c3e1c5841da3e1ec7ecc7433734a7ac52f6",
+      "b6e8d0dd97a573e55ca20c8b31fd252afadc3c41c62e78cc7094bb2dad68b9e6"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

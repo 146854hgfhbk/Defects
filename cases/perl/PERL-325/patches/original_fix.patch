@@ -1,0 +1,45 @@
+diff --git a/Changes b/Changes
+index a427e8e81..7d91c0ffd 100644
+--- a/Changes
++++ b/Changes
+@@ -1,8 +1,9 @@
+ {{$NEXT}}
+ 
+-    - Fix #817 (local $TODO bug)
+-    - Fix #812 (Another local $TODO bug)
+-    - Fix #815 (shm read warning)
++    - Fix #810 Verbose TAP newline regression
++    - Fix #817 local $TODO bug
++    - Fix #812 Another local $TODO bug
++    - Fix #815 shm read warning
+ 
+ 1.302141  2018-11-30 14:27:19-08:00 America/Los_Angeles
+ 
+diff --git a/lib/Test2/Formatter/TAP.pm b/lib/Test2/Formatter/TAP.pm
+index a5d97c9d2..bd94c5978 100644
+--- a/lib/Test2/Formatter/TAP.pm
++++ b/lib/Test2/Formatter/TAP.pm
+@@ -104,10 +104,9 @@ sub write {
+ 
+         print $io "\n"
+             if $ENV{HARNESS_ACTIVE}
+-            && !$ENV{HARNESS_IS_VERBOSE}
+             && $hid == OUT_ERR
+             && $self->{+_LAST_FH} != $io
+-            && $msg =~ m/^#\s*Failed test /;
++            && $msg =~ m/^#\s*Failed( \(TODO\))? test /;
+ 
+         $msg =~ s/^/$indent/mg if $nesting;
+         print $io $msg;
+diff --git a/t/Test2/modules/Formatter/TAP.t b/t/Test2/modules/Formatter/TAP.t
+index 6f31c888a..33537f539 100644
+--- a/t/Test2/modules/Formatter/TAP.t
++++ b/t/Test2/modules/Formatter/TAP.t
+@@ -681,6 +681,7 @@ not ok 1 - harness that is verbose
+ 
+ # Failed test 'harness, but not verbose'
+ # at foo.pl line 42.
++
+ # Failed test 'harness that is verbose'
+ # at foo.pl line 42.
+     EOT

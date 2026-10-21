@@ -1,0 +1,17 @@
+diff --git a/lua/pl/path.lua b/lua/pl/path.lua
+index 011b979447f773b32df8a6692ff4a04a526e3572..dd0b49af0580abee115ce9bb6cf3f00b899eb035 100644
+--- a/lua/pl/path.lua
++++ b/lua/pl/path.lua
+@@ -21,9 +21,9 @@ local append, concat, remove = table.insert, table.concat, table.remove
+ local utils = require 'pl.utils'
+ local assert_string,raise = utils.assert_string,utils.raise
+ 
+-local res,lfs = _G.pcall(_G.require,'lfs')
+-if not res then
+-    error("pl.path requires LuaFileSystem")
++local ok, lfs = _G.pcall(_G.require,'lfs')
++if not ok then
++    error("pl.path requires LuaFileSystem, but failed loading it: " .. tostring(lfs))
+ end
+ 
+ local attrib = lfs.attributes

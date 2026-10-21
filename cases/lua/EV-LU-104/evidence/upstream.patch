@@ -1,0 +1,37 @@
+diff --git a/spec/parser_spec.lua b/spec/parser_spec.lua
+index cfdda8fbb55d08aadbf7c4df72d12b2e4f24a614..7e499f14da33e7cd4e495f8e6bf4895d2c9ba7be 100644
+--- a/spec/parser_spec.lua
++++ b/spec/parser_spec.lua
+@@ -1238,6 +1238,19 @@ thing1()
+       thing3()
+    end
+ until another_thing
++]]))
++      end)
++
++      it("does not report tokens on the same line as the innermost block opening token", function()
++         assert.same({line = 6, offset = 78, end_offset = 80, prev_line = 3, prev_offset = 60, prev_end_offset = 61,
++            msg = "expected 'end' (to close 'do' on line 3) near less indented 'end' (indentation-based guess)"
++         }, get_error([[
++local function f()
++   local function g() return ret end
++   do
++      thing()
++
++end
+ ]]))
+       end)
+    end)
+diff --git a/src/luacheck/parser.lua b/src/luacheck/parser.lua
+index 63da599002f1915132e489d73f7e5da4e3e6ab98..7446841569d6c955041e0f650d2e4fbdc45dea0e 100644
+--- a/src/luacheck/parser.lua
++++ b/src/luacheck/parser.lua
+@@ -214,7 +214,7 @@ end
+ function UnpairedTokenGuesser:check_token()
+    local top = self.opening_tokens_stack.top
+ 
+-   if top and top.eligible then
++   if top and top.eligible and self.state.line > top.line then
+       local token_indentation = get_indentation(self.state, self.state.line)
+ 
+       if token_indentation < top.indentation then

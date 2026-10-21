@@ -1,0 +1,167 @@
+diff --git a/lib/reverse_proxy_plug.ex b/lib/reverse_proxy_plug.ex
+index 6860385..4ea5f2d 100644
+--- a/lib/reverse_proxy_plug.ex
++++ b/lib/reverse_proxy_plug.ex
+@@ -44,6 +44,7 @@ defmodule ReverseProxyPlug do
+       {m, f, a} -> {m, f, a}
+       fun when is_function(fun) -> fun
+     end)
++    |> ensure_response_mode_compatibility()
+   end
+ 
+   @spec call(Plug.Conn.t(), Keyword.t()) :: Plug.Conn.t()
+@@ -183,32 +184,26 @@ defmodule ReverseProxyPlug do
+     |> Conn.resp(status, body)
+   end
+ 
+-  if {:module, HTTPoison} == Code.ensure_loaded(HTTPoison) do
+-    # This section of the code is present for retrocompatibility
+-    # for the case where HTTPoison is the underlying HTTP Client
+-    defp process_response(:stream, conn, _resp, opts),
+-      do: stream_response(conn, opts)
+-
+-    @spec stream_response(Conn.t(), Keyword.t()) :: Conn.t()
+-    defp stream_response(conn, opts) do
+-      receive do
+-        %HTTPoison.AsyncStatus{code: code} ->
+-          case opts[:status_callbacks][code] do
+-            nil ->
+-              conn
+-              |> Conn.put_status(code)
+-              |> stream_response(opts)
+-
+-            handler ->
+-              handler.(conn, opts)
+-          end
+-
+-        %HTTPoison.AsyncHeaders{headers: headers} ->
+-          additional_headers =
+-            if conn.status >= 200 and conn.status != 204,
+-              do: [{"transfer-encoding", "chunked"}],
+-              else: []
++  defp process_response(:stream, initial_conn, %HTTPClient.AsyncResponse{} = resp, opts) do
++    resp
++    |> opts[:client].stream_response()
++    |> Enum.reduce_while(initial_conn, fn
++      {:status, status}, conn ->
++        case opts[:status_callbacks][status] do
++          nil ->
++            {:cont, conn |> Conn.put_status(status)}
+ 
++          handler ->
++            {:halt, handler.(conn, opts)}
++        end
++
++      {:headers, headers}, conn ->
++        additional_headers =
++          if conn.status >= 200 and conn.status != 204,
++            do: [{"transfer-encoding", "chunked"}],
++            else: []
++
++        conn =
+           headers
+           |> opts[:normalize_headers].()
+           |> remove_hop_by_hop_headers
+@@ -216,28 +211,18 @@ defmodule ReverseProxyPlug do
+           |> Enum.concat(additional_headers)
+           |> add_resp_headers(conn, opts[:stream_headers_mode])
+           |> Conn.send_chunked(conn.status)
+-          |> stream_response(opts)
+-
+-        %HTTPoison.AsyncChunk{chunk: chunk} ->
+-          case Conn.chunk(conn, chunk) do
+-            {:ok, conn} ->
+-              stream_response(conn, opts)
+-
+-            {:error, :closed} ->
+-              conn
+-          end
+-
+-        %HTTPoison.AsyncEnd{} ->
+-          conn
+-
+-        %HTTPoison.Error{reason: reason} ->
+-          do_error_callback(
+-            opts[:error_callback],
+-            {:error, %HTTPClient.Error{reason: reason}},
+-            conn
+-          )
+-      end
+-    end
++
++        {:cont, conn}
++
++      {:chunk, chunk}, conn ->
++        case Conn.chunk(conn, chunk) do
++          {:ok, conn_after_chunk} -> {:cont, conn_after_chunk}
++          {:error, _error} -> {:halt, conn}
++        end
++
++      {:error, error}, conn ->
++        {:halt, do_error_callback(opts[:error_callback], error, conn)}
++    end)
+   end
+ 
+   defp prepare_url(conn, overrides) do
+@@ -435,6 +420,16 @@ defmodule ReverseProxyPlug do
+     end
+   end
+ 
++  defp ensure_response_mode_compatibility(opts) do
++    if opts[:response_mode] == :stream and
++         not function_exported?(opts[:client], :stream_response, 1) do
++      raise ArgumentError,
++            "The client adapter does not support streaming responses. Please use :buffer response mode."
++    else
++      opts
++    end
++  end
++
+   defp add_resp_headers(resp_headers, conn, :prepend) do
+     Conn.prepend_resp_headers(conn, resp_headers)
+   end
+diff --git a/lib/reverse_proxy_plug/http_client.ex b/lib/reverse_proxy_plug/http_client.ex
+index 2c1f6ed..5491aa6 100644
+--- a/lib/reverse_proxy_plug/http_client.ex
++++ b/lib/reverse_proxy_plug/http_client.ex
+@@ -10,4 +10,8 @@ defmodule ReverseProxyPlug.HTTPClient do
+                | __MODULE__.AsyncResponse.t()
+                | __MODULE__.MaybeRedirect.t()}
+               | {:error, error()}
++
++  @callback stream_response(__MODULE__.AsyncResponse.t()) :: Enumerable.t()
++
++  @optional_callbacks stream_response: 1
+ end
+diff --git a/lib/reverse_proxy_plug/http_client/adapters/httpoison.ex b/lib/reverse_proxy_plug/http_client/adapters/httpoison.ex
+index 925e8ea..3f384dc 100644
+--- a/lib/reverse_proxy_plug/http_client/adapters/httpoison.ex
++++ b/lib/reverse_proxy_plug/http_client/adapters/httpoison.ex
+@@ -68,5 +68,27 @@ if Code.ensure_loaded?(HTTPoison) do
+     defp translate_mod(HTTPoison.AsyncResponse), do: HTTPClient.AsyncResponse
+     defp translate_mod(HTTPoison.MaybeRedirect), do: HTTPClient.MaybeRedirect
+     defp translate_mod(HTTPoison.Error), do: HTTPClient.Error
++
++    @impl HTTPClient
++    def stream_response(_resp) do
++      Stream.unfold(nil, fn _ ->
++        receive do
++          %HTTPoison.AsyncStatus{code: code} ->
++            {{:status, code}, nil}
++
++          %HTTPoison.AsyncHeaders{headers: headers} ->
++            {{:headers, headers}, nil}
++
++          %HTTPoison.AsyncChunk{chunk: chunk} ->
++            {{:chunk, chunk}, nil}
++
++          %HTTPoison.Error{reason: reason} ->
++            {{:error, %HTTPClient.Error{reason: reason}}, nil}
++
++          %HTTPoison.AsyncEnd{} ->
++            nil
++        end
++      end)
++    end
+   end
+ end

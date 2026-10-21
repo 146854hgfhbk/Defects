@@ -1,0 +1,68 @@
+diff --git a/lib/src/collection.dart b/lib/src/collection.dart
+index 0d41a8c..9727d83 100644
+--- a/lib/src/collection.dart
++++ b/lib/src/collection.dart
+@@ -378,9 +378,31 @@ class AppstreamCollection {
+         components: components);
+   }
+ 
++  // Very dumb removal of invalid YAML documents.
++  // See https://github.com/canonical/appstream.dart/issues/15.
++  // Fixing these documents would be much costlier and error-prone,
++  // hence this simplistic approach to just filter out invalid documents.
++  static String _removeInvalidDocuments(String yaml) {
++    String processNode(String document) {
++      try {
++        loadYamlDocument(document);
++        return document;
++      } on YamlException {
++        return '';
++      }
++    }
++
++    final documentSeparator = '\n---\n';
++    final documents = yaml.split(documentSeparator);
++    for (var i = 0; i < documents.length; ++i) {
++      documents[i] = processNode(documents[i]);
++    }
++    return documents.where((e) => e.isNotEmpty).join(documentSeparator);
++  }
++
+   /// Decodes an Appstream collection in YAML format.
+   factory AppstreamCollection.fromYaml(String yaml) {
+-    var yamlDocuments = loadYamlDocuments(yaml);
++    var yamlDocuments = loadYamlDocuments(_removeInvalidDocuments(yaml));
+     if (yamlDocuments.isEmpty) {
+       throw FormatException('Empty YAML file');
+     }
+diff --git a/test/appstream_test.dart b/test/appstream_test.dart
+index 3715a54..630868e 100644
+--- a/test/appstream_test.dart
++++ b/test/appstream_test.dart
+@@ -449,6 +449,26 @@ void main() {
+         throwsFormatException);
+   });
+ 
++  test('collection - yaml with duplicate mapping keys', () async {
++    var collection = AppstreamCollection.fromYaml("""---
++File: DEP-11
++Version: '0.12'
++Origin: ubuntu-hirsute-main
++---
++Type: console-application
++ID: com.example.Hello
++Package: hello
++Name:
++  C: Hello World
++Summary:
++  C: A simple example application
++ContentRating:
++  oars-1.1: {}
++  oars-1.1: {}
++""");
++    expect(collection.components, isEmpty);
++  });
++
+   test('collection - empty - yaml', () async {
+     var collection = AppstreamCollection.fromYaml("""---
+ File: DEP-11

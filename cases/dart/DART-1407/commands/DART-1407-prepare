@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+case_dir="$(cd "$(dirname "$0")/.." && pwd)"
+workspace="${DART_REPRO_WORKSPACE:-${XDG_CACHE_HOME:-$HOME/.cache}/dart-defects4j/DART-1407}"
+mkdir -p "${workspace}/home" "${workspace}/tmp"
+image="dart-defects-repro-2-18-6"
+if ! docker image inspect "${image}" >/dev/null 2>&1; then
+  echo "Building SDK-locked reproduction image ${image}"
+  docker build --network=default -f "${case_dir}/environment/Dockerfile.reproduction" -t "${image}" "${case_dir}"
+fi
+
+docker run --rm --init --network bridge \
+  --user "$(id -u):$(id -g)" \
+  --env HOME=/workspace/home \
+  --env DART_ASCII_WORKSPACE_ROOT=/workspace \
+  --env TMPDIR=/workspace/tmp --env TEMP=/workspace/tmp --env TMP=/workspace/tmp \
+  --env DART_VALIDATION_NETWORK_ISOLATION=online_bootstrap \
+  --env DART_VALIDATION_DEPENDENCY_MODE=online \
+  --volume "${case_dir}:/case:ro" \
+  --volume "${workspace}:/workspace" \
+  "${image}" python -u /case/tools/prepare_case.py \
+    --case /case/case.json --prepared-root /workspace/prepared
+printf "Verified bootstrap workspace: %s\n" "${workspace}"

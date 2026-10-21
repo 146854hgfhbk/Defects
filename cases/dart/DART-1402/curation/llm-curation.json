@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1402",
+  "technical_evidence_sha256": "19004a82466b72136caf2767babc94ae4f201f82998cc6f980b169e194d29f6c",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "9a9b22528a7890b277ffc7c77981ce4220463681ef9aadefb8e0ce9381236b6f",
+  "reviewed_at": "2026-08-15T15:32:22.372682+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/stack_trace#73",
+  "rationale": "Single coherent defect: `Frame.parseVM` passed `match[2]` straight to `Uri.parse`, so VM frames emitted since Dart 2.2.0 in the bracketed form `<data:application/dart;charset=utf-8>` could not be parsed as a URI. The minimized production patch touches only the three lines in lib/src/frame.dart that branch on the `<data:` prefix and substitute an empty data URI, keeping the legacy path intact; the CHANGELOG entry and pubspec version bump present in the original commit are excluded from the minimized patch, and no refactor, reformatting, or config change remains. The trigger is the unchanged upstream test from the same fixing commit: `truncates data: URIs` feeds a real new-style VM frame to the pre-existing public `Frame.parseVM` API and asserts `frame.library == 'data:...'`, so it depends on no API introduced by the fix and expresses exactly the reported parsing failure; the accompanying rename of the old case to `truncates legacy data: URIs` is test-only and that selector is the declared non-reproducing one. Machine evidence confirms the direction: buggy differential reproduces only `test/frame_test.dart::truncates data: URIs` across 3 repetitions with 3 deterministic fingerprint groups, fixed isolated/suite/reversed runs are clean, full suite is green on the fixed revision, and both revisions build; strict_original and strict_post_minimization both pass with no failed checks. Traceability verifies fix-commit-to-issue 73, which matches the sole allowed root cause id, and active_same_project_root_causes is empty, so this root cause is not a duplicate.\n\nOne coherent defect across all three artifacts. The public artifact (dart-archive/stack_trace#73, 'Handle new style VM data URI frames', with the CHANGELOG line 'Parse the format for `data:` URIs that the Dart VM has used since `2.2.0`') states that Frame.parseVM mishandles the angle-bracketed data URI form the VM has emitted since 2.2.0, i.e. a pre-existing parsing defect against traces the runtime was already producing. The minimized production patch touches exactly one expression in lib/src/frame.dart, guarding `Uri.parse(match[2])` with a `startsWith('<data:')` branch that substitutes `Uri.dataFromString('')` so the library truncates to 'data:...'. No refactor, formatting, config, or doc change survives minimization: the version bump in pubspec.yaml and the CHANGELOG entry present in patches/original-commit.patch were correctly stripped from patches/minimized-production.patch and patches/production-fix.patch, which are byte-identical. The trigger is the unchanged upstream test from the same fixing commit (trigger_reduction.status, patches/trigger-tests.patch): the new case feeds '#0      main (<data:application/dart;charset=utf-8>:1:15)' to the pre-existing Frame.parseVM and asserts frame.library == 'data:...', so it exercises the reported symptom through APIs that already exist on the buggy revision and introduces no new production surface. The companion selector 'truncates legacy data: URIs' is only a rename of the existing legacy case and is recorded as a non-reproducing selector that passes on both revisions. Strict evidence is machine-supplied and clean in both strict_original and strict_post_minimization: build.both_versions passed, trigger.buggy_differential reproduced ('test/frame_test.dart', 'truncates data: URIs'), trigger.fixed_clean and full_suite.fixed_all_green passed, trigger.deterministic across 3 repetitions with 38 matrix runs, and full_suite.buggy_reproduces_only_triggers confirms no collateral buggy failures. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and dart-archive/stack_trace#73 is the verified key in allowed_root_cause_ids and traceability.verified_fix_issue_numbers.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T15:31:50.235024+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "9a9b22528a7890b277ffc7c77981ce4220463681ef9aadefb8e0ce9381236b6f",
+      "response_sha256": "4db4aac64a768ff858ddb8562cde5710b20580abbef49e7bf3f3aa40b64fd2c1",
+      "response_id": "msg_1ae13e8867744431a03777841645a832",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.614727956716418,
+        "input_tokens": 7861,
+        "output_tokens": 659
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/stack_trace#73",
+      "rationale": "Single coherent defect: `Frame.parseVM` passed `match[2]` straight to `Uri.parse`, so VM frames emitted since Dart 2.2.0 in the bracketed form `<data:application/dart;charset=utf-8>` could not be parsed as a URI. The minimized production patch touches only the three lines in lib/src/frame.dart that branch on the `<data:` prefix and substitute an empty data URI, keeping the legacy path intact; the CHANGELOG entry and pubspec version bump present in the original commit are excluded from the minimized patch, and no refactor, reformatting, or config change remains. The trigger is the unchanged upstream test from the same fixing commit: `truncates data: URIs` feeds a real new-style VM frame to the pre-existing public `Frame.parseVM` API and asserts `frame.library == 'data:...'`, so it depends on no API introduced by the fix and expresses exactly the reported parsing failure; the accompanying rename of the old case to `truncates legacy data: URIs` is test-only and that selector is the declared non-reproducing one. Machine evidence confirms the direction: buggy differential reproduces only `test/frame_test.dart::truncates data: URIs` across 3 repetitions with 3 deterministic fingerprint groups, fixed isolated/suite/reversed runs are clean, full suite is green on the fixed revision, and both revisions build; strict_original and strict_post_minimization both pass with no failed checks. Traceability verifies fix-commit-to-issue 73, which matches the sole allowed root cause id, and active_same_project_root_causes is empty, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/frame.dart",
+        "patches/trigger-tests.patch",
+        "test/frame_test.dart",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "traceability.verified_fix_issue_numbers",
+        "issue_urls"
+      ],
+      "risks": [
+        "Reference 73 is the pull request itself (issue_urls and pull_request_url both point at 73); there is no separate independent user bug report describing the symptom, so intent rests on the PR title and CHANGELOG text.",
+        "The fix substitutes `Uri.dataFromString('')`, discarding the original media type and payload of the bracketed data URI; the trigger only asserts the truncated `data:...` library string, so any finer-grained loss of URI content is unverified.",
+        "The change can be read as adding support for a newer VM output format rather than repairing older behavior, though the practical pre-existing effect on the parent revision is a parse failure on valid VM stack traces."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T15:32:22.372419+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "9a9b22528a7890b277ffc7c77981ce4220463681ef9aadefb8e0ce9381236b6f",
+      "response_sha256": "074be8e1919c58ca31be33beb54958631795e36b956095dae09511e410dec63f",
+      "response_id": "msg_b7e627a615164e92b583fe08417cd584",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6728795366169154,
+        "input_tokens": 8263,
+        "output_tokens": 926
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/stack_trace#73",
+      "rationale": "One coherent defect across all three artifacts. The public artifact (dart-archive/stack_trace#73, 'Handle new style VM data URI frames', with the CHANGELOG line 'Parse the format for `data:` URIs that the Dart VM has used since `2.2.0`') states that Frame.parseVM mishandles the angle-bracketed data URI form the VM has emitted since 2.2.0, i.e. a pre-existing parsing defect against traces the runtime was already producing. The minimized production patch touches exactly one expression in lib/src/frame.dart, guarding `Uri.parse(match[2])` with a `startsWith('<data:')` branch that substitutes `Uri.dataFromString('')` so the library truncates to 'data:...'. No refactor, formatting, config, or doc change survives minimization: the version bump in pubspec.yaml and the CHANGELOG entry present in patches/original-commit.patch were correctly stripped from patches/minimized-production.patch and patches/production-fix.patch, which are byte-identical. The trigger is the unchanged upstream test from the same fixing commit (trigger_reduction.status, patches/trigger-tests.patch): the new case feeds '#0      main (<data:application/dart;charset=utf-8>:1:15)' to the pre-existing Frame.parseVM and asserts frame.library == 'data:...', so it exercises the reported symptom through APIs that already exist on the buggy revision and introduces no new production surface. The companion selector 'truncates legacy data: URIs' is only a rename of the existing legacy case and is recorded as a non-reproducing selector that passes on both revisions. Strict evidence is machine-supplied and clean in both strict_original and strict_post_minimization: build.both_versions passed, trigger.buggy_differential reproduced ('test/frame_test.dart', 'truncates data: URIs'), trigger.fixed_clean and full_suite.fixed_all_green passed, trigger.deterministic across 3 repetitions with 38 matrix runs, and full_suite.buggy_reproduces_only_triggers confirms no collateral buggy failures. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and dart-archive/stack_trace#73 is the verified key in allowed_root_cause_ids and traceability.verified_fix_issue_numbers.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/original-commit.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/frame.dart",
+        "test/frame_test.dart",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_original.checks.trigger.fixed_clean",
+        "traceability.verified_fix_issue_numbers",
+        "trigger_reduction.status",
+        "issue_urls"
+      ],
+      "risks": [
+        "The public artifact is the merged pull request itself; no separate user-filed issue body with an observed crash or stack trace is supplied, so the symptom is inferred from the PR subject, CHANGELOG text, and the patch rather than an independent bug report.",
+        "The change could be read as adding support for a newer VM output format rather than repairing a regression; it is classified as a defect here because the VM had already emitted this form since 2.2.0 and Uri.parse of the angle-bracketed string yields a wrong or failing library value.",
+        "The trigger is the upstream test from the fixing commit, so it is inherently shaped to the chosen fix; it does not independently probe other malformed URI shapes that the narrow startsWith('<data:') guard still leaves unhandled.",
+        "The guard discards the original data URI payload entirely via Uri.dataFromString(''), so any behavior depending on data URI contents is untested by this trigger.",
+        "require_analyze_clean is false and the analyzer is diagnostic only, so static-analysis cleanliness on either revision is not gated.",
+        "full_suite_repetitions is 1, giving weaker protection against flaky full-suite behavior than the 3 repetitions used for the isolated trigger."
+      ]
+    }
+  ]
+}

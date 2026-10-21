@@ -1,0 +1,119 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 393f2e1a61ebce8f78e881845ccdd2d31e960bca..7e503941d731b1c149cf748d5f55674cfbb9d85c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -12,7 +12,10 @@ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) fo
+    [#360](https://github.com/lunarmodules/Penlight/pull/360)
+  - feat: `permute.list_table` generate table with different sets of values
+    [#360](https://github.com/lunarmodules/Penlight/pull/360)
+- - feat: deprecation functionality `utils.raise_deprecation` [#361](https://github.com/lunarmodules/Penlight/pull/361)
++ - feat: deprecation functionality `utils.raise_deprecation`
++   [#361](https://github.com/lunarmodules/Penlight/pull/361)
++ - fix: `dir.rmtree` failed to remove symlinks to directories
++   [#365](https://github.com/lunarmodules/Penlight/pull/365)
+ 
+ 
+ ## 1.9.2 (2020-09-27)
+diff --git a/lua/pl/dir.lua b/lua/pl/dir.lua
+index 86b51ccc8caf8b4a0d6f372855416be29778e838..56d084c03f75ca99abb62ac970ceffddbb2cfe45 100644
+--- a/lua/pl/dir.lua
++++ b/lua/pl/dir.lua
+@@ -317,7 +317,8 @@ function dir.walk(root,bottom_up,follow_links)
+ end
+ 
+ --- remove a whole directory tree.
+--- @string fullpath A directory path
++-- Symlinks in the tree will be deleted without following them.
++-- @string fullpath A directory path (must be an actual directory, not a symlink)
+ -- @return true or nil
+ -- @return error if failed
+ -- @raise fullpath must be a string
+@@ -325,12 +326,25 @@ function dir.rmtree(fullpath)
+     assert_dir(1,fullpath)
+     if path.islink(fullpath) then return false,'will not follow symlink' end
+     for root,dirs,files in dir.walk(fullpath,true) do
+-        for i,f in ipairs(files) do
+-            local res, err = remove(path.join(root,f))
+-            if not res then return nil,err end
++        if path.islink(root) then
++            -- sub dir is a link, remove link, do not follow
++            if is_windows then
++                -- Windows requires using "rmdir". Deleting the link like a file
++                -- will instead delete all files from the target directory!!
++                local res, err = rmdir(root)
++                if not res then return nil,err .. ": " .. root end
++            else
++                local res, err = remove(root)
++                if not res then return nil,err .. ": " .. root end
++            end
++        else
++            for i,f in ipairs(files) do
++                local res, err = remove(path.join(root,f))
++                if not res then return nil,err .. ": " .. path.join(root,f) end
++            end
++            local res, err = rmdir(root)
++            if not res then return nil,err .. ": " .. root end
+         end
+-        local res, err = rmdir(root)
+-        if not res then return nil,err end
+     end
+     return true
+ end
+diff --git a/tests/test-dir.lua b/tests/test-dir.lua
+index 06111dca917935fb7506defc811eb01fd08caab2..b293abc4ddae97ec8003679235880e72c0be7a68 100644
+--- a/tests/test-dir.lua
++++ b/tests/test-dir.lua
+@@ -4,6 +4,7 @@ local dir = require( "pl.dir" )
+ local file = require( "pl.file" )
+ local path = require( "pl.path" )
+ local asserteq = require( "pl.test" ).asserteq
++local lfs = require("lfs")
+ 
+ asserteq(dir.fnmatch("foobar", "foo*bar"), true)
+ asserteq(dir.fnmatch("afoobar", "foo*bar"), false)
+@@ -156,6 +157,45 @@ file.delete( newFileName )
+ 
+ 
+ 
++-- Test rmtree -----------------------------------------
++do
++  local dirName = path.tmpname()
++  os.remove(dirName)
++  assert(dir.makepath(dirName))
++  assert(file.write(path.normpath(dirName .. "/file_base.txt"), "hello world"))
++  assert(dir.makepath(path.normpath(dirName .. "/sub1")))
++  assert(file.write(path.normpath(dirName .. "/sub1/file_sub1.txt"), "hello world"))
++  assert(dir.makepath(path.normpath(dirName .. "/sub2")))
++  assert(file.write(path.normpath(dirName .. "/sub2/file_sub2.txt"), "hello world"))
++
++
++  local linkTarget = path.tmpname()
++  os.remove(linkTarget)
++  assert(dir.makepath(linkTarget))
++  local linkFile = path.normpath(linkTarget .. "/file.txt")
++  assert(file.write(linkFile, "hello world"))
++
++  local linkSource = path.normpath(dirName .. "/link1")
++  assert(lfs.link(linkTarget, linkSource, true))
++
++  -- test: rmtree will not follow symlinks
++  local ok, err = dir.rmtree(linkSource)
++  asserteq(ok, false)
++  asserteq(err, "will not follow symlink")
++
++  -- test: rmtree removes a tree without following symlinks in that tree
++  local ok, err = dir.rmtree(dirName)
++  asserteq(err, nil)
++  asserteq(ok, true)
++
++  asserteq(path.exists(dirName), false)  -- tree is gone, including symlink
++  assert(path.exists(linkFile), "expected linked-to file to still exist")  -- symlink target file is still there
++
++  -- cleanup
++  assert(dir.rmtree(linkTarget))
++end
++
++
+ -- have NO idea why forcing the return code is necessary here (Windows 7 64-bit)
+ os.exit(0)
+ 

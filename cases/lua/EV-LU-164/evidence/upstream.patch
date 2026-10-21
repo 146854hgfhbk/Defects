@@ -1,0 +1,109 @@
+diff --git a/spec/date_spec.lua b/spec/date_spec.lua
+index 138b524a18744111ba1350e96017e0087d1fd547..33c658f5f31d1967617855e6dc60153b706d23e8 100644
+--- a/spec/date_spec.lua
++++ b/spec/date_spec.lua
+@@ -20,43 +20,54 @@ describe("Testing the 'date' module", function()
+     assert(date("Jul 27 2006 MDT") == date(2006,07,27,6,0,0))
+     assert(date("Jul 27 2006 PST") == date(2006,07,27,8,0,0))
+     assert(date("Jul 27 2006 PDT") == date(2006,07,27,7,0,0))
+-    -- Date Format.  Short dates can use either a "/" or "-" date separator,
+-    -- but must follow the month/day/year format
++    -- Date Format.  Short dates can use either a "/" or "-" date separator, but must
++    -- follow the month/day/year format.
+     assert(date("02-03-04")==date(1904,02,03))
+     assert(date("12/25/98")==date(1998,12,25))
+-    -- Long dates of the form "July 10 1995" can be given with the year, month,
+-    -- and day in any order, and the year in 2-digit or 4-digit form. If you use
+-    -- the 2-digit form, the year must be greater than or equal to 70.
++    -- Long dates of the form "July 10 1995" can be given with the year, month, and day
++    -- in any order, and the year in 2-digit or 4-digit form. If you use the 2-digit
++    -- form, the year must be greater than or equal to 70.
+     assert(date("Feb-03-04")==date(1904,02,03))
+     assert(date("December 25 1998")==date(1998,12,25))
+     -- Follow the year with BC or BCE to indicate that the year is before common era.
+     assert(date("Feb 3 0003 BC")==date(-2,02,03))
+     assert(date("December 25 0001 BC")==date(0,12,25))
+ 
+-    -- Supported ISO 8601 Formats.
+-    -- YYYY-MM-DDwhere YYYY is the year, MM is the month of the year, and DD is the
+-    -- day of the month.
++    -- Supported ISO 8601 Formats
++    -- YYYY-MM-DD, where YYYY is the year, MM is the month of the year, and DD is the
++    -- day of the month
+     assert(date("2000-12-31")==date(2000,12,31))
+-    assert(date(" 20001231 ")==date(2000,12,31)) -- Compact version
+-    -- YYYY-DDDwhere YYYY is the year, DDD is the day of the year.
++    assert(date(" 20001231 ")==date(2000,12,31)) -- "basic format" (compact)
++    -- YYYY-DDD, where YYYY is the year, DDD is the day of the year
+     assert(date("1995-035")==date(1995,02,04))
+-    assert(date("1995035 ")==date(1995,02,04)) -- Compact version
+-    -- YYYY-WDD-Dwhere YYYY is the year, DD is the week of the year, D is the day of
+-    -- the week.
++    assert(date("1995035 ")==date(1995,02,04)) -- "basic format" (compact)
++    -- YYYY-WDD-D, where YYYY is the year, DD is the week of the year, D is the day of
++    -- the week
+     assert(date("1997-W01-1")==date(1996,12,30))
+-    assert(date("  1997W017")==date(1997,01,05)) -- Compact version
+-    -- DATE HH:MM:SS.SSSWhere DATE is the date format discuss above, HH is the hour,
+-    -- MM is the miute, SS.SSS is the seconds (fraction is optional).
++    assert(date("  1997W017")==date(1997,01,05)) -- "basic format" (compact)
++    -- DATE HH:MM:SS.SSS, where DATE is the date format discussed above, HH is the hour,
++    -- MM is the minute, SS.SSS is the seconds (fraction is optional)
++    -- These are not ISO 8601 conformant:  Space between date and time is no longer
++    -- allowed (though is in RFC 3339).
+     assert(date("1995-02-04 24:00:51.536")==date(1995,2,5,0,0,51.536))
++    assert(date("1995-02-04 24:00:51,536")==date(1995,2,5,0,0,51.536))
+     assert(date("1976-W01-1 12:12:12.123")==date(1975,12,29,12,12,12.123))
+     assert(date("1995-035 23:59:59.99999")==date(1995,02,04,23,59,59.99999))
+-    -- Compact version separated by latin capital letter T
++    -- "basic format" (compact), date and time separated by the Latin capital T
+     assert(date("  19950205T000051.536  ")==date(1995,2,5,0,0,51.536))
++    assert(date("  19950205T000051,536  ")==date(1995,2,5,0,0,51.536))
+     assert(date("  1976W011T121212.123  ")==date(1975,12,29,12,12,12.123))
+-    assert(date(" 1995035T235959.99999  ")==date(1995,02,04,23,59,59.99999))
+-    -- DATE TIME +HH:MM, DATE TIME -HHMM, DATE TIME Z,Where DATE and TIME is the date
+-    -- and time format discuss above. First character is a sign "+" (east of UTC) or "-"
+-    -- (west of UTC). HH and MM is Hours and minutes offset. The Z stands for the zero offset.
++    assert(date(" 1995035T235959.99999  ")==date(1995,02,04,23,59,59.99999)) -- not ISO 8601 conformant day spec
++    -- "extended format" (human readable), date and time separated by the Latin
++    -- capital T
++    assert(date("1995-02-05T00:00:51.536")==date(1995,2,5,0,0,51.536))
++    assert(date("1995-02-05T00:00:51,536")==date(1995,2,5,0,0,51.536))
++    assert(date("1976-W01-1T12:12:12.123")==date(1975,12,29,12,12,12.123))
++    assert(date("1995-035T23:59:59.99999")==date(1995,02,04,23,59,59.99999)) -- not ISO 8601 conformant day spec
++    -- DATE TIME +HH:MM, DATE TIME -HHMM, DATE TIME Z, where DATE and TIME is the date
++    -- and time format discussed above
++    -- First character is a sign "+" (east of UTC) or "-" (west of UTC). HH and MM are
++    -- hours and minutes offset. The Z stands for the zero offset.
+     assert(date("1976-W01-1 12:00Z     ")==date(1975,12,29,12))
+     assert(date("1976-W01-1 13:00+01:00")==date(1975,12,29,12))
+     assert(date("1976-W01-1 0700-0500  ")==date(1975,12,29,12))
+diff --git a/src/date.lua b/src/date.lua
+index 35fdab6de6d14e7eab41707cac4bb21abf780704..657c86b6de81988d8bb861d2aa6d30a8be9fc383 100644
+--- a/src/date.lua
++++ b/src/date.lua
+@@ -314,21 +314,21 @@
+     local function seth(q) h = h and error_dup() or tonumber(q) end
+     local function setr(q) r = r and error_dup() or tonumber(q) end
+     local function sets(q) s = s and error_dup() or tonumber(q) end
+-    local function adds(q) s = s + tonumber(q) end
++    local function adds(q) s = s + tonumber("."..string.sub(q,2,-1)) end
+     local function setj(q) j = (m or w or j) and error_dup() or tonumber(q); end
+     local function setz(q) z = (z ~= 0 and z) and error_dup() or q end
+     local function setzn(zs,zn) zn = tonumber(zn); setz( ((zn<24) and (zn*60) or (mod(zn,100) + floor(zn/100) * 60))*( zs=='+' and -1 or 1) ) end
+     local function setzc(zs,zh,zm) setz( ((tonumber(zh)*60) + tonumber(zm))*( zs=='+' and -1 or 1) ) end
+ 
+     if not (sw("^(%d%d%d%d)",sety) and (sw("^(%-?)(%d%d)%1(%d%d)",function(_,a,b) setm(tonumber(a)); setd(tonumber(b)) end) or sw("^(%-?)[Ww](%d%d)%1(%d?)",function(_,a,b) w, u = tonumber(a), tonumber(b or 1) end) or sw("^%-?(%d%d%d)",setj) or sw("^%-?(%d%d)",function(a) setm(a);setd(1) end))
+-    and ((sw("^%s*[Tt]?(%d%d):?",seth) and sw("^(%d%d):?",setr) and sw("^(%d%d)",sets) and sw("^(%.%d+)",adds))
++    and ((sw("^%s*[Tt]?(%d%d):?",seth) and sw("^(%d%d):?",setr) and sw("^(%d%d)",sets) and sw("^([,%.]%d+)",adds))
+       or sw:finish() or (sw"^%s*$" or sw"^%s*[Zz]%s*$" or sw("^%s-([%+%-])(%d%d):?(%d%d)%s*$",setzc) or sw("^%s*([%+%-])(%d%d)%s*$",setzn))
+       )  )
+     then --print(y,m,d,h,r,s,z,w,u,j)
+     sw:restart(); y,m,d,h,r,s,z,w,u,j = nil,nil,nil,nil,nil,nil,nil,nil,nil,nil
+       repeat -- print(sw:aimchr())
+         if sw("^[tT:]?%s*(%d%d?):",seth) then --print("$Time")
+-          _ = sw("^%s*(%d%d?)",setr) and sw("^%s*:%s*(%d%d?)",sets) and sw("^(%.%d+)",adds)
++          _ = sw("^%s*(%d%d?)",setr) and sw("^%s*:%s*(%d%d?)",sets) and sw("^([,%.]%d+)",adds)
+         elseif sw("^(%d+)[/\\%s,-]?%s*") then --print("$Digits")
+           x, c = tonumber(sw[1]), len(sw[1])
+           if (x >= 70) or (m and d and (not y)) or (c > 3) then

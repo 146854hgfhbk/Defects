@@ -1,0 +1,56 @@
+diff --git a/ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/ASTNodeExtension.kt b/ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/ASTNodeExtension.kt
+index 296fdc7e..f37b0225 100644
+--- a/ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/ASTNodeExtension.kt
++++ b/ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/ASTNodeExtension.kt
+@@ -468,7 +468,7 @@ private fun Sequence<ASTNode>.dropTrailingEolComment(): Sequence<ASTNode> =
+     }
+ 
+ internal fun ASTNode.getFirstLeafOnLineOrSelf() =
+-    prevLeaf { it.textContains('\n') || it.prevLeaf() == null }
++    prevLeaf { (it.textContains('\n') && !it.isPartOfComment()) || it.prevLeaf() == null }
+         ?: this
+ 
+ internal fun ASTNode.getLastLeafOnLineOrNull() = nextLeaf { it.textContains('\n') }?.prevLeaf()
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/MaxLineLengthRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/MaxLineLengthRule.kt
+index 4f35ba99..fdcbf3a7 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/MaxLineLengthRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/MaxLineLengthRule.kt
+@@ -15,6 +15,7 @@ import com.pinterest.ktlint.rule.engine.core.api.isPartOf
+ import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpace
+ import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpaceWithNewline
+ import com.pinterest.ktlint.rule.engine.core.api.leavesOnLine
++import com.pinterest.ktlint.rule.engine.core.api.lineLengthWithoutNewlinePrefix
+ import com.pinterest.ktlint.rule.engine.core.api.nextLeaf
+ import com.pinterest.ktlint.rule.engine.core.api.parent
+ import com.pinterest.ktlint.rule.engine.core.api.prevLeaf
+@@ -102,25 +103,12 @@ public class MaxLineLengthRule :
+     }
+ 
+     private fun ASTNode.lineLength() =
+-        leavesOnLine(excludeEolComment = false)
+-            .sumOf {
+-                when {
+-                    it.isWhiteSpaceWithNewline() -> {
+-                        it.text.substringAfterLast('\n').length
+-                    }
+-
++        leavesOnLine(false)
++            .filterNot {
++                ignoreBackTickedIdentifier &&
+                     it.elementType == IDENTIFIER &&
+-                        it.text.matches(BACKTICKED_IDENTIFIER_REGEX) &&
+-                        ignoreBackTickedIdentifier
+-                    -> {
+-                        0
+-                    }
+-
+-                    else -> {
+-                        it.textLength
+-                    }
+-                }
+-            }
++                    it.text.matches(BACKTICKED_IDENTIFIER_REGEX)
++            }.lineLengthWithoutNewlinePrefix()
+ 
+     private fun ASTNode.isPartOfRawMultiLineString() =
+         parent(STRING_TEMPLATE, strict = false)

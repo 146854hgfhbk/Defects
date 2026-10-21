@@ -1,0 +1,36 @@
+diff --git a/R/object-from-call.R b/R/object-from-call.R
+index e0714407..8bde28ae 100644
+--- a/R/object-from-call.R
++++ b/R/object-from-call.R
+@@ -30,14 +30,10 @@ object_from_call <- function(call, env, block, file) {
+       "setRefClass" = parser_setRefClass(call, env, block),
+       "methods::setGeneric" = ,
+       "setGeneric" = parser_setGeneric(call, env, block),
+-      "methods::setGroupGeneric" = ,
+-      "setGroupGeneric" = parser_setGeneric(call, env, block),
+       "methods::setMethod" = ,
+       "setMethod" = parser_setMethod(call, env, block),
+       "methods::setReplaceMethod" = ,
+       "setReplaceMethod" = parser_setReplaceMethod(call, env, block),
+-      "methods::setAs" = ,
+-      "setAs" = parser_setAs(call, env, block),
+ 
+       "R.methodsS3::setMethodS3" = ,
+       "setMethodS3" = parser_setMethodS3(call, env, block),
+@@ -213,16 +209,6 @@ parser_setReplaceMethod <- function(call, env, block) {
+   object(value, NULL, "s4method")
+ }
+ 
+-# setAs() defines a method for the coerce() generic (and, if `replace` is
+-# supplied, for coerce<-(), which we don't document).
+-parser_setAs <- function(call, env, block) {
+-  signature <- c(eval(call$from, env), eval(call$to, env))
+-  value <- methods::getMethod("coerce", signature, where = env)
+-  value@.Data <- extract_method_fun(value@.Data)
+-
+-  object(value, NULL, "s4method")
+-}
+-
+ parser_import <- function(call, env, block) {
+   pkg <- as.character(call[[2]])
+   fun <- as.character(call[[3]])

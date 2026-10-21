@@ -1,0 +1,53 @@
+diff --git a/R/type-idate.R b/R/type-idate.R
+deleted file mode 100644
+index 94b398cbb..000000000
+--- a/R/type-idate.R
++++ /dev/null
+@@ -1,29 +0,0 @@
+-# Proxy method for <IDate>
+-#
+-# `vec_proxy.Date()` coerces integer storage dates to double. If we don't
+-# intercept that, an IDate will also be converted to double storage, but that
+-# results in a corrupt IDate. Since we provide some methods for <data.table>, we
+-# also provide this one.
+-#
+-# Notably we don't provide `vec_ptype2.Date.IDate` methods. We don't think it is
+-# our place to provide methods for that, especially since we'd likely prefer
+-# <Date> as the more general common type, but `c.IDate` in data.table prefers
+-# <IDate>, so we'd probably just add conflicting behavior.
+-vec_proxy_IDate <- function(x, ...) {
+-  if (typeof(x) != "integer") {
+-    type <- typeof(x)
+-    cli::cli_abort(
+-      "Corrupt <IDate>. Expected integer storage, not {type} storage."
+-    )
+-  }
+-
+-  x
+-}
+-
+-# Restore method for <IDate>
+-#
+-# Follow `vec_restore.Date` and pass through to `vec_restore.default` which
+-# uses standard restore behavior
+-vec_restore_IDate <- function(x, to, ...) {
+-  NextMethod()
+-}
+diff --git a/R/zzz.R b/R/zzz.R
+index ce1c20c38..989fb07bc 100644
+--- a/R/zzz.R
++++ b/R/zzz.R
+@@ -94,13 +94,6 @@
+     }
+   })
+ 
+-  on_package_load("data.table", {
+-    if (!env_has(ns_env("data.table"), "vec_proxy.IDate")) {
+-      s3_register("vctrs::vec_proxy", "IDate", vec_proxy_IDate)
+-      s3_register("vctrs::vec_restore", "IDate", vec_restore_IDate)
+-    }
+-  })
+-
+   utils::globalVariables("vec_set_attributes")
+ 
+   # Prevent two copies from being made by `attributes(x) <- attrib` on R < 3.6.0

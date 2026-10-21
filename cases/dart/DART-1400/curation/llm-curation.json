@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1400",
+  "technical_evidence_sha256": "abef69818bc49fb1664439ce4deee7cfd8bdfa230647148b5f0fe91057a2c078",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "5a246ec83b2149bc4e50d48e481cdfca8ade9ddc7948c6bab8e556f874711623",
+  "reviewed_at": "2026-08-15T15:17:08.876698+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/args#132",
+  "rationale": "Single coherent defect: Command's constructor unconditionally called argParser.addFlag('help', ...) even when the command supplied an ArgParser.allowAnything(), and CommandRunner then unconditionally read argResults['help']. Both fail for allow-anything parsers, so any allowAnything-based subcommand was unusable under CommandRunner. The production fix (patches/production-fix.patch, identical to patches/minimized-production.patch) contains exactly two hunks in lib/command_runner.dart that address that pair of unguarded accesses: skip registering the help flag when argParser.allowsAnything, and guard the help lookup with argResults.options.contains('help'). The second hunk is not an unrelated change; it is required because the first hunk removes the 'help' option from such commands. The minimized patch drops the CHANGELOG edit present in patches/original-commit.patch, so nothing documentation-, config-, formatting-, or test-only remains. The trigger is the unmodified upstream test from the same fixing commit ('works as a subcommand in a CommandRunner' in test/allow_anything_test.dart) plus the project-native AllowAnythingCommand fixture in test/test_utils.dart; it exercises only pre-existing public API (CommandRunner, Command, ArgParser.allowAnything(), already covered by the existing 'new ArgParser.allowAnything()' group in the same file at the buggy revision) and does not touch the argParser.allowsAnything / argResults.options members used by the fix, so it introduces no dependency on a fix-introduced API. Machine evidence gates all pass in both strict_original and strict_post_minimization: build.both_versions, trigger.buggy_differential (reproduced selector matches the declared trigger), trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, and full_suite.fixed_all_green with buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty, so dart-archive/args#132 duplicates no active registry entry, and it is the sole allowed verified key.\n\nOne coherent defect: `Command()` unconditionally called `argParser.addFlag('help', ...)` and `CommandRunner.parse` unconditionally read `argResults['help']`, both of which are invalid for a parser created via the pre-existing `ArgParser.allowAnything()`. The fix in lib/command_runner.dart guards the flag registration with `!argParser.allowsAnything` and guards the lookup with `argResults.options.contains('help')`; both `allowsAnything` and `ArgResults.options` are pre-existing (they are referenced, not introduced, by the patch, which touches only command_runner.dart). The trigger 'works as a subcommand in a CommandRunner' registers an `AllowAnythingCommand` (whose `argParser` is `ArgParser.allowAnything()`, an API already exercised by the pre-existing allow_anything_test.dart group) with a CommandRunner and runs it, hitting exactly the two guarded code paths; it uses no API added by the fix. The trigger is the unchanged upstream test portion of the single fixing commit (test/allow_anything_test.dart plus the test-only fixture in test/test_utils.dart), so it is semantically identical to the reported defect rather than a curator reconstruction. The minimized production patch is byte-identical to production-fix.patch and confined to the two logic hunks in lib/command_runner.dart; the CHANGELOG edit and test/fixture additions from the original commit were correctly excluded, and no formatting, refactor, or feature-extension change remains. Strict evidence for both the original and post-minimization runs shows all gates green: build.both_versions, selectors.present_and_unique (1/1 unique), trigger.buggy_differential with the declared selector failing alone, trigger.fixed_clean across isolated/suite/reversed runs, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32-run matrix), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty, so no duplicate root cause exists, and dart-archive/args#132 is the sole allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T15:16:34.666157+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "5a246ec83b2149bc4e50d48e481cdfca8ade9ddc7948c6bab8e556f874711623",
+      "response_sha256": "194b0bcd27aa39cd104cabeb009d2473e2c519939d90b0765bd42741f55cabf3",
+      "response_id": "msg_588e0362d87744f98b2f6e6ab3aff733",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.738540444013267,
+        "input_tokens": 9509,
+        "output_tokens": 804
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/args#132",
+      "rationale": "Single coherent defect: Command's constructor unconditionally called argParser.addFlag('help', ...) even when the command supplied an ArgParser.allowAnything(), and CommandRunner then unconditionally read argResults['help']. Both fail for allow-anything parsers, so any allowAnything-based subcommand was unusable under CommandRunner. The production fix (patches/production-fix.patch, identical to patches/minimized-production.patch) contains exactly two hunks in lib/command_runner.dart that address that pair of unguarded accesses: skip registering the help flag when argParser.allowsAnything, and guard the help lookup with argResults.options.contains('help'). The second hunk is not an unrelated change; it is required because the first hunk removes the 'help' option from such commands. The minimized patch drops the CHANGELOG edit present in patches/original-commit.patch, so nothing documentation-, config-, formatting-, or test-only remains. The trigger is the unmodified upstream test from the same fixing commit ('works as a subcommand in a CommandRunner' in test/allow_anything_test.dart) plus the project-native AllowAnythingCommand fixture in test/test_utils.dart; it exercises only pre-existing public API (CommandRunner, Command, ArgParser.allowAnything(), already covered by the existing 'new ArgParser.allowAnything()' group in the same file at the buggy revision) and does not touch the argParser.allowsAnything / argResults.options members used by the fix, so it introduces no dependency on a fix-introduced API. Machine evidence gates all pass in both strict_original and strict_post_minimization: build.both_versions, trigger.buggy_differential (reproduced selector matches the declared trigger), trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, and full_suite.fixed_all_green with buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty, so dart-archive/args#132 duplicates no active registry entry, and it is the sole allowed verified key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/command_runner.dart",
+        "test/allow_anything_test.dart",
+        "test/test_utils.dart",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "traceability.verified_fix_issue_numbers",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "Traceability resolves to PR #132 rather than a distinct user-filed issue; issue_urls points at issues/132, which is the same GitHub number as the pull request. The CHANGELOG line in patches/original-commit.patch credits 'fix #123' as the underlying report, so the original reporter's issue text was not supplied and the defect description rests on the PR title/commit message.",
+        "The trigger asserts only that commandRunner.run(...) completes without throwing; it never checks command.hasRun or any parsed value, so it is a crash-regression trigger and would not catch a fix that suppresses the exception while mis-dispatching the subcommand.",
+        "The second hunk's guard depends on the pre-existing semantics of ArgResults.options and ArgParser.allowsAnything, which were not re-verified from the buggy-revision source in the supplied evidence; they are inferred to pre-exist because no patch touches their defining files."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T15:17:08.876461+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "5a246ec83b2149bc4e50d48e481cdfca8ade9ddc7948c6bab8e556f874711623",
+      "response_sha256": "116b0dea9149475c2fd80e9df916a6302e1a7274818565ac135077aa986ecadf",
+      "response_id": "msg_02be295f590a42a99c489fbd23a9aaf6",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6550336594361525,
+        "input_tokens": 9344,
+        "output_tokens": 810
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/args#132",
+      "rationale": "One coherent defect: `Command()` unconditionally called `argParser.addFlag('help', ...)` and `CommandRunner.parse` unconditionally read `argResults['help']`, both of which are invalid for a parser created via the pre-existing `ArgParser.allowAnything()`. The fix in lib/command_runner.dart guards the flag registration with `!argParser.allowsAnything` and guards the lookup with `argResults.options.contains('help')`; both `allowsAnything` and `ArgResults.options` are pre-existing (they are referenced, not introduced, by the patch, which touches only command_runner.dart). The trigger 'works as a subcommand in a CommandRunner' registers an `AllowAnythingCommand` (whose `argParser` is `ArgParser.allowAnything()`, an API already exercised by the pre-existing allow_anything_test.dart group) with a CommandRunner and runs it, hitting exactly the two guarded code paths; it uses no API added by the fix. The trigger is the unchanged upstream test portion of the single fixing commit (test/allow_anything_test.dart plus the test-only fixture in test/test_utils.dart), so it is semantically identical to the reported defect rather than a curator reconstruction. The minimized production patch is byte-identical to production-fix.patch and confined to the two logic hunks in lib/command_runner.dart; the CHANGELOG edit and test/fixture additions from the original commit were correctly excluded, and no formatting, refactor, or feature-extension change remains. Strict evidence for both the original and post-minimization runs shows all gates green: build.both_versions, selectors.present_and_unique (1/1 unique), trigger.buggy_differential with the declared selector failing alone, trigger.fixed_clean across isolated/suite/reversed runs, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32-run matrix), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty, so no duplicate root cause exists, and dart-archive/args#132 is the sole allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.fixed_all_green",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The verified key #132 is the fixing pull request rather than a separate user-filed bug report; the CHANGELOG hunk in the original commit references 'fix #123', and that underlying report was not supplied for cross-checking. Defect intent is still established by the PR title, commit message, and code, not by a status label.",
+        "The trigger asserts only that `commandRunner.run` completes without throwing; it does not assert `hasRun` or usage output, so it detects the crash but not any subtler behavioral regression in help handling.",
+        "Correctness of the fix depends on `ArgResults.options` and `ArgParser.allowsAnything` semantics in the buggy revision, which were inferred from the patch context rather than read from the full source of lib/src.",
+        "Minimization drops the CHANGELOG line documenting the behavior change, so the benchmark case carries no record that commands using allowAnything intentionally lose the auto-added help flag."
+      ]
+    }
+  ]
+}

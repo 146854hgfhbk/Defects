@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-306",
+  "technical_evidence_sha256": "d615492dc1ee215f157e06bdbc62c57ad89a37d4ce457947583e81cb20ce44ca",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "968f367faf7b44446fb0d965ff9e1027a2f945c218120b865ebc0d4bc18f94aa",
+  "reviewed_at": "2026-08-11T11:55:43.447653+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1505",
+  "rationale": "Issue #1505 reports that tall-style formatting of an extension type representation clause emits a trailing comma (`JSExportedDartFunctionRepType _jsExportedDartFunction,`), producing output that Dart's grammar rejects on reformat ('The representation field can't have a trailing comma'), i.e. non-idempotent, unparseable output from pre-existing behavior. The minimized production patch is a single hunk in visitRepresentationDeclaration that constructs the existing DelimitedListBuilder with `const ListStyle(commas: Commas.nonTrailing)`; it is a pure behavior change with no refactor, formatting, feature, doc, or config edits, and it introduces no new production API (the ListStyle/Commas constructor arguments are pre-existing, and build.both_versions passed on buggy and fixed revisions). Triggers are data-driven .unit fixtures from the upstream fix commit (fbf2ce9): the new test/tall/regression/1500/1505.unit is the issue's own reproducer, and the two modified fixtures only flip the same trailing comma in representation clauses, so all three assert exactly the reported defect and depend on no new API surface. Strict machine evidence passes every gate in both strict_original and strict_post_minimization: all three selectors present and unique, buggy differential reproduces all three selectors with suite failures confined to them, fixed isolated/suite/reversed runs clean, deterministic fingerprints (5 groups), 44-run matrix at 3 repetitions, fixed full suite green. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and the ID matches allowed_root_cause_ids.\n\nIssue #1505 reports that the tall formatter emits a trailing comma inside an extension type representation clause, producing output that fails to re-parse ('The representation field can't have a trailing comma.'). The minimized production patch is a single hunk in visitRepresentationDeclaration that constructs the existing DelimitedListBuilder with const ListStyle(commas: Commas.nonTrailing), directly suppressing that comma; commit message and PR #1518 both state 'Fix #1505'. The minimized patch equals the production-only portion of the original commit, with no formatting, refactor, config, or doc changes and no new public API. Triggers are data-driven .unit fixtures from the upstream commit (fbf2ce9, the merged form of PR #1518): the new regression fixture test/tall/regression/1500/1505.unit reproduces the issue's exact JSExportedDartFunction._ example, and the two modified fixtures only update expected output for the same trailing-comma behavior, so they depend on no API introduced by the fix. Strict evidence for both original and post-minimization runs shows build passing on both revisions, three declared unique selectors all reproducing on the buggy revision, fixed runs clean including reversed, deterministic fingerprints, and buggy full-suite failures limited to the reproduced triggers. active_same_project_root_causes is empty, so #1505 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T11:55:25.299336+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "968f367faf7b44446fb0d965ff9e1027a2f945c218120b865ebc0d4bc18f94aa",
+      "response_sha256": "07435453df40590ab817f2c8eb33159c3667df91d44f2dc49864a0a12739614c",
+      "response_id": "msg_74c95fd7-c3af-4013-bf",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3561
+        },
+        "cache_creation_input_tokens": 3561,
+        "cache_read_input_tokens": 7588,
+        "input_tokens": 10084,
+        "output_tokens": 1765
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1505",
+      "rationale": "Issue #1505 reports that tall-style formatting of an extension type representation clause emits a trailing comma (`JSExportedDartFunctionRepType _jsExportedDartFunction,`), producing output that Dart's grammar rejects on reformat ('The representation field can't have a trailing comma'), i.e. non-idempotent, unparseable output from pre-existing behavior. The minimized production patch is a single hunk in visitRepresentationDeclaration that constructs the existing DelimitedListBuilder with `const ListStyle(commas: Commas.nonTrailing)`; it is a pure behavior change with no refactor, formatting, feature, doc, or config edits, and it introduces no new production API (the ListStyle/Commas constructor arguments are pre-existing, and build.both_versions passed on buggy and fixed revisions). Triggers are data-driven .unit fixtures from the upstream fix commit (fbf2ce9): the new test/tall/regression/1500/1505.unit is the issue's own reproducer, and the two modified fixtures only flip the same trailing comma in representation clauses, so all three assert exactly the reported defect and depend on no new API surface. Strict machine evidence passes every gate in both strict_original and strict_post_minimization: all three selectors present and unique, buggy differential reproduces all three selectors with suite failures confined to them, fixed isolated/suite/reversed runs clean, deterministic fingerprints (5 groups), 44-run matrix at 3 repetitions, fixed full suite green. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and the ID matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json issue_urls",
+        "case.json source_candidate.candidate.issue_check.linked_issues[0].body",
+        "case.json strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json strict_post_minimization.checks.trigger.fixed_clean",
+        "case.json trigger_tests"
+      ],
+      "risks": [
+        "Two of the three triggers are pre-existing expected-output fixtures rather than dedicated regression tests, so they are broader golden-file assertions; any future formatting change to extension type representation clauses would also perturb them.",
+        "The added fixture test/tall/regression/1500/1505.unit lacks a trailing newline, which is cosmetic but could confuse naive fixture parsers.",
+        "Analyzer cleanliness was diagnostic-only (require_analyze_clean=false), so static-analysis parity between revisions is unverified.",
+        "Trigger provenance is the later upstream commit fbf2ce9 (the merge of the same PR #1518), not an independently authored test; equivalence rests on fixture content inspection rather than a separate reproducer."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T11:55:43.447431+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "968f367faf7b44446fb0d965ff9e1027a2f945c218120b865ebc0d4bc18f94aa",
+      "response_sha256": "747c6bbe3959b102f1ab7d71a76a64a946f3d92c403b45c9fbbeb14f6117a224",
+      "response_id": "msg_33ec56e1-4f49-4815-8f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3037
+        },
+        "cache_creation_input_tokens": 3037,
+        "cache_read_input_tokens": 7717,
+        "input_tokens": 10084,
+        "output_tokens": 1379
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1505",
+      "rationale": "Issue #1505 reports that the tall formatter emits a trailing comma inside an extension type representation clause, producing output that fails to re-parse ('The representation field can't have a trailing comma.'). The minimized production patch is a single hunk in visitRepresentationDeclaration that constructs the existing DelimitedListBuilder with const ListStyle(commas: Commas.nonTrailing), directly suppressing that comma; commit message and PR #1518 both state 'Fix #1505'. The minimized patch equals the production-only portion of the original commit, with no formatting, refactor, config, or doc changes and no new public API. Triggers are data-driven .unit fixtures from the upstream commit (fbf2ce9, the merged form of PR #1518): the new regression fixture test/tall/regression/1500/1505.unit reproduces the issue's exact JSExportedDartFunction._ example, and the two modified fixtures only update expected output for the same trailing-comma behavior, so they depend on no API introduced by the fix. Strict evidence for both original and post-minimization runs shows build passing on both revisions, three declared unique selectors all reproducing on the buggy revision, fixed runs clean including reversed, deterministic fingerprints, and buggy full-suite failures limited to the reproduced triggers. active_same_project_root_causes is empty, so #1505 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/front_end/ast_node_visitor.dart",
+        "test/tall/regression/1500/1505.unit",
+        "case.json:strict_post_minimization.checks",
+        "case.json:source_candidate.candidate.issue_check.linked_issues[0].body"
+      ],
+      "risks": [
+        "Two of the three triggers are pre-existing fixtures whose expected output was updated by the same commit; they distinguish the revisions only because the harness compares formatter output, so any future change to fixture-selector semantics could weaken selector isolation.",
+        "ListStyle/Commas.nonTrailing pre-existence at the buggy parent was inferred from the passing build gate rather than read from source at 1536c11a.",
+        "The added fixture file lacks a trailing newline, which is cosmetic but could matter to stricter fixture parsers."
+      ]
+    }
+  ]
+}

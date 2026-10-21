@@ -1,0 +1,85 @@
+{
+  "candidate_sha": "be12972c8f4522cb9af61555e79fd6b3e60aef5f",
+  "project": "SciML/SciMLBase.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1481,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/1481",
+      "state": "closed",
+      "title": "Fix Moshi bare-singleton deprecation warning on v2-backport",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "**Please ignore until reviewed by @ChrisRackauckas.**\n\nFixes the precompilation warning reported at https://discourse.julialang.org/t/warning-in-scimlbase-about-continousclock/138534:\n\n```\n┌ SciMLBase\n│  ┌ Warning: the bare singleton variant syntax `ContinuousClock` is deprecated, write `ContinuousClock()` instead (near .../SciMLBase/hLfdZ/src/clock.jl:4)\n│  │   caller = eval at boot.jl:430 [inlined]\n│  └ @ Core ./boot.jl:430\n└\n```\n\n### Root cause\n\nMoshi v0.3.11 (Roger-luo/Moshi.jl#80, 2026-07-12) deprecated the bare singleton variant syntax inside `@data` and requires `Name()`. `src/clock.jl` on `v2-backport` declares `ContinuousClock` and `SolverStepClock` in the bare form, and the v2 compat entry `Moshi = \"0.3.6\"` resolves to v0.3.12, so every user on SciMLBase v2 now gets this warning on precompile. Only one warning shows because `Base.depwarn` dedupes on `(caller frame, funcsym)` — `SolverStepClock` has the same problem.\n\n`master` (v3) is unaffected: Moshi was dropped entirely in 2837095 (\"Replace Moshi with plain Julia structs for Clocks\", v3.0.0). Verified — a fresh env with SciMLBase v3.40.0 precompiles clean.\n\nOther Moshi users in the ecosystem (ModelingToolkitBase's `MissingGuessValue` / `StructuralHint`, SymbolicUtils' `BasicSymbolicImpl`) already use the explicit form, so this is the only offender.\n\n### Fix\n\n`ContinuousClock` → `ContinuousClock()`, `SolverStepClock` → `SolverStepClock()`. The explicit form throws `ArgumentError: missing fields in variant expression` on Moshi < 0.3.11, so the compat floor moves to `0.3.11` alongside the syntax. All `@match` patterns in `clock.jl` already used `Name()` and are unchanged.\n\n### Test\n\nAdded a regression test that force-recompiles SciMLBase in a subprocess and asserts no deprecation output — the warning is emitted during macroexpansion, so it is invisible unless the package is actually recompiled.\n\nVerified locally on Julia 1.11.9 with Moshi v0.3.12:\n\n- Reproduced the warning on released v2.155.1.\n- With the f"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 1481,
+      "pull_request_repository": "SciML/SciMLBase.jl",
+      "pull_request_url": "https://github.com/SciML/SciMLBase.jl/pull/1481",
+      "fix_commit": "be12972c8f4522cb9af61555e79fd6b3e60aef5f",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Use explicit `()` singleton variant syntax for clocks (#1481)\n\nMoshi v0.3.11 deprecated the bare singleton variant syntax inside `@data`, so\nprecompiling SciMLBase v2 emitted\n\n    Warning: the bare singleton variant syntax `ContinuousClock` is deprecated,\n    write `ContinuousClock()` instead (near .../src/clock.jl:4)\n\nExplicit `Name()` variants only parse on Moshi v0.3.11 or newer, so the compat\nfloor moves with the syntax.\n\nCo-authored-by: ChrisRackauckas-Claude <accounts@chrisrackauckas.com>",
+    "commit_issue_refs": [
+      1481
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1481,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Fix Moshi bare-singleton deprecation warning on v2-backport",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [
+      [
+        "Roger-luo/Moshi.jl",
+        80,
+        "issues"
+      ]
+    ],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [
+    {
+      "number": 80,
+      "url": "https://github.com/Roger-luo/Moshi.jl/pull/80",
+      "state": "closed",
+      "title": "feat(data): require explicit `()` for singleton variants; deprecate bare form",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "## Motivation\n\nFollow-up to #22. The confusion in that issue comes from singleton variants being written as a **bare identifier**:\n\n```julia\n@data Score begin\n    ZeroZero   # looks like a value...\n    Plus(Int)\nend\n```\n\n`Score.ZeroZero` is actually the variant **type**, not a value — you must call `Score.ZeroZero()` to get an instance of `Score.Type`. The bare syntax reinforces the wrong mental model, producing baffling `convert`/dispatch `MethodError`s (see #22).\n\n### On \"does Julia have singleton types?\"\n\nYes — Julia *has* singleton **types** (an immutable no-field struct has exactly one instance; `Base.issingletontype(Empty) == true`, and Moshi's own `Score.ZeroZero() === Score.ZeroZero()` is `true`). But the type and its instance are **always distinct objects** (`Nothing` vs `nothing`); there is no way to make one bare name be simultaneously a type *and* its sole value the way a Rust `enum` variant is. Moshi needs the variant name to remain a **type** (for dispatch, reflection, and pattern matching), and a `const` value binding is impossible for generic ADTs (`Option.None{Float64}`). So the honest fix is to make the **syntax explicit** rather than fake a value binding.\n\n## Change\n\n- `@data` now accepts the explicit **`Name()`** singleton form (previously *rejected* with \"missing fields\") and treats it as the canonical spelling.\n- The bare `Name` form still parses to a `Singleton` but emits a `Base.depwarn(...; force=true)` at macro-expansion time pointing to `Name()`.\n- **Non-breaking** (deprecation only). The version bump is left to release-please (`release-type: julia`); the `feat:` commit drives a patch bump automatically.\n\n```julia\n@data Score begin\n    ZeroZero()   # ✅ canonical\n    Plus(Int)\nend\n```\n\n## Scope\n\n- **Core:** `src/data/cons.jl` — accept `Name()`, deprecate bare `Name`.\n- **Internal:** `src/match/repr.jl` `Wildcard` → `Wildcard()` so Moshi doesn't warn on its own load; all test `@data` blocks migrated to `()`.\n- **Docs:** `data/syntax.mdx`, `d",
+      "repository": "Roger-luo/Moshi.jl",
+      "reference_kind": "issues"
+    }
+  ],
+  "pull_request_record": {
+    "number": 1481,
+    "repository": "SciML/SciMLBase.jl",
+    "url": "https://github.com/SciML/SciMLBase.jl/pull/1481",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-07-31T05:25:43Z",
+    "merge_commit_sha": "be12972c8f4522cb9af61555e79fd6b3e60aef5f",
+    "title": "Fix Moshi bare-singleton deprecation warning on v2-backport",
+    "body_excerpt": "**Please ignore until reviewed by @ChrisRackauckas.**\n\nFixes the precompilation warning reported at https://discourse.julialang.org/t/warning-in-scimlbase-about-continousclock/138534:\n\n```\n┌ SciMLBase\n│  ┌ Warning: the bare singleton variant syntax `ContinuousClock` is deprecated, write `ContinuousClock()` instead (near .../SciMLBase/hLfdZ/src/clock.jl:4)\n│  │   caller = eval at boot.jl:430 [inlined]\n│  └ @ Core ./boot.jl:430\n└\n```\n\n### Root cause\n\nMoshi v0.3.11 (Roger-luo/Moshi.jl#80, 2026-07-12) deprecated the bare singleton variant syntax inside `@data` and requires `Name()`. `src/clock.jl` on `v2-backport` declares `ContinuousClock` and `SolverStepClock` in the bare form, and the v2 compat entry `Moshi = \"0.3.6\"` resolves to v0.3.12, so every user on SciMLBase v2 now gets this warning on precompile. Only one warning shows because `Base.depwarn` dedupes on `(caller frame, funcsym)` — `SolverStepClock` has the same problem.\n\n`master` (v3) is unaffected: Moshi was dropped entirely in 2837095 (\"Replace Moshi with plain Julia structs for Clocks\", v3.0.0). Verified — a fresh env with SciMLBase v3.40.0 precompiles clean.\n\nOther Moshi users in the ecosystem (ModelingToolkitBase's `MissingGuessValue` / `StructuralHint`, SymbolicUtils' `BasicSymbolicImpl`) already use the explicit form, so this is the only offender.\n\n### Fix\n\n`ContinuousClock` → `ContinuousClock()`, `SolverStepClock` → `SolverStepClock()`. The explicit form throws `ArgumentError: missing fields in variant expression` on Moshi < 0.3.11, so the compat floor moves to `0.3.11` alongside the syntax. All `@match` patterns in `clock.jl` already used `Name()` and are unchanged.\n\n### Test\n\nAdded a regression test that force-recompiles SciMLBase in a subprocess and asserts no deprecation output — the warning is emitted during macroexpansion, so it is invisible unless the package is actually recompiled.\n\nVerified locally on Julia 1.11.9 with Moshi v0.3.12:\n\n- Reproduced the warning on released v2.155.1.\n- With the f",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

@@ -1,0 +1,232 @@
+{
+  "schema_version": 2,
+  "case_id": "ELIXIR-028",
+  "id": "ELIXIR-028",
+  "bug_id": "ELIXIR-028",
+  "language": "Elixir",
+  "project": "tallarium/reverse_proxy_plug",
+  "repo": "tallarium/reverse_proxy_plug",
+  "buggy_revision": "d434539ce3adcb3608f7088f1fa44afaee124ff4",
+  "fixed_revision": "0d8b59e6d30dc59edcc584e3b20db13d8024cc60",
+  "fixed_revision_kind": "upstream_pr_merge_commit",
+  "fixed_revision_parents": null,
+  "revision_mode": "base_plus_gold_patch",
+  "upstream_id": "tallarium__reverse_proxy_plug-202",
+  "patch": {
+    "path": "patches/minimized-source.patch",
+    "upstream_path": "patches/upstream.patch",
+    "sha256": "f8f67471090dfd4ade845b5e392006c5e187c69e06a68265b182fbd88d7b6afa",
+    "upstream_sha256": "cef08c9fa526a904e5150153d7e4e6968f8ceb2dbb541365a4b84c9e75cf79f5",
+    "changed_source_files": [
+      "lib/reverse_proxy_plug.ex"
+    ]
+  },
+  "patch_sha256": "f8f67471090dfd4ade845b5e392006c5e187c69e06a68265b182fbd88d7b6afa",
+  "trigger_test_patch": "patches/trigger-tests.patch",
+  "trigger_test_patch_sha256": "0f7d62bc5a5ff77163b2f9a0f0e8115d07ba78935d62595085520ea84b2bcd42",
+  "trigger_tests": [
+    "calls error callback with arity 2 if supplied (stream)",
+    "calls error callback with higher arity if present (stream)",
+    "calls error callback if supplied (buffer)",
+    "calls error callback if supplied as MFA tuple (buffer)",
+    "calls error callback with arity 2 if supplied (buffer)",
+    "calls error callback if supplied (stream)",
+    "calls error callback if supplied as MFA tuple (stream)",
+    "calls error callback with higher arity if present (buffer)"
+  ],
+  "triggering_tests": [
+    "calls error callback with arity 2 if supplied (stream)",
+    "calls error callback with higher arity if present (stream)",
+    "calls error callback if supplied (buffer)",
+    "calls error callback if supplied as MFA tuple (buffer)",
+    "calls error callback with arity 2 if supplied (buffer)",
+    "calls error callback if supplied (stream)",
+    "calls error callback if supplied as MFA tuple (stream)",
+    "calls error callback with higher arity if present (buffer)"
+  ],
+  "expected_failure": {
+    "test_count": 8,
+    "tests": [
+      "calls error callback with arity 2 if supplied (stream)",
+      "calls error callback with higher arity if present (stream)",
+      "calls error callback if supplied (buffer)",
+      "calls error callback if supplied as MFA tuple (buffer)",
+      "calls error callback with arity 2 if supplied (buffer)",
+      "calls error callback if supplied (stream)",
+      "calls error callback if supplied as MFA tuple (stream)",
+      "calls error callback with higher arity if present (buffer)"
+    ],
+    "exception_types": [],
+    "fingerprints": [],
+    "source": "SWE-rebench-V2 FAIL_TO_PASS"
+  },
+  "trigger_test_filters": {},
+  "validation": {
+    "status": "PASS",
+    "report": "validation/phase-d.json",
+    "report_sha256": "af3e23e6bf79153f1302bb4910457c79a5ff388ba8dc59e8c5cb1262dd33ad37",
+    "protocol": "v4-goldsuite",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "result": "PASS"
+  },
+  "environment_lock": "environment.lock.json",
+  "environment": {
+    "backend": "swe_rebench_v2_docker",
+    "image": "docker.io/swerebenchv2/tallarium-reverse-proxy-plug:202-d434539"
+  },
+  "commands": {
+    "test": "mix test --trace"
+  },
+  "minimization": {
+    "status": "HUMAN_REVIEWED_MINIMIZED_V1",
+    "policy": "execution-verified hunk removal; suite-repair post-pass",
+    "removed_hunks": 0,
+    "trials": 2,
+    "report": "patches/minimization.json",
+    "llm_review": "llm-hunk-review.json",
+    "review_status": "human_minimization_signoff_completed",
+    "reviewer_type": "human_dataset_curator",
+    "human_signoff": "completed",
+    "dynamic_revalidation": true,
+    "human_signoff_date": "2026-09-12",
+    "human_signoff_scope": "patch_minimization_only"
+  },
+  "artifacts": {
+    "curation_decision": "curation-decision.json",
+    "llm_hunk_review": "llm-hunk-review.json",
+    "llm_semantic_review": "llm-semantic-review.json",
+    "minimization_decisions": "minimization-decisions.json",
+    "manual_minimization_confirmation": "manual-minimization-confirmation.json",
+    "minimization_report": "patches/minimization.json"
+  },
+  "provenance": {
+    "source_dataset": "SWE-rebench-V2",
+    "source_dataset_id": "nebius/SWE-rebench-V2",
+    "source_revision": "475dd5e",
+    "instance_id": "tallarium__reverse_proxy_plug-202",
+    "pr_url": "https://github.com/tallarium/reverse_proxy_plug/pull/202",
+    "replacement": {
+      "replaces_case": "ELIXIR-028",
+      "replaced_repo": "elixir-ecto/ecto",
+      "replaced_reason": "QUARANTINED",
+      "candidate_work_id": "PR-025"
+    },
+    "issue_id": 182,
+    "issue_url": "https://github.com/tallarium/reverse_proxy_plug/issues/182",
+    "issue_relation": "PR_BODY_CLOSES"
+  },
+  "status": "ACTIVE",
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "elixir",
+    "reason_code": null,
+    "reason": null,
+    "llm_semantic_decision": "BUG_FIX",
+    "human_confirmation": false
+  },
+  "release_integrity": "release-integrity.json",
+  "execution_validation": {
+    "status": "PASS",
+    "protocol": "v4-goldsuite",
+    "evidence": "validation/phase-d.json",
+    "evidence_sha256": "af3e23e6bf79153f1302bb4910457c79a5ff388ba8dc59e8c5cb1262dd33ad37",
+    "validated_at": "2026-09-11T14:26:22Z",
+    "b_failures": [
+      8,
+      8,
+      8
+    ],
+    "f_failures": [
+      0,
+      0,
+      0
+    ],
+    "gold_failures": [
+      0
+    ],
+    "dyn_dropped": 0
+  },
+  "fixed_test_result": "pass",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "build_command": [
+    "export HOME=/workspace",
+    "mix deps.get",
+    "mix compile"
+  ],
+  "test_command": "mix test --trace",
+  "language_version": {
+    "elixir": "1.16.3",
+    "otp": "26"
+  },
+  "dependency_versions": {
+    "mix_lock_md5": "ef584f3ae81f78ea527d81a07e93a226"
+  },
+  "operating_system_or_container": {
+    "container_image": "docker.io/swerebenchv2/tallarium-reverse-proxy-plug:202-d434539",
+    "image_id": "sha256:85893d1cf34da803c5bf2a74ad697b8d12a47fbef2d5857f4a4e24f8473e1ff6",
+    "platform": "linux/amd64"
+  },
+  "traceability": {
+    "issue_id": 182,
+    "issue_url": "https://github.com/tallarium/reverse_proxy_plug/issues/182",
+    "pr_url": "https://github.com/tallarium/reverse_proxy_plug/pull/202",
+    "issue_closed": true,
+    "pr_merged": true,
+    "issue_referenced_in": "pull_request_body",
+    "fix_commit": "770a552ad173a6b22fef68b3d478652f9ac05a38",
+    "fix_commit_count": 1,
+    "single_parent_fix": true,
+    "audit": {
+      "method": "GitHub API commit-file superset check",
+      "verdict": "SINGLE_COMMIT_FIX"
+    },
+    "issue_title": "Error callback can be simplified",
+    "upstream_fix_parents": [
+      "d434539ce3adcb3608f7088f1fa44afaee124ff4"
+    ],
+    "upstream_fix_parent": "d434539ce3adcb3608f7088f1fa44afaee124ff4",
+    "fix_commit_is_merge": false,
+    "provenance_strength": "PR_BODY_REFERENCE"
+  },
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "DONE",
+    "full_suite_validation": "PASS",
+    "protocol": "v4-goldsuite"
+  },
+  "upstream": {
+    "fix_commit": "770a552ad173a6b22fef68b3d478652f9ac05a38",
+    "fix_parent": "d434539ce3adcb3608f7088f1fa44afaee124ff4",
+    "issue_url": "https://github.com/tallarium/reverse_proxy_plug/issues/182",
+    "pr_url": "https://github.com/tallarium/reverse_proxy_plug/pull/202"
+  },
+  "benchmark_revision": {
+    "mode": "base_plus_gold_patch",
+    "base_revision": "d434539ce3adcb3608f7088f1fa44afaee124ff4",
+    "declared_fixed_revision": "0d8b59e6d30dc59edcc584e3b20db13d8024cc60",
+    "fixed_construction": "base_plus_minimized_patch"
+  },
+  "upstream_revision": {
+    "fix_commit": "770a552ad173a6b22fef68b3d478652f9ac05a38",
+    "fix_parent": "d434539ce3adcb3608f7088f1fa44afaee124ff4",
+    "issue_url": "https://github.com/tallarium/reverse_proxy_plug/issues/182",
+    "pr_url": "https://github.com/tallarium/reverse_proxy_plug/pull/202"
+  },
+  "excluded_tests_manifest": "validation/excluded-tests.json",
+  "canonical_test_policy": {
+    "raw_test_command": "mix test --trace",
+    "canonical_runner": "python3 tools/defects4x test --bug 28 --version <b|f> --workdir <checkout> --canonical --execute",
+    "fixed_acceptance": "PASS only after a normal, non-empty ExUnit completion with a valid summary and no infrastructure/process error; a non-zero raw exit may be normalized only when the summary failure count matches parsed failure identities and every identity is explicitly listed in validation/excluded-tests.json and reproduced in upstream GOLD."
+  },
+  "canonical_test_command": "python3 tools/defects4x test --bug 28 --version f --workdir <checkout> --canonical --execute",
+  "trigger_selectors": [
+    "test/reverse_proxy_plug_test.exs:380",
+    "test/reverse_proxy_plug_test.exs:417",
+    "test/reverse_proxy_plug_test.exs:361",
+    "test/reverse_proxy_plug_test.exs:399"
+  ],
+  "trigger_selector_evidence": "validation/selector-hardening.json"
+}

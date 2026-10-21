@@ -1,0 +1,317 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b2ba981..c7f9be8 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,8 @@
+ ## Unreleased
+ 
++- **Error Mapping Parity:** Connection request error handling now maps parameter/validation exceptions to JSON-RPC `-32602` (`Invalid params`) and unexpected exceptions to `-32603` (`Internal error`), preserving structured error payloads when available.
++- **NDJSON Tolerant Parsing:** `ndJsonStream` now logs malformed non-empty JSON lines and continues streaming subsequent valid messages instead of terminating the stream.
++- **Regression Tests:** Added coverage for invalid-params mapping, internal-error fallback, and malformed-line tolerant stream behavior.
+ - **Extension Semantics:** `extMethod` and `extNotification` now preserve caller-provided method names instead of auto-prefixing `_`; callers must provide the leading underscore for protocol extension methods.
+ - **Extension Dispatch:** Incoming extension request/notification handlers now pass full method names through to callbacks and avoid spurious method-not-found handling after successful extension notification dispatch.
+ - **Tests:** Added regression coverage for extension method pass-through, handled extension notifications, and unknown non-extension method-not-found behavior.
+diff --git a/README.md b/README.md
+index c0e5495..9311492 100644
+--- a/README.md
++++ b/README.md
+@@ -61,9 +61,16 @@ If you're building a [Client](https://agentclientprotocol.com/protocol/overview#
+ - **Stream-based Communication**: NDJSON-based communication over stdio
+ - **Complete Protocol Coverage**: All ACP request/response types implemented
+ - **Error Handling**: Comprehensive error types and handling mechanisms
++- **JSON-RPC Error Mapping**: Parameter-validation failures map to `-32602 Invalid params`, while unexpected failures map to `-32603 Internal error`
+ - **Protocol Cancellation**: Typed `$/cancel_request` notifications with `-32800` cancelled error semantics
+ - **Extensible**: Support for extension methods and notifications (method names are passed through as provided; include leading `_` for protocol extension methods)
+ 
++### Error and Stream Behavior
++
++- Incoming request parameter/validation failures are returned as JSON-RPC `Invalid params` (`-32602`).
++- Unexpected runtime failures are returned as JSON-RPC `Internal error` (`-32603`).
++- `ndJsonStream` skips malformed non-empty lines, logs the parse failure, and continues processing subsequent valid messages.
++
+ ## Usage Examples
+ 
+ ### Creating an Agent
+diff --git a/lib/src/acp.dart b/lib/src/acp.dart
+index 716750a..8096557 100644
+--- a/lib/src/acp.dart
++++ b/lib/src/acp.dart
+@@ -3,6 +3,7 @@
+ library;
+ 
+ import 'dart:async';
++import 'dart:convert';
+ 
+ import 'package:acp_dart/src/schema.dart';
+ import 'package:acp_dart/src/stream.dart';
+@@ -231,18 +232,38 @@ class Connection {
+       final result = await _requestHandler(method, params);
+       _sendMessage({'jsonrpc': '2.0', 'id': id, 'result': result});
+     } catch (error) {
+-      late Map<String, dynamic> errorResponse;
+-      if (error is RequestError) {
+-        errorResponse = error.toErrorResponse().toJson();
+-      } else {
+-        errorResponse = RequestError.internalError(
+-          error.toString(),
+-        ).toErrorResponse().toJson();
+-      }
++      final errorResponse = _mapRequestError(error).toErrorResponse().toJson();
+       _sendMessage({'jsonrpc': '2.0', 'id': id, 'error': errorResponse});
+     }
+   }
+ 
++  RequestError _mapRequestError(Object error) {
++    if (error is RequestError) {
++      return error;
++    }
++
++    final errorData = _extractErrorData(error);
++    if (error is TypeError ||
++        error is FormatException ||
++        error is ArgumentError) {
++      return RequestError.invalidParams(errorData);
++    }
++    return RequestError.internalError(errorData);
++  }
++
++  dynamic _extractErrorData(Object error) {
++    final message = switch (error) {
++      FormatException() => error.message.toString(),
++      ArgumentError() => error.message?.toString() ?? error.toString(),
++      _ => error.toString(),
++    };
++    try {
++      return jsonDecode(message);
++    } catch (_) {
++      return message;
++    }
++  }
++
+   /// Handles incoming notification
+   void _handleNotification(Map<String, dynamic> message) async {
+     final method = message['method'] as String;
+diff --git a/lib/src/stream.dart b/lib/src/stream.dart
+index 645ba9a..256f48d 100644
+--- a/lib/src/stream.dart
++++ b/lib/src/stream.dart
+@@ -26,16 +26,32 @@ AcpStream ndJsonStream(Stream<List<int>> input, StreamSink<List<int>> output) {
+   // Create readable stream: transform bytes to messages
+   final readable = input
+       .transform(utf8.decoder) // Safely decode bytes to string
+-      .transform(const LineSplitter()) // Safely split lines, handling partial UTF-8
+-      .where((line) => line.trim().isNotEmpty) // Filter empty lines
+-      .map((line) {
+-        try {
+-          return jsonDecode(line) as Map<String, dynamic>;
+-        } catch (e) {
+-          // Propagate the error to the stream listener
+-          throw FormatException('Failed to parse JSON message: $line, error: $e');
+-        }
+-      });
++      .transform(
++        const LineSplitter(),
++      ) // Safely split lines, handling partial UTF-8
++      .transform(
++        StreamTransformer<String, Map<String, dynamic>>.fromHandlers(
++          handleData: (line, sink) {
++            final trimmed = line.trim();
++            if (trimmed.isEmpty) {
++              return;
++            }
++
++            try {
++              final decoded = jsonDecode(trimmed);
++              if (decoded is Map<String, dynamic>) {
++                sink.add(decoded);
++                return;
++              }
++              print(
++                'Failed to parse JSON message: $trimmed, error: expected JSON object',
++              );
++            } catch (e) {
++              print('Failed to parse JSON message: $trimmed, error: $e');
++            }
++          },
++        ),
++      );
+ 
+   // Create writable stream: transform messages to bytes
+   final writableController = StreamController<Map<String, dynamic>>();
+@@ -58,4 +74,4 @@ AcpStream ndJsonStream(Stream<List<int>> input, StreamSink<List<int>> output) {
+   );
+ 
+   return AcpStream(readable: readable, writable: writable);
+-}
+\ No newline at end of file
++}
+diff --git a/test/acp_test.dart b/test/acp_test.dart
+index 5e8070e..9b9c7f3 100644
+--- a/test/acp_test.dart
++++ b/test/acp_test.dart
+@@ -406,6 +406,73 @@ void main() {
+       await readableController.close();
+       await writableController.close();
+     });
++
++    test('maps validation-like exceptions to invalid params', () async {
++      final readableController = StreamController<Map<String, dynamic>>();
++      final writableController = StreamController<Map<String, dynamic>>();
++      final acpStream = AcpStream(
++        readable: readableController.stream,
++        writable: writableController.sink,
++      );
++
++      final connection = Connection(
++        (method, params) async =>
++            throw FormatException('{"field":"cwd","reason":"required"}'),
++        (method, params) async {},
++        acpStream,
++      );
++      // ignore: unused_local_variable
++      final _ = connection;
++
++      readableController.add({
++        'jsonrpc': '2.0',
++        'id': 3,
++        'method': 'test.validation',
++      });
++
++      final response = await writableController.stream.first;
++      expect(response['jsonrpc'], '2.0');
++      expect(response['id'], 3);
++      expect(response['error']['code'], -32602);
++      expect(response['error']['message'], 'Invalid params');
++      expect(response['error']['data'], {'field': 'cwd', 'reason': 'required'});
++
++      await readableController.close();
++      await writableController.close();
++    });
++
++    test('maps unexpected exceptions to internal error', () async {
++      final readableController = StreamController<Map<String, dynamic>>();
++      final writableController = StreamController<Map<String, dynamic>>();
++      final acpStream = AcpStream(
++        readable: readableController.stream,
++        writable: writableController.sink,
++      );
++
++      final connection = Connection(
++        (method, params) async => throw StateError('unexpected failure'),
++        (method, params) async {},
++        acpStream,
++      );
++      // ignore: unused_local_variable
++      final _ = connection;
++
++      readableController.add({
++        'jsonrpc': '2.0',
++        'id': 4,
++        'method': 'test.internal',
++      });
++
++      final response = await writableController.stream.first;
++      expect(response['jsonrpc'], '2.0');
++      expect(response['id'], 4);
++      expect(response['error']['code'], -32603);
++      expect(response['error']['message'], 'Internal error');
++      expect(response['error']['data'], contains('unexpected failure'));
++
++      await readableController.close();
++      await writableController.close();
++    });
+   });
+ 
+   group('AgentSideConnection', () {
+@@ -447,6 +514,22 @@ void main() {
+       expect(agentSideConnection, isA<Client>());
+     });
+ 
++    test('maps invalid request params to invalid params error', () async {
++      final _ = AgentSideConnection((conn) => MockAgent(), acpStream);
++
++      readableController.add({
++        'jsonrpc': '2.0',
++        'id': 109,
++        'method': 'initialize',
++        'params': 'not-a-map',
++      });
++
++      final response = await writableController.stream.first;
++      expect(response['id'], equals(109));
++      expect(response['error']['code'], equals(-32602));
++      expect(response['error']['message'], equals('Invalid params'));
++    });
++
+     test('dispatches session/set_config_option requests to Agent', () async {
+       final agent = ConfigurableMockAgent();
+       final _ = AgentSideConnection((conn) => agent, acpStream);
+diff --git a/test/stream_test.dart b/test/stream_test.dart
+index c057113..6c1e16b 100644
+--- a/test/stream_test.dart
++++ b/test/stream_test.dart
+@@ -171,7 +171,7 @@ void main() {
+       outputController.close();
+     });
+ 
+-    test('propagates JSON parsing errors and stops stream', () async {
++    test('skips malformed JSON lines and continues processing', () async {
+       final inputController = StreamController<List<int>>();
+       final outputController = StreamController<List<int>>();
+ 
+@@ -180,49 +180,31 @@ void main() {
+         outputController.sink,
+       );
+ 
+-      // Send a valid message, then an invalid message
++      // Send valid, invalid, and valid messages.
+       inputController.add(utf8.encode('{"valid": "json"}\n'));
+       inputController.add(utf8.encode('invalid json\n'));
++      inputController.add(utf8.encode('{"valid": "json-2"}\n'));
+       inputController.close();
+ 
+       final received = <Map<String, dynamic>>[];
+-      final errorCompleter = Completer<Object?>();
+       final doneCompleter = Completer<void>();
+-      var completed = false;
+-
+-      void complete() {
+-        if (!completed) {
+-          completed = true;
+-          doneCompleter.complete();
+-        }
+-      }
+ 
+       acpStream.readable.listen(
+         (msg) => received.add(msg),
+-        onError: (e) {
+-          errorCompleter.complete(e);
+-          complete();
+-        },
+-        onDone: () {
+-          if (!errorCompleter.isCompleted) {
+-            errorCompleter.complete(null); // No error occurred
+-          }
+-          complete();
+-        },
++        onError: (e) => fail('Unexpected parse error: $e'),
++        onDone: () => doneCompleter.complete(),
+       );
+ 
+       await doneCompleter.future;
+ 
+-      // Expect the valid message to be received
++      // Malformed line should be ignored, stream continues.
+       expect(
+         received,
+         equals([
+           {'valid': 'json'},
++          {'valid': 'json-2'},
+         ]),
+       );
+-      // Expect the stream to have terminated with a FormatException
+-      expect(errorCompleter.isCompleted, isTrue);
+-      expect(await errorCompleter.future, isA<FormatException>());
+ 
+       outputController.close();
+     });

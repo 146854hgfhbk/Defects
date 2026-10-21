@@ -1,0 +1,515 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-22T07:10:48.798152+00:00",
+  "generated_by": "minimize_patch.py",
+  "patch_direction": "buggy_to_fixed",
+  "application_direction": "fixed_to_buggy_via_reverse_apply",
+  "policy": {
+    "granularity": "unified_diff_hunk",
+    "safe_automatic_categories": [
+      "comment",
+      "documentation",
+      "format",
+      "unrelated"
+    ],
+    "semantic_hunks_default": "KEEP",
+    "uncertain_hunks_default": "UNCERTAIN_AND_KEEP",
+    "llm_remove_requires_explicit_decision": true,
+    "removal_requires_differential_validation": true,
+    "batch_safe_candidates_first": true,
+    "verify_all_hunks": true,
+    "signature_fields": [
+      "trigger_set",
+      "exception_type",
+      "normalized_message",
+      "normalized_stack_hash"
+    ],
+    "necessity_evidence": [
+      "bug_not_reproduced with three complete compile and full-suite runs, repeat consistency, and no infrastructure errors",
+      "candidate source compilation fails in three isolated runs with an identical Kotlin compiler diagnostic fingerprint while fixed compile and full-suite runs pass"
+    ]
+  },
+  "original_patch": "original-source.patch",
+  "original_patch_sha256": "00293193eb2a23cf56ecb8a588cb88f25774cce35b7ea88f9d35d178512bfe76",
+  "minimized_patch": "pre-curation-minimized-source.patch",
+  "minimized_patch_sha256": "00293193eb2a23cf56ecb8a588cb88f25774cce35b7ea88f9d35d178512bfe76",
+  "original_hunk_count": 1,
+  "retained_hunk_count": 1,
+  "removed_hunk_count": 0,
+  "baseline_validation": {
+    "acceptable": true,
+    "status": "stable_differential",
+    "repeat_consistent": true,
+    "signature_complete": true,
+    "signature": {
+      "trigger_set": [
+        "com.pinterest.ktlint.cli.SimpleCLITest.Issue 3278 - Given some code containing a string with a percent character, the code is provided via stdin then write the formatted code without interpreting the percent character as format instruction(Path)"
+      ],
+      "failures": [
+        {
+          "test_id": "com.pinterest.ktlint.cli.SimpleCLITest.Issue 3278 - Given some code containing a string with a percent character, the code is provided via stdin then write the formatted code without interpreting the percent character as format instruction(Path)",
+          "exception_type": "org.opentest4j.AssertionFailedError",
+          "normalized_message": "org.opentest4j.AssertionFailedError: CLI test has been aborted as it could not be completed in 1.0 seconds RESULTS OF STDOUT: kotlin-logging: initializing... active logger factory: Slf4jLoggerFactory <TIME> [main] INFO com.pinterest.ktlint.cli.internal.KtlintCommandLine -- Enable default patterns [**<PATH> **<PATH> <TIME> [main] DEBUG com.pinterest.ktlint.cli.internal.KtlintCommandLine -- Add editor config override to disable 'filename' rule which can not be used in combination with",
+          "normalized_stack_hash": "28c72f9af85c570f31e4542267421fdb48c1be7bb77ddcf8f8f62b0460866da9"
+        }
+      ]
+    },
+    "fixed_passed_all_runs": true,
+    "buggy_failed_all_runs": true,
+    "full_suite_valid": true,
+    "compile_valid": true,
+    "compile_fixed_runs": 3,
+    "compile_buggy_runs": 3,
+    "full_fixed_runs": 3,
+    "full_buggy_runs": 3,
+    "infrastructure_error_count": 0
+  },
+  "baseline_validation_source": {
+    "kind": "existing_validation_report",
+    "case_id": "KOTLIN-107",
+    "file": "baseline-validation.json",
+    "sha256": "1dae24fdcc3a6732591f18a5f691aa4e0aa46e7569e3e9c7b6267f2aad35d4f3"
+  },
+  "hunks": [
+    {
+      "hunk_id": "F001-H001",
+      "file": "ktlint-cli/src/main/kotlin/com/pinterest/ktlint/cli/internal/KtlintCommandLine.kt",
+      "header": "@@ -519,8 +519,14 @@ internal class KtlintCommandLine : CliktCommand(name = \"ktlint\") {",
+      "category": "semantic",
+      "initial_decision": "REMOVE_CANDIDATE_FOR_NECESSITY_CHECK",
+      "source": "exhaustive_differential_check",
+      "eligible_for_automatic_removal": true,
+      "reason": "Production-code semantics may change; retained by default; removal is tested to establish that this retained hunk is necessary; retained because removal changes the differential evidence; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation",
+      "validation_evidence": {
+        "attempted": true,
+        "mode": "individual_exhaustive",
+        "accepted": false,
+        "reason": "removal consistently eliminates the defect under complete three-run differential validation",
+        "candidate_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "candidate": {
+          "acceptable": false,
+          "status": "bug_not_reproduced",
+          "repeat_consistent": true,
+          "signature_complete": false,
+          "signature": {
+            "trigger_set": [],
+            "failures": []
+          },
+          "fixed_passed_all_runs": true,
+          "buggy_failed_all_runs": false,
+          "full_suite_valid": true,
+          "compile_valid": true,
+          "compile_fixed_runs": 3,
+          "compile_buggy_runs": 3,
+          "full_fixed_runs": 3,
+          "full_buggy_runs": 3,
+          "infrastructure_error_count": 0,
+          "validation_provenance": {
+            "case_id": "KOTLIN-107",
+            "generated_by": "validation_engine.py",
+            "schema_version": 2,
+            "policy": {
+              "repetitions": 3,
+              "timeout_seconds": 1800,
+              "fresh_worktree_per_repetition": true,
+              "individual_trigger_processes": true,
+              "compile_before_tests": true,
+              "full_suite_run_per_version": 3,
+              "offline": true,
+              "environment_lock_sha256": "13d1b830500d5901fb6da9c536329ba320f396d3ce2b730c064fe98aa9821c64",
+              "trigger_patch_states": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "state": "already_present"
+                }
+              ],
+              "buggy_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "run_matrix": [
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 77,
+                "junit_file_count": 8,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 77,
+                "junit_file_count": 8,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 77,
+                "junit_file_count": 8,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 77,
+                "junit_file_count": 8,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 77,
+                "junit_file_count": 8,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.cli.SimpleCLITest"
+                ],
+                "tests": 29,
+                "junit_file_count": 3,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 77,
+                "junit_file_count": 8,
+                "failure_fingerprint": null
+              }
+            ],
+            "derived": {
+              "status": "bug_not_reproduced",
+              "stable": false,
+              "fixed_passed_all_runs": true,
+              "buggy_failed_all_runs": false,
+              "full_suite_valid": true,
+              "compile_valid": true,
+              "compile_fixed_runs": 3,
+              "compile_buggy_runs": 3,
+              "full_fixed_runs": 3,
+              "full_buggy_runs": 3,
+              "full_buggy_failed": false,
+              "buggy_failed_test_count": 0,
+              "buggy_failed_tests": [],
+              "buggy_failure_types": [],
+              "failure_fingerprints": [],
+              "broken_tests": [],
+              "flaky_tests": [],
+              "order_dependent_tests": [],
+              "infrastructure_error_count": 0
+            },
+            "source_report_sha256": "cf29e1e4596298b7921980862982a2f7c0e611bebc9605e339a453d0a1ed84b9",
+            "embedded_report": "minimization-evidence/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855-cf29e1e4596298b7921980862982a2f7c0e611bebc9605e339a453d0a1ed84b9.evidence.json",
+            "embedded_report_sha256": "948ccd8ef90a9770b9ea610845b28238db065c15a114b1beb4b09940be17e2da"
+          }
+        },
+        "source_validation_report": "D:\\Desktop\\综述试验方案\\kotlin-defects-miner-review\\output\\exhaustive-minimization\\KOTLIN-107\\validation-artifacts\\candidate-001\\validation.json",
+        "source_validation_sha256": "cf29e1e4596298b7921980862982a2f7c0e611bebc9605e339a453d0a1ed84b9"
+      },
+      "decision": "KEEP"
+    }
+  ],
+  "manual_confirmation_required": false,
+  "evidence_confirmation": {
+    "decision": "CONFIRMED_BY_EXHAUSTIVE_DIFFERENTIAL_EVIDENCE",
+    "confirmed_at": "2026-07-24T14:46:46.207266+00:00",
+    "method": "exact cardinality subset search with decisive differential evidence for every retained and removed hunk",
+    "human_review_claimed": false
+  },
+  "evidence_reclassified_at": "2026-07-24T14:46:46.183265+00:00",
+  "post_minimization_curation": {
+    "status": "superseded_by_comment_trimmed_forward_validated_patch",
+    "record": "comment-trimming.json",
+    "final_patch": "minimized-source.patch",
+    "final_patch_sha256": "72652dc6235fcf744b51ec0ebb4df9806e4d7ee488f2bfa3045857e00fc90625",
+    "final_validation": "../validation/final-patch-validation.json"
+  }
+}

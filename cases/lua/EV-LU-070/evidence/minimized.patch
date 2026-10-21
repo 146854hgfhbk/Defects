@@ -1,0 +1,35 @@
+--- a/src/binaryheap.lua
++++ b/src/binaryheap.lua
+@@ -211,6 +211,14 @@
+   return remove(self, self[payload])
+ end
+ 
++--- Removes the top of the unique heap and returns it.
++local function popU(self)
++  if self[1] then
++    self[self[1].payload] = nil
++    return remove(self, 1)
++  end
++end
++
+ --================================================================
+ -- unique heap creation
+ --================================================================
+@@ -225,7 +233,7 @@
+   local lte = function(a,b) return (a<=b) end
+   local h = M.binaryHeap(swap, lt, lte)
+   h.peek = peek
+-  h.pop = pop
++  h.pop = popU
+   h.remove = removeU
+   h.insert = insertU
+   h.update = updateU
+@@ -242,7 +250,7 @@
+   local gte = function(a,b) return (a>=b) end
+   local h = M.binaryHeap(swap, gt, gte)
+   h.peek = peek
+-  h.pop = pop
++  h.pop = popU
+   h.remove = removeU
+   h.insert = insertU
+   h.update = updateU

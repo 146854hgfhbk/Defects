@@ -1,0 +1,74 @@
+{
+  "candidate_sha": "e8a5db463bd682e6a332d7abd644bff56d055366",
+  "project": "JuliaWeb/URIs.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 25,
+      "url": "https://github.com/JuliaWeb/URIs.jl/issues/25",
+      "state": "closed",
+      "title": "Properly check for invalid characters when parsing URI-string",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "https://github.com/JuliaWeb/HTTP.jl/blob/668e7e68747bb333ebde13af8d16add5b82b3b8a/src/URIs.jl#L120-L132\r\n\r\nThe quoted section of code doesn't actually check whether a URI contains invalid characters or not - e.g., `' '` (space character) is not allowed in the host part of an authority (or anywhere in a URI for that matter as far as I can tell), but still makes it through and can lead to some weird requests. There's also no two `@` allowed.\r\n\r\nWhen parsing user-typed URIs \"should attempt to recognize and strip both delimiters and embedded whitespace\", according to [RFC3986](https://tools.ietf.org/html/rfc3986#appendix-C).\r\n\r\nIt should be noted that the regex from the RFC for seperating valid URIs doesn't check for invalid characters that are not explicitly excluded in the grammar definitions and so is not enough for ensuring a URI is valid.\r\n\r\nHere a MWE for showing the fault:\r\n\r\n```julia\r\njulia> using HTTP\r\n\r\njulia> badURL = \"http://foo@127.0.0.1 @test.com:8080/test\"\r\n\r\njulia> t = HTTP.URIs.URI(badURL)\r\n\r\njulia> for f in 1:fieldcount(typeof(t))\r\n           n = fieldname(typeof(t),f)\r\n           println(\"$n - '$(getfield(t, f))'\")\r\n       end\r\nuri - 'http://foo@127.0.0.1 @test.com:8080/test'\r\nscheme - 'http'\r\nuserinfo - 'foo'\r\nhost - '127.0.0.1 @test.com'\r\nport - '8080'\r\npath - '/test'\r\nquery - ''\r\nfragment - ''\r\n\r\njulia> HTTP.get(badURL)\r\n```\r\n\r\nand in a seperate terminal session:\r\n\r\n```\r\n<snip>:~ $ nc -l -p 8080\r\n\r\nGET /test HTTP/1.1\r\nHost: 127.0.0.1 @test.com\r\nContent-Length: 0\r\n```\r\n\r\nThat the request actually goes through is a problem with `Sockets.getaddrinfo` though, since that does no checking either and the underlying OS library returns `127.0.0.1` for the (invalid) host `127.0.0.1 @test.com` on my machine.\r\n\r\n----\r\n\r\n```julia\r\njulia> versioninfo()\r\nJulia Version 1.2.0\r\nCommit c6da87ff4b (2019-08-20 00:03 UTC)\r\nPlatform Info:\r\n  OS: Linux (x86_64-linux-gnu)\r\n  CPU: Intel(R) Core(TM) i7-6600U CPU @ 2.60GHz\r\n  WORD_SIZE: 64\r\n  LIBM: libopenlibm\r\n  LLVM: libLLV"
+    },
+    {
+      "number": 45,
+      "url": "https://github.com/JuliaWeb/URIs.jl/issues/45",
+      "state": "closed",
+      "title": "Invalid port pattern is recognized in the sense of RFC3986 ",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "```julia\r\nu = URI(\"//foo.com:bar\")\r\nusing Test\r\n@test u.port == \"bar\"\r\n```\r\nbreaks the parsing of port as expected from https://www.ietf.org/rfc/rfc3986.html#section-3.2.3\r\n\r\n>   The port subcomponent of authority is designated by an optional port\r\n   number in decimal following the host and delimited from it by a\r\n   single colon (\":\") character.\r\n>\r\n>      port        = *DIGIT\r\n\r\nThe regex part is too broad @ https://github.com/JuliaWeb/URIs.jl/blob/master/src/URIs.jl#L94"
+    },
+    {
+      "number": 74,
+      "url": "https://github.com/JuliaWeb/URIs.jl/pull/74",
+      "state": "closed",
+      "title": "Reject invalid URI authorities",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "## Summary\n\n- validate user information, hosts, and ports against the RFC 3986 authority grammar\n- reject raw ASCII whitespace and control characters in all URI components\n- reject extra authority delimiters and malformed percent escapes before DNS or network access\n- keep valid empty ports, percent escapes, IPv6 zone escapes, and current Unicode behavior\n- update inherited URL cases that treated raw tab, form feed, and malformed zone escapes as valid\n\nCloses #25.\nCloses #45.\n\n## Validation\n\n- Julia 1.6.7: full test suite passed (277 URI tests, 12 URL tests)\n- Julia 1.12.6: full test suite passed (277 URI tests, 12 URL tests)\n- Documenter build and doctests passed\n- representative parse and validator paths allocate 0 bytes after compilation\n\nCo-authored by Codex"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        25,
+        45
+      ],
+      "pull_request": 74,
+      "fix_commit": "e8a5db463bd682e6a332d7abd644bff56d055366",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "fix: reject invalid URI authorities (#74)",
+    "commit_issue_refs": [
+      74
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 74,
+    "pull_request_title": "Reject invalid URI authorities",
+    "pull_request_issue_refs": [
+      25,
+      45
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    25
+  ],
+  "cross_repository_issue_records": []
+}

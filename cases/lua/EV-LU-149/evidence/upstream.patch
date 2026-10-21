@@ -1,0 +1,27 @@
+diff --git a/lua/pl/sip.lua b/lua/pl/sip.lua
+index b79d80e742c559951523d04265c9b7d4cef76d45..15020953cfe60689be9d2daefceb80a107e49deb 100644
+--- a/lua/pl/sip.lua
++++ b/lua/pl/sip.lua
+@@ -194,6 +194,7 @@ function sip.create_spec_fun(spec,options)
+     for i = 1,#fieldnames do
+         append(ls,'mm'..i)
+     end
++    ls[1] = ls[1] or "mm1" -- behave correctly if there are no patterns
+     local fun = ('return (function(s,res)\n\tlocal %s = s:match(%q)\n'):format(concat(ls,','),spec)
+     fun = fun..'\tif not mm1 then return false end\n'
+     local k=1
+diff --git a/tests/test-sip.lua b/tests/test-sip.lua
+index b6378781a617096dc31d04d64245373e8e46bd13..464139b450ec5c3382d2b0a1bfe3f3493d7bf577 100644
+--- a/tests/test-sip.lua
++++ b/tests/test-sip.lua
+@@ -43,6 +43,10 @@ check('$v $d','age  23',{'age',23})
+ -- the spaces in this pattern, however, are compressible.
+ check('$v = $d','age=23',{'age',23})
+ 
++-- patterns without patterns
++check('just a string', 'just a string', {})
++check('just a string', 'not that string')
++
+ local months={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}
+ 
+ local function adjust_year(res)

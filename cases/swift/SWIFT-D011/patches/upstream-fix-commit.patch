@@ -1,0 +1,70 @@
+diff --git a/Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift b/Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift
+index 35f82af..8342e06 100644
+--- a/Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift
++++ b/Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift
+@@ -21,8 +21,7 @@ public enum DependencyEndpointMacro: AccessorMacro, PeerMacro {
+     else {
+       return []
+     }
+-    if
+-      let initializer = binding.initializer,
++    if let initializer = binding.initializer,
+       try initializer.diagnose(node, context: context).earlyOut
+     {
+       return []
+@@ -80,10 +79,12 @@ public enum DependencyEndpointMacro: AccessorMacro, PeerMacro {
+       else {
+         return []
+       }
+-      if !functionType.isVoid,
+-        closure.statements.count == 1,
++      if closure.statements.count == 1,
+         var statement = closure.statements.first,
+-        let expression = statement.item.as(ExprSyntax.self)
++        let expression = statement.item.as(ExprSyntax.self),
++        !functionType.isVoid
++          || expression.as(FunctionCallExprSyntax.self)?.calledExpression.is(ClosureExprSyntax.self)
++            == true
+       {
+         if !statement.item.description.hasPrefix("fatalError(") {
+           statement.item = CodeBlockItemSyntax.Item(
+diff --git a/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift b/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift
+index 3dba81c..6d81df4 100644
+--- a/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift
++++ b/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift
+@@ -145,7 +145,7 @@ final class DependencyEndpointMacroTests: BaseTestCase {
+                ✏️ Insert '= { _, _, _ in <#Bool#> }'
+       }
+       """
+-    }fixes: {
++    } fixes: {
+       """
+       struct Client {
+         @DependencyEndpoint
+@@ -894,7 +894,7 @@ final class DependencyEndpointMacroTests: BaseTestCase {
+       """
+       struct Blah {
+         @DependencyEndpoint
+-        public var foo: () -> String = { { fatalError() }() }
++        public var foo: () -> Void = { { fatalError() }() }
+         @DependencyEndpoint
+         public var bar: () -> String = { { fatalError("Goodbye") }() }
+       }
+@@ -902,7 +902,7 @@ final class DependencyEndpointMacroTests: BaseTestCase {
+     } expansion: {
+       """
+       struct Blah {
+-        public var foo: () -> String = { { fatalError() }() } {
++        public var foo: () -> Void = { { fatalError() }() } {
+           @storageRestrictions(initializes: _foo)
+           init(initialValue) {
+             _foo = initialValue
+@@ -915,7 +915,7 @@ final class DependencyEndpointMacroTests: BaseTestCase {
+           }
+         }
+ 
+-        private var _foo: () -> String = {
++        private var _foo: () -> Void = {
+           XCTestDynamicOverlay.XCTFail("Unimplemented: 'foo'")
+           return {
+             fatalError()

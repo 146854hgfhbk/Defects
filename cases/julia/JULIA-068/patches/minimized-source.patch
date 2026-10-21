@@ -1,0 +1,14 @@
+diff --git a/src/Bridges/debug.jl b/src/Bridges/debug.jl
+--- a/src/Bridges/debug.jl
++++ b/src/Bridges/debug.jl
+@@ -542,7 +542,9 @@ Print the set of bridges that are active in the model `b`.
+ """
+ function print_active_bridges(io::IO, b::MOI.Bridges.LazyBridgeOptimizer)
+     F = MOI.get(b, MOI.ObjectiveFunctionType())
+-    print_active_bridges(io, b, F)
++    if F !== nothing
++        print_active_bridges(io, b, F)
++    end
+     types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
+     # We add a sort here to make the order reproducible, and to group similar
+     # constraints together.

@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-210",
+  "technical_evidence_sha256": "3ee2b68eebc304697b16f86836e9bef0a725c2e7f11aef7e5e5e66a5a1affd48",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "efa942350b80a5ca0de8ec2cb50106fe0fcb03e622fff8c14426eee784390e98",
+  "reviewed_at": "2026-09-06T12:52:23.805093+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "swiftlang/swift-format#1080",
+  "rationale": "Issue #1080 ('Comment-only code blocks are removed when OrderedImports is enabled') reports that `import A / // Comment / import B` formats to `import A / import B`, silently dropping the comment, and pinpoints convertToCodeBlockItems(lines:) leaving the comment in pendingLeadingTrivia. The minimized production patch is exactly one hunk at the tail of that function in Sources/SwiftFormat/Rules/OrderedImports.swift: it strips the loop's synthesized trailing newlines, checks for comment pieces, and appends the leftover trivia to the last code block item's trailingTrivia. Nothing else is touched — no renames, no reformatting, no new API, no config or docs; the added prose is inline commentary on the new logic, not a documentation change. The trigger is the unchanged upstream test from the same fixing commit (testCommentBetweenImportGroupsIsPreserved), which drives the exact reproducer from the issue through the pre-existing LintOrFormatRuleTestCase.assertFormatting entry point with findings: [], so it depends on no API introduced by the fix and is semantically the reported defect rather than a proxy. Machine-generated strict evidence passes on both the original and post-minimization runs: build of both revisions, unique selector, buggy differential reproduction of that single selector over 3 repetitions with 3 deterministic fingerprint groups, fixed isolated/suite/reversed clean, and full-suite green on the fixed revision with the buggy full-suite failure set limited to the declared trigger. active_same_project_root_causes is empty and swiftlang/swift-format#1080 is the sole allowed key, so the root cause is not a duplicate.\n\nIssue #1080 ('Comment-only code blocks are removed when OrderedImports is enabled') reports concrete content loss: 'import A / // Comment / import B' is reformatted to 'import A / import B', dropping the comment, and the reporter's own diagnosis names convertToCodeBlockItems(lines:) with pendingLeadingTrivia as the drop site. The minimized production patch touches exactly that function's tail in Sources/SwiftFormat/Rules/OrderedImports.swift, stripping the loop's synthesised trailing newlines and appending remaining comment-bearing trivia to the last code block item's trailingTrivia. The trigger test testCommentBetweenImportGroupsIsPreserved encodes the issue's exact input and expected output through the pre-existing LintOrFormatRuleTestCase.assertFormatting helper with findings: [], so it depends on no API introduced by the fix and is semantically the reported defect rather than a proxy. The patch is a single hunk, production-only (25 added lines, 0 deletions), with no signature change, no renaming, no config/docs/test coupling; the test change is isolated in the separate trigger patch. Strict machine evidence passes on both the original and post-minimization runs: build.both_versions, trigger.buggy_differential (the declared selector fails alone on the buggy parent b6808a1), trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with a complete 32-run matrix and no failed checks. Duplicate check: active_same_project_root_causes is empty and #1080 is the only entry in allowed_root_cause_ids.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T12:51:59.183976+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "efa942350b80a5ca0de8ec2cb50106fe0fcb03e622fff8c14426eee784390e98",
+      "response_sha256": "bc66f1ebb7abf61254d74a95e62c3b14476b2e4220d5aac4674c6126d9b079f2",
+      "response_id": "msg_97c4f4a4caea4099ade0120cfd56634a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5644162982752903,
+        "input_tokens": 17839,
+        "output_tokens": 703
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#1080",
+      "rationale": "Issue #1080 ('Comment-only code blocks are removed when OrderedImports is enabled') reports that `import A / // Comment / import B` formats to `import A / import B`, silently dropping the comment, and pinpoints convertToCodeBlockItems(lines:) leaving the comment in pendingLeadingTrivia. The minimized production patch is exactly one hunk at the tail of that function in Sources/SwiftFormat/Rules/OrderedImports.swift: it strips the loop's synthesized trailing newlines, checks for comment pieces, and appends the leftover trivia to the last code block item's trailingTrivia. Nothing else is touched — no renames, no reformatting, no new API, no config or docs; the added prose is inline commentary on the new logic, not a documentation change. The trigger is the unchanged upstream test from the same fixing commit (testCommentBetweenImportGroupsIsPreserved), which drives the exact reproducer from the issue through the pre-existing LintOrFormatRuleTestCase.assertFormatting entry point with findings: [], so it depends on no API introduced by the fix and is semantically the reported defect rather than a proxy. Machine-generated strict evidence passes on both the original and post-minimization runs: build of both revisions, unique selector, buggy differential reproduction of that single selector over 3 repetitions with 3 deterministic fingerprint groups, fixed isolated/suite/reversed clean, and full-suite green on the fixed revision with the buggy full-suite failure set limited to the declared trigger. active_same_project_root_causes is empty and swiftlang/swift-format#1080 is the sole allowed key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests[0]",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The selected revision is the first of two commits in PR #1205; the follow-up commit a7dc786 replaces the inline hasComment switch with the project's existing hasAnyComments helper, so the benchmark's fixed revision is behaviorally equivalent to but textually not identical to the merged upstream state.",
+        "The fix mutates trailing trivia of the last code block item, which can interact with other trivia-normalizing rules or the pretty printer; only the fixed-revision full suite (1 repetition) guards against such collateral output shifts.",
+        "The newline-stripping loop removes only .newlines pieces, so inputs ending in spaces or carriage returns before the comment may yield output differing from the fixture; behavior could drift across SwiftSyntax versions.",
+        "issue_evidence is null; the issue text used here comes from the candidate metadata's linked_issues body rather than an independently captured issue artifact."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T12:52:23.804271+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "efa942350b80a5ca0de8ec2cb50106fe0fcb03e622fff8c14426eee784390e98",
+      "response_sha256": "c8e5d01392881f31b2509e5f8f462c9da633b02d686b448464c9309bf97bd409",
+      "response_id": "msg_ea8e6382a19641d08a64357f68a42cb4",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.521788256583748,
+        "input_tokens": 17968,
+        "output_tokens": 744
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#1080",
+      "rationale": "Issue #1080 ('Comment-only code blocks are removed when OrderedImports is enabled') reports concrete content loss: 'import A / // Comment / import B' is reformatted to 'import A / import B', dropping the comment, and the reporter's own diagnosis names convertToCodeBlockItems(lines:) with pendingLeadingTrivia as the drop site. The minimized production patch touches exactly that function's tail in Sources/SwiftFormat/Rules/OrderedImports.swift, stripping the loop's synthesised trailing newlines and appending remaining comment-bearing trivia to the last code block item's trailingTrivia. The trigger test testCommentBetweenImportGroupsIsPreserved encodes the issue's exact input and expected output through the pre-existing LintOrFormatRuleTestCase.assertFormatting helper with findings: [], so it depends on no API introduced by the fix and is semantically the reported defect rather than a proxy. The patch is a single hunk, production-only (25 added lines, 0 deletions), with no signature change, no renaming, no config/docs/test coupling; the test change is isolated in the separate trigger patch. Strict machine evidence passes on both the original and post-minimization runs: build.both_versions, trigger.buggy_differential (the declared selector fails alone on the buggy parent b6808a1), trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with a complete 32-run matrix and no failed checks. Duplicate check: active_same_project_root_causes is empty and #1080 is the only entry in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_original.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.fixed_all_green",
+        "case.json:trigger_tests",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The case_id-level issue_evidence field is null; the issue body was read from source_candidate.issue_check.linked_issues rather than an independently fetched issue record.",
+        "Selected from a 2-commit PR: the later commit a7dc786 rewrites the inline comment-detection closure to use the existing hasAnyComments helper, so the benchmark's fixed revision is functionally equivalent to but textually different from the merged head.",
+        "The cleanup loop strips only trailing .newlines pieces; inputs ending in spaces or carriage returns before the comment could yield output differing from the fixture, making the trigger potentially sensitive to SwiftSyntax trivia representation across versions.",
+        "Fix mutates trailing trivia of the last code block item, which could interact with downstream trivia-normalising rules or the pretty printer on inputs outside the current suite (not observed: fixed full suite is green).",
+        "No independent confirmation that the closed/merged status timestamps correspond to upstream reality beyond the supplied metadata; acceptance rests on the patch content plus strict runtime gates, not on status labels."
+      ]
+    }
+  ]
+}

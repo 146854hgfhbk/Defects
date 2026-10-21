@@ -1,0 +1,29 @@
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index e0c466a2e5b24c52b79ec95b89831474c6342967..14b6e04bfd731bdbd40c15383848bdd83eec5e6d 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -27,13 +27,13 @@ use constant {
+ };
+ 
+ use overload (
+-    q{""}    => sub    { $_[0]->[PATH] },
++    q{""}    => 'stringify',
+     bool     => sub () { 1 },
+     fallback => 1,
+ );
+ 
+ # FREEZE/THAW per Sereal/CBOR/Types::Serialiser protocol
+-sub FREEZE { return $_[0]->[PATH] }
++*FREEZE = \&stringify;
+ sub THAW   { return path( $_[2] ) }
+ { no warnings 'once'; *TO_JSON = *FREEZE };
+ 
+@@ -2202,7 +2202,7 @@ Current API available since 0.001.
+ 
+ =cut
+ 
+-sub stringify { $_[0]->[PATH] }
++sub stringify { $_[0]->[PATH] =~ /^~/ ? './' . $_[0]->[PATH] : $_[0]->[PATH] }
+ 
+ =method subsumes
+ 

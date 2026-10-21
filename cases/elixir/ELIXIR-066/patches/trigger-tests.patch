@@ -1,0 +1,49 @@
+diff --git a/test/phoenix/endpoint/endpoint_test.exs b/test/phoenix/endpoint/endpoint_test.exs
+index bd8077e19..beb946a99 100644
+--- a/test/phoenix/endpoint/endpoint_test.exs
++++ b/test/phoenix/endpoint/endpoint_test.exs
+@@ -178,6 +178,18 @@ defmodule Phoenix.Endpoint.EndpointTest do
+     assert Endpoint.static_path("/foo.css") == "/foo-d978852bea6530fcd197b5445ed008fd.css"
+   end
+ 
++  test "uses correct path for resources with fragment identifier" do
++    config = put_in(@config[:cache_manifest_skip_vsn], false)
++    assert Endpoint.config_change([{Endpoint, config}], []) == :ok
++
++    assert Endpoint.static_path("/foo.css#info") ==
++             "/foo-d978852bea6530fcd197b5445ed008fd.css?vsn=d#info"
++
++    # assert that even multiple presences of a number sign are treated as a fragment
++    assert Endpoint.static_path("/foo.css#info#me") ==
++             "/foo-d978852bea6530fcd197b5445ed008fd.css?vsn=d#info#me"
++  end
++
+   @tag :capture_log
+   test "invokes init/2 callback" do
+     defmodule InitEndpoint do
+diff --git a/test/phoenix/integration/endpoint_test.exs b/test/phoenix/integration/endpoint_test.exs
+index 2fe130960..07c09f9f4 100644
+--- a/test/phoenix/integration/endpoint_test.exs
++++ b/test/phoenix/integration/endpoint_test.exs
+@@ -2,7 +2,7 @@ Code.require_file "../../support/http_client.exs", __DIR__
+ Code.require_file "../../support/endpoint_helper.exs", __DIR__
+ 
+ defmodule Phoenix.Integration.EndpointTest do
+-  use ExUnit.Case
++  use ExUnit.Case, async: false
+   import ExUnit.CaptureLog
+ 
+   import Phoenix.Integration.EndpointHelper
+diff --git a/test/phoenix/integration/long_poll_channels_test.exs b/test/phoenix/integration/long_poll_channels_test.exs
+index 7320f6666..6ffd32278 100644
+--- a/test/phoenix/integration/long_poll_channels_test.exs
++++ b/test/phoenix/integration/long_poll_channels_test.exs
+@@ -1,7 +1,7 @@
+ Code.require_file("../../support/http_client.exs", __DIR__)
+ 
+ defmodule Phoenix.Integration.LongPollChannelsTest do
+-  use ExUnit.Case
++  use ExUnit.Case, async: false
+   import ExUnit.CaptureLog
+ 
+   alias Phoenix.Integration.HTTPClient

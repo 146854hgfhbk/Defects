@@ -1,0 +1,122 @@
+diff --git a/Sources/HTMLKit/Framework/Localization/Localization.swift b/Sources/HTMLKit/Framework/Localization/Localization.swift
+index 172d53b4acbedd3e34f2f800e4d21349e5f10bf8..cba06d3fb9f855ea2d42c95c653407d441ff9e7e 100644
+--- a/Sources/HTMLKit/Framework/Localization/Localization.swift
++++ b/Sources/HTMLKit/Framework/Localization/Localization.swift
+@@ -130,20 +130,31 @@ public class Localization {
+ 
+                             switch argument {
+                             case let stringValue as String:
+-                                translation = translation.replacingOccurrences(of: "%st", with: stringValue)
++                                
++                                if let range = translation.range(of: "%st") {
++                                    translation = translation.replacingCharacters(in: range, with: stringValue)
++                                }
+                                 
+                             case let dateValue as Date:
+                                 
+                                 let formatter = DateFormatter()
+                                 formatter.dateFormat = currentLocale.dateFormat
+                                 
+-                                translation = translation.replacingOccurrences(of: "%dt", with: formatter.string(from: dateValue))
++                                if let range = translation.range(of: "%dt") {
++                                    translation = translation.replacingCharacters(in: range, with: formatter.string(from: dateValue))
++                                }
+                                 
+                             case let doubleValue as Double:
+-                                translation = translation.replacingOccurrences(of: "%do", with: String(doubleValue))
++                                
++                                if let range = translation.range(of: "%do") {
++                                    translation = translation.replacingCharacters(in: range, with: String(doubleValue))
++                                }
+                                 
+                             case let intValue as Int:
+-                                translation = translation.replacingOccurrences(of: "%in", with: String(intValue))
++                                
++                                if let range = translation.range(of: "%in") {
++                                    translation = translation.replacingCharacters(in: range, with: String(intValue))
++                                }
+                                 
+                             default:
+                                 break
+@@ -192,20 +203,31 @@ public class Localization {
+ 
+                                 switch argument {
+                                 case let stringValue as String:
+-                                    translation = translation.replacingOccurrences(of: "%st", with: stringValue)
++                                    
++                                    if let range = translation.range(of: "%st") {
++                                        translation = translation.replacingCharacters(in: range, with: stringValue)
++                                    }
+                                     
+                                 case let dateValue as Date:
+                                     
+                                     let formatter = DateFormatter()
+                                     formatter.dateFormat = currentLocale.dateFormat
+                                     
+-                                    translation = translation.replacingOccurrences(of: "%dt", with: formatter.string(from: dateValue))
++                                    if let range = translation.range(of: "%dt") {
++                                        translation = translation.replacingCharacters(in: range, with: formatter.string(from: dateValue))
++                                    }
+                                     
+                                 case let doubleValue as Double:
+-                                    translation = translation.replacingOccurrences(of: "%do", with: String(doubleValue))
++                                    
++                                    if let range = translation.range(of: "%do") {
++                                        translation = translation.replacingCharacters(in: range, with: String(doubleValue))
++                                    }
+                                     
+                                 case let intValue as Int:
+-                                    translation = translation.replacingOccurrences(of: "%in", with: String(intValue))
++                                    
++                                    if let range = translation.range(of: "%in") {
++                                        translation = translation.replacingCharacters(in: range, with: String(intValue))
++                                    }
+                                     
+                                 default:
+                                     break
+diff --git a/Tests/HTMLKitTests/Localization/en-GB/web.strings b/Tests/HTMLKitTests/Localization/en-GB/web.strings
+index 671db72ff9b8a1bd2de741934cf11874fd5ac45c..929b84c60c3cbb70a8e4b19e99a7da69b531c96b 100644
+--- a/Tests/HTMLKitTests/Localization/en-GB/web.strings
++++ b/Tests/HTMLKitTests/Localization/en-GB/web.strings
+@@ -5,4 +5,4 @@
+ "greeting.person" = "Hello %st";
+ 
+ /* A personal indroduction. */
+-"personal.introduction" = "Hello, I am %st and %in years old.";
++"personal.intro" = "Hello, I am %st, and I am %in years old. I have a dog named %st. He is %in and %do inches tall.";
+diff --git a/Tests/HTMLKitTests/LocalizationTests.swift b/Tests/HTMLKitTests/LocalizationTests.swift
+index fd95ad22cc20e784b2eb76ccd366a42b34d2200c..c5fd4c845d41010dbd03044947bd3208a18d21e9 100644
+--- a/Tests/HTMLKitTests/LocalizationTests.swift
++++ b/Tests/HTMLKitTests/LocalizationTests.swift
+@@ -53,13 +53,13 @@ final class LocalizationTests: XCTestCase {
+         struct TestView: View {
+             
+             var body: Content {
+-                Heading1("personal.introduction", interpolation: "John Doe", 31)
++                Paragraph("personal.intro", interpolation: "John Doe", 31, "Mozart", 5, 21.5)
+             }
+         }
+         
+         XCTAssertEqual(try renderer!.render(view: TestView()),
+                        """
+-                       <h1>Hello, I am John Doe and 31 years old.</h1>
++                       <p>Hello, I am John Doe, and I am 31 years old. I have a dog named Mozart. He is 5 and 21.5 inches tall.</p>
+                        """
+         )
+     }
+@@ -69,13 +69,13 @@ final class LocalizationTests: XCTestCase {
+         struct TestView: View {
+             
+             var body: Content {
+-                Heading1("personal.introduction", tableName: "web", interpolation: "John Doe", 31)
++                Paragraph("personal.intro", tableName: "web", interpolation: "John Doe", 31, "Mozart", 5, 21.5)
+             }
+         }
+         
+         XCTAssertEqual(try renderer!.render(view: TestView()),
+                        """
+-                       <h1>Hello, I am John Doe and 31 years old.</h1>
++                       <p>Hello, I am John Doe, and I am 31 years old. I have a dog named Mozart. He is 5 and 21.5 inches tall.</p>
+                        """
+         )
+     }

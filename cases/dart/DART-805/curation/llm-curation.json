@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-805",
+  "technical_evidence_sha256": "11f695d23017ac31ff0ffb7ee1033542fd409550a99b35decb90099aa98cade9",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "2cf6587a9650a3820aff9224ba8fc9a260617f15eca0672783e10ec84cb61077",
+  "reviewed_at": "2026-08-12T10:02:06.641290+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "intel/rohd#129",
+  "rationale": "Issue #129 describes a specific VCD formatting bug where multi-bit values print as '1'b01'b11'b01'b1' instead of '0101', caused by a LogicValue.toString change. The minimized production patch adds includeWidth: false to the toString() call for multi-bit values in WaveDumper._writeSignalValueUpdate, directly addressing the root cause. The trigger tests exercise the exact defect by dumping multi-bit Logic signals and validating VCD content, using only pre-existing APIs (Logic, SimpleModule, confirmValue, createTemporaryDump). Runtime evidence confirms both trigger tests fail deterministically on buggy (reproduced in isolated, suite, and reversed runs) and pass cleanly on fixed. The SimpleModule width parameter modification in the trigger is necessary infrastructure to support multi-bit testing but does not introduce new production API—addInput/addOutput already accept width parameters. No active same-project duplicates exist.\n\nIssue #129 describes multi-bit VCD values incorrectly dumped as '1'b01'b11'b01'b1' instead of '0101' due to a LogicValue.toString() regression. The minimized production patch adds includeWidth: false to the width > 1 branch in _writeSignalValueUpdate, matching the single-bit branch that already used this parameter. The trigger tests 'multi-bit value' and 'multi-bit value mixed invalid' exercise 8-bit Logic signals and validate VCD output using pre-existing APIs (Logic, SimpleModule, confirmValue, createTemporaryDump). The trigger patch modifies SimpleModule to accept width parameters, but this uses existing addInput/addOutput width parameters already present in the parent revision. Strict runtime validation confirms both triggers fail deterministically on buggy (reproduced in isolated, suite, and reversed runs) and pass on fixed across 3 repetitions with 38 total matrix runs. No active same-project root causes supplied for duplicate check.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T10:01:52.077700+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "2cf6587a9650a3820aff9224ba8fc9a260617f15eca0672783e10ec84cb61077",
+      "response_sha256": "41fbcbb726f681e1333c70e98383fe6d41b4f372be17ebdcaa525544fb3f8729",
+      "response_id": "msg_5800ab70-34c7-4c57-af",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2860
+        },
+        "cache_creation_input_tokens": 2860,
+        "cache_read_input_tokens": 7088,
+        "input_tokens": 9227,
+        "output_tokens": 912
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#129",
+      "rationale": "Issue #129 describes a specific VCD formatting bug where multi-bit values print as '1'b01'b11'b01'b1' instead of '0101', caused by a LogicValue.toString change. The minimized production patch adds includeWidth: false to the toString() call for multi-bit values in WaveDumper._writeSignalValueUpdate, directly addressing the root cause. The trigger tests exercise the exact defect by dumping multi-bit Logic signals and validating VCD content, using only pre-existing APIs (Logic, SimpleModule, confirmValue, createTemporaryDump). Runtime evidence confirms both trigger tests fail deterministically on buggy (reproduced in isolated, suite, and reversed runs) and pass cleanly on fixed. The SimpleModule width parameter modification in the trigger is necessary infrastructure to support multi-bit testing but does not introduce new production API—addInput/addOutput already accept width parameters. No active same-project duplicates exist.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.trigger.deterministic",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.llm_review.evidence[0]",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers"
+      ],
+      "risks": [
+        "Trigger modifies SimpleModule test helper to parameterize width; relies on width parameter existing in buggy revision",
+        "Tests perform filesystem I/O for VCD dumps; environment dependencies could affect reproducibility"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T10:02:06.641090+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "2cf6587a9650a3820aff9224ba8fc9a260617f15eca0672783e10ec84cb61077",
+      "response_sha256": "6c0c07a8fac588f6cbfcbae29a294fafa5f4e25611b08990d98f5968cce01a72",
+      "response_id": "msg_6032a95b-dd76-4747-b2",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3050
+        },
+        "cache_creation_input_tokens": 3050,
+        "cache_read_input_tokens": 7041,
+        "input_tokens": 9227,
+        "output_tokens": 997
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#129",
+      "rationale": "Issue #129 describes multi-bit VCD values incorrectly dumped as '1'b01'b11'b01'b1' instead of '0101' due to a LogicValue.toString() regression. The minimized production patch adds includeWidth: false to the width > 1 branch in _writeSignalValueUpdate, matching the single-bit branch that already used this parameter. The trigger tests 'multi-bit value' and 'multi-bit value mixed invalid' exercise 8-bit Logic signals and validate VCD output using pre-existing APIs (Logic, SimpleModule, confirmValue, createTemporaryDump). The trigger patch modifies SimpleModule to accept width parameters, but this uses existing addInput/addOutput width parameters already present in the parent revision. Strict runtime validation confirms both triggers fail deterministically on buggy (reproduced in isolated, suite, and reversed runs) and pass on fixed across 3 repetitions with 38 total matrix runs. No active same-project root causes supplied for duplicate check.",
+      "evidence_paths": [
+        "issue_urls[0] (intel/rohd/issues/129)",
+        "patches/minimized-production.patch (lib/src/wave_dumper.dart hunk)",
+        "patches/trigger-tests.patch (test/wave_dumper_test.dart)",
+        "strict_post_minimization.checks.trigger.buggy_differential.detail (reproduced both triggers)",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed",
+        "strict_post_minimization.checks.trigger.deterministic.passed",
+        "source_candidate.issue_check.linked_issues[0] (issue #129 defect label and description)",
+        "active_same_project_root_causes (empty array)"
+      ],
+      "risks": [
+        "SimpleModule helper modification in trigger patch changes signature; validation confirms parent revision compiles and runs with width parameter",
+        "Trigger tests depend on filesystem temp dump and VCD text parsing; strict validation confirms deterministic reproduction"
+      ]
+    }
+  ]
+}

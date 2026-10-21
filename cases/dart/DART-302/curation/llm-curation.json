@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-302",
+  "technical_evidence_sha256": "6c1005dfe54a94ad5f225f9a6077162d42bf0f663bd1ab8b4d13d067c921e524",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "7662e9d10f36f8d24e63cb6409d368e38af0a9d0ec28a052205031a6804c8c2c",
+  "reviewed_at": "2026-08-11T12:04:04.834436+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1254",
+  "rationale": "Issue #1254 (labeled 'bug') reports that formatting `enum EE { a, b, // 'b' c }` collapses the enum body onto one line so that `c }` is swallowed by the line comment, producing output that no longer parses. The fix commit 3f9f4cf ('Always split enums that contain a line comment. Fix #1254.') adds exactly one behavioral condition in SourceVisitor.visitEnumDeclaration: `forceSplit` now also becomes true when `_containsLineComments(node.constants)`, with the two supporting hunks making `rightBracket` an optional positional parameter of that private helper and preserving its prior semantics (`hasLineCommentBefore(rightBracket)` only when a bracket is supplied). No public API is introduced, no feature is added, and no unrelated production code is touched (single file, three hunks, 19 changed lines). The CHANGELOG line and test fixtures are excluded from patches/minimized-production.patch. The triggers are the upstream fixtures from the same commit: test/regression/1200/1254.unit encodes the issue's exact reproducer with idempotent expected output, and the two new cases in test/comments/enums.unit ('line comment in middle', 'line comment in member constructor') are the same enum-line-comment split behavior; both are data-driven .unit fixtures executed by test/formatter_test.dart and depend on no API introduced by the fix. Strict runtime evidence passes on both the original and post-minimization matrices: both declared selectors reproduce on the buggy revision, buggy full-suite failures are limited to those triggers, fixed isolated/suite/reversed runs are all green, and determinism held over 3 repetitions (38 matrix runs, fingerprint_groups=4). active_same_project_root_causes is empty and dart-lang/dart_style#1254 is the only allowed root cause key.\n\nIssue #1254 reports that dart_style collapses enums containing line comments onto a single line, causing tokens after the comment to be absorbed into the comment text and producing invalid Dart output. The minimized production patch adds a single condition `_containsLineComments(node.constants)` to the forceSplit logic in visitEnumDeclaration, refactors the helper signature to make rightBracket optional, and fixes a documentation typo. No unrelated formatting, features, or refactoring is present. The trigger tests are from the same commit that introduced the fix (test/regression/1200/1254.unit and test/comments/enums.unit additions), encoding the exact defect scenario reported in the issue. Strict runtime evidence confirms both triggers fail differentially on buggy (3 reps), pass on fixed (3 reps), with deterministic fingerprints across 38 matrix runs. No active duplicates in the same project were supplied.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:03:51.126202+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "7662e9d10f36f8d24e63cb6409d368e38af0a9d0ec28a052205031a6804c8c2c",
+      "response_sha256": "6dfdfb8f7c4d03419615ede3fbc969660177ae35169b52c52d403fb44fe76375",
+      "response_id": "msg_1786449830929",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 10011,
+        "output_tokens": 1378,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1254",
+      "rationale": "Issue #1254 (labeled 'bug') reports that formatting `enum EE { a, b, // 'b' c }` collapses the enum body onto one line so that `c }` is swallowed by the line comment, producing output that no longer parses. The fix commit 3f9f4cf ('Always split enums that contain a line comment. Fix #1254.') adds exactly one behavioral condition in SourceVisitor.visitEnumDeclaration: `forceSplit` now also becomes true when `_containsLineComments(node.constants)`, with the two supporting hunks making `rightBracket` an optional positional parameter of that private helper and preserving its prior semantics (`hasLineCommentBefore(rightBracket)` only when a bracket is supplied). No public API is introduced, no feature is added, and no unrelated production code is touched (single file, three hunks, 19 changed lines). The CHANGELOG line and test fixtures are excluded from patches/minimized-production.patch. The triggers are the upstream fixtures from the same commit: test/regression/1200/1254.unit encodes the issue's exact reproducer with idempotent expected output, and the two new cases in test/comments/enums.unit ('line comment in middle', 'line comment in member constructor') are the same enum-line-comment split behavior; both are data-driven .unit fixtures executed by test/formatter_test.dart and depend on no API introduced by the fix. Strict runtime evidence passes on both the original and post-minimization matrices: both declared selectors reproduce on the buggy revision, buggy full-suite failures are limited to those triggers, fixed isolated/suite/reversed runs are all green, and determinism held over 3 repetitions (38 matrix runs, fingerprint_groups=4). active_same_project_root_causes is empty and dart-lang/dart_style#1254 is the only allowed root cause key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/1200/1254.unit",
+        "test/comments/enums.unit",
+        "case.json:issue_urls",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests",
+        "case.json:source_candidate.candidate.issue_check.linked_issues"
+      ],
+      "risks": [
+        "The minimized patch retains a one-word doc-comment typo fix ('withs' -> 'with') on the line immediately above the helper signature it must change; it is behaviorally inert and co-located, but it is strictly not required by the fix.",
+        "The comments/enums.unit selector covers a whole fixture file with multiple cases, so failure attribution at that selector is coarser than a single assertion; only regression/1200/1254.unit maps one-to-one to the reported reproducer.",
+        "The 'line comment in member constructor' fixture case exercises a comment inside an enum constant's argument list rather than after a constant, which is the same defect class but a broader expectation than the issue text.",
+        "Fixture-driven .unit expectations depend on the pinned analyzer version's comment/token traversal (precedingComments); dependency drift on the buggy revision could change reproduction.",
+        "Trigger configuration was curator-corrected to test/formatter_test.dart (the original config named a nonexistent test/short_format_test.dart); correctness rests on the machine-generated selector validation rather than independent inspection of the harness."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:04:04.834230+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "7662e9d10f36f8d24e63cb6409d368e38af0a9d0ec28a052205031a6804c8c2c",
+      "response_sha256": "c8b6069827ac4463f1d050fb695dbcb1b7e45b50ec7f33bdb1917a92713a16bf",
+      "response_id": "msg_fc3f23d5-b314-4564-95",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2967
+        },
+        "cache_creation_input_tokens": 2967,
+        "cache_read_input_tokens": 7767,
+        "input_tokens": 10126,
+        "output_tokens": 914
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1254",
+      "rationale": "Issue #1254 reports that dart_style collapses enums containing line comments onto a single line, causing tokens after the comment to be absorbed into the comment text and producing invalid Dart output. The minimized production patch adds a single condition `_containsLineComments(node.constants)` to the forceSplit logic in visitEnumDeclaration, refactors the helper signature to make rightBracket optional, and fixes a documentation typo. No unrelated formatting, features, or refactoring is present. The trigger tests are from the same commit that introduced the fix (test/regression/1200/1254.unit and test/comments/enums.unit additions), encoding the exact defect scenario reported in the issue. Strict runtime evidence confirms both triggers fail differentially on buggy (3 reps), pass on fixed (3 reps), with deterministic fingerprints across 38 matrix runs. No active duplicates in the same project were supplied.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "source_candidate.origin_pull_request.linked_issues[0].body",
+        "source_candidate.llm_review.evidence[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.trigger.deterministic",
+        "trigger_tests[0].name",
+        "trigger_tests[1].name"
+      ],
+      "risks": [
+        ".unit fixture harness may require exact formatter version alignment to reproduce page-width and option-header parsing behavior",
+        "Trigger isolation depends on test/formatter_test.dart directory glob correctly discovering test/regression/1200/ subdirectories on the buggy revision"
+      ]
+    }
+  ]
+}

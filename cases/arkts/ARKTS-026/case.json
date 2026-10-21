@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "ARKTS-026",
+  "status": "VALIDATED_ACTIVE",
+  "source_dataset": "ArkEval",
+  "source_instance_id": "openharmony__applications_app_samples+779ec893-5697",
+  "project": "openharmony/applications_app_samples",
+  "repo_url": "https://gitee.com/openharmony/applications_app_samples",
+  "title": "【Sample】【5.0.3Release】FileManager 修复不能创建同名文件夹和文件问题",
+  "pr_number": 5697,
+  "pr_url": "https://gitee.com/openharmony/applications_app_samples/pulls/5697",
+  "issue_urls": [
+    "https://gitee.com/openharmony/applications_app_samples/issues/IBUPCV"
+  ],
+  "buggy_revision": "779ec89383d2c1449c84fed3b7af3778ff29cdf9",
+  "fixed_revision": "beb0b476ce6f97695aab5228db32149d9ff1c12b",
+  "revision_mode": "strict_upstream_boundary",
+  "project_root": "code/SystemFeature/FileManagement/FileManager",
+  "changed_production_files": [
+    "code/SystemFeature/FileManagement/FileManager/entry/src/main/ets/filemanager/pages/MyPhone/MyPhone.ets"
+  ],
+  "trigger_test_files": [
+    "entry/src/ohosTest/ets/test/List.test.ets",
+    "entry/src/ohosTest/ets/test/MyPhoneCreateSameName.test.ets",
+    "entry/src/ohosTest/ets/testability/TestAbility.ets",
+    "entry/src/ohosTest/ets/testability/pages/Index.ets"
+  ],
+  "target": "MyPhoneCreateSameNameTest#creates_file_with_txt_suffix_when_directory_has_same_name",
+  "runner": "/ets/TestRunner/OpenHarmonyTestRunner",
+  "bundle": "com.samples.filemanager",
+  "patches": {
+    "upstream": "patches/upstream.patch",
+    "source": "patches/source.patch",
+    "test": "patches/test.patch",
+    "harness": null
+  },
+  "source_patch_sha256": "049999c1de702ce1bad3c5d710ddca6ce006ef003fb5af5356db586603b8ce5d",
+  "source_diff_payload_sha256": "2e22773670a30b93c08db26df7e5883dc6ce89308b27b21e0da24e621adf7bc4",
+  "test_patch_sha256": "747c420c422134074def1077b138a07082dc0ab60d6a9a2576b4401fa485bb26",
+  "build_commands": {
+    "buggy": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api11-official-v2/work/S001/buggy/code/SystemFeature/FileManagement/FileManager",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api11-official-v2/work/S001/buggy/code/SystemFeature/FileManagement/FileManager",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    },
+    "fixed": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api11-official-v2/work/S001/fixed/code/SystemFeature/FileManagement/FileManager",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api11-official-v2/work/S001/fixed/code/SystemFeature/FileManagement/FileManager",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    }
+  },
+  "test_command_template": [
+    "hdc",
+    "-t",
+    "127.0.0.1:5555",
+    "shell",
+    "aa",
+    "test",
+    "-b",
+    "com.samples.filemanager",
+    "-m",
+    "entry_test",
+    "-s",
+    "unittest",
+    "/ets/TestRunner/OpenHarmonyTestRunner",
+    "-s",
+    "class",
+    "MyPhoneCreateSameNameTest#creates_file_with_txt_suffix_when_directory_has_same_name"
+  ],
+  "environment_lock": "environment.lock.json",
+  "validation": "validation/validation.json",
+  "selection_status": "ACTIVE",
+  "release_eligibility": "ACTIVE",
+  "issue_id": "IBUPCV",
+  "traceability_type": "ISSUE",
+  "bug_report_id": "IBUPCV",
+  "bug_report_url": "https://gitee.com/openharmony/applications_app_samples/issues/IBUPCV",
+  "fix_kind": "production_source",
+  "branch_specific_instance": false,
+  "shared_fix_pattern": false,
+  "duplicate": false,
+  "duplicate_of": null,
+  "minimization_method": "original_patch_already_minimal"
+}

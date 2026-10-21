@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-948",
+  "technical_evidence_sha256": "1f200fcdbf338e83f27339b1d73b4f898e22a3ef7c8e96d433cb779b591073e4",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "cd62b92dd12351b89b4d75246c783acf61afa1b84e18b31a179830aca6d2220d",
+  "reviewed_at": "2026-08-14T06:09:44.596842+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#500",
+  "rationale": "Issue #500 ('Indentation weird on named argument function body') reports dartfmt emitting an offside body for the block-bodied named argument `getter:` in a call that also has an arrow-bodied named argument `setter:`. The production hunk in lib/src/argument_list_visitor.dart addresses exactly that shape: when the first function argument is a NamedExpression and any other named argument is a FunctionExpression with an ExpressionFunctionBody (arrow), functionsStart is cleared so block-bodied and arrow-bodied named function arguments are formatted uniformly. The trigger is the upstream regression fixture test/regression/0500/0500.unit, whose input is verbatim the code from the issue body and whose expected output indents the `getter:` block body under its signature instead of offside; it is driven by the pre-existing runner test/formatter_test.dart ('regression 0500.unit') and depends on no API introduced by the fix. The minimized production patch equals the single 34-line hunk in the one production file, with the CHANGELOG.md doc-only edit and the fixture excluded, so no refactor, formatting, feature, config, or test-only change is bundled. Machine-generated strict evidence passes in both the original and post-minimization runs: selectors present/unique (1), buggy differential reproduces test/formatter_test.dart::regression 0500.unit, fixed isolated/suite/reversed runs clean, deterministic across 3 repetitions with 32 matrix runs, and full-suite buggy failures limited to the declared trigger. active_same_project_root_causes is empty, so dart-lang/dart_style#500 is not a duplicate, and it matches the single allowed verified issue key.\n\nIssue #500 (\"Indentation weird on named argument function body\", opened 2016-03-17, closed by PR #595) reports dartfmt emitting a block-bodied named argument (`getter:`) whose body is indented left of its own signature line, while a sibling named argument (`setter:`) uses an arrow body. The minimized production patch in lib/src/argument_list_visitor.dart adds exactly one hunk that detects the same shape: when the first function argument is a NamedExpression and any other named argument holds a FunctionExpression with an ExpressionFunctionBody (arrow), it clears functionsStart so all arguments are laid out as ordinary expressions instead of receiving block-function special handling. That is the mixed block/arrow named-argument case described in the issue, so issue, fix, and defect align. The minimized patch and production-fix patch contain only that behavioral hunk; the CHANGELOG.md version-note edit and the fixture file present in patches/original-commit.patch are excluded, and there is no refactor, rename, formatting churn, or feature extension inside the hunk. The trigger is the unchanged upstream fixture test/regression/0500/0500.unit whose input is verbatim the malformed output pasted in the issue body and whose expected output re-indents the `getter:` block body under its signature; it is a data-driven fixture consumed by the pre-existing test/formatter_test.dart runner and invokes no API introduced by the fix, so it is semantically equivalent to the reported defect. Strict evidence for both the original and post-minimization runs reports all gates passed with the single unique selector test/formatter_test.dart::regression 0500.unit failing in isolation on the buggy revision (3a50bd05), passing on the fixed revision (16a7677e) across isolated, suite, and reversed runs, deterministic over 3 repetitions and 32 matrix runs, with the buggy full suite failing only on that reproduced trigger. active_same_project_root_causes is empty and dart-lang/dart_style#500 is the sole allowed verified issue key, so this root cause is not a registry duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:09:19.272453+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "cd62b92dd12351b89b4d75246c783acf61afa1b84e18b31a179830aca6d2220d",
+      "response_sha256": "952130db48168efccbc2737f3211f52a147a4923a67f57bd5ab5cc615ac39218",
+      "response_id": "msg_4470dff1500a4fe891d564b13fa73d80",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5251639978772803,
+        "input_tokens": 14595,
+        "output_tokens": 627
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#500",
+      "rationale": "Issue #500 ('Indentation weird on named argument function body') reports dartfmt emitting an offside body for the block-bodied named argument `getter:` in a call that also has an arrow-bodied named argument `setter:`. The production hunk in lib/src/argument_list_visitor.dart addresses exactly that shape: when the first function argument is a NamedExpression and any other named argument is a FunctionExpression with an ExpressionFunctionBody (arrow), functionsStart is cleared so block-bodied and arrow-bodied named function arguments are formatted uniformly. The trigger is the upstream regression fixture test/regression/0500/0500.unit, whose input is verbatim the code from the issue body and whose expected output indents the `getter:` block body under its signature instead of offside; it is driven by the pre-existing runner test/formatter_test.dart ('regression 0500.unit') and depends on no API introduced by the fix. The minimized production patch equals the single 34-line hunk in the one production file, with the CHANGELOG.md doc-only edit and the fixture excluded, so no refactor, formatting, feature, config, or test-only change is bundled. Machine-generated strict evidence passes in both the original and post-minimization runs: selectors present/unique (1), buggy differential reproduces test/formatter_test.dart::regression 0500.unit, fixed isolated/suite/reversed runs clean, deterministic across 3 repetitions with 32 matrix runs, and full-suite buggy failures limited to the declared trigger. active_same_project_root_causes is empty, so dart-lang/dart_style#500 is not a duplicate, and it matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/argument_list_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/0500/0500.unit",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The fix's target output is partly an aesthetic judgment ('it looks cleaner to treat them all like normal expressions'), so the accepted behavior is defined by the maintainer-authored fixture rather than a language-level correctness rule.",
+        "The trigger is a data fixture consumed by a generic runner, so any future change to formatter_test.dart's fixture discovery could silently alter which case executes.",
+        "The oracle is whole-file expected output; a differently-caused formatting change in the same fixture region could also flip the test."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:09:44.596457+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "cd62b92dd12351b89b4d75246c783acf61afa1b84e18b31a179830aca6d2220d",
+      "response_sha256": "ebce7ca01c7aec6c5e58feb09856d4ebea8a3918e24541f67190adb602a0f5ea",
+      "response_id": "msg_3b9a66e247e342b084e6fd2c3b5ee2d8",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5516572052736317,
+        "input_tokens": 14704,
+        "output_tokens": 798
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#500",
+      "rationale": "Issue #500 (\"Indentation weird on named argument function body\", opened 2016-03-17, closed by PR #595) reports dartfmt emitting a block-bodied named argument (`getter:`) whose body is indented left of its own signature line, while a sibling named argument (`setter:`) uses an arrow body. The minimized production patch in lib/src/argument_list_visitor.dart adds exactly one hunk that detects the same shape: when the first function argument is a NamedExpression and any other named argument holds a FunctionExpression with an ExpressionFunctionBody (arrow), it clears functionsStart so all arguments are laid out as ordinary expressions instead of receiving block-function special handling. That is the mixed block/arrow named-argument case described in the issue, so issue, fix, and defect align. The minimized patch and production-fix patch contain only that behavioral hunk; the CHANGELOG.md version-note edit and the fixture file present in patches/original-commit.patch are excluded, and there is no refactor, rename, formatting churn, or feature extension inside the hunk. The trigger is the unchanged upstream fixture test/regression/0500/0500.unit whose input is verbatim the malformed output pasted in the issue body and whose expected output re-indents the `getter:` block body under its signature; it is a data-driven fixture consumed by the pre-existing test/formatter_test.dart runner and invokes no API introduced by the fix, so it is semantically equivalent to the reported defect. Strict evidence for both the original and post-minimization runs reports all gates passed with the single unique selector test/formatter_test.dart::regression 0500.unit failing in isolation on the buggy revision (3a50bd05), passing on the fixed revision (16a7677e) across isolated, suite, and reversed runs, deterministic over 3 repetitions and 32 matrix runs, with the buggy full suite failing only on that reproduced trigger. active_same_project_root_causes is empty and dart-lang/dart_style#500 is the sole allowed verified issue key, so this root cause is not a registry duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/argument_list_visitor.dart",
+        "test/regression/0500/0500.unit",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_original.checks.full_suite.buggy_reproduces_only_triggers",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger is a whitespace-exact formatter fixture, so it is brittle to unrelated future style-rule changes rather than isolating only this defect's logic.",
+        "The patch comment frames the change partly as an aesthetic preference (\"it looks cleaner\"); the objective defect signal is the offside indentation reported in the issue, and the fix necessarily changes output for other mixed block/arrow named-argument call sites too.",
+        "The fixture is a single case with no newline at end of file and no negative case covering all-block-bodied named arguments, so the guard's non-regression scope rests on the full-suite green result rather than on targeted coverage.",
+        "Duplicate checking relied on an empty supplied same-project registry; a broader registry could still contain a related argument-list-layout root cause."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+diff --git a/lua/pl/sip.lua b/lua/pl/sip.lua
+index 15020953cfe60689be9d2daefceb80a107e49deb..5d6ad6de9409506abcfeada27f96a93c2ee0cccd 100644
+--- a/lua/pl/sip.lua
++++ b/lua/pl/sip.lua
+@@ -55,23 +55,24 @@ local function escape (spec)
+     return (spec:gsub('[%-%.%+%[%]%(%)%^%%%?%*]','%%%0'):gsub('%$%%(%S)','$%1'))
+ end
+ 
+-local function imcompressible (s)
+-    return s:gsub('%s+','\001')
+-end
+-
+--- [handling of spaces in patterns]
+--- spaces may be 'compressed' (i.e will match zero or more spaces)
+--- unless this occurs within a number or an identifier. So we mark
+--- the four possible imcompressible patterns first and then replace.
+--- The possible alnum patterns are v,f,a,d,x,l and u.
+-local function compress_spaces (s)
+-    s = s:gsub('%$[vifadxlu]%s+%$[vfadxlu]',imcompressible)
+-    s = s:gsub('[%w_]%s+[%w_]',imcompressible)
+-    s = s:gsub('[%w_]%s+%$[vfadxlu]',imcompressible)
+-    s = s:gsub('%$[vfadxlu]%s+[%w_]',imcompressible)
+-    s = s:gsub('%s+','%%s*')
+-    s = s:gsub('\001','%%s+')
+-    return s
++-- Most spaces within patterns can match zero or more spaces.
++-- Spaces between alphanumeric characters or underscores or between
++-- patterns that can match these characters, however, must match at least
++-- one space. Otherwise '$v $v' would match 'abcd' as {'abc', 'd'}.
++-- This function replaces continuous spaces within a pattern with either
++-- '%s*' or '%s+' according to this rule. The pattern has already
++-- been stripped of pattern names by now.
++local function compress_spaces(patt)
++    return (patt:gsub("()%s+()", function(i1, i2)
++        local before = patt:sub(i1 - 2, i1 - 1)
++        if before:match('%$[vifadxlu]') or before:match('^[^%$]?[%w_]$') then
++            local after = patt:sub(i2, i2 + 1)
++            if after:match('%$[vifadxlu]') or after:match('^[%w_]') then
++                return '%s+'
++            end
++        end
++        return '%s*'
++    end))
+ end
+ 
+ local pattern_map = {
+diff --git a/tests/test-sip.lua b/tests/test-sip.lua
+index 464139b450ec5c3382d2b0a1bfe3f3493d7bf577..d50ea59c6394351c69a5c22b3ec90fd4c56c1fd5 100644
+--- a/tests/test-sip.lua
++++ b/tests/test-sip.lua
+@@ -38,7 +38,9 @@ check('$v is $','bonzo is dog for sure',{'bonzo','dog for sure'})
+ -- spaces
+ check('$v $d','age 23',{'age',23})
+ check('$v $d','age  23',{'age',23})
+--- but this pattern will NOT match age23 - the space is 'imcompressible'
++check('$v $d','age23') -- the space is 'imcompressible'
++check('a b c $r', 'a bc d')
++check('a b c $r', 'a b c d',{'d'})
+ 
+ -- the spaces in this pattern, however, are compressible.
+ check('$v = $d','age=23',{'age',23})

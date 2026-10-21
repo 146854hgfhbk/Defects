@@ -1,0 +1,34 @@
+diff --git a/sembast/lib/src/jdb.dart b/sembast/lib/src/jdb.dart
+index 0898addcc2d7777f0f407b4ea7cf5d74e1db4f80..b3f95280c53c0dba29c3f71bd8883e83c14c2e3e 100644
+--- a/sembast/lib/src/jdb.dart
++++ b/sembast/lib/src/jdb.dart
+@@ -88,12 +88,11 @@ class JdbWriteEntry extends JdbEntry {
+ 
+   /// Used internally to check for corruption first when importing.
+   @override
+-  Object? get valueOrNull => _txnRecordNull;
++  Object? get valueOrNull => _txnRecordValueOrNull;
+ 
+-  // Object? get valueOrNull => _value ??= txnRecord!.record.value;
+-  Object? get _txnRecordNull => txnRecord!.record.value;
++  Object? get _txnRecordValueOrNull => txnRecord?.record.value;
+ 
+-  /// value.
++  /// Value. Should not be overriden.
+   @override
+   Value get value {
+     try {
+diff --git a/sembast/test/jdb_memory_test.dart b/sembast/test/jdb_memory_test.dart
+index 1cd9e6aaf3329063b2699a20c3bd8884abedefc5..a1786a2af714583c84a9094ebefaa07c09eebafa 100644
+--- a/sembast/test/jdb_memory_test.dart
++++ b/sembast/test/jdb_memory_test.dart
+@@ -190,6 +190,9 @@ void main() {
+       // swap order
+       expect(jdbWriteEntry.value, 1);
+       expect(jdbWriteEntry.valueOrNull, 1);
++
++      jdbWriteEntry = JdbWriteEntry(txnRecord: null);
++      expect(jdbWriteEntry.valueOrNull, isNull);
+     });
+     test('JdbWriteEntryMock', () async {
+       var jdbWriteEntry = JdbWriteEntryMock(id: 1, key: 2, value: 'test');

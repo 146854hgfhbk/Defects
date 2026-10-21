@@ -1,0 +1,378 @@
+diff --git a/lib/src/chunk.dart b/lib/src/chunk.dart
+index 43e3d84b..c247a8d7 100644
+--- a/lib/src/chunk.dart
++++ b/lib/src/chunk.dart
+@@ -114,10 +114,8 @@ class Chunk extends Selection {
+ 
+   /// Whether this chunk marks the end of a range of chunks that can be line
+   /// split independently of the following chunks.
+-  ///
+-  /// You must call markDivide() before accessing this.
+   bool get canDivide => _canDivide;
+-  late final bool _canDivide;
++  late bool _canDivide = true;
+ 
+   /// The number of characters in this chunk when unsplit.
+   int get length => (_spaceWhenUnsplit ? 1 : 0) + _text.length;
+@@ -177,9 +175,12 @@ class Chunk extends Selection {
+   /// that [Rule].
+   bool indentBlock(int Function(Rule) getValue) => false;
+ 
+-  // Mark whether this chunk can divide the range of chunks.
+-  void markDivide(bool canDivide) {
+-    _canDivide = canDivide;
++  /// Prevent the line splitter from diving at this chunk.
++  ///
++  /// This should be called on any chunk where line splitting choices before
++  /// and after this chunk relate to each other.
++  void preventDivide() {
++    _canDivide = false;
+   }
+ 
+   @override
+diff --git a/lib/src/chunk_builder.dart b/lib/src/chunk_builder.dart
+index c7165eb7..480bc792 100644
+--- a/lib/src/chunk_builder.dart
++++ b/lib/src/chunk_builder.dart
+@@ -60,6 +60,23 @@ class ChunkBuilder {
+   /// Whether the next chunk should be flush left.
+   bool _pendingFlushLeft = false;
+ 
++  /// Whether subsequent hard splits should be allowed to divide for line
++  /// splitting.
++  ///
++  /// Most rules used by multiple chunks will never have a hard split on a
++  /// chunk between two chunks using that rule. That means when we see a hard
++  /// split, we can line split the chunks before and after it independently.
++  ///
++  /// However, there are a couple of places where a single rule spans
++  /// multiple chunks where hard splits also appear interleaved between them.
++  /// Currently, that's the rule for splitting switch case bodies, and the
++  /// rule for parameter list metadata.
++  ///
++  /// In those circumstances, we mark the chunk with the hard split as not
++  /// being allowed to divide. That way, all of the chunks using the rule are
++  /// split together.
++  bool _pendingPreventDivide = false;
++
+   /// Whether the most recently written output was a comment.
+   bool _afterComment = false;
+ 
+@@ -156,6 +173,7 @@ class ChunkBuilder {
+ 
+     _nesting.commitNesting();
+     _afterComment = false;
++    _pendingPreventDivide = false;
+   }
+ 
+   /// Writes one or two hard newlines.
+@@ -168,10 +186,14 @@ class ChunkBuilder {
+   /// nesting. If [nest] is `true` then the next line will use expression
+   /// nesting.
+   void writeNewline(
+-      {bool isDouble = false, bool flushLeft = false, bool nest = false}) {
++      {bool isDouble = false,
++      bool flushLeft = false,
++      bool nest = false,
++      bool preventDivide = false}) {
+     _pendingNewlines = isDouble ? 2 : 1;
+     _pendingFlushLeft = flushLeft;
+     _pendingNested = nest;
++    _pendingPreventDivide |= preventDivide;
+   }
+ 
+   /// Writes a space before the subsequent non-whitespace text.
+@@ -855,10 +877,14 @@ class ChunkBuilder {
+           isHard: isHard, isDouble: isDouble, space: space);
+     }
+ 
++    if (chunk.rule.isHardened) {
++      _handleHardSplit();
++
++      if (_pendingPreventDivide) chunk.preventDivide();
++    }
++
+     _pendingNewlines = 0;
+     _pendingNested = false;
+-
+-    if (chunk.rule.isHardened) _handleHardSplit();
+     return chunk;
+   }
+ 
+@@ -901,32 +927,9 @@ class ChunkBuilder {
+     // splits, along with all of the other rules they constrain.
+     _hardenRules();
+ 
+-    var ruleRanges = _calculateRuleRanges();
+-
+     for (var i = 0; i < _chunks.length; i++) {
+       var chunk = _chunks[i];
+-      var canDivide = _canDivide(chunk);
+-
+-      if (canDivide) {
+-        // Don't divide in the middle of a rule.
+-        //
+-        // This rarely comes into play since few rules can have hard splits
+-        // between their chunks while not also being hardened themselves. But
+-        // rules for paramater metadata and switch case bodies can.
+-        for (var range in ruleRanges) {
+-          // Example:
+-          // Chunk index: 0 1 2 3 4 5
+-          // Rule:            a   a    [2, 4]
+-          // Divide:        | |     |
+-          //                1 2     5
+-          if (i > range[0] && i < range[1]) {
+-            canDivide = false;
+-            break;
+-          }
+-        }
+-      }
+-
+-      chunk.markDivide(canDivide);
++      if (!_canDivide(chunk)) chunk.preventDivide();
+     }
+   }
+ 
+@@ -949,61 +952,6 @@ class ChunkBuilder {
+     return true;
+   }
+ 
+-  /// For each non-hardened rule, find the range of chunks that share it.
+-  ///
+-  /// We must ensure that those chunks are all split together so that they
+-  /// don't try to pick different values for the same rule.
+-  ///
+-  /// Returns a list of `[low, high]` ranges.
+-  ///
+-  /// Very few rules actually allow a hard split in between chunks sharing that
+-  /// rule (as of today just switch case bodies and parameter metadata). To
+-  /// avoid returning a huge list of mostly useless ranges, we only return
+-  /// ranges for rules that contain at least one hard split between their first
+-  /// and last chunks.
+-  List<List<int>> _calculateRuleRanges() {
+-    var ruleStarts = <Rule, int>{};
+-    var ruleRanges = <Rule, List<int>>{};
+-    var lastHardSplit = -1;
+-    var usefulRanges = <Rule, List<int>>{};
+-
+-    for (var i = 0; i < _chunks.length; i++) {
+-      var rule = _chunks[i].rule;
+-      if (!rule.isHardened) {
+-        var start = ruleStarts[rule];
+-        if (start == null) {
+-          // This is the first chunk using this rule. Don't create a range yet
+-          // until we see it used by another chunk, since most rules are only
+-          // used for a single chunk.
+-          ruleStarts[rule] = i;
+-        } else {
+-          // This rule now spans at least two chunks, so create a range. The
+-          // low end is the first index using this rule rule.
+-          var range = ruleRanges.putIfAbsent(rule, () => [start, 0]);
+-
+-          // Keep updating the high end of the range as long we continue to find
+-          // the rule.
+-          range[1] = i;
+-
+-          // If we encounter a hard split within this rule's range, keep the
+-          // range.
+-          if (lastHardSplit > range[0] && lastHardSplit < range[1]) {
+-            usefulRanges[rule] = range;
+-          }
+-        }
+-      } else {
+-        lastHardSplit = i;
+-      }
+-    }
+-
+-    // TODO(rnystrom): There is probably something more efficient we can do.
+-    // We could merge overlapping ranges in the list into larger ones. Or maybe
+-    // during chunk building, when a Rule sets `splitsOnInnerRules` to `false`
+-    // and we write a hard chunk, we can mark that hard chunk as not splittable.
+-
+-    return usefulRanges.values.toList();
+-  }
+-
+   /// Hardens the active rules when a hard split occurs within them.
+   void _handleHardSplit() {
+     if (_rules.isEmpty) return;
+diff --git a/lib/src/dart_formatter.dart b/lib/src/dart_formatter.dart
+index 21fc30f2..214d1814 100644
+--- a/lib/src/dart_formatter.dart
++++ b/lib/src/dart_formatter.dart
+@@ -199,7 +199,8 @@ class DartFormatter {
+   // brittle), we just try parsing everything with patterns enabled. When a
+   // parse error occurs, we try parsing it again with pattern disabled. If that
+   // happens to parse without error, then we use that result instead.
+-  ParseStringResult _parse(String source, String? uri, {required bool patterns}) {
++  ParseStringResult _parse(String source, String? uri,
++      {required bool patterns}) {
+     // Enable all features that are enabled by default in the current analyzer
+     // version.
+     var featureSet = FeatureSet.fromEnableFlags2(
+diff --git a/lib/src/debug.dart b/lib/src/debug.dart
+index 351e80e6..a06f5a3f 100644
+--- a/lib/src/debug.dart
++++ b/lib/src/debug.dart
+@@ -76,9 +76,6 @@ void dumpChunks(int start, List<Chunk> chunks) {
+ 
+   addSpans(chunks);
+ 
+-  var spans = spanSet.toList();
+-  var rules = chunks.map((chunk) => chunk.rule).toSet();
+-
+   var rows = <List<String>>[];
+ 
+   void addChunk(List<Chunk> chunks, String prefix, int index) {
+@@ -108,6 +105,7 @@ void dumpChunks(int start, List<Chunk> chunks) {
+     if (rule.isHardened) ruleString += '!';
+     row.add(ruleString);
+ 
++    var rules = chunks.map((chunk) => chunk.rule).toSet();
+     var constrainedRules = rule.constrainedRules.toSet().intersection(rules);
+     writeIf(
+         constrainedRules.isNotEmpty, () => "-> ${constrainedRules.join(" ")}");
+@@ -123,6 +121,7 @@ void dumpChunks(int start, List<Chunk> chunks) {
+     writeIf(chunk.indent != 0, () => 'indent ${chunk.indent}');
+     writeIf(chunk.nesting.indent != 0, () => 'nest ${chunk.nesting}');
+ 
++    var spans = spanSet.toList();
+     if (spans.length <= 20) {
+       var spanBars = '';
+       for (var span in spans) {
+diff --git a/lib/src/source_visitor.dart b/lib/src/source_visitor.dart
+index 496a0037..9926011b 100644
+--- a/lib/src/source_visitor.dart
++++ b/lib/src/source_visitor.dart
+@@ -2834,13 +2834,13 @@ class SourceVisitor extends ThrowingAstVisitor {
+ 
+         // We don't want the split between cases to force them to split.
+         caseRule.disableSplitOnInnerRules();
+-        oneOrTwoNewlines();
++        oneOrTwoNewlines(preventDivide: true);
+       } else {
+         // We don't want the split between cases to force them to split.
+         caseRule.disableSplitOnInnerRules();
+ 
+         // Don't preserve blank lines between empty cases.
+-        newline();
++        builder.writeNewline(preventDivide: true);
+       }
+     }
+ 
+@@ -3640,7 +3640,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     builder = builder.startBlock();
+ 
+     for (var parameter in parameters.parameters) {
+-      newline();
++      builder.writeNewline(preventDivide: true);
+       visit(parameter);
+       _writeCommaAfter(parameter);
+ 
+@@ -3657,7 +3657,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     var firstDelimiter =
+         parameters.rightDelimiter ?? parameters.rightParenthesis;
+     if (firstDelimiter.precedingComments != null) {
+-      newline();
++      builder.writeNewline(preventDivide: true);
+       writePrecedingCommentsAndNewlines(firstDelimiter);
+     }
+ 
+@@ -4120,12 +4120,9 @@ class SourceVisitor extends ThrowingAstVisitor {
+   /// Allow either one or two newlines to be emitted before the next
+   /// non-whitespace token based on whether any blank lines exist in the source
+   /// between the last token and the next one.
+-  void oneOrTwoNewlines() {
+-    if (_linesBeforeNextToken > 1) {
+-      twoNewlines();
+-    } else {
+-      newline();
+-    }
++  void oneOrTwoNewlines({bool preventDivide = false}) {
++    builder.writeNewline(
++        isDouble: _linesBeforeNextToken > 1, preventDivide: preventDivide);
+   }
+ 
+   /// The number of newlines between the last written token and the next one to
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 93ac48ea..5bb30ba2 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -9,7 +9,7 @@ environment:
+   sdk: ">=2.18.0 <3.0.0"
+ 
+ dependencies:
+-  analyzer: ^5.5.0
++  analyzer: ^5.6.0
+   args: ">=1.0.0 <3.0.0"
+   path: ^1.0.0
+   pub_semver: ">=1.4.4 <3.0.0"
+diff --git a/test/comments/functions.unit b/test/comments/functions.unit
+index 0443087b..d0d9ea1f 100644
+--- a/test/comments/functions.unit
++++ b/test/comments/functions.unit
+@@ -234,4 +234,18 @@ function({
+   a,
+ }) {
+   ;
+-}
+\ No newline at end of file
++}
++>>> metadata in trailing comma parameter list splits together even with comment
++function(@Annotation longParameter,
++  // Comment.
++@Annotation @Other @Third longParameter2,) {}
++<<<
++function(
++  @Annotation
++      longParameter,
++  // Comment.
++  @Annotation
++  @Other
++  @Third
++      longParameter2,
++) {}
+\ No newline at end of file
+diff --git a/test/comments/switch.stmt b/test/comments/switch.stmt
+index f74d0d08..a6ad3fbf 100644
+--- a/test/comments/switch.stmt
++++ b/test/comments/switch.stmt
+@@ -87,6 +87,21 @@ switch (n) {
+   case 2:
+   // comment 2
+ }
++>>> bodies all split or don't together even with comment in the middle
++switch (n) {
++  case 0: longBodyExpression + thatForcesSplit;
++  // comment
++  case 1: c;
++}
++<<<
++switch (n) {
++  case 0:
++    longBodyExpression +
++        thatForcesSplit;
++  // comment
++  case 1:
++    c;
++}
+ >>> keeps one blank line around case comments in switch expression
+ e = switch (n) {
+ 
+diff --git a/test/regression/1100/1181.stmt b/test/regression/1100/1181.stmt
+new file mode 100644
+index 00000000..43c98250
+--- /dev/null
++++ b/test/regression/1100/1181.stmt
+@@ -0,0 +1,11 @@
++>>>
++switch (e) {
++  case E.e1:
++    break;
++  case E.e2:
++}
++<<<
++switch (e) {
++  case E.e1: break;
++  case E.e2:
++}
+\ No newline at end of file

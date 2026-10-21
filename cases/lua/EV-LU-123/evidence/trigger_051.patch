@@ -1,0 +1,137 @@
+diff --git a/spec/expand_rockspec_spec.lua b/spec/expand_rockspec_spec.lua
+index 8c1073c..f001d96 100644
+--- a/spec/expand_rockspec_spec.lua
++++ b/spec/expand_rockspec_spec.lua
+@@ -10,6 +10,20 @@ describe("expand_rockspec", function()
+       }, expand_rockspec("spec/folder/rockspec"))
+    end)
+ 
++   it("autodetects modules for rockspecs without build table", function()
++      assert.same({
++         "spec/rock/src/rock.lua",
++         "spec/rock/src/rock/mod.lua",
++         "spec/rock/bin/rock.lua"
++      }, expand_rockspec("spec/rock/rock-dev-1.rockspec"))
++   end)
++
++   it("autodetects modules for rockspecs without build.modules table", function()
++      assert.same({
++         "spec/rock2/mod.lua"
++      }, expand_rockspec("spec/rock2/rock2-dev-1.rockspec"))
++   end)
++
+    it("returns nil, \"I/O\" for non-existent paths", function()
+       local ok, err = expand_rockspec("spec/folder/non-existent")
+       assert.is_nil(ok)
+diff --git a/spec/rock/bin/rock.lua b/spec/rock/bin/rock.lua
+new file mode 100644
+index 0000000..e95cb5d
+--- /dev/null
++++ b/spec/rock/bin/rock.lua
+@@ -0,0 +1 @@
++-- nothing
+diff --git a/spec/rock/bin/rock.sh b/spec/rock/bin/rock.sh
+new file mode 100644
+index 0000000..556df42
+--- /dev/null
++++ b/spec/rock/bin/rock.sh
+@@ -0,0 +1 @@
++# nothing
+diff --git a/spec/rock/lua_modules/something.lua b/spec/rock/lua_modules/something.lua
+new file mode 100644
+index 0000000..e95cb5d
+--- /dev/null
++++ b/spec/rock/lua_modules/something.lua
+@@ -0,0 +1 @@
++-- nothing
+diff --git a/spec/rock/rock-dev-1.rockspec b/spec/rock/rock-dev-1.rockspec
+new file mode 100644
+index 0000000..e692345
+--- /dev/null
++++ b/spec/rock/rock-dev-1.rockspec
+@@ -0,0 +1,18 @@
++rockspec_format = "3.0"
++package = "rock"
++version = "dev-1"
++source = {
++   url = "https://github.com/rockman/rock"
++}
++description = {
++   license = "MIT"
++}
++dependencies = {
++  "lua >= 5.1"
++}
++test_dependencies = {
++  "busted = 2.0.rc12-1"
++}
++test = {
++  type = "busted"
++}
+diff --git a/spec/rock/src/rock.lua b/spec/rock/src/rock.lua
+new file mode 100644
+index 0000000..e95cb5d
+--- /dev/null
++++ b/spec/rock/src/rock.lua
+@@ -0,0 +1 @@
++-- nothing
+diff --git a/spec/rock/src/rock/mod.lua b/spec/rock/src/rock/mod.lua
+new file mode 100644
+index 0000000..e95cb5d
+--- /dev/null
++++ b/spec/rock/src/rock/mod.lua
+@@ -0,0 +1 @@
++-- nothing
+diff --git a/spec/rock/src/rock/thing.c b/spec/rock/src/rock/thing.c
+new file mode 100644
+index 0000000..e9b6a44
+--- /dev/null
++++ b/spec/rock/src/rock/thing.c
+@@ -0,0 +1 @@
++// nothing
+diff --git a/spec/rock/test.lua b/spec/rock/test.lua
+new file mode 100644
+index 0000000..e95cb5d
+--- /dev/null
++++ b/spec/rock/test.lua
+@@ -0,0 +1 @@
++-- nothing
+diff --git a/spec/rock2/mod.lua b/spec/rock2/mod.lua
+new file mode 100644
+index 0000000..e95cb5d
+--- /dev/null
++++ b/spec/rock2/mod.lua
+@@ -0,0 +1 @@
++-- nothing
+diff --git a/spec/rock2/rock2-dev-1.rockspec b/spec/rock2/rock2-dev-1.rockspec
+new file mode 100644
+index 0000000..f236d59
+--- /dev/null
++++ b/spec/rock2/rock2-dev-1.rockspec
+@@ -0,0 +1,19 @@
++rockspec_format = "3.0"
++package = "rock2"
++version = "dev-1"
++source = {
++   url = "https://github.com/rockman/rock2"
++}
++description = {
++   license = "MIT"
++}
++dependencies = {
++  "lua >= 5.1"
++}
++test_dependencies = {
++  "busted = 2.0.rc12-1"
++}
++build = {}
++test = {
++  type = "busted"
++}
+diff --git a/spec/rock2/spec/rock2_spec.lua b/spec/rock2/spec/rock2_spec.lua
+new file mode 100644
+index 0000000..e95cb5d
+--- /dev/null
++++ b/spec/rock2/spec/rock2_spec.lua
+@@ -0,0 +1 @@
++-- nothing

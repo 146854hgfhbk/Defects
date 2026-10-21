@@ -1,0 +1,91 @@
+diff --git a/lib/ex_unit_properties.ex b/lib/ex_unit_properties.ex
+index 696a6ce..f9822b1 100644
+--- a/lib/ex_unit_properties.ex
++++ b/lib/ex_unit_properties.ex
+@@ -424,44 +424,46 @@ defmodule ExUnitProperties do
+     %{
+       original_failure: original_failure,
+       shrunk_failure: shrunk_failure,
+-      nodes_visited: nodes_visited
++      successful_runs: successful_runs
+     } = test_result
+ 
+-    choose_error_and_raise(original_failure, shrunk_failure, nodes_visited)
++    choose_error_and_raise(original_failure, shrunk_failure, successful_runs)
+   end
+ 
+-  defp choose_error_and_raise(_, %{exception: %AssertionError{}} = shrunk_failure, nodes_visited) do
+-    reraise enrich_assertion_error(shrunk_failure, nodes_visited), shrunk_failure.stacktrace
++  defp choose_error_and_raise(
++         _,
++         %{exception: %AssertionError{}} = shrunk_failure,
++         successful_runs
++       ) do
++    reraise enrich_assertion_error(shrunk_failure, successful_runs), shrunk_failure.stacktrace
+   end
+ 
+   defp choose_error_and_raise(
+          %{exception: %AssertionError{}} = original_failure,
+          _,
+-         nodes_visited
++         successful_runs
+        ) do
+-    reraise enrich_assertion_error(original_failure, nodes_visited), original_failure.stacktrace
++    reraise enrich_assertion_error(original_failure, successful_runs), original_failure.stacktrace
+   end
+ 
+-  defp choose_error_and_raise(_original_failure, shrunk_failure, nodes_visited) do
+-    formatted =
+-      indent(
+-        Exception.format_banner(:error, shrunk_failure.exception, shrunk_failure.stacktrace),
+-        "    "
+-      )
++  defp choose_error_and_raise(_original_failure, shrunk_failure, successful_runs) do
++    formatted_exception =
++      Exception.format_banner(:error, shrunk_failure.exception, shrunk_failure.stacktrace)
+ 
+     message =
+-      "failed with generated values (after #{nodes_visited} attempt(s)):\n\n" <>
+-        "#{format_generated_values(shrunk_failure.generated_values)}\n\n" <> formatted
++      "failed with generated values (after #{successful_runs} successful run(s)):\n\n" <>
++        "#{format_generated_values(shrunk_failure.generated_values)}\n\n" <>
++        indent(formatted_exception, "    ")
+ 
+     reraise Error, [message: message], shrunk_failure.stacktrace
+   end
+ 
+   defp enrich_assertion_error(
+          %{exception: exception, generated_values: generated_values},
+-         nodes_visited
++         successful_runs
+        ) do
+     message =
+-      "Failed with generated values (after #{nodes_visited} attempt(s)):\n\n" <>
++      "Failed with generated values (after #{successful_runs} successful run(s)):\n\n" <>
+         indent(format_generated_values(generated_values), "    ") <>
+         if(is_binary(exception.message), do: "\n\n" <> exception.message, else: "")
+ 
+diff --git a/lib/stream_data.ex b/lib/stream_data.ex
+index 0b8e996..1e18330 100644
+--- a/lib/stream_data.ex
++++ b/lib/stream_data.ex
+@@ -1843,6 +1843,8 @@ defmodule StreamData do
+         the shrinking tree in order to find the smallest value. See also the
+         `:max_shrinking_steps` option.
+ 
++      * `:successful_runs` - the number of successful runs before a failing value was found.
++
+   ## Options
+ 
+   This function takes the following options:
+@@ -1927,8 +1929,9 @@ defmodule StreamData do
+       {:error, reason} ->
+         shrinking_result =
+           shrink_failure(shrink_initial_cont(children), nil, reason, fun, 1, config)
++          |> Map.put(:original_failure, reason)
++          |> Map.put(:successful_runs, runs)
+ 
+-        shrinking_result = Map.put(shrinking_result, :original_failure, reason)
+         {:error, shrinking_result}
+     end
+   end

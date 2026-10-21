@@ -1,0 +1,21 @@
+diff --git a/Sources/Fluent/SQL/GeneralSQLSerializer.swift b/Sources/Fluent/SQL/GeneralSQLSerializer.swift
+--- a/Sources/Fluent/SQL/GeneralSQLSerializer.swift
++++ b/Sources/Fluent/SQL/GeneralSQLSerializer.swift
+@@ -115,7 +115,7 @@ open class GeneralSQLSerializer<E: Entity>: SQLSerializer {
+     }
+ 
+     open func aggregate(_ field: String, _ aggregate: Aggregate) -> (String, [Node]) {
+-        let fieldEscaped: String
++        var fieldEscaped: String
+         switch field {
+         case "*":
+             fieldEscaped = field
+@@ -131,7 +131,7 @@ open class GeneralSQLSerializer<E: Entity>: SQLSerializer {
+ 
+         statement += "SELECT"
+         if query.isDistinct {
+-            statement += "DISTINCT"
++            fieldEscaped = "DISTINCT \(fieldEscaped)"
+         }
+         
+         let function: String

@@ -1,0 +1,50 @@
+diff --git a/Sources/_JSONCore/Parser/JSONParser+Parsing.swift b/Sources/_JSONCore/Parser/JSONParser+Parsing.swift
+index a999461..66dc50e 100644
+--- a/Sources/_JSONCore/Parser/JSONParser+Parsing.swift
++++ b/Sources/_JSONCore/Parser/JSONParser+Parsing.swift
+@@ -258,8 +258,21 @@ extension JSONTokenizer {
+       while i < min(alignedStart, searchEnd) {
+         let byte = buffer[i]
+         if byte == .quote {
+-          // Found unescaped quote - string ends here
+-          return (i - currentOffset, didEscape, true)
++          var escaped = false
++          if didEscape {
++            var backwardsOffset = i &- 1
++            while backwardsOffset >= searchStart &- 1 {
++              if buffer[backwardsOffset] == .backslash {
++                escaped = !escaped
++                backwardsOffset &-= 1
++              } else {
++                break
++              }
++            }
++          }
++          if !escaped {
++            return (i - currentOffset, didEscape, true)
++          }
+         } else if byte == .backslash {
+           didEscape = true
+         }
+diff --git a/Tests/IkigaJSONTests/JSONTests.swift b/Tests/IkigaJSONTests/JSONTests.swift
+index 68cc60f..2904998 100644
+--- a/Tests/IkigaJSONTests/JSONTests.swift
++++ b/Tests/IkigaJSONTests/JSONTests.swift
+@@ -96,6 +96,17 @@ final class IkigaJSONTests: XCTestCase {
+     }
+   }
+ 
++  func testEscapedQuoteAtStartOfValue() throws {
++    // Regression test: alignment phase of SWAR scanner was returning early on escaped quotes
++    let json = #"{"content":"\"fantastic resort\" Great hotel"}"#.data(using: .utf8)!
++    let result = try IkigaJSONDecoder().decode([String: String].self, from: json)
++    XCTAssertEqual(result["content"], #""fantastic resort" Great hotel"#)
++
++    // Nested in array, matching the travel-sample pattern from issue #60
++    let json2 = #"[{"author":"snej","date":"2013-03-08 03:22:59 +0300"},{"content":"\"fantastic resort\" Great hotel"}]"#.data(using: .utf8)!
++    XCTAssertNoThrow(try IkigaJSONDecoder().decode([[String: String]].self, from: json2))
++  }
++
+   func testEscapedUnicodeWeis() throws {
+     do {
+       let json: Data = #"{"foo":"\u0022wei\u00DF\u0022"}"#.data(using: .utf8)!

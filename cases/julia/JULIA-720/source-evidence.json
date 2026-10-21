@@ -1,0 +1,82 @@
+{
+  "candidate_sha": "bec43b6ffe782aac5cd49f03e6e1ad4c76433d5a",
+  "project": "PainterQubits/Unitful.jl",
+  "source": "merged_pull_request",
+  "instance_id": "painterqubits__unitful.jl-478",
+  "swe_rebench": {
+    "base_commit": "5f68b2b940119b556e9e61561a330046f1dca367",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "Unit string parsing",
+      "Unit and dimensional analysis",
+      "> Comparisons",
+      "> Addition and subtraction",
+      "> Multiplication",
+      "> Division",
+      "> Trigonometry",
+      "> Exponentials and logarithms",
+      "> Matrix inversion",
+      "> Is functions",
+      "> Floating point tests"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 457,
+      "url": "https://github.com/JuliaPhysics/Unitful.jl/issues/457",
+      "state": "closed",
+      "title": "incorrect preferred units conversion with atomic units",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "```Julia\r\nusing Unitful\r\n\r\nusing Unitful: preferunits\r\nusing UnitfulAtomic: me_au, e_au\r\n\r\npreferunits(u\"cm\", u\"ns\", me_au, e_au / u\"ns\")\r\n\r\n@show dimension(upreferred(u\"V/cm\"))\r\n@show dimension(u\"V/cm\")\r\n\r\n@assert dimension(upreferred(u\"V/cm\")) == dimension(u\"V/cm\")\r\n\r\n```\r\n\r\nresults in\r\n\r\n```Julia\r\ndimension(upreferred(u\"V/cm\")) = 𝐋 𝐌 𝐈⁻¹ 𝐓⁻⁴\r\ndimension(u\"V/cm\") = 𝐋 𝐌 𝐈⁻¹ 𝐓⁻³\r\nERROR: LoadError: AssertionError: dimension(upreferred(u\"V/cm\")) == dimension(u\"V/cm\")\r\n[...]\r\n```\r\n\r\nwith\r\n\r\n```\r\n[1986cc42] Unitful v1.8.0\r\n[a7773ee8] UnitfulAtomic v1.0.0\r\n```"
+    },
+    {
+      "number": 478,
+      "url": "https://github.com/JuliaPhysics/Unitful.jl/pull/478",
+      "state": "closed",
+      "title": "Attempt to allow preferunits to work with non-pure units",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Should fix #457. Prior to this change, attempts to use something that looked like `preferunits(u\"C/ms\")` would result in strange behavior, without throwing any sort of errors. Now, that should work nicely. This means that, for example:\r\n\r\n```\r\njulia> Unitful.preferunits(u\"ms\",u\"C/ms\")\r\n\r\njulia> upreferred(50u\"A\")\r\n1//20 C ms^-1\r\n\r\njulia> upreferred(50u\"mA*ns\")\r\n1//20000000000 C\r\n\r\njulia> upreferred(50u\"mA/mC\")\r\n1//20 ms^-1\r\n```\r\n\r\npreferunits still requires units with pure dimensions of power=1.\r\n\r\nI ran all of the tests and looked through the rest of the code for anywhere this could cause issues or incompatibilities, and I couldn't find anything, as upreferred(x::Dimensions) and preferunits seem to be the only things that touch the promotions Dict."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "fix_commit_to_issue",
+      "issue_numbers": [
+        457
+      ],
+      "fix_commit": "bec43b6ffe782aac5cd49f03e6e1ad4c76433d5a",
+      "evidence_source": "fix_commit_message"
+    }
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Attempt to allow preferunits to work with non-pure units (#478)\n\n* Attempt to allow preferunits to work with non-pure units\r\n\r\nShould fix #457. Prior to this change, attempts to use something that\r\nlooked like \"preferunits(C/ms)\" would result in strange behavior, without\r\nthrowing any sort of errors. Now, that should work nicely.\r\n\r\n* Warn user when preferunits causes redundant units\r\n\r\nIssue a warning when preferunits creates redundant units, which could stop\r\nit from sucessfully simplifying certain quantities.\r\n\r\n* Fix new upreferred behavior for non-dimensional quantities\r\n\r\n* Add tests for preferunits changes\r\n\r\n* Update test/runtests.jl\r\n\r\nCo-authored-by: Sebastian Stock <42280794+sostock@users.noreply.github.com>\r\n\r\n* Fix preferunits tests\r\n\r\n* Apply suggestions from code review\r\n\r\nCo-authored-by: Mosè Giordano <giordano@users.noreply.github.com>\r\n\r\n* Fix issues added by removing excess arrays\r\n\r\n* No longer use string for key while checking for units of different scales\r\n\r\n* Update test/runtests.jl\r\n\r\nCo-authored-by: Sebastian Stock <42280794+sostock@users.noreply.github.com>\r\n\r\n* Apply suggestions from code review\r\n\r\nCo-authored-by: Sebastian Stock <42280794+sostock@users.noreply.github.com>\r\n\r\n* Update runtests.jl\r\n\r\nCo-authored-by: Sebastian Stock <42280794+sostock@users.noreply.github.com>\r\nCo-authored-by: Mosè Giordano <giordano@users.noreply.github.com>",
+    "commit_issue_refs": [
+      457,
+      478
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 478,
+    "pull_request_title": "Attempt to allow preferunits to work with non-pure units",
+    "pull_request_issue_refs": [
+      457
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    457
+  ],
+  "cross_repository_issue_records": []
+}

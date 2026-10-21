@@ -1,0 +1,116 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-061",
+  "bug_id": "JULIA-061",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "e78a2223fd6c300e82e22b36cd6bc7d03a6442a4",
+  "fixed_revision": "4a983f60eb8ef3d877bbeb7eac6d2ae3d98fa377",
+  "candidate_sha": "4a983f60eb8ef3d877bbeb7eac6d2ae3d98fa377",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "e78a2223fd6c300e82e22b36cd6bc7d03a6442a4",
+  "changed_production_files": [
+    "src/julia/parser.jl"
+  ],
+  "changed_test_files": [
+    "test/parser.jl"
+  ],
+  "trigger_tests": [
+    "multiline function signatures"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "4170097f2731399e4ef02589ae85c040c36aa7c9f116fed0ad9bb004e6022709",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/parser.jl",
+        "basis": "assertions copied from the upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "a9b0e9e9d012f04777d893958765412c406719a4a7d0f1feeb296844e7cf4708"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.12.7",
+    "julia_version_origin": "fixed_revision_era_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.12.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "4a983f60eb8ef3d877bbeb7eac6d2ae3d98fa377",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "226378c72c0a17d99cf03c8aeb49fa7f1af0a1598ecbb5e043545a838fe7df8e",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:53:23Z",
+    "usage": {
+      "prompt_tokens": 1995,
+      "completion_tokens": 574,
+      "total_tokens": 2569
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.88,\n  \"summary\": \"Fix for a real parsing bug where multiline function signatures with type annotations were incorrectly parsed as tuples instead of calls when newlines appeared between parentheses. The issue clearly demonstrates incorrect behavior compared to the single-line equivalent.\",\n  \"evidence\": \"Issue #580 documents a concrete parsing defect: `function (\\\\n::A\\\\n)() end` was parsed as `(function (tuple ...) (block))` instead of the correct `(function (call (parens ...)) (block))`. The single-line version `function (::A)() end` parsed correctly, demonstrating inconsistency. The fix modifies src/julia/parser.jl (production code) and test/parser.jl (test file), targeting the `peek(ps, 2)` check that didn't account for newlines in multiline signatures.\",\n  \"missing_evidence\": \"Cannot see the exact diff to confirm the fix is minimal and correct. The issue body mentions the fix was AI-generated which adds some uncertainty about correctness, but it was reviewed and merged. Cannot verify the test passes.\",\n  \"validation_risks\": \"The fix involves parser lookahead logic which could have edge cases affecting other valid syntax patterns. The issue author noted the fix was AI-generated ('AI slop') so extra validation of edge cases would be prudent.\",\n  \"suggested_tests\": \"1. Parse `function (\\\\n::A\\\\n)() end` and verify it produces a `call` node wrapping `parens` rather than a bare `tuple`. 2. Verify the single-line equivalent `function (::A)() end` still parses correctly. 3. Test with multiple parameters: `function (\\\\n::A,\\\\n::B\\\\n)() end`. 4. Test nested newlines in more complex signatures.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.88,
+    "summary": "Fix for a real parsing bug where multiline function signatures with type annotations were incorrectly parsed as tuples instead of calls when newlines appeared between parentheses. The issue clearly demonstrates incorrect behavior compared to the single-line equivalent.",
+    "evidence": "Issue #580 documents a concrete parsing defect: `function (\\n::A\\n)() end` was parsed as `(function (tuple ...) (block))` instead of the correct `(function (call (parens ...)) (block))`. The single-line version `function (::A)() end` parsed correctly, demonstrating inconsistency. The fix modifies src/julia/parser.jl (production code) and test/parser.jl (test file), targeting the `peek(ps, 2)` check that didn't account for newlines in multiline signatures.",
+    "missing_evidence": "Cannot see the exact diff to confirm the fix is minimal and correct. The issue body mentions the fix was AI-generated which adds some uncertainty about correctness, but it was reviewed and merged. Cannot verify the test passes.",
+    "validation_risks": "The fix involves parser lookahead logic which could have edge cases affecting other valid syntax patterns. The issue author noted the fix was AI-generated ('AI slop') so extra validation of edge cases would be prudent.",
+    "suggested_tests": "1. Parse `function (\\n::A\\n)() end` and verify it produces a `call` node wrapping `parens` rather than a bare `tuple`. 2. Verify the single-line equivalent `function (::A)() end` still parses correctly. 3. Test with multiple parameters: `function (\\n::A,\\n::B\\n)() end`. 4. Test nested newlines in more complex signatures."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "multiline function signatures"
+    ],
+    "exception_types": [
+      "46e8ba276670878d7eaa18df5d1883e7b2d95a6270c1cd718b7e48dbd5491b2e"
+    ],
+    "fingerprints": [
+      "46e8ba276670878d7eaa18df5d1883e7b2d95a6270c1cd718b7e48dbd5491b2e"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

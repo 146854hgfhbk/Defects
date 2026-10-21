@@ -1,0 +1,42 @@
+diff --git a/Sources/AWSLambdaRuntime/LambdaClock.swift b/Sources/AWSLambdaRuntime/LambdaClock.swift
+index 6f3df39..53b641c 100644
+--- a/Sources/AWSLambdaRuntime/LambdaClock.swift
++++ b/Sources/AWSLambdaRuntime/LambdaClock.swift
+@@ -62,7 +62,7 @@ public struct LambdaClock: Clock {
+     /// ## Thread Safety
+     ///
+     /// `Instant` is a value type and is inherently thread-safe.
+-    public struct Instant: InstantProtocol {
++    public struct Instant: InstantProtocol, CustomStringConvertible {
+         /// The number of milliseconds since the Unix epoch.
+         let instant: Int64
+ 
+@@ -122,6 +122,11 @@ public struct LambdaClock: Clock {
+         public init(millisecondsSinceEpoch milliseconds: Int64) {
+             self.instant = milliseconds
+         }
++
++        /// Renders an Instant as an EPOCH value
++        public var description: String {
++            "\(self.instant)"
++        }
+     }
+ 
+     /// The current instant according to this clock.
+diff --git a/Tests/AWSLambdaRuntimeTests/LambdaClockTests.swift b/Tests/AWSLambdaRuntimeTests/LambdaClockTests.swift
+index 413a3aa..31e4d19 100644
+--- a/Tests/AWSLambdaRuntimeTests/LambdaClockTests.swift
++++ b/Tests/AWSLambdaRuntimeTests/LambdaClockTests.swift
+@@ -136,4 +136,12 @@ struct LambdaClockTests {
+             "LambdaClock and Foundation Date should be within 10ms of each other, difference was \(difference)ms"
+         )
+     }
++    @Test("Instant renders as string with an epoch number")
++    func instantRendersAsStringWithEpochNumber() {
++        let clock = LambdaClock()
++        let instant = clock.now
++
++        let expectedString = "\(instant)"
++        #expect(expectedString.allSatisfy { $0.isNumber }, "String should only contain numbers")
++    }
+ }

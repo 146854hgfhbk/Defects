@@ -1,0 +1,41 @@
+diff --git a/Tests/StencilTests/LexerSpec.swift b/Tests/StencilTests/LexerSpec.swift
+index adf6a92df5a6285799e32ecd6e10cae5e3ad7cc6..18726993d0ec815e88a1ff2a05c1d61ee0b8c094 100644
+--- a/Tests/StencilTests/LexerSpec.swift
++++ b/Tests/StencilTests/LexerSpec.swift
+@@ -126,6 +126,17 @@ final class LexerTests: XCTestCase {
+     }
+   }
+ 
++  func testCombiningDiaeresis() throws {
++    let path = Path(#file as String) + ".."  + "fixtures" + "combining-diaeresis.html"
++    let content: String = try path.read()
++
++    let lexer = Lexer(templateString: content)
++    let tokens = lexer.tokenize()
++
++    try expect(tokens.count) == 3
++    assert(tokens[1].contents == "test")
++  }
++
+   private func makeSourceMap(_ token: String, for lexer: Lexer, options: String.CompareOptions = []) -> SourceMap {
+     guard let range = lexer.templateString.range(of: token, options: options) else { fatalError("Token not found") }
+     return SourceMap(location: lexer.rangeLocation(range))
+diff --git a/Tests/StencilTests/fixtures/combining-diaeresis.html b/Tests/StencilTests/fixtures/combining-diaeresis.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..41477b706a371c4de00dbd67ca86029b6a5f9d80
+--- /dev/null
++++ b/Tests/StencilTests/fixtures/combining-diaeresis.html
+@@ -0,0 +1,2 @@
++ü
++{% test %}
+diff --git a/Tests/StencilTests/XCTestManifests.swift b/Tests/StencilTests/XCTestManifests.swift
+--- a/Tests/StencilTests/XCTestManifests.swift
++++ b/Tests/StencilTests/XCTestManifests.swift
+@@ -122,6 +122,7 @@
+ 
+ extension LexerTests {
+     static let __allTests = [
++        ("testCombiningDiaeresis", testCombiningDiaeresis),
+         ("testComment", testComment),
+         ("testContentMixture", testContentMixture),
+         ("testEmptyVariable", testEmptyVariable),

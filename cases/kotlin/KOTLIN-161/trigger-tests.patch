@@ -1,0 +1,14 @@
+diff --git a/core/src/test/kotlin/org/jetbrains/kotlinx/dataframe/api/get.kt b/core/src/test/kotlin/org/jetbrains/kotlinx/dataframe/api/get.kt
+index 5117b18687..f2a0ede4f7 100644
+--- a/core/src/test/kotlin/org/jetbrains/kotlinx/dataframe/api/get.kt
++++ b/core/src/test/kotlin/org/jetbrains/kotlinx/dataframe/api/get.kt
+@@ -49,6 +49,9 @@ class GetTests {
+         shouldThrow<IllegalArgumentException> { row.getValue(c) }
+         shouldThrow<IllegalArgumentException> { row.getValue(A::c) }
+ 
++        val throwable = shouldThrow<IllegalArgumentException> { df[column<Int>("c")] }
++        throwable.message shouldContain "Column not found: '[c]'"
++
+         val added = df.add(A::c) { "3" }[0]
+ 
+         shouldThrow<ClassCastException> { added.getValue(c) + 1 }

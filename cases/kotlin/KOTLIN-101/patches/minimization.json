@@ -1,0 +1,515 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-21T18:17:20.611515+00:00",
+  "generated_by": "minimize_patch.py",
+  "patch_direction": "buggy_to_fixed",
+  "application_direction": "fixed_to_buggy_via_reverse_apply",
+  "policy": {
+    "granularity": "unified_diff_hunk",
+    "safe_automatic_categories": [
+      "comment",
+      "documentation",
+      "format",
+      "unrelated"
+    ],
+    "semantic_hunks_default": "KEEP",
+    "uncertain_hunks_default": "UNCERTAIN_AND_KEEP",
+    "llm_remove_requires_explicit_decision": true,
+    "removal_requires_differential_validation": true,
+    "batch_safe_candidates_first": true,
+    "verify_all_hunks": true,
+    "signature_fields": [
+      "trigger_set",
+      "exception_type",
+      "normalized_message",
+      "normalized_stack_hash"
+    ],
+    "necessity_evidence": [
+      "bug_not_reproduced with three complete compile and full-suite runs, repeat consistency, and no infrastructure errors",
+      "candidate source compilation fails in three isolated runs with an identical Kotlin compiler diagnostic fingerprint while fixed compile and full-suite runs pass"
+    ]
+  },
+  "original_patch": "original-source.patch",
+  "original_patch_sha256": "5c75a943dd080cbfecb1c56f47fd6268a5b2ea32a65a57276fc8703efca45c04",
+  "minimized_patch": "pre-curation-minimized-source.patch",
+  "minimized_patch_sha256": "5c75a943dd080cbfecb1c56f47fd6268a5b2ea32a65a57276fc8703efca45c04",
+  "original_hunk_count": 1,
+  "retained_hunk_count": 1,
+  "removed_hunk_count": 0,
+  "baseline_validation": {
+    "acceptable": true,
+    "status": "stable_differential",
+    "repeat_consistent": true,
+    "signature_complete": true,
+    "signature": {
+      "trigger_set": [
+        "org.koin.viewmodel.ViewModelScopeFactoryLinkTest.viewModelScopeFactory_resolves_viewModel_from_custom_scope_issue_2299"
+      ],
+      "failures": [
+        {
+          "test_id": "org.koin.viewmodel.ViewModelScopeFactoryLinkTest.viewModelScopeFactory_resolves_viewModel_from_custom_scope_issue_2299",
+          "exception_type": "org.koin.core.error.NoDefinitionFoundException",
+          "normalized_message": "org.koin.core.error.NoDefinitionFoundException: No definition found for type 'org.koin.viewmodel.ViewModelScopeFactoryLinkTest$ScopedVM' on scope '['ScopedVM-<UUID>']'. Searched scopes: ['ScopedVM-<UUID>'] -> [['_root_']]. Check or add definition for type 'org.koin.viewmodel.ViewModelScopeFactoryLinkTest$ScopedVM' in scope 'org.koin.viewmodel.ViewModelScopeFactoryLinkTest$ScopedVM'.",
+          "normalized_stack_hash": "5b2fcf7b91c7529ebc33bd45e72963bd78f6450130a86cd832db8a22e13ed276"
+        }
+      ]
+    },
+    "fixed_passed_all_runs": true,
+    "buggy_failed_all_runs": true,
+    "full_suite_valid": true,
+    "compile_valid": true,
+    "compile_fixed_runs": 3,
+    "compile_buggy_runs": 3,
+    "full_fixed_runs": 3,
+    "full_buggy_runs": 3,
+    "infrastructure_error_count": 0
+  },
+  "baseline_validation_source": {
+    "kind": "existing_validation_report",
+    "case_id": "KOTLIN-101",
+    "file": "baseline-validation.json",
+    "sha256": "b04fe5aedd28ded176e1af9d6223f2a8d224a29368f5910b6aa5fa296a72693f"
+  },
+  "hunks": [
+    {
+      "hunk_id": "F001-H001",
+      "file": "projects/core/koin-core-viewmodel/src/commonMain/kotlin/org/koin/viewmodel/factory/KoinViewModelFactory.kt",
+      "header": "@@ -50,6 +50,12 @@ class KoinViewModelFactory(",
+      "category": "semantic",
+      "initial_decision": "REMOVE_CANDIDATE_FOR_NECESSITY_CHECK",
+      "source": "exhaustive_differential_check",
+      "eligible_for_automatic_removal": true,
+      "reason": "Production-code semantics may change; retained by default; removal is tested to establish that this retained hunk is necessary; retained because removal changes the differential evidence; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation",
+      "validation_evidence": {
+        "attempted": true,
+        "mode": "individual_exhaustive",
+        "accepted": false,
+        "reason": "removal consistently eliminates the defect under complete three-run differential validation",
+        "candidate_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "candidate": {
+          "acceptable": false,
+          "status": "bug_not_reproduced",
+          "repeat_consistent": true,
+          "signature_complete": false,
+          "signature": {
+            "trigger_set": [],
+            "failures": []
+          },
+          "fixed_passed_all_runs": true,
+          "buggy_failed_all_runs": false,
+          "full_suite_valid": true,
+          "compile_valid": true,
+          "compile_fixed_runs": 3,
+          "compile_buggy_runs": 3,
+          "full_fixed_runs": 3,
+          "full_buggy_runs": 3,
+          "infrastructure_error_count": 0,
+          "validation_provenance": {
+            "case_id": "KOTLIN-101",
+            "generated_by": "validation_engine.py",
+            "schema_version": 2,
+            "policy": {
+              "repetitions": 3,
+              "timeout_seconds": 1800,
+              "fresh_worktree_per_repetition": true,
+              "individual_trigger_processes": true,
+              "compile_before_tests": true,
+              "full_suite_run_per_version": 3,
+              "offline": true,
+              "environment_lock_sha256": "839286d6f9d24b122d836b26d33f44926ca58d5d1fbeefca197d22b6ae459d86",
+              "trigger_patch_states": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "state": "already_present"
+                }
+              ],
+              "buggy_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "run_matrix": [
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 7,
+                "junit_file_count": 5,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 7,
+                "junit_file_count": 5,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 7,
+                "junit_file_count": 5,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 7,
+                "junit_file_count": 5,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 7,
+                "junit_file_count": 5,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "org.koin.viewmodel.ViewModelScopeFactoryLinkTest"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 7,
+                "junit_file_count": 5,
+                "failure_fingerprint": null
+              }
+            ],
+            "derived": {
+              "status": "bug_not_reproduced",
+              "stable": false,
+              "fixed_passed_all_runs": true,
+              "buggy_failed_all_runs": false,
+              "full_suite_valid": true,
+              "compile_valid": true,
+              "compile_fixed_runs": 3,
+              "compile_buggy_runs": 3,
+              "full_fixed_runs": 3,
+              "full_buggy_runs": 3,
+              "full_buggy_failed": false,
+              "buggy_failed_test_count": 0,
+              "buggy_failed_tests": [],
+              "buggy_failure_types": [],
+              "failure_fingerprints": [],
+              "broken_tests": [],
+              "flaky_tests": [],
+              "order_dependent_tests": [],
+              "infrastructure_error_count": 0
+            },
+            "source_report_sha256": "651394f14848cb472d14627d13ea35e40e46bb4f1e0c327cd67f5a07cc5262c9",
+            "embedded_report": "minimization-evidence/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855-651394f14848cb472d14627d13ea35e40e46bb4f1e0c327cd67f5a07cc5262c9.evidence.json",
+            "embedded_report_sha256": "903c4a9412109b749b0396a3b2a6006526611cdfd48d24c28d7d073fa8195f40"
+          }
+        },
+        "source_validation_report": "D:\\Desktop\\综述试验方案\\kotlin-defects-miner-review\\output\\exhaustive-minimization\\KOTLIN-101\\validation-artifacts\\candidate-001\\validation.json",
+        "source_validation_sha256": "651394f14848cb472d14627d13ea35e40e46bb4f1e0c327cd67f5a07cc5262c9"
+      },
+      "decision": "KEEP"
+    }
+  ],
+  "manual_confirmation_required": false,
+  "evidence_confirmation": {
+    "decision": "CONFIRMED_BY_EXHAUSTIVE_DIFFERENTIAL_EVIDENCE",
+    "confirmed_at": "2026-07-24T14:46:46.136615+00:00",
+    "method": "exact cardinality subset search with decisive differential evidence for every retained and removed hunk",
+    "human_review_claimed": false
+  },
+  "evidence_reclassified_at": "2026-07-24T14:46:46.123100+00:00",
+  "post_minimization_curation": {
+    "status": "superseded_by_comment_trimmed_forward_validated_patch",
+    "record": "comment-trimming.json",
+    "final_patch": "minimized-source.patch",
+    "final_patch_sha256": "b653673b8243f8d2c3708e49882f524756a83c1cfcadd15efb02b1ee0f8040dc",
+    "final_validation": "../validation/final-patch-validation.json"
+  }
+}

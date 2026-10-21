@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-983",
+  "technical_evidence_sha256": "a0d4f5345d1aab09aa7458cc808e17d01431dbd0ae89a3f9628d633828274ae5",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "3d8daa006b6652728b453d371546c78369beae30db0e02be584ad12558829139",
+  "reviewed_at": "2026-08-14T06:30:41.934063+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#711",
+  "rationale": "Issue #711 ('Multi-line strings inside string interpolation have their contents changed') reports that dartfmt collapses newlines inside a multi-line string nested in an interpolation, silently altering program semantics. The commit message for ed251e7 states 'Fix #711' and explains the root cause: the previous change suppressed *all* splits inside interpolation. The minimized production patch matches that root cause exactly: it removes the blanket `_preventSplitNesting > 0` guards from `_writeHardSplit`, `_writeSplit`, and `startBlock` in lib/src/chunk_builder.dart, and moves suppression into `split()` so only soft splits are prevented while hard splits (multi-line string content, line comments) survive. The trigger fixture test/regression/0700/0711.stmt is the verbatim reproducer from the issue body ('''${\"\"\"\\na\\nb\\nc\\n\"\"\"}'''), comes from the fixing commit itself, and exercises only the existing public formatter entry point through test/formatter_test.dart, so it introduces no new production API. Non-production noise from the original commit (analysis_options.yaml strong-mode removal, pubspec.lock SDK bound, version/changelog and README commits from PR #714) is excluded from the minimized production patch, which touches one file and only the split-prevention logic; the test/utils.dart directory-sort change is confined to the test-only trigger patch. Both strict gates (original and post-minimization) report pass with build.both_versions, trigger.buggy_differential reproducing 'regression 0711.stmt' and 'splitting strings.stmt', trigger.fixed_clean, trigger.deterministic over 3 repetitions, and full_suite.fixed_all_green; the declared-but-non-reproducing 'whitespace strings.stmt' selector passes in both revisions, which the differential gate permits. active_same_project_root_causes is empty and dart-lang/dart_style#711 is the sole allowed verified issue key, so this root cause is not a duplicate.\n\nIssue #711 ('Multi-line strings inside string interpolation have their contents changed') reports that formatting `var str = '''${\"\"\"\\na\\nb\\nc\\n\"\"\"}''';` collapses meaningful newlines inside the nested multi-line string, i.e. dartfmt silently alters program semantics. The commit message on ed251e7 states 'Allow hard splits inside string interpolation... Fix #711', and the minimized production patch narrows the over-broad split suppression in lib/src/chunk_builder.dart: the `_preventSplitNesting > 0` early-outs are removed from `_writeHardSplit`, `_writeSplit`, and `startBlock`, and the suppression is relocated to the soft-split entry point `split()` so hard splits (newlines in multi-line strings, line comments) survive inside interpolation. That is exactly the mechanism that produced the reported corruption, so issue, fix, and triggers describe one pre-existing defect at buggy revision 2b344e3. The minimized patch is confined to one production file and to split-prevention control flow; the unrelated commit noise (analysis_options.yaml strong-mode removal, pubspec.lock SDK constraint bump, README/changelog/version commits from the multi-commit PR) is excluded, and no doc, config, or test change leaks into it. The trigger is the project's own fixture harness: test/regression/0700/0711.stmt contains the exact reproducer input/output pair from the issue body, and test/splitting/strings.stmt updates the interpolation expectations ('hard splits are split in interpolation') that the buggy revision violates. Both run through the pre-existing test/formatter_test.dart driver, so no production API introduced by the fix is required. Strict evidence confirms the differential: buggy fails on 'regression 0711.stmt' and 'splitting strings.stmt' in isolation and in the full suite with no extra failures, fixed is green across 3 repetitions and 44 matrix runs, and both revisions build. active_same_project_root_causes is empty and dart-lang/dart_style#711 is the sole allowed key, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:29:52.722092+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3d8daa006b6652728b453d371546c78369beae30db0e02be584ad12558829139",
+      "response_sha256": "ab56d431c5fbaf1b442687a8aaf76735648ea74cdfe71c075a84ae23af0d639b",
+      "response_id": "msg_ff3e1be228fc4ea3bd599d47267f3d79",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.2383855372139307,
+        "input_tokens": 24390,
+        "output_tokens": 859
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#711",
+      "rationale": "Issue #711 ('Multi-line strings inside string interpolation have their contents changed') reports that dartfmt collapses newlines inside a multi-line string nested in an interpolation, silently altering program semantics. The commit message for ed251e7 states 'Fix #711' and explains the root cause: the previous change suppressed *all* splits inside interpolation. The minimized production patch matches that root cause exactly: it removes the blanket `_preventSplitNesting > 0` guards from `_writeHardSplit`, `_writeSplit`, and `startBlock` in lib/src/chunk_builder.dart, and moves suppression into `split()` so only soft splits are prevented while hard splits (multi-line string content, line comments) survive. The trigger fixture test/regression/0700/0711.stmt is the verbatim reproducer from the issue body ('''${\"\"\"\\na\\nb\\nc\\n\"\"\"}'''), comes from the fixing commit itself, and exercises only the existing public formatter entry point through test/formatter_test.dart, so it introduces no new production API. Non-production noise from the original commit (analysis_options.yaml strong-mode removal, pubspec.lock SDK bound, version/changelog and README commits from PR #714) is excluded from the minimized production patch, which touches one file and only the split-prevention logic; the test/utils.dart directory-sort change is confined to the test-only trigger patch. Both strict gates (original and post-minimization) report pass with build.both_versions, trigger.buggy_differential reproducing 'regression 0711.stmt' and 'splitting strings.stmt', trigger.fixed_clean, trigger.deterministic over 3 repetitions, and full_suite.fixed_all_green; the declared-but-non-reproducing 'whitespace strings.stmt' selector passes in both revisions, which the differential gate permits. active_same_project_root_causes is empty and dart-lang/dart_style#711 is the sole allowed verified issue key, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/chunk_builder.dart",
+        "test/regression/0700/0711.stmt",
+        "test/splitting/strings.stmt",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "trigger_tests"
+      ],
+      "risks": [
+        "The minimized patch drops the `endBlock` early-return hunk that the upstream fix also removed, leaving an asymmetric guard (`startBlock` no longer short-circuits while `endBlock` still checks `_preventSplitNesting`). Strict post-minimization gates pass, implying that branch is unreachable once nested block builders are created with their own counter, but the minimized state diverges structurally from the upstream fix.",
+        "Hunk line offsets in patches/minimized-production.patch were not recomputed after the endBlock hunk was dropped (third hunk header still reads +769), so application relies on context/offset tolerance rather than exact line numbers.",
+        "test/splitting/strings.stmt rewrites an existing expectation ('hard splits are not split in interpolation' becomes 'hard splits are split in interpolation') rather than only adding cases, so part of the trigger encodes intended new formatting output for the same root cause instead of a pure regression assertion.",
+        "The defect was introduced by an immediately preceding commit in the same release cycle, so the buggy revision reflects a short-lived regression rather than long-standing behavior.",
+        "Runtime evidence is machine-supplied only; no independent re-execution was performed here, and analyzer cleanliness was not required (require_analyze_clean=false)."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:30:41.933672+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3d8daa006b6652728b453d371546c78369beae30db0e02be584ad12558829139",
+      "response_sha256": "8b99010f425b016f6484b296c0c0e5871182990411cf8a47eca08d057f4f60e7",
+      "response_id": "msg_09957b76c1a94886ad33e68de553b656",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.028163652106136,
+        "input_tokens": 23881,
+        "output_tokens": 864
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#711",
+      "rationale": "Issue #711 ('Multi-line strings inside string interpolation have their contents changed') reports that formatting `var str = '''${\"\"\"\\na\\nb\\nc\\n\"\"\"}''';` collapses meaningful newlines inside the nested multi-line string, i.e. dartfmt silently alters program semantics. The commit message on ed251e7 states 'Allow hard splits inside string interpolation... Fix #711', and the minimized production patch narrows the over-broad split suppression in lib/src/chunk_builder.dart: the `_preventSplitNesting > 0` early-outs are removed from `_writeHardSplit`, `_writeSplit`, and `startBlock`, and the suppression is relocated to the soft-split entry point `split()` so hard splits (newlines in multi-line strings, line comments) survive inside interpolation. That is exactly the mechanism that produced the reported corruption, so issue, fix, and triggers describe one pre-existing defect at buggy revision 2b344e3. The minimized patch is confined to one production file and to split-prevention control flow; the unrelated commit noise (analysis_options.yaml strong-mode removal, pubspec.lock SDK constraint bump, README/changelog/version commits from the multi-commit PR) is excluded, and no doc, config, or test change leaks into it. The trigger is the project's own fixture harness: test/regression/0700/0711.stmt contains the exact reproducer input/output pair from the issue body, and test/splitting/strings.stmt updates the interpolation expectations ('hard splits are split in interpolation') that the buggy revision violates. Both run through the pre-existing test/formatter_test.dart driver, so no production API introduced by the fix is required. Strict evidence confirms the differential: buggy fails on 'regression 0711.stmt' and 'splitting strings.stmt' in isolation and in the full suite with no extra failures, fixed is green across 3 repetitions and 44 matrix runs, and both revisions build. active_same_project_root_causes is empty and dart-lang/dart_style#711 is the sole allowed key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "case.json issue_urls",
+        "case.json source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch (lib/src/chunk_builder.dart: split, startBlock, _writeHardSplit, _writeSplit)",
+        "patches/trigger-tests.patch (test/regression/0700/0711.stmt, test/splitting/strings.stmt)",
+        "case.json strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json strict_post_minimization.checks.full_suite.fixed_all_green",
+        "case.json allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The minimized patch keeps the `_preventSplitNesting > 0` early-out in `endBlock` while removing the matching one in `startBlock`. This is only safe because a nested block gets a fresh ChunkBuilder whose counter starts at zero; the gates confirm the fixed suite stays green, but the minimized state diverges from the upstream fix and that residual guard is untested dead code.",
+        "test/splitting/strings.stmt also adds a 'collections split in interpolation if needed' expectation. The commit author acknowledges this as a deliberate side effect of the fix rather than the reported multi-line-string symptom, so the trigger asserts slightly broader behavior than the issue text.",
+        "test/whitespace/strings.stmt is declared as a third selector but does not reproduce on the buggy revision; it is extra coverage, not a trigger.",
+        "The trigger patch includes a test-only sort in test/utils.dart to stabilize fixture discovery order; it affects test enumeration, so selector ordering assumptions depend on it."
+      ]
+    }
+  ]
+}

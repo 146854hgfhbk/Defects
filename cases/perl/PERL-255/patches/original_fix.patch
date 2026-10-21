@@ -1,0 +1,94 @@
+diff --git a/Changes b/Changes
+index e45f058..70f7dc6 100644
+--- a/Changes
++++ b/Changes
+@@ -2,6 +2,10 @@ Revision history for Path-Tiny
+ 
+ {{$NEXT}}
+ 
++    [Additions]
++
++    - Added 'cached_temp' method.
++
+ 0.100     2017-01-14 22:47:55-05:00 America/New_York
+ 
+     - No changes from 0.099-TRIAL.
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index 12f2634..62d3c1b 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -356,6 +356,10 @@ of storing it:
+ 
+     my $lost = tempdir()->child("foo"); # tempdir cleaned up right away
+ 
++B<Note 4>: The cached object may be accessed with the L</cached_temp> method.
++Keeping a reference to, or modifying the cached object may break the
++behavior documented above and is not supported.  Use at your own risk.
++
+ Current API available since 0.097.
+ 
+ =cut
+@@ -625,6 +629,27 @@ Current API available since 0.001.
+ 
+ sub canonpath { $_[0]->[CANON] }
+ 
++=method cached_temp
++
++Returns the cached C<File::Temp> or C<File::Temp::Dir> object if the
++C<Path::Tiny> object was created with C</tempfile> or C</tempdir>.
++If there is no such object, this method throws.
++
++B<WARNING>: Keeping a reference to, or modifying the cached object may
++break the behavior documented for temporary files and directories created
++with C<Path::Tiny> and is not supported.  Use at your own risk.
++
++Current API available since 0.101.
++
++=cut
++
++sub cached_temp {
++    my $self = shift;
++    $self->_throw( "cached_temp", $self, "has no cached File::Temp object" )
++      unless defined $self->[TEMP];
++    return $self->[TEMP];
++}
++
+ =method child
+ 
+     $file = path("/tmp")->child("foo.txt"); # "/tmp/foo.txt"
+diff --git a/t/temp.t b/t/temp.t
+index 9c18478..1046d32 100644
+--- a/t/temp.t
++++ b/t/temp.t
+@@ -12,7 +12,8 @@ use Path::Tiny;
+ 
+ subtest "tempdir" => sub {
+     my $tempdir = Path::Tiny->tempdir;
+-    my $string  = $tempdir->stringify;
++    isa_ok( $tempdir->cached_temp, 'File::Temp::Dir', "cached_temp" );
++    my $string = $tempdir->stringify;
+     ok( $tempdir->exists, "tempdir exists" );
+     undef $tempdir;
+     ok( !-e $string, "tempdir destroyed" );
+@@ -20,7 +21,8 @@ subtest "tempdir" => sub {
+ 
+ subtest "tempfile" => sub {
+     my $tempfile = Path::Tiny->tempfile;
+-    my $string   = $tempfile->stringify;
++    isa_ok( $tempfile->cached_temp, 'File::Temp', "cached_temp" );
++    my $string = $tempfile->stringify;
+     ok( $tempfile->exists, "tempfile exists" );
+     undef $tempfile;
+     ok( !-e $string, "tempfile destroyed" );
+@@ -69,5 +71,11 @@ subtest "realpath option" => sub {
+     is( $tempfile, $tempfile->realpath, "tempfile has realpath" );
+ };
+ 
++subtest "cached_temp on non tempfile" => sub {
++    my $path = path("abcdefg");
++    eval { $path->cached_temp };
++    like( $@, qr/has no cached File::Temp object/, "cached_temp error message" );
++};
++
+ done_testing;
+ # COPYRIGHT

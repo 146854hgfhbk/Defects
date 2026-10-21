@@ -1,0 +1,340 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b0832bf7e..6505f2c3e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 1.3.2
++
++* Preserve comma after nullable function-typed parameters (#862).
++
+ # 1.3.1
+ 
+ * Fix crash in formatting complex method chains (#855).
+diff --git a/bin/format.dart b/bin/format.dart
+index 771d81bc3..6a8569b59 100644
+--- a/bin/format.dart
++++ b/bin/format.dart
+@@ -15,7 +15,7 @@ import 'package:dart_style/src/source_code.dart';
+ import 'package:dart_style/src/style_fix.dart';
+ 
+ // Note: The following line of code is modified by tool/grind.dart.
+-const version = "1.3.1";
++const version = "1.3.2";
+ 
+ void main(List<String> args) {
+   var parser = ArgParser(allowTrailingOptions: true);
+diff --git a/lib/src/argument_list_visitor.dart b/lib/src/argument_list_visitor.dart
+index 25bbb7514..92fa7c31b 100644
+--- a/lib/src/argument_list_visitor.dart
++++ b/lib/src/argument_list_visitor.dart
+@@ -207,7 +207,7 @@ class ArgumentListVisitor {
+         _visitor.visit(argument);
+ 
+         // Write the following comma.
+-        if (argument.endToken.next.type == TokenType.COMMA) {
++        if (_visitor.hasCommaAfter(argument)) {
+           _visitor.token(argument.endToken.next);
+         }
+       }
+@@ -480,7 +480,7 @@ class ArgumentSublist {
+     }
+ 
+     // Write the following comma.
+-    if (argument.endToken.next.type == TokenType.COMMA) {
++    if (visitor.hasCommaAfter(argument)) {
+       visitor.token(argument.endToken.next);
+     }
+   }
+diff --git a/lib/src/call_chain_visitor.dart b/lib/src/call_chain_visitor.dart
+index 3c04c59f2..30b72e8fa 100644
+--- a/lib/src/call_chain_visitor.dart
++++ b/lib/src/call_chain_visitor.dart
+@@ -321,7 +321,7 @@ class CallChainVisitor {
+     var argument = argumentList.arguments.last;
+ 
+     // If the argument list has a trailing comma, treat it like a collection.
+-    if (argument.endToken.next.type == TokenType.COMMA) return false;
++    if (_visitor.hasCommaAfter(argument)) return false;
+ 
+     if (argument is NamedExpression) {
+       argument = (argument as NamedExpression).expression;
+diff --git a/lib/src/source_visitor.dart b/lib/src/source_visitor.dart
+index 35b03967a..ad4267c1c 100644
+--- a/lib/src/source_visitor.dart
++++ b/lib/src/source_visitor.dart
+@@ -322,7 +322,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     // If the argument list has a trailing comma, format it like a collection
+     // literal where each argument goes on its own line, they are indented +2,
+     // and the ")" ends up on its own line.
+-    if (node.arguments.last.endToken.next.type == TokenType.COMMA) {
++    if (hasCommaAfter(node.arguments.last)) {
+       _visitCollectionLiteral(
+           null, node.leftParenthesis, node.arguments, node.rightParenthesis);
+       return;
+@@ -354,7 +354,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     // If the argument list has a trailing comma, format it like a collection
+     // literal where each argument goes on its own line, they are indented +2,
+     // and the ")" ends up on its own line.
+-    if (arguments.last.endToken.next.type == TokenType.COMMA) {
++    if (hasCommaAfter(arguments.last)) {
+       _visitCollectionLiteral(
+           null, node.leftParenthesis, arguments, node.rightParenthesis);
+       return;
+@@ -377,7 +377,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+       // If the argument list has a trailing comma, format it like a collection
+       // literal where each argument goes on its own line, they are indented +2,
+       // and the ")" ends up on its own line.
+-      if (arguments.last.endToken.next.type == TokenType.COMMA) {
++      if (hasCommaAfter(arguments.last)) {
+         _visitCollectionLiteral(
+             null, node.leftParenthesis, arguments, node.rightParenthesis);
+         return;
+@@ -634,7 +634,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+ 
+     return arguments == null ||
+         arguments.arguments.isEmpty ||
+-        arguments.arguments.last.endToken.next.type != TokenType.COMMA;
++        !hasCommaAfter(arguments.arguments.last);
+   }
+ 
+   /// Whether a cascade should be allowed to be inline as opposed to one
+@@ -883,7 +883,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+ 
+   void _visitConstructorInitializers(ConstructorDeclaration node) {
+     var hasTrailingComma = node.parameters.parameters.isNotEmpty &&
+-        node.parameters.parameters.last.endToken.next.type == TokenType.COMMA;
++        hasCommaAfter(node.parameters.parameters.last);
+ 
+     if (hasTrailingComma) {
+       // Since the ")", "])", or "})" on the preceding line doesn't take up
+@@ -1070,7 +1070,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     visitCommaSeparatedNodes(node.constants, between: splitOrTwoNewlines);
+ 
+     // If there is a trailing comma, always force the constants to split.
+-    if (node.constants.last.endToken.next.type == TokenType.COMMA) {
++    if (hasCommaAfter(node.constants.last)) {
+       builder.forceRules();
+     }
+ 
+@@ -1212,7 +1212,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     // If the parameter list has a trailing comma, format it like a collection
+     // literal where each parameter goes on its own line, they are indented +2,
+     // and the ")" ends up on its own line.
+-    if (node.parameters.last.endToken.next.type == TokenType.COMMA) {
++    if (hasCommaAfter(node.parameters.last)) {
+       _visitTrailingCommaParameterList(node);
+       return;
+     }
+@@ -1248,11 +1248,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+ 
+       for (var param in requiredParams) {
+         visit(param);
+-
+-        // Write the following comma.
+-        if (param.endToken.next.type == TokenType.COMMA) {
+-          token(param.endToken.next);
+-        }
++        _writeCommaAfter(param);
+ 
+         if (param != requiredParams.last) rule.beforeArgument(split());
+       }
+@@ -1279,11 +1275,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+ 
+       for (var param in optionalParams) {
+         visit(param);
+-
+-        // Write the following comma.
+-        if (param.endToken.next.type == TokenType.COMMA) {
+-          token(param.endToken.next);
+-        }
++        _writeCommaAfter(param);
+ 
+         if (param != optionalParams.last) namedRule.beforeArgument(split());
+       }
+@@ -2822,11 +2814,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+       }
+ 
+       visit(element);
+-
+-      // The comma after the element.
+-      if (element.endToken.next.type == TokenType.COMMA) {
+-        token(element.endToken.next);
+-      }
++      _writeCommaAfter(element);
+     }
+ 
+     builder.endRule();
+@@ -2835,10 +2823,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     var force = _collectionSplits.removeLast();
+ 
+     // If the collection has a trailing comma, the user must want it to split.
+-    if (elements.isNotEmpty &&
+-        elements.last.endToken.next.type == TokenType.COMMA) {
+-      force = true;
+-    }
++    if (elements.isNotEmpty && hasCommaAfter(elements.last)) force = true;
+ 
+     if (node != null) _endPossibleConstContext(node.constKeyword);
+     _endLiteralBody(rightBracket, ignoredRule: rule, forceSplit: force);
+@@ -2884,11 +2869,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+ 
+     for (var parameter in parameters.parameters) {
+       visit(parameter);
+-
+-      // The comma after the parameter.
+-      if (parameter.endToken.next.type == TokenType.COMMA) {
+-        token(parameter.endToken.next);
+-      }
++      _writeCommaAfter(parameter);
+ 
+       // If the optional parameters start after this one, put the delimiter
+       // at the end of its line.
+@@ -2991,8 +2972,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     var parent = node.parent;
+     if (parent is NamedExpression) parent = parent.parent;
+ 
+-    return parent is ArgumentList &&
+-        parent.arguments.last.endToken.next.type == TokenType.COMMA;
++    return parent is ArgumentList && hasCommaAfter(parent.arguments.last);
+   }
+ 
+   /// Whether [node] is a spread of a collection literal.
+@@ -3265,6 +3245,30 @@ class SourceVisitor extends ThrowingAstVisitor {
+     }
+   }
+ 
++  /// Write the comma token following [node], if there is one.
++  void _writeCommaAfter(AstNode node) {
++    token(_commaAfter(node));
++  }
++
++  /// Whether there is a comma token immediately following [node].
++  bool hasCommaAfter(AstNode node) => _commaAfter(node) != null;
++
++  /// The comma token immediately following [node] if there is one, or `null`.
++  Token _commaAfter(AstNode node) {
++    if (node.endToken.next.type == TokenType.COMMA) {
++      return node.endToken.next;
++    }
++
++    // TODO(sdk#38990): endToken doesn't include the "?" on a nullable
++    // function-typed formal, so check for that case and handle it.
++    if (node.endToken.next.type == TokenType.QUESTION &&
++        node.endToken.next.next.type == TokenType.COMMA) {
++      return node.endToken.next.next;
++    }
++
++    return null;
++  }
++
+   /// Emit the given [modifier] if it's non null, followed by non-breaking
+   /// whitespace.
+   void modifier(Token modifier) {
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 990ce7e61..d79344359 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,6 +1,6 @@
+ name: dart_style
+ # Note: See tool/grind.dart for how to bump the version.
+-version: 1.3.1
++version: 1.3.2
+ author: Dart Team <misc@dartlang.org>
+ description: >-
+   Opinionated, automatic Dart source code formatter.
+diff --git a/test/regression/0800/0862.unit b/test/regression/0800/0862.unit
+new file mode 100644
+index 000000000..a70bda441
+--- /dev/null
++++ b/test/regression/0800/0862.unit
+@@ -0,0 +1,64 @@
++>>>
++class JsonCodec {
++  const JsonCodec({
++      Object? reviver(Object? key, Object? value)?,
++      Object? toEncodable(dynamic object)?})
++      : _reviver = reviver,
++        _toEncodable = toEncodable;
++}
++<<<
++class JsonCodec {
++  const JsonCodec(
++      {Object? reviver(Object? key, Object? value)?,
++      Object? toEncodable(dynamic object)?})
++      : _reviver = reviver,
++        _toEncodable = toEncodable;
++}
++>>>
++class JsonUtf8Encoder {
++  JsonUtf8Encoder(
++      [String? indent, dynamic toEncodable(dynamic object)?, int? bufferSize])
++      : _indent = _utf8Encode(indent),
++        _toEncodable = toEncodable,
++        _bufferSize = bufferSize ?? _defaultBufferSize;
++}
++<<<
++class JsonUtf8Encoder {
++  JsonUtf8Encoder(
++      [String? indent, dynamic toEncodable(dynamic object)?, int? bufferSize])
++      : _indent = _utf8Encode(indent),
++        _toEncodable = toEncodable,
++        _bufferSize = bufferSize ?? _defaultBufferSize;
++}
++>>> comma between parameters
++mandatory(f()?,i) {}
++optional([f()?,i]) {}
++named({f()?,i}) {}
++<<<
++mandatory(f()?, i) {}
++optional([f()?, i]) {}
++named({f()?, i}) {}
++>>> trailing commas
++mandatory(f()?,) {}
++optional([f()?,]) {}
++named({f()?,}) {}
++<<<
++mandatory(
++  f()?,
++) {}
++optional([
++  f()?,
++]) {}
++named({
++  f()?,
++}) {}
++>>> constructor initializer trailing comma
++class C {
++  C(f()?,) : field = 3;
++}
++<<<
++class C {
++  C(
++    f()?,
++  ) : field = 3;
++}
+\ No newline at end of file
+diff --git a/test/whitespace/functions.unit b/test/whitespace/functions.unit
+index fc3f7e7d3..f12fbeb1f 100644
+--- a/test/whitespace/functions.unit
++++ b/test/whitespace/functions.unit
+@@ -167,9 +167,19 @@ function(int   foo  <  T  ,S >(T t, S s)) {}
+ <<<
+ function(int foo<T, S>(T t, S s)) {}
+ >>> nullable old style function typed parameter
+-function(int? callback()?) {}
++function(int? callback()    ?  ) {}
+ <<<
+ function(int? callback()?) {}
++>>> nullable old style function typed parameter with trailing comma
++function(int? f()?  ,p) {}
++<<<
++function(int? f()?, p) {}
++>>> nullable old style function typed parameter with trailing comma
++function(int? callback()   ?   ,    ) {}
++<<<
++function(
++  int? callback()?,
++) {}
+ >>> required parameters
+ class A {
+ f({   required    int a,required   b}) {}

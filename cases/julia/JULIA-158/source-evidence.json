@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "d74dcc0edf61bdda4702446a718e5eed5d59ec60",
+  "project": "SciML/LinearSolve.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1240,
+      "url": "https://github.com/SciML/LinearSolve.jl/pull/1240",
+      "state": "closed",
+      "title": "Fix default algorithm QA regressions",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "> Ignore this PR until it has been reviewed by @ChrisRackauckas.\n\n## What changed and why\n\nThe QA group on `main` was red from a `WOperator`/GPU right-hand-side dispatch ambiguity, an unused `mark_jacobian_updated!` import, and two newly introduced extension-internal qualified accesses. This adds the missing intersection method, removes the stale import, and records the extension-only `_check_matrix_support` and `csrlsvqr!` accesses in the existing strict ExplicitImports inventories.\n\nThe regression test uses `JLArray`, a CPU-backed GPU array, to cover the ambiguous dispatch without requiring GPU hardware.\n\n## Verification\n\n### Failing before\n\nAt [`6166a400bd393af4653ea752033a6ab792517408`](https://github.com/SciML/LinearSolve.jl/commit/6166a400bd393af4653ea752033a6ab792517408), the new regression case failed:\n\n```julia\njulia +release --project=.tmp-gpu-rhs-before -e 'using LinearSolve, JLArrays, LinearAlgebra; using SciMLOperators: WOperator; W = WOperator{true}(I, 0.1, Matrix{Float64}(I, 2, 2), zeros(2)); alg = LinearSolve.defaultalg(W, JLArray(ones(2)), LinearSolve.OperatorAssumptions(true)); @assert alg.alg === LinearSolve.DefaultAlgorithmChoice.KrylovJL_GMRES'\n```\n\n```text\nERROR: MethodError: defaultalg(::WOperator{...}, ::JLArray{Float64, 1}, ::OperatorAssumptions{Bool}) is ambiguous.\n\nCandidates:\n  defaultalg(A::WOperator, b, assump::OperatorAssumptions{Bool})\n  defaultalg(A::SciMLOperators.AbstractSciMLOperator, b::GPUArraysCore.AnyGPUArray, assump::OperatorAssumptions{Bool})\n```\n\nThe clean base QA run also reproduced all three defects:\n\n```sh\nGROUP=QA julia +release --project -e 'using Pkg; Pkg.test()'\n```\n\n```text\nQuality Assurance | 46 pass, 1 fail, 2 errors, 49 total\n```\n\nThe first bad commits were bisected to:\n\n- [`47cdfb2eb81757346bb06cd8a3053a9736d15291`](https://github.com/SciML/LinearSolve.jl/commit/47cdfb2eb81757346bb06cd8a3053a9736d15291): ambiguity and stale import\n- [`012c5e9e21a60111c9364e49356de8f603b2376e`](https://github.com/SciML/LinearSolv"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 1240,
+      "pull_request_repository": "SciML/LinearSolve.jl",
+      "pull_request_url": "https://github.com/SciML/LinearSolve.jl/pull/1240",
+      "fix_commit": "d74dcc0edf61bdda4702446a718e5eed5d59ec60",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix default algorithm QA regressions (#1240)\n\nResolve the WOperator/GPU RHS dispatch intersection, drop the stale SciMLOperators import, and inventory the two extension-only internal accesses caught by ExplicitImports.\n\nCo-authored-by: ChrisRackauckas-Claude <accounts@chrisrackauckas.com>",
+    "commit_issue_refs": [
+      1240
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1240,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Fix default algorithm QA regressions",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [],
+  "pull_request_record": {
+    "number": 1240,
+    "repository": "SciML/LinearSolve.jl",
+    "url": "https://github.com/SciML/LinearSolve.jl/pull/1240",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-08-20T16:07:17Z",
+    "merge_commit_sha": "d74dcc0edf61bdda4702446a718e5eed5d59ec60",
+    "title": "Fix default algorithm QA regressions",
+    "body_excerpt": "> Ignore this PR until it has been reviewed by @ChrisRackauckas.\n\n## What changed and why\n\nThe QA group on `main` was red from a `WOperator`/GPU right-hand-side dispatch ambiguity, an unused `mark_jacobian_updated!` import, and two newly introduced extension-internal qualified accesses. This adds the missing intersection method, removes the stale import, and records the extension-only `_check_matrix_support` and `csrlsvqr!` accesses in the existing strict ExplicitImports inventories.\n\nThe regression test uses `JLArray`, a CPU-backed GPU array, to cover the ambiguous dispatch without requiring GPU hardware.\n\n## Verification\n\n### Failing before\n\nAt [`6166a400bd393af4653ea752033a6ab792517408`](https://github.com/SciML/LinearSolve.jl/commit/6166a400bd393af4653ea752033a6ab792517408), the new regression case failed:\n\n```julia\njulia +release --project=.tmp-gpu-rhs-before -e 'using LinearSolve, JLArrays, LinearAlgebra; using SciMLOperators: WOperator; W = WOperator{true}(I, 0.1, Matrix{Float64}(I, 2, 2), zeros(2)); alg = LinearSolve.defaultalg(W, JLArray(ones(2)), LinearSolve.OperatorAssumptions(true)); @assert alg.alg === LinearSolve.DefaultAlgorithmChoice.KrylovJL_GMRES'\n```\n\n```text\nERROR: MethodError: defaultalg(::WOperator{...}, ::JLArray{Float64, 1}, ::OperatorAssumptions{Bool}) is ambiguous.\n\nCandidates:\n  defaultalg(A::WOperator, b, assump::OperatorAssumptions{Bool})\n  defaultalg(A::SciMLOperators.AbstractSciMLOperator, b::GPUArraysCore.AnyGPUArray, assump::OperatorAssumptions{Bool})\n```\n\nThe clean base QA run also reproduced all three defects:\n\n```sh\nGROUP=QA julia +release --project -e 'using Pkg; Pkg.test()'\n```\n\n```text\nQuality Assurance | 46 pass, 1 fail, 2 errors, 49 total\n```\n\nThe first bad commits were bisected to:\n\n- [`47cdfb2eb81757346bb06cd8a3053a9736d15291`](https://github.com/SciML/LinearSolve.jl/commit/47cdfb2eb81757346bb06cd8a3053a9736d15291): ambiguity and stale import\n- [`012c5e9e21a60111c9364e49356de8f603b2376e`](https://github.com/SciML/LinearSolv",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

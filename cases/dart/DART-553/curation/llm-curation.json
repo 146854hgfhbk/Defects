@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-553",
+  "technical_evidence_sha256": "b97c0ff23ba5720ca48241c561e5262dbbe86fdfdc6af70392c23a922d761366",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "a72b1ce1c1fc027fac8cfd72265aed402239ae4cbd5e74887da0bb0a3ee73586",
+  "reviewed_at": "2026-08-11T12:11:45.233554+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/source_span#1621",
+  "rationale": "Issue dart-lang/tools#1621 (migrated from dart-lang/source_span#32) reports a concrete pre-existing crash with a stack trace: 'RangeError: Invalid value: Not in range 0..1, inclusive: -1' at highlighter.dart:160 in Highlighter._lastLineLength, reached from _normalizeTrailingNewline (line 129) via SourceSpanMixin.highlight, for SourceFile.fromString(\"Hello\\n\\n\\n\").span(5,7). The minimized production patch modifies exactly those two methods in lib/src/highlighter.dart: hunk 1 short-circuits _normalizeTrailingNewline when span.text ends with \"\\n\\n\" (the wrongly-taken path named in the commit message), and hunk 2 guards _lastLineLength with 'text.length == 1 ? 0 : ...', eliminating the lastIndexOf call with a negative start index that returned -1. The ternary-to-if/else conversion is the mechanical carrier of that guard, not a separate refactor; CHANGELOG.md and the pubspec version bump present in the original commit are excluded from the minimized patch, and no test-only, config-only, or feature change remains. The reproduced trigger is the unchanged upstream regression test from the same fixing commit ('Regression test for #32'): SourceFile.fromString(\"foo\\n\\n\").span(3, 5).highlight(), a span covering a trailing newline plus one empty line, i.e. the same shape as the reported \"Hello\\n\\n\\n\".span(5,7) case, and it uses only APIs present at the buggy parent (SourceFile.fromString, span, highlight) with no new production API from the fix. Traceability is verified via fix_commit_to_merged_pr_to_issue through merged PR #33 to issue 1621, matching the single entry in allowed_root_cause_ids, and active_same_project_root_causes is empty so no duplicate exists. Runtime gates are machine-supplied and all green in both strict_original and strict_post_minimization: build.both_versions, trigger.buggy_differential with reproduced=[('test/highlight_test.dart','highlights the end of a line and an empty line')], trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green.\n\nIssue #1621 ('RangeError in Highlighter') supplies a stack trace naming the exact two frames the fix touches: Highlighter._lastLineLength at highlighter.dart:160 called from _normalizeTrailingNewline at :129, raising 'RangeError: Invalid value: Not in range 0..1, inclusive: -1'. The minimized production patch modifies only those two methods in lib/src/highlighter.dart: hunk 2 replaces the unguarded ternary with a text.length == 1 ? 0 : ... branch, eliminating the lastIndexOf call with a negative start index that produced the RangeError; hunk 1 short-circuits _normalizeTrailingNewline when span.text ends with '\\n\\n', the code path the commit message identifies as wrongly taken. The ternary-to-if/else rewrite is structurally required to host the new length guard, not a cosmetic refactor; CHANGELOG.md and the pubspec version bump present in the original commit are correctly excluded from the minimized patch, leaving no documentation-, configuration-, or test-only content in it. The trigger is the unmodified upstream test portion of the same fixing commit; the reproduced selector 'highlights the end of a line and an empty line' (explicitly labeled 'Regression test for #32') uses SourceFile.fromString(\"foo\\n\\n\").span(3, 5).highlight() — the same shape as the issue's SourceFile.fromString(\"Hello\\n\\n\\n\").span(5, 7) reproduction, a span covering a trailing newline plus one empty line — and depends only on SourceFile.fromString, span, and highlight, all present at the buggy parent 1a97871. Strict machine evidence (both original and post-minimization) passed every gate: build on both revisions, buggy differential isolating that single selector, fixed-clean isolated/suite/reversed runs, deterministic fingerprints over 3 repetitions across a 50-run matrix, and fixed full suite green. active_same_project_root_causes is empty, so this root cause duplicates no registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:11:18.456859+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a72b1ce1c1fc027fac8cfd72265aed402239ae4cbd5e74887da0bb0a3ee73586",
+      "response_sha256": "c32c07b38ab9792e40ffe5144e58195866667ff14583415d8a8a078a39bbdf17",
+      "response_id": "msg_1786450278262",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 10925,
+        "output_tokens": 1300,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/source_span#1621",
+      "rationale": "Issue dart-lang/tools#1621 (migrated from dart-lang/source_span#32) reports a concrete pre-existing crash with a stack trace: 'RangeError: Invalid value: Not in range 0..1, inclusive: -1' at highlighter.dart:160 in Highlighter._lastLineLength, reached from _normalizeTrailingNewline (line 129) via SourceSpanMixin.highlight, for SourceFile.fromString(\"Hello\\n\\n\\n\").span(5,7). The minimized production patch modifies exactly those two methods in lib/src/highlighter.dart: hunk 1 short-circuits _normalizeTrailingNewline when span.text ends with \"\\n\\n\" (the wrongly-taken path named in the commit message), and hunk 2 guards _lastLineLength with 'text.length == 1 ? 0 : ...', eliminating the lastIndexOf call with a negative start index that returned -1. The ternary-to-if/else conversion is the mechanical carrier of that guard, not a separate refactor; CHANGELOG.md and the pubspec version bump present in the original commit are excluded from the minimized patch, and no test-only, config-only, or feature change remains. The reproduced trigger is the unchanged upstream regression test from the same fixing commit ('Regression test for #32'): SourceFile.fromString(\"foo\\n\\n\").span(3, 5).highlight(), a span covering a trailing newline plus one empty line, i.e. the same shape as the reported \"Hello\\n\\n\\n\".span(5,7) case, and it uses only APIs present at the buggy parent (SourceFile.fromString, span, highlight) with no new production API from the fix. Traceability is verified via fix_commit_to_merged_pr_to_issue through merged PR #33 to issue 1621, matching the single entry in allowed_root_cause_ids, and active_same_project_root_causes is empty so no duplicate exists. Runtime gates are machine-supplied and all green in both strict_original and strict_post_minimization: build.both_versions, trigger.buggy_differential with reproduced=[('test/highlight_test.dart','highlights the end of a line and an empty line')], trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "lib/src/highlighter.dart",
+        "patches/trigger-tests.patch",
+        "test/highlight_test.dart",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.commit_stats",
+        "case.json:traceability.paths",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_reduction"
+      ],
+      "risks": [
+        "Three of the four declared trigger selectors ('on an empty line', 'highlights a single empty line', 'highlights multiple empty lines') do not reproduce on the buggy revision; only 'highlights the end of a line and an empty line' provides differential value, so the extra selectors are dead weight for the benchmark.",
+        "The added _normalizeTrailingNewline guard also changes rendering for some non-crashing spans ending in \"\\n\\n\"; the full-suite fixed-all-green result covers this, but the behavioral scope of the fix is slightly wider than the single crash.",
+        "Expected highlight strings contain semantically significant trailing whitespace inside raw multi-line literals; any reformatting of the trigger patch could silently alter expectations.",
+        "The reformatted return statement exceeds typical Dart line length and require_analyze_clean is false, so formatter/lint state on the fixed revision is unverified (diagnostic only, not behavioral)."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:11:45.233291+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a72b1ce1c1fc027fac8cfd72265aed402239ae4cbd5e74887da0bb0a3ee73586",
+      "response_sha256": "f39adb06b0e51fe9f29a7f054724a2a3d3c9cd735a08a23b219d9b558abb9605",
+      "response_id": "msg_1786450305037",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 11017,
+        "output_tokens": 1207,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/source_span#1621",
+      "rationale": "Issue #1621 ('RangeError in Highlighter') supplies a stack trace naming the exact two frames the fix touches: Highlighter._lastLineLength at highlighter.dart:160 called from _normalizeTrailingNewline at :129, raising 'RangeError: Invalid value: Not in range 0..1, inclusive: -1'. The minimized production patch modifies only those two methods in lib/src/highlighter.dart: hunk 2 replaces the unguarded ternary with a text.length == 1 ? 0 : ... branch, eliminating the lastIndexOf call with a negative start index that produced the RangeError; hunk 1 short-circuits _normalizeTrailingNewline when span.text ends with '\\n\\n', the code path the commit message identifies as wrongly taken. The ternary-to-if/else rewrite is structurally required to host the new length guard, not a cosmetic refactor; CHANGELOG.md and the pubspec version bump present in the original commit are correctly excluded from the minimized patch, leaving no documentation-, configuration-, or test-only content in it. The trigger is the unmodified upstream test portion of the same fixing commit; the reproduced selector 'highlights the end of a line and an empty line' (explicitly labeled 'Regression test for #32') uses SourceFile.fromString(\"foo\\n\\n\").span(3, 5).highlight() — the same shape as the issue's SourceFile.fromString(\"Hello\\n\\n\\n\").span(5, 7) reproduction, a span covering a trailing newline plus one empty line — and depends only on SourceFile.fromString, span, and highlight, all present at the buggy parent 1a97871. Strict machine evidence (both original and post-minimization) passed every gate: build on both revisions, buggy differential isolating that single selector, fixed-clean isolated/suite/reversed runs, deterministic fingerprints over 3 repetitions across a 50-run matrix, and fixed full suite green. active_same_project_root_causes is empty, so this root cause duplicates no registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:traceability.paths[0]",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_reduction.upstream_trigger_patch"
+      ],
+      "risks": [
+        "The screening-stage source_candidate.issue_check.status is 'rejected' for lacking a verified fix-commit-to-issue chain, which conflicts with case-level traceability.paths reporting a verified fix_commit_to_merged_pr_to_issue path for #1621; acceptance here rests on the substantive stack-trace-to-patched-line match rather than either status label.",
+        "allowed_root_cause_ids uses the key dart-archive/source_span#1621 while the issue actually lives at dart-lang/tools#1621 after repository migration; the identifier is a registry alias, not a resolvable URL.",
+        "Three of the four declared trigger selectors do not reproduce the defect on the buggy revision and serve only as adjacent empty-line output assertions; only the '#32' selector is the differential trigger.",
+        "Expected highlight strings contain semantically significant trailing whitespace inside multi-line string literals, so any reformatting of the trigger patch could silently alter expectations.",
+        "The reformatted return statement exceeds conventional line length; a formatter-enforced CI step could flag style, though require_analyze_clean is false and the analyzer is treated as diagnostic only."
+      ]
+    }
+  ]
+}

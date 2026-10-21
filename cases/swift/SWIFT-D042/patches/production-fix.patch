@@ -1,0 +1,26 @@
+diff --git a/Sources/ParsingHelpers.swift b/Sources/ParsingHelpers.swift
+index 8b37d14abbe5592c03ad0cc38cbfd1d9f0ce0ed4..ccadb3e55ebb9eac4a2347bfb458e8d9c9182afd 100644
+--- a/Sources/ParsingHelpers.swift
++++ b/Sources/ParsingHelpers.swift
+@@ -1860,8 +1860,19 @@ extension Formatter {
+                 return (argumentNames: [], inKeywordIndex: inKeywordIndex)
+             }
+ 
+-            let argumentTokens = tokens[firstTokenInArgumentsList ... endOfArgumentsScopeIndex].split(separator: .delimiter(","))
+-            argumentNames = argumentTokens.compactMap { $0.first(where: \.isIdentifier)?.string ?? $0[0].string }
++            // Parse the comma-separated list of arguments
++            var currentArgIndex = firstTokenInArgumentsList
++            while tokens[currentArgIndex].isIdentifierOrKeyword {
++                argumentNames.append(tokens[currentArgIndex].string)
++
++                guard let nextComma = index(of: .delimiter(","), in: currentArgIndex ..< endOfArgumentsScopeIndex),
++                      let nextArgLabel = index(of: .identifierOrKeyword, in: nextComma ..< endOfArgumentsScopeIndex)
++                else {
++                    break
++                }
++
++                currentArgIndex = nextArgLabel
++            }
+         }
+ 
+         // Otherwise this is an anonymous closure

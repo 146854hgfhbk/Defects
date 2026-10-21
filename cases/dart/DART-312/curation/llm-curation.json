@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-312",
+  "technical_evidence_sha256": "bed75aa43d95cbd352ae85f863136501b437874a8b6472b0e9315aa8d0477892",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "6fe06083de7152177bb2111fabe4456746065ee9c8b64c33e5b896ceba703e86",
+  "reviewed_at": "2026-08-12T15:19:07.466452+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1321",
+  "rationale": "Issue #1321 (labeled bug) reports that formatting `B.sub1(int super.bar1<T1>(int a1),)` emits `int super.bar1(int a1)`, silently dropping the type parameter list. The minimized production patch is exactly two one-line additions of `visit(node.typeParameters);` in lib/src/short/source_visitor.dart, one in the `this.`-parameter branch (after node.name, before node.parameters) and one in the `super.`-parameter branch, which is precisely the omission that would drop `<T1>` from the output. Nothing else is touched: no formatting churn, no renames, no config, no new API, and the CHANGELOG-only second commit of PR #1520 was correctly excluded. The trigger is the upstream fixture test/short/regression/1300/1321.unit from the same fix commit; its input is the verbatim reproducer from the issue and it exercises only the existing formatter entry point via the pre-existing .unit fixture harness (test/short_format_test.dart), so it depends on no API introduced by the fix. Strict evidence confirms both revisions build, the short fixture selector fails alone on the buggy revision and passes on the fixed revision across 3 repetitions with deterministic fingerprints (3 groups), the fixed full suite is green, and buggy full-suite failures contain only the reproduced trigger. The active same-project root-cause registry is empty, so #1321 is not a duplicate, and it matches the single allowed root_cause_id.\n\nIssue #1321 (labeled bug, closed by PR #1520) reports that formatting `B.sub1(int super.bar1<T1>(int a1),)` drops `<T1>`, i.e. the short-style formatter silently loses type parameters on function-typed `this.`/`super.` formal parameters. The minimized production patch is exactly two one-line additions of `visit(node.typeParameters);` in lib/src/short/source_visitor.dart, inserted after `token(node.name)` in the FieldFormalParameter (`this.`) and SuperFormalParameter (`super.`) branches, which directly emits the previously skipped AST child. No refactor, formatting, feature, doc, or config change is present, and the production patch equals the original commit minus the two regression fixtures. The trigger is the upstream fixture pair added in the same fix commit (later_trigger_commit 8c0e44e0), whose short-style input/expected output is character-for-character the reproducer from the issue body; it consumes `node.typeParameters`, an analyzer AST property that already exists at the buggy revision, so it depends on no API introduced by the fix. Strict evidence for both original and post-minimization runs passes every gate: build on both revisions, deterministic 3-repetition matrix (38 runs, 3 fingerprint groups), buggy differential reproducing test/short_format_test.dart::short/regression/1300/1321.unit in isolation, fixed clean on isolated/suite/reversed runs, and fixed full suite all green with buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty and dart-lang/dart_style#1321 is the sole allowed and verified fix issue key, so this root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T15:18:46.710375+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "6fe06083de7152177bb2111fabe4456746065ee9c8b64c33e5b896ceba703e86",
+      "response_sha256": "f4b57638fd9ba48d93d412455ee9127ee76f1f46c83656017d34621ae9f15211",
+      "response_id": "msg_1786547926526",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 12045,
+        "output_tokens": 871,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1321",
+      "rationale": "Issue #1321 (labeled bug) reports that formatting `B.sub1(int super.bar1<T1>(int a1),)` emits `int super.bar1(int a1)`, silently dropping the type parameter list. The minimized production patch is exactly two one-line additions of `visit(node.typeParameters);` in lib/src/short/source_visitor.dart, one in the `this.`-parameter branch (after node.name, before node.parameters) and one in the `super.`-parameter branch, which is precisely the omission that would drop `<T1>` from the output. Nothing else is touched: no formatting churn, no renames, no config, no new API, and the CHANGELOG-only second commit of PR #1520 was correctly excluded. The trigger is the upstream fixture test/short/regression/1300/1321.unit from the same fix commit; its input is the verbatim reproducer from the issue and it exercises only the existing formatter entry point via the pre-existing .unit fixture harness (test/short_format_test.dart), so it depends on no API introduced by the fix. Strict evidence confirms both revisions build, the short fixture selector fails alone on the buggy revision and passes on the fixed revision across 3 repetitions with deterministic fingerprints (3 groups), the fixed full suite is green, and buggy full-suite failures contain only the reproduced trigger. The active same-project root-cause registry is empty, so #1321 is not a duplicate, and it matches the single allowed root_cause_id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/short/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/short/regression/1300/1321.unit",
+        "case.json:issue_urls",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.fixed_all_green",
+        "case.json:traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The tall-style selector (tall/regression/1300/1321.unit) is a non-reproducing control: it passes on the buggy revision, as the commit message states tall style was already correct. Only the short-style selector carries the defect signal, so the case reduces to a single effective trigger.",
+        "Formatter fixture expectations are whitespace-exact, so the trigger asserts full expected output rather than only the presence of the lost type parameters; unrelated formatting drift in the short style would surface as trigger noise instead of a clean single-defect failure.",
+        "The fix targets the legacy short style (lib/src/short), which upstream later deprecated; the defect path may not exist in newer dart_style revisions, limiting the case to this revision range."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T15:19:07.466175+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "6fe06083de7152177bb2111fabe4456746065ee9c8b64c33e5b896ceba703e86",
+      "response_sha256": "c879a968d427143325b20c390bb95a9bd9fd6afe5886f30d132f8343b5518170",
+      "response_id": "msg_1786547947281",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 11250,
+        "output_tokens": 957,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1321",
+      "rationale": "Issue #1321 (labeled bug, closed by PR #1520) reports that formatting `B.sub1(int super.bar1<T1>(int a1),)` drops `<T1>`, i.e. the short-style formatter silently loses type parameters on function-typed `this.`/`super.` formal parameters. The minimized production patch is exactly two one-line additions of `visit(node.typeParameters);` in lib/src/short/source_visitor.dart, inserted after `token(node.name)` in the FieldFormalParameter (`this.`) and SuperFormalParameter (`super.`) branches, which directly emits the previously skipped AST child. No refactor, formatting, feature, doc, or config change is present, and the production patch equals the original commit minus the two regression fixtures. The trigger is the upstream fixture pair added in the same fix commit (later_trigger_commit 8c0e44e0), whose short-style input/expected output is character-for-character the reproducer from the issue body; it consumes `node.typeParameters`, an analyzer AST property that already exists at the buggy revision, so it depends on no API introduced by the fix. Strict evidence for both original and post-minimization runs passes every gate: build on both revisions, deterministic 3-repetition matrix (38 runs, 3 fingerprint groups), buggy differential reproducing test/short_format_test.dart::short/regression/1300/1321.unit in isolation, fixed clean on isolated/suite/reversed runs, and fixed full suite all green with buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty and dart-lang/dart_style#1321 is the sole allowed and verified fix issue key, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "case.json issue_urls[0]",
+        "case.json source_candidate.candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/short/source_visitor.dart",
+        "test/short/regression/1300/1321.unit",
+        "case.json strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json trigger_tests"
+      ],
+      "risks": [
+        "Only the short-style selector reproduces the defect; test/tall_format_test.dart::tall/regression/1300/1321.unit passes on the buggy revision (consistent with the commit message that tall style was already correct) and therefore contributes no differential signal.",
+        "The fixture-based trigger is whitespace-sensitive and both .unit files lack a trailing newline, so unrelated formatter output drift in future revisions could break the trigger for reasons other than this defect.",
+        "The trigger originates from the fix commit itself rather than an independent later commit, so its expected output encodes the maintainer's chosen formatting as well as the semantic fix."
+      ]
+    }
+  ]
+}

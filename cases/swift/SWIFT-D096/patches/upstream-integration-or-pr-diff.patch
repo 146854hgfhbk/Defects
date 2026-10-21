@@ -1,0 +1,34 @@
+diff --git a/Sources/SwiftBasicFormat/BasicFormat.swift b/Sources/SwiftBasicFormat/BasicFormat.swift
+index bf732490..692a4916 100644
+--- a/Sources/SwiftBasicFormat/BasicFormat.swift
++++ b/Sources/SwiftBasicFormat/BasicFormat.swift
+@@ -206,6 +206,7 @@ open class BasicFormat: SyntaxRewriter {
+       (.identifier, .leftSquare),  // myArray[1]
+       (.identifier, .period),  // a.b
+       (.integerLiteral, .period),  // macOS 11.2.1
++      (.keyword(.Any), .period),  // Any.Type
+       (.keyword(.`init`), .leftAngle),  // init<T>()
+       (.keyword(.`init`), .leftParen),  // init()
+       (.keyword(.self), .period),  // self.someProperty
+diff --git a/Tests/SwiftSyntaxBuilderTest/VariableTests.swift b/Tests/SwiftSyntaxBuilderTest/VariableTests.swift
+index d35a99f1..948045c7 100644
+--- a/Tests/SwiftSyntaxBuilderTest/VariableTests.swift
++++ b/Tests/SwiftSyntaxBuilderTest/VariableTests.swift
+@@ -371,4 +371,17 @@ final class VariableTests: XCTestCase {
+       assertBuildResult(builder, expected, line: line)
+     }
+   }
++
++  // https://github.com/apple/swift-syntax/issues/1815
++  func testSpacingInDictionaryType() throws {
++    let buildable = try VariableDeclSyntax("static var mirror: Dictionary<String, Any.Type>") {}
++
++    assertBuildResult(
++      buildable,
++      """
++      static var mirror: Dictionary<String, Any.Type> {
++      }
++      """
++    )
++  }
+ }

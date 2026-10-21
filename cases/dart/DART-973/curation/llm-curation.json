@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-973",
+  "technical_evidence_sha256": "1d094e22416a4d65e253fba322ff247e7df21cc9913ebeaaf3a6dce7b93cc02d",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "7f188e495022b8d8c444c264781e10841090697ee54829abe82c6311a6f97b2d",
+  "reviewed_at": "2026-08-14T06:23:06.592371+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1215",
+  "rationale": "Issue #1215 reports that a line comment before a switch expression case with a `when` guard forces an unnecessary split, showing the exact output `1\\n    when flag =>\\n  b,` versus the desired `1 when flag => b,`. The minimized production patch is a single call-site change in the `whenClause != null` branch of lib/src/source_visitor.dart (`builder.startRule()` -> `builder.startLazyRule()`), which is precisely the hard-rule-versus-lazy-rule behavior that made the preceding comment's forced newline propagate into the guard rule. The upstream fixture test/regression/1200/1215.stmt reproduces the issue body verbatim (input with split guard, expected single-line output), and test/comments/switch.stmt adds the equivalent named case 'line comment before case with guard does not force split'; both are project-native formatter fixtures executed through the pre-existing test/formatter_test.dart harness and depend on no API introduced by the fix (startLazyRule is an existing ChunkBuilder method; the patch only changes which one is called). The minimized patch drops the CHANGELOG.md entry and pubspec.yaml 2.3.1 -> 2.3.2-dev bump present in the original commit, leaving one behavioral hunk in one production file with no refactor, formatting, feature, doc, or config change. Machine-generated strict evidence passes on both the original and post-minimization runs: selectors present and unique (2), buggy differential reproduces both declared selectors, fixed isolated/suite/reversed runs clean, buggy full suite fails only on the reproduced triggers, fixed full suite green, deterministic across 3 repetitions with 38 matrix runs and no failed checks. active_same_same_project registry entries are empty and the root cause matches the sole allowed verified issue key dart-lang/dart_style#1215, so this is not a duplicate.\n\nIssue #1215 reports that a line comment before a switch-expression case with a guard forces an unnecessary split, showing `1\\n      when flag =>\\n    b,` instead of `1 when flag => b,`. The minimized production patch changes exactly one line in the `whenClause != null` branch of lib/src/source_visitor.dart, `builder.startRule()` -> `builder.startLazyRule()`, so the hard split introduced by the preceding comment no longer propagates into the when-clause rule. The trigger fixtures are the unchanged upstream test data from the same fixing commit: test/regression/1200/1215.stmt reproduces the issue body verbatim (buggy split as input, single-line guard as expected output) and test/comments/switch.stmt adds the equivalent named case 'line comment before case with guard does not force split'. Both run through the pre-existing fixture harness test/formatter_test.dart and exercise only the public formatter, not any API introduced by the fix (startLazyRule already existed on ChunkBuilder; the fix selects it). The minimized patch drops the commit's CHANGELOG.md and pubspec.yaml version bump, leaving no refactor, feature, docs, config, or test change in the production diff. Strict machine evidence passes for both the original and post-minimization matrices: build.both_versions, selectors.present_and_unique (2/2), trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean, trigger.deterministic (4/4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, with 3 repetitions across 38 runs and no failed checks. active_same_project_root_causes is empty and dart-lang/dart_style#1215 is the sole allowed and verified issue key, so this root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:22:43.680949+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "7f188e495022b8d8c444c264781e10841090697ee54829abe82c6311a6f97b2d",
+      "response_sha256": "023b20813f30b789f11db3a815db186a7abce1589280b2c0a1aa94c989f83708",
+      "response_id": "msg_7f731ec88b1c418d893597a534897ea2",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5225447391708127,
+        "input_tokens": 12515,
+        "output_tokens": 746
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1215",
+      "rationale": "Issue #1215 reports that a line comment before a switch expression case with a `when` guard forces an unnecessary split, showing the exact output `1\\n    when flag =>\\n  b,` versus the desired `1 when flag => b,`. The minimized production patch is a single call-site change in the `whenClause != null` branch of lib/src/source_visitor.dart (`builder.startRule()` -> `builder.startLazyRule()`), which is precisely the hard-rule-versus-lazy-rule behavior that made the preceding comment's forced newline propagate into the guard rule. The upstream fixture test/regression/1200/1215.stmt reproduces the issue body verbatim (input with split guard, expected single-line output), and test/comments/switch.stmt adds the equivalent named case 'line comment before case with guard does not force split'; both are project-native formatter fixtures executed through the pre-existing test/formatter_test.dart harness and depend on no API introduced by the fix (startLazyRule is an existing ChunkBuilder method; the patch only changes which one is called). The minimized patch drops the CHANGELOG.md entry and pubspec.yaml 2.3.1 -> 2.3.2-dev bump present in the original commit, leaving one behavioral hunk in one production file with no refactor, formatting, feature, doc, or config change. Machine-generated strict evidence passes on both the original and post-minimization runs: selectors present and unique (2), buggy differential reproduces both declared selectors, fixed isolated/suite/reversed runs clean, buggy full suite fails only on the reproduced triggers, fixed full suite green, deterministic across 3 repetitions with 38 matrix runs and no failed checks. active_same_same_project registry entries are empty and the root cause matches the sole allowed verified issue key dart-lang/dart_style#1215, so this is not a duplicate.",
+      "evidence_paths": [
+        "case.json:issue_urls",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/source_visitor.dart",
+        "test/regression/1200/1215.stmt",
+        "test/comments/switch.stmt",
+        "case.json:strict_post_minimization.checks",
+        "case.json:strict_original.checks",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The defect is formatter output shape only; correctness rests on golden-fixture string comparison, so unrelated future formatting policy changes could invalidate the expected output rather than indicating a regression.",
+        "test/comments/switch.stmt carries a curator-visible descriptive test label from the fix commit; the label text is untrusted data and only the fixture input/expected pair was treated as evidence.",
+        "The minimized patch excludes the CHANGELOG and version bump, so the buggy-versus-fixed revisions differ from the released 2.3.2-dev artifact in metadata only.",
+        "Semantic defect confirmation upstream came from an LLM screening step because issue #1215 carries no defect label; the acceptance here rests on the issue body's concrete reproduction, not on that status label."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:23:06.591999+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "7f188e495022b8d8c444c264781e10841090697ee54829abe82c6311a6f97b2d",
+      "response_sha256": "fcba148d2c3fb6ff22407d06a21b17a56d725893d2d6b6001b063ca2968b6613",
+      "response_id": "msg_036b09ac5d364cf39869eab3a3d252cd",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4173670807960199,
+        "input_tokens": 12314,
+        "output_tokens": 669
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1215",
+      "rationale": "Issue #1215 reports that a line comment before a switch-expression case with a guard forces an unnecessary split, showing `1\\n      when flag =>\\n    b,` instead of `1 when flag => b,`. The minimized production patch changes exactly one line in the `whenClause != null` branch of lib/src/source_visitor.dart, `builder.startRule()` -> `builder.startLazyRule()`, so the hard split introduced by the preceding comment no longer propagates into the when-clause rule. The trigger fixtures are the unchanged upstream test data from the same fixing commit: test/regression/1200/1215.stmt reproduces the issue body verbatim (buggy split as input, single-line guard as expected output) and test/comments/switch.stmt adds the equivalent named case 'line comment before case with guard does not force split'. Both run through the pre-existing fixture harness test/formatter_test.dart and exercise only the public formatter, not any API introduced by the fix (startLazyRule already existed on ChunkBuilder; the fix selects it). The minimized patch drops the commit's CHANGELOG.md and pubspec.yaml version bump, leaving no refactor, feature, docs, config, or test change in the production diff. Strict machine evidence passes for both the original and post-minimization matrices: build.both_versions, selectors.present_and_unique (2/2), trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean, trigger.deterministic (4/4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, with 3 repetitions across 38 runs and no failed checks. active_same_project_root_causes is empty and dart-lang/dart_style#1215 is the sole allowed and verified issue key, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/1200/1215.stmt",
+        "test/comments/switch.stmt",
+        "trigger_tests",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "Both triggers are golden-output fixtures asserting exact formatting, so unrelated future changes to line-splitting heuristics could shift expected output and make the case brittle.",
+        "The selector 'comments switch.stmt' covers the whole fixture file, not just the new case; isolation of the defect rests on the differential gate rather than a single-assertion test.",
+        "Semantic defect classification for issue #1215 came from the upstream screening LLM (the issue carries no defect label), though the issue body itself documents the incorrect output directly."
+      ]
+    }
+  ]
+}

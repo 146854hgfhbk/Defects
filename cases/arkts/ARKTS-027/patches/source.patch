@@ -1,0 +1,300 @@
+diff --git a/code/BasicFeature/Connectivity/RPC/entry/src/main/ets/common/FlexList.ets b/code/BasicFeature/Connectivity/RPC/entry/src/main/ets/common/FlexList.ets
+index bb2121e435..86e1e57433 100644
+--- a/code/BasicFeature/Connectivity/RPC/entry/src/main/ets/common/FlexList.ets
++++ b/code/BasicFeature/Connectivity/RPC/entry/src/main/ets/common/FlexList.ets
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
++ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+@@ -13,99 +13,96 @@
+  * limitations under the License.
+  */
+ 
+-import { CustomDialogList } from '../common/CustomDialogList'
+-import { Logger } from '../common/Logger'
++import { CustomDialogList } from '../common/CustomDialogList';
++import { Logger } from '../common/Logger';
+ 
+-let TAG = '[eTSRPC.FlexList]'
++let TAG = '[eTSRPC.FlexList]';
+ 
+ @Component
+ export struct FlexList {
+-  private index: number = 0
+-  private menu: Array<string> = []
+-  private category: string = ''
+-  private selectStuff: (index: number, good: string, count: number) => void
+-  @State @Watch('amountChange') select: string = ''
+-  @State @Watch('amountChange') amount: number = 0
++  private index: number = 0;
++  private menu: Array<string> = [];
++  private category: string = '';
++  private selectStuff: (index: number, good: string, count: number) => void;
++  @State @Watch('amountChange') select: string = '';
++  @State @Watch('amountChange') amount: number = 0;
+   dialogController: CustomDialogController = new CustomDialogController({
+     builder: CustomDialogList({
+       menu: this.menu,
+       action: this.action.bind(this)
+     }),
+     autoCancel: true
+-  })
++  });
+ 
+   amountChange() {
+     if (this.select != undefined) {
+-      this.selectStuff(this.index, this.select, this.amount)
++      this.selectStuff(this.index, this.select, this.amount);
+     }
+   }
+ 
+   action(value) {
+-    this.select = value
++    this.select = value;
+   }
+ 
+   build() {
+-    Column() {
++    Row() {
++      Text(this.category)
++        .layoutWeight(1)
++        .height(50)
++        .padding(10)
++        .fontSize(24)
++        .textAlign(TextAlign.Center)
++        .textOverflow({ overflow: TextOverflow.None })
++
++      Text(this.select)
++        .layoutWeight(1)
++        .height(50)
++        .padding(12)
++        .fontSize(20)
++        .textAlign(TextAlign.Center)
++        .border({ width: 2, color: Color.Black })
++        .textOverflow({ overflow: TextOverflow.None })
++        .onClick(() => {
++          this.dialogController.open();
++        })
++
+       Row() {
+-        Text(this.category)
+-          .layoutWeight(1)
++        Button('-', { type: ButtonType.Normal })
++          .width(50)
+           .height(50)
+-          .padding(10)
+-          .fontSize(24)
+-          .textAlign(TextAlign.Center)
+-          .textOverflow({ overflow: TextOverflow.None })
++          .fontSize(16)
++          .fontColor(Color.Black)
++          .backgroundColor($r('app.color.button_bg'))
++          .onClick(() => {
++            if (this.amount > 0) {
++              this.amount--;
++              Logger.info(TAG, `amount is ${this.amount}`);
++            }
++          })
+ 
+-        Text(this.select)
+-          .layoutWeight(1)
++        Text(this.amount.toString())
++          .id('amount')
++          .width(50)
+           .height(50)
+-          .padding(12)
+-          .fontSize(20)
++          .fontSize(16)
++          .backgroundColor($r('app.color.button_bg'))
+           .textAlign(TextAlign.Center)
+-          .border({ width: 2, color: Color.Black })
+-          .textOverflow({ overflow: TextOverflow.None })
++          .border({ width: 1, color: $r('app.color.text_color') })
++
++        Button('+', { type: ButtonType.Normal })
++          .width(50)
++          .height(50)
++          .fontSize(16)
++          .fontColor(Color.Black)
++          .backgroundColor($r('app.color.button_bg'))
+           .onClick(() => {
+-            this.dialogController.open()
++            this.amount++;
++            Logger.info(TAG, `amount is ${this.amount}`);
+           })
+-
+-        Row() {
+-          Button('-', { type: ButtonType.Normal })
+-            .width(50)
+-            .height(50)
+-            .fontSize(16)
+-            .fontColor(Color.Black)
+-            .backgroundColor($r('app.color.button_bg'))
+-            .onClick(() => {
+-              if (this.amount > 0) {
+-                this.amount--
+-                Logger.info(TAG, `amount is ${this.amount}`)
+-              }
+-            })
+-
+-          Text(this.amount.toString())
+-            .id('amount')
+-            .width(50)
+-            .height(50)
+-            .fontSize(16)
+-            .backgroundColor($r('app.color.button_bg'))
+-            .textAlign(TextAlign.Center)
+-            .border({ width: 1, color: $r('app.color.text_color') })
+-
+-          Button('+', { type: ButtonType.Normal })
+-            .width(50)
+-            .height(50)
+-            .fontSize(16)
+-            .fontColor(Color.Black)
+-            .backgroundColor($r('app.color.button_bg'))
+-            .onClick(() => {
+-              this.amount++
+-              Logger.info(TAG, `amount is ${this.amount}`)
+-            })
+-        }
+       }
+-      .justifyContent(FlexAlign.SpaceAround)
+-      .margin({ top: 30, right: 30 })
+-      .width('100%')
+-      .height(50)
+     }
++    .justifyContent(FlexAlign.SpaceAround)
++    .width('100%')
++    .height(50)
+   }
+ }
+\ No newline at end of file
+diff --git a/code/BasicFeature/Connectivity/RPC/entry/src/main/ets/pages/Index.ets b/code/BasicFeature/Connectivity/RPC/entry/src/main/ets/pages/Index.ets
+index a6dd3bd590..cb240cb90b 100644
+--- a/code/BasicFeature/Connectivity/RPC/entry/src/main/ets/pages/Index.ets
++++ b/code/BasicFeature/Connectivity/RPC/entry/src/main/ets/pages/Index.ets
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2021-2023 Huawei Device Co., Ltd.
++ * Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+@@ -13,49 +13,49 @@
+  * limitations under the License.
+  */
+ 
+-import rpc from '@ohos.rpc'
+-import ReceivedData from '../model/ReceivedData'
+-import { ProcessData } from '../model/ProcessData'
+-import { Logger } from '../common/Logger'
+-import { MyDataSource } from '../model/OptionsData'
+-import { OPTIONS } from '../muck/MyData'
+-import { TitleBar } from '../common/TitleBar'
+-import { FlexList } from '../common/FlexList'
++import rpc from '@ohos.rpc';
++import ReceivedData from '../model/ReceivedData';
++import { ProcessData } from '../model/ProcessData';
++import { Logger } from '../common/Logger';
++import { MyDataSource } from '../model/OptionsData';
++import { OPTIONS } from '../muck/MyData';
++import { TitleBar } from '../common/TitleBar';
++import { FlexList } from '../common/FlexList';
+ 
+-const REQUEST_CODE: number = 1
++const REQUEST_CODE: number = 1;
+ type SelectType = {
+   subcategory: string,
+   count: number
+-}
++};
+ 
+ @Entry
+ @Component
+ struct Index {
+-  @State send: string = ''
+-  @State result: number = 0
+-  private Process: ProcessData = new ProcessData()
+-  private selectStuffs: Array<SelectType> = new Array(4).fill({ subcategory: '', count: 0 })
++  @State send: string = '';
++  @State result: number = 0;
++  private Process: ProcessData = new ProcessData();
++  private selectStuffs: Array<SelectType> = new Array(4).fill({ subcategory: '', count: 0 });
+ 
+   selectStuff(index: number, good: string, count: number) {
+-    Logger.info(`index=  ${index}, count= ${count}, good= ${good}`)
+-    this.selectStuffs[index] = { subcategory: good, count: count }
++    Logger.info(`index=  ${index}, count= ${count}, good= ${good}`);
++    this.selectStuffs[index] = { subcategory: good, count: count };
+   }
+ 
+   async sortString(sendData: Array<string>) {
+-    Logger.info(`sortString is ${sendData}`)
+-    Logger.info(`sendData typeof ${typeof (sendData)}`)
+-    let option: rpc.MessageOption = new rpc.MessageOption()
+-    let data: rpc.MessageSequence = rpc.MessageSequence.create()
+-    let reply: rpc.MessageSequence = rpc.MessageSequence.create()
+-    Logger.info(`getCallingUid: ${ReceivedData.getCallingUid()}  getCallingPid: ${ReceivedData.getCallingPid()}`)
+-    data.writeStringArray(sendData)
++    Logger.info(`sortString is ${sendData}`);
++    Logger.info(`sendData typeof ${typeof (sendData)}`);
++    let option: rpc.MessageOption = new rpc.MessageOption();
++    let data: rpc.MessageSequence = rpc.MessageSequence.create();
++    let reply: rpc.MessageSequence = rpc.MessageSequence.create();
++    Logger.info(`getCallingUid: ${ReceivedData.getCallingUid()}  getCallingPid: ${ReceivedData.getCallingPid()}`);
++    data.writeStringArray(sendData);
+     try {
+-      await ReceivedData.sendMessageRequest(REQUEST_CODE, data, reply, option)
++      await ReceivedData.sendMessageRequest(REQUEST_CODE, data, reply, option);
+     } catch (err) {
+-      Logger.error(`sortString failed, ${JSON.stringify(err)}`)
++      Logger.error(`sortString failed, ${JSON.stringify(err)}`);
+     }
+-    this.result = reply.readInt()
+-    reply.reclaim()
++    this.result = reply.readInt();
++    reply.reclaim();
+   }
+ 
+   build() {
+@@ -71,6 +71,7 @@ struct Index {
+               selectStuff: this.selectStuff.bind(this)
+             })
+           }
++          .margin({ top: 30, right: 30 })
+         }, item => JSON.stringify(item))
+ 
+         Column() {
+@@ -79,14 +80,14 @@ struct Index {
+               .width('65%')
+               .height(25)
+               .fontSize(18)
+-              .textAlign(TextAlign.Center)
++              .textAlign(TextAlign.Start)
+ 
+             Text(this.result.toString())
+               .id('totalPrice')
+               .height(25)
+               .fontSize(20)
+               .margin({ left: '5%' })
+-              .textAlign(TextAlign.Center)
++              .textAlign(TextAlign.Start)
+           }
+           .justifyContent(FlexAlign.Center)
+           .width('80%')
+@@ -97,9 +98,9 @@ struct Index {
+             .height(40)
+             .margin({ top: 30 })
+             .onClick(() => {
+-              let priceArray = this.Process.getPrice(this.selectStuffs)
+-              Logger.info(`priceArray= ${priceArray}`)
+-              this.sortString(priceArray)
++              let priceArray = this.Process.getPrice(this.selectStuffs);
++              Logger.info(`priceArray= ${priceArray}`);
++              this.sortString(priceArray);
+             })
+         }
+         .width('100%')

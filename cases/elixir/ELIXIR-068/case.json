@@ -1,0 +1,213 @@
+{
+  "schema_version": 2,
+  "case_id": "ELIXIR-068",
+  "id": "ELIXIR-068",
+  "bug_id": "ELIXIR-068",
+  "language": "Elixir",
+  "project": "tv-labs/lua",
+  "repo": "tv-labs/lua",
+  "buggy_revision": "257d10007734cf788afcf49db36f1499e463679d",
+  "fixed_revision": "598e0ae3d4dd2ee386354a05a1aef921c02c3da0",
+  "fixed_revision_kind": "upstream_pr_merge_commit",
+  "fixed_revision_parents": null,
+  "revision_mode": "base_plus_gold_patch",
+  "upstream_id": "tv-labs__lua-65",
+  "patch": {
+    "path": "patches/minimized-source.patch",
+    "upstream_path": "patches/upstream.patch",
+    "sha256": "1518a5f5f4e67f17a035d1c4f265f8a281c183927ad06582859b92bf2b5c110b",
+    "upstream_sha256": "b2d1b7c1d0717e8e8839fe00e292af27993b7de6c99b6a645039dc9a74f86dfe",
+    "changed_source_files": [
+      "lib/lua.ex"
+    ]
+  },
+  "patch_sha256": "1518a5f5f4e67f17a035d1c4f265f8a281c183927ad06582859b92bf2b5c110b",
+  "trigger_test_patch": "patches/trigger-tests.patch",
+  "trigger_test_patch_sha256": "d5fa0b3ddc5d9ff0d433db1ce1c389065e511176c3f704746f8f131ad4b96c39",
+  "trigger_tests": [
+    "it can contain unicode",
+    "sigil lua can contain unicode",
+    "chunks can contain unicode",
+    "a chunk can be loaded with unicode"
+  ],
+  "triggering_tests": [
+    "it can contain unicode",
+    "sigil lua can contain unicode",
+    "chunks can contain unicode",
+    "a chunk can be loaded with unicode"
+  ],
+  "expected_failure": {
+    "test_count": 4,
+    "tests": [
+      "it can contain unicode",
+      "sigil lua can contain unicode",
+      "chunks can contain unicode",
+      "a chunk can be loaded with unicode"
+    ],
+    "exception_types": [],
+    "fingerprints": [],
+    "source": "SWE-rebench-V2 FAIL_TO_PASS"
+  },
+  "trigger_test_filters": {},
+  "validation": {
+    "status": "PASS",
+    "report": "validation/phase-d.json",
+    "report_sha256": "2c9b3ba9f05cdbc09cf03d12bcbe8bfd1140e413fe9a92d307501cc759addfce",
+    "protocol": "v5-f2p",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "result": "PASS"
+  },
+  "environment_lock": "environment.lock.json",
+  "environment": {
+    "backend": "swe_rebench_v2_docker",
+    "image": "docker.io/swerebenchv2/tv-labs-lua:65-257d100"
+  },
+  "commands": {
+    "test": "mix test --trace"
+  },
+  "minimization": {
+    "status": "HUMAN_REVIEWED_MINIMIZED_V1",
+    "policy": "execution-verified hunk removal; suite-repair post-pass",
+    "removed_hunks": 0,
+    "trials": 6,
+    "report": "patches/minimization.json",
+    "llm_review": "llm-hunk-review.json",
+    "review_status": "human_minimization_signoff_completed",
+    "reviewer_type": "human_dataset_curator",
+    "human_signoff": "completed",
+    "dynamic_revalidation": true,
+    "human_signoff_date": "2026-09-12",
+    "human_signoff_scope": "patch_minimization_only"
+  },
+  "artifacts": {
+    "curation_decision": "curation-decision.json",
+    "llm_hunk_review": "llm-hunk-review.json",
+    "llm_semantic_review": "llm-semantic-review.json",
+    "minimization_decisions": "minimization-decisions.json",
+    "manual_minimization_confirmation": "manual-minimization-confirmation.json",
+    "minimization_report": "patches/minimization.json"
+  },
+  "provenance": {
+    "source_dataset": "SWE-rebench-V2",
+    "source_dataset_id": "nebius/SWE-rebench-V2",
+    "source_revision": "475dd5e",
+    "instance_id": "tv-labs__lua-65",
+    "pr_url": "https://github.com/tv-labs/lua/pull/65",
+    "replacement": {
+      "replaces_case": "ELIXIR-068",
+      "replaced_repo": "phoenixframework/phoenix_html",
+      "replaced_reason": "QUARANTINED",
+      "candidate_work_id": "PR-056"
+    },
+    "issue_id": 63,
+    "issue_url": "https://github.com/tv-labs/lua/issues/63",
+    "issue_relation": "PR_BODY_CLOSES"
+  },
+  "status": "ACTIVE",
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "elixir",
+    "reason_code": null,
+    "reason": null,
+    "llm_semantic_decision": "BUG_FIX",
+    "human_confirmation": false
+  },
+  "release_integrity": "release-integrity.json",
+  "execution_validation": {
+    "status": "PASS",
+    "protocol": "v5-f2p",
+    "evidence": "validation/phase-d.json",
+    "evidence_sha256": "2c9b3ba9f05cdbc09cf03d12bcbe8bfd1140e413fe9a92d307501cc759addfce",
+    "validated_at": "2026-09-11T14:26:22Z",
+    "b_failures": [
+      4,
+      4,
+      4
+    ],
+    "f_failures": [
+      0,
+      0,
+      0
+    ],
+    "gold_failures": [
+      0
+    ],
+    "dyn_dropped": 0
+  },
+  "fixed_test_result": "pass",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "build_command": [
+    "export HOME=/workspace",
+    "mix deps.get",
+    "mix compile"
+  ],
+  "test_command": "mix test --trace",
+  "language_version": {
+    "elixir": "1.16.3",
+    "otp": "26"
+  },
+  "dependency_versions": {
+    "mix_lock_md5": "cd3afdfc02a69a8d391977c1fcc14943"
+  },
+  "operating_system_or_container": {
+    "container_image": "docker.io/swerebenchv2/tv-labs-lua:65-257d100",
+    "image_id": "sha256:292a78015d948c5c4a0ea4b5d5eb0cd2275b1aece33400b59d758859148c218f",
+    "platform": "linux/amd64"
+  },
+  "traceability": {
+    "issue_id": 63,
+    "issue_url": "https://github.com/tv-labs/lua/issues/63",
+    "pr_url": "https://github.com/tv-labs/lua/pull/65",
+    "issue_closed": true,
+    "pr_merged": true,
+    "issue_referenced_in": "pull_request_body",
+    "fix_commit": "598e0ae3d4dd2ee386354a05a1aef921c02c3da0",
+    "fix_commit_count": 1,
+    "single_parent_fix": true,
+    "audit": {
+      "method": "GitHub API commit-file superset check",
+      "verdict": "SINGLE_COMMIT_FIX"
+    },
+    "issue_title": "Encoding artifacts with non ASCII character in source",
+    "upstream_fix_parents": [
+      "257d10007734cf788afcf49db36f1499e463679d"
+    ],
+    "upstream_fix_parent": "257d10007734cf788afcf49db36f1499e463679d",
+    "fix_commit_is_merge": false,
+    "provenance_strength": "PR_BODY_REFERENCE"
+  },
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "DONE",
+    "full_suite_validation": "PASS",
+    "protocol": "v5-f2p"
+  },
+  "upstream": {
+    "fix_commit": "598e0ae3d4dd2ee386354a05a1aef921c02c3da0",
+    "fix_parent": "257d10007734cf788afcf49db36f1499e463679d",
+    "issue_url": "https://github.com/tv-labs/lua/issues/63",
+    "pr_url": "https://github.com/tv-labs/lua/pull/65"
+  },
+  "benchmark_revision": {
+    "mode": "base_plus_gold_patch",
+    "base_revision": "257d10007734cf788afcf49db36f1499e463679d",
+    "declared_fixed_revision": "598e0ae3d4dd2ee386354a05a1aef921c02c3da0",
+    "fixed_construction": "base_plus_minimized_patch"
+  },
+  "upstream_revision": {
+    "fix_commit": "598e0ae3d4dd2ee386354a05a1aef921c02c3da0",
+    "fix_parent": "257d10007734cf788afcf49db36f1499e463679d",
+    "issue_url": "https://github.com/tv-labs/lua/issues/63",
+    "pr_url": "https://github.com/tv-labs/lua/pull/65"
+  },
+  "excluded_tests_manifest": "validation/excluded-tests.json",
+  "canonical_test_policy": {
+    "raw_test_command": "mix test --trace",
+    "canonical_runner": "python3 tools/defects4x test --bug 68 --version <b|f> --workdir <checkout> --canonical --execute",
+    "fixed_acceptance": "PASS only after a normal, non-empty ExUnit completion with a valid summary and no infrastructure/process error; a non-zero raw exit may be normalized only when the summary failure count matches parsed failure identities and every identity is explicitly listed in validation/excluded-tests.json and reproduced in upstream GOLD."
+  },
+  "canonical_test_command": "python3 tools/defects4x test --bug 68 --version f --workdir <checkout> --canonical --execute"
+}

@@ -1,0 +1,241 @@
+diff --git a/analysis_options.yaml b/analysis_options.yaml
+index 574efd17..e4b1b8f5 100644
+--- a/analysis_options.yaml
++++ b/analysis_options.yaml
+@@ -1,5 +1,3 @@
+-analyzer:
+-  strong-mode: true
+ linter:
+   rules:
+     - unawaited_futures
+diff --git a/lib/src/chunk_builder.dart b/lib/src/chunk_builder.dart
+index 4bdd1667..a192f21c 100644
+--- a/lib/src/chunk_builder.dart
++++ b/lib/src/chunk_builder.dart
+@@ -171,9 +171,20 @@ class ChunkBuilder {
+   /// If [nest] is `false`, ignores any current expression nesting. Otherwise,
+   /// uses the current nesting level. If unsplit, it expands to a space if
+   /// [space] is `true`.
+-  Chunk split({bool flushLeft, bool isDouble, bool nest, bool space}) =>
+-      _writeSplit(_rules.last,
+-          flushLeft: flushLeft, isDouble: isDouble, nest: nest, space: space);
++  Chunk split({bool flushLeft, bool isDouble, bool nest, bool space}) {
++    space ??= false;
++
++    // If we are not allowed to split at all, don't. Returning null for the
++    // chunk is safe since the rule that uses the chunk will itself get
++    // discarded because no chunk references it.
++    if (_preventSplitNesting > 0) {
++      if (space) _pendingWhitespace = Whitespace.space;
++      return null;
++    }
++
++    return _writeSplit(_rules.last,
++        flushLeft: flushLeft, isDouble: isDouble, nest: nest, space: space);
++  }
+ 
+   /// Outputs the series of [comments] and associated whitespace that appear
+   /// before [token] (which is not written by this).
+@@ -512,10 +523,6 @@ class ChunkBuilder {
+   ///
+   /// Nested blocks are handled using their own independent [LineWriter].
+   ChunkBuilder startBlock(Chunk argumentChunk) {
+-    // If we are not allowed to split at all, don't create a new block. Instead,
+-    // the block contents will end up in the current chunk.
+-    if (_preventSplitNesting > 0) return this;
+-
+     var chunk = _chunks.last;
+     chunk.makeBlock(argumentChunk);
+ 
+@@ -538,11 +545,6 @@ class ChunkBuilder {
+   ///
+   /// Returns the previous writer for the surrounding block.
+   ChunkBuilder endBlock(Rule ignoredSplit, {bool forceSplit}) {
+-    // If we are not allowed to split at all, we didn't create a new block and
+-    // thus didn't create a new ChunkBuilder, so there is no builder to pop.
+-    // We are still in the current one.
+-    if (_preventSplitNesting > 0) return this;
+-
+     _divideChunks();
+ 
+     // If we don't already know if the block is going to split, see if it
+@@ -767,21 +769,6 @@ class ChunkBuilder {
+   /// to be at column zero. Otherwise, it uses the normal indentation and
+   /// nesting behavior.
+   void _writeHardSplit({bool isDouble, bool flushLeft, bool nest: false}) {
+-    // If we are not allowed to split at all, simply write a space. Instead of:
+-    //
+-    //     foo("${() {
+-    //       a;
+-    //       b;
+-    //     }}");
+-    //
+-    // produces:
+-    //
+-    //     foo("${() { a; b; }}");
+-    if (_preventSplitNesting > 0) {
+-      _writeText(" ");
+-      return;
+-    }
+-
+     // A hard split overrides any other whitespace.
+     _pendingWhitespace = null;
+     _writeSplit(new Rule.hard(),
+@@ -796,14 +783,6 @@ class ChunkBuilder {
+     nest ??= true;
+     space ??= false;
+ 
+-    // If we are not allowed to split at all, don't. Returning null for the
+-    // chunk is safe since the rule that uses the chunk will itself get
+-    // discarded because no chunk references it.
+-    if (_preventSplitNesting > 0) {
+-      if (space) write(" ");
+-      return null;
+-    }
+-
+     if (_chunks.isEmpty) {
+       if (flushLeft != null) _firstFlushLeft = flushLeft;
+ 
+diff --git a/pubspec.lock b/pubspec.lock
+index 54d2a9a8..b6483222 100644
+--- a/pubspec.lock
++++ b/pubspec.lock
+@@ -366,4 +366,4 @@ packages:
+     source: hosted
+     version: "2.1.14"
+ sdks:
+-  dart: ">=2.0.0-dev.62.0 <=2.0.0-edge.edf26852e6f6f096bb935ab8a545ce0646cf05a6"
++  dart: ">=2.0.0-dev.62.0 <=2.0.0-edge.69a15d20069891ed13e7c65a6810527b4a9f9e40"
+diff --git a/test/regression/0700/0711.stmt b/test/regression/0700/0711.stmt
+new file mode 100644
+index 00000000..8fd21791
+--- /dev/null
++++ b/test/regression/0700/0711.stmt
+@@ -0,0 +1,12 @@
++>>>
++var str = '''${"""
++a
++b
++c
++"""}''';
++<<<
++var str = '''${"""
++a
++b
++c
++"""}''';
+\ No newline at end of file
+diff --git a/test/splitting/strings.stmt b/test/splitting/strings.stmt
+index d3bdaab5..43948585 100644
+--- a/test/splitting/strings.stmt
++++ b/test/splitting/strings.stmt
+@@ -161,8 +161,75 @@ a + thing   } more'} text", "another arg");
+ someMethod(
+     "some text that is ${pretty + 'long ${interpolate + a + thing} more'} text",
+     "another arg");
+->>> hard splits are not split in interpolation
++>>> hard splits are split in interpolation
+ someMethod("before ${(){statement();statement();statement();}} after");
+ <<<
+-someMethod(
+-    "before ${() { statement(); statement(); statement(); }} after");
+\ No newline at end of file
++someMethod("before ${() {
++  statement();
++  statement();
++  statement();
++}} after");
++>>> collections split in interpolation if needed
++method(
++"b ${[1, 2, 3, 4, 5, 6]} a",
++"before ${[first, second, third, fourth, {fifth: sixth}]} after");
++<<<
++method(
++    "b ${[1, 2, 3, 4, 5, 6]} a",
++    "before ${[
++      first,
++      second,
++      third,
++      fourth,
++      {fifth: sixth}
++    ]} after");
++>>> nested multiline strings are not merged in interpolation
++"before ${"""a
++b"""} ${aft
+++
++er}";
++<<<
++"before ${"""a
++b"""} ${aft + er}";
++>>> multiply-nested interpolation
++'''a
++${b +
++"""c
++${d
+++ '''e
++f'''
+++
++g}
++h"""
+++ i}
++j ${k
+++
++l}''';
++<<<
++'''a
++${b + """c
++${d + '''e
++f''' + g}
++h""" + i}
++j ${k + l}''';
++>>> nested interpolation inside function
++"before ${ () { a(); """b
++c"""; d(); }} after";
++<<<
++"before ${() {
++  a();
++  """b
++c""";
++  d();
++}} after";
++>>> comment inside interpolation
++"before ${// comment
++a
+++
++b
+++  // another
++c} after";
++<<<
++"before ${ // comment
++    a + b + // another
++        c} after";
+\ No newline at end of file
+diff --git a/test/utils.dart b/test/utils.dart
+index 74fa4890..0d5f8898 100644
+--- a/test/utils.dart
++++ b/test/utils.dart
+@@ -62,6 +62,8 @@ void testDirectory(String name, [Iterable<StyleFix> fixes]) {
+ 
+   var entries = new Directory(p.join(testDir, name))
+       .listSync(recursive: true, followLinks: false);
++  entries.sort((a, b) => a.path.compareTo(b.path));
++
+   for (var entry in entries) {
+     if (!entry.path.endsWith(".stmt") && !entry.path.endsWith(".unit")) {
+       continue;
+diff --git a/test/whitespace/strings.stmt b/test/whitespace/strings.stmt
+new file mode 100644
+index 00000000..b44f8bfc
+--- /dev/null
++++ b/test/whitespace/strings.stmt
+@@ -0,0 +1,9 @@
++40 columns                              |
++>>>
++"a"     "b" "c";
++<<<
++"a" "b" "c";
++>>> empty multi-line
++"""""" '''''';
++<<<
++"""""" '''''';
+\ No newline at end of file

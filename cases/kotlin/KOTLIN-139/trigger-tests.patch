@@ -1,0 +1,42 @@
+diff --git a/detekt-rules-naming/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/naming/NonBooleanPropertyWithPrefixIsSpec.kt b/detekt-rules-naming/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/naming/NonBooleanPropertyWithPrefixIsSpec.kt
+index 03a7be248a56..8ec3bd3b0887 100644
+--- a/detekt-rules-naming/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/naming/NonBooleanPropertyWithPrefixIsSpec.kt
++++ b/detekt-rules-naming/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/naming/NonBooleanPropertyWithPrefixIsSpec.kt
+@@ -46,6 +46,17 @@ class NonBooleanPropertyWithPrefixIsSpec(val env: KotlinCoreEnvironment) {
+             assertThat(findings).isEmpty()
+         }
+
++        @Test
++        fun `should not detect AtomicBoolean`() {
++            val code = """
++                import java.util.concurrent.atomic.AtomicBoolean
++                data class O (var isDefault: AtomicBoolean)
++            """.trimIndent()
++            val findings = subject.compileAndLintWithContext(env, code)
++
++            assertThat(findings).isEmpty()
++        }
++
+         @Test
+         fun `should warn about primitive types`() {
+             val code = """data class O (var isDefault: Int)"""
+@@ -165,6 +176,19 @@ class NonBooleanPropertyWithPrefixIsSpec(val env: KotlinCoreEnvironment) {
+             assertThat(findings).isEmpty()
+         }
+
++        @Test
++        fun `should not detect AtomicBoolean`() {
++            val code = """
++                import java.util.concurrent.atomic.AtomicBoolean
++                class O {
++                    var isDefault = AtomicBoolean()
++                }
++            """.trimIndent()
++            val findings = subject.compileAndLintWithContext(env, code)
++
++            assertThat(findings).isEmpty()
++        }
++
+         @Test
+         fun `should warn about primitive types in class`() {
+             val code = """

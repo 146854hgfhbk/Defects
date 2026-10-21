@@ -1,0 +1,202 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 13867b14..e61b59ac 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -3,6 +3,7 @@
+ * Add support for formatting extension methods (#830).
+ * Format `?` in types.
+ * Format the `late` modifier.
++* Better formatting of empty spread collections (#831).
+ 
+ # 1.2.10
+ 
+diff --git a/lib/src/source_visitor.dart b/lib/src/source_visitor.dart
+index c8a56f39..c0cc9c67 100644
+--- a/lib/src/source_visitor.dart
++++ b/lib/src/source_visitor.dart
+@@ -457,8 +457,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     // Treat empty blocks specially. In most cases, they are not allowed to
+     // split. However, an empty block as the then statement of an if with an
+     // else is always split.
+-    if (node.statements.isEmpty &&
+-        node.rightBracket.precedingComments == null) {
++    if (_isEmptyCollection(node.statements, node.rightBracket)) {
+       token(node.leftBracket);
+ 
+       // Force a split when used as the then body of an if with an else:
+@@ -2762,7 +2761,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+     }
+ 
+     // Don't allow splitting in an empty collection.
+-    if (elements.isEmpty && rightBracket.precedingComments == null) {
++    if (_isEmptyCollection(elements, rightBracket)) {
+       token(leftBracket);
+       token(rightBracket);
+       return;
+@@ -2998,8 +2997,16 @@ class SourceVisitor extends ThrowingAstVisitor {
+   bool _isSpreadCollection(AstNode node) =>
+       _findSpreadCollectionBracket(node) != null;
+ 
+-  /// If [node] is a spread of a collection literal, then this returns the
+-  /// token for the opening bracket of the collection, as in:
++  /// Whether the collection literal or block containing [nodes] and
++  /// terminated by [rightBracket] is empty or not.
++  ///
++  /// An empty collection must have no elements or comments inside. Collections
++  /// like that are treated specially because they cannot be split inside.
++  bool _isEmptyCollection(Iterable<AstNode> nodes, Token rightBracket) =>
++      nodes.isEmpty && rightBracket.precedingComments == null;
++
++  /// If [node] is a spread of a non-empty collection literal, then this
++  /// returns the token for the opening bracket of the collection, as in:
+   ///
+   ///     [ ...[a, list] ]
+   ///     //   ^
+@@ -3008,8 +3015,15 @@ class SourceVisitor extends ThrowingAstVisitor {
+   Token _findSpreadCollectionBracket(AstNode node) {
+     if (node is SpreadElement) {
+       var expression = node.expression;
+-      if (expression is ListLiteral) return expression.leftBracket;
+-      if (expression is SetOrMapLiteral) return expression.leftBracket;
++      if (expression is ListLiteral) {
++        if (!_isEmptyCollection(expression.elements, expression.rightBracket)) {
++          return expression.leftBracket;
++        }
++      } else if (expression is SetOrMapLiteral) {
++        if (!_isEmptyCollection(expression.elements, expression.rightBracket)) {
++          return expression.leftBracket;
++        }
++      }
+     }
+ 
+     return null;
+diff --git a/test/regression/0800/0831.unit b/test/regression/0800/0831.unit
+new file mode 100644
+index 00000000..f4b754a8
+--- /dev/null
++++ b/test/regression/0800/0831.unit
+@@ -0,0 +1,17 @@
++>>>
++foo() {
++  final bar = [
++    if (longVariableName == 'do nothing but be long') ...[] else if (longVariableName ==
++        'show the welcome message')
++      'Hello'
++  ];
++}
++<<<
++foo() {
++  final bar = [
++    if (longVariableName == 'do nothing but be long')
++      ...[]
++    else if (longVariableName == 'show the welcome message')
++      'Hello'
++  ];
++}
+\ No newline at end of file
+diff --git a/test/splitting/list_collection_if.stmt b/test/splitting/list_collection_if.stmt
+index 36e44c2b..00d9cb34 100644
+--- a/test/splitting/list_collection_if.stmt
++++ b/test/splitting/list_collection_if.stmt
+@@ -313,4 +313,100 @@ var list = [
+     else ...{
+       h
+     }
++];
++>>> empty then spread not treated like block
++var list = [
++  if (condition) ...[] else ...[a,]
++];
++<<<
++var list = [
++  if (condition)
++    ...[]
++  else ...[
++    a,
++  ]
++];
++>>> empty else spread not treated like block
++var list = [
++  if (condition) ...[a,] else ...[]
++];
++<<<
++var list = [
++  if (condition) ...[
++    a,
++  ] else
++    ...[]
++];
++>>> empty then spread does not split
++var list = [
++  if (condition) ...[] else veryLongIdentifier
++];
++<<<
++var list = [
++  if (condition)
++    ...[]
++  else
++    veryLongIdentifier
++];
++>>> empty else spread does not split
++var list = [
++  if (condition) veryLongIdentifier else ...[]
++];
++<<<
++var list = [
++  if (condition)
++    veryLongIdentifier
++  else
++    ...[]
++];
++>>> empty then spread with comment treated like block
++var list = [
++  if (condition) ...[// c
++  ] else ...[a,]
++];
++<<<
++var list = [
++  if (condition) ...[
++    // c
++  ] else ...[
++    a,
++  ]
++];
++>>> empty else spread with comment treated like block
++var list = [
++  if (condition) ...[a,] else ...[// c
++  ]
++];
++<<<
++var list = [
++  if (condition) ...[
++    a,
++  ] else ...[
++    // c
++  ]
++];
++>>> empty then spread with comment splits
++var list = [
++  if (condition) ...[// c
++  ] else veryLongIdentifier
++];
++<<<
++var list = [
++  if (condition) ...[
++    // c
++  ] else
++    veryLongIdentifier
++];
++>>> empty else spread with comment splits
++var list = [
++  if (condition) veryLongIdentifier else ...[// c
++  ]
++];
++<<<
++var list = [
++  if (condition)
++    veryLongIdentifier
++  else ...[
++    // c
++  ]
+ ];
+\ No newline at end of file

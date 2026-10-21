@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1393",
+  "technical_evidence_sha256": "3eac797be60938a1b415c278371aade3ca4bd5bb1bfcb2b8e69eb6d98c87e01b",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "d7604d119004dcaf154a9aaf4f19c17c21451462efeb846440aeaf283d495c0b",
+  "reviewed_at": "2026-08-15T13:47:57.784590+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1377",
+  "rationale": "The three artifacts converge on one pre-existing defect in the tall-style solver: Solution.mergeSubtree added the subtree's aggregate cost (_cost += subtreeSolution.cost) while merging its piece states with addAll, so pieces already bound in the parent solution had their state cost counted twice, yielding a suboptimal winning solution. The minimized production patch touches only that method, replacing the blanket add with putIfAbsent that charges piece.stateCost(state) exactly once per newly bound piece; there is no refactor, rename, formatting churn, or feature work in it, and the sequence.dart change from the original commit was dropped during minimization. The trigger is a project-native tall-format fixture (test/regression_tall/other/misc.unit) whose own description, 'Incorrect cost calculation when merging subtrees led to wrong solution.', names the same root cause, and it exercises the formatter only through existing input/expected-output fixture semantics, introducing no dependency on any API added by the fix; enabling the regression_tall directory in tall_format_test.dart is test-harness registration, not production change. Strict evidence for both the original and post-minimization states reports all gates passed: build.both_versions, selectors.present_and_unique (1 declared, 1 valid, 1 unique), trigger.buggy_differential reproducing exactly the declared selector, trigger.deterministic with 3 fingerprint groups over 3 repetitions, trigger.fixed_clean across isolated/suite/reversed runs, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with 0 bad runs. Traceability resolves the fix commit 7d5dcfc to verified issue key 1377, which matches the single allowed root_cause_id, and active_same_project_root_causes is empty, so this root cause duplicates no registry entry.\n\nThe three artifacts converge on one pre-existing defect: Solution.mergeSubtree added the whole subtree cost (`_cost += subtreeSolution.cost`) and blindly merged `_pieceStates` via `addAll`, so pieces already bound in the parent solution had their state cost counted twice, producing a wrongly-ranked solution. The fix replaces this with a per-piece `putIfAbsent` that only adds `piece.stateCost(state)` for newly bound pieces, which matches the commit subject 'Fix bug in subtree merging cost calculation.' and the fixture header 'Incorrect cost calculation when merging subtrees led to wrong solution.' The minimized production patch touches only that one method in lib/src/back_end/solution.dart; the sequence.dart `separate` computation present in the original commit was removed during minimization, and no formatting, docs, config, or test-only edits remain in the minimized production diff. The trigger is upstream project-native data: a new .unit fixture under test/regression_tall/other plus one line registering that directory in test/tall_format_test.dart. It exercises only the public formatter through the existing testDirectory harness and depends on no API introduced by the fix, so it is semantically equivalent to the reported defect. Machine evidence supports this: strict_post_minimization reports all gates green with the minimized patch (trigger.buggy_differential reproduced on 'test/tall_format_test.dart::Incorrect cost calculation when merging subtrees led to wrong solution.', trigger.fixed_clean, trigger.deterministic with 3 fingerprint groups over 3 repetitions, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers with no extra failures from the newly registered directory, build.both_versions, matrix.complete with 32 runs). active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and dart-lang/dart_style#1377 is in allowed_root_cause_ids with verified_fix_issue_numbers [1377].",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T13:47:20.146189+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "d7604d119004dcaf154a9aaf4f19c17c21451462efeb846440aeaf283d495c0b",
+      "response_sha256": "b439ac1e6a64fc46958e29d36e35402d02f8c15ed9c8023f8a765acc487495b6",
+      "response_id": "msg_d936fa1befa2469da2400758d13bf322",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7070760035157545,
+        "input_tokens": 9841,
+        "output_tokens": 775
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1377",
+      "rationale": "The three artifacts converge on one pre-existing defect in the tall-style solver: Solution.mergeSubtree added the subtree's aggregate cost (_cost += subtreeSolution.cost) while merging its piece states with addAll, so pieces already bound in the parent solution had their state cost counted twice, yielding a suboptimal winning solution. The minimized production patch touches only that method, replacing the blanket add with putIfAbsent that charges piece.stateCost(state) exactly once per newly bound piece; there is no refactor, rename, formatting churn, or feature work in it, and the sequence.dart change from the original commit was dropped during minimization. The trigger is a project-native tall-format fixture (test/regression_tall/other/misc.unit) whose own description, 'Incorrect cost calculation when merging subtrees led to wrong solution.', names the same root cause, and it exercises the formatter only through existing input/expected-output fixture semantics, introducing no dependency on any API added by the fix; enabling the regression_tall directory in tall_format_test.dart is test-harness registration, not production change. Strict evidence for both the original and post-minimization states reports all gates passed: build.both_versions, selectors.present_and_unique (1 declared, 1 valid, 1 unique), trigger.buggy_differential reproducing exactly the declared selector, trigger.deterministic with 3 fingerprint groups over 3 repetitions, trigger.fixed_clean across isolated/suite/reversed runs, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with 0 bad runs. Traceability resolves the fix commit 7d5dcfc to verified issue key 1377, which matches the single allowed root_cause_id, and active_same_project_root_causes is empty, so this root cause duplicates no registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/back_end/solution.dart",
+        "patches/trigger-tests.patch",
+        "test/regression_tall/other/misc.unit",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "Issue 1377 and pull request 1377 are the same GitHub number, so the 'public issue' is the fixing pull request itself rather than an independent user-filed bug report; the defect description therefore comes from the author's own commit and fixture text rather than a third-party reproduction.",
+        "The original commit also changed lib/src/piece/sequence.dart (per-element separate formatting in SequencePiece); minimization dropped it, and the strict gates indicate the fixture still discriminates buggy from fixed without it, but the fixture's exact expected output may be sensitive to that companion change in other inputs.",
+        "The trigger registers the whole test/regression_tall directory in tall_format_test.dart, so future or pre-existing fixtures in that tree could widen the selector's blast radius; the current gates confirm only this one selector fails on the buggy revision.",
+        "The fixture is an oracle over exact formatter output, so it is a whole-output comparison rather than a targeted assertion on merge cost, and unrelated formatting changes could perturb it.",
+        "Fixture file is committed without a trailing newline, a cosmetic artifact carried from upstream."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T13:47:57.784235+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "d7604d119004dcaf154a9aaf4f19c17c21451462efeb846440aeaf283d495c0b",
+      "response_sha256": "0f7f899ec3e1169b60b04b47494abe10e8b7bcbdd1c30ac48e5d99477eb45ac1",
+      "response_id": "msg_ecdfc950b1954cd8a0ba62bb8312ff82",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7133989301160862,
+        "input_tokens": 10052,
+        "output_tokens": 780
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1377",
+      "rationale": "The three artifacts converge on one pre-existing defect: Solution.mergeSubtree added the whole subtree cost (`_cost += subtreeSolution.cost`) and blindly merged `_pieceStates` via `addAll`, so pieces already bound in the parent solution had their state cost counted twice, producing a wrongly-ranked solution. The fix replaces this with a per-piece `putIfAbsent` that only adds `piece.stateCost(state)` for newly bound pieces, which matches the commit subject 'Fix bug in subtree merging cost calculation.' and the fixture header 'Incorrect cost calculation when merging subtrees led to wrong solution.' The minimized production patch touches only that one method in lib/src/back_end/solution.dart; the sequence.dart `separate` computation present in the original commit was removed during minimization, and no formatting, docs, config, or test-only edits remain in the minimized production diff. The trigger is upstream project-native data: a new .unit fixture under test/regression_tall/other plus one line registering that directory in test/tall_format_test.dart. It exercises only the public formatter through the existing testDirectory harness and depends on no API introduced by the fix, so it is semantically equivalent to the reported defect. Machine evidence supports this: strict_post_minimization reports all gates green with the minimized patch (trigger.buggy_differential reproduced on 'test/tall_format_test.dart::Incorrect cost calculation when merging subtrees led to wrong solution.', trigger.fixed_clean, trigger.deterministic with 3 fingerprint groups over 3 repetitions, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers with no extra failures from the newly registered directory, build.both_versions, matrix.complete with 32 runs). active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and dart-lang/dart_style#1377 is in allowed_root_cause_ids with verified_fix_issue_numbers [1377].",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/back_end/solution.dart",
+        "patches/trigger-tests.patch",
+        "test/regression_tall/other/misc.unit",
+        "test/tall_format_test.dart",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "traceability.verified_fix_issue_numbers",
+        "source_candidate.origin_pull_request"
+      ],
+      "risks": [
+        "Issue 1377 and PR 1377 are the same GitHub number and traceability records only a fix_commit_to_issue path, so there is no independent user-filed bug report describing the misformatting symptom; the defect description rests on the PR/commit and the fixture header.",
+        "The original commit also changed lib/src/piece/sequence.dart (element `separate` conditions). Minimization dropped it and gates still pass, but the accepted case therefore covers a narrower behavior than the upstream fix, and case.json production_files still lists sequence.dart, an inconsistency with the minimized patch.",
+        "The trigger registers an entire directory (regression_tall) rather than a single test; future files added there would widen the selector, though at this revision the directory contains only misc.unit.",
+        "The trigger asserts exact formatter output, so it is sensitive to unrelated cost-model or layout changes rather than isolating only the double-counting condition."
+      ]
+    }
+  ]
+}

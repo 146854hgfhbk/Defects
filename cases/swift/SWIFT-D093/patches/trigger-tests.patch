@@ -1,0 +1,39 @@
+diff --git a/Tests/SwiftParserTest/AttributeTests.swift b/Tests/SwiftParserTest/AttributeTests.swift
+index bba48ec0..70b4b5a2 100644
+--- a/Tests/SwiftParserTest/AttributeTests.swift
++++ b/Tests/SwiftParserTest/AttributeTests.swift
+@@ -43,11 +43,11 @@ final class AttributeTests: XCTestCase {
+       """,
+       diagnostics: [
+         DiagnosticSpec(locationMarker: "1️⃣", message: "expected ':' and parameters in '@differentiable' argument", fixIts: ["insert ':' and parameters"]),
+-        DiagnosticSpec(locationMarker: "2️⃣", message: "expected '=' and right-hand type in same type requirement", fixIts: ["insert '=' and right-hand type"]),
++        DiagnosticSpec(locationMarker: "2️⃣", message: "expected ':' or '==' to indicate a conformance or same-type requirement"),
+         DiagnosticSpec(locationMarker: "2️⃣", message: "expected ')' to end attribute", fixIts: ["insert ')'"]),
+       ],
+       fixedSource: """
+-        @differentiable(reverse wrt: <#identifier#>,where T = <#type#>)
++        @differentiable(reverse wrt: <#identifier#>,where T)
+         func podcastPlaybackSpeed() {
+         }
+         """
+diff --git a/Tests/SwiftParserTest/DeclarationTests.swift b/Tests/SwiftParserTest/DeclarationTests.swift
+index 4a12f72d..fe54746c 100644
+--- a/Tests/SwiftParserTest/DeclarationTests.swift
++++ b/Tests/SwiftParserTest/DeclarationTests.swift
+@@ -123,14 +123,14 @@ final class DeclarationTests: XCTestCase {
+     AssertParse(
+       "class T where t1️⃣",
+       diagnostics: [
+-        DiagnosticSpec(message: "expected '=' and right-hand type in same type requirement"),
++        DiagnosticSpec(message: "expected ':' or '==' to indicate a conformance or same-type requirement"),
+         DiagnosticSpec(message: "expected member block in class"),
+       ]
+     )
+     AssertParse(
+       "class B<where g1️⃣",
+       diagnostics: [
+-        DiagnosticSpec(message: "expected '=' and right-hand type in same type requirement"),
++        DiagnosticSpec(message: "expected ':' or '==' to indicate a conformance or same-type requirement"),
+         DiagnosticSpec(message: "expected '>' to end generic parameter clause"),
+         DiagnosticSpec(message: "expected member block in class"),
+       ]

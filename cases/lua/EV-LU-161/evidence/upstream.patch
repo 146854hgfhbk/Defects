@@ -1,0 +1,76 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index febbcf8a50e298ad3e63cb7dd3375fcbc35a64ba..855e48219c068e719a5e1e91806ea14367083876 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -12,6 +12,8 @@
+ 
+ * Fixed errors or incorrect reporting when unused mutually recursive functions
+   have other values assigned to their local variables.
++* Fixed unused values in infinite loops sometimes reported
++  as overwritten by another value.
+ 
+ ## 0.21.2 (2017-11-13)
+ 
+diff --git a/spec/unused_locals_spec.lua b/spec/unused_locals_spec.lua
+index 9a4cbd832eb43f805bd92bff09084d2c08dfa580..95efc16776836d5e05e3715391c20c4bc5844ede 100644
+--- a/spec/unused_locals_spec.lua
++++ b/spec/unused_locals_spec.lua
+@@ -142,6 +142,19 @@ end
+ ]])
+    end)
+ 
++   it("does not provide overwriting location if the value overwrites itself", function()
++      assert_warnings({
++         {code = "311", name = "a", line = 5, column = 4, end_column = 4}
++      }, [[
++local a = 1
++print(a)
++
++while true do
++   a = 2
++end
++]])
++   end)
++
+    it("does not detect unused value when it and a closure using it can live together", function()
+       assert_warnings({}, [[
+ local a = 3
+diff --git a/src/luacheck/detect_unused_locals.lua b/src/luacheck/detect_unused_locals.lua
+index 22c8eba3be3e6f31ba322c757f71bf76b097f5c2..8c56aab972a9dd9a08277f08c0b15531ac3926af 100644
+--- a/src/luacheck/detect_unused_locals.lua
++++ b/src/luacheck/detect_unused_locals.lua
+@@ -78,7 +78,7 @@ local function externally_accessible(value)
+    return value.type ~= "var" or (value.node and externally_accessible_tags[value.node.tag])
+ end
+ 
+-local function find_overwriting_lhs_node(item, value)
++local function get_overwriting_lhs_node(item, value)
+    for _, node in ipairs(item.lhs) do
+       if node.var == value.var then
+          return node
+@@ -86,7 +86,7 @@ local function find_overwriting_lhs_node(item, value)
+    end
+ end
+ 
+-local function get_overwriting_node_in_dup_assignment(item, value)
++local function get_second_overwriting_lhs_node(item, value)
+    local after_value_node
+ 
+    for _, node in ipairs(item.lhs) do
+@@ -140,13 +140,11 @@ local function check_var(chstate, var)
+                local overwriting_node
+ 
+                if value.overwriting_item then
+-                  overwriting_node = find_overwriting_lhs_node(value.overwriting_item, value)
+-
+-                  if overwriting_node == value.node then
+-                     overwriting_node = nil
++                  if value.overwriting_item ~= value.item then
++                     overwriting_node = get_overwriting_lhs_node(value.overwriting_item, value)
+                   end
+                else
+-                  overwriting_node = get_overwriting_node_in_dup_assignment(value.item, value)
++                  overwriting_node = get_second_overwriting_lhs_node(value.item, value)
+                end
+ 
+                table.insert(chstate.warnings, new_unused_value_warning(value, false, overwriting_node))

@@ -1,0 +1,59 @@
+diff --git a/src/luacheck/check.lua b/src/luacheck/check.lua
+index 3bcfaf1b93b96ade6e39cd06c6d1348def4b98aa..894b8ba4533c0f7d3fc7e4d7df8eb23749902791 100644
+--- a/src/luacheck/check.lua
++++ b/src/luacheck/check.lua
+@@ -109,7 +109,7 @@ end
+ function ChState:warn_unused_field_value(node)
+    self:warn({
+       code = "314",
+-      name = node.field,
++      field = node.field,
+       index = node.is_index,
+       line = node.location.line,
+       column = node.location.column,
+@@ -152,7 +152,7 @@ end
+ function ChState:warn_unused_label(label)
+    self:warn({
+       code = "521",
+-      name = label.name,
++      label = label.name,
+       line = label.location.line,
+       column = label.location.column,
+       end_column = label.end_column
+diff --git a/src/luacheck/filter.lua b/src/luacheck/filter.lua
+index 68f1305d9d3ab972b3682fa0106e2a4065d4afb7..35e6a18f9d9e6f91b69bad1cabeb776f53fe8cef 100644
+--- a/src/luacheck/filter.lua
++++ b/src/luacheck/filter.lua
+@@ -145,8 +145,8 @@ local function match(warning, pattern)
+    end
+ 
+    if name_pattern then
+-      if warning.code:match("[56]..") or warning.code == "314" then
+-         -- Statement and field related warnings can't match by name.
++      if not warning.name then
++         -- Warnings without name field can't match by name.
+          matches_name = false
+       else
+          matches_name = utils.pmatch(warning.name, name_pattern)
+diff --git a/src/luacheck/format.lua b/src/luacheck/format.lua
+index 23536142cd610ca126f35982c176a6f3b19e0419..03fd48d5c17e179e41c2dd0e4c8811c21f17c969 100644
+--- a/src/luacheck/format.lua
++++ b/src/luacheck/format.lua
+@@ -51,7 +51,7 @@ local message_formats = {
+    ["312"] = "value of argument {name!} is unused",
+    ["313"] = "value of loop variable {name!} is unused",
+    ["314"] = function(w)
+-      return "value assigned to " .. (w.index and "index" or "field") .. " {name!} is unused"
++      return "value assigned to " .. (w.index and "index" or "field") .. " {field!} is unused"
+    end,
+    ["321"] = "accessing uninitialized variable {name!}",
+    ["331"] = "value assigned to variable {name!} is mutated but never accessed",
+@@ -67,7 +67,7 @@ local message_formats = {
+    ["433"] = "shadowing upvalue loop variable {name!} on line {prev_line}",
+    ["511"] = "unreachable code",
+    ["512"] = "loop is executed at most once",
+-   ["521"] = "unused label {name!}",
++   ["521"] = "unused label {label!}",
+    ["531"] = "left-hand side of assignment is too short",
+    ["532"] = "left-hand side of assignment is too long",
+    ["541"] = "empty do..end block",

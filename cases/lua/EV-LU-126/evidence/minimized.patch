@@ -1,0 +1,31 @@
+diff --git a/lua/pl/types.lua b/lua/pl/types.lua
+index 35b0ccb54a5b3fcf88affaf8d64fc3276cb87dfa..ce82efa7a1d8cf8c553ab96549e9a07e04dbbd15 100644
+--- a/lua/pl/types.lua
++++ b/lua/pl/types.lua
+@@ -8,10 +8,22 @@ local math_ceil = math.ceil
+ local assert_arg = utils.assert_arg
+ local types = {}
+ 
+---- is the object either a function or a callable object?.
+--- @param obj Object to check.
+-function types.is_callable (obj)
+-    return type(obj) == 'function' or getmetatable(obj) and getmetatable(obj).__call and true
++do
++    -- we prefer debug.getmetatable, but only if available
++    local gmt = (debug or {}).getmetatable or getmetatable
++
++    --- is the object either a function or a callable object?.
++    -- @param obj Object to check.
++    function types.is_callable (obj)
++        if type(obj) == 'function' then
++            return true
++        end
++        local mt = gmt(obj)
++        if not mt then
++            return false
++        end
++        return type(rawget(mt, "__call")) == "function"
++    end
+ end
+ 
+ --- is the object of the specified type?.

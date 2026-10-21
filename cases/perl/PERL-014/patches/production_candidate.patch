@@ -1,0 +1,33 @@
+diff --git a/Changes b/Changes
+index 2a3a5484..73274b43 100644
+--- a/Changes
++++ b/Changes
+@@ -1,6 +1,7 @@
+ Revision history for HTTP-Message
+ 
+ {{$NEXT}}
++    - Add default status_message for unknown status codes (GH#105) (Robert Rothenberg)
+ 
+ 6.16      2018-03-28 14:09:17Z
+     - Update status codes to official IANA list (GH#100) (Theo van Hoesel)
+diff --git a/lib/HTTP/Status.pm b/lib/HTTP/Status.pm
+index d70b23f2..30cabfc1 100644
+--- a/lib/HTTP/Status.pm
++++ b/lib/HTTP/Status.pm
+@@ -126,8 +126,14 @@ our %EXPORT_TAGS = (
+    is => [grep /^is_/, @EXPORT, @EXPORT_OK],
+ );
+ 
+-
+-sub status_message  ($) { $StatusCode{$_[0]}; }
++sub status_message ($) {
++    $StatusCode{ $_[0] } || is_info( $_[0] ) ? 'OK'
++      : is_success( $_[0] )      ? 'OK'
++      : is_redirect( $_[0] )     ? 'Redirect'
++      : is_client_error( $_[0] ) ? 'Client Error'
++      : is_server_error( $_[0] ) ? 'Server Error'
++      :                            undef;
++}
+ 
+ sub is_info                 ($) { $_[0] && $_[0] >= 100 && $_[0] < 200; }
+ sub is_success              ($) { $_[0] && $_[0] >= 200 && $_[0] < 300; }

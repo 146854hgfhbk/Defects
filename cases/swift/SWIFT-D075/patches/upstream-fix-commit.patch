@@ -1,0 +1,39 @@
+diff --git a/PhoneNumberKit/PhoneNumberKit.swift b/PhoneNumberKit/PhoneNumberKit.swift
+index 4958fed..811847a 100644
+--- a/PhoneNumberKit/PhoneNumberKit.swift
++++ b/PhoneNumberKit/PhoneNumberKit.swift
+@@ -36,7 +36,19 @@ public final class PhoneNumberKit: NSObject {
+     ///   - ignoreType: Avoids number type checking for faster performance.
+     /// - Returns: PhoneNumber object.
+     public func parse(_ numberString: String, withRegion region: String = PhoneNumberKit.defaultRegionCode(), ignoreType: Bool = false) throws -> PhoneNumber {
+-        return try self.parseManager.parse(numberString, withRegion: region, ignoreType: ignoreType)
++        let region = region.uppercased()
++        do {
++            return try self.parseManager.parse(numberString, withRegion: region, ignoreType: ignoreType)
++        } catch {
++            guard numberString.first != "+", let regionMetadata = metadataManager.filterTerritories(byCountry: region) else {
++                throw error
++            }
++            let countryCode = String(regionMetadata.countryCode)
++            guard numberString.prefix(countryCode.count) == countryCode else {
++                throw error
++            }
++            return try self.parse("+\(numberString)", withRegion: region, ignoreType: ignoreType)
++        }
+     }
+ 
+     /// Parses an array of number strings. Optimised for performance. Invalid numbers are ignored in the resulting array
+diff --git a/PhoneNumberKitTests/PhoneNumberKitTests.swift b/PhoneNumberKitTests/PhoneNumberKitTests.swift
+index 23cc396..69012bc 100644
+--- a/PhoneNumberKitTests/PhoneNumberKitTests.swift
++++ b/PhoneNumberKitTests/PhoneNumberKitTests.swift
+@@ -457,4 +457,9 @@ class PhoneNumberKitTests: XCTestCase {
+             }
+         }
+     }
++    
++    func testValidCZNumbers() {
++        let numbers = ["420734593819", "+420734593819", "734593819"]
++        numbers.forEach { XCTAssertTrue(phoneNumberKit.isValidPhoneNumber($0, withRegion: "CZ")) }
++    }
+ }

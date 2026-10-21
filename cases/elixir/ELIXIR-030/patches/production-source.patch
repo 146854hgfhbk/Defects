@@ -1,0 +1,177 @@
+diff --git a/lib/ecto/changeset.ex b/lib/ecto/changeset.ex
+index fbb731ca..cd2febc0 100644
+--- a/lib/ecto/changeset.ex
++++ b/lib/ecto/changeset.ex
+@@ -729,7 +729,7 @@ defmodule Ecto.Changeset do
+           opts
+ 
+         empty_values != empty_values() ->
+-          # TODO: Remove changeset.empty_values field
++          # TODO: Remove changeset.empty_values field in Ecto v3.14
+           IO.warn(
+             "Changing the empty_values field of Ecto.Changeset is deprecated, " <>
+               "please pass the :empty_values option on cast instead"
+@@ -3152,7 +3152,7 @@ defmodule Ecto.Changeset do
+          _spec_function,
+          %Decimal{} = target_value
+        ) do
+-    result = Decimal.compare(value, target_value) |> normalize_compare()
++    result = Decimal.compare(value, target_value)
+ 
+     case decimal_compare(result, spec_key) do
+       true -> nil
+@@ -3175,17 +3175,6 @@ defmodule Ecto.Changeset do
+     end
+   end
+ 
+-  # TODO: Remove me once we support Decimal 2.0 only
+-  # Support mismatch between API for Decimal.compare/2 for versions 1.6 and 2.0
+-  defp normalize_compare(result) do
+-    case result do
+-      %Decimal{coef: 1, sign: -1} -> :lt
+-      %Decimal{coef: 0} -> :eq
+-      %Decimal{coef: 1, sign: 1} -> :gt
+-      _ -> result
+-    end
+-  end
+-
+   defp decimal_new(term) when is_float(term), do: Decimal.from_float(term)
+   defp decimal_new(term), do: Decimal.new(term)
+ 
+diff --git a/lib/ecto/query/builder.ex b/lib/ecto/query/builder.ex
+index 6e1770b2..7f27578a 100644
+--- a/lib/ecto/query/builder.ex
++++ b/lib/ecto/query/builder.ex
+@@ -1128,13 +1128,7 @@ defmodule Ecto.Query.Builder do
+   @doc """
+   Negates the given number.
+   """
+-  # TODO: Remove check when we depend on decimal v2.0
+-  if Code.ensure_loaded?(Decimal) and function_exported?(Decimal, :negate, 1) do
+-    def negate!(%Decimal{} = decimal), do: Decimal.negate(decimal)
+-  else
+-    def negate!(%Decimal{} = decimal), do: Decimal.minus(decimal)
+-  end
+-
++  def negate!(%Decimal{} = decimal), do: Decimal.negate(decimal)
+   def negate!(number) when is_number(number), do: -number
+ 
+   @doc """
+diff --git a/lib/ecto/query/planner.ex b/lib/ecto/query/planner.ex
+index 451bb306..550d941e 100644
+--- a/lib/ecto/query/planner.ex
++++ b/lib/ecto/query/planner.ex
+@@ -1309,7 +1309,28 @@ defmodule Ecto.Query.Planner do
+     if Ecto.Type.base?(type) do
+       {tagged, acc}
+     else
+-      {dump_param(kind, query, expr, v, type, adapter), acc}
++      type = field_type!(kind, query, expr, type)
++
++      with {:ok, type} <- normalize_param(kind, type, v),
++           {:ok, value} <- dump_param(adapter, type, v) do
++        # We cannot encode binary/uuid in queries because they would emit
++        # invalid queries with binary parts in them. In theory, we could
++        # wrap them in Ecto.Query.Tagged, but a tagged UUID would most
++        # likely wrap its string representation, not its binary one.
++        # So it is best to be consistent and not support query-dumping of
++        # non-base types.
++        if is_binary(value) and Ecto.Type.type(type) in [:binary_id, :binary, :uuid] do
++          error = "cannot encode value `#{inspect v}` of type `#{inspect(type)}` within a query, please interpolate (using ^) instead"
++          error! query, expr, error
++        else
++          {value, acc}
++        end
++      else
++        {:error, error} ->
++          error = error <> ". Or the value is incompatible or it must be " <>
++                           "interpolated (using ^) so it may be cast accordingly"
++          error! query, expr, error
++      end
+     end
+   end
+ 
+@@ -1344,24 +1365,6 @@ defmodule Ecto.Query.Planner do
+     end
+   end
+ 
+-  defp dump_param(kind, query, expr, v, type, adapter) do
+-    type = field_type!(kind, query, expr, type)
+-
+-    case dump_param(kind, type, v, adapter) do
+-      {:ok, v} ->
+-        v
+-      {:error, error} ->
+-        error = error <> ". Or the value is incompatible or it must be " <>
+-                         "interpolated (using ^) so it may be cast accordingly"
+-        error! query, expr, error
+-    end
+-  end
+-
+-  defp dump_param(kind, type, v, adapter) do
+-    with {:ok, type} <- normalize_param(kind, type, v),
+-         do: dump_param(adapter, type, v)
+-  end
+-
+   defp validate_in(meta, expr, param, acc, adapter) do
+     {v, t} = Enum.fetch!(expr.params, param)
+     length = length(v)
+diff --git a/lib/ecto/schema.ex b/lib/ecto/schema.ex
+index d846c3e4..b5d5308d 100644
+--- a/lib/ecto/schema.ex
++++ b/lib/ecto/schema.ex
+@@ -2244,9 +2244,7 @@ defmodule Ecto.Schema do
+   def __after_compile__(%{module: module} = env, _) do
+     # If we are compiling code, we can validate associations now,
+     # as the Elixir compiler will solve dependencies.
+-    #
+-    # TODO: Use Code.can_await_module_compilation?/0 from Elixir v1.11+.
+-    if Process.info(self(), :error_handler) == {:error_handler, Kernel.ErrorHandler} do
++    if Code.can_await_module_compilation?() do
+       for name <- module.__schema__(:associations) do
+         assoc = module.__schema__(:association, name)
+ 
+diff --git a/lib/ecto/type.ex b/lib/ecto/type.ex
+index c44d2522..5f9bc091 100644
+--- a/lib/ecto/type.ex
++++ b/lib/ecto/type.ex
+@@ -858,8 +858,6 @@ defmodule Ecto.Type do
+ 
+   defp cast_decimal(term) when is_binary(term) do
+     case Decimal.parse(term) do
+-      {:ok, decimal} -> check_decimal(decimal, false)
+-      # The following two clauses exist to support earlier versions of Decimal.
+       {decimal, ""} -> check_decimal(decimal, false)
+       {_, remainder} when is_binary(remainder) and byte_size(remainder) > 0 -> :error
+       :error -> :error
+diff --git a/lib/mix/ecto.ex b/lib/mix/ecto.ex
+index 4226a1e6..7f5a37a3 100644
+--- a/lib/mix/ecto.ex
++++ b/lib/mix/ecto.ex
+@@ -24,9 +24,7 @@ defmodule Mix.Ecto do
+   defp parse_repo([], []) do
+     apps =
+       if apps_paths = Mix.Project.apps_paths() do
+-        # TODO: Use the proper ordering from Mix.Project.deps_apps
+-        # when we depend on Elixir v1.11+.
+-        apps_paths |> Map.keys() |> Enum.sort()
++        Enum.filter(Mix.Project.deps_apps(), &is_map_key(apps_paths, &1))
+       else
+         [Mix.Project.config()[:app]]
+       end
+@@ -64,14 +62,7 @@ defmodule Mix.Ecto do
+   def ensure_repo(repo, args) do
+     # Do not pass the --force switch used by some tasks downstream
+     args = List.delete(args, "--force")
+-
+-    # TODO: Use only app.config when we depend on Elixir v1.11+.
+-    if Code.ensure_loaded?(Mix.Tasks.App.Config) do
+-      Mix.Task.run("app.config", args)
+-    else
+-      Mix.Task.run("loadpaths", args)
+-      "--no-compile" not in args && Mix.Task.run("compile", args)
+-    end
++    Mix.Task.run("app.config", args)
+ 
+     case Code.ensure_compiled(repo) do
+       {:module, _} ->

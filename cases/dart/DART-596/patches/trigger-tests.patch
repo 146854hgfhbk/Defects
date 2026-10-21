@@ -1,0 +1,21 @@
+diff --git a/test/csv_to_list_test.dart b/test/csv_to_list_test.dart
+index 0bed060..07943e7 100644
+--- a/test/csv_to_list_test.dart
++++ b/test/csv_to_list_test.dart
+@@ -601,4 +601,16 @@ void main_converter() {
+           ['', 'faa4aag', 'haa5.6']
+         ]));
+   });
++
++  test('Issue #70', () {
++    final input = '"A B", "C, D"\r\n';
++    final parsed = CsvToListConverter().convert(input);
++    expect(parsed, equals([["A B",' "C',' D"']]));
++  });
++
++  test('Quotes inside', () {
++    final input = 'A"B,C"D';
++    final parsed = CsvToListConverter().convert(input);
++    expect(parsed, equals([['A"B', 'C"D']]));
++  });
+ }

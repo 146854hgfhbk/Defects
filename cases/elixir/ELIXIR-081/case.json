@@ -1,0 +1,310 @@
+{
+  "schema_version": 2,
+  "case_id": "ELIXIR-081",
+  "id": "ELIXIR-081",
+  "upstream_id": "tallarium__reverse_proxy_plug-186",
+  "language": "Elixir",
+  "project": "tallarium/reverse_proxy_plug",
+  "repo": "tallarium/reverse_proxy_plug",
+  "provenance": {
+    "source_dataset": "SWE-rebench-V2",
+    "source_dataset_id": "nebius/SWE-rebench-V2",
+    "source_revision": "475dd5e",
+    "pr_url": "https://github.com/tallarium/reverse_proxy_plug/pull/186",
+    "issue_id": 148,
+    "issue_url": "https://github.com/tallarium/reverse_proxy_plug/issues/148",
+    "issue_relation": "PR_DESCRIPTION_ISSUE_REFERENCE",
+    "pr_merge_commit": "464ad65ec9990b2b4484cbeebe3c1696d2c57ea8",
+    "pr_merged": true,
+    "pr_base_sha": "93121839286570820434c7832b5830c3c895aceb",
+    "pr_head_sha": "3476177d1d524abbac73af30c25c701d84d20eba",
+    "pr_commit_count": 1,
+    "fix_commit_relation": "single_commit_pr"
+  },
+  "buggy_revision": "93121839286570820434c7832b5830c3c895aceb",
+  "fixed_revision": "464ad65ec9990b2b4484cbeebe3c1696d2c57ea8",
+  "revision_mode": "base_plus_gold_patch",
+  "revisions": {
+    "revision_mode": "base_plus_gold_patch",
+    "buggy": "93121839286570820434c7832b5830c3c895aceb",
+    "fixed": {
+      "declared_commit": "464ad65ec9990b2b4484cbeebe3c1696d2c57ea8",
+      "base_commit": "93121839286570820434c7832b5830c3c895aceb",
+      "patch": "patches/minimized-source.patch",
+      "note": "replay is base + canonical patch; the merge commit is the declared upstream reference"
+    }
+  },
+  "patch": {
+    "path": "patches/minimized-source.patch",
+    "upstream_path": "patches/upstream.patch",
+    "sha256": "5be40d3649582e563c7ac87f0cffc6e69fa4149cc95d7afc30beb13c37b06459",
+    "upstream_sha256": "880f115537b5720d7901bab78a79fa8208aad107fc355ca48a30baa4fba8d1d2",
+    "changed_source_files": [
+      "lib/reverse_proxy_plug.ex",
+      "lib/reverse_proxy_plug/http_client.ex",
+      "lib/reverse_proxy_plug/http_client/adapters/httpoison.ex"
+    ]
+  },
+  "patch_sha256": "5be40d3649582e563c7ac87f0cffc6e69fa4149cc95d7afc30beb13c37b06459",
+  "trigger_test_patch": "patches/trigger-tests.patch",
+  "trigger_test_patch_sha256": "a8c12564832c33e99329ea00e8153ee342930f59cf88350c482fe6fd4ee27f11",
+  "triggering_tests": [
+    "calls status callback",
+    "does not sets transfer-encoding headers for informational status class",
+    "does not sets transfer-encoding headers for no content status code",
+    "receives stream response",
+    "sets correct chunked transfer-encoding headers",
+    "throws an error if :stream mode is used with the Tesla adapter"
+  ],
+  "trigger_tests": [
+    "calls status callback",
+    "does not sets transfer-encoding headers for informational status class",
+    "does not sets transfer-encoding headers for no content status code",
+    "receives stream response",
+    "sets correct chunked transfer-encoding headers",
+    "throws an error if :stream mode is used with the Tesla adapter"
+  ],
+  "expected_failure": {
+    "test_count": 6,
+    "tests": [
+      "calls status callback",
+      "does not sets transfer-encoding headers for informational status class",
+      "does not sets transfer-encoding headers for no content status code",
+      "receives stream response",
+      "sets correct chunked transfer-encoding headers",
+      "throws an error if :stream mode is used with the Tesla adapter"
+    ],
+    "exception_types": [],
+    "fingerprints": []
+  },
+  "minimization": {
+    "status": "HUMAN_REVIEWED_MINIMIZED_V1",
+    "policy": "drop non-production files; production only documentation/comment/format; same-file dangling guard",
+    "removed_hunks": 0,
+    "removed_files": [],
+    "forced_kept": [],
+    "upstream_equals_minimized": true,
+    "report": "patches/minimization.json",
+    "llm_review": "llm-hunk-review.json",
+    "review_status": "human_minimization_signoff_completed",
+    "reviewer_type": "human_dataset_curator",
+    "human_signoff": "completed",
+    "dynamic_revalidation": false,
+    "human_signoff_date": "2026-09-12",
+    "human_signoff_scope": "patch_minimization_only"
+  },
+  "environment": {
+    "backend": "swe_rebench_v2_docker",
+    "image": "docker.io/swerebenchv2/tallarium-reverse-proxy-plug:186-9312183"
+  },
+  "environment_lock": "environment.lock.json",
+  "commands": {
+    "test": "mix test --trace"
+  },
+  "validation": {
+    "status": "PASS",
+    "report": "validation/phase-d.json",
+    "report_sha256": "86d2bf6240c7592cd073b5a064a263d472766c2efd6baa1c111a996f291b2b53",
+    "protocol": "v5-f2p",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "result": "PASS"
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "elixir",
+    "reason_code": null,
+    "reason": null,
+    "llm_semantic_decision": "BUG_FIX",
+    "human_confirmation": false
+  },
+  "release_integrity": "release-integrity.json",
+  "status": "ACTIVE",
+  "fixed_revision_kind": "upstream_pr_merge_commit",
+  "fixed_revision_parents": [
+    "93121839286570820434c7832b5830c3c895aceb",
+    "3476177d1d524abbac73af30c25c701d84d20eba"
+  ],
+  "artifacts": {
+    "curation_decision": "curation-decision.json",
+    "llm_hunk_review": "llm-hunk-review.json",
+    "llm_semantic_review": "llm-semantic-review.json",
+    "minimization_decisions": "minimization-decisions.json",
+    "manual_minimization_confirmation": "manual-minimization-confirmation.json",
+    "minimization_report": "patches/minimization.json"
+  },
+  "execution_validation": {
+    "status": "PASS",
+    "protocol": "v5-f2p",
+    "evidence": "validation/phase-d.json",
+    "evidence_sha256": "86d2bf6240c7592cd073b5a064a263d472766c2efd6baa1c111a996f291b2b53",
+    "validated_at": "2026-09-11T14:26:22Z",
+    "b_failures": [
+      6,
+      6,
+      6
+    ],
+    "f_failures": [
+      0,
+      0,
+      0
+    ],
+    "gold_failures": [
+      0
+    ],
+    "dyn_dropped": 0
+  },
+  "bug_id": "ELIXIR-081",
+  "fixed_test_result": "pass",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "build_command": [
+    "export HOME=/workspace",
+    "mix deps.get",
+    "mix compile"
+  ],
+  "test_command": "mix test --trace",
+  "language_version": {
+    "elixir": "1.16.3",
+    "otp": "26"
+  },
+  "dependency_versions": {
+    "mix_lock_md5": "ef584f3ae81f78ea527d81a07e93a226"
+  },
+  "operating_system_or_container": {
+    "container_image": "docker.io/swerebenchv2/tallarium-reverse-proxy-plug:186-9312183",
+    "image_id": "docker.1ms.run/swerebenchv2/tallarium-reverse-proxy-plug@sha256:1a883f0a857204e5852e7afd904e1b4685493cfd11b7b02c9195a25870520ff7",
+    "platform": "linux/amd64"
+  },
+  "traceability": {
+    "issue_id": 148,
+    "issue_url": "https://github.com/tallarium/reverse_proxy_plug/issues/148",
+    "pr_url": "https://github.com/tallarium/reverse_proxy_plug/pull/186",
+    "issue_closed": true,
+    "pr_merged": true,
+    "issue_referenced_in": "pull_request_body",
+    "fix_commit": "3476177d1d524abbac73af30c25c701d84d20eba",
+    "fix_commit_count": 1,
+    "single_parent_fix": true,
+    "fix_boundary_verdict": "SINGLE_COMMIT_FIX",
+    "upstream_fix_parents": [
+      "93121839286570820434c7832b5830c3c895aceb"
+    ],
+    "upstream_fix_parent": "93121839286570820434c7832b5830c3c895aceb",
+    "fix_commit_is_merge": false,
+    "provenance_strength": "PR_BODY_REFERENCE"
+  },
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "DONE",
+    "full_suite_validation": "PASS",
+    "protocol": "v5-f2p"
+  },
+  "upstream": {
+    "fix_commit": "3476177d1d524abbac73af30c25c701d84d20eba",
+    "fix_parent": "93121839286570820434c7832b5830c3c895aceb",
+    "issue_url": "https://github.com/tallarium/reverse_proxy_plug/issues/148",
+    "pr_url": "https://github.com/tallarium/reverse_proxy_plug/pull/186"
+  },
+  "benchmark_revision": {
+    "mode": "base_plus_gold_patch",
+    "base_revision": "93121839286570820434c7832b5830c3c895aceb",
+    "declared_fixed_revision": "464ad65ec9990b2b4484cbeebe3c1696d2c57ea8",
+    "fixed_construction": "base_plus_minimized_patch"
+  },
+  "trigger_metadata_repair": {
+    "performed_at": "2026-09-11T23:54:24Z",
+    "source_of_truth": "validation/phase-d.json b_runs/f_runs/gold_runs failure_names",
+    "original_declared_tests": [
+      "add upstream headers with prepend mode option (stream)",
+      "add upstream headers with replace mode option (stream)",
+      "adds x-forwarded-for header if not present (stream)",
+      "allow upstream configured at runtime (stream)",
+      "allow upstream configured at runtime with conn data (stream)",
+      "appends to x-forwarded-for header if present (stream)",
+      "calls error callback if supplied (stream)",
+      "calls error callback if supplied as MFA tuple (stream)",
+      "calls error callback with arity 2 if supplied (stream)",
+      "calls error callback with higher arity if present (stream)",
+      "calls status callback",
+      "client options do not set cookies if not present on connection (stream)",
+      "does not sets transfer-encoding headers for informational status class",
+      "does not sets transfer-encoding headers for no content status code",
+      "don't add a redundant slash at the end of request path (stream)",
+      "don't include the port in the host header when is the default and preserve_host_header is false in opts (stream)",
+      "don't include the port in the host header when is the default for https and preserve_host_header is false in opts (stream)",
+      "handles request path and query string (stream)",
+      "include the port in the host header when is not the default and preserve_host_header is false in opts (stream)",
+      "passes timeout options to HTTP client (stream)",
+      "preserves trailing slash at the end of request path (stream)",
+      "receives stream response",
+      "recycles cookies from connection (stream)",
+      "removes hop-by-hop headers before forwarding request (stream)",
+      "removes hop-by-hop headers from response (stream)",
+      "returns bad gateway on error (stream)",
+      "returns gateway error on a generic error (stream)",
+      "returns gateway timeout on :connect_timeout as error reason (stream)",
+      "returns gateway timeout on :timeout as error reason (stream)",
+      "returns gateway timeout on {:closed, :timeout} as error reason (stream)",
+      "sets correct chunked transfer-encoding headers",
+      "throws an error if :stream mode is used with the Tesla adapter"
+    ],
+    "validated_triggering_tests": [
+      "calls status callback",
+      "does not sets transfer-encoding headers for informational status class",
+      "does not sets transfer-encoding headers for no content status code",
+      "receives stream response",
+      "sets correct chunked transfer-encoding headers",
+      "throws an error if :stream mode is used with the Tesla adapter"
+    ],
+    "removed_stale_declarations": [
+      "add upstream headers with prepend mode option (stream)",
+      "add upstream headers with replace mode option (stream)",
+      "adds x-forwarded-for header if not present (stream)",
+      "allow upstream configured at runtime (stream)",
+      "allow upstream configured at runtime with conn data (stream)",
+      "appends to x-forwarded-for header if present (stream)",
+      "calls error callback if supplied (stream)",
+      "calls error callback if supplied as MFA tuple (stream)",
+      "calls error callback with arity 2 if supplied (stream)",
+      "calls error callback with higher arity if present (stream)",
+      "client options do not set cookies if not present on connection (stream)",
+      "don't add a redundant slash at the end of request path (stream)",
+      "don't include the port in the host header when is the default and preserve_host_header is false in opts (stream)",
+      "don't include the port in the host header when is the default for https and preserve_host_header is false in opts (stream)",
+      "handles request path and query string (stream)",
+      "include the port in the host header when is not the default and preserve_host_header is false in opts (stream)",
+      "passes timeout options to HTTP client (stream)",
+      "preserves trailing slash at the end of request path (stream)",
+      "recycles cookies from connection (stream)",
+      "removes hop-by-hop headers before forwarding request (stream)",
+      "removes hop-by-hop headers from response (stream)",
+      "returns bad gateway on error (stream)",
+      "returns gateway error on a generic error (stream)",
+      "returns gateway timeout on :connect_timeout as error reason (stream)",
+      "returns gateway timeout on :timeout as error reason (stream)",
+      "returns gateway timeout on {:closed, :timeout} as error reason (stream)"
+    ],
+    "execution_logs_modified": false
+  },
+  "upstream_revision": {
+    "fix_commit": "3476177d1d524abbac73af30c25c701d84d20eba",
+    "fix_parent": "93121839286570820434c7832b5830c3c895aceb",
+    "issue_url": "https://github.com/tallarium/reverse_proxy_plug/issues/148",
+    "pr_url": "https://github.com/tallarium/reverse_proxy_plug/pull/186"
+  },
+  "excluded_tests_manifest": "validation/excluded-tests.json",
+  "canonical_test_policy": {
+    "raw_test_command": "mix test --trace",
+    "canonical_runner": "python3 tools/defects4x test --bug 81 --version <b|f> --workdir <checkout> --canonical --execute",
+    "fixed_acceptance": "PASS only after a normal, non-empty ExUnit completion with a valid summary and no infrastructure/process error; a non-zero raw exit may be normalized only when the summary failure count matches parsed failure identities and every identity is explicitly listed in validation/excluded-tests.json and reproduced in upstream GOLD."
+  },
+  "canonical_test_command": "python3 tools/defects4x test --bug 81 --version f --workdir <checkout> --canonical --execute",
+  "repair_metadata": {
+    "repair_id": "BLOCKER-REPAIR-20261014",
+    "dependency_sidecar": "runtime/dependency-supplement-20261010/elixir",
+    "image_archive": "runtime/dependency-supplement-20261010/elixir/images/elixir-blocker-images-20261014.tar.zst",
+    "offline_dependency_resolution": "MIX_ENV=test mix deps.get before mix compile"
+  }
+}

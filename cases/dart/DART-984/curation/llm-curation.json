@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-984",
+  "technical_evidence_sha256": "1d330f7139f6e1aaec12437360f300254c0a6083f90bb0bd139a7c8f300fc23a",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "ef0bdc2c8e1eceefe05502cc18db48c2ffa999171711a50c5172b5bfab405210",
+  "reviewed_at": "2026-08-14T06:32:26.095894+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#837",
+  "rationale": "Issue #837 reports a non-fixed-point formatting defect: a `/* ... */` inline block comment inside an argument list causes the surrounding code to fully split on a second format pass. The fixing commit f093a89 (Fix #837) changes exactly that code path: source_visitor.dart classifies comments into doc/line/block/inlineBlock, chunk.dart replaces the derived `isInline` getter with an explicit `type` field, and chunk_builder.dart stops forcing `linesBeforeToken = 1` for all-inline comment runs and stops treating every `linesBefore != 0` comment as line-starting. The added fixture test/regression/0800/0837.unit is verbatim the reproducer and the idempotency round-trip from the issue body, so the trigger, issue, and fix address one pre-existing defect. The minimized production patch touches only the three library files; the CHANGELOG entry and the pubspec 2.0.2-dev version bump present in original-commit.patch are excluded, and no test file appears in it. The SourceComment bool-to-enum change is the mechanism of the fix (the fix requires distinguishing inlineBlock from block/doc), not a detached refactor; the relocation of `var text = _chunks.last.text` in _needsSpaceBeforeComment accompanies the removal of the `endsWith('\\n')` guard, which is required now that inline comments can have linesBefore > 0. Triggers are project-native .unit/.stmt fixtures consumed by the pre-existing test/formatter_test.dart harness, so they depend on no API introduced by the fix. The flipped expectations in classes.unit, extensions.unit, top_level.unit, and 0178.unit all come from the same forced-own-line path being repaired, not from a separate feature. Strict evidence (original and post-minimization) shows build passing on both revisions, all eight declared selectors unique and reproducing on the buggy revision, deterministic fingerprints across three repetitions, fixed revision clean in isolated, suite, and reversed runs, and buggy full-suite failures confined to the declared triggers. active_same_project_root_causes is empty and #837 is the sole allowed root cause key.\n\nIssue #837 reports a non-fixed-point formatting defect: the reproducer containing an inline `/* ... */` comment inside an argument list reformats to a different, fully-split output on a second pass. The fix commit f093a89 (PR #1031, 'Fix #837') targets exactly that mechanism: source_visitor.dart now classifies comments into doc/line/block/inlineBlock, and chunk_builder.dart stops forcing `linesBeforeToken = 1` for all-inline block comments and stops treating an inline block comment as line-starting, which was the source of the spurious hard split. The new fixture test/regression/0800/0837.unit contains the verbatim issue reproducer plus its own reformatted output as a second case, so it asserts fixed-point stability, which is precisely the reported symptom. The minimized production patch is limited to the three lib/src files and drops CHANGELOG.md and the pubspec version bump present in the original commit; the CommentType enum replacing `isLineComment`/`isInline` is the fix mechanism rather than an unrelated refactor, since every changed predicate (_shouldMoveCommentBeforeSplit, _needsSpaceBeforeComment, the pending-whitespace edge case) reads the new classification. Triggers are unchanged upstream project-native fixtures executed through the existing test/formatter_test.dart harness, so no new production API is required by the trigger; the fixtures for classes/extensions/top_level/0178 are expected-output revisions that are an unavoidable consequence of the same comment-classification change (leaving the old expectations would make the fixed revision fail), and they exercise the same inline-block-comment code path. Strict evidence shows build passing on both revisions, all 8 selectors present and unique, buggy differential reproduction of all 8, deterministic fingerprints over 3 repetitions, fixed revision clean in isolated/suite/reversed runs, and buggy full-suite failures confined to the declared triggers. active_same_project_root_causes is empty, so #837 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:31:41.731573+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ef0bdc2c8e1eceefe05502cc18db48c2ffa999171711a50c5172b5bfab405210",
+      "response_sha256": "8b14cba465baa8c9d90e03a6529c854a8f1fe73962fa7aa0e71e5ff0262fc21a",
+      "response_id": "msg_8f67786b2f424e9a92c22d0ca9c948cf",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.2881213677280263,
+        "input_tokens": 35992,
+        "output_tokens": 887
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#837",
+      "rationale": "Issue #837 reports a non-fixed-point formatting defect: a `/* ... */` inline block comment inside an argument list causes the surrounding code to fully split on a second format pass. The fixing commit f093a89 (Fix #837) changes exactly that code path: source_visitor.dart classifies comments into doc/line/block/inlineBlock, chunk.dart replaces the derived `isInline` getter with an explicit `type` field, and chunk_builder.dart stops forcing `linesBeforeToken = 1` for all-inline comment runs and stops treating every `linesBefore != 0` comment as line-starting. The added fixture test/regression/0800/0837.unit is verbatim the reproducer and the idempotency round-trip from the issue body, so the trigger, issue, and fix address one pre-existing defect. The minimized production patch touches only the three library files; the CHANGELOG entry and the pubspec 2.0.2-dev version bump present in original-commit.patch are excluded, and no test file appears in it. The SourceComment bool-to-enum change is the mechanism of the fix (the fix requires distinguishing inlineBlock from block/doc), not a detached refactor; the relocation of `var text = _chunks.last.text` in _needsSpaceBeforeComment accompanies the removal of the `endsWith('\\n')` guard, which is required now that inline comments can have linesBefore > 0. Triggers are project-native .unit/.stmt fixtures consumed by the pre-existing test/formatter_test.dart harness, so they depend on no API introduced by the fix. The flipped expectations in classes.unit, extensions.unit, top_level.unit, and 0178.unit all come from the same forced-own-line path being repaired, not from a separate feature. Strict evidence (original and post-minimization) shows build passing on both revisions, all eight declared selectors unique and reproducing on the buggy revision, deterministic fingerprints across three repetitions, fixed revision clean in isolated, suite, and reversed runs, and buggy full-suite failures confined to the declared triggers. active_same_project_root_causes is empty and #837 is the sole allowed root cause key.",
+      "evidence_paths": [
+        "issue_urls[0]",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch:lib/src/source_visitor.dart",
+        "patches/minimized-production.patch:lib/src/chunk_builder.dart",
+        "patches/minimized-production.patch:lib/src/chunk.dart",
+        "patches/trigger-tests.patch:test/regression/0800/0837.unit",
+        "patches/trigger-tests.patch:test/regression/other/block_comment.unit",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_post_minimization.checks.trigger.fixed_clean"
+      ],
+      "risks": [
+        "Four of the eight declared selectors (comments classes.unit, comments extensions.unit, comments top_level.unit, regression 0178.unit) fail on the buggy revision because their pre-existing expected output was flipped by the fix, which the PR body describes as a slight formatting tweak; they are same-root-cause collateral rather than independent reproductions of the reported symptom, so a narrower trigger set of regression 0837.unit plus block_comment.unit would be a purer defect signal.",
+        "The oracle is fixture-based golden output; any future intended formatting change to inline block comments would break these triggers without a functional regression.",
+        "The case selects the first of two commits in PR #1031; the second commit (Format.) fixes the mis-indented `text.startsWith('/**')` continuation line introduced here, so the buggy-to-fixed pair does not match the merged PR head exactly.",
+        "Analyzer cleanliness was not required (require_analyze_clean=false), so static-analysis state at either revision is unverified."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:32:26.095524+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ef0bdc2c8e1eceefe05502cc18db48c2ffa999171711a50c5172b5bfab405210",
+      "response_sha256": "99f877c63bb0f07e0808181e6258fa062dc4d7b8e18bff84d840aacc1916b97d",
+      "response_id": "msg_bb45bfc964fa413ba296dbe3393caea9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.95284494026534,
+        "input_tokens": 35129,
+        "output_tokens": 848
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#837",
+      "rationale": "Issue #837 reports a non-fixed-point formatting defect: the reproducer containing an inline `/* ... */` comment inside an argument list reformats to a different, fully-split output on a second pass. The fix commit f093a89 (PR #1031, 'Fix #837') targets exactly that mechanism: source_visitor.dart now classifies comments into doc/line/block/inlineBlock, and chunk_builder.dart stops forcing `linesBeforeToken = 1` for all-inline block comments and stops treating an inline block comment as line-starting, which was the source of the spurious hard split. The new fixture test/regression/0800/0837.unit contains the verbatim issue reproducer plus its own reformatted output as a second case, so it asserts fixed-point stability, which is precisely the reported symptom. The minimized production patch is limited to the three lib/src files and drops CHANGELOG.md and the pubspec version bump present in the original commit; the CommentType enum replacing `isLineComment`/`isInline` is the fix mechanism rather than an unrelated refactor, since every changed predicate (_shouldMoveCommentBeforeSplit, _needsSpaceBeforeComment, the pending-whitespace edge case) reads the new classification. Triggers are unchanged upstream project-native fixtures executed through the existing test/formatter_test.dart harness, so no new production API is required by the trigger; the fixtures for classes/extensions/top_level/0178 are expected-output revisions that are an unavoidable consequence of the same comment-classification change (leaving the old expectations would make the fixed revision fail), and they exercise the same inline-block-comment code path. Strict evidence shows build passing on both revisions, all 8 selectors present and unique, buggy differential reproduction of all 8, deterministic fingerprints over 3 repetitions, fixed revision clean in isolated/suite/reversed runs, and buggy full-suite failures confined to the declared triggers. active_same_project_root_causes is empty, so #837 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+      "evidence_paths": [
+        "case.json:issue_urls",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch:lib/src/chunk_builder.dart",
+        "patches/minimized-production.patch:lib/src/source_visitor.dart",
+        "patches/minimized-production.patch:lib/src/chunk.dart",
+        "patches/trigger-tests.patch:test/regression/0800/0837.unit",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "Only regression 0837.unit encodes the reported issue directly; the other seven selectors are expected-output updates for incidental inline-block-comment formatting tweaks the PR acknowledges, so a semantically correct alternative repair that does not reproduce those exact cosmetic outputs would be scored as failing.",
+        "The fixture-driven harness means a trigger 'test name' maps to a whole .unit file, so failure granularity is coarser than a single assertion and a fixture may fail for reasons other than the 837 case.",
+        "The source_visitor.dart hunk carries the fix commit's own misindented continuation line (`text.startsWith('/**')`), later corrected by the PR's second 'Format.' commit; it is cosmetic and inseparable from the fix hunk, but the buggy-to-fixed diff is therefore not formatting-clean.",
+        "Runtime evidence is limited to a single full-suite repetition, so flakiness in the full suite is less strongly bounded than the 3-repetition trigger matrix."
+      ]
+    }
+  ]
+}

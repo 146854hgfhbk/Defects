@@ -1,0 +1,459 @@
+diff --git a/cpanfile b/cpanfile
+index 840e67974ac6a3cc6eeb5bc37da5c1a24d517a3f..7c10d15c711fa736b027e0bcdf2a5bdee655b5f2 100644
+--- a/cpanfile
++++ b/cpanfile
+@@ -38,6 +38,7 @@ on 'runtime' => sub {
+     requires "strict" => "0";
+     requires "warnings" => "0";
+     requires "utf8" => '0';
++    suggests 'Regexp::IPv6' => "0.03";
+     suggests 'Business::ISBN' => "3.005";
+ };
+ 
+diff --git a/lib/URI.pm b/lib/URI.pm
+index eb02a728fcaf28d69c72907a7914eee917366af0..9370720ad64892e45e0d96bb3287b324c0124da1 100644
+--- a/lib/URI.pm
++++ b/lib/URI.pm
+@@ -5,16 +5,21 @@ use warnings;
+ 
+ our $VERSION = '5.11';
+ 
++# 1=version 5.10 and earlier; 0=version 5.11 and later
++use constant HAS_RESERVED_SQUARE_BRACKETS => $ENV{URI_HAS_RESERVED_SQUARE_BRACKETS} ? 1 : 0;
++
+ our ($ABS_REMOTE_LEADING_DOTS, $ABS_ALLOW_RELATIVE_SCHEME, $DEFAULT_QUERY_FORM_DELIMITER);
+ 
+ my %implements;  # mapping from scheme to implementor class
+ 
+ # Some "official" character classes
+ 
+-our $reserved   = q(;/?:@&=+$,[]);
++our $reserved   = HAS_RESERVED_SQUARE_BRACKETS ? q(;/?:@&=+$,[]) : q(;/?:@&=+$,);
+ our $mark       = q(-_.!~*'());                                    #'; emacs
+ our $unreserved = "A-Za-z0-9\Q$mark\E";
+ our $uric       = quotemeta($reserved) . $unreserved . "%";
++our $uric4host  = $uric . ( HAS_RESERVED_SQUARE_BRACKETS ? '' : quotemeta( q([]) ) );
++our $uric4user  = quotemeta( q{!$'()*,;:._~%-+=%&} ) . "A-Za-z0-9" . ( HAS_RESERVED_SQUARE_BRACKETS ? quotemeta( q([]) ) : '' ); # RFC-3987: iuserinfo w/o UTF
+ 
+ our $scheme_re  = '[a-zA-Z][a-zA-Z0-9.+\-]*';
+ 
+@@ -86,10 +91,34 @@ sub _init
+ }
+ 
+ 
++#-- Version: 5.11+
++#   Since the complete URI will be percent-encoded including '[' and ']',
++#   we selectively unescape square brackets from the authority/host part of the URI.
++#   Derived modules that implement _uric_escape() should take this into account
++#   if they do not rely on URI::_uric_escape().
++#   No unescaping is performed for the userinfo@ part of the authority part.
++sub _fix_uric_escape_for_host_part {
++  return if HAS_RESERVED_SQUARE_BRACKETS;
++  return if $_[0] !~ /%/;
++
++  if ($_[0] =~ m,^((?:$URI::scheme_re:)?)//([^/?\#]*)(.*)$,os) {
++    my $orig          = $2;
++    my ($user, $host) = $orig =~ /^(.*@)?([^@]*)$/;
++    $user  ||= '';
++    my $port = $host =~ s/(:\d+)$// ? $1 : '';
++    #MAINT: die() here if scheme indicates TCP/UDP and port is out of range [0..65535] ?
++    $host    =~ s/\%5B/[/gi;
++    $host    =~ s/\%5D/]/gi;
++    $_[0]    =~ s/\Q$orig\E/$user$host$port/;
++  }
++}
++
++
+ sub _uric_escape
+ {
+     my($class, $str) = @_;
+     $str =~ s*([^$uric\#])* URI::Escape::escape_char($1) *ego;
++    _fix_uric_escape_for_host_part( $str );
+     utf8::downgrade($str);
+     return $str;
+ }
+@@ -1087,6 +1116,34 @@ delimited by ";" instead of "&" which is the default.
+ 
+ =back
+ 
++=head1 ENVIRONMENT VARIABLES
++
++=over 4
++
++=item URI_HAS_RESERVED_SQUARE_BRACKETS
++
++Before version 5.11, URI treated square brackets as reserved characters
++throughout the whole URI string. However, these brackets are reserved
++only within the authority/host part of the URI and nowhere else (RFC 3986).
++
++Starting with version 5.11, URI takes this distinction into account.
++Setting the environment variable C<URI_HAS_RESERVED_SQUARE_BRACKETS>
++(programmatically or via the shell), restores the old behavior.
++
++  #-- restore 5.10 behavior programmatically
++  BEGIN {
++    $ENV{URI_HAS_RESERVED_SQUARE_BRACKETS} = 1;
++  }
++  use URI ();
++
++I<Note>: This environment variable is just used during initialization and has to be set
++      I<before> module URI is used/required. Changing it at run time has no effect.
++
++Its value can be checked programmatically by accessing the constant
++C<URI::HAS_RESERVED_SQUARE_BRACKETS>.
++
++=back
++
+ =head1 BUGS
+ 
+ There are some things that are not quite right:
+diff --git a/lib/URI/_generic.pm b/lib/URI/_generic.pm
+index d03377f7a0b222cbeafd1ce00808d1d92dd185ba..8389cd698579974790147da1236736f9c77d967d 100644
+--- a/lib/URI/_generic.pm
++++ b/lib/URI/_generic.pm
+@@ -10,11 +10,31 @@ use Carp ();
+ 
+ our $VERSION = '5.11';
+ 
+-my $ACHAR = $URI::uric;  $ACHAR =~ s,\\[/?],,g;
+-my $PCHAR = $URI::uric;  $PCHAR =~ s,\\[?],,g;
++my $ACHAR = URI::HAS_RESERVED_SQUARE_BRACKETS ? $URI::uric : $URI::uric4host;  $ACHAR =~ s,\\[/?],,g;
++my $PCHAR = $URI::uric;                                                        $PCHAR =~ s,\\[?],,g;
+ 
+ sub _no_scheme_ok { 1 }
+ 
++our $IPv6_re;
++
++sub _looks_like_raw_ip6_address {
++  my $addr = shift;
++
++  if ( !$IPv6_re ) { #-- lazy / runs once / use Regexp::IPv6 if installed
++    eval {
++      require Regexp::IPv6;
++      Regexp::IPv6->import( qw($IPv6_re) );
++      1;
++    }  ||  do { $IPv6_re = qr/[:0-9a-f]{3,}/; }; #-- fallback: unambitious guess
++  }
++
++  return 0 unless $addr;
++  return 0 if $addr =~ tr/:/:/ < 2;  #-- fallback must not create false positive for IPv4:Port = 0:0
++  return 1 if $addr =~ /^$IPv6_re$/i;
++  return 0;
++}
++
++
+ sub authority
+ {
+     my $self = shift;
+@@ -26,6 +46,13 @@ sub authority
+ 	my $rest = $3;
+ 	if (defined $auth) {
+ 	    $auth =~ s/([^$ACHAR])/ URI::Escape::escape_char($1)/ego;
++            if ( my ($user, $host) = $auth =~ /^(.*@)?([^@]+)$/ ) { #-- special escape userinfo part
++              $user ||= '';
++              $user =~ s/([^$URI::uric4user])/ URI::Escape::escape_char($1)/ego;
++              $user =~ s/%40$/\@/; # recover final '@'
++              $host = "[$host]" if _looks_like_raw_ip6_address( $host );
++              $auth = $user . $host;
++            }
+ 	    utf8::downgrade($auth);
+ 	    $$self .= "//$auth";
+ 	}
+diff --git a/lib/URI/_server.pm b/lib/URI/_server.pm
+index 16ff524a19218fe9f802e596b8e4564e6382346b..69207a80a1906113ff5ce8d9cfb2447c800b9fa8 100644
+--- a/lib/URI/_server.pm
++++ b/lib/URI/_server.pm
+@@ -23,7 +23,8 @@ sub _uric_escape {
+ }
+ 
+ sub _host_escape {
+-    return unless $_[0] =~ /[^$URI::uric]/;
++  return if  URI::HAS_RESERVED_SQUARE_BRACKETS  and  $_[0] !~ /[^$URI::uric]/;
++  return if !URI::HAS_RESERVED_SQUARE_BRACKETS  and  $_[0] !~ /[^$URI::uric4host]/;
+     eval {
+ 	require URI::_idna;
+ 	$_[0] = URI::_idna::encode($_[0]);
+@@ -59,8 +60,8 @@ sub userinfo
+ 	$new =~ s/.*@//;  # remove old stuff
+ 	my $ui = shift;
+ 	if (defined $ui) {
+-	    $ui =~ s/@/%40/g;   # protect @
+-	    $new = "$ui\@$new";
++          $ui =~ s/([^$URI::uric4user])/ URI::Escape::escape_char($1)/ego;
++          $new = "$ui\@$new";
+ 	}
+ 	$self->authority($new);
+     }
+diff --git a/t/old-base.t b/t/old-base.t
+index 706051a2d5b7c2c974def9a743490d8cad3ba9a5..bef71eb463099279f14f05538f259a15087de9bf 100644
+--- a/t/old-base.t
++++ b/t/old-base.t
+@@ -552,7 +552,13 @@ sub escape_test {
+     is($all, $new, "uri_escape->uri_unescape"),
+ 
+     $url->path($all);
+-    is($url->full_path, q(%00%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%20!%22%23$%&'()*+,-./0123456789:;%3C=%3E%3F@ABCDEFGHIJKLMNOPQRSTUVWXYZ[%5C]%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~%7F%80%81%82%83%84%85%86%87%88%89%8A%8B%8C%8D%8E%8F%90%91%92%93%94%95%96%97%98%99%9A%9B%9C%9D%9E%9F%A0%A1%A2%A3%A4%A5%A6%A7%A8%A9%AA%AB%AC%AD%AE%AF%B0%B1%B2%B3%B4%B5%B6%B7%B8%B9%BA%BB%BC%BD%BE%BF%C0%C1%C2%C3%C4%C5%C6%C7%C8%C9%CA%CB%CC%CD%CE%CF%D0%D1%D2%D3%D4%D5%D6%D7%D8%D9%DA%DB%DC%DD%DE%DF%E0%E1%E2%E3%E4%E5%E6%E7%E8%E9%EA%EB%EC%ED%EE%EF%F0%F1%F2%F3%F4%F5%F6%F7%F8%F9%FA%FB%FC%FD%FE%FF), ref($url) . '->as_string');
++
++    if ( URI::HAS_RESERVED_SQUARE_BRACKETS ) {
++      # legacy: this was legal before '[' and ']' were restricted to the host part of the URI (see: RFC 3513 & RFC 3986)
++      is($url->full_path, q(%00%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%20!%22%23$%&'()*+,-./0123456789:;%3C=%3E%3F@ABCDEFGHIJKLMNOPQRSTUVWXYZ[%5C]%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~%7F%80%81%82%83%84%85%86%87%88%89%8A%8B%8C%8D%8E%8F%90%91%92%93%94%95%96%97%98%99%9A%9B%9C%9D%9E%9F%A0%A1%A2%A3%A4%A5%A6%A7%A8%A9%AA%AB%AC%AD%AE%AF%B0%B1%B2%B3%B4%B5%B6%B7%B8%B9%BA%BB%BC%BD%BE%BF%C0%C1%C2%C3%C4%C5%C6%C7%C8%C9%CA%CB%CC%CD%CE%CF%D0%D1%D2%D3%D4%D5%D6%D7%D8%D9%DA%DB%DC%DD%DE%DF%E0%E1%E2%E3%E4%E5%E6%E7%E8%E9%EA%EB%EC%ED%EE%EF%F0%F1%F2%F3%F4%F5%F6%F7%F8%F9%FA%FB%FC%FD%FE%FF), ref($url) . '->as_string');
++    } else {
++      is($url->full_path, q(%00%01%02%03%04%05%06%07%08%09%0A%0B%0C%0D%0E%0F%10%11%12%13%14%15%16%17%18%19%1A%1B%1C%1D%1E%1F%20!%22%23$%&'()*+,-./0123456789:;%3C=%3E%3F@ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~%7F%80%81%82%83%84%85%86%87%88%89%8A%8B%8C%8D%8E%8F%90%91%92%93%94%95%96%97%98%99%9A%9B%9C%9D%9E%9F%A0%A1%A2%A3%A4%A5%A6%A7%A8%A9%AA%AB%AC%AD%AE%AF%B0%B1%B2%B3%B4%B5%B6%B7%B8%B9%BA%BB%BC%BD%BE%BF%C0%C1%C2%C3%C4%C5%C6%C7%C8%C9%CA%CB%CC%CD%CE%CF%D0%D1%D2%D3%D4%D5%D6%D7%D8%D9%DA%DB%DC%DD%DE%DF%E0%E1%E2%E3%E4%E5%E6%E7%E8%E9%EA%EB%EC%ED%EE%EF%F0%F1%F2%F3%F4%F5%F6%F7%F8%F9%FA%FB%FC%FD%FE%FF), ref($url) . '->as_string');
++    }
+ 
+     # test escaping uses uppercase (preferred by rfc1837)
+     $url = new URI::URL 'file://h/';
+diff --git a/t/sq-brackets-legacy.t b/t/sq-brackets-legacy.t
+new file mode 100644
+index 0000000000000000000000000000000000000000..1f5b7ddc85711a71ffcf55b67abcae25599dbbbb
+--- /dev/null
++++ b/t/sq-brackets-legacy.t
+@@ -0,0 +1,41 @@
++use strict;
++use warnings;
++
++use Test::More;
++
++BEGIN {
++  $ENV{URI_HAS_RESERVED_SQUARE_BRACKETS} = 1;
++}
++
++use URI ();
++
++sub show {
++  diag explain("self: ", shift);
++}
++
++
++#-- test bugfix of https://github.com/libwww-perl/URI/issues/99
++
++
++no warnings; #-- don't complain about the fragment # being a potential comment
++my @legacy_tests = qw(
++                     ftp://[::1]/
++                     http://example.com/path_with_square_[brackets]
++                     http://[::1]/and_[%5Bmixed%5D]_stuff_in_path
++                     https://[::1]/path_with_square_[brackets]_and_query?par=value[1]&par=value[2]
++                     http://[::1]/path_with_square_[brackets]_and_query?par=value[1]#and_fragment[2]
++                     https://root[user]@[::1]/welcome.html
++                    );
++use warnings;
++
++is( URI::HAS_RESERVED_SQUARE_BRACKETS, 1, "constant indicates to treat square brackets as reserved characters (legacy)" );
++
++foreach my $same ( @legacy_tests  ) {
++  my $u = URI->new(  $same );
++  is( $u->canonical,
++      $same,
++      "legacy: reserved square brackets not escaped"
++    ) or show $u;
++}
++
++done_testing;
+diff --git a/t/sq-brackets.t b/t/sq-brackets.t
+new file mode 100644
+index 0000000000000000000000000000000000000000..bb5152da085e6e8b70849dc442d0fc538cc5825f
+--- /dev/null
++++ b/t/sq-brackets.t
+@@ -0,0 +1,188 @@
++use strict;
++use warnings;
++
++use Test::More;
++
++BEGIN {
++  $ENV{URI_HAS_RESERVED_SQUARE_BRACKETS} = 0;
++}
++
++use URI ();
++
++sub show {
++  diag explain("self: ", shift);
++}
++
++
++#-- test bugfix of https://github.com/libwww-perl/URI/issues/99
++
++
++is( URI::HAS_RESERVED_SQUARE_BRACKETS, 0, "constant indicates NOT to treat square brackets as reserved characters" );
++
++{
++  my $u = URI->new("http://[::1]/path_with_square_[brackets]?par=value[1]");
++  is( $u->canonical,
++      "http://[::1]/path_with_square_%5Bbrackets%5D?par=value%5B1%5D",
++      "sqb in path and request"
++    ) or show $u;
++}
++
++
++{
++  my $u = URI->new("http://[::1]/path_with_square_[brackets]?par=value[1]#fragment[2]");
++  is( $u->canonical,
++      "http://[::1]/path_with_square_%5Bbrackets%5D?par=value%5B1%5D#fragment%5B2%5D",
++      "sqb in path and request and fragment"
++    ) or show $u;
++}
++
++
++{
++  my $u = URI->new("http://root[user]@[::1]/path_with_square_[brackets]?par=value[1]#fragment[2]");
++  is( $u->canonical,
++      "http://root%5Buser%5D@[::1]/path_with_square_%5Bbrackets%5D?par=value%5B1%5D#fragment%5B2%5D",
++      "sqb in userinfo, host, path, request and fragment"
++    ) or show $u;
++}
++
++
++{
++  my $u = URI->new("http://root[user]@[::1]/path_with_square_[brackets]?par=value[1]&par[2]=value[2]#fragment[2]");
++  is( $u->canonical,
++      "http://root%5Buser%5D@[::1]/path_with_square_%5Bbrackets%5D?par=value%5B1%5D&par%5B2%5D=value%5B2%5D#fragment%5B2%5D",
++      "sqb in userinfo, host, path, request and fragment"
++    ) or show $u;
++
++  is( $u->scheme()                , "http",           "scheme");
++  is( $u->userinfo()              , "root%5Buser%5D", "userinfo");
++  is( $u->host()                  , "::1",            "host");
++  is( $u->ihost()                 , "::1",            "ihost");
++  is( $u->port()                  , "80",             "port");
++  is( $u->default_port()          , "80",             "default_port");
++  is( $u->host_port()             , "[::1]:80",       "host_port");
++  is( $u->secure()                , "0",              "is_secure" );
++  is( $u->path()                  , "/path_with_square_%5Bbrackets%5D", "path");
++  is( $u->opaque()                , "//root%5Buser%5D@[::1]/path_with_square_%5Bbrackets%5D?par=value%5B1%5D&par%5B2%5D=value%5B2%5D", "opaque");
++  is( $u->fragment()              , "fragment%5B2%5D", "fragment");
++  is( $u->query()                 , "par=value%5B1%5D&par%5B2%5D=value%5B2%5D", "query");
++  is( $u->as_string()             , "http://root%5Buser%5D@[::1]/path_with_square_%5Bbrackets%5D?par=value%5B1%5D&par%5B2%5D=value%5B2%5D#fragment%5B2%5D", "as_string");
++  is( $u->has_recognized_scheme() , "1", "has_recognized_scheme");
++  is( $u->as_iri()                , "http://root%5Buser%5D@[::1]/path_with_square_%5Bbrackets%5D?par=value%5B1%5D&par%5B2%5D=value%5B2%5D#fragment%5B2%5D", "as_iri"); #TODO: utf8
++
++  is( $u->abs( "/BASEDIR")->as_string() , "http://root%5Buser%5D@[::1]/path_with_square_%5Bbrackets%5D?par=value%5B1%5D&par%5B2%5D=value%5B2%5D#fragment%5B2%5D", "abs (no change)");
++  is( $u->rel("../BASEDIR")             , "http://root%5Buser%5D@[::1]/path_with_square_%5Bbrackets%5D?par=value%5B1%5D&par%5B2%5D=value%5B2%5D#fragment%5B2%5D", "rel");
++
++  is( $u->authority()                   , "root%5Buser%5D@[::1]", "authority" );
++  is( $u->path_query()                  , "/path_with_square_%5Bbrackets%5D?par=value%5B1%5D&par%5B2%5D=value%5B2%5D", "path_query");
++  is( $u->query_keywords()              , undef, "query_keywords");
++
++  my @segments = $u->path_segments();
++  is( join(" | ", @segments), " | path_with_square_[brackets]", "segments");
++}
++
++
++{ #-- form/query related tests
++  my $u = URI->new("http://root[user]@[::1]/path_with_square_[brackets]/segment[2]?par=value[1]&par[2]=value[2]#fragment[2]");
++
++  is( $u->query_form(), "4", "scalar: query_form");
++  is( join(" | ", $u->query_form()), "par | value[1] | par[2] | value[2]", "list: query_form");
++
++  $u->query_form( {} );
++  is( $u->query(), undef, "query removed");
++  is( join(" | ", $u->query_form()), "", "list: query_form");
++  is( $u->canonical(), "http://root%5Buser%5D@[::1]/path_with_square_%5Bbrackets%5D/segment%5B2%5D#fragment%5B2%5D", "query removed: canonical");
++
++  $u->query_form( key1 => 'val1', key2 => 'val[2]' );
++  is( $u->query(), "key1=val1&key2=val%5B2%5D", "query");
++}
++
++
++{ #-- path segments
++  my $u = URI->new("http://root[user]@[::1]/path_with_square_[brackets]/segment[2]?par=value[1]#fragment[2]");
++  my @segments = $u->path_segments();
++  is( join(" | ", @segments), " | path_with_square_[brackets] | segment[2]", "segments");
++}
++
++
++{ #-- rel
++  my $u = URI->new("http://root[user]@[::1]/oldbase/next/path_with_square_[brackets]/segment[2]?par=value[1]#fragment[2]");
++  #TODO: is userinfo@ optional?
++  is( $u->rel("http://root%5Buser%5D@[::1]/oldbase/next/")->canonical(),
++      "path_with_square_%5Bbrackets%5D/segment%5B2%5D?par=value%5B1%5D#fragment%5B2%5D",
++      "rel/canonical"
++    );
++}
++
++
++{ #-- various setters
++ my $ip6 = 'fedc:ba98:7654:3210:fedc:ba98:7654:3210';
++ my $u = URI->new("http://\[" . uc($ip6) . "\]/index.html");
++ is ($u->canonical(), "http://[$ip6]/index.html", "basic IPv6 URI");
++
++ $u->scheme("https");
++ is ($u->canonical(), "https://[$ip6]/index.html", "basic IPv6 URI");
++
++ $u->userinfo("user[42]"); #-- tolerate unescaped '[', ']'
++ is ($u->canonical(), "https://user%5B42%5D@[$ip6]/index.html", "userinfo added (unescaped)");
++ is ($u->userinfo(), "user%5B42%5D", "userinfo is escaped");
++
++ $u->userinfo("user%5B77%5D"); #-- already escaped
++ is ($u->canonical(), "https://user%5B77%5D@[$ip6]/index.html", "userinfo replaced (escaped)");
++ is ($u->userinfo(), "user%5B77%5D", "userinfo is escaped");
++
++ $u->userinfo( q(weird.al$!:secret*[1]++) );
++ is ($u->canonical(), "https://weird.al\$!:secret*%5B1%5D++@[$ip6]/index.html", "userinfo replaced (escaped2)");
++ is ($u->userinfo(),  "weird.al\$!:secret*%5B1%5D++", "userinfo is escaped2");
++
++ $u->userinfo( q(j.doe@example.com:secret) );
++ is ($u->canonical(), "https://j.doe%40example.com:secret@[$ip6]/index.html", "userinfo replaced (escaped3)");
++ is ($u->userinfo() , "j.doe%40example.com:secret", "userinfo is escaped3");
++
++ $u->host("example.com");
++ is ($u->canonical(), "https://j.doe%40example.com:secret\@example.com/index.html", "hostname replaced");
++
++ $u->host("127.0.0.1");
++ is ($u->canonical(), "https://j.doe%40example.com:secret\@127.0.0.1/index.html", "hostname replaced");
++
++ for my $host ( qw(example.com 127.0.0.1)) {
++   $u->host( $host );
++   my $expect = "https://j.doe%40example.com:secret\@$host/index.html";
++   is ($u->canonical(), $expect, "host: $host");
++   is ($u->host(), $host, "same hosts ($host)");
++ }
++
++ for my $host6 ( $ip6, qw(::1) ) {
++   $u->host( $host6 );
++   my $expect = "https://j.doe%40example.com:secret\@[$host6]/index.html";
++   is ($u->canonical(), $expect, "IPv6 host: $host6");
++   is ($u->host(), $host6, "same IPv6 hosts ($host6)");
++ }
++
++ $u->host($ip6);
++ $u->path("/subdir/index[1].html");
++ is( $u->canonical(), "https://j.doe%40example.com:secret@[$ip6]/subdir/index%5B1%5D.html", "path replaced");
++
++ $u->fragment("fragment[xyz]");
++ is( $u->canonical(), "https://j.doe%40example.com:secret@[$ip6]/subdir/index%5B1%5D.html#fragment%5Bxyz%5D", "fragment added");
++
++ $u->authority("user[doe]@[::1]");
++ is( $u->canonical(), "https://user%5Bdoe%5D@[::1]/subdir/index%5B1%5D.html#fragment%5Bxyz%5D", "authority replaced");
++
++ $u->authority("::1");
++ is( $u->canonical(), "https://[::1]/subdir/index%5B1%5D.html#fragment%5Bxyz%5D", "authority replaced");
++
++ $u->authority("[::1]:19999");
++ is( $u->canonical(), "https://[::1]:19999/subdir/index%5B1%5D.html#fragment%5Bxyz%5D", "authority replaced");
++
++ # $u->authority("::1:18000"); #-- theoretically, we could guess an [::1]:18000 ... but for now it will just be ill formatted.
++ # is( $u->canonical(), "https://::1:18000/subdir/index%5B1%5D.html#fragment%5Bxyz%5D", "authority replaced");
++
++ $u->authority("user[abc]\@::1");
++ is( $u->canonical(), "https://user%5Babc%5D@[::1]/subdir/index%5B1%5D.html#fragment%5Bxyz%5D", "authority replaced");
++
++ $u->authority("user[xyz]\@example.com\@[::1]:22022");
++ is( $u->canonical(), "https://user%5Bxyz%5D%40example.com@[::1]:22022/subdir/index%5B1%5D.html#fragment%5Bxyz%5D", "authority replaced");
++
++}
++
++done_testing;
+diff --git a/uri-test b/uri-test
+index ca30ef8536e30458ea1ca4986c97bb97d694f817..542723acbe52c5e75e45b77ee514807a01752089 100755
+--- a/uri-test
++++ b/uri-test
+@@ -14,6 +14,8 @@ my $orig = $uri;
+ 
+ require URI;
+ 
++warn "Using: $INC{'URI.pm'}\n"  if  $INC{'URI.pm'} ne 'lib/URI.pm'  and  -t STDOUT  and  -t STDIN;
++
+ my @ctor_arg = ($uri);
+ push(@ctor_arg, shift) while @ARGV && $ARGV[0] =~ s/^\+//;
+ 

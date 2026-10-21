@@ -1,0 +1,26 @@
+diff --git a/lua/pl/lexer.lua b/lua/pl/lexer.lua
+index 579fa41100ceea4b9fab7eb68efe38b0f6d669d5..9d609db287083f03b475a2e351d9644374165b66 100644
+--- a/lua/pl/lexer.lua
++++ b/lua/pl/lexer.lua
+@@ -329,7 +329,7 @@ end
+ -- @tab[opt] options a table of options; by default, `{number=true,string=true}`,
+ -- which means convert numbers and strip string quotes.
+ function lexer.cpp(s,filter,options)
+-    filter = filter or {comments=true}
++    filter = filter or {space=true,comments=true}
+     if not cpp_keyword then
+         cpp_keyword = {
+             ["class"] = true, ["break"] = true,  ["do"] = true, ["sizeof"] = true,
+diff --git a/tests/test-lexer.lua b/tests/test-lexer.lua
+index 9c048b9dcd8b947683dd905c558e0b6106156269..0f4f9c2dcf34b6d685cdab996c9013136a42539c 100644
+--- a/tests/test-lexer.lua
++++ b/tests/test-lexer.lua
+@@ -113,7 +113,7 @@ test_scan(txt, {}, nil, {
+     {'comment', '// more\n'}
+ }, 'cpp')
+ 
+-test_scan([['' "" " \\" '\'' "'"]], {space=true}, nil, {
++test_scan([['' "" " \\" '\'' "'"]], nil, nil, {
+     {'char', ''}, -- Char literals with no or more than one characters are not a lexing error.
+     {'string', ''},
+     {'string', ' \\\\'},

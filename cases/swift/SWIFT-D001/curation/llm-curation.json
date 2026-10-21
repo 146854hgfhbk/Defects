@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "CASES-SWIFT-001",
+  "technical_evidence_sha256": "9d867f4cb8ed8bb0aa9a16ef0c9f6abab7ac9b8eace536ae96196093591190ad",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "25455ff6b7a30af5bb853147602be43ec95d1bdd688dd6a64747f56b9af335be",
+  "reviewed_at": "2026-09-07T12:13:27.657072+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-argument-parser#578",
+  "rationale": "Issue #578 (labeled bug, opened 2023-07-13) reports that the built-in help flag's usage line prepends the type name of @OptionGroup members to the command stack when every option/argument has a default value, expecting 'USAGE: test [--num <num>] [<arg>]'. The minimized production patch is a single hunk in CommandParser.swift's commandStack that filters decoded commandTypes to those present in commandTree, which is exactly the leak path described in the issue and PR #873 root-cause analysis (an @OptionGroup type conforming to ParsableCommand being decoded and counted as a command). The trigger test reproduces the issue's own repro structure (a ParsableCommand with an @OptionGroup whose type is a ParsableCommand with @Option num: Int = 0, plus @Argument arg: String = \"\") and asserts the expected usage line via parseAsRoot([\"--help\"]) -> HelpCommand.generateHelp(screenWidth:), both pre-existing internal APIs untouched by the fix; the patch adds no new production API, and build.both_versions plus trigger.buggy_differential passing confirms the test compiles and fails on the buggy revision 1e77425 and passes on 9253b37. The patch contains only the behavioral filter plus an explanatory comment: no refactor, feature extension, config, or doc-only change; the test-only and lint/whitespace commits from the multi-commit PR were correctly excluded from the production patch (original-commit test hunk and the two follow-up formatting commits are not in minimized-production.patch). Strict evidence pre- and post-minimization both pass all gates (matrix 32 runs, 3 repetitions, deterministic fingerprints, fixed suite green, buggy full suite fails only on the declared selector). active_same_project_root_causes is empty, so #578 is not a duplicate, and it matches the sole allowed_root_cause_ids entry.\n\nIssue #578 (label 'bug', opened 2023-07-13, affecting 1.0.0-main) reports that the built-in help flag's usage line prepends the type name of @OptionGroup members to the command stack when every argument has a default value, e.g. 'USAGE: group test [--num <num>] [<arg>]' instead of 'USAGE: test [--num <num>] [<arg>]'. The minimized production patch touches exactly one hunk in Sources/ArgumentParser/Parsing/CommandParser.swift, restricting commandStack to decoded command types that actually exist as nodes in commandTree, which is precisely the leak of @OptionGroup types conforming to ParsableCommand described in the issue and PR #873 root-cause section. The trigger, testOptionGroupUsageDoesNotIncludeGroupName, reconstructs the issue's reproducer (OptionGroupOptions with '--num' defaulted, OptionGroupCommand named 'test' with a defaulted @Argument), drives it through parseAsRoot([\"--help\"]) so the built-in help path is exercised rather than helpMessage(), and asserts the expected usage line from the issue. It uses only pre-existing internal symbols (HelpCommand, generateHelp(screenWidth:)); the fix adds no production API, and the strict matrix confirms the test compiles and fails on buggy revision 1e77425 and passes on 9253b37, which is only possible if every symbol it references predates the fix. The patch adds no refactor, feature, config, or doc-only change; the two added comment lines describe the filter inline and the trailing-blank-line churn is confined to the test file (and was reverted by a later PR commit). Strict evidence passes on both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential with the selector reproducing in isolation, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32 matrix runs), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no excluded baseline tests. active_same_project_root_causes is empty, so apple/swift-argument-parser#578 is not a duplicate, and it matches the single allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T12:12:41.726958+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "25455ff6b7a30af5bb853147602be43ec95d1bdd688dd6a64747f56b9af335be",
+      "response_sha256": "1d99e191b628c889c76ddb1dfc9729de3686fe3ea095561436ac45e038037157",
+      "response_id": "msg_fc56eccf92244683ae30c25341e6a1b6",
+      "attempts": 2,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7550193973466003,
+        "input_tokens": 17710,
+        "output_tokens": 735
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-argument-parser#578",
+      "rationale": "Issue #578 (labeled bug, opened 2023-07-13) reports that the built-in help flag's usage line prepends the type name of @OptionGroup members to the command stack when every option/argument has a default value, expecting 'USAGE: test [--num <num>] [<arg>]'. The minimized production patch is a single hunk in CommandParser.swift's commandStack that filters decoded commandTypes to those present in commandTree, which is exactly the leak path described in the issue and PR #873 root-cause analysis (an @OptionGroup type conforming to ParsableCommand being decoded and counted as a command). The trigger test reproduces the issue's own repro structure (a ParsableCommand with an @OptionGroup whose type is a ParsableCommand with @Option num: Int = 0, plus @Argument arg: String = \"\") and asserts the expected usage line via parseAsRoot([\"--help\"]) -> HelpCommand.generateHelp(screenWidth:), both pre-existing internal APIs untouched by the fix; the patch adds no new production API, and build.both_versions plus trigger.buggy_differential passing confirms the test compiles and fails on the buggy revision 1e77425 and passes on 9253b37. The patch contains only the behavioral filter plus an explanatory comment: no refactor, feature extension, config, or doc-only change; the test-only and lint/whitespace commits from the multi-commit PR were correctly excluded from the production patch (original-commit test hunk and the two follow-up formatting commits are not in minimized-production.patch). Strict evidence pre- and post-minimization both pass all gates (matrix 32 runs, 3 repetitions, deterministic fingerprints, fixed suite green, buggy full suite fails only on the declared selector). active_same_project_root_causes is empty, so #578 is not a duplicate, and it matches the sole allowed_root_cause_ids entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "trigger_tests[0]",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger asserts the entire help output (ARGUMENTS/OPTIONS sections and default-value rendering), so unrelated future help-formatting changes could break it for reasons unrelated to the defect.",
+        "The fix's `!commandTree.path(to:).isEmpty` filter is broader than the OptionGroup case; behavior for command types appearing outside the tree (e.g. dynamically constructed stacks) is not exercised by the single declared trigger.",
+        "issue_evidence is null at the top level; issue text is only available through source_candidate.issue_check.linked_issues, so the issue body was not independently re-fetched during curation.",
+        "Minimization was trivial (1 of 1 hunk retained), so it provides no additional evidence about hunk-level necessity beyond the runtime gates."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T12:13:27.656158+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "25455ff6b7a30af5bb853147602be43ec95d1bdd688dd6a64747f56b9af335be",
+      "response_sha256": "241ea2f6bb8e857c8d1c6537a2ec22c6660227b9a00586675ff46e76b94b1202",
+      "response_id": "msg_6fe9798d47204a7889b23d9b574d7551",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7407558454726368,
+        "input_tokens": 17944,
+        "output_tokens": 911
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-argument-parser#578",
+      "rationale": "Issue #578 (label 'bug', opened 2023-07-13, affecting 1.0.0-main) reports that the built-in help flag's usage line prepends the type name of @OptionGroup members to the command stack when every argument has a default value, e.g. 'USAGE: group test [--num <num>] [<arg>]' instead of 'USAGE: test [--num <num>] [<arg>]'. The minimized production patch touches exactly one hunk in Sources/ArgumentParser/Parsing/CommandParser.swift, restricting commandStack to decoded command types that actually exist as nodes in commandTree, which is precisely the leak of @OptionGroup types conforming to ParsableCommand described in the issue and PR #873 root-cause section. The trigger, testOptionGroupUsageDoesNotIncludeGroupName, reconstructs the issue's reproducer (OptionGroupOptions with '--num' defaulted, OptionGroupCommand named 'test' with a defaulted @Argument), drives it through parseAsRoot([\"--help\"]) so the built-in help path is exercised rather than helpMessage(), and asserts the expected usage line from the issue. It uses only pre-existing internal symbols (HelpCommand, generateHelp(screenWidth:)); the fix adds no production API, and the strict matrix confirms the test compiles and fails on buggy revision 1e77425 and passes on 9253b37, which is only possible if every symbol it references predates the fix. The patch adds no refactor, feature, config, or doc-only change; the two added comment lines describe the filter inline and the trailing-blank-line churn is confined to the test file (and was reverted by a later PR commit). Strict evidence passes on both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential with the selector reproducing in isolation, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32 matrix runs), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no excluded baseline tests. active_same_project_root_causes is empty, so apple/swift-argument-parser#578 is not a duplicate, and it matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.origin_pull_request.body",
+        "case.json:strict_original.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:trigger_tests[0]",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The trigger asserts the entire rendered help text (arguments and options sections, exact column alignment at screenWidth 80), so unrelated future help-formatting changes could break it for reasons other than the #578 defect.",
+        "The commandTree.path(to:) filter changes commandStack semantics generally; a legitimate command type that is not reachable as a tree node would now be dropped silently, and the supplied evidence covers this only through the project's own suite passing green on the fixed revision.",
+        "issue_evidence is null at the top level; the issue body was read from source_candidate.issue_check.linked_issues rather than an independently fetched artifact, and the issue's reported prefix ('group') differs cosmetically from the PR's ('option-group-options') because the reproducer type names differ.",
+        "The trigger test was authored in the fixing commit itself with AI co-author trailers on sibling commits in PR #873; it is upstream-native but not an independent pre-existing regression test.",
+        "Full-suite gates ran with only 1 repetition, so slow-burn flakiness across the whole suite is less well characterized than the 3-repetition trigger matrix."
+      ]
+    }
+  ]
+}

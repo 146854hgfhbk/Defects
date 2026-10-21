@@ -1,0 +1,62 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f97ab2e1096730375951887d7e89d4149fd92d27..a1fb5b92b8e29653765638cd20e7919102f0e99d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -7,6 +7,8 @@ deprecation policy.
+ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) for release instructions
+ 
+ ## 1.13.0 (unreleased)
++ - fix: `xml.parse` returned nonsense when given a file name
++   [#431](https://github.com/lunarmodules/Penlight/pull/431)
+  - fix: `compat.warn` raised write guard warning in OpenResty
+    [#414](https://github.com/lunarmodules/Penlight/pull/414)
+  - feat: `utils.enum` now accepts hash tables, to enable better error handling
+diff --git a/lua/pl/xml.lua b/lua/pl/xml.lua
+index 7956de95899e7dd6ec7d0fc29beab629c95336a8..94895300a1ff914502a10f87d0a4023f848cf6b5 100644
+--- a/lua/pl/xml.lua
++++ b/lua/pl/xml.lua
+@@ -114,10 +114,11 @@ function _M.parse(text_or_filename, is_file, use_basic)
+   end
+ 
+   if is_file then
+-    local text_or_filename, err = utils.readfile(text_or_filename)
+-    if not text_or_filename then
++    local text, err = utils.readfile(text_or_filename)
++    if not text then
+       return nil, err
+     end
++    text_or_filename = text
+   end
+ 
+   local doc, err = parser(text_or_filename)
+diff --git a/tests/test-xml.lua b/tests/test-xml.lua
+index d532786363021b1ad129a13ac83118e460805b6c..e1b541e77ea32498eb3fc498942fa6086ddff80d 100644
+--- a/tests/test-xml.lua
++++ b/tests/test-xml.lua
+@@ -1,6 +1,8 @@
+ local xml = require 'pl.xml'
+ local asserteq = require 'pl.test'.asserteq
+ local dump = require 'pl.pretty'.dump
++local path = require 'pl.path'
++local utils = require 'pl.utils'
+ 
+ -- Prosody stanza.lua style XML building
+ 
+@@ -534,3 +536,17 @@ asserteq(xml.tostring(doc),[[
+ <hello><tag my_attribute='my_value'>dolly</tag></hello>]])
+ 
+ 
++-- parsing by file name
++
++local filename = path.tmpname()
++utils.writefile(filename, '<hello><world/></hello>')
++doc = xml.parse(filename, true, true)
++os.remove(filename)
++asserteq(type(doc), 'table')
++asserteq(xml.tostring(doc, '', '  ', nil, true), [[
++<?xml version='1.0'?>
++<hello>
++  <world/>
++</hello>]])
++
++

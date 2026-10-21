@@ -1,0 +1,83 @@
+diff --git a/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/BrowserPhoneLayout.test.ets b/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/BrowserPhoneLayout.test.ets
+new file mode 100644
+index 000000000..a3f3f11fd
+--- /dev/null
++++ b/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/BrowserPhoneLayout.test.ets
+@@ -0,0 +1,60 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++import { Driver, ON } from '@ohos.UiTest';
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import Logger from '../util/Logger';
++
++const BUNDLE = 'Browser_';
++const TAG = 'BrowserPhoneLayoutTest';
++
++async function startBrowser(): Promise<void> {
++  const want = {
++    bundleName: 'ohos.samples.browser1',
++    abilityName: 'MainAbility'
++  };
++  const abilityDelegator: AbilityDelegatorRegistry.AbilityDelegator =
++    AbilityDelegatorRegistry.getAbilityDelegator();
++  await abilityDelegator.startAbility(want);
++}
++
++async function componentExists(driver: Driver, id: string): Promise<boolean> {
++  try {
++    await driver.assertComponentExist(ON.id(id));
++    return true;
++  } catch (err) {
++    Logger.info(TAG, `${id} not found: ${JSON.stringify(err)}`);
++    return false;
++  }
++}
++
++export default function browserPhoneLayoutTest() {
++  describe('BrowserPhoneLayoutTest', () => {
++    it(BUNDLE + 'UsesPhoneTitleBar_001', 0, async () => {
++      const driver: Driver = Driver.create();
++      await startBrowser();
++      await driver.delayMs(2500);
++
++      const hasInput = await componentExists(driver, 'inputUrl');
++      const hasPhoneSubmit = await componentExists(driver, 'actionButton0');
++      const hasTabletAddPage = await componentExists(driver, 'actionButton1');
++
++      expect(1).assertEqual(hasInput ? 1 : 0);
++      expect(1).assertEqual(hasPhoneSubmit ? 1 : 0);
++      expect(0).assertEqual(hasTabletAddPage ? 1 : 0);
++    });
++  });
++}
+diff --git a/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/List.test.ets b/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/List.test.ets
+index d522716aa..143fa222b 100644
+--- a/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,8 +13,8 @@
+  * limitations under the License.
+  */
+ 
+-import appTest from './app.test';
++import browserPhoneLayoutTest from './BrowserPhoneLayout.test';
+ 
+ export default function testsuite() {
+-  appTest();
+-}
+\ No newline at end of file
++  browserPhoneLayoutTest();
++}

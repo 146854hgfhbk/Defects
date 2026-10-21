@@ -1,0 +1,57 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 61c8b85e4afbc91a543086adf7d116a7e2294dac..5c7dbd06e49af4a6ae4008cc2b90a8bcf2ac2399 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,9 @@
+ ## 1.3.2-wip
+ 
+ * Require Dart 3.3
++* Fix bug where a `flushTimers` or `elapse` call from within
++  the callback of a periodic timer would immediately invoke
++  the same timer.
+ 
+ ## 1.3.1
+ 
+diff --git a/lib/fake_async.dart b/lib/fake_async.dart
+index 415cb967ee18187cd787eef2fd646315444b395a..b4eea856b46487a6f9469572517179d32bd7f087 100644
+--- a/lib/fake_async.dart
++++ b/lib/fake_async.dart
+@@ -320,9 +320,9 @@ class FakeTimer implements Timer {
+     assert(isActive);
+     _tick++;
+     if (isPeriodic) {
++      _nextCall += duration;
+       // ignore: avoid_dynamic_calls
+       _callback(this);
+-      _nextCall += duration;
+     } else {
+       cancel();
+       // ignore: avoid_dynamic_calls
+diff --git a/test/fake_async_test.dart b/test/fake_async_test.dart
+index 7aefc5fe8156a9792f0bad5517f7de1670ee32c0..463eecdb8bbbdd9378853d2e3de3dbb22a06a78d 100644
+--- a/test/fake_async_test.dart
++++ b/test/fake_async_test.dart
+@@ -586,6 +586,23 @@ void main() {
+         expect(ticks, [1, 2]);
+       });
+     });
++
++    test('should update periodic timer state before invoking callback', () {
++      // Regression test for: https://github.com/dart-lang/fake_async/issues/88
++      FakeAsync().run((async) {
++        final log = <String>[];
++        Timer.periodic(const Duration(seconds: 2), (timer) {
++          log.add('periodic ${timer.tick}');
++          async.elapse(Duration.zero);
++        });
++        Timer(const Duration(seconds: 3), () {
++          log.add('single');
++        });
++
++        async.flushTimers(flushPeriodicTimers: false);
++        expect(log, ['periodic 1', 'single']);
++      });
++    });
+   });
+ 
+   group('clock', () {

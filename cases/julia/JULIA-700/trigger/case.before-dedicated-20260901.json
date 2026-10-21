@@ -1,0 +1,204 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-700",
+  "bug_id": "JULIA-700",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaCollections/DataStructures.jl",
+  "repository_url": "https://github.com/JuliaCollections/DataStructures.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaCollections/DataStructures.jl/issues/857"
+  ],
+  "issue_id": 857,
+  "buggy_revision": "d79c5d5ca02eef1cbd4c27aa5d651e7eca70e219",
+  "fixed_revision": "e62f4696ddce7d65e51ec87730255477e9ee6dc2",
+  "candidate_sha": "e62f4696ddce7d65e51ec87730255477e9ee6dc2",
+  "source": "merged_pull_request",
+  "instance_id": "juliacollections__datastructures.jl-858",
+  "swe": {
+    "base_commit": "d79c5d5ca02eef1cbd4c27aa5d651e7eca70e219",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/JuliaCollections/DataStructures.jl/pull/858",
+    "issue_url": "https://github.com/JuliaCollections/DataStructures.jl/issues/857",
+    "problem_statement": "Base.in(x, KeySet{OrderedRobinDict}) should not use `get`\nMWE:\r\n\r\n```julia\r\n## Incorrect answer if value is a negative Int\r\njulia> d = OrderedRobinDict(:a => -3)\r\nOrderedRobinDict{Symbol, Int64} with 1 entry:\r\n  :a => -3\r\n\r\njulia> :a in keys(d1)\r\nfalse\r\n\r\n# Completely errors out if value is not comparable against Int with >=\r\n\r\njulia> d = OrderedRobinDict(1 => [1,2,3], 2 => [4,5,6])\r\nOrderedRobinDict{Int64, Vector{Int64}} with 2 entries:\r\n  1 => [1, 2, 3]\r\n  2 => [4, 5, 6]\r\n\r\njulia> 1 in keys(d)\r\nERROR: MethodError: no method matching isless(::Int64, ::Vector{Int64})\r\n\r\nClosest candidates are:\r\n  isless(::Real, ::ColorTypes.AbstractGray)\r\n   @ ColorTypes C:\\Users\\mrufsvold\\.julia\\packages\\ColorTypes\\1dGw6\\src\\operations.jl:39\r\n  isless(::AbstractVector, ::AbstractVector)\r\n   @ Base abstractarray.jl:2911\r\n  isless(::Real, ::AbstractFloat)\r\n   @ Base operators.jl:178\r\n  ...\r\n\r\nStacktrace:\r\n [1] <(x::Int64, y::Vector{Int64})\r\n   @ Base .\\operators.jl:343\r\n [2] <=(x::Int64, y::Vector{Int64})\r\n   @ Base .\\operators.jl:392\r\n [3] >=(x::Vector{Int64}, y::Int64)\r\n   @ Base .\\operators.jl:416\r\n [4] in(key::Int64, v::Base.KeySet{Int64, OrderedRobinDict{Int64, Vector{Int64}}})\r\n   @ DataStructures C:\\Users\\mrufsvold\\.julia\\packages\\DataStructures\\59MD0\\src\\ordered_robin_dict.jl:306\r\n [5] top-level scope\r\n   @ REPL[74]:1\r\n```\r\n\r\nBase.in is using `get` and checks if the value is greater than zero, causing all these problems.",
+    "patch": "diff --git a/src/ordered_robin_dict.jl b/src/ordered_robin_dict.jl\nindex 917e1a84b..141a5f757 100644\n--- a/src/ordered_robin_dict.jl\n+++ b/src/ordered_robin_dict.jl\n@@ -132,7 +132,7 @@ function Base.setindex!(h::OrderedRobinDict{K, V}, v0, key0) where {K,V}\n     else\n         @assert haskey(h, key0)\n         @inbounds orig_v = h.vals[index]\n-        (orig_v != v0) && (@inbounds h.vals[index] = v0)\n+        !isequal(orig_v, v0) && (@inbounds h.vals[index] = v0)\n     end\n \n     check_for_rehash(h) && rehash!(h)\n@@ -305,8 +305,8 @@ julia> haskey(D, 'c')\n false\n ```\n \"\"\"\n-Base.haskey(h::OrderedRobinDict, key) = (get(h.dict, key, -2) > 0)\n-Base.in(key, v::Base.KeySet{K,T}) where {K,T<:OrderedRobinDict{K}} = (get(v.dict, key, -1) >= 0)\n+Base.haskey(h::OrderedRobinDict, key) = (get(h.dict, key, -1) > 0)\n+Base.in(key, v::Base.KeySet{K,T}) where {K,T<:OrderedRobinDict{K}} = (get(v.dict.dict, key, -1) >= 0)\n \n \"\"\"\n     getkey(collection, key, default)\n",
+    "test_patch": "diff --git a/test/runtests.jl b/test/runtests.jl\nindex 33927d2a4..d44fe5bc5 100644\n--- a/test/runtests.jl\n+++ b/test/runtests.jl\n@@ -8,7 +8,8 @@ import DataStructures: IntSet\n @test [] == detect_ambiguities(Core, DataStructures)\n @test [] == detect_ambiguities(Base, DataStructures)\n \n-tests = [\"deprecations\",\n+tests = [\n+         \"deprecations\",\n          \"int_set\",\n          \"sparse_int_set\",\n          \"deque\",\ndiff --git a/test/test_ordered_robin_dict.jl b/test/test_ordered_robin_dict.jl\nindex 2a78fc7aa..79efa6572 100644\n--- a/test/test_ordered_robin_dict.jl\n+++ b/test/test_ordered_robin_dict.jl\n@@ -78,6 +78,13 @@\n         @test od60[14] == 15\n     end\n \n+    @testset \"Fixes issue 857\" begin\n+        h = OrderedRobinDict{Any,Any}([(\"a\", missing), (\"b\", -2)])\n+        @test 5 == (h[\"a\"] = 5)\n+        @test \"b\" in keys(h)\n+        @test haskey(h,\"b\")\n+    end\n+\n \n     # #############################\n     # Copied and modified from Base/test/dict.jl\n",
+    "FAIL_TO_PASS": [
+      "DataStructures"
+    ],
+    "PASS_TO_PASS": [],
+    "instance_id": "juliacollections__datastructures.jl-858",
+    "repo": "JuliaCollections/DataStructures.jl",
+    "pr_description": "Resolves #857 \r\n\r\nI am not sure if checking if the key appears in the key vector property is the right way to go. Open to another solution!",
+    "created_at": "2023-06-10 20:24:23",
+    "image_name": "docker.io/swerebenchv2/juliacollections-datastructures.jl:858-d79c5d5",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "license": "MIT",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()' 2>&1"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.98,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports that Base.in on the KeySet of an OrderedRobinDict incorrectly uses get with sentinel values, causing false negatives and type errors for certain keys/values. The added tests verify that key presence works for heterogeneous values, matching the intended behavior. No discrepancies between the issue description and test expectations are observed, and there are no external dependencies or hidden requirements. Therefore the task is well-specified and solvable without environment preparation issues.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 3,
+      "num_modified_lines": null,
+      "pr_author": "mrufsvold",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaCollections/DataStructures.jl/pull/858"
+    }
+  },
+  "parent_sha": "d79c5d5ca02eef1cbd4c27aa5d651e7eca70e219",
+  "changed_production_files": [
+    "src/ordered_robin_dict.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl",
+    "test/test_ordered_robin_dict.jl"
+  ],
+  "trigger_tests": [
+    "DataStructures"
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "e62f4696ddce7d65e51ec87730255477e9ee6dc2",
+    "project": "JuliaCollections/DataStructures.jl",
+    "input_sha256": "c28d056e0fd3b8b95eb9e8ebbd4815978482b64b8022fd2e5bd13a25a008c1cc",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:37:30Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.4165145541625208,
+      "input_tokens": 5189,
+      "output_tokens": 737
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.9, \"summary\": \"The commit fixes incorrect membership testing for OrderedRobinDict: `Base.in(key, keys(d))` was calling `get(v.dict, key, -1)` on the OrderedRobinDict itself, so it compared the stored *value* against -1 instead of the internal slot index. This produced wrong results for negative integer values and hard MethodErrors for non-comparable value types. The fix dereferences the inner dict (`v.dict.dict`), normalizes the haskey sentinel from -2 to -1, and replaces `!=` with `!isequal` in setindex! so value comparison is total (handles NaN/missing-like values without error). All changes are behavior corrections in existing public API, no new API surface.\", \"evidence\": \"Issue #857 gives a concrete MWE reproducing both failure modes (`:a in keys(OrderedRobinDict(:a => -3))` returning false, and a MethodError for `isless(::Int64, ::Vector{Int64})` with a stacktrace pointing at ordered_robin_dict.jl:306). PR #858 explicitly resolves #857. The production patch touches a single file with 2 hunks, both reported necessary and globally minimal. Test patch touches test/test_ordered_robin_dict.jl and test/runtests.jl. Runtime evidence reports a stable differential across 3 repetitions with the full suite passing on the fixed revision.\", \"missing_evidence\": \"No explicit trigger test names are listed, so I cannot confirm which specific test cases flip from fail to pass. The test patch diff itself is not shown, so I could not verify it only adds assertions rather than relaxing existing ones. The `!=` to `!isequal` change in setindex! is not described in the linked issue, so its motivating case is inferred rather than documented.\", \"validation_risks\": \"The setindex! change alters equality semantics for value types where `!=` and `isequal` differ (NaN, missing-containing values), which could shift behavior beyond the reported issue; worth confirming no existing test depended on the old `!=` path. The haskey sentinel change from -2 to -1 relies on the inner dict never storing a legitimate index of -1 or -2, an invariant not visible in the provided patch context.\", \"suggested_tests\": \"Assert `:a in keys(OrderedRobinDict(:a => -3))` is true and `:b in keys(...)` is false. Assert `1 in keys(OrderedRobinDict(1 => [1,2,3], 2 => [4,5,6]))` returns true without throwing. Assert haskey agrees with `in(key, keys(d))` for negative, zero, and non-numeric value types. For setindex!, overwrite an existing key with NaN and then with NaN again, verifying no spurious mutation and that the stored value is correct; repeat with a value type that errors on `!=` to confirm isequal keeps the path total. Also verify insertion order is preserved after these overwrites and after a rehash.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.9,
+    "summary": "The commit fixes incorrect membership testing for OrderedRobinDict: `Base.in(key, keys(d))` was calling `get(v.dict, key, -1)` on the OrderedRobinDict itself, so it compared the stored *value* against -1 instead of the internal slot index. This produced wrong results for negative integer values and hard MethodErrors for non-comparable value types. The fix dereferences the inner dict (`v.dict.dict`), normalizes the haskey sentinel from -2 to -1, and replaces `!=` with `!isequal` in setindex! so value comparison is total (handles NaN/missing-like values without error). All changes are behavior corrections in existing public API, no new API surface.",
+    "evidence": "Issue #857 gives a concrete MWE reproducing both failure modes (`:a in keys(OrderedRobinDict(:a => -3))` returning false, and a MethodError for `isless(::Int64, ::Vector{Int64})` with a stacktrace pointing at ordered_robin_dict.jl:306). PR #858 explicitly resolves #857. The production patch touches a single file with 2 hunks, both reported necessary and globally minimal. Test patch touches test/test_ordered_robin_dict.jl and test/runtests.jl. Runtime evidence reports a stable differential across 3 repetitions with the full suite passing on the fixed revision.",
+    "missing_evidence": "No explicit trigger test names are listed, so I cannot confirm which specific test cases flip from fail to pass. The test patch diff itself is not shown, so I could not verify it only adds assertions rather than relaxing existing ones. The `!=` to `!isequal` change in setindex! is not described in the linked issue, so its motivating case is inferred rather than documented.",
+    "validation_risks": "The setindex! change alters equality semantics for value types where `!=` and `isequal` differ (NaN, missing-containing values), which could shift behavior beyond the reported issue; worth confirming no existing test depended on the old `!=` path. The haskey sentinel change from -2 to -1 relies on the inner dict never storing a legitimate index of -1 or -2, an invariant not visible in the provided patch context.",
+    "suggested_tests": "Assert `:a in keys(OrderedRobinDict(:a => -3))` is true and `:b in keys(...)` is false. Assert `1 in keys(OrderedRobinDict(1 => [1,2,3], 2 => [4,5,6]))` returns true without throwing. Assert haskey agrees with `in(key, keys(d))` for negative, zero, and non-numeric value types. For setindex!, overwrite an existing key with NaN and then with NaN again, verifying no spurious mutation and that the stored value is correct; repeat with a value type that errors on `!=` to confirm isequal keeps the path total. Also verify insertion order is preserved after these overwrites and after a rehash."
+  },
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "test_patch_suite",
+    "path": "trigger/upstream-tests.patch",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "test_files": [
+      "test/runtests.jl",
+      "test/test_ordered_robin_dict.jl"
+    ],
+    "test_files_sha256": {
+      "test/runtests.jl": "c3123e1dce296405d6019c52d9faf0add59953e883c0afaa36031e83eb7c3303",
+      "test/test_ordered_robin_dict.jl": "68b42902d599a787a6f03b4aff52ca7d629421dd2c207ab277201c4a9b123405"
+    },
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "DataStructures"
+      ],
+      "added_testsets": [
+        "Fixes issue 857"
+      ],
+      "inferred_testset_context": [
+        "Issue #60"
+      ],
+      "assertion_expression_sha256": [
+        "fdf19b337238458de20950dd41123f5f52fcb059fe2e7d1056af86a391354811",
+        "30a8f7a157e95ade0284a4dbffe7d8e0e7551d016913be8d70e1c603cfe850af",
+        "009ccf831a9132ae9f9e041d419ab2837e6e935ce63336080b4346ebf235fc17"
+      ]
+    },
+    "sha256": "e49c4622e71fef97251dbc3ff729beb10e6825b9941977fd8f0284a56069eecf"
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2"
+}

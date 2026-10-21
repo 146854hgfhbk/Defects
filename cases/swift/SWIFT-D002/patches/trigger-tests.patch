@@ -1,0 +1,33 @@
+diff --git a/Tests/OrderedCollectionsTests/OrderedSet/OrderedSetTests.swift b/Tests/OrderedCollectionsTests/OrderedSet/OrderedSetTests.swift
+index 05475d8b7854f153006fe496318199ce86d0386e..c8f67feca5b26cb65d566e58ec75690675b45d05 100644
+--- a/Tests/OrderedCollectionsTests/OrderedSet/OrderedSetTests.swift
++++ b/Tests/OrderedCollectionsTests/OrderedSet/OrderedSetTests.swift
+@@ -786,6 +786,28 @@ class OrderedSetTests: CollectionTestCase {
+     }
+   }
+ 
++  func test_negative_capacity() {
++    // https://github.com/apple/swift-collections/issues/608
++    let set = OrderedSet<Int>(minimumCapacity: -1)
++    expectEqual(set.__unstable.scale, 0)
++    expectEqual(set.__unstable.reservedScale, 0)
++    expectEqual(set.__unstable.minimumCapacity, 0)
++    expectTrue(set.isEmpty)
++
++    let set2 = OrderedSet<Int>(minimumCapacity: -1, persistent: true)
++    expectEqual(set2.__unstable.scale, 0)
++    expectEqual(set2.__unstable.reservedScale, 0)
++    expectEqual(set2.__unstable.minimumCapacity, 0)
++    expectTrue(set2.isEmpty)
++
++    var set3 = OrderedSet<Int>([1, 2, 3])
++    set3.reserveCapacity(-1)
++    expectEqual(set3.count, 3)
++    expectTrue(set3.contains(1))
++    expectTrue(set3.contains(2))
++    expectTrue(set3.contains(3))
++  }
++
+   func test_init_minimumCapacity() {
+     withEvery("capacity", in: 0 ..< 1000) { capacity in
+       let expectedScale = OrderedSet<Int>._scale(forCapacity: capacity)

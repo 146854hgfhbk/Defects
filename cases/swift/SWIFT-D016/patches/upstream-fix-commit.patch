@@ -1,0 +1,35 @@
+diff --git a/Sources/Fluent/SQL/GeneralSQLSerializer.swift b/Sources/Fluent/SQL/GeneralSQLSerializer.swift
+index 36babab..9953a15 100644
+--- a/Sources/Fluent/SQL/GeneralSQLSerializer.swift
++++ b/Sources/Fluent/SQL/GeneralSQLSerializer.swift
+@@ -115,7 +115,7 @@ open class GeneralSQLSerializer<E: Entity>: SQLSerializer {
+     }
+ 
+     open func aggregate(_ field: String, _ aggregate: Aggregate) -> (String, [Node]) {
+-        let fieldEscaped: String
++        var fieldEscaped: String
+         switch field {
+         case "*":
+             fieldEscaped = field
+@@ -131,7 +131,7 @@ open class GeneralSQLSerializer<E: Entity>: SQLSerializer {
+ 
+         statement += "SELECT"
+         if query.isDistinct {
+-            statement += "DISTINCT"
++            fieldEscaped = "DISTINCT \(fieldEscaped)"
+         }
+         
+         let function: String
+diff --git a/Tests/FluentTests/SQLSerializerTests.swift b/Tests/FluentTests/SQLSerializerTests.swift
+index 479e44a..9d2df55 100644
+--- a/Tests/FluentTests/SQLSerializerTests.swift
++++ b/Tests/FluentTests/SQLSerializerTests.swift
+@@ -85,7 +85,7 @@ class SQLSerializerTests: XCTestCase {
+         query.isDistinct = true
+         let (statement, values) = serialize(query)
+         
+-        XCTAssertEqual(statement, "SELECT DISTINCT COUNT(*) as _fluent_aggregate FROM `users`")
++        XCTAssertEqual(statement, "SELECT COUNT(DISTINCT *) as _fluent_aggregate FROM `users`")
+         XCTAssert(values.isEmpty)
+     }
+ 

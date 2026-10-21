@@ -1,0 +1,33 @@
+diff --git a/XS.pm b/XS.pm
+index 7d41ac4..f6836d6 100644
+--- a/XS.pm
++++ b/XS.pm
+@@ -2224,6 +2224,10 @@ BEGIN {
+         return $obj ? 1 == $op : 0 == $op;
+       }
+     },
++    'ne'     => sub {
++      my ($obj, $op) = ref ($_[0]) ? ($_[0], $_[1]) : ($_[1], $_[0]);
++      return !($obj eq $op);
++    },
+     fallback => 1);
+ }
+ 
+diff --git a/t/03_types.t b/t/03_types.t
+index 1089b20..f3fdd44 100644
+--- a/t/03_types.t
++++ b/t/03_types.t
+@@ -1,4 +1,4 @@
+-BEGIN { $| = 1; print "1..86\n"; }
++BEGIN { $| = 1; print "1..87\n"; }
+ use utf8;
+ use Cpanel::JSON::XS;
+ 
+@@ -19,6 +19,7 @@ ok ($false == !$true);
+ ok (Cpanel::JSON::XS::is_bool $false);
+ ok ($false eq "0", "false: eq $false");
+ ok ($true eq "true", "true: eq $true");
++ok (!($true ne "true"), "ne operator test for !(true: ne $true)");
+ ok ("$false" eq "0",     "false: stringified $false eq 0");
+ #ok ("$false" eq "false", "false: stringified $false eq false");
+ #ok ("$true" eq "1",    "true: stringified $true eq 1");

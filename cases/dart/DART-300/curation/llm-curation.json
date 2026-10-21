@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-300",
+  "technical_evidence_sha256": "9708bd1070771bdf7acdf0cb759235db7a7ba46ff29ba9709504f4a32ee06b62",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "d9c9e83ef817d341dcc1eda13d71cac1a0acb8696ce178a3e1735ec2db9490d0",
+  "reviewed_at": "2026-08-11T12:03:17.930818+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1404",
+  "rationale": "Issue #1404 reports that formatting `int weird(Object o) { return switch (o) { int i => i, // evil comment\\n _ => 42 }; }` collapses the switch expression onto one line, swallowing the following case into the line comment and emitting non-parseable Dart. The minimized production patch is a single hunk in the switch-expression body termination of lib/src/source_visitor.dart, replacing `forceSplit: hasTrailingComma` with `hasTrailingComma || _containsLineComments(node.cases, node.rightBracket)` — precisely the collapse condition described in the issue. `_containsLineComments` is called but not defined anywhere in the commit diff, so it pre-exists at parent 9dd81d6; the fix introduces no new production API, and build.both_versions passed on both revisions. The minimized patch excludes the CHANGELOG.md entry (which also carried an unrelated punctuation touch-up to the #1235 line) and the fixture file, leaving no refactor, formatting, feature, docs, or config change. The trigger is the upstream regression fixture test/regression/1400/1404.stmt driven by selector test/short_format_test.dart::regression/1400/1404.stmt; its first case is the verbatim issue reproducer with the buggy input as expected idempotent output, and the two additional cases (line comment inside a case value expression and inside a case pattern) exercise the same forced-split root cause rather than new behavior. Strict evidence, identical pre- and post-minimization, shows trigger.buggy_differential reproducing exactly that one selector, trigger.fixed_clean across isolated/suite/reversed runs, full_suite.fixed_all_green, buggy full-suite failures limited to the expected trigger, matrix.complete at 32 runs with 3 repetitions, and trigger.deterministic at 3 fingerprint groups. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and dart-lang/dart_style#1404 is the sole allowed and verified issue key.\n\nIssue #1404 reports dart format producing syntactically invalid code when a switch expression contains a trailing line comment on a case, collapsing the expression onto one line and breaking compilation. The minimized production patch adds a single logical change to lib/src/source_visitor.dart:visitSwitchExpression: it checks for line comments in the switch cases and forces a split when present. The original commit includes only this production change, a CHANGELOG entry, and the regression test file 1404.stmt. The trigger test comes from the same commit that introduced the fix (a6ad769), contains the exact reproducer from the issue body, and strict runtime evidence confirms it fails on buggy (9dd81d6) and passes on fixed (021d0cb) with deterministic results across 3 repetitions and clean full-suite behavior. No unrelated refactoring, formatting changes, or feature extensions are present. The active_same_project_root_causes list is empty, confirming no duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:03:04.000257+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "d9c9e83ef817d341dcc1eda13d71cac1a0acb8696ce178a3e1735ec2db9490d0",
+      "response_sha256": "21a9ac804cb5dc3ba8d35fba9253ccc0521ea1b276388b283e30b0a18cb867eb",
+      "response_id": "msg_1786449783804",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 10251,
+        "output_tokens": 1102,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1404",
+      "rationale": "Issue #1404 reports that formatting `int weird(Object o) { return switch (o) { int i => i, // evil comment\\n _ => 42 }; }` collapses the switch expression onto one line, swallowing the following case into the line comment and emitting non-parseable Dart. The minimized production patch is a single hunk in the switch-expression body termination of lib/src/source_visitor.dart, replacing `forceSplit: hasTrailingComma` with `hasTrailingComma || _containsLineComments(node.cases, node.rightBracket)` — precisely the collapse condition described in the issue. `_containsLineComments` is called but not defined anywhere in the commit diff, so it pre-exists at parent 9dd81d6; the fix introduces no new production API, and build.both_versions passed on both revisions. The minimized patch excludes the CHANGELOG.md entry (which also carried an unrelated punctuation touch-up to the #1235 line) and the fixture file, leaving no refactor, formatting, feature, docs, or config change. The trigger is the upstream regression fixture test/regression/1400/1404.stmt driven by selector test/short_format_test.dart::regression/1400/1404.stmt; its first case is the verbatim issue reproducer with the buggy input as expected idempotent output, and the two additional cases (line comment inside a case value expression and inside a case pattern) exercise the same forced-split root cause rather than new behavior. Strict evidence, identical pre- and post-minimization, shows trigger.buggy_differential reproducing exactly that one selector, trigger.fixed_clean across isolated/suite/reversed runs, full_suite.fixed_all_green, buggy full-suite failures limited to the expected trigger, matrix.complete at 32 runs with 3 repetitions, and trigger.deterministic at 3 fingerprint groups. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and dart-lang/dart_style#1404 is the sole allowed and verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.trigger.fixed_clean",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:trigger_tests",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:source_candidate.candidate.issue_check.linked_issues[0].body",
+        "lib/src/source_visitor.dart"
+      ],
+      "risks": [
+        "The fixture bundles three cases in one selector; the two beyond the issue reproducer (line comment inside a case value expression and inside a case pattern) encode golden output shapes chosen by the maintainer, so the trigger asserts slightly more than the literal issue report even though the root cause is the same.",
+        "Golden-file formatter fixtures are sensitive to page width, trailing whitespace, and the trailing-newline-free file ending; harness drift could change pass/fail for reasons unrelated to the defect.",
+        "The fix is self-described as a hack scoped to the legacy formatter, so it may be superseded rather than preserved by the later Piece-based rewrite; the defect location is not stable across future versions.",
+        "_containsLineComments existing at the buggy revision with this signature is inferred from the diff and from build.both_versions passing, not from a direct read of parent source."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:03:17.930544+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "d9c9e83ef817d341dcc1eda13d71cac1a0acb8696ce178a3e1735ec2db9490d0",
+      "response_sha256": "ab91707aa52f654c66402af02bcb70c3458b5fc84d2c3d89e032b4c3fe470c08",
+      "response_id": "msg_b4ff69ff-49f9-4e79-97",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3241
+        },
+        "cache_creation_input_tokens": 3241,
+        "cache_read_input_tokens": 7202,
+        "input_tokens": 9491,
+        "output_tokens": 933
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1404",
+      "rationale": "Issue #1404 reports dart format producing syntactically invalid code when a switch expression contains a trailing line comment on a case, collapsing the expression onto one line and breaking compilation. The minimized production patch adds a single logical change to lib/src/source_visitor.dart:visitSwitchExpression: it checks for line comments in the switch cases and forces a split when present. The original commit includes only this production change, a CHANGELOG entry, and the regression test file 1404.stmt. The trigger test comes from the same commit that introduced the fix (a6ad769), contains the exact reproducer from the issue body, and strict runtime evidence confirms it fails on buggy (9dd81d6) and passes on fixed (021d0cb) with deterministic results across 3 repetitions and clean full-suite behavior. No unrelated refactoring, formatting changes, or feature extensions are present. The active_same_project_root_causes list is empty, confirming no duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "issue_urls[0]: dart-lang/dart_style#1404",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential.detail",
+        "strict_post_minimization.checks.trigger.deterministic.passed",
+        "strict_post_minimization.checks.full_suite.fixed_all_green.passed"
+      ],
+      "risks": [
+        "The fix is described as hacky by the author and targets legacy formatter code scheduled for replacement; long-term maintenance may be limited.",
+        "The _containsLineComments helper is called but not visible in the diff; its correctness is assumed from runtime validation."
+      ]
+    }
+  ]
+}

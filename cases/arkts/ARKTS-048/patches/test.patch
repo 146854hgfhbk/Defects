@@ -1,0 +1,113 @@
+diff --git a/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/test/List.test.ets b/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/test/List.test.ets
+index bb4e23130..7e122c8e4 100644
+--- a/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/test/List.test.ets
+@@ -12,8 +12,8 @@
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+-import abilityTest from './Ability.test'
++import modeSwitchLayoutTest from './ModeSwitchLayout.test'
+ 
+ export default function testsuite() {
+-  abilityTest()
+-}
+\ No newline at end of file
++  modeSwitchLayoutTest()
++}
+diff --git a/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/test/ModeSwitchLayout.test.ets b/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/test/ModeSwitchLayout.test.ets
+new file mode 100644
+index 000000000..74c804d0f
+--- /dev/null
++++ b/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/test/ModeSwitchLayout.test.ets
+@@ -0,0 +1,32 @@
++/*
++ * Copyright (c) 2023 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++import { Driver, ON } from '@ohos.UiTest';
++
++export default function modeSwitchLayoutTest() {
++  describe('modeSwitchLayoutTest', () => {
++    it('Camera_ModeSwitchIconSize_001', 0, async () => {
++      let driver: Driver = Driver.create();
++      await driver.delayMs(1000);
++      let captureButton = await driver.findComponent(ON.id('CaptureOrVideoButton'));
++      let bounds = await captureButton.getBounds();
++      let width = bounds.right - bounds.left;
++      let height = bounds.bottom - bounds.top;
++      expect(width < 190).assertTrue();
++      expect(height < 190).assertTrue();
++    })
++  })
++}
+diff --git a/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/testability/pages/Index.ets b/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/testability/pages/Index.ets
+index 78185d1e7..4f8a4114f 100644
+--- a/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/testability/pages/Index.ets
++++ b/code/BasicFeature/Media/Camera/entry/src/ohosTest/ets/testability/pages/Index.ets
+@@ -13,6 +13,7 @@
+ * limitations under the License.
+ */
+ import hilog from '@ohos.hilog';
++import { modeSwitchPage } from '../../../../main/ets/views/ModeSwitchPage';
+ 
+ @Entry
+ @Component
+@@ -20,29 +21,18 @@ struct Index {
+   aboutToAppear() {
+     hilog.info(0x0000, 'testTag', '%{public}s', 'TestAbility index aboutToAppear');
+   }
+- @State message: string = 'Hello World'
+-   build() {
+-         Row() {
+-           Column() {
+-             Text(this.message)
+-               .fontSize(50)
+-               .fontWeight(FontWeight.Bold)
+-             Button() {
+-               Text('next page')
+-                 .fontSize(20)
+-                 .fontWeight(FontWeight.Bold)
+-             }.type(ButtonType.Capsule)
+-             .margin({
+-               top: 20
+-             })
+-             .backgroundColor('#0D9FFB')
+-             .width('35%')
+-             .height('5%')
+-             .onClick(()=>{
+-             })
+-           }
+-             .width('100%')
+-         }
+-             .height('100%')
+-   }
+- }
+\ No newline at end of file
++  @State cameraDeviceIndex: number = 0
++  @State countdownNum: number = 0
++
++  build() {
++    Column() {
++      modeSwitchPage({
++        cameraDeviceIndex: $cameraDeviceIndex,
++        surfaceId: '',
++        countdownNum: $countdownNum
++      })
++    }
++    .width('100%')
++    .height('100%')
++  }
++}

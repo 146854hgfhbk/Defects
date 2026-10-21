@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-825",
+  "technical_evidence_sha256": "1ef739b2ee2d37aec0fa9fc81f90248b409cc7421c42e4db5d0ef65ba0fed2ba",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "4b4f0ca604bd0fe81b104d79468bc48c0f2957bb4c0bda6acf17a3da81a3b43d",
+  "reviewed_at": "2026-09-06T07:32:24.389307+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "awslabs/swift-aws-lambda-runtime#551",
+  "rationale": "Issue #551 documents a concrete pre-existing defect introduced by PR #540: LambdaClock.Instant had no CustomStringConvertible conformance, so string interpolation emitted 'Lambda-Runtime-Deadline-Ms: Instant(instant: 1756032737492)' instead of the bare epoch value, and the runtime client failed with nextInvocationMissingHeaderDeadline. The minimized production patch is confined to Sources/AWSLambdaRuntime/LambdaClock.swift and consists of exactly the two hunks required for that behavior: the conformance declaration on Instant and the description property returning \"\\(self.instant)\". There is no refactor, formatting churn, config, or test content in the production patch; the only doc comment present is the docstring attached to the new property. The build-compatibility patch touches only the Logger.Level initializer ambiguity and is applied symmetrically to both revisions, so it does not alter defect logic. The trigger is the unchanged upstream test from the same fixing commit (instantRendersAsStringWithEpochNumber) and uses only pre-fix API surface (LambdaClock(), clock.now, string interpolation), so it compiles and fails on the buggy revision rather than depending on any API the fix introduces; it asserts precisely the property the issue reports, that the rendered Instant is a plain epoch number. Machine strict evidence passes in both the original and post-minimization runs: build.both_versions, trigger.buggy_differential with the single declared selector reproduced, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, and matrix.complete at 32 runs with 3 repetitions. active_same_project_root_causes is empty and the root cause matches the sole allowed verified issue key #551.\n\nIssue #551 documents a concrete pre-existing regression introduced by PR #540: LambdaClock.Instant rendered through string interpolation as 'Instant(instant: 1756032737492)' instead of the raw epoch value, so LocalServer emitted an invalid Lambda-Runtime-Deadline-Ms header and the runtime client failed with nextInvocationMissingHeaderDeadline. The minimized production patch is exactly the countermeasure to that cause: two hunks in Sources/AWSLambdaRuntime/LambdaClock.swift adding CustomStringConvertible conformance to Instant and a description returning \"\\(self.instant)\". Nothing else is touched, no refactor, no rename, no config or docs-only change; the single added doc comment is attached to the new property that constitutes the fix. The build-compatibility patch is confined to unrelated Logger.Level initializer ambiguity in MockHTTPServer.swift and LambdaRuntime.swift and is recorded as applied symmetrically to both revisions, so it cannot manufacture the differential. The trigger is the unchanged upstream test from the fixing commit (instantRendersAsStringWithEpochNumber); it exercises only pre-existing API (LambdaClock(), clock.now, string interpolation) and therefore compiles at the buggy revision, confirmed by machine evidence: trigger.buggy_differential reproduced the selector, trigger.fixed_clean and full_suite.fixed_all_green passed, buggy full-suite failures were limited to the reproduced trigger, and determinism held over 3 repetitions across 32 matrix runs, both pre- and post-minimization. active_same_project_root_causes is empty and awslabs/swift-aws-lambda-runtime#551 is the sole allowed verified issue key, so no duplicate root cause exists.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T07:31:56.015729+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "4b4f0ca604bd0fe81b104d79468bc48c0f2957bb4c0bda6acf17a3da81a3b43d",
+      "response_sha256": "80e44d3d38be6cdb3e6e8ad146b060a0e77d2a30174dac47bf1a58eaa30bed3f",
+      "response_id": "msg_fa1b4d27b6b34bcfba180ad181af6d65",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5673478854726368,
+        "input_tokens": 16150,
+        "output_tokens": 711
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "awslabs/swift-aws-lambda-runtime#551",
+      "rationale": "Issue #551 documents a concrete pre-existing defect introduced by PR #540: LambdaClock.Instant had no CustomStringConvertible conformance, so string interpolation emitted 'Lambda-Runtime-Deadline-Ms: Instant(instant: 1756032737492)' instead of the bare epoch value, and the runtime client failed with nextInvocationMissingHeaderDeadline. The minimized production patch is confined to Sources/AWSLambdaRuntime/LambdaClock.swift and consists of exactly the two hunks required for that behavior: the conformance declaration on Instant and the description property returning \"\\(self.instant)\". There is no refactor, formatting churn, config, or test content in the production patch; the only doc comment present is the docstring attached to the new property. The build-compatibility patch touches only the Logger.Level initializer ambiguity and is applied symmetrically to both revisions, so it does not alter defect logic. The trigger is the unchanged upstream test from the same fixing commit (instantRendersAsStringWithEpochNumber) and uses only pre-fix API surface (LambdaClock(), clock.now, string interpolation), so it compiles and fails on the buggy revision rather than depending on any API the fix introduces; it asserts precisely the property the issue reports, that the rendered Instant is a plain epoch number. Machine strict evidence passes in both the original and post-minimization runs: build.both_versions, trigger.buggy_differential with the single declared selector reproduced, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, and matrix.complete at 32 runs with 3 repetitions. active_same_project_root_causes is empty and the root cause matches the sole allowed verified issue key #551.",
+      "evidence_paths": [
+        "case.json source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/build-compatibility.patch",
+        "case.json strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json strict_original.checks.full_suite.fixed_all_green",
+        "case.json traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The trigger asserts only that the interpolated string contains solely digits; a negative epoch or a differently formatted synthesized description on another toolchain would weaken the differential signal. A fixed-value assertion via init(millisecondsSinceEpoch:) would be stronger.",
+        "The test reads the live clock (clock.now), so it is time-dependent, though the assertion never compares wall-clock values.",
+        "The defect manifested through the LocalServer /next header path, but no visible test covers that path; coverage is at the Instant rendering level only.",
+        "Adding a public CustomStringConvertible conformance expands the public API surface, so tooling that flags new public members could classify this as an extension even though the change is behaviorally the fix.",
+        "issue_evidence is null; issue text was read from the embedded source_candidate payload rather than a separately fetched artifact."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T07:32:24.388746+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "4b4f0ca604bd0fe81b104d79468bc48c0f2957bb4c0bda6acf17a3da81a3b43d",
+      "response_sha256": "53a53ab25ebe5508a27a8204e4dfeb122285a4cf514b78e7a8068de6f0f2f021",
+      "response_id": "msg_5ab8d0d852d5489e8de3e6799b34b6f5",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6344977700165837,
+        "input_tokens": 16707,
+        "output_tokens": 749
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "awslabs/swift-aws-lambda-runtime#551",
+      "rationale": "Issue #551 documents a concrete pre-existing regression introduced by PR #540: LambdaClock.Instant rendered through string interpolation as 'Instant(instant: 1756032737492)' instead of the raw epoch value, so LocalServer emitted an invalid Lambda-Runtime-Deadline-Ms header and the runtime client failed with nextInvocationMissingHeaderDeadline. The minimized production patch is exactly the countermeasure to that cause: two hunks in Sources/AWSLambdaRuntime/LambdaClock.swift adding CustomStringConvertible conformance to Instant and a description returning \"\\(self.instant)\". Nothing else is touched, no refactor, no rename, no config or docs-only change; the single added doc comment is attached to the new property that constitutes the fix. The build-compatibility patch is confined to unrelated Logger.Level initializer ambiguity in MockHTTPServer.swift and LambdaRuntime.swift and is recorded as applied symmetrically to both revisions, so it cannot manufacture the differential. The trigger is the unchanged upstream test from the fixing commit (instantRendersAsStringWithEpochNumber); it exercises only pre-existing API (LambdaClock(), clock.now, string interpolation) and therefore compiles at the buggy revision, confirmed by machine evidence: trigger.buggy_differential reproduced the selector, trigger.fixed_clean and full_suite.fixed_all_green passed, buggy full-suite failures were limited to the reproduced trigger, and determinism held over 3 repetitions across 32 matrix runs, both pre- and post-minimization. active_same_project_root_causes is empty and awslabs/swift-aws-lambda-runtime#551 is the sole allowed verified issue key, so no duplicate root cause exists.",
+      "evidence_paths": [
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/build-compatibility.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_original.checks.trigger.deterministic",
+        "minimized_patch_reference.post_minimization_validation",
+        "trigger_reduction.upstream_trigger_patch"
+      ],
+      "risks": [
+        "The trigger asserts only that the interpolated string contains digits exclusively, not that it equals a fixed epoch value; a differently formatted synthesized description or a negative epoch would weaken the signal, though the buggy differential was observed deterministically.",
+        "The test reads the live clock (clock.now), making it mildly time-dependent even though no wall-clock comparison is made.",
+        "The actual reported symptom path (LocalServer /next Lambda-Runtime-Deadline-Ms header) is not directly asserted; coverage is at the Instant rendering level only.",
+        "The fix adds a public protocol conformance, so tooling that classifies any new public member as API extension could categorize this differently, although behaviorally it only corrects the rendering defect.",
+        "issue_evidence and semantic_justification are null in case.json; issue text was read from the embedded source_candidate.issue_check payload rather than an independently fetched field."
+      ]
+    }
+  ]
+}

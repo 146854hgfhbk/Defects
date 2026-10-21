@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1148",
+  "technical_evidence_sha256": "e5ee11b2f66c630f07ff799c82561757d33649c7a128d5066bd0ecc4e8a6282b",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "5c15b827964b363fb8de393cf1fc6304e094703c4db0883c55e5c94f9c642444",
+  "reviewed_at": "2026-08-15T00:29:41.715218+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/source_gen#558",
+  "rationale": "Issue #558 reports that GeneratorForAnnotation silently ignores an annotation placed on a `library` directive while the same annotation on a top-level class is processed. The fix commit message states the mechanism precisely: the annotation lands on the LibraryElement, which is absent from `element.topLevelElements` backing `LibraryReader.allElements`, the collection `annotatedWith` scans. The minimized production patch is exactly that one expression: `element.topLevelElements` -> `[element, ...element.topLevelElements]` in source_gen/lib/src/library.dart, with no refactor, formatting, doc, config, or test content included (CHANGELOG.md and the pubspec version bump present in the original commit are excluded from the minimized patch). The trigger `test/generator_for_annotation_test.dart::applies to annotated libraries` is the unchanged upstream test from the same fixing commit; it builds `@deprecated library foo;` through the pre-existing LibraryBuilder/GeneratorForAnnotation/testBuilder surface and the local `_StubGenerator`, introducing no API added by the fix, so it compiles and fails on the buggy revision. Strict machine evidence confirms this both pre- and post-minimization: build.both_versions passed, trigger.buggy_differential reproduced the single declared selector, trigger.deterministic showed 3 fingerprint groups over 3 repetitions, trigger.fixed_clean and full_suite.fixed_all_green passed, and buggy full-suite failures contained only the expected trigger (with two pre-resolved stable baseline exclusions unrelated to library.dart). active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and #558 is the sole allowed id.\n\nIssue #558 reports that `GeneratorForAnnotation` never invokes `generateForAnnotatedElement` when the annotation is placed on a `library` directive, while the same annotation on a top-level class works. The commit message and PR #561 body state the mechanism precisely: annotations on a `library` statement attach to the `LibraryElement`, which is absent from `element.topLevelElements`, the collection backing `LibraryReader.allElements` used by `annotatedWith`. The minimized production patch is a single hunk in source_gen/lib/src/library.dart changing `element.topLevelElements` to `[element, ...element.topLevelElements]` — exactly the missing-element defect described, with no refactor, formatting, feature, doc, or config content (the CHANGELOG.md and pubspec.yaml version bump present in the original commit are excluded from the minimized patch). The trigger is the unchanged upstream test 'applies to annotated libraries' from the same fixing commit; it builds a `LibraryBuilder` over a `_StubGenerator<Deprecated>` against source containing `@deprecated library foo;` and asserts generated output, which is the reported scenario expressed through pre-existing public API (`LibraryBuilder`, `GeneratorForAnnotation`, `testBuilder`, core `Deprecated`) and introduces no API added by the fix, so it compiles and fails on the buggy revision. Strict machine evidence for both the original and post-minimization runs reports all gates passed with no failed checks: build on both revisions, unique selector, isolated buggy differential on `test/generator_for_annotation_test.dart::applies to annotated libraries`, deterministic fingerprints over 3 repetitions across a complete 32-run matrix, fixed-revision clean in isolated/suite/reversed runs, and buggy full-suite failures limited to the reproduced trigger. `active_same_project_root_causes` is empty and the proposed root cause equals the sole allowed verified key dart-lang/source_gen#558, so it is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T00:29:15.796363+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "5c15b827964b363fb8de393cf1fc6304e094703c4db0883c55e5c94f9c642444",
+      "response_sha256": "bc752b8c1e76f618018674e6a10ecae97cf70a1f3670bd1ee995074f6349b262",
+      "response_id": "msg_cbb3e31bff3f4d4a92b26d8b2554e966",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7297043607296849,
+        "input_tokens": 16171,
+        "output_tokens": 774
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/source_gen#558",
+      "rationale": "Issue #558 reports that GeneratorForAnnotation silently ignores an annotation placed on a `library` directive while the same annotation on a top-level class is processed. The fix commit message states the mechanism precisely: the annotation lands on the LibraryElement, which is absent from `element.topLevelElements` backing `LibraryReader.allElements`, the collection `annotatedWith` scans. The minimized production patch is exactly that one expression: `element.topLevelElements` -> `[element, ...element.topLevelElements]` in source_gen/lib/src/library.dart, with no refactor, formatting, doc, config, or test content included (CHANGELOG.md and the pubspec version bump present in the original commit are excluded from the minimized patch). The trigger `test/generator_for_annotation_test.dart::applies to annotated libraries` is the unchanged upstream test from the same fixing commit; it builds `@deprecated library foo;` through the pre-existing LibraryBuilder/GeneratorForAnnotation/testBuilder surface and the local `_StubGenerator`, introducing no API added by the fix, so it compiles and fails on the buggy revision. Strict machine evidence confirms this both pre- and post-minimization: build.both_versions passed, trigger.buggy_differential reproduced the single declared selector, trigger.deterministic showed 3 fingerprint groups over 3 repetitions, trigger.fixed_clean and full_suite.fixed_all_green passed, and buggy full-suite failures contained only the expected trigger (with two pre-resolved stable baseline exclusions unrelated to library.dart). active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and #558 is the sole allowed id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "trigger_tests[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_original.checks.build.both_versions",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The upstream release framing leans toward a behavior extension rather than a strict regression: pubspec moves 1.1.2-dev -> 1.2.0-dev (minor bump) and the CHANGELOG says generators will now 'Run ... on library elements'. The defect classification rests on the user-visible expectation gap in #558 plus the maintainer's 'Fixes #558', not on a prior working behavior that broke.",
+        "The doc comment on allElements ('All of the declarations in this library') is unchanged, so whether the LibraryElement itself counts as a declaration remains a documented-contract ambiguity a solver could reasonably read either way.",
+        "The trigger is the pre-dartfmt form of the test; the merged PR head (02a706e) reformats the same test, so byte-level comparison against upstream master will differ while semantics are identical.",
+        "Two baseline full-suite failures (external_only_type_checker_test setUpAll, path_to_url_test) are excluded as stable pre-existing noise; the suite is not fully green independent of this defect.",
+        "full_suite repetitions = 1, so full-suite flakiness outside the declared trigger is less thoroughly sampled than the 3-repetition isolated trigger runs."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T00:29:41.714931+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "5c15b827964b363fb8de393cf1fc6304e094703c4db0883c55e5c94f9c642444",
+      "response_sha256": "a3a5071fe48d530889c4b4ba090ed5f3ae42d1529dabc88015904f82e577743c",
+      "response_id": "msg_7ff5616b3ffe429dbc56b0b3fbf2f8bc",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5550152181426201,
+        "input_tokens": 15724,
+        "output_tokens": 807
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/source_gen#558",
+      "rationale": "Issue #558 reports that `GeneratorForAnnotation` never invokes `generateForAnnotatedElement` when the annotation is placed on a `library` directive, while the same annotation on a top-level class works. The commit message and PR #561 body state the mechanism precisely: annotations on a `library` statement attach to the `LibraryElement`, which is absent from `element.topLevelElements`, the collection backing `LibraryReader.allElements` used by `annotatedWith`. The minimized production patch is a single hunk in source_gen/lib/src/library.dart changing `element.topLevelElements` to `[element, ...element.topLevelElements]` — exactly the missing-element defect described, with no refactor, formatting, feature, doc, or config content (the CHANGELOG.md and pubspec.yaml version bump present in the original commit are excluded from the minimized patch). The trigger is the unchanged upstream test 'applies to annotated libraries' from the same fixing commit; it builds a `LibraryBuilder` over a `_StubGenerator<Deprecated>` against source containing `@deprecated library foo;` and asserts generated output, which is the reported scenario expressed through pre-existing public API (`LibraryBuilder`, `GeneratorForAnnotation`, `testBuilder`, core `Deprecated`) and introduces no API added by the fix, so it compiles and fails on the buggy revision. Strict machine evidence for both the original and post-minimization runs reports all gates passed with no failed checks: build on both revisions, unique selector, isolated buggy differential on `test/generator_for_annotation_test.dart::applies to annotated libraries`, deterministic fingerprints over 3 repetitions across a complete 32-run matrix, fixed-revision clean in isolated/suite/reversed runs, and buggy full-suite failures limited to the reproduced trigger. `active_same_project_root_causes` is empty and the proposed root cause equals the sole allowed verified key dart-lang/source_gen#558, so it is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:issue_urls",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.commit_message",
+        "case.json:strict_original.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests",
+        "case.json:allowed_root_cause_ids",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "Maintainers describe the change as a visible behavior change and bumped the minor version (1.1.2-dev to 1.2.0-dev); downstream generators that implicitly relied on the LibraryElement being absent could behave differently, so the boundary between defect fix and intentional behavior change is thinner than a pure logic bug.",
+        "The linked issue carries no defect label or bug keyword; defect classification rests on the reported wrong behavior in the issue body plus the commit's root-cause explanation rather than project labeling.",
+        "The strict runs resolve two pre-existing baseline full-suite failures as exclusions (test/external_only_type_checker_test.dart::(setUpAll) and test/library/path_to_url_test.dart path case), so the fixed revision is green only relative to that exclusion set.",
+        "Analyzer cleanliness was not required (require_analyze_clean=false) and is treated as diagnostic only.",
+        "Trigger determinism was validated at 3 repetitions with a single full-suite repetition, which bounds confidence in flakiness detection."
+      ]
+    }
+  ]
+}

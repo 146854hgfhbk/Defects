@@ -1,0 +1,121 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-135",
+  "bug_id": "JULIA-135",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "jump-dev/MathOptInterface.jl",
+  "repository_url": "https://github.com/jump-dev/MathOptInterface.jl.git",
+  "issue_urls": [
+    "https://github.com/jump-dev/MathOptInterface.jl/issues/2962"
+  ],
+  "issue_id": 2962,
+  "buggy_revision": "1393aff6c131645e1ca0b864ecdf1bb56868dc05",
+  "fixed_revision": "b632fb6a7d8c01e19863a49e111fa56e83e55afb",
+  "candidate_sha": "b632fb6a7d8c01e19863a49e111fa56e83e55afb",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "1393aff6c131645e1ca0b864ecdf1bb56868dc05",
+  "changed_production_files": [
+    "src/Bridges/Constraint/bridges/SemiToBinaryBridge.jl"
+  ],
+  "changed_test_files": [
+    "test/Bridges/Constraint/test_SemiToBinaryBridge.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-135 rejects open SemiToBinary intervals"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "9fd12b4ae5f1f727a2c3165d53b70795e73413177e6880a25d3003eadc424670",
+    "oracle": {
+      "mwe_basis": {
+        "upstream_test_file": "test/Bridges/Constraint/test_SemiToBinaryBridge.jl",
+        "public_api": "MathOptInterface SemiToBinary bridge add_constraint and ConstraintSet",
+        "defect": "open Semiinteger/Semicontinuous intervals were accepted and produced invalid Inf reformulations"
+      },
+      "source_evidence": "Behavior-equivalent MWE derived verbatim from upstream test_open_interval added by fix commit b632fb6a7d8c."
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "b632fb6a7d8c01e19863a49e111fa56e83e55afb",
+    "project": "jump-dev/MathOptInterface.jl",
+    "input_sha256": "ff7b8c45e85c29f9fd6619aa08de7761660b8911000a023ae1a984e37a77e58e",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:54:38Z",
+    "usage": {
+      "prompt_tokens": 1445,
+      "completion_tokens": 520,
+      "total_tokens": 1965
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.85, \"summary\": \"Fix for a bug in SemiToBinaryBridge where Inf values in Semiinteger and Semicontinuous sets caused incorrect behavior with open intervals. The issue (#2962) clearly describes a defect in existing logic, and the PR (#2963) explicitly closes that bug report.\", \"evidence\": \"Issue #2962 identifies a specific bug: incorrect logic handling Inf in Semiinteger and Semicontinuous sets at a specific line in SemiToBinaryBridge.jl. Issue #2963 is titled '[Bridges] fix bug with open intervals in SemiToBinaryBridge' and closes #2962. The commit modifies only the production file src/Bridges/Constraint/bridges/SemiToBinaryBridge.jl and includes a test file test/Bridges/Constraint/test_SemiToBinaryBridge.jl, indicating test coverage for the fix.\", \"missing_evidence\": \"The actual diff content is not available to confirm the precise nature of the code change. The PR body is empty, so detailed explanation of the fix approach is not visible.\", \"validation_risks\": \"Without seeing the actual diff, there is a small risk that the fix might include additional refactoring or behavioral changes beyond the bug fix. The test file change should be verified to confirm it tests the specific Inf-in-interval scenario.\", \"suggested_tests\": \"Test cases with Semicontinuous and Semiinteger variables where the upper bound is Inf, verifying correct bridge behavior. Test with open intervals near Inf boundaries. Test that finite bounds still work correctly after the fix.\"}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.85,
+    "summary": "Fix for a bug in SemiToBinaryBridge where Inf values in Semiinteger and Semicontinuous sets caused incorrect behavior with open intervals. The issue (#2962) clearly describes a defect in existing logic, and the PR (#2963) explicitly closes that bug report.",
+    "evidence": "Issue #2962 identifies a specific bug: incorrect logic handling Inf in Semiinteger and Semicontinuous sets at a specific line in SemiToBinaryBridge.jl. Issue #2963 is titled '[Bridges] fix bug with open intervals in SemiToBinaryBridge' and closes #2962. The commit modifies only the production file src/Bridges/Constraint/bridges/SemiToBinaryBridge.jl and includes a test file test/Bridges/Constraint/test_SemiToBinaryBridge.jl, indicating test coverage for the fix.",
+    "missing_evidence": "The actual diff content is not available to confirm the precise nature of the code change. The PR body is empty, so detailed explanation of the fix approach is not visible.",
+    "validation_risks": "Without seeing the actual diff, there is a small risk that the fix might include additional refactoring or behavioral changes beyond the bug fix. The test file change should be verified to confirm it tests the specific Inf-in-interval scenario.",
+    "suggested_tests": "Test cases with Semicontinuous and Semiinteger variables where the upper bound is Inf, verifying correct bridge behavior. Test with open intervals near Inf boundaries. Test that finite bounds still work correctly after the fix."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-135 rejects open SemiToBinary intervals"
+    ],
+    "exception_types": [
+      "163095867523d629f94688f173d7e640613c1d4c17d1d5ff53d24a3a5b3153b6",
+      "fbf43f2a489254f6a0006cb070124385c8bc95933d6da298fa07016c974df0a2"
+    ],
+    "fingerprints": [
+      "163095867523d629f94688f173d7e640613c1d4c17d1d5ff53d24a3a5b3153b6",
+      "fbf43f2a489254f6a0006cb070124385c8bc95933d6da298fa07016c974df0a2"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

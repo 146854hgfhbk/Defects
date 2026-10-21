@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "case_id": "ELIXIR-099",
+  "manual_review_status": "delegated_agent_review_completed",
+  "reviewer": "agent (delegated by dataset owner)",
+  "reviewer_type": "agent_delegated",
+  "human_confirmation": false,
+  "rejection_code": null,
+  "review_dimension": "defect_semantics",
+  "semantic_decision": "BUG_FIX",
+  "semantic_reason": "The PR fixes a defect where an error returned inside a traversal within a choice combinator would not allow the choice to fall back to the next branch. Previously, a `{:error, ...}` from a traversal in a choice branch would incorrectly propagate as an overall parse error instead of letting the choice try alternatives. The change updates `traverse/8` to thread config and use `traverse_error/2` so traversal errors trigger choice fallback, matching expected parser semantics. Tests like `choice_post_traverse`, `choice_pre_traverse`, and `choice_quoted_post_traverse` confirm the corrected fallback behavior on existing functionality.",
+  "technical_validation_status": "upstream_summary_only; local dynamic validation pending",
+  "patch_minimization_review": {
+    "status": "human_review_accepted",
+    "llm_review": "llm-hunk-review.json",
+    "deep_review": "PHASE-C-DEEP-REVIEW.md",
+    "audit_table": "MINIMIZATION_AUDIT.csv",
+    "removed_hunk_count": 0,
+    "forced_kept": 0,
+    "human_confirmation": true,
+    "reviewer": "dataset owner / human curator",
+    "reviewed_at": "2026-09-12"
+  },
+  "delegation_note": "Defect-semantics review remains agent-delegated; patch minimization was separately confirmed by the human dataset curator on 2026-09-12.",
+  "reviewed_at": "2026-09-11",
+  "human_minimization_confirmation": true,
+  "human_minimization_reviewer": "dataset owner / human curator",
+  "human_minimization_reviewed_at": "2026-09-12"
+}

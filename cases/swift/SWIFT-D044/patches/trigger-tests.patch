@@ -1,0 +1,16 @@
+diff --git a/Tests/OpenAPIRuntimeTests/Interface/Test_HTTPBody.swift b/Tests/OpenAPIRuntimeTests/Interface/Test_HTTPBody.swift
+index 16a684c..ede7236 100644
+--- a/Tests/OpenAPIRuntimeTests/Interface/Test_HTTPBody.swift
++++ b/Tests/OpenAPIRuntimeTests/Interface/Test_HTTPBody.swift
+@@ -173,6 +173,11 @@ final class Test_Body: Test_Runtime {
+             _ = try await String(collecting: body, upTo: .max)
+             XCTFail("Expected an error to be thrown")
+         } catch {}
++
++        do {
++            for try await _ in body {}
++            XCTFail("Expected an error to be thrown")
++        } catch {}
+     }
+ 
+     func testIterationBehavior_multiple() async throws {

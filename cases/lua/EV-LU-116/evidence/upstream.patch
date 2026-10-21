@@ -1,0 +1,84 @@
+diff --git a/spec/check_spec.lua b/spec/check_spec.lua
+index eece663004c3a2e6e18cdc3393ffdf2e10e19aba..979bee4035788e2c88d5aab6ed65c50d02ef9144 100644
+--- a/spec/check_spec.lua
++++ b/spec/check_spec.lua
+@@ -439,6 +439,19 @@ end
+       ]])
+    end)
+ 
++   it("detects unreachable code in nested function", function()
++      assert.same({
++         {code = "511", line = 4, column = 7, end_column = 12}
++      }, check[[
++return function()
++   return function()
++      do return end
++      return
++   end
++end
++      ]])
++   end)
++
+    it("detects accessing uninitialized variables", function()
+       assert.same({
+          {code = "113", name = "get", line = 6, column = 8, end_column = 10},
+@@ -456,6 +469,25 @@ return a
+       ]])
+    end)
+ 
++   it("detects accessing uninitialized variables in nested functions", function()
++      assert.same({
++         {code = "113", name = "get", line = 7, column = 8, end_column = 10},
++         {code = "321", name = "a", line = 7, column = 12, end_column = 12}
++      }, check[[
++return function() return function(...)
++local a
++
++if ... then
++   a = 5
++else
++   a = get(a)
++end
++
++return a
++end end
++      ]])
++   end)
++
+    it("does not detect accessing unitialized variables incorrectly in loops", function()
+       assert.same({
+          {code = "113", name = "get", line = 4, column = 8, end_column = 10}
+diff --git a/src/luacheck/reachability.lua b/src/luacheck/reachability.lua
+index 006f8a612591902bbe4cc0c8434c6f20f81fdf1f..47be754e24099b558a2534c0eea2ca591639bea9 100644
+--- a/src/luacheck/reachability.lua
++++ b/src/luacheck/reachability.lua
+@@ -4,14 +4,14 @@ local reachability
+ 
+ local function noop_callback() end
+ 
+-local function reachability_callback(_, _, item, chstate)
++local function reachability_callback(_, _, item, chstate, nested)
+    if not item then
+       return true
+    end
+ 
+-   if item.lines then
++   if not nested and item.lines then
+       for _, subline in ipairs(item.lines) do
+-         reachability(chstate, subline)
++         reachability(chstate, subline, true)
+       end
+    end
+ 
+@@ -29,9 +29,9 @@ local function reachability_callback(_, _, item, chstate)
+ end
+ 
+ -- Emits warnings: unreachable code, uninitialized access.
+-function reachability(chstate, line)
++function reachability(chstate, line, nested)
+    local reachable_indexes = {}
+-   core_utils.walk_line_once(line, reachable_indexes, 1, reachability_callback, chstate)
++   core_utils.walk_line_once(line, reachable_indexes, 1, reachability_callback, chstate, nested)
+ 
+    for i, item in ipairs(line.items) do
+       if not reachable_indexes[i] then

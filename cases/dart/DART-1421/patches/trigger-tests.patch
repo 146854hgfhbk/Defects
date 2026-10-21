@@ -1,0 +1,19 @@
+diff --git a/test/line_scanner_test.dart b/test/line_scanner_test.dart
+--- a/test/line_scanner_test.dart
++++ b/test/line_scanner_test.dart
+@@ -46,6 +46,15 @@ void main() {
+       expect(scanner.line, equals(2));
+       expect(scanner.column, equals(1));
+     });
++
++    test('scanning a zero length match between CR LF does not fail', () {
++      scanner.expect('foo\nbar\r');
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(4));
++      scanner.expect(RegExp('(?!x)'));
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(4));
++    });
+   });
+
+   group('readChar()', () {

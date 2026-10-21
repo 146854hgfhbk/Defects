@@ -1,0 +1,14 @@
+﻿sha=ad128dc40b98bef9faec8a1319cc8e075c52615e
+subject=Fix values not saved in infinite loops
+body=When propogating a value, it was saved at the end of propogation. If
+flow ends with an unexitable loop, nothing is saved. This leads to
+incorrect analysis or crashes for upvalues, as it is expected that accesses
+in reachable closures use at least one value, perhaps the empty initial.
+
+The fix is to also save values when propogating to an item already visited
+in the current stack (path from root to current node). A loop must contain
+at least one such backtracking edge.
+
+Implementation has to simlutate recursion manually to track set of items
+in the stack. Performance hit is considerable.
+

@@ -1,0 +1,130 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-147",
+  "bug_id": "JULIA-147",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "jump-dev/MathOptInterface.jl",
+  "repository_url": "https://github.com/jump-dev/MathOptInterface.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "352ad646669f2e374a3fdac4b21c65691d85fa6e",
+  "fixed_revision": "c538a11d0948941bd6b33df9d8b2e1b766071183",
+  "candidate_sha": "c538a11d0948941bd6b33df9d8b2e1b766071183",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "352ad646669f2e374a3fdac4b21c65691d85fa6e",
+  "changed_production_files": [
+    "src/Bridges/Constraint/bridges/GeoMeanBridge.jl"
+  ],
+  "changed_test_files": [
+    "test/Bridges/Constraint/test_GeoMeanBridge.jl"
+  ],
+  "trigger_tests": [
+    "GeoMeanBridge constraint primal start"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "cefa6822f13293164c81a9a7848eb9c85c26620f0cbce79d13312676f81ed39a",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/Bridges/Constraint/test_GeoMeanBridge.jl",
+        "basis": "behavioral test function copied from the upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "f1158c86d147812e4aadebb4d39cf2446264d900a365ee13a060eada7ce9e36a"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "c538a11d0948941bd6b33df9d8b2e1b766071183",
+    "project": "jump-dev/MathOptInterface.jl",
+    "input_sha256": "114077b7a82c6994ba0a620fd6864bfac4f462130b6bf1a5254cdf3d920ab7eb",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:54:48Z",
+    "usage": {
+      "prompt_tokens": 1362,
+      "completion_tokens": 483,
+      "total_tokens": 1845
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"Fix for incorrect ConstraintPrimal computation in GeoMeanBridge due to wrong sign convention. The commit modifies production code in the bridge and adds a test file to catch the bug.\", \"evidence\": \"Issue #3059 explicitly states the sign convention was wrong and provides a test that catches the bug. Issue #3056 is cross-referenced as the original report. The commit touches only the GeoMeanBridge production file and adds a corresponding test file, consistent with an isolated bug fix for an existing behavior violation (incorrect ConstraintPrimal value returned by the bridge).\", \"missing_evidence\": \"The actual diff content is not available to verify the exact nature of the code change, and the PR body is empty. However, the issue descriptions are clear about the defect.\", \"validation_risks\": \"Without seeing the full diff, there is a small risk that additional changes (refactoring, feature additions) could be included. The issue history suggests this is a follow-up fix (#3059) to a prior incorrect fix (#3056), which adds slight complexity.\", \"suggested_tests\": \"Test that ConstraintPrimal for a GeoMeanBridge constraint returns the correct value by constructing a model with a geometric mean constraint, solving it, and verifying the primal value matches the expected geometric mean computation.\"}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for incorrect ConstraintPrimal computation in GeoMeanBridge due to wrong sign convention. The commit modifies production code in the bridge and adds a test file to catch the bug.",
+    "evidence": "Issue #3059 explicitly states the sign convention was wrong and provides a test that catches the bug. Issue #3056 is cross-referenced as the original report. The commit touches only the GeoMeanBridge production file and adds a corresponding test file, consistent with an isolated bug fix for an existing behavior violation (incorrect ConstraintPrimal value returned by the bridge).",
+    "missing_evidence": "The actual diff content is not available to verify the exact nature of the code change, and the PR body is empty. However, the issue descriptions are clear about the defect.",
+    "validation_risks": "Without seeing the full diff, there is a small risk that additional changes (refactoring, feature additions) could be included. The issue history suggests this is a follow-up fix (#3059) to a prior incorrect fix (#3056), which adds slight complexity.",
+    "suggested_tests": "Test that ConstraintPrimal for a GeoMeanBridge constraint returns the correct value by constructing a model with a geometric mean constraint, solving it, and verifying the primal value matches the expected geometric mean computation."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "GeoMeanBridge constraint primal start"
+    ],
+    "exception_types": [
+      "6d149534bd210b5e27df7c9addf74a433c41b412c2e65a1bfe9ebff461be5818"
+    ],
+    "fingerprints": [
+      "6d149534bd210b5e27df7c9addf74a433c41b412c2e65a1bfe9ebff461be5818"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "c538a11d0948941bd6b33df9d8b2e1b766071183",
+    "parent_sha": "352ad646669f2e374a3fdac4b21c65691d85fa6e",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "a177f2ca5d5844f8d8cec33dca86c6e5b17399f276e566044c492f7134d73f5c",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

@@ -1,0 +1,633 @@
+{
+  "case_id": "JULIA-658",
+  "original_patch_sha256": "6382a7d572f6b7b8ea87f075fecf7322444e06dc835e0c6f9b85def2f5639af6",
+  "minimized_patch_sha256": "6382a7d572f6b7b8ea87f075fecf7322444e06dc835e0c6f9b85def2f5639af6",
+  "hunk_count": 4,
+  "budget": {
+    "max_trials": 0,
+    "max_case_seconds": 0,
+    "trials_used": 23
+  },
+  "kept_hunk_count": 4,
+  "removed_hunk_count": 0,
+  "search": "exact_subset",
+  "globally_minimal": true,
+  "complete": true,
+  "baseline_failure_fingerprints": [
+    "5c0806cccd02ff4198fd36fd67c87c687b77ec8a0f5f4af7061489016f3169c9",
+    "97eca331642f676b2ec75e46a0029c3e1c5841da3e1ec7ecc7433734a7ac52f6",
+    "b6e8d0dd97a573e55ca20c8b31fd252afadc3c41c62e78cc7094bb2dad68b9e6"
+  ],
+  "trials": [
+    {
+      "subset": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "5c0806cccd02ff4198fd36fd67c87c687b77ec8a0f5f4af7061489016f3169c9",
+          "97eca331642f676b2ec75e46a0029c3e1c5841da3e1ec7ecc7433734a7ac52f6",
+          "b6e8d0dd97a573e55ca20c8b31fd252afadc3c41c62e78cc7094bb2dad68b9e6"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken."
+          }
+        ],
+        "output_tail": "5/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nexponential function at base zero: Test Failed at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25\n  Expression: isequal(ForwardDiff.gradient((t->begin\n                #= __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 =#\n                t[1] ^ t[2]\n            end), [0.0, 0.5]), [Inf, 0.0])\n   Evaluated: isequal([Inf, NaN], [Inf, 0.0])\n\nStacktrace:\n [1] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:673 [inlined]\n [2] macro expansion\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 [inlined]\n [3] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n [4] top-level scope\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Pass  Fail  Total  Time\nexponential function at base zero |    1     3      4  1.0s\nERROR: LoadError: Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n"
+      }
+    },
+    {
+      "subset": [],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": false,
+        "trigger_pass": true,
+        "matched": "NaN-safe mode",
+        "fingerprints": [],
+        "load_errors": [],
+        "output_tail": "JULIA-TRIGGER-START\nTest Summary: | Pass  Total  Time\nNaN-safe mode |    1      1  0.1s\nTest Summary:                     | Pass  Total  Time\nexponential function at base zero |    4      4  0.4s\nTest Summary:                         | Pass  Total  Time\ngradient for exponential with NaNMath |    6      6  0.4s\nJULIA-658 trigger completed\n"
+      }
+    },
+    {
+      "subset": [
+        0
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [8] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [9] call_composed\n      @ ./operators.jl:1044 [inlined]\n   [10] (::ComposedFunction{typeof(log), typeof(zero)})(x::ForwardDiff.Dual{ForwardDiff.Tag{ComposedFunction{typeof(log), typeof(zero)}, Float64}, Float64, 1}; kw::@Kwargs{})\n      @ Base ./operators.jl:1041\n   [11] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.7s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        1
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "59458da8d96e2c8a151eb7882240470fd12bf39420b9d19b3cae18fb2fcf7b37"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "f(zero)}, Float64}}, val::Float64, deriv::Float64, partial::ForwardDiff.Partials{1, Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [6] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [7] call_composed\n      @ ./operators.jl:1044 [inlined]\n    [8] ComposedFunction\n      @ ./operators.jl:1041 [inlined]\n    [9] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [10] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [12] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.6s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        2
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "5e9f13603a558e82ad5ba24011b716dfd00a129acfe5074a2717521f93df5399"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 1 failed, 0 errored, 0 broken."
+          }
+        ],
+        "output_tail": "JULIA-TRIGGER-START\nNaN-safe mode: Test Failed at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:15\n  Expression: iszero(x)\n\nStacktrace:\n [1] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:673 [inlined]\n [2] macro expansion\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:15 [inlined]\n [3] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n [4] top-level scope\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Fail  Total  Time\nNaN-safe mode |    1      1  0.6s\nERROR: LoadError: Some tests did not pass: 0 passed, 1 failed, 0 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "5c0806cccd02ff4198fd36fd67c87c687b77ec8a0f5f4af7061489016f3169c9",
+          "97eca331642f676b2ec75e46a0029c3e1c5841da3e1ec7ecc7433734a7ac52f6",
+          "b6e8d0dd97a573e55ca20c8b31fd252afadc3c41c62e78cc7094bb2dad68b9e6"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken."
+          }
+        ],
+        "output_tail": "5/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nexponential function at base zero: Test Failed at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25\n  Expression: isequal(ForwardDiff.gradient((t->begin\n                #= __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 =#\n                t[1] ^ t[2]\n            end), [0.0, 0.5]), [Inf, 0.0])\n   Evaluated: isequal([Inf, NaN], [Inf, 0.0])\n\nStacktrace:\n [1] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:673 [inlined]\n [2] macro expansion\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 [inlined]\n [3] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n [4] top-level scope\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Pass  Fail  Total  Time\nexponential function at base zero |    1     3      4  1.0s\nERROR: LoadError: Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n",
+        "forward_closure": {
+          "status": "ok",
+          "trigger_fail": true,
+          "trigger_pass": false,
+          "matched": "NaN-safe mode",
+          "fingerprints": [
+            "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+            "afc5ab32a14580591aa9300dc70569bb7ad9f7022d6448c8cdbe4223e7577722"
+          ],
+          "output_tail": "gradient.jl:20 [inlined]\n    [9] gradient(f::var\"#7#14\", x::Vector{Float64}, cfg::ForwardDiff.GradientConfig{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2, Vector{ForwardDiff.Dual{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2}}})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/gradient.jl:17\n   [10] gradient(f::var\"#7#14\", x::Vector{Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/gradient.jl:17\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:670 [inlined]\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:31 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Error  Total  Time\nexponential function at base zero |     4      4  1.0s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 4 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n"
+        }
+      }
+    },
+    {
+      "subset": [
+        0,
+        1
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "59458da8d96e2c8a151eb7882240470fd12bf39420b9d19b3cae18fb2fcf7b37"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "f(zero)}, Float64}}, val::Float64, deriv::Float64, partial::ForwardDiff.Partials{1, Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [6] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [7] call_composed\n      @ ./operators.jl:1044 [inlined]\n    [8] ComposedFunction\n      @ ./operators.jl:1041 [inlined]\n    [9] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [10] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [12] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.6s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        0,
+        2
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [8] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [9] call_composed\n      @ ./operators.jl:1044 [inlined]\n   [10] (::ComposedFunction{typeof(log), typeof(zero)})(x::ForwardDiff.Dual{ForwardDiff.Tag{ComposedFunction{typeof(log), typeof(zero)}, Float64}, Float64, 1}; kw::@Kwargs{})\n      @ Base ./operators.jl:1041\n   [11] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.7s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        0,
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [8] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [9] call_composed\n      @ ./operators.jl:1044 [inlined]\n   [10] (::ComposedFunction{typeof(log), typeof(zero)})(x::ForwardDiff.Dual{ForwardDiff.Tag{ComposedFunction{typeof(log), typeof(zero)}, Float64}, Float64, 1}; kw::@Kwargs{})\n      @ Base ./operators.jl:1041\n   [11] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.7s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        1,
+        2
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+          "afc5ab32a14580591aa9300dc70569bb7ad9f7022d6448c8cdbe4223e7577722"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 4 errored, 0 broken."
+          }
+        ],
+        "output_tail": "imize/trial/src/gradient.jl:20 [inlined]\n    [9] gradient(f::var\"#7#14\", x::Vector{Float64}, cfg::ForwardDiff.GradientConfig{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2, Vector{ForwardDiff.Dual{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2}}})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/gradient.jl:17\n   [10] gradient(f::var\"#7#14\", x::Vector{Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/gradient.jl:17\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:670 [inlined]\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:31 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Error  Total  Time\nexponential function at base zero |     4      4  1.1s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 4 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n"
+      }
+    },
+    {
+      "subset": [
+        1,
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "59458da8d96e2c8a151eb7882240470fd12bf39420b9d19b3cae18fb2fcf7b37"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "f(zero)}, Float64}}, val::Float64, deriv::Float64, partial::ForwardDiff.Partials{1, Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [6] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [7] call_composed\n      @ ./operators.jl:1044 [inlined]\n    [8] ComposedFunction\n      @ ./operators.jl:1041 [inlined]\n    [9] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [10] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [12] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.6s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        2,
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "5e9f13603a558e82ad5ba24011b716dfd00a129acfe5074a2717521f93df5399"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 1 failed, 0 errored, 0 broken."
+          }
+        ],
+        "output_tail": "JULIA-TRIGGER-START\nNaN-safe mode: Test Failed at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:15\n  Expression: iszero(x)\n\nStacktrace:\n [1] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:673 [inlined]\n [2] macro expansion\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:15 [inlined]\n [3] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n [4] top-level scope\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Fail  Total  Time\nNaN-safe mode |    1      1  0.6s\nERROR: LoadError: Some tests did not pass: 0 passed, 1 failed, 0 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        0,
+        1,
+        2
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+          "afc5ab32a14580591aa9300dc70569bb7ad9f7022d6448c8cdbe4223e7577722"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 4 errored, 0 broken."
+          }
+        ],
+        "output_tail": "imize/trial/src/gradient.jl:20 [inlined]\n    [9] gradient(f::var\"#7#14\", x::Vector{Float64}, cfg::ForwardDiff.GradientConfig{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2, Vector{ForwardDiff.Dual{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2}}})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/gradient.jl:17\n   [10] gradient(f::var\"#7#14\", x::Vector{Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/gradient.jl:17\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:670 [inlined]\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:31 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Error  Total  Time\nexponential function at base zero |     4      4  1.1s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 4 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n"
+      }
+    },
+    {
+      "subset": [
+        0,
+        1,
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "59458da8d96e2c8a151eb7882240470fd12bf39420b9d19b3cae18fb2fcf7b37"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "f(zero)}, Float64}}, val::Float64, deriv::Float64, partial::ForwardDiff.Partials{1, Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [6] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [7] call_composed\n      @ ./operators.jl:1044 [inlined]\n    [8] ComposedFunction\n      @ ./operators.jl:1041 [inlined]\n    [9] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [10] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [12] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.6s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        0,
+        2,
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [8] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [9] call_composed\n      @ ./operators.jl:1044 [inlined]\n   [10] (::ComposedFunction{typeof(log), typeof(zero)})(x::ForwardDiff.Dual{ForwardDiff.Tag{ComposedFunction{typeof(log), typeof(zero)}, Float64}, Float64, 1}; kw::@Kwargs{})\n      @ Base ./operators.jl:1041\n   [11] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.7s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        1,
+        2,
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "5c0806cccd02ff4198fd36fd67c87c687b77ec8a0f5f4af7061489016f3169c9",
+          "97eca331642f676b2ec75e46a0029c3e1c5841da3e1ec7ecc7433734a7ac52f6",
+          "b6e8d0dd97a573e55ca20c8b31fd252afadc3c41c62e78cc7094bb2dad68b9e6"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken."
+          }
+        ],
+        "output_tail": "5/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nexponential function at base zero: Test Failed at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25\n  Expression: isequal(ForwardDiff.gradient((t->begin\n                #= __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 =#\n                t[1] ^ t[2]\n            end), [0.0, 0.5]), [Inf, 0.0])\n   Evaluated: isequal([Inf, NaN], [Inf, 0.0])\n\nStacktrace:\n [1] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:673 [inlined]\n [2] macro expansion\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 [inlined]\n [3] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n [4] top-level scope\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Pass  Fail  Total  Time\nexponential function at base zero |    1     3      4  1.1s\nERROR: LoadError: Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n",
+        "forward_closure": {
+          "status": "ok",
+          "trigger_fail": true,
+          "trigger_pass": false,
+          "matched": "NaN-safe mode",
+          "fingerprints": [
+            "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+          ],
+          "output_tail": "fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/dual.jl:214\n    [8] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/dual.jl:255 [inlined]\n    [9] call_composed\n      @ ./operators.jl:1044 [inlined]\n   [10] (::ComposedFunction{typeof(log), typeof(zero)})(x::ForwardDiff.Dual{ForwardDiff.Tag{ComposedFunction{typeof(log), typeof(zero)}, Float64}, Float64, 1}; kw::@Kwargs{})\n      @ Base ./operators.jl:1041\n   [11] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/derivative.jl:14\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.7s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+        }
+      }
+    },
+    {
+      "subset": [
+        1,
+        2,
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "5c0806cccd02ff4198fd36fd67c87c687b77ec8a0f5f4af7061489016f3169c9",
+          "97eca331642f676b2ec75e46a0029c3e1c5841da3e1ec7ecc7433734a7ac52f6",
+          "b6e8d0dd97a573e55ca20c8b31fd252afadc3c41c62e78cc7094bb2dad68b9e6"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken."
+          }
+        ],
+        "output_tail": "5/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nexponential function at base zero: Test Failed at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25\n  Expression: isequal(ForwardDiff.gradient((t->begin\n                #= __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 =#\n                t[1] ^ t[2]\n            end), [0.0, 0.5]), [Inf, 0.0])\n   Evaluated: isequal([Inf, NaN], [Inf, 0.0])\n\nStacktrace:\n [1] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:673 [inlined]\n [2] macro expansion\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 [inlined]\n [3] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n [4] top-level scope\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Pass  Fail  Total  Time\nexponential function at base zero |    1     3      4  1.0s\nERROR: LoadError: Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n",
+        "forward_closure": {
+          "status": "ok",
+          "trigger_fail": true,
+          "trigger_pass": false,
+          "matched": "NaN-safe mode",
+          "fingerprints": [
+            "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+          ],
+          "output_tail": "fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/dual.jl:214\n    [8] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/dual.jl:255 [inlined]\n    [9] call_composed\n      @ ./operators.jl:1044 [inlined]\n   [10] (::ComposedFunction{typeof(log), typeof(zero)})(x::ForwardDiff.Dual{ForwardDiff.Tag{ComposedFunction{typeof(log), typeof(zero)}, Float64}, Float64, 1}; kw::@Kwargs{})\n      @ Base ./operators.jl:1041\n   [11] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/derivative.jl:14\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.7s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+        }
+      }
+    },
+    {
+      "subset": [
+        0,
+        2,
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [8] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [9] call_composed\n      @ ./operators.jl:1044 [inlined]\n   [10] (::ComposedFunction{typeof(log), typeof(zero)})(x::ForwardDiff.Dual{ForwardDiff.Tag{ComposedFunction{typeof(log), typeof(zero)}, Float64}, Float64, 1}; kw::@Kwargs{})\n      @ Base ./operators.jl:1041\n   [11] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.7s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        0,
+        1,
+        3
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "59458da8d96e2c8a151eb7882240470fd12bf39420b9d19b3cae18fb2fcf7b37"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "f(zero)}, Float64}}, val::Float64, deriv::Float64, partial::ForwardDiff.Partials{1, Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [6] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [7] call_composed\n      @ ./operators.jl:1044 [inlined]\n    [8] ComposedFunction\n      @ ./operators.jl:1041 [inlined]\n    [9] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [10] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [12] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.6s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "subset": [
+        0,
+        1,
+        2
+      ],
+      "outcome": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+          "afc5ab32a14580591aa9300dc70569bb7ad9f7022d6448c8cdbe4223e7577722"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 4 errored, 0 broken."
+          }
+        ],
+        "output_tail": "imize/trial/src/gradient.jl:20 [inlined]\n    [9] gradient(f::var\"#7#14\", x::Vector{Float64}, cfg::ForwardDiff.GradientConfig{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2, Vector{ForwardDiff.Dual{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2}}})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/gradient.jl:17\n   [10] gradient(f::var\"#7#14\", x::Vector{Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/gradient.jl:17\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:670 [inlined]\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:31 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Error  Total  Time\nexponential function at base zero |     4      4  1.0s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 4 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n"
+      }
+    }
+  ],
+  "hunk_decisions": [
+    {
+      "file_index": 0,
+      "hunk_index": 0,
+      "classification": "format_only",
+      "necessary": true,
+      "evidence": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "5c0806cccd02ff4198fd36fd67c87c687b77ec8a0f5f4af7061489016f3169c9",
+          "97eca331642f676b2ec75e46a0029c3e1c5841da3e1ec7ecc7433734a7ac52f6",
+          "b6e8d0dd97a573e55ca20c8b31fd252afadc3c41c62e78cc7094bb2dad68b9e6"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken."
+          }
+        ],
+        "output_tail": "5/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nexponential function at base zero: Test Failed at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25\n  Expression: isequal(ForwardDiff.gradient((t->begin\n                #= __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 =#\n                t[1] ^ t[2]\n            end), [0.0, 0.5]), [Inf, 0.0])\n   Evaluated: isequal([Inf, NaN], [Inf, 0.0])\n\nStacktrace:\n [1] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:673 [inlined]\n [2] macro expansion\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:25 [inlined]\n [3] macro expansion\n   @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n [4] top-level scope\n   @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Pass  Fail  Total  Time\nexponential function at base zero |    1     3      4  1.0s\nERROR: LoadError: Some tests did not pass: 1 passed, 3 failed, 0 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n",
+        "forward_closure": {
+          "status": "ok",
+          "trigger_fail": true,
+          "trigger_pass": false,
+          "matched": "NaN-safe mode",
+          "fingerprints": [
+            "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+          ],
+          "output_tail": "fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/dual.jl:214\n    [8] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/dual.jl:255 [inlined]\n    [9] call_composed\n      @ ./operators.jl:1044 [inlined]\n   [10] (::ComposedFunction{typeof(log), typeof(zero)})(x::ForwardDiff.Dual{ForwardDiff.Tag{ComposedFunction{typeof(log), typeof(zero)}, Float64}, Float64, 1}; kw::@Kwargs{})\n      @ Base ./operators.jl:1041\n   [11] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/forward-trial/src/derivative.jl:14\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.7s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+        }
+      }
+    },
+    {
+      "file_index": 0,
+      "hunk_index": 1,
+      "classification": "semantic",
+      "necessary": true,
+      "evidence": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [8] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [9] call_composed\n      @ ./operators.jl:1044 [inlined]\n   [10] (::ComposedFunction{typeof(log), typeof(zero)})(x::ForwardDiff.Dual{ForwardDiff.Tag{ComposedFunction{typeof(log), typeof(zero)}, Float64}, Float64, 1}; kw::@Kwargs{})\n      @ Base ./operators.jl:1041\n   [11] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.7s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "file_index": 0,
+      "hunk_index": 2,
+      "classification": "semantic",
+      "necessary": true,
+      "evidence": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "59458da8d96e2c8a151eb7882240470fd12bf39420b9d19b3cae18fb2fcf7b37"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken."
+          }
+        ],
+        "output_tail": "f(zero)}, Float64}}, val::Float64, deriv::Float64, partial::ForwardDiff.Partials{1, Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:214\n    [6] log\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/dual.jl:255 [inlined]\n    [7] call_composed\n      @ ./operators.jl:1044 [inlined]\n    [8] ComposedFunction\n      @ ./operators.jl:1041 [inlined]\n    [9] derivative(f::ComposedFunction{typeof(log), typeof(zero)}, x::Float64)\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/derivative.jl:14\n   [10] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13 [inlined]\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [12] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:13\nTest Summary: | Error  Total  Time\nNaN-safe mode |     1      1  0.6s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 1 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:12\n"
+      }
+    },
+    {
+      "file_index": 0,
+      "hunk_index": 3,
+      "classification": "semantic",
+      "necessary": true,
+      "evidence": {
+        "status": "ok",
+        "trigger_fail": true,
+        "trigger_pass": false,
+        "matched": "NaN-safe mode",
+        "fingerprints": [
+          "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+          "afc5ab32a14580591aa9300dc70569bb7ad9f7022d6448c8cdbe4223e7577722"
+        ],
+        "load_errors": [
+          {
+            "module": null,
+            "message": "Some tests did not pass: 0 passed, 0 failed, 4 errored, 0 broken."
+          }
+        ],
+        "output_tail": "imize/trial/src/gradient.jl:20 [inlined]\n    [9] gradient(f::var\"#7#14\", x::Vector{Float64}, cfg::ForwardDiff.GradientConfig{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2, Vector{ForwardDiff.Dual{ForwardDiff.Tag{var\"#7#14\", Float64}, Float64, 2}}})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/gradient.jl:17\n   [10] gradient(f::var\"#7#14\", x::Vector{Float64})\n      @ ForwardDiff ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/_minimize/trial/src/gradient.jl:17\n   [11] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:670 [inlined]\n   [12] macro expansion\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:31 [inlined]\n   [13] macro expansion\n      @ ~/julia/julia-1.10.12/share/julia/stdlib/v1.10/Test/src/Test.jl:1582 [inlined]\n   [14] top-level scope\n      @ ~/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:22\nTest Summary:                     | Error  Total  Time\nexponential function at base zero |     4      4  1.0s\nERROR: LoadError: Some tests did not pass: 0 passed, 0 failed, 4 errored, 0 broken.\nin expression starting at __REFERENCE_USER_HOME__/julia-workflow-fixed-20260825/julia-defects-workflow-fixed-20260825/workspaces/cases/JULIA-658/trigger/trigger.jl:21\n"
+      }
+    }
+  ],
+  "all_hunks_necessary": true,
+  "canonical_patch_role": "repair_evidence",
+  "canonical_forward_replay": {
+    "status": "ok",
+    "trigger_pass": true,
+    "trigger_fail": false,
+    "matched": "NaN-safe mode",
+    "failure_fingerprints": [],
+    "full_suite": null,
+    "full_suite_policy": "not_required_for_literal_upstream_fixed_state"
+  },
+  "attestation": {
+    "case_input_sha256": "630f4576788a583374bce7f94bf631be4c1dcadaba7e745db3156a9d88f83d0a",
+    "environment_lock_sha256": "03b8d94317c815734ee32d06c17d270d86f0d1e1ddaaff740babf65758bd79c4",
+    "minimizer_source_sha256": "43e6e9582b9e8dee18251d2faa5246ea3ad9503ab7fbef809a065066984f8559",
+    "validation_engine_sha256": "2615a720128327c476874d99dbf13671aacddeae568c63629ab20bf041f3e108"
+  }
+}

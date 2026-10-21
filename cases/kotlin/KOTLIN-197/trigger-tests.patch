@@ -1,0 +1,27 @@
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundCurlyRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundCurlyRuleTest.kt
+index b47f7118d8..e13c618de9 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundCurlyRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundCurlyRuleTest.kt
+@@ -562,4 +562,22 @@ class SpacingAroundCurlyRuleTest {
+                 .isFormattedAs(formattedCode)
+         }
+     }
++
++    @Test
++    fun `Issue 2359 - Given RBRACE followed by range operator then do not emit`() {
++        val code =
++            """
++            val foo = emptyList<String>().count { true }..1
++            """.trimIndent()
++        spacingAroundCurlyRuleAssertThat(code).hasNoLintViolations()
++    }
++
++    @Test
++    fun `Issue 2359 - Given RBRACE followed by range until operator then do not emit`() {
++        val code =
++            """
++            val foo = emptyList<String>().count { true }..<2
++            """.trimIndent()
++        spacingAroundCurlyRuleAssertThat(code).hasNoLintViolations()
++    }
+ }

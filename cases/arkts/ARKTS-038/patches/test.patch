@@ -1,0 +1,147 @@
+diff --git a/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/test/List.test.ets b/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/test/List.test.ets
+index 657d19416..1fd585f9d 100644
+--- a/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,8 +13,8 @@
+  * limitations under the License.
+  */
+ 
+-import abilityTest from './Ability.test';
++import pictureLimitDialogTest from './PictureLimitDialog.test';
+ 
+ export default function testsuite() {
+-  abilityTest();
+-}
+\ No newline at end of file
++  pictureLimitDialogTest();
++}
+diff --git a/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/test/PictureLimitDialog.test.ets b/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/test/PictureLimitDialog.test.ets
+new file mode 100644
+index 000000000..b590554cf
+--- /dev/null
++++ b/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/test/PictureLimitDialog.test.ets
+@@ -0,0 +1,32 @@
++/*
++ * Copyright (c) 2023 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it } from '@ohos/hypium';
++import { Driver, ON } from '@ohos.UiTest';
++
++export default function pictureLimitDialogTest() {
++  describe('PictureLimitDialogTest', function () {
++    it('ShowsDialogWhenAlbumReturnsTenPictures_001', 0, async function (done) {
++      let driver = Driver.create();
++      await driver.delayMs(1000);
++      await driver.assertComponentExist(ON.id('triggerLimit'));
++      let trigger = await driver.findComponent(ON.id('triggerLimit'));
++      await trigger.click();
++      await driver.delayMs(1000);
++      await driver.assertComponentExist(ON.type('AlertDialog'));
++      done();
++    })
++  })
++}
+diff --git a/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/testability/pages/Index.ets b/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/testability/pages/Index.ets
+index 68510e764..e22eaef17 100644
+--- a/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/testability/pages/Index.ets
++++ b/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/ets/testability/pages/Index.ets
+@@ -13,16 +13,40 @@
+  * limitations under the License.
+  */
+ 
+-import router from '@system.router';
++import GetPictures from '../../../../main/ets/feature/GetPictures'
+ 
+ @Entry
+ @Component
+ struct Index {
+   aboutToAppear() {
+     console.info('TestAbility index aboutToAppear')
++    AppStorage.SetOrCreate<Array<string>>('imageList', [])
++    let context = getContext(this)
++    context['startAbilityForResult'] = async () => {
++      return {
++        want: {
++          parameters: {
++            'select-item-list': [
++              'file://upload_test_0.jpg',
++              'file://upload_test_1.jpg',
++              'file://upload_test_2.jpg',
++              'file://upload_test_3.jpg',
++              'file://upload_test_4.jpg',
++              'file://upload_test_5.jpg',
++              'file://upload_test_6.jpg',
++              'file://upload_test_7.jpg',
++              'file://upload_test_8.jpg',
++              'file://upload_test_9.jpg'
++            ]
++          }
++        }
++      }
++    }
+   }
+ 
+   @State message: string = 'Hello World'
++  private getPictures: GetPictures = new GetPictures()
++  private getImage: () => Promise<void> = this.getPictures.getImage
+ 
+   build() {
+     Row() {
+@@ -31,10 +55,11 @@ struct Index {
+           .fontSize(50)
+           .fontWeight(FontWeight.Bold)
+         Button() {
+-          Text('next page')
++          Text('trigger limit')
+             .fontSize(20)
+             .fontWeight(FontWeight.Bold)
+         }
++        .id('triggerLimit')
+         .type(ButtonType.Capsule)
+         .margin({
+           top: 20
+@@ -42,11 +67,12 @@ struct Index {
+         .backgroundColor('#0D9FFB')
+         .width('35%')
+         .height('5%')
+-        .onClick(() => {
++        .onClick(async () => {
++          await this.getImage()
+         })
+       }
+       .width('100%')
+     }
+     .height('100%')
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/resources/base/element/string.json b/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/resources/base/element/string.json
+index f5c03bc54..0f3d45d85 100644
+--- a/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/resources/base/element/string.json
++++ b/code/SystemFeature/Connectivity/Upload/entry/src/ohosTest/resources/base/element/string.json
+@@ -120,6 +120,10 @@
+     {
+       "name": "all_photo",
+       "value":"所有照片"
++    },
++    {
++      "name": "number_limit",
++      "value": "picture limit"
+     }
+   ]
+-}
+\ No newline at end of file
++}

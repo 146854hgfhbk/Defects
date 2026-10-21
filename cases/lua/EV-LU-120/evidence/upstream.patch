@@ -1,0 +1,38 @@
+diff --git a/spec/lexer_spec.lua b/spec/lexer_spec.lua
+index df6bf3425e87a50f909f3b57971ada4757c6656e..85d3a4814db6c707ba8e3fc6173ea5fdc56f968b 100644
+--- a/spec/lexer_spec.lua
++++ b/spec/lexer_spec.lua
+@@ -343,6 +343,18 @@ print "1\g
+        3\n"
+ ]]))
+ 
++      assert.same({line = 8, column = 9, offset = 89, msg = "invalid decimal escape sequence '\\300'"}, get_last_error([[
++local function foo(bar)
++   return bar:get_foo[=[
++long string
++]=]
++end
++
++print "1\
++       2\300
++       3\n"
++]]))
++
+       assert.same({line = 8, column = 1, offset = 79, msg = "malformed number"}, get_last_error([[
+ local function foo(bar)
+    return bar:get_foo[=[
+diff --git a/src/luacheck/lexer.lua b/src/luacheck/lexer.lua
+index 0f9e4cf88c16dbaaac3ad2de9df0f595146b920c..51a01132bd978de6b6473ea8d3e5be030d80d979 100644
+--- a/src/luacheck/lexer.lua
++++ b/src/luacheck/lexer.lua
+@@ -707,8 +707,9 @@ function lexer.next_token(state)
+ 
+    if err_offset then
+       token_value = token_value .. " " .. lexer.quote(ssub(state.src, state.offset + err_offset, state.offset))
+-      token_offset = state.offset + err_offset
++      token_line = state.line
+       token_column = state.offset - state.line_offset + 1 + err_offset
++      token_offset = state.offset + err_offset
+    end
+ 
+    return token, token_value, token_line, token_column, token_offset

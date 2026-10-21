@@ -1,0 +1,29 @@
+diff --git a/src/map.c b/src/map.c
+index f8bda74c..e14b2af0 100644
+--- a/src/map.c
++++ b/src/map.c
+@@ -7,20 +7,14 @@
+ #include "utils.h"
+ 
+ void copy_names(SEXP from, SEXP to) {
+-  SEXP names = Rf_getAttrib(from, R_NamesSymbol);
+-  if (names == R_NilValue) {
++  if (Rf_length(from) != Rf_length(to))
+     return;
+-  }
+-
+-  R_len_t n = Rf_length(to);
+ 
+-  if (Rf_length(names) != n) {
+-    names = short_vec_recycle(names, n);
+-  }
+-  PROTECT(names);
++  SEXP names = Rf_getAttrib(from, R_NamesSymbol);
++  if (Rf_isNull(names))
++    return;
+ 
+   Rf_setAttrib(to, R_NamesSymbol, names);
+-  UNPROTECT(1);
+ }
+ 
+ void check_vector(SEXP x, const char *name) {

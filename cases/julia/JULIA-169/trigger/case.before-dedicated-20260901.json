@@ -1,0 +1,108 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-169",
+  "bug_id": "JULIA-169",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/julia/issues/60084"
+  ],
+  "issue_id": 60084,
+  "buggy_revision": "c5e4c03e420fb070ebfd21d99815ee9650e9490d",
+  "fixed_revision": "e78a2223fd6c300e82e22b36cd6bc7d03a6442a4",
+  "candidate_sha": "e78a2223fd6c300e82e22b36cd6bc7d03a6442a4",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "c5e4c03e420fb070ebfd21d99815ee9650e9490d",
+  "changed_production_files": [
+    "src/core/parse_stream.jl"
+  ],
+  "changed_test_files": [
+    "test/parse_stream.jl"
+  ],
+  "trigger_tests": [
+    "Singular value decomposition",
+    "LAPACK wrappers"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "test_patch_suite",
+    "path": "trigger/upstream-tests.patch",
+    "origin": "upstream_fix_test_patch",
+    "timeout_seconds": 1800,
+    "test_files": [
+      "test/parse_stream.jl"
+    ],
+    "test_files_sha256": {
+      "test/parse_stream.jl": "a666f7a472de5e2f5655167ee9dba1fffb4ab712b81fa991877489b3e4e621f7"
+    },
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "Singular value decomposition",
+        "LAPACK wrappers"
+      ],
+      "added_testsets": [
+        "peek_behind_pos with negative byte index"
+      ],
+      "assertion_expression_sha256": [
+        "59c05d7ba9a70fc724b58652cd2922e92a698005e0d4952061814b0bb87e7986",
+        "3c41c9409739782af8ab4d91b462eecf98f9cf0d44a1507242f2b655f5bb08ad",
+        "2814fc2354265036345aa88c798111f3bf2f8b9638ef4bdb342d60c827843078",
+        "9323d56dabbf3a658ddc875ad15259080e4cc9a746d4c7dbe139879bfba378d9"
+      ]
+    },
+    "sha256": "b4d1939ba2d9182969fc0748af0f09c08044a12f674c03680543f0097dee7393"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.12.7",
+    "julia_version_origin": "fixed_revision_era_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.12.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "e78a2223fd6c300e82e22b36cd6bc7d03a6442a4",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "c2af18973b30e9cc13c7e2d6bb1bc490309a8707e5350f9648a49291f42fc280",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:55:15Z",
+    "usage": {
+      "prompt_tokens": 1857,
+      "completion_tokens": 539,
+      "total_tokens": 2396
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.92,\n  \"summary\": \"Fix for an InexactError crash in peek_behind_pos when parsing incomplete keywords like 'do'. The function would attempt to convert a negative value to UInt32 because it double-counted byte spans when skipping nested trivia nodes with overlapping byte coverage.\",\n  \"evidence\": \"Issue #604 clearly describes a real crash (InexactError: trunc(UInt32, -1)) with a specific reproducer ('do' input). The fix targets production code (src/core/parse_stream.jl) and the issue references a linked Julia bug (JuliaLang/julia#60084). A test file (test/parse_stream.jl) is included. The root cause is well-explained: when a non-terminal trivia node contains children, both parent and child byte_spans were subtracted, causing an underflow.\",\n  \"missing_evidence\": \"The actual diff content is not provided, so the exact code change cannot be inspected. However, the issue description clearly explains both the problem and solution pattern.\",\n  \"validation_risks\": \"The fix changes traversal logic in peek_behind_pos which could affect other parsing scenarios. Edge cases with deeply nested trivia nodes or other incomplete keywords should be tested.\",\n  \"suggested_tests\": \"Test parsing of incomplete keywords ('do', 'if', 'for', etc.) that trigger the nested trivia node structure. Verify that peek_behind_pos correctly handles cases where non-terminal trivia nodes wrap child tokens with overlapping byte spans. Test that the parser returns a ParseError rather than crashing.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.92,
+    "summary": "Fix for an InexactError crash in peek_behind_pos when parsing incomplete keywords like 'do'. The function would attempt to convert a negative value to UInt32 because it double-counted byte spans when skipping nested trivia nodes with overlapping byte coverage.",
+    "evidence": "Issue #604 clearly describes a real crash (InexactError: trunc(UInt32, -1)) with a specific reproducer ('do' input). The fix targets production code (src/core/parse_stream.jl) and the issue references a linked Julia bug (JuliaLang/julia#60084). A test file (test/parse_stream.jl) is included. The root cause is well-explained: when a non-terminal trivia node contains children, both parent and child byte_spans were subtracted, causing an underflow.",
+    "missing_evidence": "The actual diff content is not provided, so the exact code change cannot be inspected. However, the issue description clearly explains both the problem and solution pattern.",
+    "validation_risks": "The fix changes traversal logic in peek_behind_pos which could affect other parsing scenarios. Edge cases with deeply nested trivia nodes or other incomplete keywords should be tested.",
+    "suggested_tests": "Test parsing of incomplete keywords ('do', 'if', 'for', etc.) that trigger the nested trivia node structure. Verify that peek_behind_pos correctly handles cases where non-terminal trivia nodes wrap child tokens with overlapping byte spans. Test that the parser returns a ParseError rather than crashing."
+  },
+  "origin_dataset": null
+}

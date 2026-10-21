@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "be162ee1345b332be50f53ec74267fc38ad66655",
+  "project": "fredrikekre/Runic.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 58,
+      "url": "https://github.com/fredrikekre/Runic.jl/issues/58",
+      "state": "closed",
+      "title": "Runic breaks unpacking of only the first element of a tuple",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "```julia\r\njulia> Runic.format_string(\"x, = (1, 2, 3)\")\r\n\"x = (1, 2, 3)\"\r\n```\r\nThat is, of course, not equivalent:\r\n```julia\r\njulia> x, = (1, 2, 3); x\r\n1\r\n\r\njulia> x = (1, 2, 3); x\r\n(1, 2, 3)\r\n```",
+      "defect_evidence_basis": {
+        "source": "upstream_issue_body",
+        "assessment": "Issue demonstrates that formatting changes tuple destructuring semantics; the single-parent fixing commit directly closes the issue."
+      }
+    },
+    {
+      "number": 59,
+      "url": "https://github.com/fredrikekre/Runic.jl/pull/59",
+      "state": "closed",
+      "title": "Fix trailing comma in implicit tuples in destructuring",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This patch fixes the usage of trailing commas in implicit tuples when used in destructuring assignment, e.g. `x, = z`. In this context the trailing comma is needed to preserve the tuple node, which is different from e.g. implicit tuples in `do`-blocks. A trailing comma is allowed (e.g. preserved from the source) for multi-item implicit tuples so that e.g. `x, y, = z` can be used to signal that z contains more than two items. Closes #58."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "fix_commit_to_issue",
+      "issue_numbers": [
+        58
+      ],
+      "fix_commit": "be162ee1345b332be50f53ec74267fc38ad66655",
+      "evidence": "Closes #58"
+    }
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix trailing comma in implicit tuples in destructuring (#59)\n\nThis patch fixes the usage of trailing commas in implicit tuples when\r\nused in destructuring assignment, e.g. `x, = z`. In this context the\r\ntrailing comma is needed to preserve the tuple node, which is different\r\nfrom e.g. implicit tuples in `do`-blocks. A trailing comma is allowed\r\n(e.g. preserved from the source) for multi-item implicit tuples so that\r\ne.g. `x, y, = z` can be used to signal that z contains more than two\r\nitems. Closes #58.",
+    "commit_issue_refs": [
+      58,
+      59
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 59,
+    "pull_request_title": "Fix trailing comma in implicit tuples in destructuring",
+    "pull_request_issue_refs": [
+      58
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    58
+  ],
+  "cross_repository_issue_records": []
+}

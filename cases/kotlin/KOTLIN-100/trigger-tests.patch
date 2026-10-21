@@ -1,0 +1,45 @@
+diff --git a/projects/core/koin-core/src/jvmTest/kotlin/org/koin/core/EnvironmentPropertiesIssue2348Test.kt b/projects/core/koin-core/src/jvmTest/kotlin/org/koin/core/EnvironmentPropertiesIssue2348Test.kt
+new file mode 100644
+index 00000000..243410e4
+--- /dev/null
++++ b/projects/core/koin-core/src/jvmTest/kotlin/org/koin/core/EnvironmentPropertiesIssue2348Test.kt
+@@ -0,0 +1,39 @@
++package org.koin.core
++
++import org.koin.core.annotation.KoinInternalApi
++import org.koin.core.registry.saveProperties
++import org.koin.dsl.koinApplication
++import java.util.Properties
++import kotlin.test.Test
++import kotlin.test.assertEquals
++import kotlin.test.assertSame
++
++/**
++ * Regression test for #2348. java.util.Properties can legally hold non-String keys/values
++ * (e.g. after System.setProperties(...) with arbitrary objects). Koin hard-cast values to String,
++ * crashing with ClassCastException. The registry is String-keyed but holds Any values, so a
++ * non-String value under a String key must be preserved.
++ */
++@OptIn(KoinInternalApi::class)
++class EnvironmentPropertiesIssue2348Test {
++
++    @Test
++    fun saveProperties_tolerates_non_string_entries_issue_2348() {
++        val koin = koinApplication { }.koin
++
++        val objectValue = Any()
++        val props = Properties().apply {
++            setProperty("valid.key", "valid.value")
++            // Properties permits arbitrary values; the Koin registry stores Any.
++            put("object.value", objectValue)
++        }
++
++        // must NOT throw ClassCastException
++        koin.propertyRegistry.saveProperties(props)
++
++        // valid string property is saved
++        assertEquals("valid.value", koin.getProperty<String>("valid.key"))
++        // a non-String value under a String key is preserved as-is (registry stores Any)
++        assertSame(objectValue, koin.getProperty<Any>("object.value"))
++    }
++}

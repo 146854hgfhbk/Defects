@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "case_id": "ARKTS-024",
+  "status": "VALIDATED_ACTIVE",
+  "source_dataset": "ArkEval",
+  "source_instance_id": "openharmony__applications_app_samples+72647ba3-6110",
+  "project": "openharmony/applications_app_samples",
+  "repo_url": "https://gitee.com/openharmony/applications_app_samples",
+  "title": "【Sample】【6.0-Beta1】Browser 修复jscrash",
+  "pr_number": 6110,
+  "pr_url": "https://gitee.com/openharmony/applications_app_samples/pulls/6110",
+  "issue_urls": [
+    "https://gitee.com/openharmony/applications_app_samples/issues/ICHWLQ"
+  ],
+  "buggy_revision": "72647ba38aa3d353c46e884e5de975a09bc64b37",
+  "fixed_revision": "60df4706734fb036c6b69f21c18446d52e9f383b",
+  "revision_mode": "strict_upstream_boundary",
+  "project_root": "code/BasicFeature/Web/Browser",
+  "changed_production_files": [
+    "code/BasicFeature/Web/Browser/entry/src/main/ets/common/TitleBar.ets",
+    "code/BasicFeature/Web/Browser/entry/src/main/ets/model/Browser.ets"
+  ],
+  "trigger_test_files": [
+    "code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/BrowserControllerGuard.test.ets",
+    "code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/List.test.ets"
+  ],
+  "target": "BrowserControllerGuardTest#Browser_MissingCurrentController_001",
+  "runner": "/ets/TestRunner/OpenHarmonyTestRunner",
+  "bundle": "ohos.samples.browser1",
+  "patches": {
+    "upstream": "patches/upstream.patch",
+    "source": "patches/source.patch",
+    "test": "patches/test.patch",
+    "harness": null
+  },
+  "source_patch_sha256": "31084b1e1e7eef42e4ab7ac528974292d033a77904367467ff5131f2240aee99",
+  "source_diff_payload_sha256": "6344c91d0f99f2f587048d25af02b5e09d2b7a7bc6e9587233745bfebf067431",
+  "test_patch_sha256": "c66750a47b00a36e9c90ea1622045f715f263d7016e6b17dd053bfba02fa4832",
+  "build_commands": {
+    "buggy": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/hypium-sync-loop-cohort-v1-s0/work/S001/buggy/code/BasicFeature/Web/Browser",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/hypium-sync-loop-cohort-v1-s0/work/S001/buggy/code/BasicFeature/Web/Browser",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    },
+    "fixed": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/hypium-sync-loop-cohort-v1-s0/work/S001/fixed/code/BasicFeature/Web/Browser",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/hypium-sync-loop-cohort-v1-s0/work/S001/fixed/code/BasicFeature/Web/Browser",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    }
+  },
+  "test_command_template": [
+    "hdc",
+    "-t",
+    "127.0.0.1:5555",
+    "shell",
+    "aa",
+    "test",
+    "-b",
+    "ohos.samples.browser1",
+    "-m",
+    "entry_test",
+    "-s",
+    "unittest",
+    "/ets/TestRunner/OpenHarmonyTestRunner",
+    "-s",
+    "class",
+    "BrowserControllerGuardTest#Browser_MissingCurrentController_001"
+  ],
+  "environment_lock": "environment.lock.json",
+  "validation": "validation/validation.json",
+  "selection_status": "ACTIVE",
+  "release_eligibility": "ACTIVE",
+  "duplicate_of": null,
+  "issue_id": "ICHWLQ",
+  "traceability_type": "ISSUE",
+  "bug_report_id": "ICHWLQ",
+  "bug_report_url": "https://gitee.com/openharmony/applications_app_samples/issues/ICHWLQ",
+  "fix_kind": "production_source",
+  "branch_specific_instance": true,
+  "shared_fix_pattern": true,
+  "duplicate": false,
+  "minimization_method": "original_patch_already_minimal",
+  "branch_independence": {
+    "status": "PASS",
+    "peer_case_id": "ARKTS-040",
+    "relationship": "PARALLEL_RELEASE_LINE_FIX",
+    "shared_normalized_production_patch": true,
+    "distinct_buggy_revision": true,
+    "distinct_fixed_revision": true,
+    "independent_stable_differential": true,
+    "classification": "BRANCH_SPECIFIC_DEFECT_INSTANCE",
+    "note": "PR !6109 targets master and PR !6110 targets OpenHarmony-6.0-Beta1. Distinct Issues and revision boundaries, independently stable F2P."
+  }
+}

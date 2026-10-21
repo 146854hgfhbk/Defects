@@ -1,0 +1,96 @@
+{
+  "candidate_sha": "685b2b06a6764fbbb70ae3af47227ded3e280341",
+  "project": "PainterQubits/Unitful.jl",
+  "source": "SWE-rebench-V2",
+  "instance_id": "painterqubits__unitful.jl-648",
+  "swe_rebench": {
+    "base_commit": "e4c92d2a0f3bdbdd0432ca95f7383628ac309764",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "Conversion",
+      "Temperature and affine quantities",
+      "Unit string parsing",
+      "Unit and dimensional analysis",
+      "Mathematics",
+      "Fast mathematics",
+      "Rounding",
+      "Sgn, abs, &c.",
+      "Display",
+      "Show quantities",
+      "DimensionError message",
+      "Output ordered by unit exponent",
+      "User macros",
+      "Custom types",
+      "Traits",
+      "Encoding",
+      "Units aliases",
+      "Docs",
+      "Method ambiguity",
+      "Undefined exports",
+      "Compare Project.toml and test/Project.toml",
+      "Stale dependencies",
+      "Compat bounds",
+      "Project.toml formatting",
+      "Piracy"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 647,
+      "url": "https://github.com/JuliaPhysics/Unitful.jl/issues/647",
+      "state": "closed",
+      "title": "Converting large powers of units can result in `NaN`, `Inf`, or 0",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "```julia\r\njulia> using Unitful\r\n\r\njulia> uconvert(u\"kb\"^10, 1.0 * u\"kb\"^11 * u\"b\"^-1)\r\n999.9999999999999 kb^10\r\n\r\njulia> uconvert(u\"kb\"^11, 1.0 * u\"kb\"^12 * u\"b\"^-1)\r\n0.0 kb^11\r\n\r\njulia> uconvert(u\"kb\"^12, 1.0 * u\"kb\"^13 * u\"b\"^-1)\r\nNaN kb^12\r\n\r\njulia> uconvert(u\"kOe\"^161, 1.0 * u\"kOe\"^162 * u\"Oe\"^-1)\r\n1000.0 kOe^161\r\n\r\njulia> uconvert(u\"kOe\"^162, 1.0 * u\"kOe\"^163 * u\"Oe\"^-1)\r\nInf kOe^162\r\n\r\njulia> uconvert(u\"kOe\"^163, 1.0 * u\"kOe\"^164 * u\"Oe\"^-1)\r\nNaN kOe^163\r\n```\r\n\r\nApologies for the contrived examples, but this is only an issue for units with an “inexact” conversion part `!= 1.0`, and becomes more serious the more different it is from 1. Originally, I ran into this in the context of astrophysical units (see JuliaAstro/UnitfulAstro.jl#33), but I wanted to give a more minimal example with “built-in” units.\r\n\r\nThe issue is that `inex^p` in `basefactor()`:\r\n\r\nhttps://github.com/PainterQubits/Unitful.jl/blob/bd09747409496a10ec7fab9d719f0841d8f7d5c5/src/units.jl#L229-L247\r\n\r\ncan result in `Inf` (`inex > 1`) or `0.0` (`inex < 1`) for large `p`, even though all the large factors end up canceling in the conversion. Ideally, `uconvert()` would be smarter and avoid dividing these canceling huge/tiny factors, but at a bare minimum, this should give an error instead of silently returning something wrong!"
+    },
+    {
+      "number": 648,
+      "url": "https://github.com/JuliaPhysics/Unitful.jl/pull/648",
+      "state": "closed",
+      "title": "Divide units instead of basefactors in convfact()",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This fixes #647.\r\n\r\nIn addition to the change in `convfact()` which allows the examples in #647 to work, I also added an error condition in case of floating point overflow or underflow in `basefactor()`. The latter is not actually needed for these cases anymore, but would still show up when the *real* conversion factor is actually very large/small, such as\r\n```julia\r\nuconvert(u\"kb^12\", 1u\"b^12\")\r\n# before:       NaN kb^12\r\n# with this PR: throws ArgumentError\r\n```\r\nSince the current result of `NaN` is just wrong, I’d consider this a bugfix (so the change in behavior is OK), and either way this is an obscure edge case which nobody else seems to have run into so far."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        647
+      ],
+      "pull_request": 648,
+      "fix_commit": "685b2b06a6764fbbb70ae3af47227ded3e280341",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Divide units instead of basefactors in `convfact` and error on floating-point over-/underflow (#648)",
+    "commit_issue_refs": [
+      648
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 648,
+    "pull_request_title": "Divide units instead of basefactors in convfact()",
+    "pull_request_issue_refs": [
+      647
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    647
+  ],
+  "cross_repository_issue_records": []
+}

@@ -1,0 +1,28 @@
+diff --git a/Tests/MarkdownTests/Block Nodes/DocumentTests.swift b/Tests/MarkdownTests/Block Nodes/DocumentTests.swift
+index 57078ec25efe951aeaf83648ca572ef2574a92b4..397141848e18a2256e69d021d11483556ecf0d52 100644
+--- a/Tests/MarkdownTests/Block Nodes/DocumentTests.swift	
++++ b/Tests/MarkdownTests/Block Nodes/DocumentTests.swift	
+@@ -40,4 +40,23 @@ final class DocumentTests: XCTestCase {
+         XCTAssertThrowsError(try Document(parsing: URL(fileURLWithPath: #file)
+             .appendingPathComponent("doesntexist")))
+     }
++ 
++    func testParseNewlineCharacters() {
++        let inputParagraphString = """
++        # First\n
++        ## Second\r
++        ### Third\r\n
++        """
++        let document = Document(parsing: inputParagraphString, options: [.parseBlockDirectives, .parseSymbolLinks])
++        let expectedDump = """
++                Document
++                ├─ Heading level: 1
++                │  └─ Text "First"
++                ├─ Heading level: 2
++                │  └─ Text "Second"
++                └─ Heading level: 3
++                   └─ Text "Third"
++                """
++        XCTAssertEqual(expectedDump, document.debugDescription())
++    }
+ }

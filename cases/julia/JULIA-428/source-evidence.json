@@ -1,0 +1,82 @@
+{
+  "candidate_sha": "39a2de3a2cc11e9932164a790bf28987777c3d6a",
+  "project": "meggart/DiskArrays.jl",
+  "source": "SWE-rebench-V2",
+  "instance_id": "meggart__diskarrays.jl-52",
+  "swe_rebench": {
+    "base_commit": "e3886ce6e417843c6e5560c25442e2c71ca5ee72",
+    "environment_setup_commit": null,
+    "image_name": "docker.io/swerebenchv2/meggart-diskarrays.jl:52-e3886ce",
+    "license": "custom-check-github",
+    "fail_to_pass": [
+      "Index interpretation",
+      "AbstractDiskArray getindex",
+      "AbstractDiskArray setindex",
+      "Zerodimensional",
+      "Views",
+      "Reductions",
+      "Broadcast",
+      "Broadcast with length 1 final dim",
+      "Reshape",
+      "Permutedims",
+      "Unchunked String arrays"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 51,
+      "url": "https://github.com/JuliaIO/DiskArrays.jl/issues/51",
+      "state": "closed",
+      "title": "Changes to iteration over an `Unchunked` SubDiskArray?",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "Equality of an array and a view of a DiskArray based `Raster` has broken with 0.3 when the array is `Unchunked`:\r\n\r\n```julia\r\nusing Rasters\r\nurl = \"https://download.osgeo.org/geotiff/samples/gdal_eg/cea.tif\"\r\npath = download(url)\r\nA = Raster(path)\r\nview(A, 1, 2:3, 1) == [0x00, 0x6b]\r\n```\r\n\r\nGives the error:\r\n```julia\r\nERROR: MethodError: Cannot `convert` an object of type Tuple{UnitRange{Int64}} to an object of type Int64\r\nClosest candidates are:\r\n  convert(::Type{T}, ::Base.TwicePrecision) where T<:Number at /opt/julia/share/julia/base/twiceprecision.jl:262\r\n  convert(::Type{T}, ::AbstractChar) where T<:Number at /opt/julia/share/julia/base/char.jl:185\r\n  convert(::Type{T}, ::CartesianIndex{1}) where T<:Number at /opt/julia/share/julia/base/multidimensional.jl:136\r\n  ...\r\n\r\nStacktrace:\r\n  [1] DiskArrays.RegularChunks(cs::Tuple{UnitRange{Int64}}, offset::Int64, s::Int64)\r\n    @ DiskArrays ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:17\r\n  [2] (::DiskArrays.var\"#34#37\")(s::Int64, cs::Tuple{UnitRange{Int64}}, of::Int64)\r\n    @ DiskArrays ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:101\r\n  [3] (::Base.var\"#4#5\"{DiskArrays.var\"#34#37\"})(a::Tuple{Int64, Tuple{UnitRange{Int64}}, Int64})\r\n    @ Base ./generator.jl:36\r\n  [4] iterate\r\n    @ ./generator.jl:47 [inlined]\r\n  [5] collect(itr::Base.Generator{Base.Iterators.Zip{Tuple{Tuple{Int64}, DiskArrays.GridChunks{1}, Tuple{Int64}}}, Base.var\"#4#5\"{DiskArrays.var\"#34#37\"}})\r\n    @ Base ./array.jl:724\r\n  [6] map\r\n    @ ./abstractarray.jl:2948 [inlined]\r\n  [7] DiskArrays.GridChunks(a::Tuple{Int64}, chunksize::DiskArrays.GridChunks{1}; offset::Tuple{Int64})\r\n    @ DiskArrays ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:100\r\n  [8] #GridChunks#28\r\n    @ ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:98 [inlined]\r\n  [9] GridChunks\r\n    @ ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:98 [inlined]\r\n [10] eachchunk_view(#unused#::DiskArrays.Unchunked, a::SubArray{UInt8, 1, FileArray{GDALfile, UInt8, 3, Nothing, DiskArr"
+    },
+    {
+      "number": 52,
+      "url": "https://github.com/JuliaIO/DiskArrays.jl/pull/52",
+      "state": "closed",
+      "title": "Fix views of unchunked diskarrays",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "So far, DiskArrays that returned \"Unchunked\" as their chunk status seem to not have had tests yet, which lead to #51 . This fixes #51 and adds at least one test that would have covered this use case. It might make sense to add some more tests here, maybe @rafaqz has a few ideas from DimensionalData?"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        51
+      ],
+      "pull_request": 52,
+      "fix_commit": "39a2de3a2cc11e9932164a790bf28987777c3d6a",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Fix views of unchunked diskarrays (#52)\n\n* Fix views of unchunked diskarrays\r\n\r\n* Bump version",
+    "commit_issue_refs": [
+      52
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 52,
+    "pull_request_title": "Fix views of unchunked diskarrays",
+    "pull_request_issue_refs": [
+      51
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    51
+  ],
+  "cross_repository_issue_records": []
+}

@@ -1,0 +1,126 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-507",
+  "bug_id": "JULIA-507",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "c02bc7a9151f36e46daea509827545d44132df2e",
+  "fixed_revision": "24fc593c88a6b707858f72396bb33099a1843bc5",
+  "candidate_sha": "24fc593c88a6b707858f72396bb33099a1843bc5",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "c02bc7a9151f36e46daea509827545d44132df2e",
+  "changed_production_files": [
+    "src/integration/expr.jl"
+  ],
+  "changed_test_files": [
+    "test/expr.jl"
+  ],
+  "trigger_tests": [
+    "Expr parsing with build_tree"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "0679c961a6e37721387fea5e3e1607f6cf64bfbb9f73386281ac2194b0a73649",
+    "oracle": {
+      "mwe_basis": {
+        "upstream_test_file": "test/expr.jl",
+        "upstream_testset": "Expr parsing with build_tree",
+        "public_api": "JuliaSyntax must parse transpose assignment without an injected block location",
+        "fixed_revision": "24fc593c88a6b707858f72396bb33099a1843bc5"
+      },
+      "source_evidence": "minimal public-API MWE derived from the regression assertion introduced by the fixed commit"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.12.7",
+    "julia_version_origin": "fixed_revision_era_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.12.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "24fc593c88a6b707858f72396bb33099a1843bc5",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "be4588a83cf2ce111829a4872d8d6703a99ea1e14c5040e31eafdd6da4bfce34",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:36:30Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.42301098414593696,
+      "input_tokens": 3324,
+      "output_tokens": 666
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"Single-hunk fix in the Expr conversion layer: when attaching a LineNumberNode to a function definition body, the old code pushed the location into any Expr's args, including bodies that were not blocks (e.g. an unwrapped/short-form body). The fix narrows the condition to `@isexpr(arg2, :block)`, so location info is only prepended to actual block bodies. This corrects malformed AST output rather than adding capability.\", \"evidence\": \"Minimized production patch touches only src/integration/expr.jl with 1 of 1 hunk kept, marked globally minimal and all hunks necessary. Accompanying test change in test/expr.jl. Runtime evidence reports a stable_differential across 3 repetitions with a dedicated trigger script, and the full suite passes on the fixed revision, which is consistent with a real defect that a test now pins down. The comment change ('Add location if not ErrorVal or unwrapped block') and the semantics of the guard indicate a wrong-output bug: a line node was being injected into an expression whose args are not statement lists, corrupting the resulting Expr.\", \"missing_evidence\": \"No PR number, title, body, or commit subject; no linked issue, so issue_commit_match cannot be established (traceability_class = UNVERIFIED). trigger_tests is empty, so the specific failing test name and its pre-fix failure message are not visible; only the aggregate differential result is provided. The full production patch text is empty, so I cannot confirm there were no non-minimized adjacent changes beyond the single hunk reported.\", \"validation_risks\": \"Trigger identification relies on a dedicated script rather than a named test, so mapping the buggy revision to a concrete failing test case must be re-derived. The fix changes AST shape for a fairly common construct (function bodies), so the buggy revision may fail broadly rather than in one isolated test, which could complicate a clean single-trigger Defects4J-style bug. Also, ErrorVal handling is now implicitly covered by the :block check; if any legitimate non-block Expr body previously received a location node, some pre-existing expectations could shift.\", \"suggested_tests\": \"In test/expr.jl, parse short-form and unwrapped-body function definitions (e.g. `function f() end` variants, `f(x) = x`, and definitions whose body is a single non-block expression) and assert the exact resulting Expr, verifying no LineNumberNode is prepended into a non-block body's args. Add a case where the body parses to an ErrorVal to confirm no mutation occurs. Add a positive case with a multi-statement block body asserting the LineNumberNode is still prepended first.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "Single-hunk fix in the Expr conversion layer: when attaching a LineNumberNode to a function definition body, the old code pushed the location into any Expr's args, including bodies that were not blocks (e.g. an unwrapped/short-form body). The fix narrows the condition to `@isexpr(arg2, :block)`, so location info is only prepended to actual block bodies. This corrects malformed AST output rather than adding capability.",
+    "evidence": "Minimized production patch touches only src/integration/expr.jl with 1 of 1 hunk kept, marked globally minimal and all hunks necessary. Accompanying test change in test/expr.jl. Runtime evidence reports a stable_differential across 3 repetitions with a dedicated trigger script, and the full suite passes on the fixed revision, which is consistent with a real defect that a test now pins down. The comment change ('Add location if not ErrorVal or unwrapped block') and the semantics of the guard indicate a wrong-output bug: a line node was being injected into an expression whose args are not statement lists, corrupting the resulting Expr.",
+    "missing_evidence": "No PR number, title, body, or commit subject; no linked issue, so issue_commit_match cannot be established (traceability_class = UNVERIFIED). trigger_tests is empty, so the specific failing test name and its pre-fix failure message are not visible; only the aggregate differential result is provided. The full production patch text is empty, so I cannot confirm there were no non-minimized adjacent changes beyond the single hunk reported.",
+    "validation_risks": "Trigger identification relies on a dedicated script rather than a named test, so mapping the buggy revision to a concrete failing test case must be re-derived. The fix changes AST shape for a fairly common construct (function bodies), so the buggy revision may fail broadly rather than in one isolated test, which could complicate a clean single-trigger Defects4J-style bug. Also, ErrorVal handling is now implicitly covered by the :block check; if any legitimate non-block Expr body previously received a location node, some pre-existing expectations could shift.",
+    "suggested_tests": "In test/expr.jl, parse short-form and unwrapped-body function definitions (e.g. `function f() end` variants, `f(x) = x`, and definitions whose body is a single non-block expression) and assert the exact resulting Expr, verifying no LineNumberNode is prepended into a non-block body's args. Add a case where the body parses to an ErrorVal to confirm no mutation occurs. Add a positive case with a multi-statement block body asserting the LineNumberNode is still prepended first."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "Expr parsing with build_tree"
+    ],
+    "exception_types": [
+      "bf05d42a0d0fd1a989384c7991f4f6b3f0ca692e6674c7a332ea1a02b74fa517"
+    ],
+    "fingerprints": [
+      "bf05d42a0d0fd1a989384c7991f4f6b3f0ca692e6674c7a332ea1a02b74fa517"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

@@ -1,0 +1,87 @@
+diff --git a/Changes b/Changes
+index ac6b77e42..ce9ced621 100644
+--- a/Changes
++++ b/Changes
+@@ -1,5 +1,8 @@
+ {{$NEXT}}
+ 
++    - Fix the oldest bug still in the bug list (#6)
++      This fixes cmp_ok output is some confusing cases
++
+ 1.302064  2016-10-24 21:03:24-07:00 America/Los_Angeles (TRIAL RELEASE)
+ 
+     - Repo management improvements
+diff --git a/lib/Test/Builder.pm b/lib/Test/Builder.pm
+index 67b4d77b0..1db3c496f 100644
+--- a/lib/Test/Builder.pm
++++ b/lib/Test/Builder.pm
+@@ -926,7 +926,20 @@ END
+             $self->_is_diag( $got, $type, $expect );
+         }
+         elsif( $type =~ /^(ne|!=)$/ ) {
+-            $self->_isnt_diag( $got, $type );
++            no warnings;
++            my $eq = ($got eq $expect || $got == $expect)
++                && (
++                    (defined($got) xor defined($expect))
++                 || (length($got)  !=  length($expect))
++                );
++            use warnings;
++
++            if ($eq) {
++                $self->_cmp_diag( $got, $type, $expect );
++            }
++            else {
++                $self->_isnt_diag( $got, $type );
++            }
+         }
+         else {
+             $self->_cmp_diag( $got, $type, $expect );
+diff --git a/t/Legacy/Regression/6_cmp_ok.t b/t/Legacy/Regression/6_cmp_ok.t
+new file mode 100644
+index 000000000..05cfcba9a
+--- /dev/null
++++ b/t/Legacy/Regression/6_cmp_ok.t
+@@ -0,0 +1,17 @@
++use Test::More;
++
++use Test2::API qw/intercept/;
++
++my $events = intercept {
++    local $SIG{__WARN__} = sub { 1 };
++    my $foo = undef;
++    cmp_ok($foo, "ne", "");
++};
++
++is($events->[-1]->message, <<EOT, "Got useful diag");
++    undef
++        ne
++    ''
++EOT
++
++done_testing;
+diff --git a/t/Legacy/fail-more.t b/t/Legacy/fail-more.t
+index 5c35d49bd..5cb373ede 100644
+--- a/t/Legacy/fail-more.t
++++ b/t/Legacy/fail-more.t
+@@ -440,16 +440,13 @@ ERR
+ not ok - undef ne empty string
+ OUT
+ 
+-    TODO: {
+-        local $::TODO = 'cmp_ok() gives the wrong "expected" for undef';
+-
+-        $TB->is_eq( $err->read, <<ERR );
++    $TB->is_eq( $err->read, <<ERR );
+ #   Failed test 'undef ne empty string'
+ #   at $0 line 437.
+-#          got: undef
+-#     expected: ''
++#     undef
++#         ne
++#     ''
+ ERR
+-    }
+ 
+     My::Test::like(
+         $warnings,

@@ -1,0 +1,28 @@
+{
+  "schema_version": "defects4x-verdict-v2",
+  "bug_id": "EV-LU-009",
+  "reproduction_status": "QUALIFIED",
+  "provenance_grade": "P3",
+  "targeted_buggy_exit": 1,
+  "targeted_fixed_exit": 0,
+  "targeted_buggy_result": "FAIL",
+  "targeted_fixed_result": "PASS",
+  "buggy_failures": [
+    "lua_fs get_mode returns 'file' for a file",
+    "lua_fs get_mode returns 'directory' for a directory"
+  ],
+  "conclusion": "Failures are isolated to the lua_fs variant of get_mode(); the lfs_fs variant (which does not go through quote_arg/io.popen) passes on both revisions. This confirms the failure is precisely the historical bug mechanism (missing shell-argument quoting), not an environment or infrastructure issue.",
+  "buggy_behavior": "get_mode() interpolates the unescaped path into a POSIX shell test command. For a path containing a single quote (spec/'), the embedded quote breaks the shell command's quoting, so io.popen reads empty output instead of 'file' or 'directory'.",
+  "fixed_behavior": "quote_arg() properly escapes single quotes (') -> '\\\\''), so the shell command remains well-formed and get_mode() returns the correct result.",
+  "evidence_closure_status": "HISTORICAL_EVIDENCE_ACCEPTED",
+  "release_scope": "core100_targeted_defects4j_style",
+  "full_suite_valid": true,
+  "active_status": "active",
+  "deprecation_reason": null,
+  "patch_minimization_status": "PASS",
+  "stability_status": "PASS",
+  "full_suite_status": "CLEAN",
+  "targeted_stability_status": "PASS_3_RECORDED_VALIDATIONS",
+  "strict_supplemental_status": "NOT_STRICTLY_CLOSED",
+  "provenance_tier": "PUBLIC_FIX_COMMIT_ONLY"
+}

@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1346",
+  "technical_evidence_sha256": "c9a1190db9f9aa536c5bd0941d607f3ab722bee4da7952f04e21855e3a2bcfb3",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "014539488ffbc6f39d63604dda0a27b249568f09f78544bcdb84453452b9285a",
+  "reviewed_at": "2026-08-15T05:30:01.164647+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/http#1799",
+  "rationale": "Issue #1799 documents a pre-existing spec violation (RFC 7540 §5.4.2): after the client sends RST_STREAM and drops the id from _openStreams, an in-flight server HeadersFrame for that id falls into the 'clients cannot receive HEADER_FRAMEs as a connection attempt' branch, which _catchProtocolErrors escalates into a forceful teardown of the whole connection, killing unrelated streams. The minimized production patch is a single hunk in pkgs/http2/lib/src/streams/stream_handler.dart that replaces the connection-level ProtocolException with the stream-scoped _throwStreamClosedException(frame.header.streamId), aligning header-frame handling with the pre-existing data-frame handling described in the commit message. No unrelated refactor, feature extension, or config/doc change is present: the CHANGELOG and pubspec bumps live in the sibling commit 0bed60a and are excluded from all three production patch variants; patches/trigger-tests.patch contains only the added clientTest and no edits to existing cases. The trigger is the unchanged upstream test 'header-frame-received-after-stream-cancel' and it exercises exactly the reported scenario: two open streams, terminate stream1, server writes a HeadersFrame for streamId1, then the test asserts stream2 still receives its DataFrame and client.isOpen is true. It uses only pre-existing public APIs (makeRequest, outgoingMessages.close, terminate, incomingMessages, finish, FrameWriter.writeHeadersFrame); _throwStreamClosedException is a private helper referenced only from production code, so the trigger does not depend on any new production API. Strict evidence confirms the differential without any inference on my part: trigger.buggy_differential reproduced test/client_test.dart::header-frame-received-after-stream-cancel, trigger.fixed_clean and full_suite.fixed_all_green passed, buggy full-suite failures were confined to the declared trigger, and determinism held over 3 repetitions across a complete 32-run matrix, both pre- and post-minimization with zero failed checks. active_same_project_root_causes is empty, so #1799 is not a duplicate of any active registry entry, and it matches the single allowed verified issue key.\n\nIssue #1799 describes a precise pre-existing defect: after the client sends RST_STREAM and removes the stream from _openStreams, an in-flight server HeadersFrame for that id falls into the 'server cannot open new streams' branch of StreamHandler._processStreamFrameInternal, raising a connection-level ProtocolException that _catchProtocolErrors escalates to a forceful teardown of the whole connection, killing unrelated streams. This contradicts RFC 7540 §5.4.2, quoted in the issue. The minimized production patch is a single hunk in pkgs/http2/lib/src/streams/stream_handler.dart that replaces that connection-scoped ProtocolException with the stream-scoped _throwStreamClosedException(frame.header.streamId), aligning header-frame handling with the already-correct data-frame path; the only other lines touched are the explanatory comment inside the same hunk, so there is no unrelated refactor, formatting, feature, docs, config, or test change (CHANGELOG/pubspec live in the sibling commit 0bed60a and are excluded). The trigger is the unchanged upstream test from the same fix commit, clientTest('header-frame-received-after-stream-cancel'), which reproduces the reported scenario end to end: two streams opened, stream1 terminated, server then writes a HeadersFrame for stream1's id, and the test asserts the connection stays open and stream2 still receives its DataFrame. It uses only pre-existing public API (makeRequest, terminate, incomingMessages, FrameWriter); _throwStreamClosedException is referenced but not defined by the patch, and the buggy revision built and ran the test to a differential failure, confirming no dependence on new production API. Strict machine evidence reports all gates green in both original and post-minimization runs: build.both_versions passed, trigger.buggy_differential reproduced test/client_test.dart::header-frame-received-after-stream-cancel, trigger.fixed_clean and full_suite.fixed_all_green passed, trigger.deterministic with 3 fingerprint groups over 3 repetitions and a 32-run matrix. active_same_project_root_causes is empty and dart-lang/http#1799 is the sole allowed key, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T05:29:36.496601+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "014539488ffbc6f39d63604dda0a27b249568f09f78544bcdb84453452b9285a",
+      "response_sha256": "e3d1e8f0f4af3fea665ea48002942a049ac90753da0f567a4d8cca5aa34d4497",
+      "response_id": "msg_fac89d69160546d0a66a5f29118b2013",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6022230257379769,
+        "input_tokens": 23328,
+        "output_tokens": 783
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/http#1799",
+      "rationale": "Issue #1799 documents a pre-existing spec violation (RFC 7540 §5.4.2): after the client sends RST_STREAM and drops the id from _openStreams, an in-flight server HeadersFrame for that id falls into the 'clients cannot receive HEADER_FRAMEs as a connection attempt' branch, which _catchProtocolErrors escalates into a forceful teardown of the whole connection, killing unrelated streams. The minimized production patch is a single hunk in pkgs/http2/lib/src/streams/stream_handler.dart that replaces the connection-level ProtocolException with the stream-scoped _throwStreamClosedException(frame.header.streamId), aligning header-frame handling with the pre-existing data-frame handling described in the commit message. No unrelated refactor, feature extension, or config/doc change is present: the CHANGELOG and pubspec bumps live in the sibling commit 0bed60a and are excluded from all three production patch variants; patches/trigger-tests.patch contains only the added clientTest and no edits to existing cases. The trigger is the unchanged upstream test 'header-frame-received-after-stream-cancel' and it exercises exactly the reported scenario: two open streams, terminate stream1, server writes a HeadersFrame for streamId1, then the test asserts stream2 still receives its DataFrame and client.isOpen is true. It uses only pre-existing public APIs (makeRequest, outgoingMessages.close, terminate, incomingMessages, finish, FrameWriter.writeHeadersFrame); _throwStreamClosedException is a private helper referenced only from production code, so the trigger does not depend on any new production API. Strict evidence confirms the differential without any inference on my part: trigger.buggy_differential reproduced test/client_test.dart::header-frame-received-after-stream-cancel, trigger.fixed_clean and full_suite.fixed_all_green passed, buggy full-suite failures were confined to the declared trigger, and determinism held over 3 repetitions across a complete 32-run matrix, both pre- and post-minimization with zero failed checks. active_same_project_root_causes is empty, so #1799 is not a duplicate of any active registry entry, and it matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.commits[1].files",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_original.checks.trigger.deterministic",
+        "allowed_root_cause_ids",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The test asserts an extra client-sent RstStreamFrame for streamId1 that its own comment calls non-required current behavior, so the trigger is partly coupled to implementation detail rather than the spec requirement alone.",
+        "The scenario is async and frame-ordering sensitive; determinism is established only over the 3 recorded repetitions, and a future regression could surface as a hang rather than a clean assertion failure.",
+        "I did not independently read stream_handler.dart at afda310 to confirm _throwStreamClosedException predates the fix; that it compiles and fails only on the trigger in the buggy revision is inferred from the passing build.both_versions and differential gates."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T05:30:01.164267+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "014539488ffbc6f39d63604dda0a27b249568f09f78544bcdb84453452b9285a",
+      "response_sha256": "1da10e2a98f3f379b521d7898e4a92771d5f61aeb2607f3b3dd211f3dfd279ec",
+      "response_id": "msg_6ca8008263234607a64a8a823d588025",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6265287205970149,
+        "input_tokens": 23428,
+        "output_tokens": 757
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/http#1799",
+      "rationale": "Issue #1799 describes a precise pre-existing defect: after the client sends RST_STREAM and removes the stream from _openStreams, an in-flight server HeadersFrame for that id falls into the 'server cannot open new streams' branch of StreamHandler._processStreamFrameInternal, raising a connection-level ProtocolException that _catchProtocolErrors escalates to a forceful teardown of the whole connection, killing unrelated streams. This contradicts RFC 7540 §5.4.2, quoted in the issue. The minimized production patch is a single hunk in pkgs/http2/lib/src/streams/stream_handler.dart that replaces that connection-scoped ProtocolException with the stream-scoped _throwStreamClosedException(frame.header.streamId), aligning header-frame handling with the already-correct data-frame path; the only other lines touched are the explanatory comment inside the same hunk, so there is no unrelated refactor, formatting, feature, docs, config, or test change (CHANGELOG/pubspec live in the sibling commit 0bed60a and are excluded). The trigger is the unchanged upstream test from the same fix commit, clientTest('header-frame-received-after-stream-cancel'), which reproduces the reported scenario end to end: two streams opened, stream1 terminated, server then writes a HeadersFrame for stream1's id, and the test asserts the connection stays open and stream2 still receives its DataFrame. It uses only pre-existing public API (makeRequest, terminate, incomingMessages, FrameWriter); _throwStreamClosedException is referenced but not defined by the patch, and the buggy revision built and ran the test to a differential failure, confirming no dependence on new production API. Strict machine evidence reports all gates green in both original and post-minimization runs: build.both_versions passed, trigger.buggy_differential reproduced test/client_test.dart::header-frame-received-after-stream-cancel, trigger.fixed_clean and full_suite.fixed_all_green passed, trigger.deterministic with 3 fingerprint groups over 3 repetitions and a 32-run matrix. active_same_project_root_causes is empty and dart-lang/http#1799 is the sole allowed key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger asserts a behavior the maintainer explicitly calls non-required (the client's extra RST_STREAM in response to the late HeadersFrame), so the test is coupled to current implementation detail beyond the spec requirement.",
+        "The test orchestrates a race between RST_STREAM and an inbound HeadersFrame via completers; frame-ordering sensitivity leaves some residual flakiness risk despite 3 deterministic repetitions.",
+        "full_suite_repetitions is 1, so full-suite stability is confirmed by a single run per revision.",
+        "Definition of _throwStreamClosedException was not shown in the supplied diffs; its pre-existence is inferred from the diff scope and the successful buggy-revision build rather than read directly."
+      ]
+    }
+  ]
+}

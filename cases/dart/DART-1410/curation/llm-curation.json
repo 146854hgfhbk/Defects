@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1410",
+  "technical_evidence_sha256": "b61703ced0d1e3b42b7b2ee8c9011b284eb9b87baec29c670596a08576deed5e",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "744f8c0651fad374a2ce60c1bae066340a477915b6be37b720a3637cab6c2204",
+  "reviewed_at": "2026-08-16T03:11:00.466737+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/fake_async#88",
+  "rationale": "The production fix in lib/fake_async.dart moves `_nextCall += duration;` above the periodic `_callback(this);` call inside FakeTimer's fire path, so the timer's next-call time is committed before user code runs. That matches the reported defect exactly as described in the fixing commit's CHANGELOG entry ('a flushTimers or elapse call from within the callback of a periodic timer would immediately invoke the same timer') and the commit subject 'Fully update internal state before invoking periodic-timers', both traced to issue 88 via traceability.verified_fix_issue_numbers. The trigger test reproduces that precise scenario: a periodic timer whose callback re-enters async.elapse(Duration.zero) during flushTimers(flushPeriodicTimers: false), asserting log == ['periodic 1', 'single']; with the stale _nextCall the re-entrant elapse re-fires the same timer, so the assertion fails on the buggy revision. The minimized production patch is a two-line statement reorder confined to lib/fake_async.dart, with the CHANGELOG and test changes from the original commit correctly excluded, and no formatting, refactor, or feature additions. The trigger uses only pre-existing public API (Timer.periodic, FakeAsync.run, elapse, flushTimers with flushPeriodicTimers) since the fix introduces no new API surface. Strict evidence (both original and post-minimization) reports all gates passed: build on both revisions, buggy differential with the single declared selector reproducing in isolation and in suite, deterministic fingerprinting across 3 repetitions, fixed-revision isolated/suite/reversed runs green, and full suite green on the fixed revision. active_same_project_root_causes is empty and the proposed root cause matches the sole allowed key.\n\nThe single production change in lib/fake_async.dart moves `_nextCall += duration;` ahead of the periodic `_callback(this)` invocation. That ordering is the defect itself: while the periodic callback runs, `_nextCall` still points at the already-elapsed time, so a reentrant `elapse` or `flushTimers` from inside the callback sees the timer as due again and re-invokes it. The trigger test 'should update periodic timer state before invoking callback' exercises exactly that path (a periodic timer whose callback calls `async.elapse(Duration.zero)`, plus a one-shot timer at 3s, then `flushTimers(flushPeriodicTimers: false)`), asserting the log is ['periodic 1', 'single'] rather than repeated periodic firings. This matches the fix commit's CHANGELOG description of the defect and the commit subject 'Fully update internal state before invoking periodic-timers', and traceability resolves the fix commit to verified issue 88, which is the sole allowed root_cause_id. The minimized production patch is the two-line statement reorder only; the CHANGELOG edit and the test addition are excluded from patches/minimized-production.patch and patches/production-fix.patch, so there is no refactor, formatting, feature, doc-only, config-only, or test-only content in the production diff. The trigger is the unchanged upstream test from the same fixing commit and relies solely on pre-existing public API (`FakeAsync.run`, `elapse`, `flushTimers(flushPeriodicTimers:)`, `Timer.periodic`, `Timer.tick`); the fix introduces no new API, so the trigger cannot depend on one. active_same_project_root_causes is empty, so the root cause is not a duplicate. Strict evidence for both the original and post-minimization states reports all gates passed, including trigger.buggy_differential and trigger.fixed_clean with 3 repetitions over a 32-run matrix, deterministic fingerprinting, and a green fixed full suite; no runtime gate is being overridden.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T03:10:36.259554+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "744f8c0651fad374a2ce60c1bae066340a477915b6be37b720a3637cab6c2204",
+      "response_sha256": "01f6abd1b12d95b470a22e9a3c121f898bbbb3efed6e758f603259762c149be4",
+      "response_id": "msg_7eb385ba1b84460e9290971a74f80b22",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5013273988391376,
+        "input_tokens": 7171,
+        "output_tokens": 675
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/fake_async#88",
+      "rationale": "The production fix in lib/fake_async.dart moves `_nextCall += duration;` above the periodic `_callback(this);` call inside FakeTimer's fire path, so the timer's next-call time is committed before user code runs. That matches the reported defect exactly as described in the fixing commit's CHANGELOG entry ('a flushTimers or elapse call from within the callback of a periodic timer would immediately invoke the same timer') and the commit subject 'Fully update internal state before invoking periodic-timers', both traced to issue 88 via traceability.verified_fix_issue_numbers. The trigger test reproduces that precise scenario: a periodic timer whose callback re-enters async.elapse(Duration.zero) during flushTimers(flushPeriodicTimers: false), asserting log == ['periodic 1', 'single']; with the stale _nextCall the re-entrant elapse re-fires the same timer, so the assertion fails on the buggy revision. The minimized production patch is a two-line statement reorder confined to lib/fake_async.dart, with the CHANGELOG and test changes from the original commit correctly excluded, and no formatting, refactor, or feature additions. The trigger uses only pre-existing public API (Timer.periodic, FakeAsync.run, elapse, flushTimers with flushPeriodicTimers) since the fix introduces no new API surface. Strict evidence (both original and post-minimization) reports all gates passed: build on both revisions, buggy differential with the single declared selector reproducing in isolation and in suite, deterministic fingerprinting across 3 repetitions, fixed-revision isolated/suite/reversed runs green, and full suite green on the fixed revision. active_same_project_root_causes is empty and the proposed root cause matches the sole allowed key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "case.json:trigger_tests",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:strict_post_minimization.checks"
+      ],
+      "risks": [
+        "Issue text itself was not supplied; defect identity rests on the commit subject, the CHANGELOG wording in the fixing commit, and the regression test's inline issue reference rather than the issue body.",
+        "The regression test's comment cites dart-lang/fake_async#88 while the case key is dart-archive/fake_async#88; these are the same repository under its pre-archive name, but the mismatch is not independently confirmed by the supplied evidence.",
+        "The trigger asserts combined ordering of a periodic and a one-shot timer, which is slightly broader than the minimal defect condition and could in principle fail for an unrelated scheduling regression.",
+        "require_analyze_clean is false, so analyzer diagnostics were not gating; full-suite evidence used only 1 repetition."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T03:11:00.466553+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "744f8c0651fad374a2ce60c1bae066340a477915b6be37b720a3637cab6c2204",
+      "response_sha256": "a5e1a5bb422d16b1be273c9cc6bdea61c643f30c4f5538784a7645232ece9d4d",
+      "response_id": "msg_6cb0f2131f0841c8bf1a2b873c974073",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5213450908457712,
+        "input_tokens": 7413,
+        "output_tokens": 755
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/fake_async#88",
+      "rationale": "The single production change in lib/fake_async.dart moves `_nextCall += duration;` ahead of the periodic `_callback(this)` invocation. That ordering is the defect itself: while the periodic callback runs, `_nextCall` still points at the already-elapsed time, so a reentrant `elapse` or `flushTimers` from inside the callback sees the timer as due again and re-invokes it. The trigger test 'should update periodic timer state before invoking callback' exercises exactly that path (a periodic timer whose callback calls `async.elapse(Duration.zero)`, plus a one-shot timer at 3s, then `flushTimers(flushPeriodicTimers: false)`), asserting the log is ['periodic 1', 'single'] rather than repeated periodic firings. This matches the fix commit's CHANGELOG description of the defect and the commit subject 'Fully update internal state before invoking periodic-timers', and traceability resolves the fix commit to verified issue 88, which is the sole allowed root_cause_id. The minimized production patch is the two-line statement reorder only; the CHANGELOG edit and the test addition are excluded from patches/minimized-production.patch and patches/production-fix.patch, so there is no refactor, formatting, feature, doc-only, config-only, or test-only content in the production diff. The trigger is the unchanged upstream test from the same fixing commit and relies solely on pre-existing public API (`FakeAsync.run`, `elapse`, `flushTimers(flushPeriodicTimers:)`, `Timer.periodic`, `Timer.tick`); the fix introduces no new API, so the trigger cannot depend on one. active_same_project_root_causes is empty, so the root cause is not a duplicate. Strict evidence for both the original and post-minimization states reports all gates passed, including trigger.buggy_differential and trigger.fixed_clean with 3 repetitions over a 32-run matrix, deterministic fingerprinting, and a green fixed full suite; no runtime gate is being overridden.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "trigger_tests",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The body of issue dart-archive/fake_async#88 is not supplied verbatim; the defect description is inferred from the fix commit subject, the CHANGELOG entry in patches/original-commit.patch, and the in-test issue reference, all of which are self-consistent with the code change.",
+        "Traceability is via fix_commit_to_issue only; no pull request URL or commit URL is provided for independent cross-checking.",
+        "The trigger asserts only the ordering-sensitive log for one reentrancy shape (elapse(Duration.zero) inside a periodic callback); other reentrancy paths affected by the same stale `_nextCall` are not covered by the declared selector.",
+        "full_suite_repetitions is 1, so flaky full-suite behavior outside the declared trigger would be less likely to be detected than the 3-repetition isolated trigger runs."
+      ]
+    }
+  ]
+}

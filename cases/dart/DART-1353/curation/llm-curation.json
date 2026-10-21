@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1353",
+  "technical_evidence_sha256": "de047c32eb24d3b871abd825dd0b353e4b336eeec354991a00970ac956741c39",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "a7c0712d7babf94ebf03b25f42fb2daaf7ad62a87bb51b64ce4520359453fb6e",
+  "reviewed_at": "2026-08-15T06:57:48.438267+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/markdown#239",
+  "rationale": "The public artifact (#239, 'Fix codeSyntax and BlockParser to respect encodeHtml flag'), the production fix, and the triggering tests all describe one pre-existing defect: inline CodeSyntax.onMatch and FencedCodeBlockSyntax unconditionally called escapeHtml, ignoring the Document.encodeHtml flag. The minimized production patch touches only lib/src/inline_parser.dart and lib/src/block_parser.dart and consists solely of guarding the escapeHtml calls with `parser.document.encodeHtml`; the local rename of `escaped` to `text` is required by the new conditional assignment, so there is no unrelated refactor, feature extension, docs-only, config-only, or test-only content. The trigger does not depend on a new production API: neither `Document(encodeHtml:)`, `parser.document`, `parseInline`, nor `parseLines` appears as an addition in the patch, and the pre-existing test in test/document_test.dart (asserting unescaped '< &' text) shows the encodeHtml flag already existed at the buggy revision, confirming this is a missed-honoring bug rather than a new option. Strict evidence gates all pass on both original and post-minimization runs (build.both_versions, trigger.buggy_differential with reproduced selectors 'encodeHtml false prevents code block escaping' and its BlockParser variant, trigger.fixed_clean, trigger.deterministic with 4 fingerprint groups, full_suite.fixed_all_green, matrix.complete runs=50, repetitions>=3), and no failed checks are reported. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and dart-archive/markdown#239 is the supplied allowed key.\n\nSingle-defect case: CodeSyntax.onMatch and FencedCodeBlockSyntax unconditionally called escapeHtml, ignoring the pre-existing Document.encodeHtml flag. The minimized production patch (identical to production-fix.patch) changes exactly those two call sites to guard escaping with parser.document.encodeHtml; nothing else. The flag is not introduced by the fix: no change touches document.dart, the fix only reads parser.document.encodeHtml, and test/document_test.dart already contained a pre-existing encodeHtml test ('< &' Text case) at the buggy revision, so the trigger does not depend on a new production API. The trigger patch is the unchanged upstream test portion of the same commit and exercises the reported behavior directly through parseInline and parseLines with encodeHtml false/true. Strict evidence shows both revisions build, the two encodeHtml:false selectors fail in isolation and in the full suite on the buggy revision, the encodeHtml:true selectors pass on both (consistent with default-true behavior being already correct), all four are deterministic across 3 repetitions and green on the fixed revision. active_same_project_root_causes is empty, so this root cause is not a registry duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T06:57:18.728887+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a7c0712d7babf94ebf03b25f42fb2daaf7ad62a87bb51b64ce4520359453fb6e",
+      "response_sha256": "465fbf69984e6a2c8062462e62c7f8c2301f9d79508039d3c0320a7f508c1961",
+      "response_id": "msg_5c46de2f2a824e87b02d95753879b428",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6219310186733003,
+        "input_tokens": 10468,
+        "output_tokens": 674
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/markdown#239",
+      "rationale": "The public artifact (#239, 'Fix codeSyntax and BlockParser to respect encodeHtml flag'), the production fix, and the triggering tests all describe one pre-existing defect: inline CodeSyntax.onMatch and FencedCodeBlockSyntax unconditionally called escapeHtml, ignoring the Document.encodeHtml flag. The minimized production patch touches only lib/src/inline_parser.dart and lib/src/block_parser.dart and consists solely of guarding the escapeHtml calls with `parser.document.encodeHtml`; the local rename of `escaped` to `text` is required by the new conditional assignment, so there is no unrelated refactor, feature extension, docs-only, config-only, or test-only content. The trigger does not depend on a new production API: neither `Document(encodeHtml:)`, `parser.document`, `parseInline`, nor `parseLines` appears as an addition in the patch, and the pre-existing test in test/document_test.dart (asserting unescaped '< &' text) shows the encodeHtml flag already existed at the buggy revision, confirming this is a missed-honoring bug rather than a new option. Strict evidence gates all pass on both original and post-minimization runs (build.both_versions, trigger.buggy_differential with reproduced selectors 'encodeHtml false prevents code block escaping' and its BlockParser variant, trigger.fixed_clean, trigger.deterministic with 4 fingerprint groups, full_suite.fixed_all_green, matrix.complete runs=50, repetitions>=3), and no failed checks are reported. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and dart-archive/markdown#239 is the supplied allowed key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/inline_parser.dart",
+        "lib/src/block_parser.dart",
+        "case.json:strict_post_minimization.checks",
+        "case.json:strict_original.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:trigger_tests",
+        "case.json:source_candidate.candidate.origin_pull_request"
+      ],
+      "risks": [
+        "No issue body text was supplied; defect intent is inferred from the PR/commit subject plus the code change, not from a separate reporter narrative.",
+        "The pre-existence of the encodeHtml flag is inferred from its absence in the diff and the pre-existing document_test.dart case, not from a direct read of lib/src/document.dart at the buggy revision.",
+        "Two of the four declared selectors ('encodeHtml true ...' variants) pass on the buggy revision and are regression guards only; the differential signal rests on the two 'encodeHtml false' tests.",
+        "commit_url is null and issue_urls resolves to the PR thread, so the issue-versus-PR distinction cannot be independently separated from the supplied metadata."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T06:57:48.437812+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a7c0712d7babf94ebf03b25f42fb2daaf7ad62a87bb51b64ce4520359453fb6e",
+      "response_sha256": "2a43087edb8f5ee8db96e00c9e0289af31781c0e583de67ead3898640f398f84",
+      "response_id": "msg_a0a6eeb37eb548d9b7c90a66d88e5510",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5846032082255389,
+        "input_tokens": 10512,
+        "output_tokens": 570
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/markdown#239",
+      "rationale": "Single-defect case: CodeSyntax.onMatch and FencedCodeBlockSyntax unconditionally called escapeHtml, ignoring the pre-existing Document.encodeHtml flag. The minimized production patch (identical to production-fix.patch) changes exactly those two call sites to guard escaping with parser.document.encodeHtml; nothing else. The flag is not introduced by the fix: no change touches document.dart, the fix only reads parser.document.encodeHtml, and test/document_test.dart already contained a pre-existing encodeHtml test ('< &' Text case) at the buggy revision, so the trigger does not depend on a new production API. The trigger patch is the unchanged upstream test portion of the same commit and exercises the reported behavior directly through parseInline and parseLines with encodeHtml false/true. Strict evidence shows both revisions build, the two encodeHtml:false selectors fail in isolation and in the full suite on the buggy revision, the encodeHtml:true selectors pass on both (consistent with default-true behavior being already correct), all four are deterministic across 3 repetitions and green on the fixed revision. active_same_project_root_causes is empty, so this root cause is not a registry duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/inline_parser.dart",
+        "lib/src/block_parser.dart",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "traceability.verified_fix_issue_numbers",
+        "source_candidate.candidate.message"
+      ],
+      "risks": [
+        "No issue body text was supplied; the #239 reference in the commit subject may be the squash-merged PR number rather than a distinct issue report, so defect intent is inferred from the commit subject, patch, and tests plus the supplied verified traceability path.",
+        "Only 2 of the 4 declared selectors are differential (encodeHtml:false); the encodeHtml:true selectors are regression guards, not reproducers.",
+        "The defect is only observable when a caller opts into encodeHtml: false, so default-configuration users were unaffected; the fix could alternatively be read as extending flag coverage, though the flag pre-existed and applied to other node types."
+      ]
+    }
+  ]
+}

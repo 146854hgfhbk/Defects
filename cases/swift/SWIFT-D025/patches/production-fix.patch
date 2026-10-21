@@ -1,0 +1,17 @@
+diff --git a/Sources/Tokenizer.swift b/Sources/Tokenizer.swift
+index 54e6891ba2f1f062932846fd8259a90a84d22901..99b0abd29f536cd70c8548a04f52a0dfe4c501ab 100644
+--- a/Sources/Tokenizer.swift
++++ b/Sources/Tokenizer.swift
+@@ -17,6 +17,12 @@ extension String {
+           components[components.count-1] += word
+         } else if specialCharacters.contains(word) {
+           components[components.count-1] += word
++        } else if word != "(" && word.hasPrefix("(") {
++          components.append("(")
++          appendWord(String(word.dropFirst()))
++        } else if word != ")" && word.hasSuffix(")") {
++          appendWord(String(word.dropLast()))
++          components.append(")")
+         } else {
+           components.append(word)
+         }

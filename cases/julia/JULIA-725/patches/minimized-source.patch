@@ -1,0 +1,16 @@
+diff --git a/src/parser.jl b/src/parser.jl
+--- a/src/parser.jl
++++ b/src/parser.jl
+@@ -3178,7 +3179,12 @@ function parse_string(ps::ParseState, raw::Bool)
+             if k == K"("
+                 # "a $(x + y) b"  ==>  (string "a " (parens (call-i x + y)) " b")
+                 # "hi$("ho")"     ==>  (string "hi" (parens (string "ho")))
++                m = position(ps)
+                 parse_atom(ps)
++                if peek_behind(ps, skip_parens=false).kind != K"parens"
++                    # "$(x,y)" ==> (string (error (tuple-p x y)))
++                    emit(ps, m, K"error", error="invalid interpolation syntax")
++                end
+             elseif k == K"var"
+                 # var identifiers disabled in strings
+                 # "$var"  ==>  (string var)

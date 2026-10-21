@@ -1,0 +1,74 @@
+{
+  "candidate_sha": "2d19c068cc942005db589ac25edc6b32fe5be8f8",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 397,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/397",
+      "state": "closed",
+      "title": "Improve error message for missing closing tokens",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "When a missing closing token like `)`, `]` or `}` is encountered we want the \"Expected `)`\" error to point to a location one past the last valid token, not to the trailing error tokens.\r\n\r\nFor example from #349 here's a poor error message from the existing code:\r\n\r\n    ERROR: ParseError:\r\n    # Error @ REPL[53]:15:5\r\n        ylims!(p, (0, last(ylims(p)))\r\n        xlabel!(p, \"Contig length cutoff (kbp)\")\r\n    #   └─────────────────────────────────────┘ ── Expected `)`\r\n\r\nAfter this change, the error location instead points to the end of the last valid line:\r\n\r\n    ERROR: ParseError:\r\n    # Error @ REPL[53]:15:5\r\n        ylims!(p, (0, last(ylims(p)))\r\n    #                                └── Expected `)`\r\n\r\n\r\nFix #349, fix #313"
+    },
+    {
+      "number": 512,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/512",
+      "state": "closed",
+      "title": "Regression in incomplete_tag",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "On JuliaSyntax master:\n```\njulia> s = \"CompletionFoo.test(1, 1, \"\n\"CompletionFoo.test(1, 1, \"\n\njulia> Base.incomplete_tag(Meta.parse(s, raise=false, depwarn=false))\n:none\n```\nvs Base:\n```\njulia> Base.incomplete_tag(Meta.parse(s, raise=false, depwarn=false))\n:other\n```\n\nI looked into adjusting the tag selector a bit, but couldn't come up with a good version that also distinguished `[x ` (with space), `[x)` and `(` and `( `, so there may need to be some adjustment to the source-location representation itself. @c42f can you take a look?"
+    },
+    {
+      "number": 518,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/518",
+      "state": "closed",
+      "title": "Fix `incomplete_tag` generation with trailing whitespace",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Previously we relied on the last SyntaxNode consuming all trailing whitespace when detecting incomplete syntax. However this assumption was broken by #397 and is generally fragile with respect to any extra bump_trivia() calls. Fix this by just comparing to the stream position before any bumping of remaining trivia.\r\n\r\nShould fix #512"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        512
+      ],
+      "pull_request": 518,
+      "fix_commit": "2d19c068cc942005db589ac25edc6b32fe5be8f8",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Fix incomplete_tag generation with trailing whitespace (#518)\n\nPreviously we relied on the last SyntaxNode consuming all trailing\r\nwhitespace when detecting incomplete syntax. However this assumption was\r\nbroken by #397 and is generally fragile with respect to any extra\r\nbump_trivia() calls. Fix this by just comparing to the stream position\r\nbefore any bumping of remaining trivia.",
+    "commit_issue_refs": [
+      397,
+      518
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 518,
+    "pull_request_title": "Fix `incomplete_tag` generation with trailing whitespace",
+    "pull_request_issue_refs": [
+      397,
+      512
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    512
+  ],
+  "cross_repository_issue_records": []
+}

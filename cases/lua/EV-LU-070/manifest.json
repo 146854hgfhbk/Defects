@@ -1,0 +1,87 @@
+{
+  "schema_version": "defects4x-manifest-v2",
+  "bug_id": "EV-LU-070",
+  "repository": "Tieske/binaryheap.lua",
+  "language": "lua",
+  "buggy_sha": "1b7055efab84eb0167eb12c63ace589520c1d801",
+  "fixed_sha": "a29e7a3cc3de8fb2631b112449b6a4804606a795",
+  "source_file": "src/binaryheap.lua",
+  "regression_test_file": "spec/binaryheap_spec.lua",
+  "bug_summary": "Unique-heap pop used the generic pop path and left the payload-to-index mapping stale",
+  "provenance_grade": "ISSUE_PR_LINKED",
+  "p3_state": "SUPERSEDED_BY_STRICT_GATE",
+  "runtime_image": "defects4x/penlight-p3:lua54-v2",
+  "container_digest_kind": "historical_local_image_id_not_a_gate",
+  "test_command": "busted --filter \"Testing MaxUnique heap Tests order of popping\" spec/binaryheap_spec.lua",
+  "buggy_exit_code": 1,
+  "fixed_exit_code": 0,
+  "reproduction_mode": "fixed-test-overlay-on-buggy",
+  "triggering_cases": [
+    "overlay upstream regression specs"
+  ],
+  "runtime_mounts": [
+    "penlight:ro",
+    "luacov:ro"
+  ],
+  "oracle_scope": "upstream_regression_targeted",
+  "active_status": "active",
+  "deprecation_reason": null,
+  "provenance": {
+    "commit_url": "https://github.com/Tieske/binaryheap.lua/commit/a29e7a3cc3de8fb2631b112449b6a4804606a795",
+    "evidence_type": "PR",
+    "issue_urls": [],
+    "pr_urls": [
+      "https://github.com/Tieske/binaryheap.lua/pull/1"
+    ],
+    "gate_status": "RESOLVED",
+    "release_tier": "ISSUE_PR_LINKED"
+  },
+  "patch_policy": "source_only_single_defect_minimized_patch_dynamically_validated",
+  "minimized_patch": "evidence/minimized.patch",
+  "trigger_selector": {
+    "selector_kind": "busted_filter",
+    "test_file": "spec/binaryheap_spec.lua",
+    "filter": "Testing MaxUnique heap Tests order of popping",
+    "command": [
+      "busted",
+      "--filter",
+      "Testing MaxUnique heap Tests order of popping",
+      "spec/binaryheap_spec.lua"
+    ],
+    "precision": "single_named_test_case"
+  },
+  "stability_repeats": 3,
+  "full_suite_command": [
+    "busted",
+    "spec"
+  ],
+  "runtime_identity_policy": "portable_fingerprint",
+  "timezone": "UTC",
+  "locale": "C.UTF-8",
+  "strict_qualification_status": "QUALIFIED",
+  "historical_runtime_image_id": "sha256:3aa692f226e88b1e62aa8940ff1952a58a8545122d2a4b83cb8dc3d229f5f58b",
+  "artifact_format": "Defects4X-Golden-v2-core100-restored",
+  "reproduction_status": "QUALIFIED",
+  "release_profile": "core100_targeted_defects4j_style",
+  "targeted_qualification_status": "QUALIFIED_TARGETED_3X",
+  "stability_evidence": [
+    "golden/logs",
+    "validation/fresh-docker-20260903",
+    "validation/fresh-docker-20260904-rc2"
+  ],
+  "semantic_defect_status": "ACCEPT",
+  "semantic_review_profile": "semantic_v3_final_20260920",
+  "dynamic_closure_status": "PASS_20260920",
+  "single_defect_boundary": "evidence/single_defect_boundary_20260920.json",
+  "d4j_traceability_status": "PASS",
+  "d4j_traceability_audit_date": "2026-09-21",
+  "d4j_traceability_rerun_required": false,
+  "human_minimization_signoff": {
+    "status": "CONFIRMED",
+    "review_type": "HUMAN_MANUAL_MINIMIZATION_REVIEW",
+    "reviewer": "dataset_curator_user_confirmed",
+    "review_date": "2026-09-21",
+    "signature": null,
+    "evidence": "audit/HUMAN_MINIMIZATION_SIGNOFF_20260921.json"
+  }
+}

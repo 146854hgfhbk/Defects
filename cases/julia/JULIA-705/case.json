@@ -1,0 +1,266 @@
+{
+  "bug_id": "JULIA-705",
+  "buggy_revision": "8414b44b7ac3325c5e2233728e6b1cf64a416ecf",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "edbe5df7ad22dd2bce0832cd3d85668ec2978520",
+  "case_id": "JULIA-705",
+  "changed_production_files": [
+    "src/svd.jl"
+  ],
+  "changed_test_files": [
+    "test/svd.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "edbe5df7ad22dd2bce0832cd3d85668ec2978520",
+  "instance_id": "julialinearalgebra__genericlinearalgebra.jl-122",
+  "issue_id": 121,
+  "issue_urls": [
+    "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/121"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "parent_sha": "8414b44b7ac3325c5e2233728e6b1cf64a416ecf",
+  "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+  "repository_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "candidate_sha": "edbe5df7ad22dd2bce0832cd3d85668ec2978520",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.86,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Issue #121 'Deflation breaks edge case' shows a reproducible exception with a stacktrace terminating in `__svd!` on a Bidiagonal{BigFloat}; issue #122 states 'Closes #121'. Production diff touches only src/svd.jl with 4 hunks, minimized to 2 behavior-relevant hunks (removal of pre-loop σ⁻/fudge/thresh initialization, and the `@goto top` restart after `n2 -= 1`), reported as globally minimal with all kept hunks necessary. Accompanying test change in test/svd.jl. Runtime evidence: strict_differential = stable_differential over 3 repetitions, and the full suite passes at the fixed commit.",
+    "input_sha256": "df00de2f4c68048127274344484b934bb4497b3c2c8cba7766011476115b9fd2",
+    "missing_evidence": "No explicit trigger test names are listed (trigger_tests is empty; trigger_mode is test_patch_suite), so the specific failing test at the parent commit is not identified. PR number/title/body are absent, and the commit subject is empty, so intent is inferred from the linked issues. The test patch contents are not shown.",
+    "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+    "provider": "claude",
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.86, \"summary\": \"The commit fixes a crash in the bidiagonal SVD iteration (`__svd!` in src/svd.jl) where, after deflating a zero singular value and decrementing n2, the loop continued with stale submatrix bounds and could reduce over an empty range. The fix jumps back to the top of the loop (`@goto top`) to re-locate the active submatrix after deflation and defers the σ⁻/thresh estimation to inside the loop. Issue #121 documents the concrete user-visible failure (`rank(BigFloat[0 0; 1 -1])` throwing a MethodError about reducing over an empty collection), introduced by an earlier PR #108, and PR #122 closes it.\", \"evidence\": \"Issue #121 'Deflation breaks edge case' shows a reproducible exception with a stacktrace terminating in `__svd!` on a Bidiagonal{BigFloat}; issue #122 states 'Closes #121'. Production diff touches only src/svd.jl with 4 hunks, minimized to 2 behavior-relevant hunks (removal of pre-loop σ⁻/fudge/thresh initialization, and the `@goto top` restart after `n2 -= 1`), reported as globally minimal with all kept hunks necessary. Accompanying test change in test/svd.jl. Runtime evidence: strict_differential = stable_differential over 3 repetitions, and the full suite passes at the fixed commit.\", \"missing_evidence\": \"No explicit trigger test names are listed (trigger_tests is empty; trigger_mode is test_patch_suite), so the specific failing test at the parent commit is not identified. PR number/title/body are absent, and the commit subject is empty, so intent is inferred from the linked issues. The test patch contents are not shown.\", \"validation_risks\": \"The commit also adds/reworks two `@debug` statements; these are non-behavioral under default logging but the un-minimized patch mixes diagnostics with the fix. The issue title in #122 uses the word 'Refactor', which could be mistaken for a non-bug change, but the underlying defect is a hard error. The fix relies on control flow (`@goto top`) and a label presumably already present at the loop head, so applying the minimized patch out of context could fail to compile if the label is missing. Bit-level singular value output may shift slightly for other inputs because thresh is now computed inside the loop, so exact-value assertions elsewhere could be sensitive; the reported passing full suite mitigates this.\", \"suggested_tests\": \"Assert `rank(BigFloat[0 0; 1 -1]) == 1` and that `svdvals!(BigFloat[0 0; 1 -1])` returns without error. Add cases with an exact zero singular value and zero leading diagonal entries at various positions (e.g. Bidiagonal BigFloat matrices with one or more zero diagonal entries, sizes 2-6) and compare singular values against Float64 LAPACK results within tolerance. Include a case requiring multiple successive deflations to exercise the restart path more than once.\"}",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-31T04:37:56Z",
+    "suggested_tests": "Assert `rank(BigFloat[0 0; 1 -1]) == 1` and that `svdvals!(BigFloat[0 0; 1 -1])` returns without error. Add cases with an exact zero singular value and zero leading diagonal entries at various positions (e.g. Bidiagonal BigFloat matrices with one or more zero diagonal entries, sizes 2-6) and compare singular values against Float64 LAPACK results within tolerance. Include a case requiring multiple successive deflations to exercise the restart path more than once.",
+    "summary": "The commit fixes a crash in the bidiagonal SVD iteration (`__svd!` in src/svd.jl) where, after deflating a zero singular value and decrementing n2, the loop continued with stale submatrix bounds and could reduce over an empty range. The fix jumps back to the top of the loop (`@goto top`) to re-locate the active submatrix after deflation and defers the σ⁻/thresh estimation to inside the loop. Issue #121 documents the concrete user-visible failure (`rank(BigFloat[0 0; 1 -1])` throwing a MethodError about reducing over an empty collection), introduced by an earlier PR #108, and PR #122 closes it.",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.43711375359867327,
+      "input_tokens": 5130,
+      "output_tokens": 759
+    },
+    "validation_risks": "The commit also adds/reworks two `@debug` statements; these are non-behavioral under default logging but the un-minimized patch mixes diagnostics with the fix. The issue title in #122 uses the word 'Refactor', which could be mistaken for a non-bug change, but the underlying defect is a hard error. The fix relies on control flow (`@goto top`) and a label presumably already present at the loop head, so applying the minimized patch out of context could fail to compile if the label is missing. Bit-level singular value output may shift slightly for other inputs because thresh is now computed inside the loop, so exact-value assertions elsewhere could be sensitive; the reported passing full suite mitigates this."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "Singular value decomposition",
+      "LAPACK wrappers"
+    ],
+    "PASS_TO_PASS": [
+      "rankUpdate!",
+      "triangular multiplication: UpperTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "triangular multiplication: UnitUpperTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "triangular multiplication: LowerTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "triangular multiplication: UnitLowerTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "Cholesky",
+      "The QR decomposition",
+      "The General eigenvalue problem",
+      "Test sign of eigenvalues"
+    ],
+    "base_commit": "8414b44b7ac3325c5e2233728e6b1cf64a416ecf",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "created_at": "2023-05-04 13:45:33",
+    "image_name": "docker.io/swerebenchv2/julialinearalgebra-genericlinearalgebra.jl:122-8414b44",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()' 2>&1"
+    },
+    "instance_id": "julialinearalgebra__genericlinearalgebra.jl-122",
+    "interface": "Function: svdvals(A::AbstractMatrix{T}) where T\nLocation: src/svd.jl (non‑bang wrapper that calls `svdvals!`)\nInputs: \n- `A`: an `AbstractMatrix` (e.g., `Matrix{BigFloat}`) containing numeric entries. No explicit keyword arguments are required; an optional `tol` keyword may be supplied to control the deflation tolerance.\nOutputs: \n- Returns a `Vector{T}` containing the singular values of `A` in descending order. For matrices that are rank‑deficient or have zero‑size active sub‑matrices, the function now returns zeros for the missing singular values instead of throwing a `MethodError`.\nDescription: Computes the singular values of a matrix using the GenericLinearAlgebra SVD implementation. It safely handles edge cases where the active submatrix becomes empty after deflation (e.g., the `Issue 121` matrices) by returning a complete list of singular values without errors.\n",
+    "issue_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/121",
+    "language": "julia",
+    "license": "MIT",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.97,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [
+          "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/108",
+          "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/blob/8414b44b7ac3325c5e2233728e6b1cf64a416ecf/src/svd.jl#L212",
+          "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/blob/8414b44b7ac3325c5e2233728e6b1cf64a416ecf/src/svd.jl#L224",
+          "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/blob/8414b44b7ac3325c5e2233728e6b1cf64a416ecf/src/svd.jl#L233"
+        ],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "regression_bug"
+        ],
+        "reasoning": "The issue reports that a recent PR broke the deflation step in the SVD routine, causing rank and svdvals to error on certain BigFloat matrices. The added tests explicitly assert the correct singular values for these edge‑case matrices, matching the described expected behavior. The tests directly verify the functionality described in the issue without needing external knowledge or naming conventions, and no unrelated test coupling or ambiguities are present. Therefore the task is clearly specified and solvable (A).",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 2,
+      "num_modified_lines": null,
+      "pr_author": "andreasnoack",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/122"
+    },
+    "patch": "diff --git a/src/svd.jl b/src/svd.jl\nindex d8210fd..098a982 100644\n--- a/src/svd.jl\n+++ b/src/svd.jl\n@@ -167,10 +167,7 @@ function __svd!(\n     e = B.ev\n     iteration = 0\n \n-    # See LAWN3 page 6 and 22\n-    σ⁻ = estimate_σ⁻!(d, e, n1, n2, tol)\n-    fudge = n\n-    thresh = tol * σ⁻\n+    thresh = tol * zero(first(d))\n \n     if B.uplo === 'U'\n         while true\n@@ -199,6 +196,7 @@ function __svd!(\n                     break\n                 end\n             end\n+            @debug \"Active submatrix\" iteration n1 n2 d[n1] d[n2] e[n1] e[n2 - 1]\n \n             # Deflation check. See LAWN3 p21\n             # The Demmel-Kahan iteration moves the zero to the end and produces a\n@@ -210,6 +208,9 @@ function __svd!(\n \n                     # We have now moved a zero to the end so the problem is one smaller\n                     n2 -= 1\n+\n+                    # We'll start over to find the relevant submatrix after deflation\n+                    @goto top\n                 end\n             end\n \n@@ -225,7 +226,7 @@ function __svd!(\n             fudge = n2 - n1 + 1\n             thresh = tol * σ⁻\n \n-            @debug \"__svd!\" iteration n1 n2 d[n1] d[n2] e[n1] e[n2-1] thresh\n+            @debug \"estimated quantities\" σ⁻ σ⁺ fudge thresh\n \n             if fudge * tol * σ⁻ <= eps(σ⁺)\n                 svdDemmelKahan!(B, n1, n2, U, Vᴴ)\n",
+    "pr_description": "Closes #121",
+    "pr_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/122",
+    "problem_statement": "Deflation breaks edge case\nIt seems https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/108 broke some edge cases.\r\nConsider for instance:\r\n```julia\r\njulia> rank(BigFloat[0 0; 1 -1])\r\nERROR: MethodError: reducing over an empty collection is not allowed; consider supplying `init` to the reducer\r\nStacktrace:\r\n  [1] mapreduce_empty(#unused#::typeof(identity), op::Function, T::Type)\r\n    @ Base ./reduce.jl:367\r\n  [2] reduce_empty(op::Base.MappingRF{typeof(identity), typeof(max)}, #unused#::Type{BigFloat})\r\n    @ Base ./reduce.jl:356\r\n  [3] reduce_empty_iter\r\n    @ ./reduce.jl:379 [inlined]\r\n  [4] mapreduce_empty_iter(f::Function, op::Function, itr::SubArray{BigFloat, 1, Vector{BigFloat}, Tuple{UnitRange{Int64}}, true}, ItrEltype::Base.HasEltype)\r\n    @ Base ./reduce.jl:375\r\n  [5] _mapreduce(f::typeof(identity), op::typeof(max), #unused#::IndexLinear, A::SubArray{BigFloat, 1, Vector{BigFloat}, Tuple{UnitRange{Int64}}, true})\r\n    @ Base ./reduce.jl:427\r\n  [6] _mapreduce_dim\r\n    @ ./reducedim.jl:365 [inlined]\r\n  [7] #mapreduce#765\r\n    @ ./reducedim.jl:357 [inlined]\r\n  [8] mapreduce\r\n    @ ./reducedim.jl:357 [inlined]\r\n  [9] #_maximum#783\r\n    @ ./reducedim.jl:999 [inlined]\r\n [10] _maximum\r\n    @ ./reducedim.jl:999 [inlined]\r\n [11] #_maximum#782\r\n    @ ./reducedim.jl:998 [inlined]\r\n [12] _maximum\r\n    @ ./reducedim.jl:998 [inlined]\r\n [13] #maximum#780\r\n    @ ./reducedim.jl:994 [inlined]\r\n [14] maximum\r\n    @ ./reducedim.jl:994 [inlined]\r\n [15] __svd!(B::Bidiagonal{BigFloat, Vector{BigFloat}}, U::Nothing, Vᴴ::Nothing; tol::BigFloat)\r\n    @ GenericLinearAlgebra ~/.julia/dev/GenericLinearAlgebra/src/svd.jl:224\r\n [16] _svdvals!(B::Bidiagonal{BigFloat, Vector{BigFloat}}; tol::BigFloat)\r\n    @ GenericLinearAlgebra ~/.julia/dev/GenericLinearAlgebra/src/svd.jl:252\r\n [17] #svdvals!#33\r\n    @ ~/.julia/dev/GenericLinearAlgebra/src/svd.jl:539 [inlined]\r\n [18] svdvals!(A::Matrix{BigFloat}; tol::BigFloat)\r\n    @ GenericLinearAlgebra ~/.julia/dev/GenericLinearAlgebra/src/svd.jl:567\r\n [19] svdvals!\r\n    @ ~/.julia/dev/GenericLinearAlgebra/src/svd.jl:564 [inlined]\r\n [20] svdvals\r\n    @ ~/.julia/juliaup/julia-1.8.5+0.x64.linux.gnu/share/julia/stdlib/v1.8/LinearAlgebra/src/svd.jl:243 [inlined]\r\n [21] rank(A::Matrix{BigFloat}; atol::Float64, rtol::BigFloat)\r\n    @ LinearAlgebra ~/.julia/juliaup/julia-1.8.5+0.x64.linux.gnu/share/julia/stdlib/v1.8/LinearAlgebra/src/generic.jl:977\r\n [22] rank(A::Matrix{BigFloat})\r\n    @ LinearAlgebra ~/.julia/juliaup/julia-1.8.5+0.x64.linux.gnu/share/julia/stdlib/v1.8/LinearAlgebra/src/generic.jl:975\r\n [23] top-level scope\r\n    @ REPL[13]:1\r\n```\r\nIn the code `n1 = 1` and `n2 = 2` then because `d = [-1, 0]`, `n2` is decreased to 1 by\r\nhttps://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/blob/8414b44b7ac3325c5e2233728e6b1cf64a416ecf/src/svd.jl#L212\r\nAfter that\r\nhttps://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/blob/8414b44b7ac3325c5e2233728e6b1cf64a416ecf/src/svd.jl#L224\r\nfails because the interval `n1:n2-1` is now empty and\r\nhttps://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/blob/8414b44b7ac3325c5e2233728e6b1cf64a416ecf/src/svd.jl#L233\r\nfails because `n2 - 1` is now `0`.",
+    "repo": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+    "test_patch": "diff --git a/test/svd.jl b/test/svd.jl\nindex 8fddc86..a091957 100644\n--- a/test/svd.jl\n+++ b/test/svd.jl\n@@ -248,4 +248,9 @@ using Test, GenericLinearAlgebra, LinearAlgebra, Quaternions, DoubleFloats\n         @test F.U == I\n         @test F.Vt == I\n     end\n+\n+    @testset \"Issue 121\" begin\n+        @test svdvals(BigFloat[0 0; 1 -1]) ≈ [sqrt(2), 0]\n+        @test svdvals(BigFloat[1 0 0; 0 0 0; 0 1 -1]) ≈ [sqrt(2), 1, 0]\n+    end\n end\n"
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "Issue 121"
+      ],
+      "assertion_expression_sha256": [
+        "cddfa26eeb3ddcf26a4d7405334041ee7fefd4bbddecd6607875d091eb4a4bc6",
+        "3f22bb2ddaff230550456a31c7d94cd2b39268ca8e8715cb4b204b3099d2b4dc"
+      ],
+      "f2p_tests": [
+        "Singular value decomposition",
+        "LAPACK wrappers"
+      ],
+      "inferred_testset_context": [
+        "Issue 119"
+      ],
+      "mwe_basis": "exact_assertions_from_upstream_fix_test_patch",
+      "schema_version": 1,
+      "source_evidence": {
+        "path": "trigger/upstream-tests.patch",
+        "sha256": "20657de81a0a3cf1b1658a73f7c8dc5bbb1088a7151675e37404810fb4a4f22e",
+        "test_files": [
+          "test/svd.jl"
+        ],
+        "test_files_sha256": {
+          "test/svd.jl": "4c1c679d7c7d71f5365618c75e90e3c228d743adb1da678f11d6109fb5bf9f29"
+        }
+      }
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "fb78705315a9119c033eeb40fce9ec50eb861b8a4600589db307a6c459dfe17f",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "Issue 121"
+  ],
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "Issue 121"
+    ],
+    "exception_types": [
+      "c6706497b8172f311dadd99ed24b62a5d988e5e5d43ef2a09685dbcab8614028",
+      "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7",
+      "e14b4c65cea30d01e6eab4e46ad050eb5d68f8bad193dcd56cc5aff535405958"
+    ],
+    "fingerprints": [
+      "c6706497b8172f311dadd99ed24b62a5d988e5e5d43ef2a09685dbcab8614028",
+      "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7",
+      "e14b4c65cea30d01e6eab4e46ad050eb5d68f8bad193dcd56cc5aff535405958"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "edbe5df7ad22dd2bce0832cd3d85668ec2978520",
+    "parent_sha": "8414b44b7ac3325c5e2233728e6b1cf64a416ecf",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "e4b947786afb2bd0b1207768c94bdcf86b89656d289af80854d4f931620c5d8a",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

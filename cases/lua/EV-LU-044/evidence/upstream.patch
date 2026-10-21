@@ -1,0 +1,47 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index fe6d7ed0f63116214837a9c4987f8c04d617c9a4..32b419859981b48b74f105989b308e41a09a16d5 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -26,6 +26,8 @@ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) fo
+  - feat: `text.wrap` and `text.fill` have a new parameter to forcefully break words
+    longer than the width given.
+    [#400](https://github.com/lunarmodules/Penlight/pull/400)
++ - fix: `stringx.expandtabs` could error out on Lua 5.3+
++   [#406](https://github.com/lunarmodules/Penlight/pull/406)
+ 
+ ## 1.11.0 (2021-08-18)
+ 
+diff --git a/lua/pl/stringx.lua b/lua/pl/stringx.lua
+index 8454f088e110fd06b3eba65608d841e4403bd801..8ba6763a964fa8d2edad3e848aaf8e187d70f8dd 100644
+--- a/lua/pl/stringx.lua
++++ b/lua/pl/stringx.lua
+@@ -210,10 +210,14 @@ end
+ -- @usage stringx.expandtabs('\tone,two,three', 4)   == '    one,two,three'
+ -- @usage stringx.expandtabs('  \tone,two,three', 4) == '    one,two,three'
+ function stringx.expandtabs(s,tabsize)
+-    assert_string(1,s)
+-    tabsize = tabsize or 8
+-    return (s:gsub("([^\t\r\n]*)\t", function(before_tab)
++  assert_string(1,s)
++  tabsize = tabsize or 8
++  return (s:gsub("([^\t\r\n]*)\t", function(before_tab)
++      if tabsize == 0 then
++        return before_tab
++      else
+         return before_tab .. (" "):rep(tabsize - #before_tab % tabsize)
++      end
+     end))
+ end
+ 
+diff --git a/spec/stringx_spec.lua b/spec/stringx_spec.lua
+index 132f5ab0d198b7b64a1460a02e09c34f57fa6f14..acd800c080e0adadeacb994197bc53ca309e6c38 100644
+--- a/spec/stringx_spec.lua
++++ b/spec/stringx_spec.lua
+@@ -139,6 +139,7 @@ describe("stringx", function()
+     assert.equal((' '):rep(1+8), stringx.expandtabs(' \t '))
+     assert.equal((' '):rep(3), stringx.expandtabs(' \t ',2))
+     assert.equal((' '):rep(2), stringx.expandtabs(' \t ',0))
++    assert.equal('        hi      there   folks!', stringx.expandtabs('\thi\tthere\tfolks!'))
+   end)
+ 
+ 

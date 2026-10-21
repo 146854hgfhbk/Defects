@@ -1,0 +1,35 @@
+diff --git a/lib/src/collection/lru_map.dart b/lib/src/collection/lru_map.dart
+index ddf01fc6cbc5ace54750cf67159d0661d58c83d2..5a2dd6c098abeb259658533fd94e4cde82920619 100644
+--- a/lib/src/collection/lru_map.dart
++++ b/lib/src/collection/lru_map.dart
+@@ -376,7 +376,12 @@ class LinkedLruHashMap<K, V> implements LruMap<K, V> {
+ 
+     // Remove the tail element itself.
+     _tail = _tail.previous;
+-    _tail.next = null;
++    _tail?.next = null;
++
++    // If we removed the last element, clear the head too.
++    if (_tail == null) {
++      _head = null;
++    }
+   }
+ }
+ 
+diff --git a/test/collection/lru_map_test.dart b/test/collection/lru_map_test.dart
+index c9eb0a139c4895af8b550d535c2599611b5824e3..714c572ea44b9b6409adf6ffc56e2862ee440424 100644
+--- a/test/collection/lru_map_test.dart
++++ b/test/collection/lru_map_test.dart
+@@ -315,6 +315,12 @@ void main() {
+         expect(lruMap.putIfAbsent('D', () => 'Delta'), 'Delta');
+         expect(lruMap.keys.toList(), ['D', 'C', 'B']);
+       });
++
++      test('handles maximumSize 1 correctly', () {
++        lruMap.maximumSize = 1;
++        lruMap.putIfAbsent('B', () => 'Beta');
++        expect(lruMap.keys.toList(), ['B']);
++      });
+     });
+   });
+ 

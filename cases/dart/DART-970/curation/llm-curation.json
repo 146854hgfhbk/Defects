@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-970",
+  "technical_evidence_sha256": "22ba060c94a939cca829690aa31a6ae6ef983ff258c271598e0d86a620a5e733",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "2773eb3970c589653f8fdb57b4c100c4da434fb0a24d82544892e52b147e5aa3",
+  "reviewed_at": "2026-08-14T06:22:17.954893+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1010",
+  "rationale": "Issue #1010 reports that dart_style emits three spaces before the ':' of a multi-element constructor initializer list when the last parameter is a `required` named parameter with a trailing comma. The production hunk in lib/src/source_visitor.dart is exactly at that site: the old code selected padding via `parameters.last.isOptional`, which is false for `required` named parameters, so the wider '  ' padding was written on top of the preceding space() call, yielding three spaces. The fix replaces that test with `isNamed || isOptionalPositional`, which classifies `required int x` as named and selects the single-space padding. Same defect, same code path, no behavior added. The minimized patch (patches/minimized-production.patch) is byte-identical to the production hunk of the original commit and drops the CHANGELOG.md line and the fixture, so it contains no doc, config, refactor, or test-only content; production_files lists only lib/src/source_visitor.dart and commit_stats reports a single production hunk. The trigger is the unchanged upstream fixture test/regression/1000/1010.unit, whose first case reproduces the issue reporter's snippet verbatim (required named param, trailing comma, two asserts, three spaces in input, two in expected output); the remaining two cases cover optional named and optional positional parameters, which the pre-fix code already formatted correctly and which act as guards against over-correction. It is driven by the pre-existing test/formatter_test.dart harness and uses no API introduced by the fix. Machine-generated strict gates pass in both strict_original and strict_post_minimization: build.both_versions, trigger.buggy_differential with reproduced selector test/formatter_test.dart::regression 1010.unit, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with no failed_checks. root_cause_id matches the single entry in allowed_root_cause_ids and active_same_project_root_causes is empty, so no duplicate.\n\nIssue #1010 reports that `dart format` emits three spaces before the `:` of a multi-element constructor initializer list when the last parameter is a `required` named parameter with a trailing comma. The production hunk in lib/src/source_visitor.dart is exactly at that site: the buggy code chose padding via `node.parameters.parameters.last.isOptional ? ' ' : '  '`, and a `required` named parameter is not optional, so it fell into the two-space branch and, combined with the preceding space(), produced three spaces. The fix replaces the predicate with `isNamed || isOptionalPositional`, which is the precise condition the issue describes (named or optional-positional trailing parameter). The trigger fixture test/regression/1000/1010.unit is the unchanged upstream fixture from the same single-commit PR #1015 and its first case is a verbatim copy of the issue reproducer (`Foo({required int x,}) : assert(x != 0), assert(x != -1);` expecting two spaces); it exercises only formatter output through the existing .unit harness in test/formatter_test.dart and introduces no dependency on any API added by the fix. The minimized production patch is the production hunk alone: the CHANGELOG.md entry and the fixture from the original commit are excluded, and there is no refactor, rename, feature extension, or config change beyond hoisting the padding value into a local variable required to express the new condition. Strict machine evidence for both original and post-minimization runs passes every gate, including trigger.buggy_differential and trigger.fixed_clean, with reproduced selector test/formatter_test.dart::regression 1010.unit over 3 repetitions and a green fixed full suite. active_same_project_root_causes is empty and dart-lang/dart_style#1010 is the sole entry in allowed_root_cause_ids, so this root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:21:52.354763+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "2773eb3970c589653f8fdb57b4c100c4da434fb0a24d82544892e52b147e5aa3",
+      "response_sha256": "f0e86f5eb098c25a47bebbb71dde3b5f16494891d921658617811b2813a74b33",
+      "response_id": "msg_bb445f57cd8346b3b1055657fad6b4a1",
+      "attempts": 2,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4992034666666666,
+        "input_tokens": 12485,
+        "output_tokens": 712
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1010",
+      "rationale": "Issue #1010 reports that dart_style emits three spaces before the ':' of a multi-element constructor initializer list when the last parameter is a `required` named parameter with a trailing comma. The production hunk in lib/src/source_visitor.dart is exactly at that site: the old code selected padding via `parameters.last.isOptional`, which is false for `required` named parameters, so the wider '  ' padding was written on top of the preceding space() call, yielding three spaces. The fix replaces that test with `isNamed || isOptionalPositional`, which classifies `required int x` as named and selects the single-space padding. Same defect, same code path, no behavior added. The minimized patch (patches/minimized-production.patch) is byte-identical to the production hunk of the original commit and drops the CHANGELOG.md line and the fixture, so it contains no doc, config, refactor, or test-only content; production_files lists only lib/src/source_visitor.dart and commit_stats reports a single production hunk. The trigger is the unchanged upstream fixture test/regression/1000/1010.unit, whose first case reproduces the issue reporter's snippet verbatim (required named param, trailing comma, two asserts, three spaces in input, two in expected output); the remaining two cases cover optional named and optional positional parameters, which the pre-fix code already formatted correctly and which act as guards against over-correction. It is driven by the pre-existing test/formatter_test.dart harness and uses no API introduced by the fix. Machine-generated strict gates pass in both strict_original and strict_post_minimization: build.both_versions, trigger.buggy_differential with reproduced selector test/formatter_test.dart::regression 1010.unit, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with no failed_checks. root_cause_id matches the single entry in allowed_root_cause_ids and active_same_project_root_causes is empty, so no duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/source_visitor.dart",
+        "test/regression/1000/1010.unit",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The single trigger selector aggregates three fixture cases; only the first corresponds to the reported defect, so the other two are regression guards rather than defect reproductions and cannot be failed independently.",
+        "Defect manifests as formatter output spacing, so the trigger asserts on exact whitespace and could be sensitive to unrelated future formatting changes in the same code path.",
+        "Traceability to issue #1010 rests on the commit/PR 'Fix #1010' reference plus semantic match; the issue carries no defect label."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:22:17.954600+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "2773eb3970c589653f8fdb57b4c100c4da434fb0a24d82544892e52b147e5aa3",
+      "response_sha256": "22061280190cdc26b344fc6b0ba57fdbe5cadd04ccedcbff0b21d755eb6921ae",
+      "response_id": "msg_1bbad034661b4172b4ddeafc2de2fc29",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4963692734328359,
+        "input_tokens": 12708,
+        "output_tokens": 733
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1010",
+      "rationale": "Issue #1010 reports that `dart format` emits three spaces before the `:` of a multi-element constructor initializer list when the last parameter is a `required` named parameter with a trailing comma. The production hunk in lib/src/source_visitor.dart is exactly at that site: the buggy code chose padding via `node.parameters.parameters.last.isOptional ? ' ' : '  '`, and a `required` named parameter is not optional, so it fell into the two-space branch and, combined with the preceding space(), produced three spaces. The fix replaces the predicate with `isNamed || isOptionalPositional`, which is the precise condition the issue describes (named or optional-positional trailing parameter). The trigger fixture test/regression/1000/1010.unit is the unchanged upstream fixture from the same single-commit PR #1015 and its first case is a verbatim copy of the issue reproducer (`Foo({required int x,}) : assert(x != 0), assert(x != -1);` expecting two spaces); it exercises only formatter output through the existing .unit harness in test/formatter_test.dart and introduces no dependency on any API added by the fix. The minimized production patch is the production hunk alone: the CHANGELOG.md entry and the fixture from the original commit are excluded, and there is no refactor, rename, feature extension, or config change beyond hoisting the padding value into a local variable required to express the new condition. Strict machine evidence for both original and post-minimization runs passes every gate, including trigger.buggy_differential and trigger.fixed_clean, with reproduced selector test/formatter_test.dart::regression 1010.unit over 3 repetitions and a green fixed full suite. active_same_project_root_causes is empty and dart-lang/dart_style#1010 is the sole entry in allowed_root_cause_ids, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/1000/1010.unit",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests[0]"
+      ],
+      "risks": [
+        "The fixture bundles two extra cases (optional named `{int x,}` and optional positional `[int x,]`) that already formatted correctly before the fix; they act as guards rather than defect triggers, so the single test name covers slightly more than the reported defect.",
+        "Granularity is coarse: the whole 1010.unit fixture maps to one test selector, so a failure cannot distinguish the required-named case from the guard cases without inspecting output.",
+        "Correctness of the fix beyond the three fixture cases (e.g. required named parameter without trailing comma, or mixed positional/named tails) is not covered by the trigger.",
+        "The added fixture file lacks a trailing newline, which is cosmetic but could matter if the harness is regenerated or reformatted."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,833 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1000",
+  "algorithm": "single_hunk_identity",
+  "minimality_guarantee": "one_minimal_over_hunks",
+  "original_patch_sha256": "8781ef9dac70ce6defcf083d0831bfb38aa80f42560eaabaf82e232eb4aca58f",
+  "original_hunk_count": 1,
+  "candidate_subset_count": 1,
+  "chosen_subset": [
+    1
+  ],
+  "conclusive": true,
+  "status": "PASS",
+  "evidence_basis": "stable initial 3-run validation; single-hunk production patch is byte-identical to the minimized patch",
+  "evaluations": [
+    {
+      "subset": [
+        1
+      ],
+      "outcome": "PASS_REUSED_INITIAL_VALIDATION",
+      "patch_sha256": "8781ef9dac70ce6defcf083d0831bfb38aa80f42560eaabaf82e232eb4aca58f",
+      "note": "single-hunk patch identical to production patch; no hunk can be removed while preserving the triggering behavior",
+      "runs": [
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/batch100-spm-cache",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.737,
+          "stderr_log": "logs/original/001-fixed-attempt-1-dependency/stderr.log",
+          "stderr_sha256": "0ee832500c29ac51013fa44722972295c4052d5c64d9f6ef016ddf81abe9afaf",
+          "stdout_log": "logs/original/001-fixed-attempt-1-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/001-fixed-attempt-1-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ec16aca52867cd83a5331c6d05a2cc3d930ab25179f77469715c144773e9d5c6",
+          "package_manifest_lock_artifact": "logs/original/001-fixed-attempt-1-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "d877352e049f582309cc2564535be710c57028ac408ed086230befa191ec188d",
+          "package_manifest_lock_synthetic": true,
+          "version": "fixed"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 5.586,
+          "stderr_log": "logs/original/002-fixed-attempt-1-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/002-fixed-attempt-1-analyze/stdout.log",
+          "stdout_sha256": "0680b4c9bc20aa22b0cbf268f561184d0f26add30e32ee5f1ea1c7ddd57906d6",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.607,
+          "stderr_log": "logs/original/003-fixed-attempt-1-isolated-trigger/stderr.log",
+          "stderr_sha256": "dfc67e53f79c4824314986e98dd47642334ecb6833ce66a7adc4b00864d3c9ae",
+          "stdout_log": "logs/original/003-fixed-attempt-1-isolated-trigger/stdout.log",
+          "stdout_sha256": "e8caac3685fa4a17515595077cd6d840e055b5f93cc1f143fce801410e41dfb1",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.305,
+          "stderr_log": "logs/original/004-fixed-attempt-1-isolated-trigger/stderr.log",
+          "stderr_sha256": "4ef197b639b6a20e2cf4c99a16294bd6b598842e6db4a75bad07ccb7a725e7f1",
+          "stdout_log": "logs/original/004-fixed-attempt-1-isolated-trigger/stdout.log",
+          "stdout_sha256": "a3e3f5675c709458327f06bf20bf195641e6e006160081e5f86a5a72b47c6ddc",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.311,
+          "stderr_log": "logs/original/005-fixed-attempt-1-trigger-suite/stderr.log",
+          "stderr_sha256": "4ef197b639b6a20e2cf4c99a16294bd6b598842e6db4a75bad07ccb7a725e7f1",
+          "stdout_log": "logs/original/005-fixed-attempt-1-trigger-suite/stdout.log",
+          "stdout_sha256": "7e605b2a1d4cb0ad8019cb1e43daea9afb2375dbccf49ae8342423d1f6588393",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.31,
+          "stderr_log": "logs/original/006-fixed-attempt-1-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "4ef197b639b6a20e2cf4c99a16294bd6b598842e6db4a75bad07ccb7a725e7f1",
+          "stdout_log": "logs/original/006-fixed-attempt-1-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "7e605b2a1d4cb0ad8019cb1e43daea9afb2375dbccf49ae8342423d1f6588393",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "full-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 1.79,
+          "stderr_log": "logs/original/007-fixed-attempt-1-full-suite/stderr.log",
+          "stderr_sha256": "4ef197b639b6a20e2cf4c99a16294bd6b598842e6db4a75bad07ccb7a725e7f1",
+          "stdout_log": "logs/original/007-fixed-attempt-1-full-suite/stdout.log",
+          "stdout_sha256": "e675d94ee5c39e6c7107834af866d84535900dad71e951cea8a86d4afbbe4308",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/batch100-spm-cache",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.309,
+          "stderr_log": "logs/original/008-buggy-attempt-1-dependency/stderr.log",
+          "stderr_sha256": "0ee832500c29ac51013fa44722972295c4052d5c64d9f6ef016ddf81abe9afaf",
+          "stdout_log": "logs/original/008-buggy-attempt-1-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/008-buggy-attempt-1-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ec16aca52867cd83a5331c6d05a2cc3d930ab25179f77469715c144773e9d5c6",
+          "package_manifest_lock_artifact": "logs/original/008-buggy-attempt-1-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "d877352e049f582309cc2564535be710c57028ac408ed086230befa191ec188d",
+          "package_manifest_lock_synthetic": true,
+          "version": "buggy"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 6.114,
+          "stderr_log": "logs/original/009-buggy-attempt-1-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/009-buggy-attempt-1-analyze/stdout.log",
+          "stdout_sha256": "1dd34d78e6287e366b4bc3a8a67cea1fda3df05cccf4e2bd12123ed7ea16d626",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.527,
+          "stderr_log": "logs/original/010-buggy-attempt-1-isolated-trigger/stderr.log",
+          "stderr_sha256": "cfcd5b3a51a1999d9377527a9f7519c6bdf78a5f6dc1b1b35beef133d99c5cdc",
+          "stdout_log": "logs/original/010-buggy-attempt-1-isolated-trigger/stdout.log",
+          "stdout_sha256": "3a42ed663720c4cfe30f44aca12f3d0e8582734919df4be94b39dbf34b161e46",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.292,
+          "stderr_log": "logs/original/011-buggy-attempt-1-isolated-trigger/stderr.log",
+          "stderr_sha256": "42555f7048bd272ca707e3d4ba367c9e25b5942e3e7a5fff6068f3f20b0eccf5",
+          "stdout_log": "logs/original/011-buggy-attempt-1-isolated-trigger/stdout.log",
+          "stdout_sha256": "1c74f807f5bf32b20a14c5046806d577913760fd214248f2000542b37fdd60af",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.322,
+          "stderr_log": "logs/original/012-buggy-attempt-1-trigger-suite/stderr.log",
+          "stderr_sha256": "42555f7048bd272ca707e3d4ba367c9e25b5942e3e7a5fff6068f3f20b0eccf5",
+          "stdout_log": "logs/original/012-buggy-attempt-1-trigger-suite/stdout.log",
+          "stdout_sha256": "e886204d7930481b961b09be1aae0bca1b924e9145e68fdc81a5bb725d82280a",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.369,
+          "stderr_log": "logs/original/013-buggy-attempt-1-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "81b4d9260054b1d388e1b4f16ecb1ac924ae3bed9c0cba2228bd3423911b1e0f",
+          "stdout_log": "logs/original/013-buggy-attempt-1-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "34423528d3fdc00e8dd66c4c46dca6b74d8431ca6d7c489a4e31c7cc085d967d",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "full-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 1.742,
+          "stderr_log": "logs/original/014-buggy-attempt-1-full-suite/stderr.log",
+          "stderr_sha256": "42555f7048bd272ca707e3d4ba367c9e25b5942e3e7a5fff6068f3f20b0eccf5",
+          "stdout_log": "logs/original/014-buggy-attempt-1-full-suite/stdout.log",
+          "stdout_sha256": "3026fb8114ba7ab74b7298f4ddbe7f7bfdfc5a9ffac69c3df311e696745ce47a",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/batch100-spm-cache",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.259,
+          "stderr_log": "logs/original/015-buggy-attempt-2-dependency/stderr.log",
+          "stderr_sha256": "0ee832500c29ac51013fa44722972295c4052d5c64d9f6ef016ddf81abe9afaf",
+          "stdout_log": "logs/original/015-buggy-attempt-2-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/015-buggy-attempt-2-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ec16aca52867cd83a5331c6d05a2cc3d930ab25179f77469715c144773e9d5c6",
+          "package_manifest_lock_artifact": "logs/original/015-buggy-attempt-2-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "d877352e049f582309cc2564535be710c57028ac408ed086230befa191ec188d",
+          "package_manifest_lock_synthetic": true,
+          "version": "buggy"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 5.951,
+          "stderr_log": "logs/original/016-buggy-attempt-2-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/016-buggy-attempt-2-analyze/stdout.log",
+          "stdout_sha256": "24a897ba76f313436e05ca8cafc2ad8279337152bd9541be1b6627b57b893457",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.465,
+          "stderr_log": "logs/original/017-buggy-attempt-2-isolated-trigger/stderr.log",
+          "stderr_sha256": "cfcd5b3a51a1999d9377527a9f7519c6bdf78a5f6dc1b1b35beef133d99c5cdc",
+          "stdout_log": "logs/original/017-buggy-attempt-2-isolated-trigger/stdout.log",
+          "stdout_sha256": "0ccf8a9248a299e0276896c3d3d44a245b4f087d63ca6ddbe42f837ab7e7a21c",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.248,
+          "stderr_log": "logs/original/018-buggy-attempt-2-isolated-trigger/stderr.log",
+          "stderr_sha256": "2f0a98f4e5a4928ca079c57f9e8371b875d82bc8e5eea179dc0768610559a173",
+          "stdout_log": "logs/original/018-buggy-attempt-2-isolated-trigger/stdout.log",
+          "stdout_sha256": "c76450c81b9b2e51a43c0c1392e759ce49f274da5c2a223d1b1f67b967aed9e8",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.267,
+          "stderr_log": "logs/original/019-buggy-attempt-2-trigger-suite/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/019-buggy-attempt-2-trigger-suite/stdout.log",
+          "stdout_sha256": "520036b4a94b13a432dbe9fafc8aa196bc1d24b802d00eb7076c99959528746a",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.258,
+          "stderr_log": "logs/original/020-buggy-attempt-2-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/020-buggy-attempt-2-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "305aa2b07736031e424dae7b53a448bd8fffb2842c1969221aa00a9eadd13a93",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/batch100-spm-cache",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.225,
+          "stderr_log": "logs/original/021-fixed-attempt-2-dependency/stderr.log",
+          "stderr_sha256": "0ee832500c29ac51013fa44722972295c4052d5c64d9f6ef016ddf81abe9afaf",
+          "stdout_log": "logs/original/021-fixed-attempt-2-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/021-fixed-attempt-2-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ec16aca52867cd83a5331c6d05a2cc3d930ab25179f77469715c144773e9d5c6",
+          "package_manifest_lock_artifact": "logs/original/021-fixed-attempt-2-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "d877352e049f582309cc2564535be710c57028ac408ed086230befa191ec188d",
+          "package_manifest_lock_synthetic": true,
+          "version": "fixed"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 6.027,
+          "stderr_log": "logs/original/022-fixed-attempt-2-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/022-fixed-attempt-2-analyze/stdout.log",
+          "stdout_sha256": "d6e21ee4b3d58dd2ffc4ac1cd597963a4e0b8040eeeaf4e02b237141acbb0ed5",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.415,
+          "stderr_log": "logs/original/023-fixed-attempt-2-isolated-trigger/stderr.log",
+          "stderr_sha256": "56ecfbed50c6b1422255353e69bfeeb3e2b0c81e56416cb937d409e91f9b92a8",
+          "stdout_log": "logs/original/023-fixed-attempt-2-isolated-trigger/stdout.log",
+          "stdout_sha256": "e8caac3685fa4a17515595077cd6d840e055b5f93cc1f143fce801410e41dfb1",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.248,
+          "stderr_log": "logs/original/024-fixed-attempt-2-isolated-trigger/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/024-fixed-attempt-2-isolated-trigger/stdout.log",
+          "stdout_sha256": "a3e3f5675c709458327f06bf20bf195641e6e006160081e5f86a5a72b47c6ddc",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.258,
+          "stderr_log": "logs/original/025-fixed-attempt-2-trigger-suite/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/025-fixed-attempt-2-trigger-suite/stdout.log",
+          "stdout_sha256": "7e605b2a1d4cb0ad8019cb1e43daea9afb2375dbccf49ae8342423d1f6588393",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.254,
+          "stderr_log": "logs/original/026-fixed-attempt-2-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/026-fixed-attempt-2-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "7e605b2a1d4cb0ad8019cb1e43daea9afb2375dbccf49ae8342423d1f6588393",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/batch100-spm-cache",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.229,
+          "stderr_log": "logs/original/027-fixed-attempt-3-dependency/stderr.log",
+          "stderr_sha256": "0ee832500c29ac51013fa44722972295c4052d5c64d9f6ef016ddf81abe9afaf",
+          "stdout_log": "logs/original/027-fixed-attempt-3-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/027-fixed-attempt-3-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ec16aca52867cd83a5331c6d05a2cc3d930ab25179f77469715c144773e9d5c6",
+          "package_manifest_lock_artifact": "logs/original/027-fixed-attempt-3-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "d877352e049f582309cc2564535be710c57028ac408ed086230befa191ec188d",
+          "package_manifest_lock_synthetic": true,
+          "version": "fixed"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 5.736,
+          "stderr_log": "logs/original/028-fixed-attempt-3-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/028-fixed-attempt-3-analyze/stdout.log",
+          "stdout_sha256": "85136c6f7c87f9293ffb8115970d9c9ed7f03e5a88a6c08ffc74d5861657ebe2",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.423,
+          "stderr_log": "logs/original/029-fixed-attempt-3-isolated-trigger/stderr.log",
+          "stderr_sha256": "56ecfbed50c6b1422255353e69bfeeb3e2b0c81e56416cb937d409e91f9b92a8",
+          "stdout_log": "logs/original/029-fixed-attempt-3-isolated-trigger/stdout.log",
+          "stdout_sha256": "e8caac3685fa4a17515595077cd6d840e055b5f93cc1f143fce801410e41dfb1",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.246,
+          "stderr_log": "logs/original/030-fixed-attempt-3-isolated-trigger/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/030-fixed-attempt-3-isolated-trigger/stdout.log",
+          "stdout_sha256": "a3e3f5675c709458327f06bf20bf195641e6e006160081e5f86a5a72b47c6ddc",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.247,
+          "stderr_log": "logs/original/031-fixed-attempt-3-trigger-suite/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/031-fixed-attempt-3-trigger-suite/stdout.log",
+          "stdout_sha256": "7e605b2a1d4cb0ad8019cb1e43daea9afb2375dbccf49ae8342423d1f6588393",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.26,
+          "stderr_log": "logs/original/032-fixed-attempt-3-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/032-fixed-attempt-3-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "7e605b2a1d4cb0ad8019cb1e43daea9afb2375dbccf49ae8342423d1f6588393",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/batch100-spm-cache",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.246,
+          "stderr_log": "logs/original/033-buggy-attempt-3-dependency/stderr.log",
+          "stderr_sha256": "0ee832500c29ac51013fa44722972295c4052d5c64d9f6ef016ddf81abe9afaf",
+          "stdout_log": "logs/original/033-buggy-attempt-3-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/033-buggy-attempt-3-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ec16aca52867cd83a5331c6d05a2cc3d930ab25179f77469715c144773e9d5c6",
+          "package_manifest_lock_artifact": "logs/original/033-buggy-attempt-3-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "d877352e049f582309cc2564535be710c57028ac408ed086230befa191ec188d",
+          "package_manifest_lock_synthetic": true,
+          "version": "buggy"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 5.258,
+          "stderr_log": "logs/original/034-buggy-attempt-3-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/034-buggy-attempt-3-analyze/stdout.log",
+          "stdout_sha256": "bb3a3f376a6792875c2848658e31c881cafa5869e439b8523f6e8229ab28e48f",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.439,
+          "stderr_log": "logs/original/035-buggy-attempt-3-isolated-trigger/stderr.log",
+          "stderr_sha256": "4f5eedd8d1409de0b38a26dc279de8ead195a94fdc689d88dc3baedba1a974af",
+          "stdout_log": "logs/original/035-buggy-attempt-3-isolated-trigger/stdout.log",
+          "stdout_sha256": "71f3a032d749cfe20bfc22aae89f78ae88ef1a6f2a38d042366e07b69ee02e8b",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.252,
+          "stderr_log": "logs/original/036-buggy-attempt-3-isolated-trigger/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/036-buggy-attempt-3-isolated-trigger/stdout.log",
+          "stdout_sha256": "6f05966188c9efde1881b10c9fb120c81d53ed871e9b173816b6533ccca1da47",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.253,
+          "stderr_log": "logs/original/037-buggy-attempt-3-trigger-suite/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/037-buggy-attempt-3-trigger-suite/stdout.log",
+          "stdout_sha256": "df5ae3f317df8a90e29f299921b5dbc517258e0a668be5774bd8dddb3678c3cb",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testQuotationMark|testNextRootThrowsOnInvalidYaml)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.267,
+          "stderr_log": "logs/original/038-buggy-attempt-3-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/038-buggy-attempt-3-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "532d78223c82a2eb67fda509937bf8aa7c6a64e6f2e79b05f6a6373ccb6ad445",
+          "infrastructure_error": false,
+          "version": "buggy"
+        }
+      ]
+    }
+  ]
+}

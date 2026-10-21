@@ -1,0 +1,32 @@
+diff --git a/t/Test2/modules/Util.t b/t/Test2/modules/Util.t
+index f47f3f30e..4299b7e6b 100644
+--- a/t/Test2/modules/Util.t
++++ b/t/Test2/modules/Util.t
+@@ -18,6 +18,8 @@ use Test2::Util qw/
+     CAN_SIGSYS
+ 
+     IS_WIN32
++
++    clone_io
+ /;
+ 
+ {
+@@ -58,4 +60,18 @@ ok($check_for_sig_sys->("FOO BAR SYS"), "Found SIGSYS at end");
+ ok(!$check_for_sig_sys->("FOO SYSX BAR"), "SYSX is not SYS");
+ ok(!$check_for_sig_sys->("FOO XSYS BAR"), "XSYS is not SYS");
+ 
++my $io = clone_io(\*STDOUT);
++ok($io, "Cloned the filehandle");
++close($io);
++
++my $out = '';
++open(my $fh, '>', \$out) or die "Could not open filehandle";
++
++$io = clone_io($fh);
++is($io, $fh, "For a scalar handle we simply return the original handle, no other choice");
++print $io "Test\n";
++
++is($out, "Test\n", "wrote to the scalar handle");
++
++
+ done_testing;

@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1357",
+  "technical_evidence_sha256": "09e5cd105d4abfa6975dfaaddfea96c5e5d4197a66820059a7a66bc1c75da88d",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "ebfa5f2eef42cd17579daae33eb032221c8062c0b34580790c16d92e3a8cfce0",
+  "reviewed_at": "2026-08-15T12:42:18.815843+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "google/quiver-dart#385",
+  "rationale": "Issue #385, PR #386, and commit 9b78f0d all describe the same pre-existing defect: LinkedLruHashMap.remove() handled the case where the removed entry was both _head and _tail by only advancing _head to _head.next (null), leaving _tail pointing at the removed entry. The next insertion/eviction then dereferenced stale tail state and threw a null-pointer error. The minimized production patch in lib/src/collection/lru_map.dart adds exactly the missing branch `entry == _head && entry == _tail -> _head = _tail = null` ahead of the existing head/tail branches; it is byte-identical to production-fix.patch and contains no refactor, formatting, feature, doc, or config change. The CHANGELOG.md edit and the test addition present in original-commit.patch were correctly excluded from the minimized production patch. The trigger is the unchanged upstream test 'can remove the last item (head and tail)' and exercises only pre-existing public API (LruMap constructor with maximumSize, addAll, remove, index-set, keys) — no API introduced by the fix — and reproduces the reported eviction-time failure path (remove the only entry, then insert two entries so an eviction occurs). Strict evidence gates pass in both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (1/1 unique), trigger.buggy_differential with reproduced selector test/collection/lru_map_test.dart::can remove the last item (head and tail), trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), matrix.complete (32 runs, 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with zero failed checks. Traceability is verified via fix_commit_to_merged_pr_to_issue to issue 385, which equals the sole allowed root cause id. active_same_project_root_causes is empty, so this root cause is not a duplicate of any active registry entry.\n\nSingle coherent defect: LinkedLruHashMap.remove() handled the head-only and tail-only cases but not the case where the removed entry is both head and tail, leaving a stale _tail pointer so the next eviction dereferenced a dangling node. The production hunk in lib/src/collection/lru_map.dart adds exactly that missing branch (`entry == _head && entry == _tail` -> `_head = _tail = null`) and reorders the existing conditions into else-if without altering their bodies, so it is a one-behavior bug fix with no refactor, formatting, feature, doc, or config content; the CHANGELOG entry present in the original commit is correctly excluded from patches/minimized-production.patch. Traceability is verified through fix_commit_to_merged_pr_to_issue (commit 9b78f0d -> PR #386 -> issue #385), the commit subject 'Fix bad tail state in LRU map on removal of last entry' matches the code change, and the trigger test body itself cites issue 385 with the same scenario the CHANGELOG describes (removing the last item leaves state where the next eviction can null-pointer). The trigger is the unmodified upstream test from the same fixing commit and uses only pre-existing public API (LruMap constructor with maximumSize, addAll, remove, index-set, keys); it introduces no API added by the fix, and it exercises the defect end to end by removing the sole entry then inserting two more so an eviction occurs. Strict evidence for both the original and post-minimization states reports all gates passed: build on both revisions, unique declared selector, buggy differential reproduction of 'test/collection/lru_map_test.dart::can remove the last item (head and tail)', deterministic fingerprints over 3 repetitions across a complete 32-run matrix, fixed isolated/suite/reversed runs clean, and fixed full suite green with buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so no duplicate root cause exists, and google/quiver-dart#385 is the sole allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T12:41:53.497517+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ebfa5f2eef42cd17579daae33eb032221c8062c0b34580790c16d92e3a8cfce0",
+      "response_sha256": "54828d1841b28a2421ff9fc46b11b5275f41f9fa7799149668c3543c8844c83a",
+      "response_id": "msg_792279a2d4c44dac8098eabfa2c654d9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4724421569817579,
+        "input_tokens": 7297,
+        "output_tokens": 788
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "google/quiver-dart#385",
+      "rationale": "Issue #385, PR #386, and commit 9b78f0d all describe the same pre-existing defect: LinkedLruHashMap.remove() handled the case where the removed entry was both _head and _tail by only advancing _head to _head.next (null), leaving _tail pointing at the removed entry. The next insertion/eviction then dereferenced stale tail state and threw a null-pointer error. The minimized production patch in lib/src/collection/lru_map.dart adds exactly the missing branch `entry == _head && entry == _tail -> _head = _tail = null` ahead of the existing head/tail branches; it is byte-identical to production-fix.patch and contains no refactor, formatting, feature, doc, or config change. The CHANGELOG.md edit and the test addition present in original-commit.patch were correctly excluded from the minimized production patch. The trigger is the unchanged upstream test 'can remove the last item (head and tail)' and exercises only pre-existing public API (LruMap constructor with maximumSize, addAll, remove, index-set, keys) — no API introduced by the fix — and reproduces the reported eviction-time failure path (remove the only entry, then insert two entries so an eviction occurs). Strict evidence gates pass in both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (1/1 unique), trigger.buggy_differential with reproduced selector test/collection/lru_map_test.dart::can remove the last item (head and tail), trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), matrix.complete (32 runs, 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with zero failed checks. Traceability is verified via fix_commit_to_merged_pr_to_issue to issue 385, which equals the sole allowed root cause id. active_same_project_root_causes is empty, so this root cause is not a duplicate of any active registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "case.json:trigger_tests",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:allowed_root_cause_ids",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "Issue #385 body text was not supplied directly; the defect description is corroborated through the CHANGELOG entry, PR/commit subject, and verified traceability path rather than the raw issue text.",
+        "The trigger asserts only post-eviction key order (['C']); it detects the corrupted tail state indirectly through the subsequent eviction rather than inspecting _head/_tail, so a different fix producing the same key order would also pass.",
+        "remove() retains other unaddressed pointer-maintenance paths (e.g. previous-pointer handling for interior entries); the patch is correctly scoped to the reported defect but does not fully harden the linked-list bookkeeping.",
+        "Runtime evidence is pre-null-safety Dart; the `_head = _tail = null` assignment's validity depends on those fields being nullable in this revision, which was confirmed only by successful build gates, not by reading the field declarations."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T12:42:18.815166+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ebfa5f2eef42cd17579daae33eb032221c8062c0b34580790c16d92e3a8cfce0",
+      "response_sha256": "0a4917fc178939ce9487e016de79e8445af72c1ea10fb5aed47fc8fee1bdcf54",
+      "response_id": "msg_cd490bca71da462885e19900f6c23776",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4529896150580432,
+        "input_tokens": 7379,
+        "output_tokens": 761
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "google/quiver-dart#385",
+      "rationale": "Single coherent defect: LinkedLruHashMap.remove() handled the head-only and tail-only cases but not the case where the removed entry is both head and tail, leaving a stale _tail pointer so the next eviction dereferenced a dangling node. The production hunk in lib/src/collection/lru_map.dart adds exactly that missing branch (`entry == _head && entry == _tail` -> `_head = _tail = null`) and reorders the existing conditions into else-if without altering their bodies, so it is a one-behavior bug fix with no refactor, formatting, feature, doc, or config content; the CHANGELOG entry present in the original commit is correctly excluded from patches/minimized-production.patch. Traceability is verified through fix_commit_to_merged_pr_to_issue (commit 9b78f0d -> PR #386 -> issue #385), the commit subject 'Fix bad tail state in LRU map on removal of last entry' matches the code change, and the trigger test body itself cites issue 385 with the same scenario the CHANGELOG describes (removing the last item leaves state where the next eviction can null-pointer). The trigger is the unmodified upstream test from the same fixing commit and uses only pre-existing public API (LruMap constructor with maximumSize, addAll, remove, index-set, keys); it introduces no API added by the fix, and it exercises the defect end to end by removing the sole entry then inserting two more so an eviction occurs. Strict evidence for both the original and post-minimization states reports all gates passed: build on both revisions, unique declared selector, buggy differential reproduction of 'test/collection/lru_map_test.dart::can remove the last item (head and tail)', deterministic fingerprints over 3 repetitions across a complete 32-run matrix, fixed isolated/suite/reversed runs clean, and fixed full suite green with buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so no duplicate root cause exists, and google/quiver-dart#385 is the sole allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "traceability.paths",
+        "traceability.verified_fix_issue_numbers",
+        "trigger_tests",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The issue #385 body text was not supplied inline; linkage to the reported symptom rests on the verified commit-to-PR-to-issue path, the CHANGELOG wording in patches/original-commit.patch, and the issue reference inside the trigger test rather than on direct reading of the issue report.",
+        "The trigger asserts final key order (['C']) rather than explicitly asserting the null-pointer exception, so the exact buggy failure mode is known only from the machine-generated differential evidence, not from the assertion text.",
+        "full_suite_repetitions=1 means the full-suite green and buggy-scope results were observed only once, though isolated trigger runs were repeated 3 times.",
+        "require_analyze_clean=false, so analyzer output was diagnostic only and cannot rule out unrelated static issues in the revision pair."
+      ]
+    }
+  ]
+}

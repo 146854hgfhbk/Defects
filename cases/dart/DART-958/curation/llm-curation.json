@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-958",
+  "technical_evidence_sha256": "3cc63c3ead4b22888fd6806d8c16850d85409dea44fbcf52ee2b1e79c9640e98",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "1956c0fc796a5579d6472e309bc5d99adcadf799b096adf1b9dda49af1a2f58c",
+  "reviewed_at": "2026-08-14T07:45:24.251506+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#862",
+  "rationale": "Issue #862 ('Deletes commas after nullable type in parameter list', label 'bug') reports that formatting a constructor with nullable function-typed formals drops a syntactically required comma. The fix commit 6985f6b ('Preserve commas after nullable function-typed parameters. Fix #862') addresses exactly that: it adds _commaAfter/hasCommaAfter/_writeCommaAfter in lib/src/source_visitor.dart, which additionally recognizes the case where endToken.next is QUESTION followed by COMMA — the documented workaround for the analyzer not including the trailing '?' in a nullable function-typed formal's endToken (sdk#38990). The pre-existing defect is therefore a comma-detection failure, not a missing feature. The minimized production patch (patches/minimized-production.patch) contains only lib/src/{source_visitor,argument_list_visitor,call_chain_visitor}.dart behavioral changes; the CHANGELOG.md entry, pubspec.yaml version bump, and bin/format.dart version constant present in patches/original-commit.patch and patches/production-fix.patch were correctly excluded, and no test files, docs, or config remain. The trigger is the unchanged upstream fixture portion of the same commit (patches/trigger-tests.patch): test/regression/0800/0862.unit reproduces the issue's exact JsonCodec snippet plus mandatory/optional/named and constructor-initializer trailing-comma variants, and test/whitespace/functions.unit adds two nullable-function-typed-parameter-with-comma cases. These are data fixtures executed by the pre-existing test/formatter_test.dart harness and do not reference the new hasCommaAfter API. Strict evidence (strict_original and strict_post_minimization, both passed with zero failed checks) shows build success on both revisions, isolated buggy failure and fixed-clean for both declared selectors over 3 repetitions across a 38-run matrix, deterministic fingerprints, and a fixed full suite that is all green with buggy full-suite failures limited to the declared triggers. active_same_project_root_causes is empty, so dart-lang/dart_style#862 is not a duplicate, and it matches the single allowed_root_cause_ids entry.\n\nIssue #862 ('Deletes commas after nullable type in parameter list', labeled bug, opened before the fix) reports that formatting a constructor with nullable old-style function-typed parameters drops the required comma, producing invalid Dart. The fix commit message states 'Preserve commas after nullable function-typed parameters. Fix #862' and identifies the upstream cause (sdk#38990: endToken excludes the trailing '?'). The minimized production patch matches that cause exactly: it adds _commaAfter/hasCommaAfter/_writeCommaAfter in source_visitor.dart, which also accepts QUESTION followed by COMMA, and routes every previously direct 'endToken.next.type == TokenType.COMMA' check through it. Minimization stripped the non-production parts of the original commit (CHANGELOG.md, pubspec.yaml version bump, bin/format.dart version constant), so the remaining diff is behavior-only in lib/src. The call-site replacements, including the _writeCommaAfter extraction that removed the duplicated inline comment blocks, all change comma detection semantics rather than merely reshaping code, so they belong to the same defect. The triggers are the unchanged upstream fixtures from the same commit (test/regression/0800/0862.unit reproduces the exact issue snippet plus trailing-comma variants; test/whitespace/functions.unit adds 'nullable old style function typed parameter with trailing comma' cases) driven through the existing test/formatter_test.dart harness, so they exercise formatter output and do not call the newly added public hasCommaAfter API. Strict evidence for both the original and post-minimization revisions reports all gates passed: build on both versions, unique selectors, buggy differential reproducing both declared selectors, deterministic fingerprints (4 groups), fixed isolated/suite/reversed clean, and buggy full-suite failures limited to the reproduced triggers, over 3 repetitions and 38 matrix runs. active_same_project_root_causes is empty and dart-lang/dart_style#862 is the sole allowed verified key, so no duplicate root cause.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T07:44:48.943132+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "1956c0fc796a5579d6472e309bc5d99adcadf799b096adf1b9dda49af1a2f58c",
+      "response_sha256": "fc14cb163a00d22f5d4f3cd8580243a523ed646bbc5cd217eb07894e6fe2f554",
+      "response_id": "msg_39193eee682d4b05be007f58e1ba2561",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8724042022885572,
+        "input_tokens": 31000,
+        "output_tokens": 764
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#862",
+      "rationale": "Issue #862 ('Deletes commas after nullable type in parameter list', label 'bug') reports that formatting a constructor with nullable function-typed formals drops a syntactically required comma. The fix commit 6985f6b ('Preserve commas after nullable function-typed parameters. Fix #862') addresses exactly that: it adds _commaAfter/hasCommaAfter/_writeCommaAfter in lib/src/source_visitor.dart, which additionally recognizes the case where endToken.next is QUESTION followed by COMMA — the documented workaround for the analyzer not including the trailing '?' in a nullable function-typed formal's endToken (sdk#38990). The pre-existing defect is therefore a comma-detection failure, not a missing feature. The minimized production patch (patches/minimized-production.patch) contains only lib/src/{source_visitor,argument_list_visitor,call_chain_visitor}.dart behavioral changes; the CHANGELOG.md entry, pubspec.yaml version bump, and bin/format.dart version constant present in patches/original-commit.patch and patches/production-fix.patch were correctly excluded, and no test files, docs, or config remain. The trigger is the unchanged upstream fixture portion of the same commit (patches/trigger-tests.patch): test/regression/0800/0862.unit reproduces the issue's exact JsonCodec snippet plus mandatory/optional/named and constructor-initializer trailing-comma variants, and test/whitespace/functions.unit adds two nullable-function-typed-parameter-with-comma cases. These are data fixtures executed by the pre-existing test/formatter_test.dart harness and do not reference the new hasCommaAfter API. Strict evidence (strict_original and strict_post_minimization, both passed with zero failed checks) shows build success on both revisions, isolated buggy failure and fixed-clean for both declared selectors over 3 repetitions across a 38-run matrix, deterministic fingerprints, and a fixed full suite that is all green with buggy full-suite failures limited to the declared triggers. active_same_project_root_causes is empty, so dart-lang/dart_style#862 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+      "evidence_paths": [
+        "case.json:issue_check.linked_issues[0].body",
+        "case.json:source_candidate.message",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:strict_post_minimization.checks",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The fix's helper substitution is applied uniformly at comma-detection sites that cannot involve function-typed formals (enum constants in visitEnumDeclaration, collection literal elements, call-chain argument checks); these are behavior-neutral consistency changes rather than strictly required by the reported defect, so the minimized patch is slightly broader than the minimal defect surface.",
+        "argument_list_visitor.dart still emits argument.endToken.next after the hasCommaAfter guard rather than the resolved comma token, so the retained upstream code path is not fully consistent with the new helper; this is upstream behavior and is covered by the passing full suite but is not exercised by the declared triggers.",
+        "Triggers are .unit fixture files rather than named Dart test functions, so selector stability depends on the formatter_test.dart harness naming ('regression 0862.unit', 'whitespace functions.unit') remaining unchanged."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T07:45:24.251253+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "1956c0fc796a5579d6472e309bc5d99adcadf799b096adf1b9dda49af1a2f58c",
+      "response_sha256": "e056ced835c6be51cb10e0f284f0aff65d71aef7ca1387e45d6d0aaebf73aa67",
+      "response_id": "msg_b23409a78f8c42ca90006d46494edaf1",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8335640512769485,
+        "input_tokens": 30812,
+        "output_tokens": 755
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#862",
+      "rationale": "Issue #862 ('Deletes commas after nullable type in parameter list', labeled bug, opened before the fix) reports that formatting a constructor with nullable old-style function-typed parameters drops the required comma, producing invalid Dart. The fix commit message states 'Preserve commas after nullable function-typed parameters. Fix #862' and identifies the upstream cause (sdk#38990: endToken excludes the trailing '?'). The minimized production patch matches that cause exactly: it adds _commaAfter/hasCommaAfter/_writeCommaAfter in source_visitor.dart, which also accepts QUESTION followed by COMMA, and routes every previously direct 'endToken.next.type == TokenType.COMMA' check through it. Minimization stripped the non-production parts of the original commit (CHANGELOG.md, pubspec.yaml version bump, bin/format.dart version constant), so the remaining diff is behavior-only in lib/src. The call-site replacements, including the _writeCommaAfter extraction that removed the duplicated inline comment blocks, all change comma detection semantics rather than merely reshaping code, so they belong to the same defect. The triggers are the unchanged upstream fixtures from the same commit (test/regression/0800/0862.unit reproduces the exact issue snippet plus trailing-comma variants; test/whitespace/functions.unit adds 'nullable old style function typed parameter with trailing comma' cases) driven through the existing test/formatter_test.dart harness, so they exercise formatter output and do not call the newly added public hasCommaAfter API. Strict evidence for both the original and post-minimization revisions reports all gates passed: build on both versions, unique selectors, buggy differential reproducing both declared selectors, deterministic fingerprints (4 groups), fixed isolated/suite/reversed clean, and buggy full-suite failures limited to the reproduced triggers, over 3 repetitions and 38 matrix runs. active_same_project_root_causes is empty and dart-lang/dart_style#862 is the sole allowed verified key, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/minimized-production.patch::lib/src/source_visitor.dart (_commaAfter QUESTION+COMMA handling)",
+        "patches/trigger-tests.patch::test/regression/0800/0862.unit",
+        "patches/trigger-tests.patch::test/whitespace/functions.unit",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The helper is applied uniformly to sites where a nullable function-typed formal cannot appear (enum constants, collection literal elements, argument lists), so part of the diff is a behavior-preserving generalization rather than strictly required for issue #862.",
+        "The fix makes hasCommaAfter a public method on SourceVisitor; the declared triggers are fixture-driven and do not depend on it, but future triggers could.",
+        "Trigger selectors are fixture-file granular ('whitespace functions.unit' contains many unrelated cases), so a selector failure is only attributable to this defect via the added cases and the recorded buggy differential.",
+        "The added regression fixture ends without a trailing newline; harmless here but a formatting wart in the benchmark artifact."
+      ]
+    }
+  ]
+}

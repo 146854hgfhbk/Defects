@@ -1,0 +1,48 @@
+diff --git a/lib/Test/Builder.pm b/lib/Test/Builder.pm
+index c0eaf1a70..7960787e8 100644
+--- a/lib/Test/Builder.pm
++++ b/lib/Test/Builder.pm
+@@ -143,7 +143,8 @@ sub parent {
+     my $chub = $self->{Hub} || $ctx->hub;
+     $ctx->release;
+ 
+-    my $parent = $chub->meta(__PACKAGE__, {})->{parent};
++    my $meta = $chub->meta(__PACKAGE__, {});
++    my $parent = $meta->{parent};
+ 
+     return undef unless $parent;
+ 
+@@ -388,6 +389,7 @@ sub reset {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
+         Done_Testing => undef,
+         Skip_All     => 0,
+         Test_Results => [],
++        parent       => $meta->{parent},
+     );
+ 
+     $self->{Exported_To} = undef;
+diff --git a/t/regression/757-reset_in_subtest.t b/t/regression/757-reset_in_subtest.t
+new file mode 100644
+index 000000000..846a34d83
+--- /dev/null
++++ b/t/regression/757-reset_in_subtest.t
+@@ -0,0 +1,20 @@
++use strict;
++use warnings;
++
++use Test::More;
++
++subtest 'subtest' => sub {
++    Test::Builder->new->reset;
++    ok 1;
++};
++
++subtest 'subtest' => sub {
++    Test::Builder->new->reset;
++    subtest 'subtest' => sub {
++        Test::Builder->new->reset;
++        ok 1;
++    };
++    ok 1;
++};
++
++done_testing;

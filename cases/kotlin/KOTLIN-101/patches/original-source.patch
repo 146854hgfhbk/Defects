@@ -1,0 +1,17 @@
+diff --git a/projects/core/koin-core-viewmodel/src/commonMain/kotlin/org/koin/viewmodel/factory/KoinViewModelFactory.kt b/projects/core/koin-core-viewmodel/src/commonMain/kotlin/org/koin/viewmodel/factory/KoinViewModelFactory.kt
+index f20fc7b80..37eceb20d 100644
+--- a/projects/core/koin-core-viewmodel/src/commonMain/kotlin/org/koin/viewmodel/factory/KoinViewModelFactory.kt
++++ b/projects/core/koin-core-viewmodel/src/commonMain/kotlin/org/koin/viewmodel/factory/KoinViewModelFactory.kt
+@@ -50,6 +50,12 @@ class KoinViewModelFactory(
+         } else {
+             val scopeId = getViewModelScopeId(modelClass)
+             val vmScope = koin.createScope(scopeId, TypeQualifier(modelClass), null, ViewModelScopeArchetype)
++            // #2299: link the auto-created VM scope to the requesting (parent) scope, so a ViewModel
++            // declared in a custom scope - and its scoped dependencies - resolve. New scopes already
++            // link to root, so only a non-root parent needs an explicit link.
++            if (!scope.isRoot) {
++                vmScope.linkTo(scope)
++            }
+             val vm : T = vmScope.getWithParameters(kClass, qualifier, androidParams)
+             vm.addCloseable(ViewModelScopeAutoCloseable(scopeId,koin))
+             vm

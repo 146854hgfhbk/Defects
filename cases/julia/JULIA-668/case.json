@@ -1,0 +1,322 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-668",
+  "bug_id": "JULIA-668",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaDiff/TaylorSeries.jl",
+  "repository_url": "https://github.com/JuliaDiff/TaylorSeries.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaDiff/TaylorSeries.jl/issues/85"
+  ],
+  "issue_id": 85,
+  "buggy_revision": "1daed03049a6f0c9079628dc66c84e74ba5b352f",
+  "fixed_revision": "c4b474d5cac3d44b95144c42ad4b740fa1d9dbbe",
+  "candidate_sha": "c4b474d5cac3d44b95144c42ad4b740fa1d9dbbe",
+  "source": "merged_pull_request",
+  "instance_id": "juliadiff__taylorseries.jl-316",
+  "swe": {
+    "base_commit": "1daed03049a6f0c9079628dc66c84e74ba5b352f",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/JuliaDiff/TaylorSeries.jl/pull/316",
+    "issue_url": null,
+    "problem_statement": "Cannot use more than 65 variables with TaylorN\nWas just doing some work on my machine with TaylorN (OS X 10.10.5, julia-0.5; TaylorSeries v0.4.0), and then I came across some unexpected behaviour:\r\n```julia\r\njulia> using TaylorSeries\r\njulia> δv = set_variables(\"δ\", order=1, numvars=65);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₁ + 𝒪(‖x‖²) #this is OK\r\njulia> δv = set_variables(\"δ\", order=1, numvars=66);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₂ + 𝒪(‖x‖²) #the subscript on the δ should be 1 instead of 2\r\njulia> δv = set_variables(\"δ\", order=1, numvars=70);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₆ + 𝒪(‖x‖²) #the subscript on the δ should be 1 instead of 6\r\njulia> δv = set_variables(\"δ\", order=1, numvars=5);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₁ + 𝒪(‖x‖²) #this is OK\r\njulia> δv = set_variables(\"δ\", order=1, numvars=65);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₁ + 𝒪(‖x‖²) #this is OK\r\n```\r\n\r\nThere seems to be a problem with `TaylorN` when `order==1` and `numvars>65`...\r\n\r\nIf I use `order=2` instead of `order=1`, everything works fine (this is the workaround I'm using):\r\n```julia\r\njulia> δv = set_variables(\"δ\", order=2, numvars=65);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₁ + 1.0 δ₁² + 𝒪(‖x‖³) #OK\r\njulia> δv = set_variables(\"δ\", order=2, numvars=66);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₁ + 1.0 δ₁² + 𝒪(‖x‖³) #OK\r\njulia> δv = set_variables(\"δ\", order=2, numvars=70);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₁ + 1.0 δ₁² + 𝒪(‖x‖³) #OK\r\njulia> δv = set_variables(\"δ\", order=2, numvars=5);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₁ + 1.0 δ₁² + 𝒪(‖x‖³) #OK\r\njulia> δv = set_variables(\"δ\", order=2, numvars=65);\r\njulia> (1+δv[1])^2\r\n 1.0 + 2.0 δ₁ + 1.0 δ₁² + 𝒪(‖x‖³) #OK\r\n```\r\n\r\nAfter testing in JuliaBox (julia-0.5, TaylorSeries v0.4.0) the results are the same...",
+    "patch": "diff --git a/Project.toml b/Project.toml\nindex ef29d24e..ab41e4de 100644\n--- a/Project.toml\n+++ b/Project.toml\n@@ -1,7 +1,7 @@\n name = \"TaylorSeries\"\n uuid = \"6aa5eb33-94cf-58f4-a9d0-e4b2c4fc25ea\"\n repo = \"https://github.com/JuliaDiff/TaylorSeries.jl.git\"\n-version = \"0.13.1\"\n+version = \"0.13.2\"\n \n [deps]\n LinearAlgebra = \"37e2e46d-f89d-539d-b4ee-838fcccc9c8e\"\ndiff --git a/docs/src/api.md b/docs/src/api.md\nindex 3154a6d6..c71cc28b 100644\n--- a/docs/src/api.md\n+++ b/docs/src/api.md\n@@ -65,7 +65,6 @@ _InternalMutFuncs\n generate_tables\n generate_index_vectors\n in_base\n-in_base_safe\n make_inverse_dict\n resize_coeffs1!\n resize_coeffsHP!\ndiff --git a/src/hash_tables.jl b/src/hash_tables.jl\nindex 0b191461..08dbb9dd 100644\n--- a/src/hash_tables.jl\n+++ b/src/hash_tables.jl\n@@ -33,12 +33,19 @@ of the corresponding monomial in `coeffs_table`.\n function generate_tables(num_vars, order)\n     coeff_table = [generate_index_vectors(num_vars, i) for i in 0:order]\n \n-    index_table = Vector{Int}[map(x->in_base_safe(order, x), coeffs) for coeffs in coeff_table]\n+    index_table = Vector{Int}[map(x->in_base(order, x), coeffs) for coeffs in coeff_table]\n+\n+    # Check uniqueness of labels as \"non-collision\" test\n+    @assert all(allunique.(index_table))\n \n     pos_table = map(make_inverse_dict, index_table)\n     size_table = map(length, index_table)\n \n-    coeff_table, index_table, size_table, pos_table\n+    # The next line tests the consistency of the number of monomials,\n+    # but it's commented because it may not pass due to the `binomial`\n+    # @assert sum(size_table) == binomial(num_vars+order, min(num_vars,order))\n+\n+    return (coeff_table, index_table, size_table, pos_table)\n end\n \n \"\"\"\n@@ -61,7 +68,7 @@ function generate_index_vectors(num_vars, degree)\n \n     end\n \n-    indices\n+    return indices\n end\n \n \n@@ -77,44 +84,25 @@ the corresponding index.\n \n It is used to construct `pos_table` from `index_table`.\n \"\"\"\n-function make_inverse_dict(v::Vector)\n-    Dict(Dict(x=>i for (i,x) in enumerate(v)))\n-end\n+make_inverse_dict(v::Vector) = Dict(Dict(x=>i for (i,x) in enumerate(v)))\n \n \"\"\"\n     in_base(order, v)\n \n-Convert vector `v` of non-negative integers to base `order+1`.\n+Convert vector `v` of non-negative integers to base `oorder`, where\n+`oorder` is the next odd integer of `order`.\n \"\"\"\n function in_base(order, v)\n-    order = order+1\n+    oorder = iseven(order) ? order+1 : order+2 # `oorder` is the next odd integer to `order`\n \n     result = 0\n \n     all(iszero.(v)) && return result\n \n     for i in v\n-        result = result*order + i\n+        result = result*oorder + i\n     end\n \n-    result\n-end\n-\n-\"\"\"\n-    in_base_safe(order, v)\n-\n-Same as `in_base` assuring positivity of the result;\n-used for constructing `index_table`.\n-\"\"\"\n-function in_base_safe(order, v)\n-    result = in_base(order, v)\n-\n-    iszero(v) && return result\n-\n-    (result <= 0) && throw(OverflowError(\"\"\"\n-        Using numvars=$(length(v)) at order=$(order) produces\n-        a non-positive index_table entry: $result.\"\"\"))\n-\n     return result\n end\n \n",
+    "test_patch": "diff --git a/test/manyvariables.jl b/test/manyvariables.jl\nindex 4b909108..843b4440 100644\n--- a/test/manyvariables.jl\n+++ b/test/manyvariables.jl\n@@ -1,5 +1,4 @@\n-# This file is part of TaylorSeries.jl, MIT licensed\n-#\n+# This file is part of TS.jl, MIT licensed#\n \n using TaylorSeries\n \n@@ -7,24 +6,24 @@ using Test\n using LinearAlgebra\n \n @testset \"Test hash tables\" begin\n-    set_variables(\"x\", numvars=2, order=6)\n-    _taylorNparams = TaylorSeries.ParamsTaylorN(6, 2, String[\"x₁\", \"x₂\"])\n-    @test _taylorNparams.order == get_order()\n-    @test _taylorNparams.num_vars == get_numvars()\n-    @test _taylorNparams.variable_names == get_variable_names()\n-    @test _taylorNparams.variable_symbols == get_variable_symbols()\n-\n-    @test_throws OverflowError(\"\"\"\n-        Using numvars=65 at order=1 produces\n-        a non-positive index_table entry: 0.\"\"\") set_variables(\"δ\", order=1, numvars=65)\n-    @test_throws OverflowError(\"\"\"\n-        Using numvars=41 at order=2 produces\n-        a non-positive index_table entry: -6289078614652622815.\"\"\") set_variables(\"δ\", order=2, numvars=41)\n-    @test_throws OverflowError(\"\"\"\n-        Using numvars=32 at order=3 produces\n-        a non-positive index_table entry: -9223372036854775808.\"\"\") set_variables(\"δ\", order=3, numvars=32)\n-    set_variables(\"x\", numvars=2, order=40)\n-    @test all(allunique.(TS.index_table[:]))\n+    # Issue #85 is solved!\n+    set_variables(\"x\", numvars=66, order=1)\n+    @test TS._params_TaylorN_.order == get_order() == 1\n+    @test TS._params_TaylorN_.num_vars == get_numvars() == 66\n+    @test TS._params_TaylorN_.variable_names[end] == \"x₆₆\"\n+    @test TS._params_TaylorN_.variable_symbols[6] == :x₆\n+    @test sum(TS.size_table) == 67\n+    @test TS.coeff_table[2][1] == vcat([1], zeros(Int, 65))\n+    @test TS.index_table[2][1] == 3^65\n+    @test TS.pos_table[2][3^64] == 2\n+    #\n+    set_variables(\"x\", numvars=66, order=2)\n+    @test TS._params_TaylorN_.order == get_order() == 2\n+    @test TS._params_TaylorN_.num_vars == get_numvars() == 66\n+    @test sum(TS.size_table) == binomial(66+2, 2)\n+    @test TS.coeff_table[2][1] == vcat([1], zeros(Int, 65))\n+    @test TS.index_table[2][1] == 3^65\n+    @test TS.pos_table[2][3^64] == 2\n \n     @test eltype(set_variables(Int, \"x\", numvars=2, order=6)) == TaylorN{Int}\n     @test eltype(set_variables(\"x\", numvars=2, order=6)) == TaylorN{Float64}\n@@ -32,15 +31,15 @@ using LinearAlgebra\n     @test eltype(set_variables(\"x y\", order=6)) == TaylorN{Float64}\n     @test eltype(set_variables(Int, :x, numvars=2, order=6)) == TaylorN{Int}\n     @test eltype(set_variables(:x, numvars=2, order=6)) == TaylorN{Float64}\n-    @test eltype(set_variables(BigInt, [:x,:y], order=6)) == TaylorN{BigInt}\n-    @test eltype(set_variables([:x,:y], order=6)) == TaylorN{Float64}\n+    @test eltype(set_variables(BigInt, [:x, :y], order=6)) == TaylorN{BigInt}\n+    @test eltype(set_variables([:x, :y], order=6)) == TaylorN{Float64}\n     @test typeof(show_params_TaylorN()) == Nothing\n     @test typeof(show_monomials(2)) == Nothing\n \n-    @test TaylorSeries.coeff_table[2][1] == [1,0]\n-    @test TaylorSeries.index_table[2][1] == 7\n-    @test TaylorSeries.in_base(get_order(),[2,1]) == 15\n-    @test TaylorSeries.pos_table[4][15] == 2\n+    @test TS.coeff_table[2][1] == [1,0]\n+    @test TS.index_table[2][1] == 7\n+    @test TS.in_base(get_order(), [2,1]) == 15\n+    @test TS.pos_table[4][15] == 2\n end\n \n @testset \"Tests for HomogeneousPolynomial and TaylorN\" begin\n@@ -50,7 +49,7 @@ end\n     @test HomogeneousPolynomial{Int} <: AbstractSeries{Int}\n     @test TaylorN{Float64} <: AbstractSeries{Float64}\n \n-    set_variables([:x,:y], order=6)\n+    set_variables([:x, :y], order=6)\n     @test get_order() == 6\n     @test get_numvars() == 2\n \n@@ -75,13 +74,13 @@ end\n     @test iterate(x, 7) == nothing\n \n     @test x.order == 6\n-    @test TaylorSeries.name_taylorNvar(1) == \" x\"\n-    @test TaylorSeries._params_TaylorN_.variable_names == [\"x\",\"y\"]\n-    @test TaylorSeries._params_TaylorN_.variable_symbols == [:x, :y]\n+    @test TS.name_taylorNvar(1) == \" x\"\n+    @test TS._params_TaylorN_.variable_names == [\"x\",\"y\"]\n+    @test TS._params_TaylorN_.variable_symbols == [:x, :y]\n     @test get_variable_symbols() == [:x, :y]\n-    @test TaylorSeries.lookupvar(:x) == 1\n-    @test TaylorSeries.lookupvar(:α) == 0\n-    @test TaylorSeries.get_variable_names() == [\"x\", \"y\"]\n+    @test TS.lookupvar(:x) == 1\n+    @test TS.lookupvar(:α) == 0\n+    @test TS.get_variable_names() == [\"x\", \"y\"]\n     @test x == HomogeneousPolynomial(Float64, 1)\n     @test x == HomogeneousPolynomial(1)\n     @test y == HomogeneousPolynomial(Float64, 2)\n@@ -90,9 +89,9 @@ end\n \n     set_variables(\"x\", numvars=2, order=17)\n     v = [1,2]\n-    @test typeof(TaylorSeries.resize_coeffsHP!(v,2)) == Nothing\n+    @test typeof(TS.resize_coeffsHP!(v,2)) == Nothing\n     @test v == [1,2,0]\n-    @test_throws AssertionError TaylorSeries.resize_coeffsHP!(v,1)\n+    @test_throws AssertionError TS.resize_coeffsHP!(v,1)\n     hpol_v = HomogeneousPolynomial(v)\n     hpol_v[3] = 3\n     @test v == [1,2,3]\n@@ -154,8 +153,8 @@ end\n     @test ones(HomogeneousPolynomial{Complex{Int}},0) ==\n         [HomogeneousPolynomial([complex(1,0)], 0)]\n     @test !isnan(uT)\n-    @test TaylorSeries.fixorder(xH,yH) == (xH,yH)\n-    @test_throws AssertionError TaylorSeries.fixorder(zeros(xH,0)[1],yH)\n+    @test TS.fixorder(xH,yH) == (xH,yH)\n+    @test_throws AssertionError TS.fixorder(zeros(xH,0)[1],yH)\n \n \n     @test constant_term(xT) == 0\n@@ -462,104 +461,104 @@ end\n     @test sinh(xT+yT) == imag(sin(im*(xT+yT)))\n \n     xx = 1.0*zeroT\n-    TaylorSeries.add!(xx, 1.0*xT, 2yT, 1)\n+    TS.add!(xx, 1.0*xT, 2yT, 1)\n     @test xx[1] == HomogeneousPolynomial([1,2])\n-    TaylorSeries.add!(xx, 5.0, 0)\n+    TS.add!(xx, 5.0, 0)\n     @test xx[0] == HomogeneousPolynomial([5.0])\n-    TaylorSeries.add!(xx, -5.0, 1)\n+    TS.add!(xx, -5.0, 1)\n     @test xx[1] == zero(xx[1])\n-    TaylorSeries.subst!(xx, 1.0*xT, yT, 1)\n+    TS.subst!(xx, 1.0*xT, yT, 1)\n     @test xx[1] == HomogeneousPolynomial([1,-1])\n-    TaylorSeries.subst!(xx, 5.0, 0)\n+    TS.subst!(xx, 5.0, 0)\n     @test xx[0] == HomogeneousPolynomial([-5.0])\n-    TaylorSeries.subst!(xx, -5.0, 1)\n+    TS.subst!(xx, -5.0, 1)\n     @test xx[1] == zero(xx[end])\n-    TaylorSeries.div!(xx, 1.0+xT, 1.0+xT, 0)\n+    TS.div!(xx, 1.0+xT, 1.0+xT, 0)\n     @test xx[0] == HomogeneousPolynomial([1.0])\n-    TaylorSeries.pow!(xx, 1.0+xT, 0.5, 1)\n+    TS.pow!(xx, 1.0+xT, 0.5, 1)\n     @test xx[1] == HomogeneousPolynomial([0.5,0.0])\n     xx = 1.0*zeroT\n-    TaylorSeries.pow!(xx, 1.0+xT, 1.5, 0)\n+    TS.pow!(xx, 1.0+xT, 1.5, 0)\n     @test xx[0] == HomogeneousPolynomial([1.0])\n-    TaylorSeries.pow!(xx, 1.0+xT, 1.5, 1)\n+    TS.pow!(xx, 1.0+xT, 1.5, 1)\n     @test xx[1] == HomogeneousPolynomial([1.5,0.0])\n     xx = 1.0*zeroT\n-    TaylorSeries.pow!(xx, 1.0+xT, 0, 0)\n+    TS.pow!(xx, 1.0+xT, 0, 0)\n     @test xx[0] == HomogeneousPolynomial([1.0])\n-    TaylorSeries.pow!(xx, 1.0+xT, 1, 1)\n+    TS.pow!(xx, 1.0+xT, 1, 1)\n     @test xx[1] == HomogeneousPolynomial([1.0,0.0])\n     xx = 1.0*zeroT\n-    TaylorSeries.pow!(xx, 1.0+xT, 2, 0)\n+    TS.pow!(xx, 1.0+xT, 2, 0)\n     @test xx[0] == HomogeneousPolynomial([1.0])\n-    TaylorSeries.pow!(xx, 1.0+xT, 2, 1)\n+    TS.pow!(xx, 1.0+xT, 2, 1)\n     @test xx[1] == HomogeneousPolynomial([2.0,0.0])\n     xx = 1.0*zeroT\n-    TaylorSeries.sqrt!(xx, 1.0+xT, 0)\n-    TaylorSeries.sqrt!(xx, 1.0+xT, 1)\n+    TS.sqrt!(xx, 1.0+xT, 0)\n+    TS.sqrt!(xx, 1.0+xT, 1)\n     @test xx[0] == 1.0\n     @test xx[1] == HomogeneousPolynomial([0.5,0.0])\n     xx = 1.0*zeroT\n-    TaylorSeries.exp!(xx, 1.0*xT, 0)\n-    TaylorSeries.exp!(xx, 1.0*xT, 1)\n+    TS.exp!(xx, 1.0*xT, 0)\n+    TS.exp!(xx, 1.0*xT, 1)\n     @test xx[0] == 1.0\n     @test xx[1] == HomogeneousPolynomial([1.0,0.0])\n     xx = 1.0*zeroT\n-    TaylorSeries.log!(xx, 1.0+xT, 0)\n-    TaylorSeries.log!(xx, 1.0+xT, 1)\n+    TS.log!(xx, 1.0+xT, 0)\n+    TS.log!(xx, 1.0+xT, 1)\n     @test xx[0] == 0.0\n     @test xx[1] == HomogeneousPolynomial(1.0,1)\n     xx = 1.0*zeroT\n     cxx = zero(xx)\n-    TaylorSeries.sincos!(xx, cxx, 1.0*xT, 0)\n-    TaylorSeries.sincos!(xx, cxx, 1.0*xT, 1)\n+    TS.sincos!(xx, cxx, 1.0*xT, 0)\n+    TS.sincos!(xx, cxx, 1.0*xT, 1)\n     @test xx[0] == 0.0\n     @test xx[1] == HomogeneousPolynomial(1.0,1)\n     @test cxx[0] == 1.0\n     @test cxx[1] == HomogeneousPolynomial(0.0,1)\n     xx = 1.0*zeroT\n     cxx = zero(xx)\n-    TaylorSeries.tan!(xx, 1.0*xT, cxx, 0)\n-    TaylorSeries.tan!(xx, 1.0*xT, cxx, 1)\n+    TS.tan!(xx, 1.0*xT, cxx, 0)\n+    TS.tan!(xx, 1.0*xT, cxx, 1)\n     @test xx[0] == 0.0\n     @test xx[1] == HomogeneousPolynomial(1.0,1)\n     @test cxx[0] == 0.0\n     @test cxx[1] == HomogeneousPolynomial(0.0,1)\n     xx = 1.0*zeroT\n     cxx = zero(xx)\n-    TaylorSeries.asin!(xx, 1.0*xT, cxx, 0)\n-    TaylorSeries.asin!(xx, 1.0*xT, cxx, 1)\n+    TS.asin!(xx, 1.0*xT, cxx, 0)\n+    TS.asin!(xx, 1.0*xT, cxx, 1)\n     @test xx[0] == 0.0\n     @test xx[1] == HomogeneousPolynomial(1.0,1)\n     @test cxx[0] == 1.0\n     @test cxx[1] == HomogeneousPolynomial(0.0,1)\n     xx = 1.0*zeroT\n     cxx = zero(xx)\n-    TaylorSeries.acos!(xx, 1.0*xT, cxx, 0)\n-    TaylorSeries.acos!(xx, 1.0*xT, cxx, 1)\n+    TS.acos!(xx, 1.0*xT, cxx, 0)\n+    TS.acos!(xx, 1.0*xT, cxx, 1)\n     @test xx[0] == acos(0.0)\n     @test xx[1] == HomogeneousPolynomial(-1.0,1)\n     @test cxx[0] == 1.0\n     @test cxx[1] == HomogeneousPolynomial(0.0,1)\n     xx = 1.0*zeroT\n     cxx = zero(xx)\n-    TaylorSeries.atan!(xx, 1.0*xT, cxx, 0)\n-    TaylorSeries.atan!(xx, 1.0*xT, cxx, 1)\n+    TS.atan!(xx, 1.0*xT, cxx, 0)\n+    TS.atan!(xx, 1.0*xT, cxx, 1)\n     @test xx[0] == 0.0\n     @test xx[1] == HomogeneousPolynomial(1.0,1)\n     @test cxx[0] == 1.0\n     @test cxx[1] == HomogeneousPolynomial(0.0,1)\n     xx = 1.0*zeroT\n     cxx = zero(xx)\n-    TaylorSeries.sinhcosh!(xx, cxx, 1.0*xT, 0)\n-    TaylorSeries.sinhcosh!(xx, cxx, 1.0*xT, 1)\n+    TS.sinhcosh!(xx, cxx, 1.0*xT, 0)\n+    TS.sinhcosh!(xx, cxx, 1.0*xT, 1)\n     @test xx[0] == 0.0\n     @test xx[1] == HomogeneousPolynomial(1.0,1)\n     @test cxx[0] == 1.0\n     @test cxx[1] == HomogeneousPolynomial(0.0,1)\n     xx = 1.0*zeroT\n     cxx = zero(xx)\n-    TaylorSeries.tanh!(xx, 1.0*xT, cxx, 0)\n-    TaylorSeries.tanh!(xx, 1.0*xT, cxx, 1)\n+    TS.tanh!(xx, 1.0*xT, cxx, 0)\n+    TS.tanh!(xx, 1.0*xT, cxx, 1)\n     @test xx[0] == 0.0\n     @test xx[1] == HomogeneousPolynomial(1.0,1)\n     @test cxx[0] == 0.0\n@@ -569,35 +568,35 @@ end\n     g2(x, y) = y + x^2 - x^4\n     f1 = g1(xT, yT)\n     f2 = g2(xT, yT)\n-    @test TaylorSeries.gradient(f1) == [ 3*xT^2-4*xT*yT-TaylorN(7,0), 6*yT-2*xT^2 ]\n+    @test TS.gradient(f1) == [ 3*xT^2-4*xT*yT-TaylorN(7,0), 6*yT-2*xT^2 ]\n     @test ∇(f2) == [2*xT - 4*xT^3, TaylorN(1,0)]\n-    @test TaylorSeries.jacobian([f1,f2], [2,1]) == TaylorSeries.jacobian( [g1(xT+2,yT+1), g2(xT+2,yT+1)] )\n+    @test TS.jacobian([f1,f2], [2,1]) == TS.jacobian( [g1(xT+2,yT+1), g2(xT+2,yT+1)] )\n     jac = Array{Int}(undef, 2, 2)\n-    TaylorSeries.jacobian!(jac, [g1(xT+2,yT+1), g2(xT+2,yT+1)])\n-    @test jac == TaylorSeries.jacobian( [g1(xT+2,yT+1), g2(xT+2,yT+1)] )\n-    TaylorSeries.jacobian!(jac, [f1,f2], [2,1])\n-    @test jac == TaylorSeries.jacobian([f1,f2], [2,1])\n-    @test TaylorSeries.hessian( f1*f2 ) ==\n+    TS.jacobian!(jac, [g1(xT+2,yT+1), g2(xT+2,yT+1)])\n+    @test jac == TS.jacobian( [g1(xT+2,yT+1), g2(xT+2,yT+1)] )\n+    TS.jacobian!(jac, [f1,f2], [2,1])\n+    @test jac == TS.jacobian([f1,f2], [2,1])\n+    @test TS.hessian( f1*f2 ) ==\n         [differentiate((2,0), f1*f2) differentiate((1,1), (f1*f2));\n          differentiate((1,1), f1*f2) differentiate((0,2), (f1*f2))] == [4 -7; -7 0]\n-    @test TaylorSeries.hessian( f1*f2, [xT, yT] ) ==\n+    @test TS.hessian( f1*f2, [xT, yT] ) ==\n         [differentiate(f1*f2, (2,0)) differentiate((f1*f2), (1,1));\n          differentiate(f1*f2, (1,1)) differentiate((f1*f2), (0,2))]\n-    @test [xT yT]*TaylorSeries.hessian(f1*f2)*[xT, yT] == [ 2*TaylorN((f1*f2)[2]) ]\n-    @test TaylorSeries.hessian(f1^2)/2 == [ [49,0] [0,12] ]\n-    @test TaylorSeries.hessian(f1-f2-2*f1*f2) == (TaylorSeries.hessian(f1-f2-2*f1*f2))'\n-    @test TaylorSeries.hessian(f1-f2,[1,-1]) == TaylorSeries.hessian(g1(xT+1,yT-1)-g2(xT+1,yT-1))\n+    @test [xT yT]*TS.hessian(f1*f2)*[xT, yT] == [ 2*TaylorN((f1*f2)[2]) ]\n+    @test TS.hessian(f1^2)/2 == [ [49,0] [0,12] ]\n+    @test TS.hessian(f1-f2-2*f1*f2) == (TS.hessian(f1-f2-2*f1*f2))'\n+    @test TS.hessian(f1-f2,[1,-1]) == TS.hessian(g1(xT+1,yT-1)-g2(xT+1,yT-1))\n     hes = Array{Int}(undef, 2, 2)\n-    TaylorSeries.hessian!(hes, f1*f2)\n-    @test hes == TaylorSeries.hessian(f1*f2)\n+    TS.hessian!(hes, f1*f2)\n+    @test hes == TS.hessian(f1*f2)\n     @test [xT yT]*hes*[xT, yT] == [ 2*TaylorN((f1*f2)[2]) ]\n-    TaylorSeries.hessian!(hes, f1^2)\n+    TS.hessian!(hes, f1^2)\n     @test hes/2 == [ [49,0] [0,12] ]\n-    TaylorSeries.hessian!(hes, f1-f2-2*f1*f2)\n+    TS.hessian!(hes, f1-f2-2*f1*f2)\n     @test hes == hes'\n     hes1 = Array{Int}(undef, 2, 2)\n-    TaylorSeries.hessian!(hes1, f1-f2,[1,-1])\n-    TaylorSeries.hessian!(hes, g1(xT+1,yT-1)-g2(xT+1,yT-1))\n+    TS.hessian!(hes1, f1-f2,[1,-1])\n+    TS.hessian!(hes, g1(xT+1,yT-1)-g2(xT+1,yT-1))\n     @test hes1 == hes\n \n     use_show_default(true)\n@@ -652,11 +651,11 @@ end\n     @test norm(a, Inf) == 8.0\n     @test norm((3.0 + 4im)*x) == abs(3.0 + 4im)\n \n-    @test TaylorSeries.rtoldefault(TaylorN{Int}) == 0\n-    @test TaylorSeries.rtoldefault(TaylorN{Float64}) == sqrt(eps(Float64))\n-    @test TaylorSeries.rtoldefault(TaylorN{BigFloat}) == sqrt(eps(BigFloat))\n-    @test TaylorSeries.real(TaylorN{Float64}) == TaylorN{Float64}\n-    @test TaylorSeries.real(TaylorN{Complex{Float64}}) == TaylorN{Float64}\n+    @test TS.rtoldefault(TaylorN{Int}) == 0\n+    @test TS.rtoldefault(TaylorN{Float64}) == sqrt(eps(Float64))\n+    @test TS.rtoldefault(TaylorN{BigFloat}) == sqrt(eps(BigFloat))\n+    @test TS.real(TaylorN{Float64}) == TaylorN{Float64}\n+    @test TS.real(TaylorN{Complex{Float64}}) == TaylorN{Float64}\n     @test isfinite(a)\n     @test a[0] ≈ a[0]\n     @test a[1] ≈ a[1]\n@@ -728,23 +727,23 @@ end\n     end\n     p = sin(exp(dx[1]*dx[2])+dx[3]*dx[2])/(1.0+dx[4]^2)\n     q = zero(p)\n-    TaylorSeries.deg2rad!(q, p, 0)\n+    TS.deg2rad!(q, p, 0)\n     @test q[0] == p[0]*(pi/180)\n-    # TaylorSeries.deg2rad!.(q, p, [1,3,5])\n+    # TS.deg2rad!.(q, p, [1,3,5])\n     # for i in [0,1,3,5]\n     #     @test q[i] == p[i]*(pi/180)\n     # end\n-    TaylorSeries.rad2deg!(q, p, 0)\n+    TS.rad2deg!(q, p, 0)\n     @test q[0] == p[0]*(180/pi)\n-    # TaylorSeries.rad2deg!.(q, p, [1,3,5])\n+    # TS.rad2deg!.(q, p, [1,3,5])\n     # for i in [0,1,3,5]\n     #     @test q[i] == p[i]*(180/pi)\n     # end\n     xT = 5+TaylorN(Int, 1, order=10)\n     yT = TaylorN(2, order=10)\n-    TaylorSeries.deg2rad!(yT, xT, 0)\n+    TS.deg2rad!(yT, xT, 0)\n     @test yT[0] == xT[0]*(pi/180)\n-    TaylorSeries.rad2deg!(yT, xT, 0)\n+    TS.rad2deg!(yT, xT, 0)\n     @test yT[0] == xT[0]*(180/pi)\n end\n \n",
+    "FAIL_TO_PASS": [
+      "Tests for HomogeneousPolynomial and TaylorN",
+      "Integrate for several variables",
+      "Tests with mixtures of Taylor1 and TaylorN",
+      "Tests with nested Taylor1s",
+      "Mutating functions",
+      "Tests Taylor1 and TaylorN expansions over Intervals",
+      "Broadcasting with Taylor1 expansions",
+      "Broadcasting with HomogeneousPolynomial and TaylorN",
+      "Broadcasting with mixtures Taylor1{TalorN{T}}",
+      "Broadcasting with mixtures TaylorN{Talor1{T}}",
+      "Testing an identity proved by Euler (8 variables)",
+      "Test inspired by Fateman (takes a few seconds)"
+    ],
+    "PASS_TO_PASS": [
+      "Tests for Taylor1 expansions",
+      "Test inv for Matrix{Taylor1{Float64}}",
+      "Matrix multiplication for Taylor1",
+      "Test hash tables"
+    ],
+    "instance_id": "juliadiff__taylorseries.jl-316",
+    "repo": "JuliaDiff/TaylorSeries.jl",
+    "pr_description": "Solves #85",
+    "created_at": "2023-02-21 20:00:11",
+    "image_name": "docker.io/swerebenchv2/juliadiff-taylorseries.jl:316-1daed03",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "license": "custom-check-github",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()' 2>&1"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.93,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "regression_bug"
+        ],
+        "reasoning": "The issue reports an overflow bug in TaylorN when order=1 and numvars>65, and the test patch adds checks to ensure correct handling for up to 66 variables and validates internal tables. The tests directly verify the intended behavior and no unrelated modules are involved, so they align with the specification. No signals of B‑category problems are present, making this a clear, solvable bug fix. Therefore the classification is A (solvable).",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 4,
+      "num_modified_lines": null,
+      "pr_author": "lbenet",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaDiff/TaylorSeries.jl/pull/316"
+    }
+  },
+  "parent_sha": "1daed03049a6f0c9079628dc66c84e74ba5b352f",
+  "changed_production_files": [
+    "src/hash_tables.jl"
+  ],
+  "changed_test_files": [
+    "test/manyvariables.jl"
+  ],
+  "trigger_tests": [
+    "Tests for HomogeneousPolynomial and TaylorN",
+    "Integrate for several variables",
+    "Tests with mixtures of Taylor1 and TaylorN",
+    "Tests with nested Taylor1s",
+    "Mutating functions",
+    "Tests Taylor1 and TaylorN expansions over Intervals",
+    "Broadcasting with Taylor1 expansions",
+    "Broadcasting with HomogeneousPolynomial and TaylorN",
+    "Broadcasting with mixtures Taylor1{TalorN{T}}",
+    "Broadcasting with mixtures TaylorN{Talor1{T}}",
+    "Testing an identity proved by Euler (8 variables)",
+    "Test inspired by Fateman (takes a few seconds)"
+  ],
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "Tests for HomogeneousPolynomial and TaylorN",
+        "Integrate for several variables",
+        "Tests with mixtures of Taylor1 and TaylorN",
+        "Tests with nested Taylor1s",
+        "Mutating functions",
+        "Tests Taylor1 and TaylorN expansions over Intervals",
+        "Broadcasting with Taylor1 expansions",
+        "Broadcasting with HomogeneousPolynomial and TaylorN",
+        "Broadcasting with mixtures Taylor1{TalorN{T}}",
+        "Broadcasting with mixtures TaylorN{Talor1{T}}",
+        "Testing an identity proved by Euler (8 variables)",
+        "Test inspired by Fateman (takes a few seconds)"
+      ],
+      "added_testsets": [],
+      "inferred_testset_context": [
+        "Test hash tables",
+        "Tests for HomogeneousPolynomial and TaylorN"
+      ],
+      "assertion_expression_sha256": [
+        "c9e2d7b241bef270196562b7f38fb3fed965c96ebc9c36d957601d87bd42e34b",
+        "c36db5f30eefb2f1c000920a79accd80a43bae56c634054805e25f98288f020c",
+        "a16a49cd5875232394b6f788315bea60fefa120c32cd8bd9ebd78e9e952ded08",
+        "ea8e04738e58fd6c4f9ded329d600047b87641fed3cfa617cadd46896360fce8",
+        "f37e1e8354155d8a9225b0af534ec4daf7855e59e72cb75bda12822f31632767",
+        "e9f91bd492dc691e31f12b6b7431830443473fc9de420f395a0d04cc6870a783",
+        "7af43ff7a2b323de51955f15536313203efb977c59e560a865b76a3bd334509d",
+        "88fe3582e8d7245c15b4f6222bdde46bba34cebd483c0980472b7dfd42dd0e61",
+        "4bc18e5ca481228fb324c03624275a4de017f9e5e2da2edef8c0ad95b9750230",
+        "d2e14ac5c701a7d60e572896faea309e1f3b75dd2c2eff8cd8604c61848f9761",
+        "8c4c3877953bd2585c06a91e1123ba920f3a18e7d1a62be3f56f42eb01a54add",
+        "7d22096b9a469460b7310d1f342c022b20b1cbe89592da3c61a4a5ef94445beb",
+        "67381979cecbcbe0ea61d809d4f83c4956b4dbdf5d44885bea73268113f6a325",
+        "c4633366b27ef66b68e17ae48519a7673f95a6dd15f4e95f9c73f5a0906108cd",
+        "73bedd7d907ea56c15ef7bf175796d9073fef1fb29f4dc1e118adbe7389f4a9e",
+        "84df7bc6c38d39ce0c4fd6e233fb87661e083f180e3fd71b3223f1fc17f8a2c2",
+        "fadd6fca9ec188a3d9af04c1d3ba3010be4513156b9ef795d4de6a47758094bc",
+        "c5ad19a78f884e082e5a7e52b199d8b42ffbb863264c69d391b6db7d9f139399",
+        "a7746071319b34c19824e5ab97f5a9a5cd9a176852d2d80a236c2d1edb055189",
+        "1197ad6f3a4ad898d0321cb60756073d4f1537ff72b333441de1a6e9d9abc55a",
+        "f86038b1d34bac290e7d13cad0660420da3ed09382609bce577eee3323c0261b",
+        "bcccb36b9268f776a9821e93f90ca2fd901ec96de1d145c18a12631031acd07d",
+        "d56032508f364ad90e7cd7f5de89afd338b02be3831a1e2f21e71e02cec90793",
+        "7f330c0d92788995a54e9a36744e482640431b400fc0daf8ccda173b9baded82",
+        "48d8807205e7b5fffc1646fa76ab6ce5c64a644a0f726f4ea30479388702a5b6",
+        "86ab12db868ac05eaf780b49daddac3011917327638cf34ca7daf966fa8cc5ad",
+        "a0b68c66985d87dcb9aaf0ad2bbc4b1f85798530fbfc5ec3ebb9f7fb93fa5b04",
+        "8d4317c8b6793382fa6f0e3f681f69906d3ede09ed3d939625c3deb2e0daa8d5",
+        "6c1f5ebc7af68eea785010b51e1f02831ecdcfabb0f3e57fc46118ada92c26ac",
+        "346db0d9a685cc1e44944d732a383ff324081cd585bb592009d88103c1a5a934",
+        "396ed7d4e111a310fea8289ec5703fad3e7cbf037ff6f3f2dc20ed2234864571",
+        "2950476769f6778057e7cef2364fdb3508fd36dc89a38935aa3438bb79bc2e39",
+        "41031f8be190839ca6df844fed936fbbf05549c16793b04610b5a3d1c8d3a26d",
+        "1cb36573e1d60ad826fa7c8b3fa877c5e8d37f41ba691f793d03ec2da1308379",
+        "c3ae52ff7c6a25af52c55bd626f24919580ac71fdfb1a9f5829264a4212d3da7",
+        "5669ea295171dc6e39fab07ba2ff0c9528ab218e063a4c1b395ffa7567937c8e",
+        "63658428dba8a72932bad1d216efe839029f9317f33241c67f9e42e69b51f3f2",
+        "3bc65d262888bee89734e1e22fc38ed9ebfa2f12a42910bfdbdce732e6c89a04",
+        "36cac48dc6b1e5715f7762a374c3ae431a7ad71dc6eff7a8ee7a37c233b0d1fa",
+        "cca747bcddfe0dc3ed9ff25764079b66eb499059e4a4a4762e4b1ca86265c731",
+        "891cdeff38c37597866774a7133e06bdae1ea21ef9a18ae5d8df3d9e6b015985",
+        "ffb642bd8e0102ef9d97f681c0c1eab5014570fb2684eb6472a1b4351eb0a456"
+      ]
+    },
+    "sha256": "5d8f85da6a01c4dfff5b46039ff3e23712067d08719b5de4c105cfb6bf1d56e4"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "c4b474d5cac3d44b95144c42ad4b740fa1d9dbbe",
+    "project": "JuliaDiff/TaylorSeries.jl",
+    "input_sha256": "69b0d171ea9a3163d3c0121d8da4b6da0ab1818920ea58b9079215fe4c8d2cb5",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:37:34Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.5343684064013268,
+      "input_tokens": 7373,
+      "output_tokens": 878
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.84, \"summary\": \"The commit changes the base used by `in_base` to the next odd integer above `order`, fixing hash-table label collisions that caused TaylorN to return wrong monomials (e.g. `(1+\\u03b4v[1])^2` yielding \\u03b4\\u2082 or \\u03b4\\u2086 instead of \\u03b4\\u2081) for order=1 with numvars>65, as reported in issue #85. The obsolete `in_base_safe` workaround is removed and replaced by an `@assert allunique` collision check, plus small stylistic cleanups (explicit `return`, one-line `make_inverse_dict`).\", \"evidence\": \"Issue #85 documents concrete wrong-output behavior with existing API calls (`set_variables` + arithmetic), which is a semantic defect, not a missing feature. Issue #316 (\\\"Use next-odd basis to construct hash tables\\\") explicitly states \\\"Solves #85\\\", matching the diff in src/hash_tables.jl exactly: `order = order+1` becomes `oorder = iseven(order) ? order+1 : order+2`. The prior mitigation `in_base_safe` (from #314, which only threw on overflow rather than fixing indexing) is removed as no longer needed. Tests were touched in test/manyvariables.jl, and runtime evidence reports a stable differential across 3 repetitions with the fixed full suite passing via a dedicated trigger script. Minimization kept 2 of 3 hunks, all deemed necessary and globally minimal.\", \"missing_evidence\": \"No PR title/body or commit message text was supplied for the reviewed commit itself, and `trigger_tests` is empty, so the specific failing test name(s) at the parent commit are not identifiable from the metadata. The test diff for test/manyvariables.jl is not shown, so the exact assertions used as the trigger cannot be inspected. No captured pre-fix failure output is included.\", \"validation_risks\": \"The added `@assert all(allunique.(index_table))` is a no-op when Julia is run with `--check-bounds`/assertion-eliding optimizations or `@assert` disabled, so a trigger relying on that assertion could behave inconsistently across run configurations; prefer a trigger that checks observable output. The fix changes internal `index_table`/`pos_table` label values, so any test hard-coding those integers would fail for reasons unrelated to the defect. The commit also bundles cosmetic refactors and a Project.toml version bump plus docs/api.md removal of `in_base_safe`, which are excluded from the minimized patch but could affect doctest/docs builds if the full suite runs documentation checks. Tests exercising >65 variables may be slow or memory-heavy.\", \"suggested_tests\": \"Assert correct monomial identity for large variable counts at odd order: `set_variables(\\\"\\u03b4\\\", order=1, numvars=66)` then verify `(1+\\u03b4v[1])^2 == 1 + 2\\u03b4v[1]` by comparing coefficient vectors, and repeat for numvars=70 and order=3. Add a direct table-integrity test: for a range of (num_vars, order) pairs including odd orders and num_vars in 60..80, call `TaylorSeries.generate_tables(num_vars, order)` and assert `all(allunique.(index_table))` and that `pos_table[i][index_table[i][j]] == j` for all i, j. Also assert `sum(size_table)` equals the expected monomial count computed independently of `binomial` rounding, and check `in_base` produces strictly positive, distinct labels for all index vectors at a given degree.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.84,
+    "summary": "The commit changes the base used by `in_base` to the next odd integer above `order`, fixing hash-table label collisions that caused TaylorN to return wrong monomials (e.g. `(1+δv[1])^2` yielding δ₂ or δ₆ instead of δ₁) for order=1 with numvars>65, as reported in issue #85. The obsolete `in_base_safe` workaround is removed and replaced by an `@assert allunique` collision check, plus small stylistic cleanups (explicit `return`, one-line `make_inverse_dict`).",
+    "evidence": "Issue #85 documents concrete wrong-output behavior with existing API calls (`set_variables` + arithmetic), which is a semantic defect, not a missing feature. Issue #316 (\"Use next-odd basis to construct hash tables\") explicitly states \"Solves #85\", matching the diff in src/hash_tables.jl exactly: `order = order+1` becomes `oorder = iseven(order) ? order+1 : order+2`. The prior mitigation `in_base_safe` (from #314, which only threw on overflow rather than fixing indexing) is removed as no longer needed. Tests were touched in test/manyvariables.jl, and runtime evidence reports a stable differential across 3 repetitions with the fixed full suite passing via a dedicated trigger script. Minimization kept 2 of 3 hunks, all deemed necessary and globally minimal.",
+    "missing_evidence": "No PR title/body or commit message text was supplied for the reviewed commit itself, and `trigger_tests` is empty, so the specific failing test name(s) at the parent commit are not identifiable from the metadata. The test diff for test/manyvariables.jl is not shown, so the exact assertions used as the trigger cannot be inspected. No captured pre-fix failure output is included.",
+    "validation_risks": "The added `@assert all(allunique.(index_table))` is a no-op when Julia is run with `--check-bounds`/assertion-eliding optimizations or `@assert` disabled, so a trigger relying on that assertion could behave inconsistently across run configurations; prefer a trigger that checks observable output. The fix changes internal `index_table`/`pos_table` label values, so any test hard-coding those integers would fail for reasons unrelated to the defect. The commit also bundles cosmetic refactors and a Project.toml version bump plus docs/api.md removal of `in_base_safe`, which are excluded from the minimized patch but could affect doctest/docs builds if the full suite runs documentation checks. Tests exercising >65 variables may be slow or memory-heavy.",
+    "suggested_tests": "Assert correct monomial identity for large variable counts at odd order: `set_variables(\"δ\", order=1, numvars=66)` then verify `(1+δv[1])^2 == 1 + 2δv[1]` by comparing coefficient vectors, and repeat for numvars=70 and order=3. Add a direct table-integrity test: for a range of (num_vars, order) pairs including odd orders and num_vars in 60..80, call `TaylorSeries.generate_tables(num_vars, order)` and assert `all(allunique.(index_table))` and that `pos_table[i][index_table[i][j]] == j` for all i, j. Also assert `sum(size_table)` equals the expected monomial count computed independently of `binomial` rounding, and check `in_base` produces strictly positive, distinct labels for all index vectors at a given degree."
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 12,
+    "tests": [
+      "Tests for HomogeneousPolynomial and TaylorN",
+      "Integrate for several variables",
+      "Tests with mixtures of Taylor1 and TaylorN",
+      "Tests with nested Taylor1s",
+      "Mutating functions",
+      "Tests Taylor1 and TaylorN expansions over Intervals",
+      "Broadcasting with Taylor1 expansions",
+      "Broadcasting with HomogeneousPolynomial and TaylorN",
+      "Broadcasting with mixtures Taylor1{TalorN{T}}",
+      "Broadcasting with mixtures TaylorN{Talor1{T}}",
+      "Testing an identity proved by Euler (8 variables)",
+      "Test inspired by Fateman (takes a few seconds)"
+    ],
+    "exception_types": [
+      "82756023628ead691dd086b4854a32666cbb695c0bef67b2d5af9cdc87d8c7c8"
+    ],
+    "fingerprints": [
+      "82756023628ead691dd086b4854a32666cbb695c0bef67b2d5af9cdc87d8c7c8"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "c4b474d5cac3d44b95144c42ad4b740fa1d9dbbe",
+    "parent_sha": "1daed03049a6f0c9079628dc66c84e74ba5b352f",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "a19414a2c337c6e7d8ccd24cf7968d2731ddfc592f0560c862a00007ac720588",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

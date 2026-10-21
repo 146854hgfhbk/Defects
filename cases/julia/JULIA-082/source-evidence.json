@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "6f3b54524156273bc024fe116d21d278f2e77c46",
+  "project": "SciML/SciMLBase.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1473,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/1473",
+      "state": "closed",
+      "title": "Handle null-state ODESolution property updates",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "**Ignore until reviewed by @ChrisRackauckas.**\n\n## Summary\n\n- preserve an `ODESolution`'s existing element type and dimensionality parameters when `ConstructionBase.setproperties` patches fields other than `u`\n- support rebuilding with both `Vector{Nothing}` and `u = nothing`\n- add direct `setproperties` and public `solution_new_retcode` regressions for null, scalar, and vector states\n- bump SciMLBase from 3.41.0 to 3.41.1\n\n## Root cause\n\n`solution_new_retcode` uses Accessors, which dispatches to SciMLBase's `ConstructionBase.setproperties(::ODESolution, ...)`. Commit `55d81af15d274d094a4c50f3e6ae82e6321d5d13` made that method unconditionally recompute `N` as `ndims(eltype(u)) + 1`, even when the patch only changes `retcode`. A null-state ODE solution stores `u::Vector{Nothing}`, so retcode replacement throws `MethodError: no method matching ndims(::Type{Nothing})`.\n\nAn adjacent-commit bisect/reproduction confirmed `0c72de24f730ab139b9cd130f46190e2aa07f1e2` succeeds and `55d81af15d274d094a4c50f3e6ae82e6321d5d13` fails; `git bisect` reports `55d81af15` as the first bad commit.\n\nThis is fixed in SciMLBase because `solution_new_retcode` and the `ODESolution` ConstructionBase implementation are owned here. No OrdinaryDiffEq-specific workaround is needed.\n\n## Validation\n\n- `GROUP=Core julia +1.12 --project=. -e 'using Pkg; Pkg.test()'`\n  - `Solution interface`: 72/72\n  - `Remake`: 4430/4430\n  - final result: `Testing SciMLBase tests passed`\n- `GROUP=Core julia +1.10 --project=. -e 'using Pkg; Pkg.test()'`\n  - `Solution interface`: 72/72\n  - `Remake`: 4430/4430\n  - final result: `Testing SciMLBase tests passed`\n- direct Julia 1.12 reproduction verified retcode replacement, `Vector{Nothing}` replacement, and `u = nothing` replacement preserve the expected solution metadata\n- `julia +1.12 --project=../.runic_env -m Runic --check .`\n- `git diff --check`\n\nThe clean OrdinaryDiffEq `ImplicitDiscreteSolve` Core group was also run at `fd8861edd500f8bba76a4f2a865e304d10881fe8` wit"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 1473,
+      "pull_request_repository": "SciML/SciMLBase.jl",
+      "pull_request_url": "https://github.com/SciML/SciMLBase.jl/pull/1473",
+      "fix_commit": "6f3b54524156273bc024fe116d21d278f2e77c46",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Handle null-state ODESolution property updates (#1473)\n\nCo-authored-by: ChrisRackauckas-Claude <accounts@chrisrackauckas.com>",
+    "commit_issue_refs": [
+      1473
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1473,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Handle null-state ODESolution property updates",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [],
+  "pull_request_record": {
+    "number": 1473,
+    "repository": "SciML/SciMLBase.jl",
+    "url": "https://github.com/SciML/SciMLBase.jl/pull/1473",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-07-29T23:44:35Z",
+    "merge_commit_sha": "6f3b54524156273bc024fe116d21d278f2e77c46",
+    "title": "Handle null-state ODESolution property updates",
+    "body_excerpt": "**Ignore until reviewed by @ChrisRackauckas.**\n\n## Summary\n\n- preserve an `ODESolution`'s existing element type and dimensionality parameters when `ConstructionBase.setproperties` patches fields other than `u`\n- support rebuilding with both `Vector{Nothing}` and `u = nothing`\n- add direct `setproperties` and public `solution_new_retcode` regressions for null, scalar, and vector states\n- bump SciMLBase from 3.41.0 to 3.41.1\n\n## Root cause\n\n`solution_new_retcode` uses Accessors, which dispatches to SciMLBase's `ConstructionBase.setproperties(::ODESolution, ...)`. Commit `55d81af15d274d094a4c50f3e6ae82e6321d5d13` made that method unconditionally recompute `N` as `ndims(eltype(u)) + 1`, even when the patch only changes `retcode`. A null-state ODE solution stores `u::Vector{Nothing}`, so retcode replacement throws `MethodError: no method matching ndims(::Type{Nothing})`.\n\nAn adjacent-commit bisect/reproduction confirmed `0c72de24f730ab139b9cd130f46190e2aa07f1e2` succeeds and `55d81af15d274d094a4c50f3e6ae82e6321d5d13` fails; `git bisect` reports `55d81af15` as the first bad commit.\n\nThis is fixed in SciMLBase because `solution_new_retcode` and the `ODESolution` ConstructionBase implementation are owned here. No OrdinaryDiffEq-specific workaround is needed.\n\n## Validation\n\n- `GROUP=Core julia +1.12 --project=. -e 'using Pkg; Pkg.test()'`\n  - `Solution interface`: 72/72\n  - `Remake`: 4430/4430\n  - final result: `Testing SciMLBase tests passed`\n- `GROUP=Core julia +1.10 --project=. -e 'using Pkg; Pkg.test()'`\n  - `Solution interface`: 72/72\n  - `Remake`: 4430/4430\n  - final result: `Testing SciMLBase tests passed`\n- direct Julia 1.12 reproduction verified retcode replacement, `Vector{Nothing}` replacement, and `u = nothing` replacement preserve the expected solution metadata\n- `julia +1.12 --project=../.runic_env -m Runic --check .`\n- `git diff --check`\n\nThe clean OrdinaryDiffEq `ImplicitDiscreteSolve` Core group was also run at `fd8861edd500f8bba76a4f2a865e304d10881fe8` wit",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

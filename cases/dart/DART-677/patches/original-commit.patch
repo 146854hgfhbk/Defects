@@ -1,0 +1,43 @@
+diff --git a/lib/src/extensions/matches_request.dart b/lib/src/extensions/matches_request.dart
+index 4f8040a..15fd9a7 100644
+--- a/lib/src/extensions/matches_request.dart
++++ b/lib/src/extensions/matches_request.dart
+@@ -71,8 +71,8 @@ extension MatchesRequest on RequestOptions {
+         return false;
+       }
+     } else if (actual is Map && expected is Map) {
+-      for (final key in actual.keys.toList()) {
+-        if (!expected.containsKey(key)) {
++      for (final key in expected.keys.toList()) {
++        if (!actual.containsKey(key)) {
+           return false;
+         } else if (expected[key] is Matcher) {
+           // Check matcher for the configured request.
+diff --git a/test/extensions/matches_request_test.dart b/test/extensions/matches_request_test.dart
+index 8aac68e..56526a5 100644
+--- a/test/extensions/matches_request_test.dart
++++ b/test/extensions/matches_request_test.dart
+@@ -228,6 +228,23 @@ void main() {
+ 
+           expect({'message': 'Test!'}, response.data);
+         });
++
++        test('fails on unsatisfied header expectation', () async {
++          dioAdapter.onGet(
++            path,
++            (request) => request.reply(statusCode, data),
++            headers: {
++              Headers.contentLengthHeader: Matchers.integer,
++            },
++          );
++
++          expect(
++              () => dio.get(path),
++              throwsA(predicate((e) =>
++                  e is DioError &&
++                  e.type == DioErrorType.other &&
++                  e.error is AssertionError)));
++        });
+       });
+     });
+   });

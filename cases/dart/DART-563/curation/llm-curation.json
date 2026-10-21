@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-563",
+  "technical_evidence_sha256": "5c513dd2887bbbde6c7425ae86fc7b4eb0e4467f9c340e3cf9c75a2b89f703a5",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "8f2f29c58ba2fa633fe29dca561049419c3299f6c68bc29bb194b26d3da60ab2",
+  "reviewed_at": "2026-08-11T22:36:14.877201+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/core#910",
+  "rationale": "Issue #910 reports that Int64.operator== throws an exception when comparing with non-Int64/int/Int32 types (e.g., Object, null) due to the _promote helper attempting unsafe casts. The minimized production patch replaces the problematic `_i == _promote(other)` with explicit type checks that return false for unsupported types, eliminating the exception. The trigger test 'test/int64_test.dart::==' was rewritten in the fixing commit to test operator== directly rather than through the equals matcher (which was hiding the exceptions), making the test semantically equivalent to the reported defect. All strict runtime gates passed: buggy version reproduces only the declared trigger deterministically (3 repetitions), fixed version passes all tests, and the patch contains only the operator== logic change with no refactoring, formatting, or unrelated modifications. No active same-project root causes exist to duplicate against.\n\nIssue #910 reports that Int64.operator== throws an exception when comparing with unrelated types due to _promote() helper attempting type conversion. The minimized production patch replaces the single-line _promote() implementation with explicit type checks that return false for unrelated types. The trigger test 'test/int64_test.dart::==' was rewritten in the fixing commit from using the 'equals' matcher (which silently catches exceptions as false) to direct == assertions, exposing the actual exception behavior. This is semantically equivalent - both test the same equality operations, but the later version correctly fails on the buggy code instead of masking the exception. The minimized patch is identical to production-fix.patch and contains only the operator== logic change with no refactoring, formatting, or unrelated changes. All strict runtime checks passed with deterministic reproduction (3 fingerprint groups). No active duplicates exist in the same project.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T22:36:02.532974+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8f2f29c58ba2fa633fe29dca561049419c3299f6c68bc29bb194b26d3da60ab2",
+      "response_sha256": "5385d1de1b5a8857158933940ac03bfebfcf013b044ea2aef14843be61408992",
+      "response_id": "msg_c02b7644-8680-489a-8e",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2063
+        },
+        "cache_creation_input_tokens": 2063,
+        "cache_read_input_tokens": 4258,
+        "input_tokens": 5364,
+        "output_tokens": 811
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/core#910",
+      "rationale": "Issue #910 reports that Int64.operator== throws an exception when comparing with non-Int64/int/Int32 types (e.g., Object, null) due to the _promote helper attempting unsafe casts. The minimized production patch replaces the problematic `_i == _promote(other)` with explicit type checks that return false for unsupported types, eliminating the exception. The trigger test 'test/int64_test.dart::==' was rewritten in the fixing commit to test operator== directly rather than through the equals matcher (which was hiding the exceptions), making the test semantically equivalent to the reported defect. All strict runtime gates passed: buggy version reproduces only the declared trigger deterministically (3 repetitions), fixed version passes all tests, and the patch contains only the operator== logic change with no refactoring, formatting, or unrelated modifications. No active same-project root causes exist to duplicate against.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.trigger.deterministic",
+        "traceability.verified_fix_issue_numbers",
+        "trigger_reduction.status"
+      ],
+      "risks": [
+        "Operator== asymmetry is intentional per project design but may surprise users expecting standard equality semantics"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T22:36:14.876940+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8f2f29c58ba2fa633fe29dca561049419c3299f6c68bc29bb194b26d3da60ab2",
+      "response_sha256": "c0245eea9f4fe2e01ee31d3985e1a133acceb38c5e67d3f069831c872dd3d350",
+      "response_id": "msg_b09298c0-23cf-4c31-b9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 1968
+        },
+        "cache_creation_input_tokens": 1968,
+        "cache_read_input_tokens": 4281,
+        "input_tokens": 5364,
+        "output_tokens": 864
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/core#910",
+      "rationale": "Issue #910 reports that Int64.operator== throws an exception when comparing with unrelated types due to _promote() helper attempting type conversion. The minimized production patch replaces the single-line _promote() implementation with explicit type checks that return false for unrelated types. The trigger test 'test/int64_test.dart::==' was rewritten in the fixing commit from using the 'equals' matcher (which silently catches exceptions as false) to direct == assertions, exposing the actual exception behavior. This is semantically equivalent - both test the same equality operations, but the later version correctly fails on the buggy code instead of masking the exception. The minimized patch is identical to production-fix.patch and contains only the operator== logic change with no refactoring, formatting, or unrelated changes. All strict runtime checks passed with deterministic reproduction (3 fingerprint groups). No active duplicates exist in the same project.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "traceability.paths[0].path=fix_commit_to_issue",
+        "traceability.verified_fix_issue_numbers=[910]",
+        "strict_post_minimization.passed=true",
+        "strict_post_minimization.checks.trigger.buggy_differential.detail",
+        "trigger_reduction.status=EXECUTABLY_VALIDATED_PENDING_LLM_EQUIVALENCE"
+      ],
+      "risks": [
+        "Trigger test was rewritten from matcher-based to direct assertion style; semantic equivalence confirmed by identical equality operations being tested"
+      ]
+    }
+  ]
+}

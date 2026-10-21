@@ -1,0 +1,126 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-506",
+  "bug_id": "JULIA-506",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "ae7d6ac7d5734c74bb2e81705fca0d92ab1a68e0",
+  "fixed_revision": "1d950817b8ab62a3be2464f4d5b097aa68c17042",
+  "candidate_sha": "1d950817b8ab62a3be2464f4d5b097aa68c17042",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "ae7d6ac7d5734c74bb2e81705fca0d92ab1a68e0",
+  "changed_production_files": [
+    "src/tokenize.jl"
+  ],
+  "changed_test_files": [
+    "test/tokenize.jl"
+  ],
+  "trigger_tests": [
+    "CRLF comment token boundary"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "d098a2446235b4671a51c6969c230724b4f50640604601df4e7cfdc224a40f24",
+    "oracle": {
+      "mwe_basis": "public tokenizer behavior",
+      "defect": "A CRLF line ending was consumed as part of a comment token instead of separate newline trivia.",
+      "source_evidence": {
+        "upstream_test_file": "test/tokenize.jl",
+        "basis": "Exact behavior assertion from the upstream fix patch; uses JuliaSyntax tokenization API."
+      },
+      "upstream_test_patch_sha256": "d94816773cc1c5dcf64fb93f5e0f68a2fdf0714c74a9f63e4b88942132c1bd8b"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "1d950817b8ab62a3be2464f4d5b097aa68c17042",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "4d9c2a3a13382af820d9384789c57b93419b27da29cfdf1a504f28b39f3fabb4",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:36:28Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.3867358912106136,
+      "input_tokens": 3213,
+      "output_tokens": 539
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.78, \"summary\": \"Single-hunk fix in JuliaSyntax's lexer: `lex_comment` terminated a single-line comment only on '\\\\n' or EOF, so with CRLF line endings the carriage return was consumed into the Comment token instead of being left for the newline/whitespace trivia token. The fix uses `dpeekchar` and stops when the lookahead is '\\\\r' followed by '\\\\n', producing correct token boundaries on CRLF sources.\", \"evidence\": \"Minimized production patch touches only src/tokenize.jl, changing the comment-termination condition to also break on '\\\\r\\\\n'. A matching test file (test/tokenize.jl) was modified, and runtime evidence reports a stable differential across 3 repetitions with the full suite passing at the fixed commit. Minimization reports the single hunk as necessary and globally minimal, indicating the token-boundary change alone drives the test outcome.\", \"missing_evidence\": \"No PR title/body, commit message, or linked issue, so intent is inferred from the diff (traceability_class=UNVERIFIED). Named trigger tests are not listed, only that the test-patch suite was used as trigger. The pre-fix failing test output is not shown.\", \"validation_risks\": \"Trigger identification depends on the test patch since no explicit trigger test names are given. CRLF content in test fixtures can be normalized by git autocrlf or editor settings, which could mask the defect if the escape sequences are not written literally in the test source. Otherwise deterministic lexer behavior, so low flakiness risk.\", \"suggested_tests\": \"Tokenize \\\"# comment\\\\r\\\\nx\\\" and assert the Comment token spans only up to the '\\\\r', with the following trivia token covering \\\"\\\\r\\\\n\\\"; compare against the LF case \\\"# comment\\\\nx\\\" for identical token kinds. Add a case where a lone '\\\\r' (not followed by '\\\\n') stays inside the comment, and a case for a comment ending at EOF with a trailing '\\\\r'. Also verify the invalid-UTF8 comment path still emits ErrorInvalidUTF8 when CRLF terminates the line.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.78,
+    "summary": "Single-hunk fix in JuliaSyntax's lexer: `lex_comment` terminated a single-line comment only on '\\n' or EOF, so with CRLF line endings the carriage return was consumed into the Comment token instead of being left for the newline/whitespace trivia token. The fix uses `dpeekchar` and stops when the lookahead is '\\r' followed by '\\n', producing correct token boundaries on CRLF sources.",
+    "evidence": "Minimized production patch touches only src/tokenize.jl, changing the comment-termination condition to also break on '\\r\\n'. A matching test file (test/tokenize.jl) was modified, and runtime evidence reports a stable differential across 3 repetitions with the full suite passing at the fixed commit. Minimization reports the single hunk as necessary and globally minimal, indicating the token-boundary change alone drives the test outcome.",
+    "missing_evidence": "No PR title/body, commit message, or linked issue, so intent is inferred from the diff (traceability_class=UNVERIFIED). Named trigger tests are not listed, only that the test-patch suite was used as trigger. The pre-fix failing test output is not shown.",
+    "validation_risks": "Trigger identification depends on the test patch since no explicit trigger test names are given. CRLF content in test fixtures can be normalized by git autocrlf or editor settings, which could mask the defect if the escape sequences are not written literally in the test source. Otherwise deterministic lexer behavior, so low flakiness risk.",
+    "suggested_tests": "Tokenize \"# comment\\r\\nx\" and assert the Comment token spans only up to the '\\r', with the following trivia token covering \"\\r\\n\"; compare against the LF case \"# comment\\nx\" for identical token kinds. Add a case where a lone '\\r' (not followed by '\\n') stays inside the comment, and a case for a comment ending at EOF with a trailing '\\r'. Also verify the invalid-UTF8 comment path still emits ErrorInvalidUTF8 when CRLF terminates the line."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "CRLF comment token boundary"
+    ],
+    "exception_types": [
+      "2ac76a13746c53f27fdb586bbb9066a442b82ddb35479ecc1790cde0ccd730ad"
+    ],
+    "fingerprints": [
+      "2ac76a13746c53f27fdb586bbb9066a442b82ddb35479ecc1790cde0ccd730ad"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

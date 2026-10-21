@@ -1,0 +1,132 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-158",
+  "bug_id": "JULIA-158",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "SciML/LinearSolve.jl",
+  "repository_url": "https://github.com/SciML/LinearSolve.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "67decdf3854a2afa18ef6e55f97cc5dc69d5d366",
+  "fixed_revision": "d74dcc0edf61bdda4702446a718e5eed5d59ec60",
+  "candidate_sha": "d74dcc0edf61bdda4702446a718e5eed5d59ec60",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "67decdf3854a2afa18ef6e55f97cc5dc69d5d366",
+  "changed_production_files": [
+    "src/LinearSolve.jl",
+    "src/default.jl"
+  ],
+  "changed_test_files": [
+    "test/Core/forwarddiff_gpu.jl",
+    "test/qa/qa.jl"
+  ],
+  "trigger_tests": [
+    "WOperator with a GPU right-hand side"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "2b9cf5c9ec6bbe93dd257ebb9644670ba5bbc5a5100ac147b3d570e0ee108619",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/Core/forwarddiff_gpu.jl",
+        "basis": "GPU array dispatch behavior isolated from upstream fix testset"
+      },
+      "upstream_test_patch_sha256": "c23fbd30952b8f2ad043049cbeac22baf493b4b460fe20febb43ef5a1b5a9bb1"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "d74dcc0edf61bdda4702446a718e5eed5d59ec60",
+    "project": "SciML/LinearSolve.jl",
+    "input_sha256": "5b3d641bc466d426de936a0b2e6c37c25130ff984cb01133284d4fd806ef2e8c",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:55:03Z",
+    "usage": {
+      "prompt_tokens": 2009,
+      "completion_tokens": 652,
+      "total_tokens": 2661
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"Fix for a method dispatch ambiguity regression where `defaultalg(::WOperator, ::GPUArray, ::OperatorAssumptions)` threw a MethodError due to two equally-specific method candidates. The fix adds the missing intersection method and cleans up QA-related import issues.\",\n  \"evidence\": \"The linked issue #1240 clearly describes a MethodError ambiguity that caused runtime failures on `main`. The error is reproducible: calling `defaultalg` with a `WOperator` and a GPU array (JLArray) throws an ambiguity error. The fix adds the missing intersection method in `src/default.jl` to resolve the dispatch. A regression test (`test/Core/forwarddiff_gpu.jl`) is included that covers the ambiguous dispatch path using `JLArray` (a CPU-backed GPU array stand-in).\",\n  \"missing_evidence\": \"The actual diff content is not available, so I cannot inspect the precise code changes in `src/default.jl` and `src/LinearSolve.jl`. The commit also includes QA cleanup (removing stale import, updating ExplicitImports inventories) which are non-bug changes bundled with the fix, but these are minor housekeeping tied to the same regression.\",\n  \"validation_risks\": \"The commit bundles QA cleanup (stale import removal, ExplicitImports inventory updates) alongside the actual bug fix, which slightly complicates isolation. The test uses `JLArray` as a GPU array proxy, which may not perfectly replicate real GPU dispatch behavior. The `test/qa/qa.jl` changes may be environment-sensitive depending on which extensions are loaded.\",\n  \"suggested_tests\": \"1. Test that `defaultalg(WOperator{true}(...), JLArray(ones(2)), OperatorAssumptions(true))` returns KrylovJL_GMRES without throwing. 2. Test that the non-GPU path `defaultalg(WOperator{true}(...), ones(2), OperatorAssumptions(true))` still works correctly. 3. Run ExplicitImports/Aqua QA checks to confirm no regressions.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for a method dispatch ambiguity regression where `defaultalg(::WOperator, ::GPUArray, ::OperatorAssumptions)` threw a MethodError due to two equally-specific method candidates. The fix adds the missing intersection method and cleans up QA-related import issues.",
+    "evidence": "The linked issue #1240 clearly describes a MethodError ambiguity that caused runtime failures on `main`. The error is reproducible: calling `defaultalg` with a `WOperator` and a GPU array (JLArray) throws an ambiguity error. The fix adds the missing intersection method in `src/default.jl` to resolve the dispatch. A regression test (`test/Core/forwarddiff_gpu.jl`) is included that covers the ambiguous dispatch path using `JLArray` (a CPU-backed GPU array stand-in).",
+    "missing_evidence": "The actual diff content is not available, so I cannot inspect the precise code changes in `src/default.jl` and `src/LinearSolve.jl`. The commit also includes QA cleanup (removing stale import, updating ExplicitImports inventories) which are non-bug changes bundled with the fix, but these are minor housekeeping tied to the same regression.",
+    "validation_risks": "The commit bundles QA cleanup (stale import removal, ExplicitImports inventory updates) alongside the actual bug fix, which slightly complicates isolation. The test uses `JLArray` as a GPU array proxy, which may not perfectly replicate real GPU dispatch behavior. The `test/qa/qa.jl` changes may be environment-sensitive depending on which extensions are loaded.",
+    "suggested_tests": "1. Test that `defaultalg(WOperator{true}(...), JLArray(ones(2)), OperatorAssumptions(true))` returns KrylovJL_GMRES without throwing. 2. Test that the non-GPU path `defaultalg(WOperator{true}(...), ones(2), OperatorAssumptions(true))` still works correctly. 3. Run ExplicitImports/Aqua QA checks to confirm no regressions."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "WOperator with a GPU right-hand side"
+    ],
+    "exception_types": [
+      "ef35c90a29cc38f9bc5145671de5cc0ce80f98b979a8e38c8f5e9d87f2d0f7d2"
+    ],
+    "fingerprints": [
+      "ef35c90a29cc38f9bc5145671de5cc0ce80f98b979a8e38c8f5e9d87f2d0f7d2"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "d74dcc0edf61bdda4702446a718e5eed5d59ec60",
+    "parent_sha": "67decdf3854a2afa18ef6e55f97cc5dc69d5d366",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "681640d6e43c83839fcde80cf52bf3312812dc794ff6e209b4a8d8b573255577",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

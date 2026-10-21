@@ -1,0 +1,12 @@
+FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git unzip && rm -rf /var/lib/apt/lists/*
+ARG DART_SDK_URL="https://storage.googleapis.com/dart-archive/channels/stable/release/2.13.4/sdk/dartsdk-linux-x64-release.zip"
+ARG DART_SDK_SHA256="633a9aa4812b725ff587e2bbf16cd5839224cfe05dcd536e1a74804e80fdb4cd"
+RUN curl -fsSL "$DART_SDK_URL" -o /tmp/dart-sdk.zip \
+ && echo "$DART_SDK_SHA256  /tmp/dart-sdk.zip" | sha256sum -c - \
+ && unzip -q /tmp/dart-sdk.zip -d /opt \
+ && rm /tmp/dart-sdk.zip
+COPY environment/requirements-reproduction.txt /tmp/requirements-reproduction.txt
+RUN pip install --no-cache-dir -r /tmp/requirements-reproduction.txt
+ENV PATH="/opt/dart-sdk/bin:${PATH}" TZ=UTC LANG=C.UTF-8 LC_ALL=C.UTF-8 DART_SUPPRESS_ANALYTICS=true
+WORKDIR /workspace

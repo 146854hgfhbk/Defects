@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-303",
+  "technical_evidence_sha256": "252becf3ccc73bea7a33e32fbf52cbb2016eae6d01cb789b2d7ec5cd87220c47",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "f8ef10a0dfcf7a8b21cbb7d16ca0e56f1478a6b243422fb794a695754472347d",
+  "reviewed_at": "2026-08-11T12:04:53.523881+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1621",
+  "rationale": "Issue #1621 reports a null check operator crash in CommentWriter._commentsBefore when formatting pkg/compiler/test/closure/data/captured_variable.dart. The stack trace shows the crash originates during DartFormatter.formatSource processing a file with doc comments on local variable declarations. The minimized production patch adds exactly one new switch case for VariableDeclarationStatement that delegates to variables.firstNonCommentToken, following the established pattern for DefaultFormalParameter and PatternVariableDeclarationStatement. This fixes the root cause: VariableDeclarationStatement was falling through to the default 'beginToken' case which incorrectly returned the comment token instead of the first non-comment token, causing CommentWriter to fail its null check. The trigger test from the same commit (later_trigger_commit e9bd213c) contains doc comments on local variables ('var /**/ local') matching the reported defect scenario. Strict runtime validation confirms: buggy revision fails trigger differentially, fixed revision passes all runs, full suite buggy failures include only the reproduced trigger, deterministic across 3 repetitions. No unrelated changes: comment rewording is clarification only, CHANGELOG is documentation. No active duplicates in same project.\n\nIssue #1621 (labeled 'bug') reports a crash, 'Null check operator used on a null value' at CommentWriter._commentsBefore, while formatting pkg/compiler/test/closure/data/captured_variable.dart. The single production hunk in lib/src/ast_extensions.dart adds a `VariableDeclarationStatement(:var variables) => variables.firstNonCommentToken` case to the existing switch, following the same delegate-to-inner-AnnotatedNode pattern already used for DefaultFormalParameter and PatternVariableDeclarationStatement; without it the statement fell through to `beginToken`, which returns the comment token and leaves comments unconsumed, producing the reported null-check failure. The trigger fixture test/tall/regression/1600/1621.unit contains `var /**/ local = parameter;` inside a function body, i.e. a comment attached to a local variable declaration, which is exactly the construct the new case handles, and it is drawn from the same source file named in the issue. It is a data fixture consumed by the pre-existing test/tall_format_test.dart runner and introduces no dependency on any API added by the fix. Strict runtime evidence for both the original and post-minimization gates passed with all checks green: selector test/tall_format_test.dart::tall/regression/1600/1621.unit fails in isolation and in-suite on the buggy revision, all fixed isolated/suite/reversed runs pass, 32-run matrix complete at 3 repetitions with 3 deterministic fingerprint groups, and builds pass on both revisions. The active same-project root cause registry is empty, so #1621 is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:04:23.508421+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "f8ef10a0dfcf7a8b21cbb7d16ca0e56f1478a6b243422fb794a695754472347d",
+      "response_sha256": "6d6d42af171b9186f508d13a14b839136b820313187ceb8124b4ea81d5edbc1e",
+      "response_id": "msg_8ed01702-99d6-40b6-bd",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2964
+        },
+        "cache_creation_input_tokens": 2964,
+        "cache_read_input_tokens": 7566,
+        "input_tokens": 9870,
+        "output_tokens": 1234
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1621",
+      "rationale": "Issue #1621 reports a null check operator crash in CommentWriter._commentsBefore when formatting pkg/compiler/test/closure/data/captured_variable.dart. The stack trace shows the crash originates during DartFormatter.formatSource processing a file with doc comments on local variable declarations. The minimized production patch adds exactly one new switch case for VariableDeclarationStatement that delegates to variables.firstNonCommentToken, following the established pattern for DefaultFormalParameter and PatternVariableDeclarationStatement. This fixes the root cause: VariableDeclarationStatement was falling through to the default 'beginToken' case which incorrectly returned the comment token instead of the first non-comment token, causing CommentWriter to fail its null check. The trigger test from the same commit (later_trigger_commit e9bd213c) contains doc comments on local variables ('var /**/ local') matching the reported defect scenario. Strict runtime validation confirms: buggy revision fails trigger differentially, fixed revision passes all runs, full suite buggy failures include only the reproduced trigger, deterministic across 3 repetitions. No unrelated changes: comment rewording is clarification only, CHANGELOG is documentation. No active duplicates in same project.",
+      "evidence_paths": [
+        "issue_urls[0] (github.com/dart-lang/dart_style/issues/1621)",
+        "patches/minimized-production.patch lines 9-13 (VariableDeclarationStatement case addition)",
+        "patches/trigger-tests.patch lines 4-7 (var /**/ local trigger)",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed=true",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed=true",
+        "strict_post_minimization.checks.trigger.deterministic.passed=true",
+        "source_candidate.issue_check.linked_issues[0].body (stack trace from CommentWriter._commentsBefore:81)",
+        "active_same_project_root_causes (empty array)"
+      ],
+      "risks": [
+        "Trigger uses /**/ comments in special locations that may be AST test markers rather than standard doc comments, though runtime validation confirms buggy crash and fixed pass",
+        "Issue reports crash on a specific external file (pkg/compiler/test/closure/data/captured_variable.dart) not included in trigger fixture, but validated trigger reproduces the same null check failure path"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:04:53.523617+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "f8ef10a0dfcf7a8b21cbb7d16ca0e56f1478a6b243422fb794a695754472347d",
+      "response_sha256": "ea7e7b057b2c9ce6f71b7390c2d85df29bbff68fdcc7be50d6fbcb6403688981",
+      "response_id": "msg_1786449893329",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 9872,
+        "output_tokens": 1262,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1621",
+      "rationale": "Issue #1621 (labeled 'bug') reports a crash, 'Null check operator used on a null value' at CommentWriter._commentsBefore, while formatting pkg/compiler/test/closure/data/captured_variable.dart. The single production hunk in lib/src/ast_extensions.dart adds a `VariableDeclarationStatement(:var variables) => variables.firstNonCommentToken` case to the existing switch, following the same delegate-to-inner-AnnotatedNode pattern already used for DefaultFormalParameter and PatternVariableDeclarationStatement; without it the statement fell through to `beginToken`, which returns the comment token and leaves comments unconsumed, producing the reported null-check failure. The trigger fixture test/tall/regression/1600/1621.unit contains `var /**/ local = parameter;` inside a function body, i.e. a comment attached to a local variable declaration, which is exactly the construct the new case handles, and it is drawn from the same source file named in the issue. It is a data fixture consumed by the pre-existing test/tall_format_test.dart runner and introduces no dependency on any API added by the fix. Strict runtime evidence for both the original and post-minimization gates passed with all checks green: selector test/tall_format_test.dart::tall/regression/1600/1621.unit fails in isolation and in-suite on the buggy revision, all fixed isolated/suite/reversed runs pass, 32-run matrix complete at 3 repetitions with 3 deterministic fingerprint groups, and builds pass on both revisions. The active same-project root cause registry is empty, so #1621 is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/ast_extensions.dart",
+        "patches/trigger-tests.patch",
+        "test/tall/regression/1600/1621.unit",
+        "case.json:trigger_tests",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:source_candidate.candidate.issue_check.linked_issues[0].body",
+        "case.json:traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The minimized patch rewords the pre-existing comments for the DefaultFormalParameter and PatternVariableDeclarationStatement cases; these are behavior-neutral comment edits inside the same switch as the fix, but a stricter minimization would have dropped them.",
+        "The fixture file contains a second case (a class field with @override and an ignore comment) that exercises the already-working AnnotatedNode metadata path rather than the new VariableDeclarationStatement case; it shares the single validated selector, so the differential signal is not attributable to that fragment alone.",
+        "The commit message says 'doc comments' while the fixture uses `/**/` block comments; the crash mechanism (unconsumed leading comment token) is the same, but the naming is looser than the fixture content.",
+        "Analyzer is diagnostic only in the build gate (require_analyze_clean=false), so static-analysis cleanliness of the revision pair was not enforced."
+      ]
+    }
+  ]
+}

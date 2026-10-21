@@ -1,0 +1,78 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/KdocWrappingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/KdocWrappingRule.kt
+index 29f4a355..152c049b 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/KdocWrappingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/KdocWrappingRule.kt
+@@ -14,7 +14,7 @@ import com.pinterest.ktlint.rule.engine.core.api.indent
+ import com.pinterest.ktlint.rule.engine.core.api.nextLeaf
+ import com.pinterest.ktlint.rule.engine.core.api.noNewLineInClosedRange
+ import com.pinterest.ktlint.rule.engine.core.api.prevLeaf
+-import com.pinterest.ktlint.rule.engine.core.api.upsertWhitespaceBeforeMe
++import com.pinterest.ktlint.rule.engine.core.api.upsertWhitespaceAfterMe
+ import com.pinterest.ktlint.ruleset.standard.StandardRule
+ import org.jetbrains.kotlin.com.intellij.lang.ASTNode
+ 
+@@ -97,7 +97,7 @@ public class KdocWrappingRule :
+     ) {
+         emit(startOffset, "A KDoc comment may not be followed by any other element on that same line", true)
+         if (autoCorrect) {
+-            this.upsertWhitespaceBeforeMe(kdocCommentNode.indent())
++            kdocCommentNode.upsertWhitespaceAfterMe(kdocCommentNode.indent())
+         }
+     }
+ 
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListWrappingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListWrappingRule.kt
+index a1901bc9..dc607421 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListWrappingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListWrappingRule.kt
+@@ -74,16 +76,12 @@ public class ParameterListWrappingRule :
+         emit: (offset: Int, errorMessage: String, canBeAutoCorrected: Boolean) -> Unit,
+     ) {
+         when (node.elementType) {
+-            NULLABLE_TYPE -> wrapNullableType(node, emit, autoCorrect)
+-            VALUE_PARAMETER_LIST -> {
+-                if (node.needToWrapParameterList()) {
+-                    wrapParameterList(node, emit, autoCorrect)
+-                }
+-            }
++            NULLABLE_TYPE -> visitNullableType(node, emit, autoCorrect)
++            VALUE_PARAMETER_LIST -> visitParameterList(node, emit, autoCorrect)
+         }
+     }
+ 
+-    private fun wrapNullableType(
++    private fun visitNullableType(
+         node: ASTNode,
+         emit: (offset: Int, errorMessage: String, canBeAutoCorrected: Boolean) -> Unit,
+         autoCorrect: Boolean,
+@@ -183,16 +181,27 @@ public class ParameterListWrappingRule :
+             .orEmpty()
+             .any { it.elementType == ElementType.ANNOTATION_ENTRY }
+ 
+-    private fun wrapParameterList(
++    private fun visitParameterList(
+         node: ASTNode,
+         emit: (offset: Int, errorMessage: String, canBeAutoCorrected: Boolean) -> Unit,
+         autoCorrect: Boolean,
+     ) {
+-        node
+-            .children()
+-            .forEach { child -> wrapParameterInList(child, emit, autoCorrect) }
++        if (isPrecededByComment(node)) {
++            emit(node.startOffset, "Parameter list should not be preceded by a comment", false)
++        } else if (node.needToWrapParameterList()) {
++            node
++                .children()
++                .forEach { child -> wrapParameterInList(child, emit, autoCorrect) }
++        }
+     }
+ 
++    private fun isPrecededByComment(node: ASTNode) =
++        node
++            .prevLeaf { !it.isWhiteSpace() }
++            ?.prevLeaf()
++            ?.isPartOfComment()
++            ?: false
++
+     private fun intendedIndent(child: ASTNode): String =
+         when {
+             // IDEA quirk:

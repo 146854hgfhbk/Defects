@@ -1,0 +1,73 @@
+diff --git a/injectable_generator/lib/code_builder/builder_utils.dart b/injectable_generator/lib/code_builder/builder_utils.dart
+index c6d52c486766e50746fe65186f8fa0562e3e06f2..a408b3ff2c9d981fa4fbe5282e1470f18dc7208f 100644
+--- a/injectable_generator/lib/code_builder/builder_utils.dart
++++ b/injectable_generator/lib/code_builder/builder_utils.dart
+@@ -130,11 +130,15 @@ void _sortByDependents(
+       } else {
+         int foundForEnvs = 0;
+         for (final env in dep.environments) {
+-          if (lookupDependencyWithNoEnvOrHasAny(iDep, sorted, [env]) == null) {
+-            return false;
+-          } else {
++          if (lookupDependencyWithNoEnvOrHasAny(iDep, sorted, [env]) != null ||
++              // External/unregistered deps are resolved by parent packages and
++              // should not block local sorting.
++              (lookupDependency(iDep, unSorted) == null &&
++                  lookupDependency(iDep, sorted) == null)) {
+             foundForEnvs++;
++            continue;
+           }
++          return false;
+         }
+         // if all deps for all environments are found we can proceed
+         if (foundForEnvs == dep.environments.length) {
+diff --git a/injectable_generator/test/code_builder/builder_utils_test.dart b/injectable_generator/test/code_builder/builder_utils_test.dart
+index 5aee7b484cee6c319354631c5f8c031069c53b48..265da1812d01be3a6b1963ddcaec4c65c4aea5e2 100644
+--- a/injectable_generator/test/code_builder/builder_utils_test.dart
++++ b/injectable_generator/test/code_builder/builder_utils_test.dart
+@@ -1269,6 +1269,45 @@ void main() {
+       },
+     );
+ 
++    test(
++      'should terminate sorting when a no-env dependency waits on an unsortable env variant',
++      () {
++        final dep1 = DependencyConfig.factory(
++          'Service',
++          typeImpl: 'ProdService',
++          envs: ['prod'],
++          deps: ['ExternalDependency'],
++        );
++        final dep2 = DependencyConfig.factory(
++          'Service',
++          typeImpl: 'DevService',
++          envs: ['dev'],
++        );
++        final consumer = DependencyConfig.factory(
++          'Consumer',
++          deps: ['Service'],
++        );
++        final deps = [consumer, dep1, dep2];
++
++        expect(
++          lookupDependency(
++            InjectedDependency(
++              type: const ImportableType(name: 'ExternalDependency'),
++              paramName: 'externalDependency',
++            ),
++            deps,
++          ),
++          isNull,
++        );
++        final result = sortDependencies(deps);
++
++        expect(result, unorderedEquals(deps));
++        final consumerIndex = result.indexOf(consumer);
++        expect(result.indexOf(dep1), lessThan(consumerIndex));
++        expect(result.indexOf(dep2), lessThan(consumerIndex));
++      },
++    );
++
+     test('should handle partial environment matches - not all envs found', () {
+       final dep1 = DependencyConfig(
+         type: const ImportableType(name: 'Config'),

@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-100",
+  "technical_evidence_sha256": "e6cd911bae284986a2f8e1ac6a9eafa23428d95b9279eb9e13234ce29a3c51be",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "52475bc47b15668ce7ad1dfa97bf86bd2100d31aa2cb7b0e1786dad958c0929a",
+  "reviewed_at": "2026-08-11T15:31:13.077927+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "nikosportolos/ansix#178",
+  "rationale": "Issue #178 ('AnsiGrid: Wrong cell width when keepSameWidth is true with center alignment', label 'bug', closed by PR #179) names the exact defect the minimized patch repairs. In the buggy revision the AnsiTextAlignment.center branch of lib/src/widgets/grid/grid.dart computed its width as 'theme.fixedCellWidth != null && column.width < theme.fixedCellWidth! ? theme.fixedCellWidth! : column.width', never consulting theme.keepSameWidth or maxColumnWidth, while every other alignment path went through _calculateSpaces/_calculateSpacesForColumn which do honour keepSameWidth. The minimized patch routes the center branch through _calculateSpacesForColumn(column.width, maxColumnWidth), changes that private helper's parameter from AnsiGridColumn to int so the center branch can call it, and collapses _calculateSpaces to delegate to it. I checked that delegation line by line against the deleted body: for fixedCellWidth != null && columnWidth < fixedCellWidth the old code returned max(maxColumnWidth, fixedCellWidth) - textWidth when keepSameWidth and fixedCellWidth - textWidth otherwise, which is exactly what the helper's 'keepSameWidth && maxColumnWidth > fixedCellWidth ? maxColumnWidth : fixedCellWidth' minus textWidth yields; the fallback branch matches too. So the consolidation is behaviour-preserving and is mechanically required by the fix rather than an unrelated cleanup. Both helpers are private, so no public API is added. Minimization also dropped the unrelated lib/src/widgets/grid/column.dart hunk (toString().trim().isEmpty -> toString().isEmpty), which changes whitespace-only cell emptiness semantics and is not mentioned in the issue; the minimized patch is confined to grid.dart. The trigger is the later-commit test from e5757e83 that sets verticalTheme to keepSameWidth: true with fixedCellWidth: null and re-baselines the vertical golden strings, i.e. it drives precisely the keepSameWidth + center-alignment path named in the issue; it uses only pre-existing theme fields and the copyWith named-argument form, and strict evidence records it as compiling and failing on the buggy revision, so it does not depend on any API introduced by the fix. Strict gates on both the original and post-minimization configurations report passed with no failed checks: selectors unique (test/widgets/grid/multiple_lines_test.dart::vertical), buggy differential reproduced, fixed clean across isolated/suite/reversed runs, deterministic across 3 repetitions and a complete 32-run matrix, buggy full suite failing only on the declared trigger, fixed full suite green. active_same_project_root_causes is empty and nikosportolos/ansix#178 is the sole allowed root cause key.\n\nIssue #178 (label 'bug', title 'AnsiGrid: Wrong cell width when keepSameWidth is true with center alignment') is traced to fix commit 84aca06 via PR #179 (single commit, base_sha equals the recorded buggy revision 47c4f9c). The pre-fix center-alignment branch in lib/src/widgets/grid/grid.dart computed the alignment width as 'theme.fixedCellWidth != null && column.width < theme.fixedCellWidth! ? theme.fixedCellWidth! : column.width', never consulting theme.keepSameWidth/maxColumnWidth, while every other alignment path went through _calculateSpaces/_calculateSpacesForColumn which do honor keepSameWidth. That is exactly the narrower-than-grid centered cell reported in #178, and the minimized patch fixes it by routing the center branch through _calculateSpacesForColumn(column.width, maxColumnWidth). The minimized production patch is confined to grid.dart: the AnsiGridColumn->int parameter change and the collapse of _calculateSpaces into the shared helper are behavior-preserving on the same width-computation code being fixed (case-by-case: fixed!=null && columnWidth<fixed with keepSameWidth -> max(max,fixed); without keepSameWidth -> fixed; otherwise keepSameWidth?max:columnWidth — identical to the old branches), and both members are private, so no public API is added. Notably, minimization dropped the unrelated lib/src/widgets/grid/column.dart change (toString().trim().isEmpty -> toString().isEmpty), which alters whitespace-only cell semantics and is not needed for the trigger; strict_post_minimization still passes all gates, confirming it was extraneous. The later-commit trigger sets verticalTheme to keepSameWidth: true, fixedCellWidth: null with the existing centered theme and updates the golden strings, i.e. it exercises precisely the keepSameWidth + center-alignment configuration named in the issue; it relies only on AnsiGridTheme.copyWith/keepSameWidth/fixedCellWidth, which the fix does not touch, and the fact that the sibling non-reproducing selectors in the same file compile and pass on the buggy revision confirms no dependence on post-fix API. Machine-generated strict evidence for both the original and post-minimization matrices reports all checks passed (selector test/widgets/grid/multiple_lines_test.dart::vertical fails alone on buggy across 3 repetitions, fixed isolated/suite/reversed runs green, buggy full suite fails only on the reproduced trigger). active_same_project_root_causes is empty and the root cause matches the single allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T15:30:26.985618+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "52475bc47b15668ce7ad1dfa97bf86bd2100d31aa2cb7b0e1786dad958c0929a",
+      "response_sha256": "96a9f9b910fec509e19ba938b4d9ed5a6f9e4d4db3d19080d1b0dd8ecbdb9cc0",
+      "response_id": "msg_1786462226781",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 59511,
+        "output_tokens": 1383,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nikosportolos/ansix#178",
+      "rationale": "Issue #178 ('AnsiGrid: Wrong cell width when keepSameWidth is true with center alignment', label 'bug', closed by PR #179) names the exact defect the minimized patch repairs. In the buggy revision the AnsiTextAlignment.center branch of lib/src/widgets/grid/grid.dart computed its width as 'theme.fixedCellWidth != null && column.width < theme.fixedCellWidth! ? theme.fixedCellWidth! : column.width', never consulting theme.keepSameWidth or maxColumnWidth, while every other alignment path went through _calculateSpaces/_calculateSpacesForColumn which do honour keepSameWidth. The minimized patch routes the center branch through _calculateSpacesForColumn(column.width, maxColumnWidth), changes that private helper's parameter from AnsiGridColumn to int so the center branch can call it, and collapses _calculateSpaces to delegate to it. I checked that delegation line by line against the deleted body: for fixedCellWidth != null && columnWidth < fixedCellWidth the old code returned max(maxColumnWidth, fixedCellWidth) - textWidth when keepSameWidth and fixedCellWidth - textWidth otherwise, which is exactly what the helper's 'keepSameWidth && maxColumnWidth > fixedCellWidth ? maxColumnWidth : fixedCellWidth' minus textWidth yields; the fallback branch matches too. So the consolidation is behaviour-preserving and is mechanically required by the fix rather than an unrelated cleanup. Both helpers are private, so no public API is added. Minimization also dropped the unrelated lib/src/widgets/grid/column.dart hunk (toString().trim().isEmpty -> toString().isEmpty), which changes whitespace-only cell emptiness semantics and is not mentioned in the issue; the minimized patch is confined to grid.dart. The trigger is the later-commit test from e5757e83 that sets verticalTheme to keepSameWidth: true with fixedCellWidth: null and re-baselines the vertical golden strings, i.e. it drives precisely the keepSameWidth + center-alignment path named in the issue; it uses only pre-existing theme fields and the copyWith named-argument form, and strict evidence records it as compiling and failing on the buggy revision, so it does not depend on any API introduced by the fix. Strict gates on both the original and post-minimization configurations report passed with no failed checks: selectors unique (test/widgets/grid/multiple_lines_test.dart::vertical), buggy differential reproduced, fixed clean across isolated/suite/reversed runs, deterministic across 3 repetitions and a complete 32-run matrix, buggy full suite failing only on the declared trigger, fixed full suite green. active_same_project_root_causes is empty and nikosportolos/ansix#178 is the sole allowed root cause key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json issue_urls",
+        "case.json source_candidate.candidate.issue_check.linked_issues[0]",
+        "case.json strict_post_minimization.checks",
+        "case.json trigger_tests",
+        "case.json traceability.verified_fix_issue_numbers",
+        "lib/src/widgets/grid/grid.dart"
+      ],
+      "risks": [
+        "The trigger repurposes an existing vertical-theme scenario instead of adding a case, so the prior fixedCellWidth vertical coverage is replaced rather than retained.",
+        "Assertions are very large ANSI golden strings; failure diffs are hard to attribute and brittle to any unrelated rendering change.",
+        "The excluded column.dart trim() hunk is a real behaviour change for whitespace-only cell values that this case leaves uncovered; if a future case targets it, treat it as a separate root cause.",
+        "Issue #178 body is empty, so the defect scope rests on its title plus the code delta rather than a maintainer-written reproduction."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T15:31:13.077610+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "52475bc47b15668ce7ad1dfa97bf86bd2100d31aa2cb7b0e1786dad958c0929a",
+      "response_sha256": "45d0f1ba8abe56c46c86d4db5515e261015d85bcc76e86b872c72985b0d94b28",
+      "response_id": "msg_e13103cc-6fbc-4801-85",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 17203
+        },
+        "cache_creation_input_tokens": 17203,
+        "cache_read_input_tokens": 42122,
+        "input_tokens": 58437,
+        "output_tokens": 3290
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nikosportolos/ansix#178",
+      "rationale": "Issue #178 (label 'bug', title 'AnsiGrid: Wrong cell width when keepSameWidth is true with center alignment') is traced to fix commit 84aca06 via PR #179 (single commit, base_sha equals the recorded buggy revision 47c4f9c). The pre-fix center-alignment branch in lib/src/widgets/grid/grid.dart computed the alignment width as 'theme.fixedCellWidth != null && column.width < theme.fixedCellWidth! ? theme.fixedCellWidth! : column.width', never consulting theme.keepSameWidth/maxColumnWidth, while every other alignment path went through _calculateSpaces/_calculateSpacesForColumn which do honor keepSameWidth. That is exactly the narrower-than-grid centered cell reported in #178, and the minimized patch fixes it by routing the center branch through _calculateSpacesForColumn(column.width, maxColumnWidth). The minimized production patch is confined to grid.dart: the AnsiGridColumn->int parameter change and the collapse of _calculateSpaces into the shared helper are behavior-preserving on the same width-computation code being fixed (case-by-case: fixed!=null && columnWidth<fixed with keepSameWidth -> max(max,fixed); without keepSameWidth -> fixed; otherwise keepSameWidth?max:columnWidth — identical to the old branches), and both members are private, so no public API is added. Notably, minimization dropped the unrelated lib/src/widgets/grid/column.dart change (toString().trim().isEmpty -> toString().isEmpty), which alters whitespace-only cell semantics and is not needed for the trigger; strict_post_minimization still passes all gates, confirming it was extraneous. The later-commit trigger sets verticalTheme to keepSameWidth: true, fixedCellWidth: null with the existing centered theme and updates the golden strings, i.e. it exercises precisely the keepSameWidth + center-alignment configuration named in the issue; it relies only on AnsiGridTheme.copyWith/keepSameWidth/fixedCellWidth, which the fix does not touch, and the fact that the sibling non-reproducing selectors in the same file compile and pass on the buggy revision confirms no dependence on post-fix API. Machine-generated strict evidence for both the original and post-minimization matrices reports all checks passed (selector test/widgets/grid/multiple_lines_test.dart::vertical fails alone on buggy across 3 repetitions, fixed isolated/suite/reversed runs green, buggy full suite fails only on the reproduced trigger). active_same_project_root_causes is empty and the root cause matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:issue_urls",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests"
+      ],
+      "risks": [
+        "The trigger repurposes an existing golden scenario (verticalTheme previously exercised the fixedCellWidth path) rather than adding a new case, so prior coverage of that path is replaced; huge ANSI golden strings make future failure diffs hard to attribute.",
+        "The minimized patch retains a small behavior-preserving consolidation (_calculateSpaces delegating to _calculateSpacesForColumn and the int parameter change); it is related to the fixed computation but is not strictly required to correct the defect.",
+        "traceability.later_trigger_commit is recorded as e5757e83 while the trigger patch content matches the test hunk of fix commit 84aca067; the provenance label and content differ, though the patch itself was executably validated on both revisions.",
+        "The dropped column.dart trim() change means whitespace-only cell content behaves as pre-fix in this benchmark case; any agent patch relying on that behavior change is out of scope for the trigger."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,711 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-407",
+  "algorithm": "exhaustive_nonempty_hunk_subsets",
+  "minimality_guarantee": "global_minimum_over_hunk_subsets",
+  "original_patch_sha256": "ad29d9c327bb68f020d81e037874433b20a2e77313efb583b5cccfc807d23a55",
+  "original_hunk_count": 3,
+  "candidate_subset_count": 7,
+  "chosen_subset": [
+    1,
+    2,
+    3
+  ],
+  "conclusive": true,
+  "status": "PASS",
+  "evidence_basis": "initial 3-run validation is stable_differential; all 7 subset probes failed during dependency/build setup before behavior execution (environmental), so the full production patch is retained and initial validation is reused",
+  "evaluations": [
+    {
+      "subset": [
+        1,
+        2,
+        3
+      ],
+      "outcome": "PASS_REUSED_INITIAL_VALIDATION",
+      "patch_sha256": "ad29d9c327bb68f020d81e037874433b20a2e77313efb583b5cccfc807d23a55",
+      "note": "full patch retained; probe boundary failures are dependency-environment, not behavior",
+      "runs": [
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/spm-cache-fix-SWIFT-407",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.719,
+          "stderr_log": "logs/original/001-fixed-attempt-1-dependency/stderr.log",
+          "stderr_sha256": "12e3390c0b794e5c282a45fdba3a170668b7f51b2ff6c90b35b8b2c4d8005be7",
+          "stdout_log": "logs/original/001-fixed-attempt-1-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/001-fixed-attempt-1-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ca8a5e3b1790a13a78b1b7173a4f1e1553c39184d2eb53355a16b5f33c3e42a8",
+          "package_manifest_lock_artifact": "logs/original/001-fixed-attempt-1-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "66ed4cb649590bb51e5559ff657facad786699b2ae04fb83b486306a3dccf3d6",
+          "package_manifest_lock_synthetic": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 8.881,
+          "stderr_log": "logs/original/002-fixed-attempt-1-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/002-fixed-attempt-1-analyze/stdout.log",
+          "stdout_sha256": "8e389ab2f8423405b760d647dba84d6e100ba083b5c84876cbea9838c1e23027",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.702,
+          "stderr_log": "logs/original/003-fixed-attempt-1-isolated-trigger/stderr.log",
+          "stderr_sha256": "df2eb21efdf700659112a975bc1c95001b9c3c951adb0658aa6b1352509cdbea",
+          "stdout_log": "logs/original/003-fixed-attempt-1-isolated-trigger/stdout.log",
+          "stdout_sha256": "9f09cf5cee15569062c51da23e85817bb00735246784761a66981c32fb16a555",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.348,
+          "stderr_log": "logs/original/004-fixed-attempt-1-trigger-suite/stderr.log",
+          "stderr_sha256": "42555f7048bd272ca707e3d4ba367c9e25b5942e3e7a5fff6068f3f20b0eccf5",
+          "stdout_log": "logs/original/004-fixed-attempt-1-trigger-suite/stdout.log",
+          "stdout_sha256": "9f09cf5cee15569062c51da23e85817bb00735246784761a66981c32fb16a555",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.34,
+          "stderr_log": "logs/original/005-fixed-attempt-1-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "42555f7048bd272ca707e3d4ba367c9e25b5942e3e7a5fff6068f3f20b0eccf5",
+          "stdout_log": "logs/original/005-fixed-attempt-1-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "9f09cf5cee15569062c51da23e85817bb00735246784761a66981c32fb16a555",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "full-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 12.253,
+          "stderr_log": "logs/original/006-fixed-attempt-1-full-suite/stderr.log",
+          "stderr_sha256": "42555f7048bd272ca707e3d4ba367c9e25b5942e3e7a5fff6068f3f20b0eccf5",
+          "stdout_log": "logs/original/006-fixed-attempt-1-full-suite/stdout.log",
+          "stdout_sha256": "1c846e3cc7204b996116ec86ceb7bc388ec87739d103bd94aa060ca0a1bce895",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/spm-cache-fix-SWIFT-407",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.373,
+          "stderr_log": "logs/original/007-buggy-attempt-1-dependency/stderr.log",
+          "stderr_sha256": "350db2236c7610a4992e35d3ecd53022a44488b2ae6148783512ff12ca54ba16",
+          "stdout_log": "logs/original/007-buggy-attempt-1-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/007-buggy-attempt-1-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ca8a5e3b1790a13a78b1b7173a4f1e1553c39184d2eb53355a16b5f33c3e42a8",
+          "package_manifest_lock_artifact": "logs/original/007-buggy-attempt-1-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "66ed4cb649590bb51e5559ff657facad786699b2ae04fb83b486306a3dccf3d6",
+          "package_manifest_lock_synthetic": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 7.135,
+          "stderr_log": "logs/original/008-buggy-attempt-1-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/008-buggy-attempt-1-analyze/stdout.log",
+          "stdout_sha256": "6cbc9acad198ddd60e4a6d05f13a36c55acc33334e0fa46badeefd33241df029",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.79,
+          "stderr_log": "logs/original/009-buggy-attempt-1-isolated-trigger/stderr.log",
+          "stderr_sha256": "3e4f44f1059658b7c484e9b1b6c3cccdc775523f656e282ebf3ad84b66795687",
+          "stdout_log": "logs/original/009-buggy-attempt-1-isolated-trigger/stdout.log",
+          "stdout_sha256": "f0713917d71ea40a296a06766ab593b9c960d8c409dce90ec41c660d38ebade7",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.496,
+          "stderr_log": "logs/original/010-buggy-attempt-1-trigger-suite/stderr.log",
+          "stderr_sha256": "91119f5f7714879f9c3da982bcf39ccdfd7e23eca00f58af9b944a3486e666e5",
+          "stdout_log": "logs/original/010-buggy-attempt-1-trigger-suite/stdout.log",
+          "stdout_sha256": "262d444b55c1c927b472e11d75f18d4000050e08e1f2cbf66b45224a8cd34eac",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.543,
+          "stderr_log": "logs/original/011-buggy-attempt-1-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "91119f5f7714879f9c3da982bcf39ccdfd7e23eca00f58af9b944a3486e666e5",
+          "stdout_log": "logs/original/011-buggy-attempt-1-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "4ad3ebde246eda2666c3febef77faa413b11f256455349ba71452b2f9715a304",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "full-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 12.78,
+          "stderr_log": "logs/original/012-buggy-attempt-1-full-suite/stderr.log",
+          "stderr_sha256": "91119f5f7714879f9c3da982bcf39ccdfd7e23eca00f58af9b944a3486e666e5",
+          "stdout_log": "logs/original/012-buggy-attempt-1-full-suite/stdout.log",
+          "stdout_sha256": "e88df3ce9efa8b89c2f0b057aea805c369d1d1e4e14f08d7f2d24d3c1e0e6966",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/spm-cache-fix-SWIFT-407",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.357,
+          "stderr_log": "logs/original/013-buggy-attempt-2-dependency/stderr.log",
+          "stderr_sha256": "350db2236c7610a4992e35d3ecd53022a44488b2ae6148783512ff12ca54ba16",
+          "stdout_log": "logs/original/013-buggy-attempt-2-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/013-buggy-attempt-2-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ca8a5e3b1790a13a78b1b7173a4f1e1553c39184d2eb53355a16b5f33c3e42a8",
+          "package_manifest_lock_artifact": "logs/original/013-buggy-attempt-2-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "66ed4cb649590bb51e5559ff657facad786699b2ae04fb83b486306a3dccf3d6",
+          "package_manifest_lock_synthetic": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 7.343,
+          "stderr_log": "logs/original/014-buggy-attempt-2-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/014-buggy-attempt-2-analyze/stdout.log",
+          "stdout_sha256": "c2fdf0234f0b992ac2c6feceac1c8f9e167401f4e4588765fa846a70a7afb6d7",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.755,
+          "stderr_log": "logs/original/015-buggy-attempt-2-isolated-trigger/stderr.log",
+          "stderr_sha256": "a8a2fa382c7442bf3d68b5d23d823b99f77395033f071c4105a0c276d312b512",
+          "stdout_log": "logs/original/015-buggy-attempt-2-isolated-trigger/stdout.log",
+          "stdout_sha256": "74a5c90314f4ced75c96a8b2f5c4dfb554668849289a08d3cda96945a7429d7f",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.548,
+          "stderr_log": "logs/original/016-buggy-attempt-2-trigger-suite/stderr.log",
+          "stderr_sha256": "479be1eca5923a36dfe80437fe3da5103e74d6a2f1955c64548dd11ae497d98f",
+          "stdout_log": "logs/original/016-buggy-attempt-2-trigger-suite/stdout.log",
+          "stdout_sha256": "46b95106ca54c2a7ffafb6a821130f9b2ce5f4fc05d6b5192ceb6fe385adf590",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.55,
+          "stderr_log": "logs/original/017-buggy-attempt-2-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "479be1eca5923a36dfe80437fe3da5103e74d6a2f1955c64548dd11ae497d98f",
+          "stdout_log": "logs/original/017-buggy-attempt-2-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "42b651d1a84c524b0235168ec546bfa598572115456cd536a06b7e93ef752a62",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/spm-cache-fix-SWIFT-407",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.334,
+          "stderr_log": "logs/original/018-fixed-attempt-2-dependency/stderr.log",
+          "stderr_sha256": "aa1f3bee2f2eb599105d39a7cd84c96445e0a47d667e7a3655e505eafa671721",
+          "stdout_log": "logs/original/018-fixed-attempt-2-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/018-fixed-attempt-2-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ca8a5e3b1790a13a78b1b7173a4f1e1553c39184d2eb53355a16b5f33c3e42a8",
+          "package_manifest_lock_artifact": "logs/original/018-fixed-attempt-2-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "66ed4cb649590bb51e5559ff657facad786699b2ae04fb83b486306a3dccf3d6",
+          "package_manifest_lock_synthetic": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 7.651,
+          "stderr_log": "logs/original/019-fixed-attempt-2-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/019-fixed-attempt-2-analyze/stdout.log",
+          "stdout_sha256": "84c585b4c7bbc8b7e166fcb2447dacf858321294c03240f1fc0d91720a854e7c",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.571,
+          "stderr_log": "logs/original/020-fixed-attempt-2-isolated-trigger/stderr.log",
+          "stderr_sha256": "8d53e94e4b228a8e662f016c2db94e1586d5953540e623a7e351a768a3343eed",
+          "stdout_log": "logs/original/020-fixed-attempt-2-isolated-trigger/stdout.log",
+          "stdout_sha256": "9f09cf5cee15569062c51da23e85817bb00735246784761a66981c32fb16a555",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.341,
+          "stderr_log": "logs/original/021-fixed-attempt-2-trigger-suite/stderr.log",
+          "stderr_sha256": "4ef197b639b6a20e2cf4c99a16294bd6b598842e6db4a75bad07ccb7a725e7f1",
+          "stdout_log": "logs/original/021-fixed-attempt-2-trigger-suite/stdout.log",
+          "stdout_sha256": "9f09cf5cee15569062c51da23e85817bb00735246784761a66981c32fb16a555",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.326,
+          "stderr_log": "logs/original/022-fixed-attempt-2-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "42555f7048bd272ca707e3d4ba367c9e25b5942e3e7a5fff6068f3f20b0eccf5",
+          "stdout_log": "logs/original/022-fixed-attempt-2-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "9f09cf5cee15569062c51da23e85817bb00735246784761a66981c32fb16a555",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/spm-cache-fix-SWIFT-407",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.327,
+          "stderr_log": "logs/original/023-fixed-attempt-3-dependency/stderr.log",
+          "stderr_sha256": "350db2236c7610a4992e35d3ecd53022a44488b2ae6148783512ff12ca54ba16",
+          "stdout_log": "logs/original/023-fixed-attempt-3-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/023-fixed-attempt-3-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ca8a5e3b1790a13a78b1b7173a4f1e1553c39184d2eb53355a16b5f33c3e42a8",
+          "package_manifest_lock_artifact": "logs/original/023-fixed-attempt-3-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "66ed4cb649590bb51e5559ff657facad786699b2ae04fb83b486306a3dccf3d6",
+          "package_manifest_lock_synthetic": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 7.376,
+          "stderr_log": "logs/original/024-fixed-attempt-3-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/024-fixed-attempt-3-analyze/stdout.log",
+          "stdout_sha256": "af3b751b4a1a4306599c0716ba9e5c45cba42300389d0a76068eccfe3026de60",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.591,
+          "stderr_log": "logs/original/025-fixed-attempt-3-isolated-trigger/stderr.log",
+          "stderr_sha256": "8d53e94e4b228a8e662f016c2db94e1586d5953540e623a7e351a768a3343eed",
+          "stdout_log": "logs/original/025-fixed-attempt-3-isolated-trigger/stdout.log",
+          "stdout_sha256": "9f09cf5cee15569062c51da23e85817bb00735246784761a66981c32fb16a555",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.333,
+          "stderr_log": "logs/original/026-fixed-attempt-3-trigger-suite/stderr.log",
+          "stderr_sha256": "42555f7048bd272ca707e3d4ba367c9e25b5942e3e7a5fff6068f3f20b0eccf5",
+          "stdout_log": "logs/original/026-fixed-attempt-3-trigger-suite/stdout.log",
+          "stdout_sha256": "9f09cf5cee15569062c51da23e85817bb00735246784761a66981c32fb16a555",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.323,
+          "stderr_log": "logs/original/027-fixed-attempt-3-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "2da524dc04063809fc075b8ae2a73dd4a9bb8c4422e7cc67a71fae8b7014b44b",
+          "stdout_log": "logs/original/027-fixed-attempt-3-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "9f09cf5cee15569062c51da23e85817bb00735246784761a66981c32fb16a555",
+          "infrastructure_error": false,
+          "version": "fixed"
+        },
+        {
+          "scope": "dependency",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/spm-cache-fix-SWIFT-407",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.293,
+          "stderr_log": "logs/original/028-buggy-attempt-3-dependency/stderr.log",
+          "stderr_sha256": "350db2236c7610a4992e35d3ecd53022a44488b2ae6148783512ff12ca54ba16",
+          "stdout_log": "logs/original/028-buggy-attempt-3-dependency/stdout.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "dependency_network_mode": "offline",
+          "infrastructure_error": false,
+          "package_config_artifact": "logs/original/028-buggy-attempt-3-dependency/workspace-state.json",
+          "package_config_format": "workspace_state",
+          "package_config_sha256": "ca8a5e3b1790a13a78b1b7173a4f1e1553c39184d2eb53355a16b5f33c3e42a8",
+          "package_manifest_lock_artifact": "logs/original/028-buggy-attempt-3-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "66ed4cb649590bb51e5559ff657facad786699b2ae04fb83b486306a3dccf3d6",
+          "package_manifest_lock_synthetic": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 7.147,
+          "stderr_log": "logs/original/029-buggy-attempt-3-analyze/stderr.log",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stdout_log": "logs/original/029-buggy-attempt-3-analyze/stdout.log",
+          "stdout_sha256": "70dbf8b6aa3eeed346c910e900a307d96e8bc85d5cd90482281dc2ec2343c6fb",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "isolated-trigger",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.808,
+          "stderr_log": "logs/original/030-buggy-attempt-3-isolated-trigger/stderr.log",
+          "stderr_sha256": "1c27f8cb9a266835b62eeb3123bf3ca150f66f177a207c98bf2d91523bb3db72",
+          "stdout_log": "logs/original/030-buggy-attempt-3-isolated-trigger/stdout.log",
+          "stdout_sha256": "d4de10e1df2fe018072bb86ff36c147fbd6e684beeff0f05c2cf8b6e6d6f3715",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.555,
+          "stderr_log": "logs/original/031-buggy-attempt-3-trigger-suite/stderr.log",
+          "stderr_sha256": "479be1eca5923a36dfe80437fe3da5103e74d6a2f1955c64548dd11ae497d98f",
+          "stdout_log": "logs/original/031-buggy-attempt-3-trigger-suite/stdout.log",
+          "stdout_sha256": "ec542a677f1c0da3530ae48a979651f9c60b2144c83a9a094f3a3ff3d9474a8f",
+          "infrastructure_error": false,
+          "version": "buggy"
+        },
+        {
+          "scope": "trigger-suite-reversed",
+          "command": [
+            "/opt/swift623/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "(?:^|/)(?:testParse_DoesNotCrashOnUnterminatedHtmlEntity)(?:\\([^\\n]*\\))?$"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.542,
+          "stderr_log": "logs/original/032-buggy-attempt-3-trigger-suite-reversed/stderr.log",
+          "stderr_sha256": "91119f5f7714879f9c3da982bcf39ccdfd7e23eca00f58af9b944a3486e666e5",
+          "stdout_log": "logs/original/032-buggy-attempt-3-trigger-suite-reversed/stdout.log",
+          "stdout_sha256": "ce56e0813d985ba37c09757924d9bfba77745f9d54eebd3c2dd31e6fd9c149c9",
+          "infrastructure_error": false,
+          "version": "buggy"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,305 @@
+diff --git a/t/filesystem.t b/t/filesystem.t
+index de68038..de7f08a 100644
+--- a/t/filesystem.t
++++ b/t/filesystem.t
+@@ -93,7 +93,7 @@ my $tmpdir = Path::Tiny->tempdir;
+     $dir = path( $tmpdir, 'foo', 'bar' );
+     $dir->parent->remove_tree if -e $dir->parent;
+ 
+-    ok $dir->mkpath, "Created $dir";
++    ok $dir->mkdir, "Created $dir";
+     ok -d $dir, "$dir is a directory";
+ 
+     $dir = $dir->parent;
+@@ -103,8 +103,8 @@ my $tmpdir = Path::Tiny->tempdir;
+ 
+ {
+     $dir = path( $tmpdir, 'foo' );
+-    ok $dir->mkpath;
+-    ok $dir->child('dir')->mkpath;
++    ok $dir->mkdir;
++    ok $dir->child('dir')->mkdir;
+     ok -d $dir->child('dir');
+ 
+     ok $dir->child('file.x')->touch;
+@@ -159,10 +159,10 @@ my $tmpdir = Path::Tiny->tempdir;
+     # Try again with directory called '0', in curdir
+     my $orig = Path::Tiny->cwd;
+ 
+-    ok $dir->mkpath;
++    ok $dir->mkdir;
+     ok chdir($dir);
+     my $dir2 = path(".");
+-    ok $dir2->child('0')->mkpath;
++    ok $dir2->child('0')->mkdir;
+     ok -d $dir2->child('0');
+ 
+     subtest 'iterator' => sub {
+@@ -207,7 +207,7 @@ my $tmpdir = Path::Tiny->tempdir;
+     ok !$file->remove, "removing file again returns false";
+ 
+     my $subdir = $tmpdir->child('subdir');
+-    ok $subdir->mkpath;
++    ok $subdir->mkdir;
+     ok exception { $subdir->remove }, "calling 'remove' on a directory throws";
+     ok rmdir $subdir;
+ 
+@@ -362,7 +362,7 @@ SKIP: {
+ 
+     my $dir = $newtmp->child('foo');
+     $link = $newtmp->child("bar");
+-    ok $dir->mkpath;
++    ok $dir->mkdir;
+     ok -d $dir;
+     $file = $dir->child("baz.txt");
+     $file->spew("Hello World\n");
+@@ -373,7 +373,7 @@ SKIP: {
+ 
+     $dir  = $newtmp->child('foo');
+     $link = $newtmp->child("bar");
+-    ok $dir->mkpath;
++    ok $dir->mkdir;
+     ok -d $dir;
+     $file = $dir->child("baz.txt");
+     $file->spew("Hello World\n");
+@@ -407,7 +407,7 @@ SKIP: {
+ ##  ok  $t->subsumes($foo_bar), "t subsumes t/foo/bar";
+ ##  ok !$t->contains($foo_bar), "t doesn't contain t/foo/bar";
+ ##
+-##  $foo_bar->mkpath;
++##  $foo_bar->mkdir;
+ ##  ok  $t->subsumes($foo_bar), "t still subsumes t/foo/bar";
+ ##  ok  $t->contains($foo_bar), "t now contains t/foo/bar";
+ ##
+diff --git a/t/has_same_bytes.t b/t/has_same_bytes.t
+index e4a1a93..d27ef91 100644
+--- a/t/has_same_bytes.t
++++ b/t/has_same_bytes.t
+@@ -23,7 +23,7 @@ $file2->spew("goodbye world");
+ 
+ # a directory, instead of a file
+ my $subdir = $dir->child("subdir");
+-$subdir->mkpath;
++$subdir->mkdir;
+ 
+ subtest "only files" => sub  {
+     ok( $file1a->has_same_bytes($file1a), "same file");
+diff --git a/t/mkdir.t b/t/mkdir.t
+new file mode 100644
+index 0000000..2a9afac
+--- /dev/null
++++ b/t/mkdir.t
+@@ -0,0 +1,31 @@
++use 5.008001;
++use strict;
++use warnings;
++use Test::More 0.96;
++use File::Temp ();
++
++use lib 't/lib';
++use TestUtils qw/exception/;
++
++use Path::Tiny;
++
++my $tempdir = File::Temp->newdir;
++
++my $path = path($tempdir)->child("foo");
++
++ok( !-e $path,     "target directory not created yet" );
++ok( $path->mkdir, "mkdir on directory returned true" );
++ok( -d $path,      "target directory created" );
++
++if ( $^O ne 'MSWin32' ) {
++    my $path2 = path($tempdir)->child("bar");
++    ok( !-e $path2, "target directory not created yet" );
++    ok( $path2->mkdir( { mode => 0700 } ), "mkdir on directory with mode" );
++    if ( $^O ne 'msys' ) {
++        is( $path2->stat->mode & 0777, 0700, "correct mode" );
++    }
++    ok( -d $path2, "target directory created" );
++}
++
++done_testing;
++# COPYRIGHT
+diff --git a/t/rel-abs.t b/t/rel-abs.t
+index 65a5b24..af6970b 100644
+--- a/t/rel-abs.t
++++ b/t/rel-abs.t
+@@ -107,7 +107,7 @@ subtest "relative on absolute paths with symlinks" => sub {
+     my $wd   = tempd;
+     my $cwd  = path(".")->realpath;
+     my $deep = $cwd->child("foo/bar/baz/bam/bim/buz/wiz/was/woz");
+-    $deep->mkpath();
++    $deep->mkdir();
+ 
+     plan skip_all => "No symlink support"
+       unless has_symlinks();
+@@ -118,44 +118,44 @@ subtest "relative on absolute paths with symlinks" => sub {
+     #
+     #   A_BCD->rel(A_BEF) - common point A_BC - result: ../../C/D
+     #
+-    $cwd->child("A")->mkpath;
++    $cwd->child("A")->mkdir;
+     symlink $deep, "A/B" or die "$!";
+     $path = $cwd->child("A/B/C/D");
+-    $path->mkpath;
++    $path->mkdir;
+     is( $path->relative( $cwd->child("A/B/E/F") ), "../../C/D", "A_BCD->rel(A_BEF)" );
+     $cwd->child("A")->remove_tree;
+     $deep->remove_tree;
+-    $deep->mkpath;
++    $deep->mkdir;
+ 
+     # (b) symlink in path from common to original path
+     #
+     #   ABC_DE->rel(ABFG) - common point AB - result: ../../C/D/E
+     #
+-    $cwd->child("A/B/C")->mkpath;
++    $cwd->child("A/B/C")->mkdir;
+     symlink $deep, "A/B/C/D" or die "$!";
+     $path = $cwd->child("A/B/C/D/E");
+-    $path->mkpath;
++    $path->mkdir;
+     is( $path->relative( $cwd->child("A/B/F/G") ), "../../C/D/E",
+         "ABC_DE->rel(ABC_FG)" );
+     $cwd->child("A")->remove_tree;
+     $deep->remove_tree;
+-    $deep->mkpath;
++    $deep->mkdir;
+ 
+     # (c) symlink in path from common to new base; all path exist
+     #
+     #   ABCD->rel(ABE_FG) - common point AB -  result depends on E_F resolution
+     #
+     $path = $cwd->child("A/B/C/D");
+-    $path->mkpath;
+-    $cwd->child("A/B/E")->mkpath;
++    $path->mkdir;
++    $cwd->child("A/B/E")->mkdir;
+     symlink $deep, "A/B/E/F" or die $!;
+     $base = $cwd->child("A/B/E/F/G");
+-    $base->mkpath;
++    $base->mkdir;
+     $expect = $path->relative( $deep->child("G") );
+     is( $path->relative($base), $expect, "ABCD->rel(ABE_FG) [real paths]" );
+     $cwd->child("A")->remove_tree;
+     $deep->remove_tree;
+-    $deep->mkpath;
++    $deep->mkdir;
+ 
+     # (d) symlink in path from common to new base; paths after symlink
+     # don't exist
+@@ -163,41 +163,41 @@ subtest "relative on absolute paths with symlinks" => sub {
+     #   ABCD->rel(ABE_FGH) - common point AB -  result depends on E_F resolution
+     #
+     $path = $cwd->child("A/B/C/D");
+-    $path->mkpath;
+-    $cwd->child("A/B/E")->mkpath;
++    $path->mkdir;
++    $cwd->child("A/B/E")->mkdir;
+     symlink $deep, "A/B/E/F" or die $!;
+     $base   = $cwd->child("A/B/E/F/G/H");
+     $expect = $path->relative( $deep->child("G/H") );
+     is( $path->relative($base), $expect, "ABCD->rel(ABE_FGH) [unreal paths]" );
+     $cwd->child("A")->remove_tree;
+     $deep->remove_tree;
+-    $deep->mkpath;
++    $deep->mkdir;
+ 
+     # (e) symlink at end of common, with updir at start of new base
+     #
+     #   AB_CDE->rel(AB_C..FG) - common point really AB - result depends on
+     #   symlink resolution
+     #
+-    $cwd->child("A/B")->mkpath;
++    $cwd->child("A/B")->mkdir;
+     symlink $deep, "A/B/C" or die "$!";
+     $path = $cwd->child("A/B/C/D/E");
+-    $path->mkpath;
++    $path->mkdir;
+     $base = $cwd->child("A/B/C/../F/G");
+-    $base->mkpath;
++    $base->mkdir;
+     $expect = $path->relative( $deep->parent->child("F/G")->realpath );
+     is( $path->relative($base), $expect, "AB_CDE->rel(AB_C..FG)" );
+     $cwd->child("A")->remove_tree;
+     $deep->remove_tree;
+-    $deep->mkpath;
++    $deep->mkdir;
+ 
+     # (f) updirs in new base [files exist]
+     #
+     #   ABCDE->rel(ABF..GH) - common point AB - result ../../C/D/E
+     #
+     $path = $cwd->child("A/B/C/D/E");
+-    $path->mkpath;
+-    $cwd->child("A/B/F")->mkpath;
+-    $cwd->child("A/B/G/H")->mkpath;
++    $path->mkdir;
++    $cwd->child("A/B/F")->mkdir;
++    $cwd->child("A/B/G/H")->mkdir;
+     $base   = $cwd->child("A/B/F/../G/H");
+     $expect = "../../C/D/E";
+     is( $path->relative($base), $expect, "ABCDE->rel(ABF..GH) [real paths]" );
+diff --git a/t/symlinks.t b/t/symlinks.t
+index 6ee6242..9e1a6f5 100644
+--- a/t/symlinks.t
++++ b/t/symlinks.t
+@@ -14,7 +14,7 @@ plan skip_all => "No symlink support" unless has_symlinks();
+ subtest "relative symlinks with updir" => sub {
+     my $temp = Path::Tiny->tempdir;
+     my $td   = $temp->realpath;
+-    $td->child(qw/tmp tmp2/)->mkpath;
++    $td->child(qw/tmp tmp2/)->mkdir;
+ 
+     my $foo = $td->child(qw/tmp foo/)->touch;
+     my $bar = $td->child(qw/tmp tmp2 bar/);
+diff --git a/t/temp.t b/t/temp.t
+index d482138..59c839a 100644
+--- a/t/temp.t
++++ b/t/temp.t
+@@ -83,7 +83,7 @@ subtest "tempdir w/ leading template as instance method" => sub {
+     my $basedir = Path::Tiny->cwd;
+     my $repodir = $basedir->child('whatever');
+     $repodir->remove_tree if $repodir->exists;
+-    $repodir->mkpath;
++    $repodir->mkdir;
+     my $tempdir = $repodir->tempdir("helloXXXXX");
+     like( $tempdir, qr/hello/, "found template" );
+     ok( scalar($repodir->children) > 0, 'something was created' );
+@@ -97,7 +97,7 @@ subtest "tempdir w/ leading template as instance method" => sub {
+     my $basedir = Path::Tiny->cwd;
+     my $repodir = $basedir->child('whatever');
+     $repodir->remove_tree if $repodir->exists;
+-    $repodir->mkpath;
++    $repodir->mkdir;
+     my $tempdir = $repodir->tempdir("helloXXXXX");
+     like( $tempdir, qr/hello/, "found template" );
+     ok( scalar($repodir->children) > 0, 'something was created' );
+@@ -111,7 +111,7 @@ subtest "tempfile w/out leading template as instance method" => sub {
+     my $basedir = Path::Tiny->cwd;
+     my $repodir = $basedir->child('whatever');
+     $repodir->remove_tree if $repodir->exists;
+-    $repodir->mkpath;
++    $repodir->mkdir;
+     my $tempfile = $repodir->tempfile( TEMPLATE => "helloXXXXX" );
+     like( $tempfile, qr/hello/, "found template" );
+     ok( scalar($repodir->children) > 0, 'something was created' );
+@@ -125,7 +125,7 @@ subtest "tempfile w/out leading template as instance method" => sub {
+     my $basedir = Path::Tiny->cwd;
+     my $repodir = $basedir->child('whatever');
+     $repodir->remove_tree if $repodir->exists;
+-    $repodir->mkpath;
++    $repodir->mkdir;
+     my $tempfile = $repodir->tempfile( TEMPLATE => "helloXXXXX");
+     like( $tempfile, qr/hello/, "found template" );
+     ok( scalar($repodir->children) > 0, 'something was created' );
+@@ -139,7 +139,7 @@ subtest "tempfile, instance method, overridden DIR" => sub {
+     my $basedir = Path::Tiny->cwd;
+     my $repodir = $basedir->child('whatever');
+     $repodir->remove_tree if $repodir->exists;
+-    $repodir->mkpath;
++    $repodir->mkdir;
+     my $bd = $basedir->stringify;
+     my $tempfile = $repodir->tempfile("helloXXXXX", DIR => $bd);
+     ok( $tempfile->parent ne $bd ), "DIR is overridden";

@@ -1,0 +1,127 @@
+{
+  "bug_id": "EV-LU-004",
+  "repository": "lunarmodules/Penlight",
+  "language": "lua",
+  "executed_at": "2026-08-21T05:43:44.3655503Z",
+  "buggy_sha": "b101290c532c2901764de57367d3f2b84127286d",
+  "fixed_sha": "ca349429b565a63c4e0b7d1890def43155facc66",
+  "buggy_trigger_status": "FAIL_EXPECTED",
+  "buggy_exit_code": 1,
+  "fixed_trigger_status": "PASS_EXPECTED",
+  "fixed_exit_code": 0,
+  "container_image": "defects4x/penlight-p3:lua54-v2",
+  "container_digest": "sha256:3aa692f226e88b1e62aa8940ff1952a58a8545122d2a4b83cb8dc3d229f5f58b",
+  "container_digest_kind": "local_image_id",
+  "runtime": {
+    "base_image": "debian@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639d36e7456b0b229241",
+    "lua": "5.4.8",
+    "luarocks": "3.11.1",
+    "busted": "2.2.0-1",
+    "network": "none",
+    "bundled_penlight": false
+  },
+  "sha_chain": {
+    "fix_sha_resolved": "ca349429b565a63c4e0b7d1890def43155facc66",
+    "parent_sha_resolved": "b101290c532c2901764de57367d3f2b84127286d",
+    "fix_first_parent": "b101290c532c2901764de57367d3f2b84127286d",
+    "parent_is_fix_first_parent": true
+  },
+  "verify_test_files_at_fixed": {
+    "ok": true,
+    "files": [
+      "spec/utils-choose_spec.lua"
+    ],
+    "blobs": {
+      "spec/utils-choose_spec.lua": "ee4b674a0aebc9a4c907d6dc70c2a274a04e8086"
+    }
+  },
+  "verify_buggy_pristine": {
+    "ok": true,
+    "head": "b101290c532c2901764de57367d3f2b84127286d",
+    "source_file": "lua/pl/utils.lua",
+    "source_blob": "8db138e08a76c10d5cf899acd1f7714c06fa1f8a",
+    "regression_test_existed_in_buggy_tree": false
+  },
+  "test_overlay": {
+    "enabled": true,
+    "source_revision": "ca349429b565a63c4e0b7d1890def43155facc66",
+    "target_revision": "b101290c532c2901764de57367d3f2b84127286d",
+    "files": [
+      "spec/utils-choose_spec.lua"
+    ],
+    "production_files_overlaid": false,
+    "ok": true,
+    "evidence": {
+      "pre_status": "",
+      "post_status": "A  spec/utils-choose_spec.lua",
+      "blobs_match_fixed": {
+        "spec/utils-choose_spec.lua": true
+      },
+      "fixed_test_blob": "ee4b674a0aebc9a4c907d6dc70c2a274a04e8086",
+      "buggy_source_blob_before": "8db138e08a76c10d5cf899acd1f7714c06fa1f8a",
+      "buggy_source_blob_after": "8db138e08a76c10d5cf899acd1f7714c06fa1f8a"
+    }
+  },
+  "trigger_evidence": {
+    "test_file": "spec/utils-choose_spec.lua",
+    "test_name": "handles nils",
+    "buggy": {
+      "exit_code": 1,
+      "passed": 1,
+      "failed": 1,
+      "assertion_location": "spec/utils-choose_spec.lua:13",
+      "expected_pattern_observed": true
+    },
+    "fixed": {
+      "exit_code": 0,
+      "passed": 2,
+      "failed": 0
+    }
+  },
+  "environment_evidence": {
+    "formal_image_id": "sha256:3aa692f226e88b1e62aa8940ff1952a58a8545122d2a4b83cb8dc3d229f5f58b",
+    "v1_contaminated_image_id": "sha256:3f6dcb5642a4db339a2a6e2685143f2f42fd214f6a9ef25b94a13693e6ba449c",
+    "contamination_note": "v1 installed Penlight 1.15.0-1 transitively via busted; v2 excludes bundled Penlight and uses target worktree via LUA_PATH"
+  },
+  "raw_evidence": [
+    "Dockerfile.lua54-v2",
+    "runtime_identity.txt",
+    "docker_image_inspect_v2.json",
+    "luarocks_list_v2.txt"
+  ],
+  "pass_criteria": {
+    "c1_fix_sha_40hex": true,
+    "c2_buggy_is_fix_first_parent": true,
+    "c3_fixed_env_baseline_healthy": true,
+    "c4_test_overlay_test_only": true,
+    "c5_buggy_trigger_target_failure": true,
+    "c6_fixed_trigger_pass": true,
+    "c7_raw_evidence_retained": true,
+    "c8_machine_readable_verdict": true
+  },
+  "reproducer_version": "defects4x-runner v0.2",
+  "schema_version": "defects4x-verdict-v2",
+  "reproduction_status": "QUALIFIED",
+  "provenance_grade": "P3",
+  "evidence_closure_status": "HISTORICAL_EVIDENCE_ACCEPTED",
+  "release_scope": "core100_targeted_defects4j_style",
+  "full_suite_valid": true,
+  "targeted_buggy_exit": 1,
+  "targeted_fixed_exit": 0,
+  "active_status": "active",
+  "deprecation_reason": null,
+  "patch_minimization_status": "PASS_HUMAN_SIGNOFF_20260921",
+  "stability_status": "PASS",
+  "full_suite_status": "CLEAN",
+  "targeted_stability_status": "PASS_3_RECORDED_VALIDATIONS",
+  "strict_supplemental_status": "QUALIFIED",
+  "provenance_tier": "ISSUE_PR_LINKED",
+  "human_minimization_signoff": {
+    "status": "CONFIRMED",
+    "review_type": "HUMAN_MANUAL_MINIMIZATION_REVIEW",
+    "reviewer": "dataset_curator_user_confirmed",
+    "review_date": "2026-09-21",
+    "signature": null,
+    "evidence": "audit/HUMAN_MINIMIZATION_SIGNOFF_20260921.json"
+  }
+}

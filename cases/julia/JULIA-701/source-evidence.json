@@ -1,0 +1,72 @@
+{
+  "candidate_sha": "946d8d966fae69d12f4cfa08dfd5c89ce6da9317",
+  "project": "Roger-luo/Configurations.jl",
+  "source": "merged_pull_request",
+  "instance_id": "roger-luo__configurations.jl-40",
+  "swe_rebench": {
+    "base_commit": "315c534f4d4a25b7bb069540cf08375231caaf4b",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "partial default"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 39,
+      "url": "https://github.com/Roger-luo/Configurations.jl/issues/39",
+      "state": "closed",
+      "title": "@static if inside @option",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "While trying to port Pluto to Configurations.jl, I found this:\r\n```julia\r\njulia> using Configurations\r\n\r\njulia> f() = 123\r\nf (generic function with 1 method)\r\n\r\njulia> @option struct A\r\n           x=f()\r\n       end\r\n\r\njulia> @option struct B\r\n           x=1\r\n           @static if true\r\n               y=f()\r\n           end\r\n       end\r\n\r\njulia> A()\r\nA(;\r\n)\r\n\r\njulia> A(1)\r\nA(;\r\n    x = 1,\r\n)\r\n\r\njulia> B()\r\nERROR: MethodError: no method matching B(::Int64)\r\nClosest candidates are:\r\n  B(; x) at none:0\r\nStacktrace:\r\n [1] B(; x::Int64)\r\n   @ Main ./none:0\r\n [2] B()\r\n   @ Main ./none:0\r\n [3] top-level scope\r\n   @ REPL[9]:1\r\n\r\njulia> B(1,2)\r\nERROR: MethodError: no method matching B(::Int64, ::Int64)\r\nStacktrace:\r\n [1] top-level scope\r\n   @ REPL[5]:1\r\n\r\n```\r\n\r\nWe use `@static` here: https://github.com/fonsp/Pluto.jl/blob/main/src/Configuration.jl#L84"
+    },
+    {
+      "number": 40,
+      "url": "https://github.com/Roger-luo/Configurations.jl/pull/40",
+      "state": "closed",
+      "title": "macroexpand option",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "fix #39  need Expronicon 0.6.6"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        39
+      ],
+      "pull_request": 40,
+      "fix_commit": "946d8d966fae69d12f4cfa08dfd5c89ce6da9317",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "macroexpand option (#40)\n\n* macroexpand option\r\n\r\n* fix test",
+    "commit_issue_refs": [
+      40
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 40,
+    "pull_request_title": "macroexpand option",
+    "pull_request_issue_refs": [
+      39
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    39
+  ],
+  "cross_repository_issue_records": []
+}

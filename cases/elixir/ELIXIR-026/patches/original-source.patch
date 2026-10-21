@@ -1,0 +1,221 @@
+diff --git a/lib/ecto/adapters/mysql/connection.ex b/lib/ecto/adapters/mysql/connection.ex
+index 99719673..363189ed 100644
+--- a/lib/ecto/adapters/mysql/connection.ex
++++ b/lib/ecto/adapters/mysql/connection.ex
+@@ -98,9 +98,14 @@ if Code.ensure_loaded?(Mariaex) do
+       sources = create_names(query)
+       {from, name} = get_source(query, sources, 0, from)
+ 
++      fields = if prefix do
++        update_fields(:on_conflict, query, sources)
++      else
++        update_fields(:update, query, sources)
++      end
++
+       join   = join(query, sources)
+       prefix = prefix || ["UPDATE ", from, " AS ", name, join, " SET "]
+-      fields = update_fields(query, sources)
+       where  = where(query, sources)
+ 
+       IO.iodata_to_binary([prefix, fields | where])
+@@ -217,23 +222,32 @@ if Code.ensure_loaded?(Mariaex) do
+       [" FROM ", from, " AS " | name]
+     end
+ 
+-    defp update_fields(%Query{updates: updates} = query, sources) do
+-      for(%{expr: expr} <- updates,
+-          {op, kw} <- expr,
+-          {key, value} <- kw,
+-          do: update_op(op, key, value, sources, query)) |> Enum.intersperse(", ")
++    defp update_fields(type, %Query{updates: updates} = query, sources) do
++     fields = for(%{expr: expr} <- updates,
++                   {op, kw} <- expr,
++                   {key, value} <- kw,
++                   do: update_op(op, update_key(type, key, query, sources), value, sources, query))
++      Enum.intersperse(fields, ", ")
++    end
++
++    defp update_key(:update, key, %Query{from: from} = query, sources) do
++      {_from, name} = get_source(query, sources, 0, from)
++
++      [name, ?. | quote_name(key)]
++    end
++    defp update_key(:on_conflict, key, _query, _sources) do
++      quote_name(key)
+     end
+ 
+-    defp update_op(:set, key, value, sources, query) do
+-      [quote_name(key), " = " | expr(value, sources, query)]
++    defp update_op(:set, quoted_key, value, sources, query) do
++      [quoted_key, " = " | expr(value, sources, query)]
+     end
+ 
+-    defp update_op(:inc, key, value, sources, query) do
+-      quoted = quote_name(key)
+-      [quoted, " = ", quoted, " + " | expr(value, sources, query)]
++    defp update_op(:inc, quoted_key, value, sources, query) do
++      [quoted_key, " = ", quoted_key, " + " | expr(value, sources, query)]
+     end
+ 
+-    defp update_op(command, _key, _value, _sources, query) do
++    defp update_op(command, _quoted_key, _value, _sources, query) do
+       error!(query, "Unknown update operation #{inspect command} for MySQL")
+     end
+ 
+diff --git a/lib/ecto/query/planner.ex b/lib/ecto/query/planner.ex
+index 6b255a42..4db5a0bd 100644
+--- a/lib/ecto/query/planner.ex
++++ b/lib/ecto/query/planner.ex
+@@ -236,9 +236,10 @@ defmodule Ecto.Query.Planner do
+   defp prepare_source(query, %Ecto.SubQuery{query: inner_query} = subquery, adapter) do
+     try do
+       {inner_query, params, key} = prepare(inner_query, :all, adapter, 0)
+-      inner_query = inner_query |> returning(true) |> normalize_select()
+-      %{subquery | query: inner_query, params: params, cache: key,
+-                   fields: subquery_fields(inner_query, inner_query.select)}
++      %{select: select} = inner_query = inner_query |> returning(true) |> normalize_select()
++      {select, fields} = subquery_fields(inner_query, select)
++      %{subquery | query: %{inner_query | select: select},
++                   params: params, cache: key, fields: fields}
+     rescue
+       e -> raise Ecto.SubQueryError, query: query, exception: e
+     end
+@@ -255,29 +256,55 @@ defmodule Ecto.Query.Planner do
+       when assocs != [] or preloads != [] do
+     error!(query, "cannot preload associations in subquery")
+   end
+-  defp subquery_fields(query, %{expr: {:%{}, _, pairs} = expr}) do
++  defp subquery_fields(query, %{expr: {:%{}, meta, [{:|, _, [{:&, [], [ix]}, pairs]}]} = expr,
++                                fields: [{:&, _, [ix, [_ | _] = fields, _]} | _]} = select) do
++    # In case of map updates, we need to remove duplicated fields
++    # at query time because we use the field names as aliases and
++    # duplicate aliases will lead to invalid queries.
++    map_fields = subquery_map_fields(query, expr, pairs)
++    map_keys = Keyword.keys(map_fields)
++    invalid_keys = map_keys -- fields
++
++    if invalid_keys != [] do
++      error!(query, "invalid key `#{inspect hd(invalid_keys)}` on map update in subquery")
++    end
++
++    fields = subquery_selector_fields(fields -- map_keys, ix) ++ map_fields
++    {%{select | expr: {:%{}, meta, fields}, fields: fields}, fields}
++  end
++  defp subquery_fields(query, %{expr: {:%{}, _, pairs} = expr} = select) do
++    {select, subquery_map_fields(query, expr, pairs)}
++  end
++  defp subquery_fields(_query, %{expr: {:&, _, [ix]},
++                                 fields: [{:&, _, [ix, [_ | _] = fields, _]}]} = select) do
++    {select, subquery_selector_fields(fields, ix)}
++  end
++  defp subquery_fields(_query, %{expr: {{:., _, [{:&, _, [ix]}, field]}, _, []},
++                                 fields: [{{:., _, [{:&, _, [ix]}, field]}, _, []}]} = select) do
++    {select, [{field, {{:., [], [{:&, [], [ix]}, field]}, [], []}}]}
++  end
++  defp subquery_fields(query, %{expr: expr}) do
++    error!(query, "subquery must select a source (t), a field (t.field) or a map, got: `#{Macro.to_string(expr)}`")
++  end
++
++  defp subquery_selector_fields(fields, ix) do
++    Enum.map(fields, fn field ->
++      {field, {{:., [], [{:&, [], [ix]}, field]}, [], []}}
++    end)
++  end
++
++  defp subquery_map_fields(query, expr, pairs) do
+     Enum.map(pairs, fn
+       {key, _} when not is_atom(key) ->
+         error!(query, "only atom keys are allowed when selecting a map in subquery, got: `#{Macro.to_string(expr)}`")
+-      {key, expr} ->
+-        if valid_subquery_value?(expr) do
+-          {key, expr}
++      {key, value} ->
++        if valid_subquery_value?(value) do
++          {key, value}
+         else
+           error!(query, "containers (maps, lists, tuples) or sources (t) are not allowed when selecting a map in subquery, got: `#{Macro.to_string(expr)}`")
+         end
+     end)
+   end
+-  defp subquery_fields(_query, %{fields: [{:&, _, [ix, [_|_] = fields, _]}]}) do
+-    Enum.map(fields, fn field ->
+-      {field, {{:., [], [{:&, [], [ix]}, field]}, [], []}}
+-    end)
+-  end
+-  defp subquery_fields(_query, %{fields: [{{:., _, [{:&, _, [ix]}, field]}, _, []}]}) do
+-    [{field, {{:., [], [{:&, [], [ix]}, field]}, [], []}}]
+-  end
+-  defp subquery_fields(query, %{expr: expr}) do
+-    error!(query, "subquery must select a source (t), a field (t.field) or a map, got: `#{Macro.to_string(expr)}`")
+-  end
+ 
+   defp valid_subquery_value?({_, _}), do: false
+   defp valid_subquery_value?(args) when is_list(args), do: false
+@@ -847,7 +874,7 @@ defmodule Ecto.Query.Planner do
+   defp collect_fields({:{}, _, elems}, query, take, from),
+     do: collect_fields(elems, query, take, from)
+   defp collect_fields({:%{}, _, [{:|, _, [data, pairs]}]}, query, take, from),
+-    do: collect_fields([data|pairs], query, take, from)
++    do: collect_fields([data | pairs], query, take, from)
+   defp collect_fields({:%{}, _, pairs}, query, take, from),
+     do: collect_fields(pairs, query, take, from)
+   defp collect_fields({:%, _, [_name, expr]}, query, take, from),
+diff --git a/lib/ecto/repo/schema.ex b/lib/ecto/repo/schema.ex
+index 5ca79643..c7b8eb1e 100644
+--- a/lib/ecto/repo/schema.ex
++++ b/lib/ecto/repo/schema.ex
+@@ -199,7 +199,7 @@ defmodule Ecto.Repo.Schema do
+         case apply(changeset, adapter, :insert, args) do
+           {:ok, values} ->
+             changeset
+-            |> load_changes(:loaded, extra ++ values, autogen, adapter)
++            |> load_changes(:loaded, extra ++ values, autogen, adapter, opts)
+             |> process_children(children, user_changeset, opts)
+           {:error, _} = error ->
+             error
+@@ -270,7 +270,7 @@ defmodule Ecto.Repo.Schema do
+           case apply(changeset, adapter, action, args) do
+             {:ok, values} ->
+               changeset
+-              |> load_changes(:loaded, values, autogen, adapter)
++              |> load_changes(:loaded, values, autogen, adapter, opts)
+               |> process_children(children, user_changeset, opts)
+             {:error, _} = error ->
+               error
+@@ -352,7 +352,7 @@ defmodule Ecto.Repo.Schema do
+       args = [repo, metadata(struct, opts), filters, opts]
+       case apply(changeset, adapter, :delete, args) do
+         {:ok, values} ->
+-          {:ok, load_changes(changeset, :deleted, values, [], adapter).data}
++          {:ok, load_changes(changeset, :deleted, values, [], adapter, opts).data}
+         {:error, _} = error ->
+           error
+         {:invalid, constraints} ->
+@@ -541,13 +541,14 @@ defmodule Ecto.Repo.Schema do
+     end
+   end
+ 
+-  defp load_changes(%{types: types, changes: changes} = changeset, state, values, autogen, adapter) do
++  defp load_changes(%{types: types, changes: changes} = changeset, state, values, autogen, adapter, opts) do
+     # It is ok to use types from changeset because we have
+     # already filtered the results to be only about fields.
+     data =
+       changeset.data
+       |> merge_changes(changes)
+       |> merge_autogen(autogen)
++      |> apply_metadata(opts)
+       |> load_each(values, types, adapter)
+     data = put_in(data.__meta__.state, state)
+     Map.put(changeset, :data, data)
+@@ -617,6 +618,11 @@ defmodule Ecto.Repo.Schema do
+     end
+   end
+ 
++  defp apply_metadata(struct, opts) do
++    prefix = Ecto.get_meta(struct, :prefix)
++    Ecto.put_meta(struct, prefix: Keyword.get(opts, :prefix, prefix))
++  end
++
+   defp process_children(changeset, assocs, user_changeset, opts) do
+     case Ecto.Association.on_repo_change(changeset, assocs, opts) do
+       {:ok, struct} -> {:ok, struct}

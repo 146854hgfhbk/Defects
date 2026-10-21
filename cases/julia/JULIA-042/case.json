@@ -1,0 +1,138 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-042",
+  "bug_id": "JULIA-042",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "SciML/LinearSolve.jl",
+  "repository_url": "https://github.com/SciML/LinearSolve.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "a507d85747c3689f491ef86a4d67d30bdde06f1d",
+  "fixed_revision": "339ca2465268c8ece7858cd5a40d9b82e2edc752",
+  "candidate_sha": "339ca2465268c8ece7858cd5a40d9b82e2edc752",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "a507d85747c3689f491ef86a4d67d30bdde06f1d",
+  "changed_production_files": [
+    "src/KLU/klu.jl",
+    "src/SupernodalLU/solve.jl"
+  ],
+  "changed_test_files": [
+    "test/Core/basictests.jl",
+    "test/Core/supernodal_lu.jl"
+  ],
+  "trigger_tests": [
+    "SupernodalLU refine dispatch"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "9b959c3fe0d44b7a98df20da5c6a5af6396e3d7a13b1c78579f3cfc1817e2954",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/Core/supernodal_lu.jl",
+        "basis": "refine dispatch assertions isolated from upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "bfebabb5e9ccf2c6be7f26d03a337f0489c47922d4e29e9b907eaf993626d216"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "339ca2465268c8ece7858cd5a40d9b82e2edc752",
+    "project": "SciML/LinearSolve.jl",
+    "input_sha256": "e02bf2df4e63ceca2022fcfe1ce57bc240d918224829c63187f190262a5745fd",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:52:51Z",
+    "usage": {
+      "prompt_tokens": 3678,
+      "completion_tokens": 614,
+      "total_tokens": 4292
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.72,\n  \"summary\": \"Fix for two JET-detected runtime dispatches that cause test failures on Julia LTS (1.10). The issue describes concrete test failures in the QA suite on Julia 1.10 due to real inference problems in production code (src/KLU/klu.jl and src/SupernodalLU/solve.jl). The fix addresses existing behavior violations (JET tests passing on 1.12 but failing on 1.10).\",\n  \"evidence\": \"Issue #1134 provides clear reproduction steps showing JET test failures on Julia 1.10 with specific error messages: runtime dispatch in `KLU._extract!` at src/KLU/klu.jl:246 and `Int(refine::Symbol)` dispatch in src/SupernodalLU/solve.jl:280. The commit modifies exactly these two production files plus their corresponding test files. The failures are in an existing test suite (GROUP=QA) that passes on 1.12 but fails on 1.10, constituting a real defect in inference/type-stability.\",\n  \"missing_evidence\": \"Cannot see the actual diff content to confirm the fix is minimal and only addresses the runtime dispatch issues. Cannot verify the test changes are purely assertions rather than new feature tests.\",\n  \"validation_risks\": \"The fix targets Julia LTS compatibility which may be version-sensitive. If tests only run on 1.12 in CI, the fix may not be verifiable without specifically testing on 1.10. The issue mentions this is part of a larger series of PRs with dependencies.\",\n  \"suggested_tests\": \"Run `GROUP=QA julia +1.10 --project=. -e 'using Pkg; Pkg.test()'` to verify JET assertions pass. Run standard test suite on both Julia 1.10 and 1.12 to ensure no regressions. Specifically verify `JET.@test_opt solve(prob_sparse, KLUFactorization())` and `JET.@test_opt SNLU_MOD.solve!(x, F, b)` pass without runtime dispatch warnings.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "Fix for two JET-detected runtime dispatches that cause test failures on Julia LTS (1.10). The issue describes concrete test failures in the QA suite on Julia 1.10 due to real inference problems in production code (src/KLU/klu.jl and src/SupernodalLU/solve.jl). The fix addresses existing behavior violations (JET tests passing on 1.12 but failing on 1.10).",
+    "evidence": "Issue #1134 provides clear reproduction steps showing JET test failures on Julia 1.10 with specific error messages: runtime dispatch in `KLU._extract!` at src/KLU/klu.jl:246 and `Int(refine::Symbol)` dispatch in src/SupernodalLU/solve.jl:280. The commit modifies exactly these two production files plus their corresponding test files. The failures are in an existing test suite (GROUP=QA) that passes on 1.12 but fails on 1.10, constituting a real defect in inference/type-stability.",
+    "missing_evidence": "Cannot see the actual diff content to confirm the fix is minimal and only addresses the runtime dispatch issues. Cannot verify the test changes are purely assertions rather than new feature tests.",
+    "validation_risks": "The fix targets Julia LTS compatibility which may be version-sensitive. If tests only run on 1.12 in CI, the fix may not be verifiable without specifically testing on 1.10. The issue mentions this is part of a larger series of PRs with dependencies.",
+    "suggested_tests": "Run `GROUP=QA julia +1.10 --project=. -e 'using Pkg; Pkg.test()'` to verify JET assertions pass. Run standard test suite on both Julia 1.10 and 1.12 to ensure no regressions. Specifically verify `JET.@test_opt solve(prob_sparse, KLUFactorization())` and `JET.@test_opt SNLU_MOD.solve!(x, F, b)` pass without runtime dispatch warnings."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "SupernodalLU refine dispatch"
+    ],
+    "exception_types": [
+      "031e1fc0c5f0969e562bb0ee560f020a07b1e791298c3878ad40df11f24bdb64",
+      "38504eec610247896048d9dcb6895872d85b571880def6d1a91f17412a33ddab",
+      "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7",
+      "d8fe9083807d41a6b43cc212a1a39b41bedff5ebe8aa9a238597045d23b33df1"
+    ],
+    "fingerprints": [
+      "031e1fc0c5f0969e562bb0ee560f020a07b1e791298c3878ad40df11f24bdb64",
+      "38504eec610247896048d9dcb6895872d85b571880def6d1a91f17412a33ddab",
+      "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7",
+      "d8fe9083807d41a6b43cc212a1a39b41bedff5ebe8aa9a238597045d23b33df1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "339ca2465268c8ece7858cd5a40d9b82e2edc752",
+    "parent_sha": "a507d85747c3689f491ef86a4d67d30bdde06f1d",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "e237b7d5887a814a1ba9bd23a094c03621c03bc6a6d402aa1f21c2cb1c366f09",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

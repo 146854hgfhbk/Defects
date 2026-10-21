@@ -1,0 +1,61 @@
+{
+  "candidate_sha": "38c1835e8b82c9354c7c8687d6e6235b33f37b65",
+  "project": "SciML/RuntimeGeneratedFunctions.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 141,
+      "url": "https://github.com/SciML/RuntimeGeneratedFunctions.jl/issues/141",
+      "state": "closed",
+      "title": "Deadlock in multithreaded processes",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug"
+      ],
+      "body_excerpt": "**Describe the bug 🐞**\n\nWhen running the tests with multiple threads, they hang and 5 cores spin forever.\n\n**Expected behavior**\n\nThey should not hang.\n\n**Minimal Reproducible Example 👇**\n\nRun the tests with `-t auto`, for me that causes it to hang.\n\n**Environment (please complete the following information):**\n\nOn my phone ATM so I don't have the details, but it's master on 1.13 rc3. The bug also reproduces for me on earlier versions though.\n\n**Additional context**\n\n<details>\n<summary>Investigation from Claude</summary>\n\n# Multithreaded use deadlocks: `_cache_lock` vs. Julia's inference lock\n\nConstructing and calling `RuntimeGeneratedFunction`s from several threads\ndeadlocks, with the involved threads spinning at 100% CPU. The threaded test in\n`test/core_tests.jl` covers this pattern, but the suite runs single-threaded, so\nCI never sees it.\n\n## Reproducer\n\n```julia\n# julia --project --threads=8 repro.jl\nusing RuntimeGeneratedFunctions\nRuntimeGeneratedFunctions.init(@__MODULE__)\n\ntasks = map(1:4) do k\n    Threads.@spawn begin\n        all(1:100) do i\n            f = @RuntimeGeneratedFunction(\n                Base.remove_linenums!(:((x, y) -> x + y + $i * $k))\n            )\n            f(1, 2) == 3 + i * k\n        end\n    end\nend\n@assert all(fetch.(tasks))\nprintln(\"OK\")\n```\n\nPasses with `--threads=1`, hangs 5/5 runs with `--threads=8`. Confirmed on Julia\n1.10.11 and 1.13.0-rc3 (RuntimeGeneratedFunctions 0.5.24, Linux, 8 cores), so\nthis is not a recent regression.\n\n## Cause\n\nLock-order inversion between `_cache_lock` and Julia's inference lock:\n\n* `_cache_body` takes `_cache_lock`, then inserts into the cache `Dict`. The\n  insert can hit an uncompiled specialization (`setindex!` → `rehash!`), so it\n  calls the compiler and blocks on the inference lock.\n* `_lookup_body` is called from the `@generated generated_callfunc` expansion,\n  i.e. while the calling thread already holds the inference lock, and spins on\n  `_cache_lock`.\n\nTrimmed from `kill -USR1` backtraces of a hun"
+    },
+    {
+      "number": 143,
+      "url": "https://github.com/SciML/RuntimeGeneratedFunctions.jl/pull/143",
+      "state": "closed",
+      "title": "Fix multithreaded deadlock between the body cache and the compiler lock",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "**Please ignore until reviewed by @ChrisRackauckas.**\n\nFixes https://github.com/SciML/RuntimeGeneratedFunctions.jl/issues/141.\n\n## What changed and why\n\n`_lookup_body` is called from the expansion of the `generated_callfunc`\n`@generated` method, so it runs while the calling thread holds Julia's compiler\nlock — and it took `_cache_lock`. Meanwhile `_cache_body` holds `_cache_lock`\nwhile inserting into the cache `Dict`, and that insert can compile a\nspecialization (`setindex!` → `rehash!` → codegen) and block on the compiler\nlock. Classic lock-order inversion; because `_cache_lock` is a `SpinLock`, the\nhung threads sit at 100% CPU.\n\nReads are now lock-free. The cache is a stack of `Dict`s, newest first, none of\nwhich is mutated once published; a reader takes the stack with a single atomic\nload. Writers still serialize on `_cache_lock` and publish a replacement stack.\nCopying the whole map per insert would be O(n²) for a package that generates\nthousands of functions, so levels merge on the logarithmic method (a level merges\ndown once it reaches half the next level's size): sizes more than double going\ndown the stack, bounding both a reader's probes and an insert's copying at\nO(log n).\n\nThe cache object stored in each initialized module changes from `Dict()` to an\ninternal `RuntimeGeneratedFunctions._BodyCache`. That name\n(`#_RuntimeGeneratedFunctions_cache`) is not public API, but it is a shape change\nfor anything reaching into it.\n\n## Failing before / passing after\n\nReproducer from the issue, on Julia 1.10.11 (also reproduces on 1.13.0-rc3):\n\nBefore (`master`, `--threads=8`, `timeout -s KILL 90`; exit 137 = killed while hung):\n\n```\n--- run 1\n[2179500] signal (15): Terminated\n...\nlock at ./locks-mt.jl:48\n_lookup_body at src/RuntimeGeneratedFunctions.jl:306      <-- spins on _cache_lock\ngenerated_callfunc_body at src/RuntimeGeneratedFunctions.jl:243\n#s1#1 at src/RuntimeGeneratedFunctions.jl:372 [inlined]\njl_type_infer at src/gf.c:396                             <-- hold"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "fix_commit_to_issue",
+      "issue_numbers": [
+        141
+      ],
+      "fix_commit": "38c1835e8b82c9354c7c8687d6e6235b33f37b65",
+      "evidence_source": "fix_commit_message"
+    }
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix multithreaded deadlock between the body cache and the compiler lock (#143)\n\n`_lookup_body` is called from the `generated_callfunc` expansion, so it runs\nwhile the calling thread holds Julia's compiler lock. It took `_cache_lock`,\nwhile `_cache_body` held `_cache_lock` and could block on the compiler lock\n(inserting into the cache compiles a specialization) — a lock-order inversion\nthat hangs both threads with the spinlock burning CPU.\n\nReads are now lock-free. The cache is a stack of `Dict`s that are never mutated\nafter publication, swapped in through an `@atomic` field; writers still take\n`_cache_lock`. Levels merge on the logarithmic method so an insert copies\nO(log n) entries rather than the whole map.\n\nThe existing threaded test could not catch this because the suite runs\nsingle-threaded; it now runs in a subprocess with `--threads=8` and a watchdog.\n\nFixes https://github.com/SciML/RuntimeGeneratedFunctions.jl/issues/141\n\nCo-authored-by: ChrisRackauckas-Claude <accounts@chrisrackauckas.com>",
+    "commit_issue_refs": [
+      141,
+      143
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": null,
+    "pull_request_title": "",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    141
+  ],
+  "cross_repository_issue_records": []
+}

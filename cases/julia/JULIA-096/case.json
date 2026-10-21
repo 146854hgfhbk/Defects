@@ -1,0 +1,117 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-096",
+  "bug_id": "JULIA-096",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/494"
+  ],
+  "issue_id": 494,
+  "buggy_revision": "0a0aa04625606e9f7bbbc8faccfe1c17bba53f7a",
+  "fixed_revision": "87fcdf08dea457394fc13a98e11210e68ff34ae0",
+  "candidate_sha": "87fcdf08dea457394fc13a98e11210e68ff34ae0",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "0a0aa04625606e9f7bbbc8faccfe1c17bba53f7a",
+  "changed_production_files": [
+    "src/parser.jl"
+  ],
+  "changed_test_files": [
+    "test/expr.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-096 toplevel line numbers after blank line"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "b9039c4b76b6b4d26e34e5e60e319a5575e74608e11059426e576c5643db2a77",
+    "oracle": {
+      "public_api": "JuliaSyntax.parseall",
+      "upstream_test_file": "test/expr.jl",
+      "source_evidence": "isolated from the upstream fix assertions in test/expr.jl",
+      "upstream_test_patch_sha256": "e188850cb22eefc0b093b8af59ecb52424d88e5f5ad44f84a04ea65858248daf"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "87fcdf08dea457394fc13a98e11210e68ff34ae0",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "1541b7543aa7d0c32045169376e8579d6e1a1f0495a94b203e5ad79b20b02baa",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:54:10Z",
+    "usage": {
+      "prompt_tokens": 2015,
+      "completion_tokens": 561,
+      "total_tokens": 2576
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"Fix for wrong line numbers reported for syntax errors when lines end in semicolons. The issue (#494) clearly documents a regression from Julia 1.6 to 1.10 where error line numbers differ depending on trailing semicolons. The commit fixes parser.jl (production code) and includes test changes in test/expr.jl.\", \"evidence\": \"Issue #494 provides a clear MWE showing that lines ending in `;` cause incorrect line numbers in error messages (line 2 instead of line 4). PR #495 references 'Fix #494'. The commit modifies src/parser.jl (production code) and test/expr.jl (test code), consistent with a targeted bug fix for syntax trivia attachment to top-level statements.\", \"missing_evidence\": \"The actual diff content is not available, so I cannot verify the exact nature of the parser change or the specific test assertions added. The commit stats and file details are empty.\", \"validation_risks\": \"Without seeing the actual code change, there's a small risk that the fix involves broader refactoring of trivia handling that could affect other parse behaviors. The issue title of PR #495 ('Consistent attachment of syntax trivia to top level statements') suggests a somewhat broader scope than a single-line fix.\", \"suggested_tests\": \"1. Parse `f(;1;2);\\\\n` and verify the error points to the correct line. 2. Parse `f(;1;2)\\\\n` without trailing semicolon and verify same line number. 3. Verify multi-line files with trailing semicolons report correct line numbers for subsequent errors. 4. Regression test ensuring trailing semicolons on non-error lines don't shift reported positions.\"}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for wrong line numbers reported for syntax errors when lines end in semicolons. The issue (#494) clearly documents a regression from Julia 1.6 to 1.10 where error line numbers differ depending on trailing semicolons. The commit fixes parser.jl (production code) and includes test changes in test/expr.jl.",
+    "evidence": "Issue #494 provides a clear MWE showing that lines ending in `;` cause incorrect line numbers in error messages (line 2 instead of line 4). PR #495 references 'Fix #494'. The commit modifies src/parser.jl (production code) and test/expr.jl (test code), consistent with a targeted bug fix for syntax trivia attachment to top-level statements.",
+    "missing_evidence": "The actual diff content is not available, so I cannot verify the exact nature of the parser change or the specific test assertions added. The commit stats and file details are empty.",
+    "validation_risks": "Without seeing the actual code change, there's a small risk that the fix involves broader refactoring of trivia handling that could affect other parse behaviors. The issue title of PR #495 ('Consistent attachment of syntax trivia to top level statements') suggests a somewhat broader scope than a single-line fix.",
+    "suggested_tests": "1. Parse `f(;1;2);\\n` and verify the error points to the correct line. 2. Parse `f(;1;2)\\n` without trailing semicolon and verify same line number. 3. Verify multi-line files with trailing semicolons report correct line numbers for subsequent errors. 4. Regression test ensuring trailing semicolons on non-error lines don't shift reported positions."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-096 toplevel line numbers after blank line"
+    ],
+    "exception_types": [
+      "fef9adae20bbd303212ca62ed6bb73c3d3c15dee7ea812c61b7ded72b9ec12db"
+    ],
+    "fingerprints": [
+      "fef9adae20bbd303212ca62ed6bb73c3d3c15dee7ea812c61b7ded72b9ec12db"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

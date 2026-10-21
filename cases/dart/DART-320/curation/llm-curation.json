@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-320",
+  "technical_evidence_sha256": "2e26d2429936db69500214a0d0f55da252afaefb9ee6ba49bf7e50966d65600a",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "de1db9bd7d2f1b27a05c757a05835d4a8bf71e536fe74352671185bd5f14c63f",
+  "reviewed_at": "2026-08-11T12:06:34.637728+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "grpc/grpc-dart#669",
+  "rationale": "Issue 669 (label type-bug) reports the Dart gRPC server marking messages as compressed while advertising grpc-encoding: identity, producing the client error 'Request sent identity grpc-encoding value with compressed message'. The production fix is exactly that: a single hunk in lib/src/shared/message.dart changing the framing header byte from `codec == null ? 0 : 1` to also emit 0 when `codec.encodingName == \"identity\"`, which PR 693 justifies against the gRPC compression spec. The minimized patch equals the original commit patch: one file, one hunk, two changed lines, no refactor, formatting-only, docs, config, or test changes (the CHANGELOG/pubspec/format commits from the 11-commit PR are not part of the selected commit). The trigger comes from the later upstream commit bdbe5f5, which added test/grpc_compression_flag_test.dart asserting the framing flag for null, IdentityCodec, and GzipCodec; strict evidence confirms build passes on both revisions and the identity selector is the sole reproducing failure on the buggy revision, so IdentityCodec and frame() already exist pre-fix and the trigger depends on no API introduced by the fix. Strict gates (build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic with 3 repetitions, 44-run matrix, full-suite green on fixed and failing only on the expected trigger on buggy) all passed in both original and post-minimization runs. No active same-project root causes are registered, so #669 is not a duplicate.\n\nIssue #669 reports that the gRPC-Dart server always compresses messages even when the client sends 'grpc-encoding: identity', causing client error 'Request sent identity grpc-encoding value with compressed message'. The minimized production patch changes a single line in frame() to check not only if codec is null but also if codec.encodingName == 'identity', setting the compression flag to 0 in both cases per the gRPC spec. The later-commit trigger test 'compression flag 0 with grpc-encoding identity' directly exercises this defect by calling frame() with IdentityCodec() and asserting data[0] == 0. The strict runtime evidence confirms: (1) the trigger fails deterministically on buggy (expects 0, observes 1), (2) passes on fixed, (3) full suite reproduces only the trigger on buggy, (4) all tests pass on fixed, (5) AB/BA/AB validation passed with 3 repetitions. IdentityCodec and GzipCodec exist in the buggy revision (imports work, test compiles). The patch contains no formatting, refactoring, documentation, test-only, or feature changes—only the protocol-conformance fix. No active same-project root causes supplied for duplicate check.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:06:19.852136+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "de1db9bd7d2f1b27a05c757a05835d4a8bf71e536fe74352671185bd5f14c63f",
+      "response_sha256": "861b0d58405d4e5f0d11d6d71d738d4a34b68105123c1c42ea97ba072f0b2323",
+      "response_id": "msg_1786449979657",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 9961,
+        "output_tokens": 908,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "grpc/grpc-dart#669",
+      "rationale": "Issue 669 (label type-bug) reports the Dart gRPC server marking messages as compressed while advertising grpc-encoding: identity, producing the client error 'Request sent identity grpc-encoding value with compressed message'. The production fix is exactly that: a single hunk in lib/src/shared/message.dart changing the framing header byte from `codec == null ? 0 : 1` to also emit 0 when `codec.encodingName == \"identity\"`, which PR 693 justifies against the gRPC compression spec. The minimized patch equals the original commit patch: one file, one hunk, two changed lines, no refactor, formatting-only, docs, config, or test changes (the CHANGELOG/pubspec/format commits from the 11-commit PR are not part of the selected commit). The trigger comes from the later upstream commit bdbe5f5, which added test/grpc_compression_flag_test.dart asserting the framing flag for null, IdentityCodec, and GzipCodec; strict evidence confirms build passes on both revisions and the identity selector is the sole reproducing failure on the buggy revision, so IdentityCodec and frame() already exist pre-fix and the trigger depends on no API introduced by the fix. Strict gates (build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic with 3 repetitions, 44-run matrix, full-suite green on fixed and failing only on the expected trigger on buggy) all passed in both original and post-minimization runs. No active same-project root causes are registered, so #669 is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.candidate.issue_check.linked_issues[0].body",
+        "source_candidate.candidate.origin_pull_request.body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_original.checks.build.both_versions",
+        "trigger_tests"
+      ],
+      "risks": [
+        "The fix compares against the literal string \"identity\" instead of a shared constant, so an identity codec named differently would still set the compressed flag.",
+        "The trigger is a unit-level assertion on the framing header byte rather than an end-to-end client/server exchange, so it covers the flag but not the full wire interaction described in the issue.",
+        "Only the header flag is corrected; the patch does not touch payload encoding, so correctness still depends on IdentityCodec.compress being a pass-through."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:06:34.637513+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "de1db9bd7d2f1b27a05c757a05835d4a8bf71e536fe74352671185bd5f14c63f",
+      "response_sha256": "7851a5f702b17006cd501528db5ed38d62d8c34ac7de3b48229fee1903cfa312",
+      "response_id": "msg_a8ec4209-90e2-4947-b1",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2863
+        },
+        "cache_creation_input_tokens": 2863,
+        "cache_read_input_tokens": 7363,
+        "input_tokens": 9579,
+        "output_tokens": 1054
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "grpc/grpc-dart#669",
+      "rationale": "Issue #669 reports that the gRPC-Dart server always compresses messages even when the client sends 'grpc-encoding: identity', causing client error 'Request sent identity grpc-encoding value with compressed message'. The minimized production patch changes a single line in frame() to check not only if codec is null but also if codec.encodingName == 'identity', setting the compression flag to 0 in both cases per the gRPC spec. The later-commit trigger test 'compression flag 0 with grpc-encoding identity' directly exercises this defect by calling frame() with IdentityCodec() and asserting data[0] == 0. The strict runtime evidence confirms: (1) the trigger fails deterministically on buggy (expects 0, observes 1), (2) passes on fixed, (3) full suite reproduces only the trigger on buggy, (4) all tests pass on fixed, (5) AB/BA/AB validation passed with 3 repetitions. IdentityCodec and GzipCodec exist in the buggy revision (imports work, test compiles). The patch contains no formatting, refactoring, documentation, test-only, or feature changes—only the protocol-conformance fix. No active same-project root causes supplied for duplicate check.",
+      "evidence_paths": [
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential.detail",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers.passed",
+        "strict_post_minimization.checks.matrix.repetitions.detail"
+      ],
+      "risks": [
+        "String literal comparison 'identity' is not defined as a constant; any deviation in spelling would bypass the fix",
+        "Test depends on IdentityCodec and GzipCodec being available in the parent revision; evidence shows imports succeed but class implementation details not verified"
+      ]
+    }
+  ]
+}

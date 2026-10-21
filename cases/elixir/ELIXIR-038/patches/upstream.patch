@@ -1,0 +1,125 @@
+diff --git a/lib/application.ex b/lib/application.ex
+index 6b7bf66..624b3f4 100644
+--- a/lib/application.ex
++++ b/lib/application.ex
+@@ -9,20 +9,27 @@ defmodule Protobuf.Application do
+   """
+ 
+   @doc false
++  @impl true
+   def start(_type, _args) do
+     if Application.get_env(:protobuf, :extensions, :disabled) == :enabled do
+       mods = get_all_modules()
+-      Protobuf.Extension.cal_extensions(mods)
++      Protobuf.Extension.__cal_extensions__(mods)
+     else
+       # Extensions in Protobuf should always be calculated for generating code
+       {:ok, mods} = :application.get_key(:protobuf, :modules)
+-      Protobuf.Extension.cal_extensions(mods)
++      Protobuf.Extension.__cal_extensions__(mods)
+     end
+ 
+     children = []
+     Supervisor.start_link(children, strategy: :one_for_one)
+   end
+ 
++  @impl true
++  def stop(_state) do
++    Protobuf.Extension.__unload_extensions__()
++    :ok
++  end
++
+   defp get_all_modules() do
+     case :code.get_mode() do
+       :embedded ->
+diff --git a/lib/protobuf/extension.ex b/lib/protobuf/extension.ex
+index 3cc8b34..450fe03 100644
+--- a/lib/protobuf/extension.ex
++++ b/lib/protobuf/extension.ex
+@@ -4,8 +4,7 @@ defmodule Protobuf.Extension do
+   let you set extra fields for previously defined messages(even for messages in other packages)
+   without changing the original message.
+ 
+-  **This is an experimental feature**, to use it, Erlang should be >= 21.2 because `:persistent_term`
+-  is used and config should be set:
++  **This is an experimental feature**, the following config should be set to use it:
+ 
+       # Without this, modules won't be scanned to get extensions metadata.
+       # Functions like `get_extension` and `put_extension` still exist, but they don't work.
+@@ -38,7 +37,6 @@ defmodule Protobuf.Extension do
+       Foo.put_extension(foo, Ext.PbExtension, :my_custom, "Custom field")
+       Foo.get_extension(foo, Ext.PbExtension, :my_custom)
+   """
+-  alias Protobuf.GlobalStore
+ 
+   @doc "The actual function for `put_extension`"
+   @spec put(module, map, module, atom, any) :: map
+@@ -97,7 +95,7 @@ defmodule Protobuf.Extension do
+ 
+   @doc false
+   def get_extension_props_by_tag(extendee, tag) do
+-    case GlobalStore.get({Protobuf.Extension, extendee, tag}, nil) do
++    case :persistent_term.get({Protobuf.Extension, extendee, tag}, nil) do
+       nil ->
+         nil
+ 
+@@ -115,7 +113,7 @@ defmodule Protobuf.Extension do
+   end
+ 
+   @doc false
+-  def cal_extensions(mods) do
++  def __cal_extensions__(mods) do
+     mods
+     |> Enum.filter(fn mod ->
+       if to_string(mod) =~ ~r/\.PbExtension$/ && Code.ensure_loaded?(mod) do
+@@ -131,12 +129,19 @@ defmodule Protobuf.Extension do
+         fnum = ext.field_props.fnum
+         fnum_key = {Protobuf.Extension, ext.extendee, fnum}
+ 
+-        if GlobalStore.get(fnum_key, nil) do
++        if :persistent_term.get(fnum_key, nil) do
+           raise "Extension #{inspect(ext.extendee)}##{fnum} already exists"
+         end
+ 
+-        GlobalStore.put(fnum_key, mod)
++        :persistent_term.put(fnum_key, mod)
+       end)
+     end)
+   end
++
++  @doc false
++  def __unload_extensions__ do
++    for {{Protobuf.Extension, _extendee, _tag} = key, _mod} <- :persistent_term.get() do
++      :persistent_term.erase(key)
++    end
++  end
+ end
+diff --git a/lib/protobuf/global_store.ex b/lib/protobuf/global_store.ex
+deleted file mode 100644
+index 728fda8..0000000
+--- a/lib/protobuf/global_store.ex
++++ /dev/null
+@@ -1,23 +0,0 @@
+-defmodule Protobuf.GlobalStore do
+-  @moduledoc false
+-
+-  if function_exported?(:persistent_term, :get, 2) &&
+-       function_exported?(:persistent_term, :put, 2) do
+-    def put(key, value) do
+-      :persistent_term.put(key, value)
+-    end
+-
+-    def get(key, default) do
+-      :persistent_term.get(key, default)
+-    end
+-  else
+-    # Without :persistent_term, this is not supported
+-    def put(key, value) do
+-      :ok
+-    end
+-
+-    def get(_key, default) do
+-      default
+-    end
+-  end
+-end

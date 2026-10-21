@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-800",
+  "technical_evidence_sha256": "3c955e092215fca404f2c42cd92bcd5893d4e57fe3f465b6aaf5eb20cf451524",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "3a1fe1f42bc7d496c9d5ff36e9dafbe2b8876dd4d8b60f8359f7be1b9d00b7a3",
+  "reviewed_at": "2026-08-14T06:07:13.762458+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "intel/rohd#382",
+  "rationale": "Issue #382 (labeled bug) reports that `If.block([Else([b < a])])` is silently accepted and emits malformed SystemVerilog (`if begin` with no condition), with expected behavior being a raised exception. The minimized production patch addresses exactly that: `If.block`'s constructor now validates `Else` placement (must be last, must not be first) and throws `InvalidConditionalException`, while the stale, late check that only fired during Verilog generation is removed from `generateVerilog`. The new exception file plus its one-line export are the mechanism of the throw, not an unrelated addition; the PR's separate doc-clarification commit (e60a07b) and unused-test-module removal (3bf8c86) are excluded from this revision pair, so the minimized patch equals the production portion of the single fixing commit with no formatting, refactor, config, or test-only content. The trigger is the unchanged upstream test portion of the same commit and uses only pre-existing APIs (`If.block`, `Else`, `ElseIf`, `Logic`) with the generic `throwsException` matcher, so it does not depend on the newly introduced `InvalidConditionalException` type. Strict evidence confirms all three declared selectors reproduce on the buggy revision, fixed revision is clean isolated/suite/reversed, both versions build, full suite on buggy fails only on the reproduced triggers, and determinism held over 3 repetitions (44 matrix runs, no failed checks). active_same_project_root_causes is empty and intel/rohd#382 is the sole allowed verified issue key, so this root cause is not a duplicate.\n\nIssue #382 (labeled bug) reports that `If.block([Else([...])])` is silently accepted and emits malformed SystemVerilog (`if begin` with no condition), expecting an exception. The minimized production patch adds construction-time validation in the `If.block` constructor in lib/src/modules/conditional.dart (Else must be last, Else must not be first) and removes the stale late check that lived in the Verilog-generation path, so the single root cause is missing/mis-timed validation of `Else` position in an `If.block`. The new file invalid_conditional_exception.dart plus the one-line export in conditional_exceptions.dart exist solely to carry the thrown exception type; there is no formatting-only, docs-only, config-only, or refactor content, and the doc-comment clarification and unused-test-module cleanup from the sibling PR commits (e60a07b, 3bf8c86) are correctly excluded. The three trigger tests come from the unchanged test portion of the same fixing commit and assert with the generic `throwsException` matcher using only pre-existing APIs (`If.block`, `Else`, `ElseIf`, `Logic`), so they compile and run on the buggy revision without depending on the newly introduced `InvalidConditionalException`. Machine-generated strict gates pass in both original and post-minimization runs: build on both versions, deterministic trigger fingerprints (5 groups), buggy differential reproducing all three declared selectors, fixed isolated/suite/reversed clean, and fixed full suite all green with no baseline exclusions. active_same_project_root_causes is empty and intel/rohd#382 is the allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:06:38.392597+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3a1fe1f42bc7d496c9d5ff36e9dafbe2b8876dd4d8b60f8359f7be1b9d00b7a3",
+      "response_sha256": "0a6352795170dfda8a0fdd3b927ca0dd6660f9c588170e32240c08415236b934",
+      "response_id": "msg_7381a676b818410594698071bbcb12b9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7261668468325041,
+        "input_tokens": 20157,
+        "output_tokens": 715
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#382",
+      "rationale": "Issue #382 (labeled bug) reports that `If.block([Else([b < a])])` is silently accepted and emits malformed SystemVerilog (`if begin` with no condition), with expected behavior being a raised exception. The minimized production patch addresses exactly that: `If.block`'s constructor now validates `Else` placement (must be last, must not be first) and throws `InvalidConditionalException`, while the stale, late check that only fired during Verilog generation is removed from `generateVerilog`. The new exception file plus its one-line export are the mechanism of the throw, not an unrelated addition; the PR's separate doc-clarification commit (e60a07b) and unused-test-module removal (3bf8c86) are excluded from this revision pair, so the minimized patch equals the production portion of the single fixing commit with no formatting, refactor, config, or test-only content. The trigger is the unchanged upstream test portion of the same commit and uses only pre-existing APIs (`If.block`, `Else`, `ElseIf`, `Logic`) with the generic `throwsException` matcher, so it does not depend on the newly introduced `InvalidConditionalException` type. Strict evidence confirms all three declared selectors reproduce on the buggy revision, fixed revision is clean isolated/suite/reversed, both versions build, full suite on buggy fails only on the reproduced triggers, and determinism held over 3 repetitions (44 matrix runs, no failed checks). active_same_project_root_causes is empty and intel/rohd#382 is the sole allowed verified issue key, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "case.json source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "lib/src/modules/conditional.dart",
+        "lib/src/exceptions/conditionals/invalid_conditional_exception.dart",
+        "patches/trigger-tests.patch",
+        "case.json strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json strict_post_minimization.checks.full_suite.fixed_all_green",
+        "case.json traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "Two of the three triggers (`else in the middle`, `else at the start`) go beyond the literal scenario in issue #382; the middle-`Else` case previously did throw, but only later during Verilog generation, so those triggers assert an earlier validation point rather than a wholly absent exception. They share the same root cause (missing construction-time validation of `Else` placement in `If.block`) and the PR explicitly scopes to it, but they are broader than the issue text alone.",
+        "The fix introduces a new public exception type exported from `conditional_exceptions.dart`. It is incidental to the behavioral fix and unused by the trigger, but it does widen the public surface at the fixed revision.",
+        "The behavior change turns previously-accepted constructions into throwing ones; the passing full suite on the fixed revision indicates no in-repo caller relied on the lax behavior, but downstream users could be affected."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:07:13.761894+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3a1fe1f42bc7d496c9d5ff36e9dafbe2b8876dd4d8b60f8359f7be1b9d00b7a3",
+      "response_sha256": "42778507fc3c4a4773e30105cd6c677c33d9a2d6d302d73be8202a8095502f28",
+      "response_id": "msg_73b2631f6ee4496e900e9588aaf5066f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6427134580431179,
+        "input_tokens": 20141,
+        "output_tokens": 728
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#382",
+      "rationale": "Issue #382 (labeled bug) reports that `If.block([Else([...])])` is silently accepted and emits malformed SystemVerilog (`if begin` with no condition), expecting an exception. The minimized production patch adds construction-time validation in the `If.block` constructor in lib/src/modules/conditional.dart (Else must be last, Else must not be first) and removes the stale late check that lived in the Verilog-generation path, so the single root cause is missing/mis-timed validation of `Else` position in an `If.block`. The new file invalid_conditional_exception.dart plus the one-line export in conditional_exceptions.dart exist solely to carry the thrown exception type; there is no formatting-only, docs-only, config-only, or refactor content, and the doc-comment clarification and unused-test-module cleanup from the sibling PR commits (e60a07b, 3bf8c86) are correctly excluded. The three trigger tests come from the unchanged test portion of the same fixing commit and assert with the generic `throwsException` matcher using only pre-existing APIs (`If.block`, `Else`, `ElseIf`, `Logic`), so they compile and run on the buggy revision without depending on the newly introduced `InvalidConditionalException`. Machine-generated strict gates pass in both original and post-minimization runs: build on both versions, deterministic trigger fingerprints (5 groups), buggy differential reproducing all three declared selectors, fixed isolated/suite/reversed clean, and fixed full suite all green with no baseline exclusions. active_same_project_root_causes is empty and intel/rohd#382 is the allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/modules/conditional.dart",
+        "lib/src/exceptions/conditionals/invalid_conditional_exception.dart",
+        "patches/trigger-tests.patch",
+        "case.json:issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.fixed_all_green",
+        "case.json:trigger_reduction.upstream_trigger_patch"
+      ],
+      "risks": [
+        "The fix introduces a new public exception type exported from conditional_exceptions.dart; this is an API surface addition, tolerated here only because the triggers use the generic throwsException matcher and never name the new type.",
+        "Two of the three triggers (Else in the middle, Else at the start) exercise the Else-not-last case that previously threw a generic Exception during Verilog generation rather than at construction, so they capture a validation-timing shift in the same root cause rather than the literal only-Else scenario in the issue text.",
+        "The trigger test patch also adds an unused OnlyElseMod class that upstream removed in a later commit; harmless for execution but could surface as an analyzer/lint warning (analyze gate is diagnostic only, require_analyze_clean=false).",
+        "Behavior moves from silently accepted to throwing at construction, so any downstream code relying on the lax construction would now fail; the fixed full suite is green, but only one full-suite repetition was recorded."
+      ]
+    }
+  ]
+}

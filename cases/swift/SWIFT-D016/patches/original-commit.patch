@@ -1,0 +1,35 @@
+diff --git a/Sources/Fluent/SQL/GeneralSQLSerializer.swift b/Sources/Fluent/SQL/GeneralSQLSerializer.swift
+index 36babab1e5a918b7afa8894403c1733ac7f70a65..9953a151e6db2213daee358f1a1345a6b3b82405 100644
+--- a/Sources/Fluent/SQL/GeneralSQLSerializer.swift
++++ b/Sources/Fluent/SQL/GeneralSQLSerializer.swift
+@@ -115,7 +115,7 @@ open class GeneralSQLSerializer<E: Entity>: SQLSerializer {
+     }
+ 
+     open func aggregate(_ field: String, _ aggregate: Aggregate) -> (String, [Node]) {
+-        let fieldEscaped: String
++        var fieldEscaped: String
+         switch field {
+         case "*":
+             fieldEscaped = field
+@@ -131,7 +131,7 @@ open class GeneralSQLSerializer<E: Entity>: SQLSerializer {
+ 
+         statement += "SELECT"
+         if query.isDistinct {
+-            statement += "DISTINCT"
++            fieldEscaped = "DISTINCT \(fieldEscaped)"
+         }
+         
+         let function: String
+diff --git a/Tests/FluentTests/SQLSerializerTests.swift b/Tests/FluentTests/SQLSerializerTests.swift
+index 479e44a628fb73973375fdb631446d45a852d647..9d2df55e5394e86f151a3098b2a0a5d4e2d87fd2 100644
+--- a/Tests/FluentTests/SQLSerializerTests.swift
++++ b/Tests/FluentTests/SQLSerializerTests.swift
+@@ -85,7 +85,7 @@ class SQLSerializerTests: XCTestCase {
+         query.isDistinct = true
+         let (statement, values) = serialize(query)
+         
+-        XCTAssertEqual(statement, "SELECT DISTINCT COUNT(*) as _fluent_aggregate FROM `users`")
++        XCTAssertEqual(statement, "SELECT COUNT(DISTINCT *) as _fluent_aggregate FROM `users`")
+         XCTAssert(values.isEmpty)
+     }
+ 

@@ -1,0 +1,217 @@
+diff --git a/lua/pl/permute.lua b/lua/pl/permute.lua
+index 78b453743089eccc7451ab68be07231d00968930..ce646f4d52fe29b5e7fd3d87040d11766356ffc9 100644
+--- a/lua/pl/permute.lua
++++ b/lua/pl/permute.lua
+@@ -88,38 +88,41 @@ end
+ -- local bools = utils.pack(true, false)
+ -- local iter = permute.list_iter(strs, bools)
+ --
+--- print(iter())    --> 1, three, false
+--- print(iter())    --> 2, three, true
+--- print(iter())    --> 3, nil, false
+--- print(iter())    --> 4, nil, true
+--- print(iter())    --> 5, one, false
+--- print(iter())    --> 6, one, true
++-- print(iter())    --> 1, one, true
++-- print(iter())    --> 2, nil, true
++-- print(iter())    --> 3, three, true
++-- print(iter())    --> 4, one, false
++-- print(iter())    --> 5, nil, false
++-- print(iter())    --> 6, three, false
+ function permute.list_iter(...)
+   local elements = {...}
+   local pointers = {}
++  local sizes = {}
++  local size = #elements
+   for i, list in ipairs(elements) do
+     assert_arg(i,list,'table')
+-    pointers[i] = list.n or #list
++    pointers[i] = 1
++    sizes[i] = list.n or #list
+   end
+   local count = 0
+ 
+   return function()
+-    if pointers[1] == 0 then return end -- we're done
++    if pointers[size] > sizes[size] then return end -- we're done
+     count = count + 1
+     local r = { n = #elements }
+-    local cascade_down = true
+-    for i = #elements, 1, -1 do
++    local cascade_up = true
++    for i = 1, size do
+       r[i] = elements[i][pointers[i]]
+-      if cascade_down then
+-        pointers[i] = pointers[i] - 1
+-        if pointers[i] > 0 then
++      if cascade_up then
++        pointers[i] = pointers[i] + 1
++        if pointers[i] <= sizes[i] then
+           -- this list is not done yet, stop cascade
+-          cascade_down = false
++          cascade_up = false
+         else
+           -- this list is done
+-          if i ~= 1 then
++          if i ~= size then
+             -- reset pointer
+-            pointers[i] = elements[i].n or #elements[i]
++            pointers[i] = 1
+           end
+         end
+       end
+@@ -138,12 +141,12 @@ end
+ -- local bools = utils.pack(true, false)
+ -- local results = permute.list_table(strs, bools)
+ -- -- results = {
+--- --   { "three", false, n = 2 },
+--- --   { "three, true, n = 2 },
+--- --   { nil, false, n = 2 },
++-- --   { "one, true, n = 2 }
+ -- --   { nil, true, n = 2 },
++-- --   { "three, true, n = 2 },
+ -- --   { "one, false, n = 2 },
+--- --   { "one, true, n = 2 }
++-- --   { nil, false, n = 2 },
++-- --   { "three", false, n = 2 },
+ -- -- }
+ function permute.list_table(...)
+   local iter = permute.list_iter(...)
+diff --git a/spec/permute_spec.lua b/spec/permute_spec.lua
+index 843b81efffff3691ea6ea8914be1e90c118cc23c..49143c0790954a3f29a96c92dca4dcaa18e9d60c 100644
+--- a/spec/permute_spec.lua
++++ b/spec/permute_spec.lua
+@@ -103,45 +103,45 @@ describe("pl.permute", function()
+         result[#result+1] = {count, str, int, bool}
+       end
+       assert.same({
+-        [1] = {1, 'three', 3, false },
+-        [2] = {2, 'three', 3, true },
+-        [3] = {3, 'three', 2, false },
+-        [4] = {4, 'three', 2, true },
+-        [5] = {5, 'three', 1, false },
+-        [6] = {6, 'three', 1, true },
+-        [7] = {7, 'two', 3, false },
++        [1] = {1, 'one', 1, true },
++        [2] = {2, 'two', 1, true },
++        [3] = {3, 'three', 1, true },
++        [4] = {4, 'one', 2, true },
++        [5] = {5, 'two', 2, true },
++        [6] = {6, 'three', 2, true },
++        [7] = {7, 'one', 3, true },
+         [8] = {8, 'two', 3, true },
+-        [9] = {9, 'two', 2, false },
+-        [10] = {10, 'two', 2, true },
++        [9] = {9, 'three', 3, true },
++        [10] = {10, 'one', 1, false },
+         [11] = {11, 'two', 1, false },
+-        [12] = {12, 'two', 1, true },
+-        [13] = {13, 'one', 3, false },
+-        [14] = {14, 'one', 3, true },
+-        [15] = {15, 'one', 2, false },
+-        [16] = {16, 'one', 2, true },
+-        [17] = {17, 'one', 1, false },
+-        [18] = {18, 'one', 1, true },
++        [12] = {12, 'three', 1, false },
++        [13] = {13, 'one', 2, false },
++        [14] = {14, 'two', 2, false },
++        [15] = {15, 'three', 2, false },
++        [16] = {16, 'one', 3, false },
++        [17] = {17, 'two', 3, false },
++        [18] = {18, 'three', 3, false },
+       }, result)
+     end)
+ 
+ 
+     it("is nil-safe, given 'n' is set", function()
+       local result = {}
+-      local strs = utils.pack("one", "two", nil)
+       local bools = utils.pack(nil, true, false)
++      local strs = utils.pack("one", "two", nil)
+       for count, bool, str in permute.list_iter(bools, strs) do
+         result[#result+1] = {count, bool, str}
+       end
+       assert.same({
+-        [1] = {1, false, nil },
+-        [2] = {2, false, 'two' },
++        [1] = {1, nil, 'one' },
++        [2] = {2, true, 'one' },
+         [3] = {3, false, 'one' },
+-        [4] = {4, true, nil },
++        [4] = {4, nil, 'two' },
+         [5] = {5, true, 'two' },
+-        [6] = {6, true, 'one' },
++        [6] = {6, false, 'two' },
+         [7] = {7, nil, nil },
+-        [8] = {8, nil, 'two' },
+-        [9] = {9, nil, 'one' },
++        [8] = {8, true, nil },
++        [9] = {9, false, nil },
+       }, result)
+     end)
+ 
+@@ -165,41 +165,41 @@ describe("pl.permute", function()
+       local ints = { 1,2,3 }
+       local bools = { true, false }
+       assert.same({
+-        [1] = {'three', 3, false, n = 3 },
+-        [2] = {'three', 3, true, n = 3 },
+-        [3] = {'three', 2, false, n = 3 },
+-        [4] = {'three', 2, true, n = 3 },
+-        [5] = {'three', 1, false, n = 3 },
+-        [6] = {'three', 1, true, n = 3 },
+-        [7] = {'two', 3, false, n = 3 },
++        [1] = {'one', 1, true, n = 3 },
++        [2] = {'two', 1, true, n = 3 },
++        [3] = {'three', 1, true, n = 3 },
++        [4] = {'one', 2, true, n = 3 },
++        [5] = {'two', 2, true, n = 3 },
++        [6] = {'three', 2, true, n = 3 },
++        [7] = {'one', 3, true, n = 3 },
+         [8] = {'two', 3, true, n = 3 },
+-        [9] = {'two', 2, false, n = 3 },
+-        [10] = {'two', 2, true, n = 3 },
++        [9] = {'three', 3, true, n = 3 },
++        [10] = {'one', 1, false, n = 3 },
+         [11] = {'two', 1, false, n = 3 },
+-        [12] = {'two', 1, true, n = 3 },
+-        [13] = {'one', 3, false, n = 3 },
+-        [14] = {'one', 3, true, n = 3 },
+-        [15] = {'one', 2, false, n = 3 },
+-        [16] = {'one', 2, true, n = 3 },
+-        [17] = {'one', 1, false, n = 3 },
+-        [18] = {'one', 1, true, n = 3 },
++        [12] = {'three', 1, false, n = 3 },
++        [13] = {'one', 2, false, n = 3 },
++        [14] = {'two', 2, false, n = 3 },
++        [15] = {'three', 2, false, n = 3 },
++        [16] = {'one', 3, false, n = 3 },
++        [17] = {'two', 3, false, n = 3 },
++        [18] = {'three', 3, false, n = 3 },
+       }, permute.list_table(strs, ints, bools))
+     end)
+ 
+ 
+     it("is nil-safe, given 'n' is set", function()
+-      local strs = utils.pack("one", "two", nil)
+       local bools = utils.pack(nil, true, false)
++      local strs = utils.pack("one", "two", nil)
+       assert.same({
+-        [1] = {false, nil, n = 2 },
+-        [2] = {false, 'two', n = 2 },
++        [1] = {nil, 'one', n = 2 },
++        [2] = {true, 'one', n = 2 },
+         [3] = {false, 'one', n = 2 },
+-        [4] = {true, nil, n = 2 },
++        [4] = {nil, 'two', n = 2 },
+         [5] = {true, 'two', n = 2 },
+-        [6] = {true, 'one', n = 2 },
++        [6] = {false, 'two', n = 2 },
+         [7] = {nil, nil, n = 2 },
+-        [8] = {nil, 'two', n = 2 },
+-        [9] = {nil, 'one', n = 2 },
++        [8] = {true, nil, n = 2 },
++        [9] = {false, nil, n = 2 },
+       }, permute.list_table(bools, strs))
+     end)
+ 

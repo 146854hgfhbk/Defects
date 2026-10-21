@@ -1,0 +1,101 @@
+{
+  "candidate_sha": "21903f7ba8de0bb1e9a38e8a5ff799ccd8df420f",
+  "project": "JuliaStats/StatsFuns.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 188,
+      "url": "https://github.com/JuliaStats/StatsFuns.jl/pull/188",
+      "state": "closed",
+      "title": "Remove Rmath sampling methods",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "The `...rand` methods in `StatsFuns.RFunctions` based on Rmath are not used in StatsFuns and not public API either. IMO if one wants to use these methods, it would be better to use `Rmath` directly (see https://github.com/JuliaStats/Rmath.jl/pull/91).\r\n\r\nThe PR requires https://github.com/JuliaStats/Rmath.jl/pull/91 and making use of Rmath in Distributions.\r\n\r\n---\r\n\r\nAdditionally, to reduce the number of definitions further I removed the `StatsFuns.RFunctions` submodule and only defined the publicly exposed functions directly in the `StatsFuns` module.\r\n"
+    },
+    {
+      "number": 211,
+      "url": "https://github.com/JuliaStats/StatsFuns.jl/pull/211",
+      "state": "closed",
+      "title": "Fix srdist by passing nranges=1 to Rmath.ptukey/qtukey",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "## Summary\n\nThe inlining of the `RFunctions` macro in #188 dropped the special-case that\nappended a literal `1` for `:tukey`, so the `lower_tail`/`log_p` `Bool` flags\nshifted into the `nranges` positional slot of `Rmath.ptukey`/`qtukey`. As a\nresult, `srdistcdf` ↔ `srdistccdf` are silently inverted on `v2.0.0` and the\ninverse CDF functions also return wrong values. For example:\n\n```julia\njulia> using StatsFuns\n\njulia> srdistcdf(2.0, 2.0, 0.0)         # should be 0\n1.0\n```\n\nRestore the missing `1` argument explicitly in all 8 `Rmath.ptukey`/`qtukey`\ncalls.\n\n## Why the existing tests didn't catch it\n\nThe `rmathcomp` harness compared StatsFuns' buggy `srdistcdf` against an\nequally buggy direct `Rmath.ptukey(..., true, false)` call, so the test\nagreed with itself. Fix the harness to inject `nranges=1` for tukey when\nbuilding the Rmath-side lambdas, and add a strict-equality\n`@testset \"srdist boundary behaviour\"` covering `x = 0` and `x = Inf` for\nall four cdf-like functions.\n\n## Test plan\n\n- [x] `Pkg.test()` passes locally (full suite)\n- [x] New `srdist boundary behaviour` testset passes (8 strict `==` assertions)\n- [x] Verified Distributions.jl's `StudentizedRange` and\n  `Truncated{StudentizedRange}` test failures on JuliaStats/Distributions.jl#2062\n  go away when this branch is dev'd in\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 211,
+      "pull_request_repository": "JuliaStats/StatsFuns.jl",
+      "pull_request_url": "https://github.com/JuliaStats/StatsFuns.jl/pull/211",
+      "fix_commit": "21903f7ba8de0bb1e9a38e8a5ff799ccd8df420f",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix srdist by passing nranges=1 to Rmath.ptukey/qtukey (#211)\n\nThe inlining of the `RFunctions` macro in #188 dropped the special-case that\nappended a literal `1` for `:tukey`, so the `lower_tail`/`log_p` Bool flags\nshifted into the `nranges` positional slot and inverted CDF↔CCDF (e.g.\n`srdistcdf(2, 2, 0) == 1.0` instead of `0`). Restore the argument explicitly.\n\nThe existing rmathcomp tests compared StatsFuns' buggy `srdistcdf` against an\nequally buggy direct `Rmath.ptukey(..., true, false)` call, so the regression\nwent unnoticed; fix the test harness to inject `nranges=1` for tukey and add\na strict boundary-behaviour testset covering `x = 0` and `x = Inf`.",
+    "commit_issue_refs": [
+      188,
+      211
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 211,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Fix srdist by passing nranges=1 to Rmath.ptukey/qtukey",
+    "pull_request_issue_refs": [
+      188
+    ],
+    "pull_request_cross_repository_refs": [
+      [
+        "JuliaStats/Distributions.jl",
+        2062,
+        "issues"
+      ]
+    ],
+    "pull_request_commit_issue_refs": [
+      188
+    ],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [
+    {
+      "number": 2062,
+      "url": "https://github.com/JuliaStats/Distributions.jl/pull/2062",
+      "state": "closed",
+      "title": "Update to StatsFuns@2",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "",
+      "repository": "JuliaStats/Distributions.jl",
+      "reference_kind": "issues"
+    }
+  ],
+  "pull_request_record": {
+    "number": 211,
+    "repository": "JuliaStats/StatsFuns.jl",
+    "url": "https://github.com/JuliaStats/StatsFuns.jl/pull/211",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-06-03T15:46:41Z",
+    "merge_commit_sha": "21903f7ba8de0bb1e9a38e8a5ff799ccd8df420f",
+    "title": "Fix srdist by passing nranges=1 to Rmath.ptukey/qtukey",
+    "body_excerpt": "## Summary\n\nThe inlining of the `RFunctions` macro in #188 dropped the special-case that\nappended a literal `1` for `:tukey`, so the `lower_tail`/`log_p` `Bool` flags\nshifted into the `nranges` positional slot of `Rmath.ptukey`/`qtukey`. As a\nresult, `srdistcdf` ↔ `srdistccdf` are silently inverted on `v2.0.0` and the\ninverse CDF functions also return wrong values. For example:\n\n```julia\njulia> using StatsFuns\n\njulia> srdistcdf(2.0, 2.0, 0.0)         # should be 0\n1.0\n```\n\nRestore the missing `1` argument explicitly in all 8 `Rmath.ptukey`/`qtukey`\ncalls.\n\n## Why the existing tests didn't catch it\n\nThe `rmathcomp` harness compared StatsFuns' buggy `srdistcdf` against an\nequally buggy direct `Rmath.ptukey(..., true, false)` call, so the test\nagreed with itself. Fix the harness to inject `nranges=1` for tukey when\nbuilding the Rmath-side lambdas, and add a strict-equality\n`@testset \"srdist boundary behaviour\"` covering `x = 0` and `x = Inf` for\nall four cdf-like functions.\n\n## Test plan\n\n- [x] `Pkg.test()` passes locally (full suite)\n- [x] New `srdist boundary behaviour` testset passes (8 strict `==` assertions)\n- [x] Verified Distributions.jl's `StudentizedRange` and\n  `Truncated{StudentizedRange}` test failures on JuliaStats/Distributions.jl#2062\n  go away when this branch is dev'd in\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

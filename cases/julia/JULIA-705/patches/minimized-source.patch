@@ -1,0 +1,25 @@
+diff --git a/src/svd.jl b/src/svd.jl
+--- a/src/svd.jl
++++ b/src/svd.jl
+@@ -167,10 +167,7 @@ function __svd!(
+     e = B.ev
+     iteration = 0
+ 
+-    # See LAWN3 page 6 and 22
+-    σ⁻ = estimate_σ⁻!(d, e, n1, n2, tol)
+-    fudge = n
+-    thresh = tol * σ⁻
++    thresh = tol * zero(first(d))
+ 
+     if B.uplo === 'U'
+         while true
+@@ -210,6 +208,9 @@ function __svd!(
+ 
+                     # We have now moved a zero to the end so the problem is one smaller
+                     n2 -= 1
++
++                    # We'll start over to find the relevant submatrix after deflation
++                    @goto top
+                 end
+             end
+ 

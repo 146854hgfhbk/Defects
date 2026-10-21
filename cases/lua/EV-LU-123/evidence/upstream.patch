@@ -1,0 +1,30 @@
+diff --git a/spec/parser_spec.lua b/spec/parser_spec.lua
+index 9b37625c1f583192403ad3e2a0181803f905dec4..d99c938f030295e34d1bb34cc322fef568a985c3 100644
+--- a/spec/parser_spec.lua
++++ b/spec/parser_spec.lua
+@@ -30,6 +30,10 @@ describe("parser", function()
+       assert.same({}, get_ast(" "))
+    end)
+ 
++   it("does not allow extra ending keywords", function()
++      assert.is_nil(parser("end"))
++   end)
++
+    it("parses return statement correctly", function()
+       assert.same({tag = "Return"}, get_node("return"))
+       assert.same({tag = "Return",
+diff --git a/src/luacheck/parser.lua b/src/luacheck/parser.lua
+index 5bfb95e3e8b3a7628dd3294fddb38ff281a241b4..4252b91fc8ab7f4e79f3afc533bd821a9d9bbada 100644
+--- a/src/luacheck/parser.lua
++++ b/src/luacheck/parser.lua
+@@ -680,7 +680,9 @@ end
+ local function parse(src)
+    local state = new_state(src)
+    skip_token(state)
+-   return parse_block(state)
++   local ast = parse_block(state)
++   check_token(state, "TK_EOS")
++   return ast
+ end
+ 
+ local function pparse(src)

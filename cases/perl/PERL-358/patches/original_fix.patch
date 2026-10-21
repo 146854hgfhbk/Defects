@@ -1,0 +1,135 @@
+diff --git a/Changes b/Changes
+index 9414b2c..bc0b46b 100644
+--- a/Changes
++++ b/Changes
+@@ -2,6 +2,9 @@ Revision history for Perl extension Cpanel::JSON::XS
+ 
+ TODO: http://stevehanov.ca/blog/index.php?id=104 compression
+ 
++4.24 2020-10-02 (rurban)
++        - Fix decode_json(scalar, 0) (GH #171 plicease), check 2nd arg for true-ness
++
+ 4.23 2020-09-05 (rurban)
+         - Fixup t/54_stringify change for JSON 2.09 (really use PR #169 madsen)
+ 
+diff --git a/README b/README
+index f59a152..f5ad86d 100644
+--- a/README
++++ b/README
+@@ -219,12 +219,14 @@ FUNCTIONAL INTERFACE
+         3.0116 and JSON::XS did not set allow_nonref but allowed them due to
+         a bug in the decoder.
+ 
+-        If the new optional $allow_nonref argument is set and not false, the
+-        allow_nonref option will be set and the function will act is
++        If the new 2nd optional $allow_nonref argument is set and not false,
++        the "allow_nonref" option will be set and the function will act is
+         described as in the relaxed RFC 7159 allowing all values such as
+-        objects, arrays, strings, numbers, "null", "true", and "false".
++        objects, arrays, strings, numbers, "null", "true", and "false". See
++        ""OLD" VS. "NEW" JSON (RFC 4627 VS. RFC 7159)" below, why you don't
++        want to do that.
+ 
+-        For the type argument see Cpanel::JSON::XS::Type.
++        For the 3rd optional type argument see Cpanel::JSON::XS::Type.
+ 
+     $is_boolean = Cpanel::JSON::XS::is_bool $scalar
+         Returns true if the passed scalar represents either "JSON::PP::true"
+@@ -941,7 +943,7 @@ OBJECT-ORIENTED INTERFACE
+         value has been chosen to be as large as typical operating systems
+         allow without crashing.
+ 
+-        See SECURITY CONSIDERATIONS, below, for more info on why this is
++        See "SECURITY CONSIDERATIONS", below, for more info on why this is
+         useful.
+ 
+     $json = $json->max_size ([$maximum_string_size])
+diff --git a/XS.pm b/XS.pm
+index f38ecb0..5ee0118 100644
+--- a/XS.pm
++++ b/XS.pm
+@@ -267,12 +267,14 @@ Note that older decode_json versions in Cpanel::JSON::XS older than
+ 3.0116 and JSON::XS did not set allow_nonref but allowed them due to a
+ bug in the decoder.
+ 
+-If the new optional $allow_nonref argument is set and not false, the
+-allow_nonref option will be set and the function will act is described
++If the new 2nd optional $allow_nonref argument is set and not false, the
++C<allow_nonref> option will be set and the function will act is described
+ as in the relaxed RFC 7159 allowing all values such as objects,
+ arrays, strings, numbers, "null", "true", and "false".
++See L</"OLD" VS. "NEW" JSON (RFC 4627 VS. RFC 7159)> below, why you don't
++want to do that.
+ 
+-For the type argument see L<Cpanel::JSON::XS::Type>.
++For the 3rd optional type argument see L<Cpanel::JSON::XS::Type>.
+ 
+ =item $is_boolean = Cpanel::JSON::XS::is_bool $scalar
+ 
+@@ -1071,7 +1073,7 @@ Note that nesting is implemented by recursion in C. The default value has
+ been chosen to be as large as typical operating systems allow without
+ crashing.
+ 
+-See SECURITY CONSIDERATIONS, below, for more info on why this is useful.
++See L</SECURITY CONSIDERATIONS>, below, for more info on why this is useful.
+ 
+ =item $json = $json->max_size ([$maximum_string_size])
+ 
+diff --git a/XS.xs b/XS.xs
+index 08b0ae1..391f38b 100644
+--- a/XS.xs
++++ b/XS.xs
+@@ -4958,10 +4958,10 @@ void DESTROY (JSON *self)
+ PROTOTYPES: ENABLE
+ 
+ void encode_json (SV *scalar, SV *typesv = &PL_sv_undef)
+-	ALIAS:
++    ALIAS:
+         _to_json    = 0
+         encode_json = F_UTF8
+-	PPCODE:
++    PPCODE:
+ {
+         JSON json;
+         json_init (&json);
+@@ -4971,15 +4971,15 @@ void encode_json (SV *scalar, SV *typesv = &PL_sv_undef)
+ }
+ 
+ void decode_json (SV *jsonstr, SV *allow_nonref = NULL, SV *typesv = NULL)
+-	ALIAS:
++    ALIAS:
+         _from_json  = 0
+         decode_json = F_UTF8
+-	PPCODE:
++    PPCODE:
+ {
+         JSON json;
+         json_init (&json);
+         json.flags |= ix;
+-        if (ix && allow_nonref)
++        if (ix && SvTRUE (allow_nonref))
+           json.flags |= F_ALLOW_NONREF;
+         PUTBACK; jsonstr = decode_json (aTHX_ jsonstr, &json, 0, typesv); SPAGAIN;
+         XPUSHs (jsonstr);
+diff --git a/t/108_decode.t b/t/108_decode.t
+index af6fe04..8da4164 100644
+--- a/t/108_decode.t
++++ b/t/108_decode.t
+@@ -2,7 +2,7 @@
+ # decode on Perl 5.005, 5.6, 5.8 or later
+ #
+ use strict;
+-use Test::More tests => 8;
++use Test::More tests => 11;
+ 
+ use Cpanel::JSON::XS;
+ use lib qw(t);
+@@ -47,3 +47,8 @@ is_deeply $decode, ["a" x 32768], "successful roundtrip"
+     close $fh;
+   };
+ 
++$decode = eval { decode_json("true", 0) };
++like($@, qr/^JSON text must be an object or array/, 'treat decode_json 0 as not allow_nonref');
++$decode = eval { decode_json("true", 1) };
++ok(!$@, "treat decode_json 1 as allow_nonref");
++is($decode, 1, "decode true as 1");

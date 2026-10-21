@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-979",
+  "technical_evidence_sha256": "36209f3e2e82d86c11e7d513bcc7b9f5e377e2538f89530c79a7e677749a568a",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "e2519e65a8a47e1c49ec37d006a1aa9cdd9accd5a0f63362e2338fe22fc20b71",
+  "reviewed_at": "2026-08-14T06:25:13.132704+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#831",
+  "rationale": "Issue #831 reports that dartfmt 1.2.8 formats a collection-if whose then-branch is an empty spread (`...[]`) by breaking inside the if condition and collapsing the if-element onto the condition line, producing an over-80-column line. The fix commit cca728d ('Don't give empty spread collections block-like formatting. ... Fix #831') changes _findSpreadCollectionBracket in lib/src/source_visitor.dart so a SpreadElement wrapping an empty ListLiteral or SetOrMapLiteral no longer reports a block bracket, which is exactly the mechanism that gave `...[]` block-like formatting it cannot use (it has no interior split point). The minimized production patch is confined to lib/src/source_visitor.dart and consists solely of the new _isEmptyCollection predicate, its two call-site substitutions for the pre-existing inline `isEmpty && rightBracket.precedingComments == null` checks, and the two emptiness guards that constitute the behavior change; the CHANGELOG entry present in the original commit has been dropped, and no test, config, or unrelated code is included. The triggers are the unchanged upstream fixture portions of the same commit: test/regression/0800/0831.unit reproduces the issue's snippet verbatim with the issue's expected output, and the appended cases in test/splitting/list_collection_if.stmt cover the same empty-spread-in-collection-if root cause (empty then/else spread, with and without interior comments). Both are data-driven fixtures consumed by the pre-existing test/formatter_test.dart harness, so they invoke no production API introduced by the fix. Strict evidence for both the original and post-minimization runs passes every gate, including trigger.buggy_differential with both declared selectors reproduced, trigger.fixed_clean, trigger.deterministic (4 fingerprint groups), and full_suite.buggy_reproduces_only_triggers. active_same_project_root_causes is empty and dart-lang/dart_style#831 is the sole allowed verified key.\n\nIssue #831 reports that dartfmt collapses an empty spread (`...[]`) in a collection-if onto the condition line and emits an over-80-column line. The fix commit cca728d (PR #850, 'Fix #831') changes lib/src/source_visitor.dart so _findSpreadCollectionBracket returns null for empty list/set/map literals, removing block-like formatting for spreads that cannot split inside. The trigger fixture test/regression/0800/0831.unit is verbatim the input and expected output from the issue body, so issue, trigger, and fix describe one pre-existing formatter defect. The minimized production patch is confined to the single production file and to the empty-collection predicate: it extracts the pre-existing condition `nodes.isEmpty && rightBracket.precedingComments == null` into _isEmptyCollection and reuses it at the block (line ~457) and collection (line ~2762) call sites without changing their semantics, then applies it as the new guard in _findSpreadCollectionBracket. CHANGELOG.md and the test fixtures present in the original commit are excluded from the minimized patch, so there is no doc-only, config-only, or test-only content. The triggers are upstream project-native fixtures executed by the existing test/formatter_test.dart harness; they contain only Dart source text and consume no API introduced by the fix (_isEmptyCollection is private and untested directly). Strict evidence for both the original and post-minimization matrices reports all gates passed: builds on both revisions, both declared selectors reproduce on the buggy revision with deterministic fingerprints (4 groups), fixed revision isolated/suite/reversed runs clean, and the buggy full suite fails only on the reproduced triggers. active_same_project_root_causes is empty and dart-lang/dart_style#831 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:24:43.074575+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "e2519e65a8a47e1c49ec37d006a1aa9cdd9accd5a0f63362e2338fe22fc20b71",
+      "response_sha256": "5723e0069064f49fddcca8aef1c05df3763ffc990e5b987378cc083538d52221",
+      "response_id": "msg_a051b6945ffb418fae3f5622055d5b96",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6413356600663349,
+        "input_tokens": 19603,
+        "output_tokens": 725
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#831",
+      "rationale": "Issue #831 reports that dartfmt 1.2.8 formats a collection-if whose then-branch is an empty spread (`...[]`) by breaking inside the if condition and collapsing the if-element onto the condition line, producing an over-80-column line. The fix commit cca728d ('Don't give empty spread collections block-like formatting. ... Fix #831') changes _findSpreadCollectionBracket in lib/src/source_visitor.dart so a SpreadElement wrapping an empty ListLiteral or SetOrMapLiteral no longer reports a block bracket, which is exactly the mechanism that gave `...[]` block-like formatting it cannot use (it has no interior split point). The minimized production patch is confined to lib/src/source_visitor.dart and consists solely of the new _isEmptyCollection predicate, its two call-site substitutions for the pre-existing inline `isEmpty && rightBracket.precedingComments == null` checks, and the two emptiness guards that constitute the behavior change; the CHANGELOG entry present in the original commit has been dropped, and no test, config, or unrelated code is included. The triggers are the unchanged upstream fixture portions of the same commit: test/regression/0800/0831.unit reproduces the issue's snippet verbatim with the issue's expected output, and the appended cases in test/splitting/list_collection_if.stmt cover the same empty-spread-in-collection-if root cause (empty then/else spread, with and without interior comments). Both are data-driven fixtures consumed by the pre-existing test/formatter_test.dart harness, so they invoke no production API introduced by the fix. Strict evidence for both the original and post-minimization runs passes every gate, including trigger.buggy_differential with both declared selectors reproduced, trigger.fixed_clean, trigger.deterministic (4 fingerprint groups), and full_suite.buggy_reproduces_only_triggers. active_same_project_root_causes is empty and dart-lang/dart_style#831 is the sole allowed verified key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/0800/0831.unit",
+        "test/splitting/list_collection_if.stmt",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests"
+      ],
+      "risks": [
+        "Two hunks replace behavior-preserving inline emptiness checks (including the empty-block path in visitBlock) with the extracted _isEmptyCollection helper; this is a small DRY step rather than a pure behavior change, though it is required to define the predicate the fix depends on and alters no semantics at those sites.",
+        "The list_collection_if.stmt trigger adds more cases than the issue snippet (else-side spreads and comment-bearing empty spreads); they share the same root cause but broaden the fixture's expected-output surface beyond what the issue text alone documents.",
+        "Both triggers are golden-output formatter fixtures, so they are sensitive to any future intentional formatting-style change even when the #831 root cause remains fixed."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:25:13.130727+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "e2519e65a8a47e1c49ec37d006a1aa9cdd9accd5a0f63362e2338fe22fc20b71",
+      "response_sha256": "8e750adca332eb534a7ec1063da7143c59d53246e855321dfbafb20f31379e2a",
+      "response_id": "msg_724c95677dd24997a93a251c9f8b0bd6",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6960234734991708,
+        "input_tokens": 19828,
+        "output_tokens": 759
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#831",
+      "rationale": "Issue #831 reports that dartfmt collapses an empty spread (`...[]`) in a collection-if onto the condition line and emits an over-80-column line. The fix commit cca728d (PR #850, 'Fix #831') changes lib/src/source_visitor.dart so _findSpreadCollectionBracket returns null for empty list/set/map literals, removing block-like formatting for spreads that cannot split inside. The trigger fixture test/regression/0800/0831.unit is verbatim the input and expected output from the issue body, so issue, trigger, and fix describe one pre-existing formatter defect. The minimized production patch is confined to the single production file and to the empty-collection predicate: it extracts the pre-existing condition `nodes.isEmpty && rightBracket.precedingComments == null` into _isEmptyCollection and reuses it at the block (line ~457) and collection (line ~2762) call sites without changing their semantics, then applies it as the new guard in _findSpreadCollectionBracket. CHANGELOG.md and the test fixtures present in the original commit are excluded from the minimized patch, so there is no doc-only, config-only, or test-only content. The triggers are upstream project-native fixtures executed by the existing test/formatter_test.dart harness; they contain only Dart source text and consume no API introduced by the fix (_isEmptyCollection is private and untested directly). Strict evidence for both the original and post-minimization matrices reports all gates passed: builds on both revisions, both declared selectors reproduce on the buggy revision with deterministic fingerprints (4 groups), fixed revision isolated/suite/reversed runs clean, and the buggy full suite fails only on the reproduced triggers. active_same_project_root_causes is empty and dart-lang/dart_style#831 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart (_findSpreadCollectionBracket, _isEmptyCollection)",
+        "patches/trigger-tests.patch",
+        "test/regression/0800/0831.unit",
+        "test/splitting/list_collection_if.stmt",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The minimized patch includes a behavior-preserving extraction of the empty-collection predicate at two pre-existing call sites (source_visitor.dart lines ~457 and ~2762); it is coupled to the fix rather than unrelated, but the diff is slightly larger than the minimal guard change.",
+        "test/splitting/list_collection_if.stmt adds eight formatting cases broader than the exact snippet in issue #831 (empty then/else spreads, and comment-bearing variants); they exercise the same code path but include expected-behavior assertions beyond the reported reproduction.",
+        "Triggers are fixture-driven and resolved at file granularity through test/formatter_test.dart, so a selector failure attributes to the whole fixture file rather than an individual case.",
+        "Correctness of the new output is a formatting-style judgement made by the maintainer; the PR body itself notes the chosen output is 'maybe not the ideal formatting'."
+      ]
+    }
+  ]
+}

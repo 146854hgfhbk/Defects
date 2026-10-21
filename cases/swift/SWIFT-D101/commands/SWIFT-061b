@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+case_dir="$(cd "$(dirname "$0")/.." && pwd)"
+workspace="${SWIFT_REPRO_WORKSPACE:-$(mktemp -d)}"
+mkdir -p "${workspace}"
+docker run --rm --init --network none --ulimit nofile=65536:65536 \
+  --user "$(id -u):$(id -g)" \
+  --env HOME=/workspace/home \
+  --env SWIFT_ASCII_WORKSPACE_ROOT=/workspace \
+  --env TMPDIR=/workspace/tmp \
+  --env TEMP=/workspace/tmp \
+  --env TMP=/workspace/tmp \
+  --env SWIFT_VALIDATION_NETWORK_ISOLATION=os_enforced \
+  --volume "${case_dir}:/case:ro" \
+  --volume "${workspace}:/workspace" \
+  sha256:da8756f80cc1f5df7a777e662785a70fc990d06bd51d8fa02929366c30d98778 \
+  python -u /case/tools/reproduce_case.py \
+    --case /case/case.json \
+    --swift /opt/swift623/usr/bin/swift \
+    --version buggy \
+    --workspace /workspace/SWIFT-061b
+printf "Reproduction workspace: %s\n" "${workspace}"

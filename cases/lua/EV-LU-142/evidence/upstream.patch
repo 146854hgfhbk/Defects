@@ -1,0 +1,34 @@
+diff --git a/lua/pl/types.lua b/lua/pl/types.lua
+index f4ab236513da5087044752e25bb98ae45966e78a..a62e4e3fed597f939ab291dc4e210476c01573d2 100644
+--- a/lua/pl/types.lua
++++ b/lua/pl/types.lua
+@@ -57,10 +57,15 @@ end
+ -- considered empty is it only contains spaces.
+ -- @return true if the object is empty, otherwise false.
+ function types.is_empty(o, ignore_spaces)
+-    if o == nil or (type(o) == "table" and not next(o)) or (type(o) == "string" and (o == "" or (ignore_spaces and o:match("^%s+$")))) then
++    if o == nil then
++        return true
++    elseif type(o) == "table" then
++        return next(o) == nil
++    elseif type(o) == "string" then
++        return o == "" or (ignore_spaces and not not o:find("^%s+$"))
++    else
+         return true
+     end
+-    return false
+ end
+ 
+ local function check_meta (val)
+diff --git a/tests/test-types.lua b/tests/test-types.lua
+index 075b970cda5881e62eae0ea2efe6352ab1af4e2f..42a280c2b05971e9542ed671030e23baa0171709 100644
+--- a/tests/test-types.lua
++++ b/tests/test-types.lua
+@@ -29,6 +29,7 @@ asserteq(types.is_indexable(10),nil)
+ 
+ asserteq(types.is_empty(nil),true)
+ asserteq(types.is_empty({}),true)
++asserteq(types.is_empty({[false] = false}),false)
+ asserteq(types.is_empty(""),true)
+ asserteq(types.is_empty("   ",true),true)
+ 

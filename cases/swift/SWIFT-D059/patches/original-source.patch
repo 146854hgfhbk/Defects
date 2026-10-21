@@ -1,0 +1,26 @@
+diff --git a/Sources/Configuration/Providers/CLI/CLIArgumentParser.swift b/Sources/Configuration/Providers/CLI/CLIArgumentParser.swift
+index 3a2a38c..fa781f8 100644
+--- a/Sources/Configuration/Providers/CLI/CLIArgumentParser.swift
++++ b/Sources/Configuration/Providers/CLI/CLIArgumentParser.swift
+@@ -122,7 +122,7 @@ internal struct CLIArgumentParser {
+             if value.isEmpty {
+                 return [""]
+             }
+-            return value.components(separatedBy: ",")
++            return value.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
+         }
+     }
+ }
+diff --git a/Sources/Configuration/Providers/EnvironmentVariables/EnvironmentVariablesProvider.swift b/Sources/Configuration/Providers/EnvironmentVariables/EnvironmentVariablesProvider.swift
+index 38e1f47..60a261b 100644
+--- a/Sources/Configuration/Providers/EnvironmentVariables/EnvironmentVariablesProvider.swift
++++ b/Sources/Configuration/Providers/EnvironmentVariables/EnvironmentVariablesProvider.swift
+@@ -345,7 +345,7 @@ internal struct EnvironmentValueArrayDecoder {
+     /// - Parameter string: The source string to parse.
+     /// - Returns: The parsed array.
+     func decode(_ string: String) -> [String] {
+-        string.split(separator: separator).map { $0.trimmed() }
++        string.split(separator: separator, omittingEmptySubsequences: false).map { $0.trimmed() }
+     }
+ }
+ 

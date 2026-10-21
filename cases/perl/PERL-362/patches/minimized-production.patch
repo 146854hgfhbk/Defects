@@ -1,0 +1,46 @@
+diff --git a/XS.pm b/XS.pm
+index dbb14f5..e282873 100644
+--- a/XS.pm
++++ b/XS.pm
+@@ -1738,16 +1738,16 @@ use overload
+    "0+"     => sub { ${$_[0]} },
+    "++"     => sub { $_[0] = ${$_[0]} + 1 },
+    "--"     => sub { $_[0] = ${$_[0]} - 1 },
+-  '""'      => sub { ${$_[0]} == 1 ? 'true' : 'false' },
+-  'eq'      => sub {
+-    my ($obj, $op) = ref ($_[0]) ? ($_[0], $_[1]) : ($_[1], $_[0]);
+-    if ($op eq 'true' or $op eq 'false') {
+-      return "$obj" eq 'true' ? 'true' eq $op : 'false' eq $op;
+-    }
+-    else {
+-      return $obj ? 1 == $op : 0 == $op;
+-    }
+-   },
++  # '""'    => sub { ${$_[0]} == 1 ? 'true' : 'false' },
++  #'eq'      => sub {
++  #  my ($obj, $op) = ref ($_[0]) ? ($_[0], $_[1]) : ($_[1], $_[0]);
++  #  if ($op eq 'true' or $op eq 'false') {
++  #    return "$obj" eq 'true' ? 'true' eq $op : 'false' eq $op;
++  #  }
++  #  else {
++  #    return $obj ? 1 == $op : 0 == $op;
++  #  }
++  # },
+    fallback => 1;
+ 
+ 1;
+diff --git a/XS.xs b/XS.xs
+index a7f1b21..057082a 100644
+--- a/XS.xs
++++ b/XS.xs
+@@ -176,8 +176,8 @@ json_init (JSON *json)
+ static void
+ init_MY_CXT(pTHX_ my_cxt_t * cxt)
+ {
+-  cxt->json_stash         = gv_stashpv ("Cpanel::JSON::XS", 1);
+-  cxt->json_boolean_stash = gv_stashpv ("JSON::XS::Boolean", 1);
++  cxt->json_stash          = gv_stashpv ("Cpanel::JSON::XS", 1);
++  cxt->json_boolean_stash  = gv_stashpv ("JSON::XS::Boolean", 1);
+   cxt->json_boolean_stash3 = gv_stashpv ("JSON::PP::Boolean", 1);
+ 
+   cxt->json_true  = get_bool (aTHX_ "Cpanel::JSON::XS::true");

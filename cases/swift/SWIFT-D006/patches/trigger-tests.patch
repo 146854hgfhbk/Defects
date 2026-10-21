@@ -1,0 +1,47 @@
+diff --git a/Tests/SwiftSoupTests/StackOverflow393Test.swift b/Tests/SwiftSoupTests/StackOverflow393Test.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..96429318567b50cd4d04a80ffe1056fff82f5ee66
+--- /dev/null
++++ b/Tests/SwiftSoupTests/StackOverflow393Test.swift
+@@ -0,0 +1,41 @@
++import XCTest
++import Foundation
++@testable import SwiftSoup
++
++final class StackOverflow393Test: XCTestCase {
++
++    private func makeDeepHTML(depth: Int) -> String {
++        var s = "<html><body>"
++        for _ in 0..<depth { s += "<div>" }
++        s += "x"
++        for _ in 0..<depth { s += "</div>" }
++        s += "</body></html>"
++        return s
++    }
++
++    /// Runs `body` on a Thread with an explicitly small stack and waits for it.
++    /// Returns true if the thread finished cleanly. Before the iterative
++    /// teardown fix a stack overflow crashed the whole process (EXC_BAD_ACCESS).
++    private func runOnSmallStack(stackSize: Int, _ body: @escaping @Sendable () -> Void) -> Bool {
++        let done = DispatchSemaphore(value: 0)
++        let thread = Thread {
++            body()
++            done.signal()
++        }
++        thread.stackSize = stackSize // bytes, multiple of 4 KiB
++        thread.start()
++        return done.wait(timeout: .now() + 30) == .success
++    }
++
++    // REGRESSION (#393): deep tree released on a small-stack thread.
++    // Before the fix this overflowed the recursive Node.deinit chain.
++    func testDeepTeardownOnSmallStackSurvives() {
++        let html = makeDeepHTML(depth: 12_000)
++        let ok = runOnSmallStack(stackSize: 512 * 1024) {
++            var doc: Document? = try? SwiftSoup.parse(html)
++            doc = nil // subtree torn down here
++            _ = doc
++        }
++        XCTAssertTrue(ok, "deep teardown overflowed the small-stack thread")
++    }
++}

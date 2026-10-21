@@ -1,0 +1,255 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-727",
+  "bug_id": "JULIA-727",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "hyrodium/BasicBSpline.jl",
+  "repository_url": "https://github.com/hyrodium/BasicBSpline.jl.git",
+  "issue_urls": [
+    "https://github.com/hyrodium/BasicBSpline.jl/issues/346"
+  ],
+  "issue_id": 346,
+  "buggy_revision": "a649f92419ce06440b1a95174208209a92703b17",
+  "fixed_revision": "6a0cb2758afee0c181c520f695d7c33ceb260da1",
+  "candidate_sha": "6a0cb2758afee0c181c520f695d7c33ceb260da1",
+  "source": "SWE-rebench-V2",
+  "instance_id": "hyrodium__basicbspline.jl-345",
+  "swe": {
+    "base_commit": "a649f92419ce06440b1a95174208209a92703b17",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/hyrodium/BasicBSpline.jl/pull/345",
+    "issue_url": null,
+    "problem_statement": "Incorrect `changebasis_I`\n```julia\r\njulia> using BasicBSpline\r\n\r\njulia> P = BSplineSpace{4, Int64, KnotVector{Int64}}(KnotVector([1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 7]))\r\nBSplineSpace{4, Int64, KnotVector{Int64}}(KnotVector([1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 7]))\r\n\r\njulia> P′ = BSplineSpace{5, Int64, KnotVector{Int64}}(KnotVector([1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 6]))\r\nBSplineSpace{5, Int64, KnotVector{Int64}}(KnotVector([1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 6]))\r\n\r\njulia> changebasis_I(P, P′)\r\n6×10 SparseArrays.SparseMatrixCSC{Float64, Int32} with 27 stored entries:\r\n   ⋅    2.8   0.4    ⋅    ⋅    ⋅     ⋅     ⋅     ⋅     ⋅ \r\n   ⋅   -4.4   2.0   0.8   ⋅    ⋅     ⋅     ⋅     ⋅     ⋅ \r\n  2.8   2.8  -1.6   0.4  0.8  0.45  0.05  0.05  0.05  0.05\r\n -0.2  -0.2   0.2  -0.2  0.2  0.5   0.5   0.5   0.5   0.5\r\n   ⋅     ⋅     ⋅     ⋅    ⋅   0.05  0.45   ⋅     ⋅     ⋅ \r\n   ⋅     ⋅     ⋅     ⋅    ⋅    ⋅     ⋅     ⋅     ⋅     ⋅ \r\n```",
+    "patch": "diff --git a/src/_BSplineSpace.jl b/src/_BSplineSpace.jl\nindex 9d2846848..7932628ba 100644\n--- a/src/_BSplineSpace.jl\n+++ b/src/_BSplineSpace.jl\n@@ -252,19 +252,17 @@ true\n isdegenerate(P::BSplineSpace)\n \n for (f, fnon) in ((:isdegenerate_R, :isnondegenerate_R), (:isdegenerate_I, :isnondegenerate_I))\n-    @eval function $f(P::BSplineSpace)\n+    @eval function $f(P::AbstractFunctionSpace)\n         for i in 1:dim(P)\n             $f(P,i) && return true\n         end\n         return false\n     end\n-    @eval $fnon(P::BSplineSpace, i::Int) = !$f(P, i)\n-    @eval $fnon(P::BSplineSpace) = !$f(P)\n+    @eval $fnon(P, i::Integer) = !$f(P, i)\n+    @eval $fnon(P) = !$f(P)\n end\n-isdegenerate(P::BSplineSpace, i::Integer) = isdegenerate_R(P,i)\n-isdegenerate(P::BSplineSpace) = isdegenerate_R(P)\n-isnondegenerate(P::BSplineSpace, i::Integer) = isnondegenerate_R(P, i)\n-isnondegenerate(P::BSplineSpace) = isnondegenerate_R(P)\n+const isdegenerate = isdegenerate_R\n+const isnondegenerate = isnondegenerate_R\n \n function _nondegeneratize_R(P::BSplineSpace{p}) where p\n     k = copy(KnotVector(knotvector(P)))\ndiff --git a/src/_ChangeBasis.jl b/src/_ChangeBasis.jl\nindex 0dfad79e1..994fb5839 100644\n--- a/src/_ChangeBasis.jl\n+++ b/src/_ChangeBasis.jl\n@@ -345,11 +345,51 @@ B_{(i,p,k)} = \\sum_{j}A_{i,j}B_{(j,p',k')}\n Assumption:\n * ``P ⊑ P^{\\prime}``\n \"\"\"\n+changebasis_I\n+\n function changebasis_I(P::AbstractFunctionSpace, P′::AbstractFunctionSpace)\n     P ⊑ P′ || throw(DomainError((P,P′),\"P ⊑ P′ should be hold.\"))\n     return _changebasis_I(P, P′)\n end\n \n+function changebasis_I(P::BSplineSpace, P′::BSplineSpace{p′}) where p′\n+    P ⊑ P′ || throw(DomainError((P,P′),\"P ⊑ P′ should be hold.\"))\n+\n+    k′ = knotvector(P′)\n+    l′ = length(k′)\n+    i = 1 + p′\n+    v = k′[i]\n+    i = i + 1\n+    while true\n+        k′[i] ≠ v && break\n+        i = i + 1\n+    end\n+    degenerated_rank_on_left = i - p′ - 2\n+    i = length(k′) - p′\n+    v = k′[i]\n+    i = i - 1\n+    while true\n+        k′[i] ≠ v && break\n+        i = i - 1\n+    end\n+    degenerated_rank_on_right = l′ - p′ - i - 1\n+    if degenerated_rank_on_left == degenerated_rank_on_right == 0\n+        return _changebasis_I(P, P′)\n+    else\n+        _k′ = view(k′, 1+degenerated_rank_on_left:l′-degenerated_rank_on_right)\n+        _P′ = BSplineSpace{p′}(_k′)\n+        _A = _changebasis_I(P, _P′)\n+        m = _A.m\n+        n = _A.n + degenerated_rank_on_left + degenerated_rank_on_right\n+        colptr = _A.colptr\n+        prepend!(colptr, fill(colptr[begin], degenerated_rank_on_left))\n+        append!(colptr, fill(colptr[end], degenerated_rank_on_right))\n+        rowval = _A.rowval\n+        nzval = _A.nzval\n+        return SparseMatrixCSC(m,n,colptr,rowval,nzval)\n+    end\n+end\n+\n function _changebasis_I(P::BSplineSpace{0,T,<:AbstractKnotVector{T}}, P′::BSplineSpace{p′,T′,<:AbstractKnotVector{T′}}) where {p′,T,T′}\n     U = StaticArrays.arithmetic_closure(promote_type(T, T′))\n     n = dim(P)\n@@ -458,7 +498,7 @@ function _changebasis_I(P::BSplineSpace{p,T,<:AbstractKnotVector{T}}, P′::BSpl\n     K′ = [k′[j+p′] - k′[j] for j in 1:n′+1]\n     K = U[ifelse(k[i+p] ≠ k[i], U(1 / (k[i+p] - k[i])), zero(U)) for i in 1:n+1]\n     Aᵖ⁻¹ = _changebasis_I(_lower_I(P), _lower_I(P′))  # (n-1) × (n′-1) matrix\n-    n_nonzero = exactdim_I(P′)*(p+2)  # This would be a upper bound of the number of non-zero elements of Aᵖ.\n+    n_nonzero = exactdim_I(P′)*(p+1)  # This would be a upper bound of the number of non-zero elements of Aᵖ.\n     I = Vector{Int32}(undef, n_nonzero)\n     J = Vector{Int32}(undef, n_nonzero)\n     V = Vector{U}(undef, n_nonzero)\n@@ -505,15 +545,6 @@ function _changebasis_I(P::BSplineSpace{p,T,<:AbstractKnotVector{T}}, P′::BSpl\n                           266666666666666661\n                           366666666666666661\n \n-         1                                    n′\n-         |--*-----------------------------*-->|\n-            j_begin                       j_end\n-           *|---------------------------->|*\n-           j_prev                          j_next\n-           |                               |\n-            |-------------j₊------------->|\n-           188888888888888888888888888888881\n-\n          1                                    n′\n          *-----------------------------*----->|\n          j_begin                       j_end\n@@ -587,9 +618,9 @@ function _changebasis_I(P::BSplineSpace{p,T,<:AbstractKnotVector{T}}, P′::BSpl\n         end\n         # Rule-0: outside of j_range\n         j_next = j_end + 1\n-        if j_next == n′+1 || isdegenerate_I(P′, j_next)\n+        if j_next == n′+1\n             j_mid = j_next - 1\n-            if j_prev == 0 || isdegenerate_I(P′, j_prev)\n+            if j_prev == 0\n                 # Rule-8: right recursion with postprocess\n                 # We can't find Aᵖᵢ₁ or Aᵖᵢₙ′ directly (yet!), so we need Δ-shift.\n                 # TODO: Find a way to avoid the Δ-shift.\n@@ -608,7 +639,7 @@ function _changebasis_I(P::BSplineSpace{p,T,<:AbstractKnotVector{T}}, P′::BSpl\n                 V[s-n′:s-1] .+= Δ\n                 continue\n             end\n-        elseif j_prev == 0 || isdegenerate_I(P′, j_prev)\n+        elseif j_prev == 0\n             j_mid = j_prev\n         else\n             j_mid = (j_prev + j_next) ÷ 2\ndiff --git a/src/_DerivativeSpace.jl b/src/_DerivativeSpace.jl\nindex 313ecbd6c..5c950d2b8 100644\n--- a/src/_DerivativeSpace.jl\n+++ b/src/_DerivativeSpace.jl\n@@ -63,6 +63,14 @@ _lower_I(dP::BSplineDerivativeSpace{r}) where r = BSplineDerivativeSpace{r-1}(_l\n _iszeros_R(P::BSplineDerivativeSpace) = _iszeros_R(bsplinespace(P))\n _iszeros_I(P::BSplineDerivativeSpace) = _iszeros_I(bsplinespace(P))\n \n+function isdegenerate_R(dP::BSplineDerivativeSpace, i::Integer)\n+    return isdegenerate_R(bsplinespace(dP), i)\n+end\n+\n+function isdegenerate_I(dP::BSplineDerivativeSpace, i::Integer)\n+    return isdegenerate_I(bsplinespace(dP), i)\n+end\n+\n @doc raw\"\"\"\n     derivative(::BSplineDerivativeSpace{r}) -> BSplineDerivativeSpace{r+1}\n     derivative(::BSplineSpace) -> BSplineDerivativeSpace{1}\n",
+    "test_patch": "diff --git a/test/test_ChangeBasis.jl b/test/test_ChangeBasis.jl\nindex 13986ae53..d279cc1be 100644\n--- a/test/test_ChangeBasis.jl\n+++ b/test/test_ChangeBasis.jl\n@@ -1,36 +1,65 @@\n @testset \"ChangeBasis\" begin\n     ε = 1e-13\n     function test_changebasis_R(P,P′)\n+        # The test case must hold P ⊆ P′\n         @test P ⊆ P′\n-        A = @inferred changebasis(P,P′)\n+        # Test type stability\n+        A = @inferred changebasis_R(P,P′)\n+        # Test output type\n         @test A isa SparseMatrixCSC\n+        # Zeros must not be stored\n         @test !any(iszero.(A.nzval))\n-        @test A == BasicBSpline._changebasis_R(P,P′) == changebasis_R(P,P′)\n+        # Test the size of A\n         n = dim(P)\n         n′ = dim(P′)\n         @test size(A) == (n,n′)\n+        # Elements must not be stored for degenerate row/col\n+        for j in 1:n′\n+            if isdegenerate_R(P′, j)\n+                @test !any(Base.isstored.(Ref(A), 1:n, j))\n+            end\n+        end\n+        for i in 1:n\n+            if isdegenerate_R(P, i)\n+                @test !any(Base.isstored.(Ref(A), i, 1:n′))\n+            end\n+        end\n+        # B_{(i,p,k)} = ∑ⱼ A_{i,j} B_{(j,p′,k′)}\n         ts = range(extrema(knotvector(P)+knotvector(P′))..., length=20)\n         for t in ts\n             @test norm(bsplinebasis.(P,1:n,t) - A*bsplinebasis.(P′,1:n′,t), Inf) < ε\n         end\n-        @test iszero(view(A, findall(BasicBSpline._iszeros_R(P)), :))\n-        @test iszero(view(A, :, findall(BasicBSpline._iszeros_R(P′))))\n     end\n \n-    function test_changebasis_I(P1, P2; check_zero=true)\n-        @test P1 ⊑ P2\n-        A = @inferred changebasis_I(P1,P2)\n+    function test_changebasis_I(P, P′; check_zero=true)\n+        # The test case must hold P ⊑ P′\n+        @test P ⊑ P′\n+        # Test type stability\n+        A = @inferred changebasis_I(P,P′)\n+        # Test output type\n         @test A isa SparseMatrixCSC\n-        if check_zero\n-            @test !any(iszero.(A.nzval))\n+        # Zeros must not be stored\n+        check_zero && @test !any(iszero.(A.nzval))\n+        # Test the size of A\n+        n = dim(P)\n+        n′ = dim(P′)\n+        @test size(A) == (n,n′)\n+        # Elements must not be stored for degenerate row/col\n+        for j in 1:n′\n+            if isdegenerate_I(P′, j)\n+                @test !any(Base.isstored.(Ref(A), 1:n, j))\n+            end\n         end\n-        n1 = dim(P1)\n-        n2 = dim(P2)\n-        @test size(A) == (n1,n2)\n-        d = domain(P1)\n+        for i in 1:n\n+            if isdegenerate_I(P, i)\n+                @test !any(Base.isstored.(Ref(A), i, 1:n′))\n+            end\n+        end\n+        # B_{(i,p,k)} = ∑ⱼ A_{i,j} B_{(j,p′,k′)}\n+        d = domain(P)\n         ts = range(extrema(d)..., length=21)[2:end-1]\n         for t in ts\n-            @test norm(bsplinebasis.(P1,1:n1,t) - A*bsplinebasis.(P2,1:n2,t), Inf) < ε\n+            @test norm(bsplinebasis.(P,1:n,t) - A*bsplinebasis.(P′,1:n′,t), Inf) < ε\n         end\n     end\n \n@@ -65,7 +94,7 @@\n         A13 = changebasis(P1, P3)\n         A36 = changebasis(P3, P6)\n         A16 = changebasis(P1, P6)\n-        A16 ≈ A13 * A36\n+        @test A16 ≈ A13 * A36\n \n         test_changebasis_R(P3, P6)\n         test_changebasis_R(P6, P7)\n@@ -73,7 +102,7 @@\n         A36 = changebasis(P3, P6)\n         A67 = changebasis(P6, P7)\n         A37 = changebasis(P3, P7)\n-        A37 ≈ A36 * A67\n+        @test A37 ≈ A36 * A67\n \n         @test P2 ⊈ P3\n \n@@ -123,13 +152,31 @@\n         _P8 = BSplineSpace{3, Int64, KnotVector{Int64}}(KnotVector(-[1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 7, 7]))\n         test_changebasis_I(_P7, _P8)\n \n+        # (2,2)-element is stored, but it is zero.\n         Q1 = BSplineSpace{1, Int64, KnotVector{Int64}}(KnotVector([2, 2, 4, 4, 6, 6]))\n         Q2 = BSplineSpace{3, Int64, KnotVector{Int64}}(KnotVector([1, 1, 1, 2, 3, 4, 4, 4, 4, 5, 5, 6, 6, 6, 6, 7]))\n         test_changebasis_I(Q1, Q2; check_zero=false)\n \n         Q3 = BSplineSpace{4, Int64, KnotVector{Int64}}(KnotVector([1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 7]))\n         Q4 = BSplineSpace{5, Int64, KnotVector{Int64}}(KnotVector([1, 1, 1, 1, 1, 2, 3, 3, 3, 3, 4, 4, 4, 5, 6]))\n-        test_changebasis_I(Q3, Q4; check_zero=false)\n+        test_changebasis_I(Q3, Q4)\n+    end\n+\n+    @testset \"different changebasis_R and changebasis_I\" begin\n+        P1 = BSplineSpace{3}(knotvector\"1111 132\")\n+        P2 = BSplineSpace{3}(knotvector\"11121132\")\n+        @test isdegenerate_I(P1)\n+        @test isdegenerate_I(P2)\n+        @test isnondegenerate_R(P1)\n+        @test isnondegenerate_R(P2)\n+        @test P1 ⊆ P2\n+        @test P1 ⊑ P2\n+\n+        test_changebasis_I(P1, P2)\n+        test_changebasis_R(P1, P2)\n+        A_R = changebasis_R(P1, P2)\n+        A_I = changebasis_I(P1, P2)\n+        @test A_R ≠ A_I\n     end\n \n     @testset \"changebasis_sim\" begin\ndiff --git a/test/test_Derivative.jl b/test/test_Derivative.jl\nindex 685810e52..de84fc6cf 100644\n--- a/test/test_Derivative.jl\n+++ b/test/test_Derivative.jl\n@@ -33,6 +33,25 @@\n         @test_throws MethodError convert(BSplineDerivativeSpace{2},dP2)\n     end\n \n+    @testset \"degenerate\" begin\n+        P1 = BSplineSpace{2}(KnotVector(1:8))\n+        P2 = BSplineSpace{2}(knotvector\"111111151111\")\n+        dP1 = BSplineDerivativeSpace{1}(P1)\n+        dP2 = BSplineDerivativeSpace{1}(P2)\n+        @test isdegenerate_R(P1) == isdegenerate_R(dP1)\n+        @test isdegenerate_R(P2) == isdegenerate_R(dP2)\n+        @test isdegenerate_I(P1) == isdegenerate_I(dP1)\n+        @test isdegenerate_I(P2) == isdegenerate_I(dP2)\n+        for i in 1:dim(P1)\n+            @test isdegenerate_R(P1, i) == isdegenerate_R(dP1, i)\n+            @test isdegenerate_I(P1, i) == isdegenerate_I(dP1, i)\n+        end\n+        for i in 1:dim(P2)\n+            @test isdegenerate_R(P2, i) == isdegenerate_R(dP2, i)\n+            @test isdegenerate_I(P2, i) == isdegenerate_I(dP2, i)\n+        end\n+    end\n+\n     # Not sure why this @testset doesn't work fine.\n     # @testset \"$(p)-th degree basis\" for p in 0:p_max\n     for p in 0:p_max\n",
+    "FAIL_TO_PASS": [
+      "Derivative",
+      "ChangeBasis",
+      "BSplineManifold",
+      "RationalBSplineManifold",
+      "Refinement"
+    ],
+    "PASS_TO_PASS": [
+      "Unbound type parameters",
+      "Undefined exports",
+      "Compare Project.toml and test/Project.toml",
+      "Stale dependencies",
+      "Compat bounds",
+      "Project.toml formatting",
+      "Piracy",
+      "util",
+      "KnotVector",
+      "BSplineSpace",
+      "BSplineBasis",
+      "UniformKnotVector",
+      "BSplineSpace with uniform knot vector",
+      "UniformBSplineBasis"
+    ],
+    "instance_id": "hyrodium__basicbspline.jl-345",
+    "repo": "hyrodium/BasicBSpline.jl",
+    "pr_description": "This PR fixes https://github.com/hyrodium/BasicBSpline.jl/issues/346.\r\n\r\n**Before this PR**\r\n```julia\r\njulia> using BasicBSpline\r\n\r\njulia> P = BSplineSpace{4, Int64, KnotVector{Int64}}(KnotVector([1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 7]))\r\nBSplineSpace{4, Int64, KnotVector{Int64}}(KnotVector([1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 7]))\r\n\r\njulia> P′ = BSplineSpace{5, Int64, KnotVector{Int64}}(KnotVector([1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 6]))\r\nBSplineSpace{5, Int64, KnotVector{Int64}}(KnotVector([1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 6]))\r\n\r\njulia> changebasis_I(P, P′)\r\n6×10 SparseArrays.SparseMatrixCSC{Float64, Int32} with 27 stored entries:\r\n   ⋅    2.8   0.4    ⋅    ⋅    ⋅     ⋅     ⋅     ⋅     ⋅ \r\n   ⋅   -4.4   2.0   0.8   ⋅    ⋅     ⋅     ⋅     ⋅     ⋅ \r\n  2.8   2.8  -1.6   0.4  0.8  0.45  0.05  0.05  0.05  0.05\r\n -0.2  -0.2   0.2  -0.2  0.2  0.5   0.5   0.5   0.5   0.5\r\n   ⋅     ⋅     ⋅     ⋅    ⋅   0.05  0.45   ⋅     ⋅     ⋅ \r\n   ⋅     ⋅     ⋅     ⋅    ⋅    ⋅     ⋅     ⋅     ⋅     ⋅ \r\n```\r\n\r\n**After this PR**\r\n```julia\r\njulia> using BasicBSpline\r\n\r\njulia> P = BSplineSpace{4, Int64, KnotVector{Int64}}(KnotVector([1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 7]))\r\nBSplineSpace{4, Int64, KnotVector{Int64}}(KnotVector([1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 7]))\r\n\r\njulia> P′ = BSplineSpace{5, Int64, KnotVector{Int64}}(KnotVector([1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 6]))\r\nBSplineSpace{5, Int64, KnotVector{Int64}}(KnotVector([1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 6]))\r\n\r\njulia> changebasis_I(P, P′)\r\n6×10 SparseMatrixCSC{Float64, Int32} with 19 stored entries:\r\n  ⋅    2.8   0.4    ⋅    ⋅    ⋅     ⋅     ⋅    ⋅    ⋅ \r\n  ⋅   -4.4   2.0   0.8   ⋅    ⋅     ⋅     ⋅    ⋅    ⋅ \r\n  ⋅    2.8  -1.6   0.4  0.8  0.45  0.05   ⋅    ⋅    ⋅ \r\n  ⋅   -0.2   0.2  -0.2  0.2  0.5   0.5    ⋅    ⋅    ⋅ \r\n  ⋅     ⋅     ⋅     ⋅    ⋅   0.05  0.45   ⋅    ⋅    ⋅ \r\n  ⋅     ⋅     ⋅     ⋅    ⋅    ⋅     ⋅     ⋅    ⋅    ⋅\r\n```",
+    "created_at": "2023-11-13 14:06:56",
+    "image_name": "docker.io/swerebenchv2/hyrodium-basicbspline.jl:345-a649f92",
+    "language": "julia",
+    "interface": "Method: changebasis_I(P::BSplineSpace, P′::BSplineSpace{p′}) where p′\nLocation: src/_ChangeBasis.jl\nInputs: \n- **P** – a `BSplineSpace` (source spline space)  \n- **P′** – a `BSplineSpace{p′}` (target spline space) where `p′` is the degree of the target space  \nConstraints: `P ⊑ P′` must hold; otherwise a `DomainError` is thrown. The method also inspects the knot vector of `P′` to detect leading/trailing degenerate knots.\nOutputs: \n- Returns a `SparseMatrixCSC` representing the change‑of‑basis matrix from `P` to `P′`. The matrix size is `(dim(P), dim(P′))`. Zero entries are never stored; rows/columns corresponding to degenerate basis functions are omitted, and the matrix is padded with empty columns/rows to preserve the correct dimensions.\nDescription: Constructs the change‑of‑basis operator for B‑splines, handling the special case where the target space contains degenerate knots (repeated interior knots) by stripping them, computing the core matrix, and then re‑adding empty columns/rows. Used by the test suite to verify type stability, sparsity, size, and that the matrix correctly reproduces basis conversion.\n\nFunction: isdegenerate_R(dP::BSplineDerivativeSpace, i::Integer)\nLocation: src/_DerivativeSpace.jl\nInputs: \n- **dP** – a `BSplineDerivativeSpace` (derivative spline space)  \n- **i** – an integer index of a basis function in `dP`\nOutputs: \n- Returns a `Bool` indicating whether the `i`‑th basis function of the derivative space is degenerate (i.e., its support collapses to a point) in the “R” (right‑hand) sense. The result is delegated to `isdegenerate_R(bsplinespace(dP), i)`.\nDescription: Provides the degeneracy test for derivative spaces, enabling the test suite to compare degeneracy of a space and its derivative for consistency.\n\nFunction: isdegenerate_I(dP::BSplineDerivativeSpace, i::Integer)\nLocation: src/_DerivativeSpace.jl\nInputs: \n- **dP** – a `BSplineDerivativeSpace`  \n- **i** – an integer index of a basis function in `dP`\nOutputs: \n- Returns a `Bool` indicating whether the `i`‑th basis function of the derivative space is degenerate in the “I” (inner) sense. The result is delegated to `isdegenerate_I(bsplinespace(dP), i)`.\nDescription: Mirrors `isdegenerate_R` for the “I” sense, allowing the test suite to verify that degeneracy properties are preserved under differentiation.\n",
+    "license": "MIT",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.97,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [],
+        "intent_completeness": "partial",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports an incorrect changebasis_I matrix and provides a reproducible example. The updated tests define the expected correct behavior (type stability, no stored zeros, proper handling of degenerate rows/cols, and consistency between changebasis_R/I). The tests are aligned with these expectations and do not introduce unrelated requirements. No signals of B‑categories (coupling, naming, external URLs, ambiguous specs, unrelated patch artifacts, or hidden domain knowledge) are present. Therefore the task is a solvable core‑bug fix.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 5,
+      "num_modified_lines": null,
+      "pr_author": "hyrodium",
+      "pr_labels": null,
+      "pr_url": "https://github.com/hyrodium/BasicBSpline.jl/pull/345"
+    }
+  },
+  "parent_sha": "a649f92419ce06440b1a95174208209a92703b17",
+  "changed_production_files": [
+    "src/_BSplineSpace.jl",
+    "src/_ChangeBasis.jl",
+    "src/_DerivativeSpace.jl"
+  ],
+  "changed_test_files": [
+    "test/test_ChangeBasis.jl",
+    "test/test_Derivative.jl"
+  ],
+  "trigger_tests": [
+    "Derivative",
+    "ChangeBasis",
+    "BSplineManifold",
+    "RationalBSplineManifold",
+    "Refinement"
+  ],
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "test_patch_suite",
+    "path": "trigger/upstream-tests.patch",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "test_files": [
+      "test/test_ChangeBasis.jl",
+      "test/test_Derivative.jl"
+    ],
+    "test_files_sha256": {
+      "test/test_ChangeBasis.jl": "61003cd4a1f49a8dd3ff590512c3d0f9edf0193db5a6ce354c60982eddae19fc",
+      "test/test_Derivative.jl": "51120548d889d5ab31c3315a1c66235c90bf512a8007900ba73c2f26f3c07a0e"
+    },
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "Derivative",
+        "ChangeBasis",
+        "BSplineManifold",
+        "RationalBSplineManifold",
+        "Refinement"
+      ],
+      "added_testsets": [
+        "different changebasis_R and changebasis_I",
+        "degenerate"
+      ],
+      "inferred_testset_context": [
+        "subseteq (R)",
+        "sqsubseteq (I)",
+        "constructor"
+      ],
+      "assertion_expression_sha256": [
+        "30767b5f55ea5d07d5213c6067e68701d71af064620c30b2b2b85b32154c9e87",
+        "08567d6801b6d437e1609bd08de60c84959c9347e0de6375d7a32fa4d5a76735",
+        "9bef25b55439ed5b9e3d60ddd9cc30abccbfa036ef8b364496b97f1b885b65aa",
+        "7126585c2e0a78b34dc818f1f8fc30559f3475d50900258cfebb943a0ece70c7",
+        "cde56ae3d54adc6d0c0738d0bb23b9276c1320991199068104962963b0b7d09e",
+        "cd27ff5955479fe9a135867cf0b8942fae5a5463711be17562944ac5d0d3b4a6",
+        "cf57d64826f78c82cfa02404cb4695559f359a445c11bc26a170a2ecdef1e4da",
+        "661ce0c8bcc86ca235beb93ae80adc25e30f6d4453df3c01b9b71363a613c388",
+        "7fdfc88f127748f738cdfa04faae237eb83d20e658f154c97b382e7a65917ec8",
+        "71cfa87acaf0c98727b53b36519bbb889f05e56215fd175c02b1599348ca222a",
+        "befea8bc1425c892f9aabed8690194518d890b4725fa84d5cbac341418c0b528",
+        "6d9cabe3a0cfa24abfe38382651c0a386b0c40907ff059958638f21453d90236",
+        "5b4e77adcb8fd3de8bf10e45268c38cf3107411cc5c886989bf3f4af61c70723",
+        "aca95bb42dad344236cbd8ce8b2ffb4b073ea5ceb33f4fa66a2b01f83c1dd452",
+        "5a2cf89d2ae4d2d8e7cec58b1803716445efe4cfc2de8f8d7a0e2b3b21fc0e45",
+        "85e5b504636248e57093188f7c01b067a36a10b6bbf8341d1e8ab30d20dc5580",
+        "eff55da008602496fa5993f71d95005916f9512ec4f36d678b56d483c5891d4e",
+        "2a1411b1222a9babda0d2b62e194334a50c050715d39ba666f8cef76d2bf79bf",
+        "ea10a6ff408862445dc73d8bf4fd96d545b57833644f6a22722f1687f5ba8e91",
+        "1c950c259de3e0ac93d06a612e49ce34d0f0678a50b7fd17069f777a7d32d780",
+        "6ebfc850d2a12ca35108d173af87acb227052d8188915d72a9a42b3ef5672b91",
+        "2cfd8f55d1401c2f4f3c009d37a45d9a69b432cd1f1f6373528b5a511940d0df"
+      ]
+    },
+    "sha256": "5f33f448deb6e81bb2545de649d07e02f22ecd45542d3e25ef5c1aa45ae7b664"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "6a0cb2758afee0c181c520f695d7c33ceb260da1",
+    "project": "hyrodium/BasicBSpline.jl",
+    "input_sha256": "e8054d570e0c55695a81546bfbae9ad6411f384546b117b2ba93df5961dacdd5",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:38:41Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.7130609455389718,
+      "input_tokens": 10500,
+      "output_tokens": 842
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"Issue #346 reports `changebasis_I` returning a numerically wrong change-of-basis matrix (negative/garbage entries, wrong support pattern) for a degenerate B-spline space pair. The commit fixes the degenerate-rank handling in `_changebasis_I`, corrects the non-zero upper bound, drops the incorrect `isdegenerate_I` short-circuits in the Rule-0/Rule-8 branches, and generalizes `isdegenerate_R/_I` dispatch so `BSplineDerivativeSpace` is handled. Tests for both `changebasis` and `derivative` were updated in the same change, and the runtime harness reports a stable differential with the fixed full suite passing.\", \"evidence\": \"Issue #346 shows concrete before-state output (wrong matrix from `changebasis_I(P, P')`) and PR #345 shows the corrected output, so the defect is a wrong-value production behavior bug, not a missing feature. Production diff touches computation paths in src/_ChangeBasis.jl (new degenerate-rank trimming plus SparseMatrixCSC colptr padding, `exactdim_I(P′)*(p+2)` -> `*(p+1)`, removal of `isdegenerate_I` conditions in the recursion rules) and dispatch/method additions in src/_BSplineSpace.jl and src/_DerivativeSpace.jl. Test files test/test_ChangeBasis.jl and test/test_Derivative.jl accompany the change; runtime_evidence reports strict_differential=stable_differential over 3 repetitions with fixed_full_suite_passed=true, minimization marked globally_minimal with all kept hunks necessary.\", \"missing_evidence\": \"No PR number/title/body for the commit itself and no explicit trigger_tests list, so the exact failing assertion is not visible. Also unclear why minimization reduced to only the isdegenerate dispatch hunks while the substantive `_changebasis_I` hunks were dropped as unnecessary for the trigger suite; the pre-fix failure mode for the minimized subset (likely a MethodError on BSplineDerivativeSpace) is inferred rather than observed.\", \"validation_risks\": \"The minimized 2-hunk patch reads like a dispatch generalization (`BSplineSpace` -> `AbstractFunctionSpace`, new BSplineDerivativeSpace methods) and could be misclassified as refactor-only if evaluated in isolation from the ChangeBasis hunks. `const isdegenerate = isdegenerate_R` changes method-table structure, which can affect unrelated dispatch or docstring attachment. Numeric comparisons in changebasis tests may be tolerance sensitive; sparse-structure assertions (stored entry counts) can be brittle across SparseArrays versions.\", \"suggested_tests\": \"Assert `changebasis_I(P, P′)` equals the expected matrix for the exact spaces in issue #346 (p=4 knots [1,1,2,2,2,3,3,4,4,5,7] into p'=5 knots [1,1,1,1,1,2,2,3,3,3,3,4,4,4,5,6]), including zero columns for degenerate ranks on both ends. Add a property check that for random degenerate P ⊑ P′ the reconstructed basis values agree pointwise on the domain interval within tolerance. Add `isdegenerate_R`/`isdegenerate_I` calls on a `BSplineDerivativeSpace` (both indexed and whole-space forms) to guard the new dispatch, and verify `isdegenerate === isdegenerate_R` behavior on BSplineSpace is unchanged.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "Issue #346 reports `changebasis_I` returning a numerically wrong change-of-basis matrix (negative/garbage entries, wrong support pattern) for a degenerate B-spline space pair. The commit fixes the degenerate-rank handling in `_changebasis_I`, corrects the non-zero upper bound, drops the incorrect `isdegenerate_I` short-circuits in the Rule-0/Rule-8 branches, and generalizes `isdegenerate_R/_I` dispatch so `BSplineDerivativeSpace` is handled. Tests for both `changebasis` and `derivative` were updated in the same change, and the runtime harness reports a stable differential with the fixed full suite passing.",
+    "evidence": "Issue #346 shows concrete before-state output (wrong matrix from `changebasis_I(P, P')`) and PR #345 shows the corrected output, so the defect is a wrong-value production behavior bug, not a missing feature. Production diff touches computation paths in src/_ChangeBasis.jl (new degenerate-rank trimming plus SparseMatrixCSC colptr padding, `exactdim_I(P′)*(p+2)` -> `*(p+1)`, removal of `isdegenerate_I` conditions in the recursion rules) and dispatch/method additions in src/_BSplineSpace.jl and src/_DerivativeSpace.jl. Test files test/test_ChangeBasis.jl and test/test_Derivative.jl accompany the change; runtime_evidence reports strict_differential=stable_differential over 3 repetitions with fixed_full_suite_passed=true, minimization marked globally_minimal with all kept hunks necessary.",
+    "missing_evidence": "No PR number/title/body for the commit itself and no explicit trigger_tests list, so the exact failing assertion is not visible. Also unclear why minimization reduced to only the isdegenerate dispatch hunks while the substantive `_changebasis_I` hunks were dropped as unnecessary for the trigger suite; the pre-fix failure mode for the minimized subset (likely a MethodError on BSplineDerivativeSpace) is inferred rather than observed.",
+    "validation_risks": "The minimized 2-hunk patch reads like a dispatch generalization (`BSplineSpace` -> `AbstractFunctionSpace`, new BSplineDerivativeSpace methods) and could be misclassified as refactor-only if evaluated in isolation from the ChangeBasis hunks. `const isdegenerate = isdegenerate_R` changes method-table structure, which can affect unrelated dispatch or docstring attachment. Numeric comparisons in changebasis tests may be tolerance sensitive; sparse-structure assertions (stored entry counts) can be brittle across SparseArrays versions.",
+    "suggested_tests": "Assert `changebasis_I(P, P′)` equals the expected matrix for the exact spaces in issue #346 (p=4 knots [1,1,2,2,2,3,3,4,4,5,7] into p'=5 knots [1,1,1,1,1,2,2,3,3,3,3,4,4,4,5,6]), including zero columns for degenerate ranks on both ends. Add a property check that for random degenerate P ⊑ P′ the reconstructed basis values agree pointwise on the domain interval within tolerance. Add `isdegenerate_R`/`isdegenerate_I` calls on a `BSplineDerivativeSpace` (both indexed and whole-space forms) to guard the new dispatch, and verify `isdegenerate === isdegenerate_R` behavior on BSplineSpace is unchanged."
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2"
+}

@@ -1,0 +1,110 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-136",
+  "bug_id": "JULIA-136",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "SciML/SciMLBase.jl",
+  "repository_url": "https://github.com/SciML/SciMLBase.jl.git",
+  "issue_urls": [
+    "https://github.com/SciML/OrdinaryDiffEq.jl/issues/4027"
+  ],
+  "issue_id": 4027,
+  "buggy_revision": "dbe6511862bd2d39f01a5d0e8c37fa45323db398",
+  "fixed_revision": "b73f7606e434e969c7703f5d2b35d7a87e2fc426",
+  "candidate_sha": "b73f7606e434e969c7703f5d2b35d7a87e2fc426",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "dbe6511862bd2d39f01a5d0e8c37fa45323db398",
+  "changed_production_files": [
+    "src/errors.jl",
+    "src/solve.jl"
+  ],
+  "changed_test_files": [
+    "test/function_building_error_messages.jl"
+  ],
+  "trigger_tests": [
+    "controller kwargs are rejected"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "test_patch_suite",
+    "path": "trigger/upstream-tests.patch",
+    "origin": "upstream_fix_test_patch",
+    "timeout_seconds": 1800,
+    "test_files": [
+      "test/function_building_error_messages.jl"
+    ],
+    "test_files_sha256": {
+      "test/function_building_error_messages.jl": "02a8df2192cf27f2e506adee33915f369d2c697ddc668cdac71896d9f7a2ae48"
+    },
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [],
+      "added_testsets": [
+        "controller kwargs are rejected"
+      ],
+      "assertion_expression_sha256": [
+        "e6db5a78a651ef6d121f02bd60c7b9172a36998950f9e1c1284e0eeed395b05c",
+        "f20fc900bbc32bf4a4e7acee8e8bd8481e388640a89981923ef00a4b843d54df",
+        "9e595e29f73a22beb9108cfe94f65227d102af69013ab0f99426b9600266c35c",
+        "808aec42dd52c108d623ea3689e56dfda61274eebb4588ce6a1dc7b8c8d9de42",
+        "70cf4af1fd7d4a516a2a993a20afafeb37ed9acd10b07572fd1a397d04f3f9cd",
+        "b1a00c76c1ee3c4537380defb5ffa5566d45d485422d7d91fd9e87c636450cef",
+        "38bc7a9a8819e0dbdc3d3c975f5bbf541d5926f0361b5a5c28c74d8666a39852",
+        "a34ae96bbb09c3ab91c7d9d81ae3ec6544b98d0b42e0298a7145b4a912e3d128",
+        "aba27a8a8f40c2a8633f131b25d0d24477bda4463af8553c064d902a3c7ab288"
+      ]
+    },
+    "sha256": "956f201b4b743d3051bdd7110c4786756bfe9f54889f689a8f78dc55b191fd94"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "b73f7606e434e969c7703f5d2b35d7a87e2fc426",
+    "project": "SciML/SciMLBase.jl",
+    "input_sha256": "09933ca05db9660300e56aabc20fdf3719f54bb150f6085281dba2fccad5b200",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:54:42Z",
+    "usage": {
+      "prompt_tokens": 1925,
+      "completion_tokens": 645,
+      "total_tokens": 2570
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"This fix removes deprecated controller kwargs (gamma, beta1, beta2, qmax, qmin, qsteady_min, qsteady_max, qoldinit) from the allowedkeywords list in SciMLBase, so that passing them now raises an error instead of being silently ignored. This is a real defect: after the v7 controller refactor these kwargs no longer had any effect, but `solve` still accepted them without warning, causing users' controller tuning to silently revert to defaults.\",\n  \"evidence\": \"The issue provides empirical evidence that sweeping gamma across wildly different values (0.1 to 0.99) produces identical nsteps=5597, proving the kwarg was silently dropped. The fix touches production files (src/errors.jl, src/solve.jl) to remove these keywords from the allowed list, and a test file is updated to verify the new error behavior. The issue is linked to a downstream report (OrdinaryDiffEq.jl#4027).\",\n  \"missing_evidence\": \"The actual diff content is not provided, so the exact code changes cannot be inspected. The test file name suggests error message testing but the specific assertions are not visible.\",\n  \"validation_risks\": \"Downstream packages (especially StochasticDiffEqCore) still list these kwargs in their signatures even though they are unused — removing them from allowedkeywords could cause errors in existing user code that was working (albeit incorrectly). This is intentional breakage to surface a silent bug, but validation should confirm no legitimate consumer remains.\",\n  \"suggested_tests\": \"1. Verify that passing any of the removed kwargs (gamma, beta1, beta2, qmax, qmin, qsteady_min, qsteady_max, qoldinit) to solve() now raises an appropriate error. 2. Verify that passing :controller and :failfactor still works. 3. Run an adaptive ODE solve with default settings to confirm no regression in normal operation.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "This fix removes deprecated controller kwargs (gamma, beta1, beta2, qmax, qmin, qsteady_min, qsteady_max, qoldinit) from the allowedkeywords list in SciMLBase, so that passing them now raises an error instead of being silently ignored. This is a real defect: after the v7 controller refactor these kwargs no longer had any effect, but `solve` still accepted them without warning, causing users' controller tuning to silently revert to defaults.",
+    "evidence": "The issue provides empirical evidence that sweeping gamma across wildly different values (0.1 to 0.99) produces identical nsteps=5597, proving the kwarg was silently dropped. The fix touches production files (src/errors.jl, src/solve.jl) to remove these keywords from the allowed list, and a test file is updated to verify the new error behavior. The issue is linked to a downstream report (OrdinaryDiffEq.jl#4027).",
+    "missing_evidence": "The actual diff content is not provided, so the exact code changes cannot be inspected. The test file name suggests error message testing but the specific assertions are not visible.",
+    "validation_risks": "Downstream packages (especially StochasticDiffEqCore) still list these kwargs in their signatures even though they are unused — removing them from allowedkeywords could cause errors in existing user code that was working (albeit incorrectly). This is intentional breakage to surface a silent bug, but validation should confirm no legitimate consumer remains.",
+    "suggested_tests": "1. Verify that passing any of the removed kwargs (gamma, beta1, beta2, qmax, qmin, qsteady_min, qsteady_max, qoldinit) to solve() now raises an appropriate error. 2. Verify that passing :controller and :failfactor still works. 3. Run an adaptive ODE solve with default settings to confirm no regression in normal operation."
+  },
+  "origin_dataset": null
+}

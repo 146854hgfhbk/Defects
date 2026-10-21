@@ -1,0 +1,74 @@
+{
+  "candidate_sha": "f4c22d12e73b3fcce26ed8aecb1b0a5faeeeed9c",
+  "project": "JuliaDynamics/DrWatson.jl",
+  "source": "SWE-rebench-V2",
+  "instance_id": "juliadynamics__drwatson.jl-285",
+  "swe_rebench": {
+    "base_commit": "953888eb7c8782ae1278601a0fc9d563ed7803c7",
+    "environment_setup_commit": null,
+    "image_name": "docker.io/swerebenchv2/juliadynamics-drwatson.jl:285-953888e",
+    "license": "custom-check-github",
+    "fail_to_pass": [
+      "DrWatson"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 284,
+      "url": "https://github.com/JuliaDynamics/DrWatson.jl/issues/284",
+      "state": "closed",
+      "title": "`savename` documentation",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug"
+      ],
+      "body_excerpt": "Hi,\r\nI just noticed that the default values for the `savename` keywords that are given in the docs:\r\nhttps://github.com/JuliaDynamics/DrWatson.jl/blob/953888eb7c8782ae1278601a0fc9d563ed7803c7/src/naming.jl#L37\r\ndo not match the real default values:\r\nhttps://github.com/JuliaDynamics/DrWatson.jl/blob/953888eb7c8782ae1278601a0fc9d563ed7803c7/src/naming.jl#L87-L89\r\n\r\nI would like to argue that the documented default values are the more sensible choice, because I just found out, that for `h = [1.0, 0.1, 0.01, 0.001, 0.0001, 1.0e-5, 1.0e-6]` we get \r\n```julia\r\njulia> savename.(Dict.(:h.=>hs))\r\n7-element Vector{String}:\r\n \"h=1.0\"\r\n \"h=0.1\"\r\n \"h=0.01\"\r\n \"h=0.001\"\r\n \"h=0.0\"\r\n \"h=0.0\"\r\n \"h=0.0\"\r\n```\r\nwhereas with `sigdigits=3` we get\r\n```julia\r\njulia> savename.(Dict.(:h.=>hs), sigdigits=3)\r\n7-element Vector{String}:\r\n \"h=1.0\"\r\n \"h=0.1\"\r\n \"h=0.01\"\r\n \"h=0.001\"\r\n \"h=0.0001\"\r\n \"h=1e-5\"\r\n \"h=1e-6\"\r\n```\r\nbut I am aware that similar examples can be found for every possible default values for `digits`/`sigdigits`.\r\nShould I open a PR to change the docstring or the default values?"
+    },
+    {
+      "number": 285,
+      "url": "https://github.com/JuliaDynamics/DrWatson.jl/pull/285",
+      "state": "closed",
+      "title": "update defaults for keyword arguments of `savename`",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This closes #284."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        284
+      ],
+      "pull_request": 285,
+      "fix_commit": "f4c22d12e73b3fcce26ed8aecb1b0a5faeeeed9c",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "update defaults for keyword arguments of `savename` (#285)\n\n* update defaults for keyword arguments of `savename`\r\n\r\n* update Changelog\r\n\r\n* bump version in Project.toml\r\n\r\n* Update CHANGELOG.md\r\n\r\n* fix digits not overriding sigdigits in savename\r\n\r\nCo-authored-by: George Datseris <datseris.george@gmail.com>",
+    "commit_issue_refs": [
+      285
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 285,
+    "pull_request_title": "update defaults for keyword arguments of `savename`",
+    "pull_request_issue_refs": [
+      284
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    284
+  ],
+  "cross_repository_issue_records": []
+}

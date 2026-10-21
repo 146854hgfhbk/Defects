@@ -1,0 +1,32 @@
+diff --git a/test/runtests.jl b/test/runtests.jl
+index 33927d2a4..d44fe5bc5 100644
+--- a/test/runtests.jl
++++ b/test/runtests.jl
+@@ -8,7 +8,8 @@ import DataStructures: IntSet
+ @test [] == detect_ambiguities(Core, DataStructures)
+ @test [] == detect_ambiguities(Base, DataStructures)
+ 
+-tests = ["deprecations",
++tests = [
++         "deprecations",
+          "int_set",
+          "sparse_int_set",
+          "deque",
+diff --git a/test/test_ordered_robin_dict.jl b/test/test_ordered_robin_dict.jl
+index 2a78fc7aa..79efa6572 100644
+--- a/test/test_ordered_robin_dict.jl
++++ b/test/test_ordered_robin_dict.jl
+@@ -78,6 +78,13 @@
+         @test od60[14] == 15
+     end
+ 
++    @testset "Fixes issue 857" begin
++        h = OrderedRobinDict{Any,Any}([("a", missing), ("b", -2)])
++        @test 5 == (h["a"] = 5)
++        @test "b" in keys(h)
++        @test haskey(h,"b")
++    end
++
+ 
+     # #############################
+     # Copied and modified from Base/test/dict.jl

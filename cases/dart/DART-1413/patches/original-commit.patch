@@ -1,0 +1,66 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c7edf67600564c58a4e490d3888fe28a15e6d153..e786f218c32eb0a45f5f3158c5fe5c43e3d8f35a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,7 @@
+ ## 0.13.3-dev
+ 
++* Validate that the `method` parameter of BaseRequest is a valid "token".
++
+ ## 0.13.2
+ 
+ * Add `package:http/retry.dart` with `RetryClient`. This is the same
+diff --git a/lib/src/base_request.dart b/lib/src/base_request.dart
+index 6380cb0bc90a6844d8f4577ae2f9d48c5c97ebed..fd18bad3325c925a3cf84f98139f74832b947ff8 100644
+--- a/lib/src/base_request.dart
++++ b/lib/src/base_request.dart
+@@ -88,8 +88,17 @@ abstract class BaseRequest {
+   bool get finalized => _finalized;
+   bool _finalized = false;
+ 
+-  BaseRequest(this.method, this.url)
+-      : headers = LinkedHashMap(
++  static final _tokenRE = RegExp(r"^[\w!#%&'*+\-.^`|~]+$");
++  static String _validateMethod(String method) {
++    if (!_tokenRE.hasMatch(method)) {
++      throw ArgumentError.value(method, 'method', 'Not a valid method');
++    }
++    return method;
++  }
++
++  BaseRequest(String method, this.url)
++      : method = _validateMethod(method),
++        headers = LinkedHashMap(
+             equals: (key1, key2) => key1.toLowerCase() == key2.toLowerCase(),
+             hashCode: (key) => key.toLowerCase().hashCode);
+ 
+diff --git a/test/request_test.dart b/test/request_test.dart
+index 5b74bff593c86fd4f3f7525eb3a445f31141a21a..59cb0988c58dc18fb8af074efe730ab9364b3ff1 100644
+--- a/test/request_test.dart
++++ b/test/request_test.dart
+@@ -334,4 +334,10 @@ void main() {
+       expect(request.toString(), 'POST $dummyUrl');
+     });
+   });
++
++  group('#method', () {
++    test('must be a token', () {
++      expect(() => http.Request('LLAMA[0]', dummyUrl), throwsArgumentError);
++    });
++  });
+ }
+diff --git a/test/streamed_request_test.dart b/test/streamed_request_test.dart
+index c8c801d866f89664cbb4fab59270789af1a4e934..4baa3e603ef5eb1b369d4e709e5abe009b14b81b 100644
+--- a/test/streamed_request_test.dart
++++ b/test/streamed_request_test.dart
+@@ -24,4 +24,10 @@ void main() {
+       expect(() => request.contentLength = 10, throwsStateError);
+     });
+   });
++  group('#method', () {
++    test('must be a token', () {
++      expect(() => http.StreamedRequest('SUPER LLAMA', dummyUrl),
++          throwsArgumentError);
++    });
++  });
+ }

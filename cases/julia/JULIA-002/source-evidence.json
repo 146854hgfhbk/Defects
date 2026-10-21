@@ -1,0 +1,71 @@
+{
+  "candidate_sha": "043fa65cc15fb13e819730f9b2a757ba971adfdd",
+  "project": "SciML/LinearSolve.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1151,
+      "url": "https://github.com/SciML/LinearSolve.jl/pull/1151",
+      "state": "closed",
+      "title": "GenericLUFactorization: pure-Julia naive back-solve instead of getrs!",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "⚠️ Draft — please ignore until reviewed by @ChrisRackauckas.\n\nFixes https://github.com/SciML/LinearSolve.jl/issues/1145.\n\n## What changed and why\n\n`GenericLUFactorization` (the default for `size(b,1) ≤ 10`) factorizes with generic Julia code but previously dispatched the back-solve to `ldiv!(::LU, ·)` → OpenBLAS `getrs!`. That call has a ~290 ns fixed floor that dominates completely at the sizes where GenericLU is the default, and every Newton/ODE reuse path pays it once per iteration against a reused factorization.\n\nThis PR replaces that path with a pure-Julia column-oriented triangular solve (apply `ipiv`, unit-lower forward, upper backward), always used for GenericLU — no BLAS cutoff, no vendor dependency. Same shape as the `PANEL_BLAS_CUTOFF` kernels in SupernodalLU (#1112). Multi-RHS applies the row permutation once, then runs the triangular sweeps per column (`nrhs == 1` is the hot path).\n\nNon-stdlib `LU` cachevals (e.g. StaticArrays) still fall through to their own `ldiv!`.\n\n## Verification\n\n### Correctness\n\n```text\nGenericLU naive back-solve correctness | Pass 120\nGenericLU naive back-solve kernel vs getrs! | Pass 12\nGenericLU back-solve reuse (many RHS, one factorization) | Pass 21\nGenericLU naive back-solve with NoPivot | Pass 1\n```\n\nTypes: `Float32/64`, `ComplexF32/64`, `BigFloat`. Sizes `N = 2…80`. Vector and multi-RHS. Relative error vs `A \\ b` / `ldiv!(F, ·)` at ~1e-15.\n\nCommands:\n\n```bash\njulia --project=lib/LinearSolveAutotune -e '\nusing LinearSolve, LinearAlgebra, Test, Random, RecursiveFactorization\ninclude(\"test/Core/genericlu_naive_ldiv.jl\")'\n```\n\n### Microbenchmarks (AMD EPYC 7502, BLAS pinned to 1 thread, min of 5)\n\nKernel-level `getrs!` vs `_naive_lu_ldiv!`:\n\n| N  | getrs! | naive  | speedup |\n|----|--------|--------|---------|\n| 2  | 115 ns | 22 ns  | 5.2×    |\n| 3  | 139 ns | 38 ns  | 3.7×    |\n| 8  | 288 ns | 135 ns | 2.1×    |\n| 20 | 655 ns | 438 ns | 1.5×    |\n| 80 | 3354 ns| 2673 ns| 1.25×   |\n\nFull `GenericLUFactorization` solve! (after"
+    },
+    {
+      "number": 1159,
+      "url": "https://github.com/SciML/LinearSolve.jl/issues/1159",
+      "state": "closed",
+      "title": "#1151's scalar back-solve is up to 2.8x slower than getrs! on Adjoint/Transpose factors",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "#1151 replaced `GenericLUFactorization`'s back-solve with a column-oriented scalar kernel, with\nno size cutoff, so the path stays vendor-free. That is the right call for `Matrix` factors. It\nis not safe for `Adjoint`/`Transpose` ones.\n\n## Why they occur\n\n`init_cacheval(alg::GenericLUFactorization, A::Union{<:Adjoint,<:Transpose}, ...)` factorizes\n`_typed_copy(A)`, and `_typed_copy(A::Adjoint) = adjoint(copy(parent(A)))`. So the resulting\n`LU`'s `factors` field is an `Adjoint`, not a `Matrix`:\n\n```\nadjoint problem -> factors::Adjoint{Float64, Matrix{Float64}}\nnormal  problem -> factors::Matrix{Float64}\n```\n\n`_naive_lu_ldiv!` is typed `fac::AbstractMatrix`, so it accepts that and stays correct — but\n`fac[i, j]` now reads `parent[j, i]`, and the column sweeps walk memory at stride `N`.\n\n## Measurement\n\nBoth kernels timed against the *same* factorization, interleaved in one process, min-of-6000\n(min-of-2000 above N=64), each call feeding a `Ref` sink. Julia 1.11.9, OpenBLAS, AMD EPYC. ns:\n\n| N | normal `getrs!` | normal scalar | | adjoint `getrs!` | adjoint scalar | |\n|---|---|---|---|---|---|---|\n| 4 | 510 | 200 | 0.39x | 830 | 200 | 0.24x |\n| 8 | 529 | 239 | 0.45x | 750 | 230 | 0.31x |\n| 16 | 820 | 490 | 0.60x | 1050 | 440 | 0.42x |\n| 32 | 1360 | 940 | 0.69x | 1930 | 1090 | 0.56x |\n| 48 | 2009 | 1450 | 0.72x | 2880 | 2180 | 0.76x |\n| 64 | 2720 | 2110 | 0.78x | 3920 | 3720 | 0.95x |\n| 96 | 4480 | 3500 | 0.78x | 6040 | **7850** | **1.30x** |\n| 128 | 6400 | 5070 | 0.79x | 8740 | **24550** | **2.81x** |\n\nOn `Matrix` factors the scalar kernel wins at every size and flattens out around 0.78x. On\n`Adjoint` factors the advantage erodes monotonically, crosses over near **N ≈ 64**, and reaches\n**2.81x slower** at N=128.\n\nEnd-to-end through `solve!`, same shape — adjoint vs normal problem on this branch: 1.00x at\nN=4, 1.15x at N=16, 1.61x at N=32, 1.88x at N=64. Before #1151 that ratio was a flat 1.24-1.42x\nacross the whole range, i.e. `getrs!` handled the transposed layout at r"
+    },
+    {
+      "number": 1162,
+      "url": "https://github.com/SciML/LinearSolve.jl/pull/1162",
+      "state": "closed",
+      "title": "Orientation-specialized naive LU back-solve for Adjoint/Transpose factors",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "⚠️ Draft — please ignore until reviewed by @ChrisRackauckas.\n\nFixes #1159.\n\nFor adjoint/transpose operators, `GenericLUFactorization` factorizes through the lazy `Adjoint`/`Transpose` wrapper, so the #1151 back-solve's `fac[i, j]` reads the parent at stride `N` and falls behind BLAS `ldiv!` near N≈64 (2.8x slower at N=128, #1159). This adds orientation-specialized `_naive_lu_ldiv!` methods for `Adjoint`/`Transpose`-wrapped `StridedMatrix` factors (option 1 from the issue): the same pivot/forward/backward sweeps rewritten in inner-product form so the wrapper's parent is traversed column-contiguously, with `@simd` on the inner reductions. Indexing stays through the wrapper, which keeps `conj` correct for complex `Adjoint` factors (complex eltypes do reach this path and are tested); `Matrix` factors keep the existing kernel via unchanged dispatch, non-strided wrapped factors keep the generic fallback, and algorithm/default selection is untouched.\n\n## Verification\n\nAMD EPYC 7502, Julia 1.11.9, OpenBLAS, `BLAS.set_num_threads(1)`, pinned with `taskset -c 8`. Methodology mirrors #1159: both kernels and `ldiv!` interleaved in one process against the **same** factorization, per-call `time_ns` min-of-6000 (min-of-2000 above N=64), each call feeding a `Ref` sink, `copyto!` of the RHS outside the timed region.\n\n### Kernel benchmark (the discriminating evidence for this perf bug)\n\nAdjoint factors (`factors::Adjoint{Float64, Matrix{Float64}}` from the real `generic_lufact!` path) — old kernel = the generic column-oriented method (reached via `invoke`), new kernel = normal dispatch on this branch; ratios are vs BLAS `ldiv!(F, x)` on the same wrapped `LU`. Times in ns:\n\n| N | adj `ldiv!` (BLAS) | adj old kernel | adj new kernel | old/ldiv | new/ldiv | normal `ldiv!` | normal kernel | ker/ldiv |\n|---|---|---|---|---|---|---|---|---|\n| 4 | 550 | 99 | 90 | 0.18x | 0.16x | 339 | 90 | 0.27x |\n| 8 | 669 | 179 | 200 | 0.27x | 0.30x | 450 | 169 | 0.38x |\n| 16 | 960 | 399 | 529 | 0.42x | 0"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "fix_commit_to_issue",
+      "issue_numbers": [
+        1159
+      ],
+      "fix_commit": "043fa65cc15fb13e819730f9b2a757ba971adfdd",
+      "evidence_source": "fix_commit_message"
+    }
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Orientation-specialized naive LU back-solve for Adjoint/Transpose factors (#1162)\n\nGenericLUFactorization's adjoint/transpose path stores the LU factors\nthrough the lazy wrapper, so the column-oriented scalar back-solve from\n#1151 walked the parent at stride N and fell behind the BLAS ldiv! near\nN=64 (2.8x slower at N=128). Dispatch Adjoint/Transpose-wrapped strided\nfactors to inner-product-form sweeps that traverse the parent\ncolumn-contiguously, keeping the small-N win at both orientations.\n\nFixes #1159\n\nCo-authored-by: ChrisRackauckas-Claude <accounts@chrisrackauckas.com>",
+    "commit_issue_refs": [
+      1151,
+      1159,
+      1162
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": null,
+    "pull_request_title": "",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    1159
+  ],
+  "cross_repository_issue_records": []
+}

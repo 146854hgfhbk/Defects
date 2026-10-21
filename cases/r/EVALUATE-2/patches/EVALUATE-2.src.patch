@@ -1,0 +1,30 @@
+diff --git a/R/eval.r b/R/eval.r
+index 20563d8..bb7c6a4 100644
+--- a/R/eval.r
++++ b/R/eval.r
+@@ -106,11 +106,6 @@ evaluate_call <- function(call, src = NULL,
+   # Capture output
+   w <- watchout(debug)
+   on.exit(w$close())
+-
+-  # Capture error output from try() (#88)
+-  old_try_outfile <- options(try.outFile = w$get_con())
+-  on.exit(options(old_try_outfile), add = TRUE)
+-
+   source <- new_source(src)
+   output_handler$source(source)
+   output <- list(source)
+diff --git a/R/watcher.r b/R/watcher.r
+index 87f49df..983b579 100644
+--- a/R/watcher.r
++++ b/R/watcher.r
+@@ -47,8 +47,7 @@ watchout <- function(debug = FALSE) {
+       sink()
+       close(con)
+       output
+-    },
+-    get_con = function() con
++    }
+   )
+ }
+ 

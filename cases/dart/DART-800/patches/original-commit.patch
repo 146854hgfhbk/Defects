@@ -1,0 +1,133 @@
+diff --git a/lib/src/exceptions/conditionals/conditional_exceptions.dart b/lib/src/exceptions/conditionals/conditional_exceptions.dart
+index b03b403..1a550f4 100644
+--- a/lib/src/exceptions/conditionals/conditional_exceptions.dart
++++ b/lib/src/exceptions/conditionals/conditional_exceptions.dart
+@@ -1,6 +1,7 @@
+ /// Copyright (C) 2022 Intel Corporation
+ /// SPDX-License-Identifier: BSD-3-Clause
+ 
++export 'invalid_conditional_exception.dart';
+ export 'mapped_signal_already_assigned_exception.dart';
+ export 'signal_redriven_exception.dart';
+ export 'uninitialized_signal_exception.dart';
+diff --git a/lib/src/exceptions/conditionals/invalid_conditional_exception.dart b/lib/src/exceptions/conditionals/invalid_conditional_exception.dart
+new file mode 100644
+index 0000000..77bad90
+--- /dev/null
++++ b/lib/src/exceptions/conditionals/invalid_conditional_exception.dart
+@@ -0,0 +1,19 @@
++// Copyright (C) 2023 Intel Corporation
++// SPDX-License-Identifier: BSD-3-Clause
++//
++// invalid_conditional_exception.dart
++// An exception thrown when a conditional is built in an invalid way.
++//
++// 2023 June 13
++// Author: Max Korbel <max.korbel@intel.com>
++
++import 'package:rohd/rohd.dart';
++import 'package:rohd/src/exceptions/exceptions.dart';
++
++/// An exception that is thrown when a [Conditional] has been constructed in
++/// an invalid way.
++class InvalidConditionalException extends RohdException {
++  /// Creates a new [InvalidConditionalException] with a [message] explaining
++  /// why the conditional was invalid.
++  InvalidConditionalException(super.message);
++}
+diff --git a/lib/src/modules/conditional.dart b/lib/src/modules/conditional.dart
+index 7db664d..7c3bc0c 100644
+--- a/lib/src/modules/conditional.dart
++++ b/lib/src/modules/conditional.dart
+@@ -1240,7 +1240,21 @@ class If extends Conditional {
+ 
+   /// Checks the conditions for [iffs] in order and executes the first one
+   /// whose condition is enabled.
+-  If.block(this.iffs);
++  If.block(this.iffs) {
++    for (final iff in iffs) {
++      if (iff is Else) {
++        if (iff != iffs.last) {
++          throw InvalidConditionalException(
++              'Else must come last in an IfBlock.');
++        }
++
++        if (iff == iffs.first) {
++          throw InvalidConditionalException(
++              'Else cannot be the first in an IfBlock.');
++        }
++      }
++    }
++  }
+ 
+   @override
+   void execute(Set<Logic> drivenSignals, [void Function(Logic)? guard]) {
+@@ -1318,9 +1332,6 @@ class If extends Conditional {
+     final padding = Conditional.calcPadding(indent);
+     final verilog = StringBuffer();
+     for (final iff in iffs) {
+-      if (iff is Else && iff != iffs.last) {
+-        throw Exception('Else must come last in an IfBlock.');
+-      }
+       final header = iff == iffs.first
+           ? 'if'
+           : iff is Else
+diff --git a/test/conditionals_test.dart b/test/conditionals_test.dart
+index 2deba13..0ec29ab 100644
+--- a/test/conditionals_test.dart
++++ b/test/conditionals_test.dart
+@@ -403,6 +403,18 @@ class MultipleConditionalModule extends Module {
+   }
+ }
+ 
++class OnlyElseMod extends Module {
++  OnlyElseMod(Logic a) {
++    a = addInput('a', a);
++    final b = addOutput('b');
++    Combinational([
++      If.block([
++        Else([b < a])
++      ])
++    ]);
++  }
++}
++
+ void main() {
+   tearDown(() async {
+     await Simulator.reset();
+@@ -455,6 +467,35 @@ void main() {
+         });
+       }
+     });
++
++    group('bad if blocks', () {
++      test('IfBlock with only else fails', () async {
++        expect(
++            () => If.block([
++                  Else([]),
++                ]),
++            throwsException);
++      });
++
++      test('IfBlock with else in the middle fails', () {
++        expect(
++            () => If.block([
++                  ElseIf(Logic(), []),
++                  Else([]),
++                  ElseIf(Logic(), []),
++                ]),
++            throwsException);
++      });
++
++      test('IfBlock with else at the start fails', () {
++        expect(
++            () => If.block([
++                  Else([]),
++                  ElseIf(Logic(), []),
++                ]),
++            throwsException);
++      });
++    });
+   });
+ 
+   group('simcompare', () {

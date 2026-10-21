@@ -1,0 +1,38 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BlankLineBeforeDeclarationRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BlankLineBeforeDeclarationRule.kt
+index 31210429..b75c3068 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BlankLineBeforeDeclarationRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BlankLineBeforeDeclarationRule.kt
+@@ -116,10 +117,17 @@ public class BlankLineBeforeDeclarationRule :
+             return
+         }
+ 
++        if (node.elementType == FUN && node.prevCodeSibling()?.elementType == EQ) {
++            // Allow:
++            //   val foo =
++            //       fun(): String {
++            //           return "foo"
++            //       }
++            return
++        }
++
+         node
+             .takeIf { it.psi is KtDeclaration }
+-//        (node.psi as KtDeclaration)
+-//            .node
+             ?.takeIf {
+                 val prevLeaf = it.prevLeaf()
+                 prevLeaf != null && (!prevLeaf.isWhiteSpace() || !prevLeaf.text.startsWith("\n\n"))
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRule.kt
+index d98d244d..a1ad1baa 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRule.kt
+@@ -43,7 +46,8 @@ public class FunctionNamingRule : StandardRule("function-naming") {
+             ?.takeUnless {
+                 node.isFactoryMethod() ||
+                     node.isTestMethod() ||
+-                    node.hasValidFunctionName()
++                    node.hasValidFunctionName() ||
++                    node.isAnonymousFunction()
+             }?.let {
+                 val identifierOffset =
+                     node

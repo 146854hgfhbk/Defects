@@ -1,0 +1,117 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-047",
+  "bug_id": "JULIA-047",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "0cd5642273b1b3d21135bae0099a2996c80c8313",
+  "fixed_revision": "38fc0fa6f17fb1ac25350bfc0928b78cd5b616b9",
+  "candidate_sha": "38fc0fa6f17fb1ac25350bfc0928b78cd5b616b9",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "0cd5642273b1b3d21135bae0099a2996c80c8313",
+  "changed_production_files": [
+    "src/expr.jl"
+  ],
+  "changed_test_files": [
+    "test/expr.jl",
+    "test/parser.jl"
+  ],
+  "trigger_tests": [
+    "command macro suffix"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "499fd5948a4c9795f0124ab204343de9b52ba533566a4bd5346545d8996a4519",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/expr.jl",
+        "basis": "public Expr parser assertion copied from upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "265f868b5485cbd1a24f9073890ff800ab56fc0197736628775be7ae18b86598"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "38fc0fa6f17fb1ac25350bfc0928b78cd5b616b9",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "28b0a1cdceb56275e89217d1a6f714ca86990d6b23e79edf917766b7f526efea",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:52:55Z",
+    "usage": {
+      "prompt_tokens": 1203,
+      "completion_tokens": 451,
+      "total_tokens": 1654
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.78, \"summary\": \"Fix for a bug in converting command string macros to Expr, discovered during downstream tests in Base. The commit modifies production code (src/expr.jl) and includes test updates (test/expr.jl, test/parser.jl), indicating a real defect with regression tests.\", \"evidence\": \"Issue #482 explicitly states 'Fix bug converting cmd string macros to Expr' and notes it was 'Found when running the downstream tests in Base'. The commit touches only one production file (src/expr.jl) and adds test coverage in two test files. The issue title clearly identifies this as a bug fix.\", \"missing_evidence\": \"The actual diff content is not available, so the precise nature of the code change cannot be verified. The PR body is empty, so detailed description of the fix mechanism is missing.\", \"validation_risks\": \"Without seeing the actual diff, there's a small risk that the change could include additional refactoring beyond the bug fix. The test changes need verification to confirm they are regression tests rather than feature tests.\", \"suggested_tests\": \"Test that cmd string macros (e.g., `@cmd_str`) correctly convert to Expr representation. Verify both the fixed case and ensure no regression in standard string macro conversion.\"}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.78,
+    "summary": "Fix for a bug in converting command string macros to Expr, discovered during downstream tests in Base. The commit modifies production code (src/expr.jl) and includes test updates (test/expr.jl, test/parser.jl), indicating a real defect with regression tests.",
+    "evidence": "Issue #482 explicitly states 'Fix bug converting cmd string macros to Expr' and notes it was 'Found when running the downstream tests in Base'. The commit touches only one production file (src/expr.jl) and adds test coverage in two test files. The issue title clearly identifies this as a bug fix.",
+    "missing_evidence": "The actual diff content is not available, so the precise nature of the code change cannot be verified. The PR body is empty, so detailed description of the fix mechanism is missing.",
+    "validation_risks": "Without seeing the actual diff, there's a small risk that the change could include additional refactoring beyond the bug fix. The test changes need verification to confirm they are regression tests rather than feature tests.",
+    "suggested_tests": "Test that cmd string macros (e.g., `@cmd_str`) correctly convert to Expr representation. Verify both the fixed case and ensure no regression in standard string macro conversion."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "command macro suffix"
+    ],
+    "exception_types": [
+      "e8b35e8e6ad9ec0c05f78dd4369b049da77fda6c57498f51a81f6fd94b6191eb"
+    ],
+    "fingerprints": [
+      "e8b35e8e6ad9ec0c05f78dd4369b049da77fda6c57498f51a81f6fd94b6191eb"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

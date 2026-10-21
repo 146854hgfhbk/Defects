@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-557",
+  "technical_evidence_sha256": "6b8170278c12ae5598b808c34acb64d6f49e6659a0ea0d77a23ce83b229ab31c",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "ad5ac13c4d3e0d78bf79388baf2a4b7d70de4638c9bedfb4456b7b9b6abf5334",
+  "reviewed_at": "2026-08-11T12:28:36.662044+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/yaml#49",
+  "rationale": "The migrated public issue (dart-archive/yaml#49 -> dart-lang/tools#1906, 'Spans aren't correct for list nodes with a null value') supplies a concrete reproducer showing that an empty block-sequence entry reports a span pointing at the following entry's line. The production fix in lib/src/parser.dart captures the blockEntry token as prevToken before _scanner.advance() and passes prevToken.span.end to _processEmptyScalar instead of the advanced token's span.end, which is exactly the off-by-one-token span origin described in the issue. The minimized production patch is a single three-line hunk in one file with no refactor, formatting, docs, config, or feature change; the changelog/pubspec and later PR commits were excluded. The trigger is the unchanged upstream test portion of the same fixing commit and uses only pre-existing public API (loadYaml, YamlList.nodes, span highlighting) with no API introduced by the fix. Strict machine evidence passes all gates both originally and post-minimization: build.both_versions, trigger.buggy_differential with reproduced selector test/span_test.dart::null nodes span, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, over a complete 38-run matrix with 3 repetitions. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and the key matches allowed_root_cause_ids.\n\nThe linked issue (dart-archive/yaml#49, migrated to dart-lang/tools#1906, 'Spans aren't correct for list nodes with a null value') reproduces with '- foo\\n- \\n- bar' where the null entry's span highlight points at the following '- bar' line. The minimized production patch matches that root cause exactly: in Parser._parseBlockSequenceEntry, the empty scalar's span was built from the token returned by _scanner.advance() (the next block entry / block end) instead of the blockEntry token itself; the fix captures prevToken before advancing and passes prevToken.span.end. The minimized patch equals the production-fix patch: one file, one hunk, three lines, no refactor, formatting, docs, config, or API change (the later PR commits that touched CHANGELOG/pubspec and reworked the fix to use 'start' are excluded from this revision pair). The trigger is the unchanged upstream test portion of the same commit and uses only pre-existing public API (loadYaml, YamlList.nodes, YamlNode.span, existing _expectSpan helper), so it introduces no dependency on new production API. Strict machine evidence reports both revisions build, the buggy revision fails exactly test/span_test.dart::'null nodes span' in isolation and in the full suite with deterministic fingerprints over 3 repetitions, and the fixed revision is all green including reversed runs. The active same-project root-cause registry is empty, so this root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:28:19.732394+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ad5ac13c4d3e0d78bf79388baf2a4b7d70de4638c9bedfb4456b7b9b6abf5334",
+      "response_sha256": "40b1b159aac856daca63afe964e44d268feb544f91c5133082264703843fa1c4",
+      "response_id": "msg_1786451299538",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 9035,
+        "output_tokens": 933,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/yaml#49",
+      "rationale": "The migrated public issue (dart-archive/yaml#49 -> dart-lang/tools#1906, 'Spans aren't correct for list nodes with a null value') supplies a concrete reproducer showing that an empty block-sequence entry reports a span pointing at the following entry's line. The production fix in lib/src/parser.dart captures the blockEntry token as prevToken before _scanner.advance() and passes prevToken.span.end to _processEmptyScalar instead of the advanced token's span.end, which is exactly the off-by-one-token span origin described in the issue. The minimized production patch is a single three-line hunk in one file with no refactor, formatting, docs, config, or feature change; the changelog/pubspec and later PR commits were excluded. The trigger is the unchanged upstream test portion of the same fixing commit and uses only pre-existing public API (loadYaml, YamlList.nodes, span highlighting) with no API introduced by the fix. Strict machine evidence passes all gates both originally and post-minimization: build.both_versions, trigger.buggy_differential with reproduced selector test/span_test.dart::null nodes span, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, over a complete 38-run matrix with 3 repetitions. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and the key matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:issue_urls",
+        "case.json:traceability.issue_migration",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "Two selectors are declared but only 'null nodes span' reproduces the defect; 'root nodes span' asserts spans for non-null nodes and passes on both revisions, so it adds no discriminating value and should not be treated as a defect trigger.",
+        "The trigger asserts source_span highlight() output containing box-drawing characters and depends on meaningful trailing whitespace in the YAML fixture; a different source_span resolution or whitespace-normalizing checkout could cause failures unrelated to the defect.",
+        "Traceability rests on an archived-issue redirect (yaml#49 -> tools#1906) rather than a directly fetchable issue in the origin repository; the mapping is asserted in case.json metadata rather than independently re-verified here.",
+        "Issue tools#1906 carries no explicit defect label; defect status is inferred from the reproducer body and the fix commit message."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:28:36.661749+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ad5ac13c4d3e0d78bf79388baf2a4b7d70de4638c9bedfb4456b7b9b6abf5334",
+      "response_sha256": "080bdf2fdf79d1bb87513ce6ff496c289194f98d8ae491c9dce4b2fa86d18c63",
+      "response_id": "msg_3007de25-bc21-4e0d-b0",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3033
+        },
+        "cache_creation_input_tokens": 3033,
+        "cache_read_input_tokens": 6618,
+        "input_tokens": 8682,
+        "output_tokens": 1637
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/yaml#49",
+      "rationale": "The linked issue (dart-archive/yaml#49, migrated to dart-lang/tools#1906, 'Spans aren't correct for list nodes with a null value') reproduces with '- foo\\n- \\n- bar' where the null entry's span highlight points at the following '- bar' line. The minimized production patch matches that root cause exactly: in Parser._parseBlockSequenceEntry, the empty scalar's span was built from the token returned by _scanner.advance() (the next block entry / block end) instead of the blockEntry token itself; the fix captures prevToken before advancing and passes prevToken.span.end. The minimized patch equals the production-fix patch: one file, one hunk, three lines, no refactor, formatting, docs, config, or API change (the later PR commits that touched CHANGELOG/pubspec and reworked the fix to use 'start' are excluded from this revision pair). The trigger is the unchanged upstream test portion of the same commit and uses only pre-existing public API (loadYaml, YamlList.nodes, YamlNode.span, existing _expectSpan helper), so it introduces no dependency on new production API. Strict machine evidence reports both revisions build, the buggy revision fails exactly test/span_test.dart::'null nodes span' in isolation and in the full suite with deterministic fingerprints over 3 repetitions, and the fixed revision is all green including reversed runs. The active same-project root-cause registry is empty, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:issue_urls",
+        "case.json:traceability.issue_migration",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.fixed_all_green",
+        "lib/src/parser.dart"
+      ],
+      "risks": [
+        "The declared selector test/span_test.dart::'root nodes span' does not reproduce the defect (passes on the buggy revision); only 'null nodes span' is the differential trigger.",
+        "Expectations compare source_span highlight() output including box-drawing characters, so a future source_span formatting change could break the trigger for reasons unrelated to the defect.",
+        "The YAML fixture depends on significant trailing whitespace on several lines; whitespace-normalizing tooling applied to patches or checkout would invalidate the trigger.",
+        "Traceability rests on the archived issue #49 redirecting to dart-lang/tools#1906; the original issue body is only available via the migrated issue record supplied here."
+      ]
+    }
+  ]
+}

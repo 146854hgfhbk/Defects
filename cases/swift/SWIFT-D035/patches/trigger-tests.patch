@@ -1,0 +1,35 @@
+diff --git a/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift b/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift
+index 932b6a22fab07d04ed57b1ad5d46af8705ad8cd5..4562663a31540e5a5d0f89351154f20c2880f47c 100644
+--- a/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift
++++ b/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift
+@@ -288,6 +288,30 @@ final class OrderedImportsTests: LintOrFormatRuleTestCase {
+     )
+   }
+ 
++  func testCommentBetweenImportGroupsIsPreserved() {
++    // A free-standing comment, separated from the surrounding imports by
++    // blank lines, was previously dropped entirely when the rule ran the
++    // import group through its line/trivia normalisation. See
++    // https://github.com/swiftlang/swift-format/issues/1080.
++    assertFormatting(
++      OrderedImports.self,
++      input: """
++        import A
++
++        // Comment
++
++        import B
++        """,
++      expected: """
++        import A
++        import B
++
++        // Comment
++        """,
++      findings: []
++    )
++  }
++
+   func testMultipleCodeBlocksPerLine() {
+     assertFormatting(
+       OrderedImports.self,

@@ -1,0 +1,20 @@
+diff --git a/R/tag-parser.R b/R/tag-parser.R
+index 810d94dc..d8f1b373 100644
+--- a/R/tag-parser.R
++++ b/R/tag-parser.R
+@@ -128,14 +128,13 @@ tag_two_part <- function(x, first, second, required = TRUE, markdown = TRUE) {
+       return(NULL)
+     }
+ 
+-    pieces[, 2] <- trim_docstring(pieces[, 2])
+     if (markdown) {
+       pieces[, 2] <- markdown_if_active(pieces[, 2], x)
+     }
+ 
+     x$val <- list(
+       name = pieces[, 1],
+-      description = pieces[, 2]
++      description = trim_docstring(pieces[, 2])
+     )
+     x
+   }

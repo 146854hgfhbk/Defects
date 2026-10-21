@@ -1,0 +1,66 @@
+diff --git a/lua/pl/path.lua b/lua/pl/path.lua
+index 011b979447f773b32df8a6692ff4a04a526e3572..dd0b49af0580abee115ce9bb6cf3f00b899eb035 100644
+--- a/lua/pl/path.lua
++++ b/lua/pl/path.lua
+@@ -21,9 +21,9 @@ local append, concat, remove = table.insert, table.concat, table.remove
+ local utils = require 'pl.utils'
+ local assert_string,raise = utils.assert_string,utils.raise
+ 
+-local res,lfs = _G.pcall(_G.require,'lfs')
+-if not res then
+-    error("pl.path requires LuaFileSystem")
++local ok, lfs = _G.pcall(_G.require,'lfs')
++if not ok then
++    error("pl.path requires LuaFileSystem, but failed loading it: " .. tostring(lfs))
+ end
+ 
+ local attrib = lfs.attributes
+diff --git a/spec/path_lfs_spec.lua b/spec/path_lfs_spec.lua
+new file mode 100644
+index 0000000000000000000000000000000000000000..bd714b2b64cecac9969c7c5723577262c1ba7cb0
+--- /dev/null
++++ b/spec/path_lfs_spec.lua
+@@ -0,0 +1,43 @@
++describe("pl.path lfs requirement", function()
++    local original_require
++    local original_path_loaded
++
++    before_each(function()
++        original_require = _G.require
++        original_path_loaded = package.loaded["pl.path"]
++        package.loaded["pl.path"] = nil
++    end)
++
++    after_each(function()
++        _G.require = original_require
++        package.loaded["pl.path"] = original_path_loaded
++    end)
++
++    it("shows descriptive error when lfs fails to load", function()
++        _G.require = function(mod)
++            if mod == "lfs" then
++                error("module 'lfs' not found:\n\tno field package.preload['lfs']\n\tno file ...")
++            end
++            return original_require(mod)
++        end
++
++        local ok, err = pcall(require, "pl.path")
++        assert.is_false(ok)
++        assert.match("pl.path requires LuaFileSystem, but failed loading it:", err)
++        assert.match("module 'lfs' not found", err)
++    end)
++
++    it("includes loader error in message", function()
++        _G.require = function(mod)
++            if mod == "lfs" then
++                error("error loading module 'lfs' from file '...': undefined symbol: lua_gettop")
++            end
++            return original_require(mod)
++        end
++
++        local ok, err = pcall(require, "pl.path")
++        assert.is_false(ok)
++        assert.match("pl.path requires LuaFileSystem, but failed loading it:", err)
++        assert.match("undefined symbol: lua_gettop", err)
++    end)
++end)

@@ -1,0 +1,96 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0ecdb26..08cce86 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,6 @@
+ ## 2.3.5-wip
+ 
++* Ensure switch expressions containing line comments split (#1404).
+ * Use language version `3.3` to parse so that code with extension types can be
+   formatted.
+ * Support formatting the `macro` modifier when the `macros` experiment flag
+@@ -11,7 +12,7 @@
+   formatting style (#1253).
+ * Format extension types.
+ * Normalize ignored whitespace and "escaped whitespace" on first line
+-  of multiline string literals. (#1235)
++  of multiline string literals (#1235).
+ 
+ ## 2.3.3
+ 
+diff --git a/lib/src/source_visitor.dart b/lib/src/source_visitor.dart
+index e171068..7d47980 100644
+--- a/lib/src/source_visitor.dart
++++ b/lib/src/source_visitor.dart
+@@ -2829,7 +2829,15 @@ class SourceVisitor extends ThrowingAstVisitor {
+ 
+     var hasTrailingComma =
+         node.cases.isNotEmpty && node.cases.last.commaAfter != null;
+-    _endBody(node.rightBracket, forceSplit: hasTrailingComma);
++
++    // TODO(rnystrom): If there is a line comment at the end of a case, make
++    // sure the switch expression splits. Looking for line comments explicitly
++    // instead of having them harden the surrounding rules is a hack. But this
++    // code will be going away when we move to the new Piece representation, so
++    // going with something expedient.
++    var forceSplit = _containsLineComments(node.cases, node.rightBracket);
++
++    _endBody(node.rightBracket, forceSplit: hasTrailingComma || forceSplit);
+   }
+ 
+   @override
+diff --git a/test/regression/1400/1404.stmt b/test/regression/1400/1404.stmt
+new file mode 100644
+index 0000000..c19d32a
+--- /dev/null
++++ b/test/regression/1400/1404.stmt
+@@ -0,0 +1,48 @@
++>>>
++int weird(Object o) {
++  return switch (o) {
++    int i => i, // evil comment
++    _ => 42
++  };
++}
++<<<
++int weird(Object o) {
++  return switch (o) {
++    int i => i, // evil comment
++    _ => 42
++  };
++}
++>>> line comment inside case value expression
++int weird(Object o) {
++  return switch (o) {
++    1 => f(// c
++    ),
++    _ => 42
++  };
++}
++<<<
++int weird(Object o) {
++  return switch (o) {
++    1 => f(// c
++        ),
++    _ => 42
++  };
++}
++>>> line comment inside case pattern
++int weird(Object o) {
++  return switch (o) {
++    [1 // c
++     ] => 2,
++    3 => 4
++  };
++}
++<<<
++int weird(Object o) {
++  return switch (o) {
++    [
++      1 // c
++    ] =>
++      2,
++    3 => 4
++  };
++}
+\ No newline at end of file

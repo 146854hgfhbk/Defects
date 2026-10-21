@@ -1,0 +1,79 @@
+diff --git a/Sources/Algorithms/Chunked.swift b/Sources/Algorithms/Chunked.swift
+index 30db1607bfd345f4e7531dc331187169d312125c..883ecf36286513871962029ab08ea6481af679c7 100644
+--- a/Sources/Algorithms/Chunked.swift
++++ b/Sources/Algorithms/Chunked.swift
+@@ -77,9 +77,13 @@ extension ChunkedBy: LazyCollectionProtocol {
+   /// at the given index.
+   @inlinable
+   internal func endOfChunk(startingAt start: Base.Index) -> Base.Index {
+-    let subject = projection(base[start])
+-    return base[base.index(after: start)...]
+-      .endOfPrefix(while: { belongInSameGroup(subject, projection($0)) })
++    var subject = projection(base[start])
++    
++    return base[base.index(after: start)...].endOfPrefix(while: { element in
++      let nextSubject = projection(element)
++      defer { subject = nextSubject }
++      return belongInSameGroup(subject, nextSubject)
++    })
+   }
+   
+   @inlinable
+@@ -118,11 +122,13 @@ extension ChunkedBy: BidirectionalCollection
+   @inlinable
+   internal func startOfChunk(endingAt end: Base.Index) -> Base.Index {
+     let indexBeforeEnd = base.index(before: end)
++    var subject = projection(base[indexBeforeEnd])
+     
+-    // Get the projected value of the last element in the range ending at `end`.
+-    let subject = projection(base[indexBeforeEnd])
+-    return base[..<indexBeforeEnd]
+-      .startOfSuffix(while: { belongInSameGroup(projection($0), subject) })
++    return base[..<indexBeforeEnd].startOfSuffix(while: { element in
++      let nextSubject = projection(element)
++      defer { subject = nextSubject }
++      return belongInSameGroup(nextSubject, subject)
++    })
+   }
+ 
+   @inlinable
+@@ -246,8 +252,8 @@ extension Collection {
+       if try !belongInSameGroup(current, element) {
+         result.append(self[start..<index])
+         start = index
+-        current = element
+       }
++      current = element
+     }
+     
+     if start != endIndex {
+diff --git a/Tests/SwiftAlgorithmsTests/ChunkedTests.swift b/Tests/SwiftAlgorithmsTests/ChunkedTests.swift
+index 77a285bcfe1166739362d4960ba3a3bb8a7f38da..56a7a6faf94975fdbb2397dbfe340b0ebe3716d3 100644
+--- a/Tests/SwiftAlgorithmsTests/ChunkedTests.swift
++++ b/Tests/SwiftAlgorithmsTests/ChunkedTests.swift
+@@ -78,6 +78,25 @@ final class ChunkedTests: XCTestCase {
+     validateIndexTraversals(lazyChunks)
+   }
+   
++  func testChunkedByComparesConsecutiveElements() {
++    XCTAssertEqualSequences(
++      [1, 2, 3, 4, 6, 7, 8, 9].chunked(by: { $1 - $0 == 1 }),
++      [[1, 2, 3, 4], [6, 7, 8, 9]])
++    
++    XCTAssertEqualSequences(
++      [1, 2, 3, 4, 6, 7, 8, 9].lazy.chunked(by: { $1 - $0 == 1 }),
++      [[1, 2, 3, 4], [6, 7, 8, 9]])
++    
++    print(Array([1, 2, 3].lazy.chunked(by: { $1 - $0 == 1 })))
++    print(Array([1, 2, 3].lazy.chunked(by: { $1 - $0 == 1 }).reversed()))
++    
++    XCTAssertEqualSequences(
++      [1, 2, 3, 4, 6, 7, 8, 9].lazy.chunked(by: { $1 - $0 == 1 }).reversed(),
++      [[6, 7, 8, 9], [1, 2, 3, 4]])
++    
++    validateIndexTraversals([1, 2, 3].lazy.chunked(by: { $1 - $0 == 1 }))
++  }
++  
+   func testChunkedLazy() {
+     XCTAssertLazySequence(fruits.lazy.chunked(by: { $0.first == $1.first }))
+     XCTAssertLazySequence(fruits.lazy.chunked(on: { $0.first }))

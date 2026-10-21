@@ -1,0 +1,26 @@
+diff --git a/test/expr.jl b/test/expr.jl
+index 272a5b9..cf9b881 100644
+--- a/test/expr.jl
++++ b/test/expr.jl
+@@ -65,6 +65,21 @@
+                           :body,
+                      ),
+                 )
++
++            @test parseall("a\n\nx") ==
++                Expr(:toplevel,
++                    LineNumberNode(1),
++                    :a,
++                    LineNumberNode(3),
++                    :x
++                )
++            @test parseall("a\n\nx;y") ==
++                Expr(:toplevel,
++                    LineNumberNode(1),
++                    :a,
++                    LineNumberNode(3),
++                    Expr(:toplevel, :x, :y)
++                )
+         end
+ 
+         @testset "Function definition lines" begin

@@ -1,0 +1,126 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-484",
+  "bug_id": "JULIA-484",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaStats/StatsFuns.jl",
+  "repository_url": "https://github.com/JuliaStats/StatsFuns.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaStats/StatsFuns.jl/issues/162"
+  ],
+  "issue_id": 162,
+  "buggy_revision": "1d392b8d12882b433c9ccac028953abac7df8827",
+  "fixed_revision": "b386d5c3064f04a23f2fc656c9aabe3a50233bdc",
+  "candidate_sha": "b386d5c3064f04a23f2fc656c9aabe3a50233bdc",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "1d392b8d12882b433c9ccac028953abac7df8827",
+  "changed_production_files": [
+    "src/distrs/gamma.jl"
+  ],
+  "changed_test_files": [
+    "test/rmath.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-484 finite gamma log density under scale underflow"
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "b386d5c3064f04a23f2fc656c9aabe3a50233bdc",
+    "project": "JuliaStats/StatsFuns.jl",
+    "input_sha256": "04e56be63afdf25d97e952cb0814daea094c44794de23de6023a242711197026",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:36:28Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.3996272571144278,
+      "input_tokens": 3367,
+      "output_tokens": 696
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"Single-hunk fix in gammalogpdf that avoids an Inf - Inf indeterminate form when x/\\u03b8 is infinite. Previously `xlogy(k - 1, x\\u03b8) - x\\u03b8` evaluated to NaN for x = Inf (or \\u03b8 \\u2192 0 with large x); the patch only adds the xlogy term when x\\u03b8 is finite, so the result correctly tends to -Inf. This is a numerical correctness bug in an existing exported function, not a new capability.\", \"evidence\": \"Minimized production patch touches only src/distrs/gamma.jl, one hunk, reported globally minimal with all hunks necessary. The accompanying comment states the mathematical rationale (xlogy(k-1, x\\u03b8) - x\\u03b8 \\u2192 -\\u221e as x\\u03b8 \\u2192 \\u221e). Test change is confined to test/rmath.jl, the file comparing StatsFuns output against Rmath reference values, consistent with a value-correctness regression test. Runtime evidence reports a stable_differential across 3 repetitions with a dedicated trigger script, and the full suite passing on the fixed revision.\", \"missing_evidence\": \"No PR title, body, issue record, or commit message is provided, so issue-to-commit traceability cannot be established (traceability_class UNVERIFIED). trigger_tests is empty and the raw production/test diffs are not shown, so the exact failing assertion and its inputs are not visible. No pre-fix failure output is included.\", \"validation_risks\": \"Trigger identification depends on the dedicated script rather than a named test, so the harness may need explicit mapping to the specific rmath.jl assertion. Behavior at the boundary depends on Julia float semantics (xlogy, loggamma) and could differ across Julia versions or with non-standard number types, since the method is generic over T<:Real. Type stability of the branch (val accumulated conditionally) should be confirmed for promoted mixed-precision inputs.\", \"suggested_tests\": \"Assert gammalogpdf(k, \\u03b8, Inf) == -Inf for several k (k < 1, k == 1, k > 1) and \\u03b8 values, including k == 1 where the xlogy coefficient is zero. Check gammalogpdf(k, 0.0, x) and very small \\u03b8 with large x for -Inf rather than NaN. Confirm gammalogpdf(k, \\u03b8, -Inf) and negative x still return -Inf. Verify no NaN appears for finite inputs by spot-checking against Rmath dgamma with log=true. Add a type-stability check (@inferred) for Float32 and Float64 argument combinations.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Single-hunk fix in gammalogpdf that avoids an Inf - Inf indeterminate form when x/θ is infinite. Previously `xlogy(k - 1, xθ) - xθ` evaluated to NaN for x = Inf (or θ → 0 with large x); the patch only adds the xlogy term when xθ is finite, so the result correctly tends to -Inf. This is a numerical correctness bug in an existing exported function, not a new capability.",
+    "evidence": "Minimized production patch touches only src/distrs/gamma.jl, one hunk, reported globally minimal with all hunks necessary. The accompanying comment states the mathematical rationale (xlogy(k-1, xθ) - xθ → -∞ as xθ → ∞). Test change is confined to test/rmath.jl, the file comparing StatsFuns output against Rmath reference values, consistent with a value-correctness regression test. Runtime evidence reports a stable_differential across 3 repetitions with a dedicated trigger script, and the full suite passing on the fixed revision.",
+    "missing_evidence": "No PR title, body, issue record, or commit message is provided, so issue-to-commit traceability cannot be established (traceability_class UNVERIFIED). trigger_tests is empty and the raw production/test diffs are not shown, so the exact failing assertion and its inputs are not visible. No pre-fix failure output is included.",
+    "validation_risks": "Trigger identification depends on the dedicated script rather than a named test, so the harness may need explicit mapping to the specific rmath.jl assertion. Behavior at the boundary depends on Julia float semantics (xlogy, loggamma) and could differ across Julia versions or with non-standard number types, since the method is generic over T<:Real. Type stability of the branch (val accumulated conditionally) should be confirmed for promoted mixed-precision inputs.",
+    "suggested_tests": "Assert gammalogpdf(k, θ, Inf) == -Inf for several k (k < 1, k == 1, k > 1) and θ values, including k == 1 where the xlogy coefficient is zero. Check gammalogpdf(k, 0.0, x) and very small θ with large x for -Inf rather than NaN. Confirm gammalogpdf(k, θ, -Inf) and negative x still return -Inf. Verify no NaN appears for finite inputs by spot-checking against Rmath dgamma with log=true. Add a type-stability check (@inferred) for Float32 and Float64 argument combinations."
+  },
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "e074cd5e404eac36d06a9301fc1a0d37330cca1ff96cfbeb30c7b8586e782cb3",
+    "oracle": {
+      "mwe_basis": {
+        "upstream_test_file": "test/rmath.jl",
+        "public_api": "StatsFuns.gammalogpdf",
+        "defect": "intermediate infinity arithmetic produced NaN instead of negative infinity"
+      },
+      "source_evidence": "minimal public-API MWE derived from the fixed commit test hunk"
+    }
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-484 finite gamma log density under scale underflow"
+    ],
+    "exception_types": [
+      "81c55dd0845ef855f18864bde88a66be5aad8ebe99009c6112758ea6119f5212"
+    ],
+    "fingerprints": [
+      "81c55dd0845ef855f18864bde88a66be5aad8ebe99009c6112758ea6119f5212"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

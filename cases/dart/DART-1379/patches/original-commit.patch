@@ -1,0 +1,61 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ddb4ff05a0a5c9c326a568494c84ec93198dcd6c..0dfe483b6702060cba0ac3855202618f0321b7c2 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++# 1.5.6
++
++* Fix padding around line numbers that are powers of 10 in
++  `FileSpan.highlight()`.
++
+ # 1.5.5
+ 
+ * Fix a bug where `FileSpan.highlight()` would crash for spans that covered a
+diff --git a/lib/src/highlighter.dart b/lib/src/highlighter.dart
+index 17a47bcea0376f9cdcc85d80e7c126db30f4c080..0714acdb44a222b300cd4aace329cc0e945ee9b0 100644
+--- a/lib/src/highlighter.dart
++++ b/lib/src/highlighter.dart
+@@ -181,7 +181,7 @@ class Highlighter {
+         // In a purely mathematical world, floor(log10(n)) would give the number of
+         // digits in n, but floating point errors render that unreliable in
+         // practice.
+-        _paddingBeforeSidebar = _span.end.line.toString().length + 1;
++        _paddingBeforeSidebar = (_span.end.line + 1).toString().length + 1;
+ 
+   /// Returns the highlighted span text.
+   ///
+diff --git a/test/highlight_test.dart b/test/highlight_test.dart
+index 5fdf622f444968f09ab2fa51357b20bb123e07bd..521f7484e224c224c1365be3299cfb7a93fc0f16 100644
+--- a/test/highlight_test.dart
++++ b/test/highlight_test.dart
+@@ -530,4 +530,30 @@ ${colors.BLUE}3 |${colors.NONE} ${colors.RED}\\ zip zap zop${colors.NONE}
+ ${colors.BLUE}  '${colors.NONE}"""));
+     });
+   });
++
++  group("line numbers have appropriate padding", () {
++    test("with line number 9", () {
++      expect(
++          SourceFile.fromString("\n" * 8 + "foo bar baz\n")
++              .span(8, 11)
++              .highlight(),
++          equals("""
++  ,
++9 | foo bar baz
++  | ^^^
++  '"""));
++    });
++
++    test("with line number 10", () {
++      expect(
++          SourceFile.fromString("\n" * 9 + "foo bar baz\n")
++              .span(9, 12)
++              .highlight(),
++          equals("""
++   ,
++10 | foo bar baz
++   | ^^^
++   '"""));
++    });
++  });
+ }

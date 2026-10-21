@@ -1,0 +1,459 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1d7920768..97e73ee87 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -46,6 +46,11 @@ styled with Tailwind CSS by default. You can opt-out of Tailwind CSS with the `-
+ flag (the Tailwind CSS classes are kept in the generated components as reference for
+ future styling).
+ 
++## 1.7.8
++
++### Bug Fixes
++  * Fix `mix phx.gen.release --docker` failing with `:http_util` error on Elixir v1.15
++
+ ## 1.7.7 (2023-07-10)
+ 
+ ## Enhancements
+diff --git a/assets/package-lock.json b/assets/package-lock.json
+index a2bc098fa..ada1a8aa7 100644
+--- a/assets/package-lock.json
++++ b/assets/package-lock.json
+@@ -9067,9 +9067,9 @@
+       }
+     },
+     "node_modules/word-wrap": {
+-      "version": "1.2.3",
+-      "resolved": "https://registry.npmjs.org/word-wrap/-/word-wrap-1.2.3.tgz",
+-      "integrity": "sha512-Hz/mrNwitNRh/HUAtM/VT/5VH+ygD6DV7mYKZAtHOrbs8U7lvPS6xf7EJKMF0uW1KJCl0H701g3ZGus+muE5vQ==",
++      "version": "1.2.4",
++      "resolved": "https://registry.npmjs.org/word-wrap/-/word-wrap-1.2.4.tgz",
++      "integrity": "sha512-2V81OA4ugVo5pRo46hAoD2ivUJx8jXmWXfUkY4KFNw0hEptvN0QfH3K4nHiwzGeKl5rFKedV48QVoqYavy4YpA==",
+       "dev": true,
+       "engines": {
+         "node": ">=0.10.0"
+@@ -16188,9 +16188,9 @@
+       }
+     },
+     "word-wrap": {
+-      "version": "1.2.3",
+-      "resolved": "https://registry.npmjs.org/word-wrap/-/word-wrap-1.2.3.tgz",
+-      "integrity": "sha512-Hz/mrNwitNRh/HUAtM/VT/5VH+ygD6DV7mYKZAtHOrbs8U7lvPS6xf7EJKMF0uW1KJCl0H701g3ZGus+muE5vQ==",
++      "version": "1.2.4",
++      "resolved": "https://registry.npmjs.org/word-wrap/-/word-wrap-1.2.4.tgz",
++      "integrity": "sha512-2V81OA4ugVo5pRo46hAoD2ivUJx8jXmWXfUkY4KFNw0hEptvN0QfH3K4nHiwzGeKl5rFKedV48QVoqYavy4YpA==",
+       "dev": true
+     },
+     "workerpool": {
+diff --git a/guides/components.md b/guides/components.md
+index 721649ac2..65934210b 100644
+--- a/guides/components.md
++++ b/guides/components.md
+@@ -183,27 +183,27 @@ In other words, after rendering your page, the result is placed in the `@inner_c
+ 
+ Phoenix provides all kinds of conveniences to control which layout should be rendered. For example, the `Phoenix.Controller` module provides the `put_root_layout/2` function for us to switch _root layouts_. This takes `conn` as its first argument and a keyword list of formats and their layouts. You can set it to `false` to disable the layout altogether.
+ 
+-You can edit the `home` action of `PageController` in `lib/hello_web/controllers/page_controller.ex` to look like this.
++You can edit the `index` action of `HelloController` in `lib/hello_web/controllers/hello_controller.ex` to look like this.
+ 
+ ```elixir
+-def home(conn, _params) do
++def index(conn, _params) do
+   conn
+   |> put_root_layout(html: false)
+-  |> render(:home)
++  |> render(:index)
+ end
+ ```
+ 
+-After reloading [http://localhost:4000/](http://localhost:4000/), we should see a very different page, one with no title, logo image, or CSS styling at all.
++After reloading [http://localhost:4000/hello](http://localhost:4000/hello), we should see a very different page, one with no title or CSS styling at all.
+ 
+ To customize the application layout, we invoke a similar function named `put_layout/2`. Let's actually create another layout and render the index template into it. As an example, let's say we had a different layout for the admin section of our application which didn't have the logo image. To do this, copy the existing `app.html.heex` to a new file `admin.html.heex` in the same directory `lib/hello_web/components/layouts`. Then remove everything inside the `<header>...</header>` tags (or change it to whatever you desire) in the new file.
+ 
+-Now, in the `home` action of the controller of `lib/hello_web/controllers/page_controller.ex`, add the following:
++Now, in the `index` action of the controller of `lib/hello_web/controllers/hello_controller.ex`, add the following:
+ 
+ ```elixir
+-def home(conn, _params) do
++def index(conn, _params) do
+   conn
+   |> put_layout(html: :admin)
+-  |> render(:home)
++  |> render(:index)
+ end
+ ```
+ 
+diff --git a/guides/contexts.md b/guides/contexts.md
+index 7ce19df4e..77ca267ad 100644
+--- a/guides/contexts.md
++++ b/guides/contexts.md
+@@ -800,17 +800,17 @@ Let's implement the new interface for the `ShoppingCart` context API in `lib/hel
+ -  alias Hello.ShoppingCart.Cart
+ +  alias Hello.ShoppingCart.{Cart, CartItem}
+ 
+-  def get_cart_by_user_uuid(user_uuid) do
+-    Repo.one(
+-      from(c in Cart,
+-        where: c.user_uuid == ^user_uuid,
+-        left_join: i in assoc(c, :items),
+-        left_join: p in assoc(i, :product),
+-        order_by: [asc: i.inserted_at],
+-        preload: [items: {i, product: p}]
+-      )
+-    )
+-  end
+++  def get_cart_by_user_uuid(user_uuid) do
+++    Repo.one(
+++      from(c in Cart,
+++        where: c.user_uuid == ^user_uuid,
+++        left_join: i in assoc(c, :items),
+++        left_join: p in assoc(i, :product),
+++        order_by: [asc: i.inserted_at],
+++        preload: [items: {i, product: p}]
+++      )
+++    )
+++  end
+ 
+ - def create_cart(attrs \\ %{}) do
+ -   %Cart{}
+diff --git a/guides/deployment/releases.md b/guides/deployment/releases.md
+index a492533da..a78989975 100644
+--- a/guides/deployment/releases.md
++++ b/guides/deployment/releases.md
+@@ -70,9 +70,9 @@ To list all commands:
+ 
+ ```
+ 
+-The `phx.gen.release` task generated a few files for us to assist in releases. First, it created `server` and `migrate` *overlay* scripts for conveniently running the phoenix server inside a release or invoking migrations from a release. The files in the `rel/overlays` directory are copied into every release environment. Next, it generated a `release.ex` file which is used to invoked Ecto migrations without a dependency on `mix` itself.
++The `phx.gen.release` task generated a few files for us to assist in releases. First, it created `server` and `migrate` *overlay* scripts for conveniently running the phoenix server inside a release or invoking migrations from a release. The files in the `rel/overlays` directory are copied into every release environment. Next, it generated a `release.ex` file which is used to invoke Ecto migrations without a dependency on `mix` itself.
+ 
+-*Note*: If you are a docker user, you can pass the `--docker` flag to `mix phx.gen.release` to generate a Dockerfile ready for deployment.
++*Note*: If you are a Docker user, you can pass the `--docker` flag to `mix phx.gen.release` to generate a Dockerfile ready for deployment.
+ 
+ Next, we can invoke `mix release` to build the release:
+ 
+diff --git a/guides/real_time/channels.md b/guides/real_time/channels.md
+index f3d7a01b4..bce3d8d60 100644
+--- a/guides/real_time/channels.md
++++ b/guides/real_time/channels.md
+@@ -410,7 +410,7 @@ Now our `conn.assigns` contains the `current_user` and `user_token`.
+ 
+ ### Step 2 - Pass the Token to the JavaScript
+ 
+-Next, we need to pass this token to JavaScript. We can do so inside a script tag in `web/templates/layout/app.html.heex` right above the app.js script, as follows:
++Next, we need to pass this token to JavaScript. We can do so inside a script tag in `lib/hello_web/components/layouts/app.html.heex` right above the app.js script, as follows:
+ 
+ ```heex
+ <script>window.userToken = "<%= assigns[:user_token] %>";</script>
+@@ -419,7 +419,7 @@ Next, we need to pass this token to JavaScript. We can do so inside a script tag
+ 
+ ### Step 3 - Pass the Token to the Socket Constructor and Verify
+ 
+-We also need to pass the `:params` to the socket constructor and verify the user token in the `connect/3` function. To do so, edit `web/channels/user_socket.ex`, as follows:
++We also need to pass the `:params` to the socket constructor and verify the user token in the `connect/3` function. To do so, edit `lib/hello_web/channels/user_socket.ex`, as follows:
+ 
+ ```elixir
+ def connect(%{"token" => token}, socket, _connect_info) do
+@@ -461,7 +461,7 @@ channel.join()
+ export default socket
+ ```
+ 
+-Note that token authentication is preferable since it's transport agnostic and well-suited for long running-connections like channels, as opposed to using sessions or authentication approaches.
++Note that token authentication is preferable since it's transport agnostic and well-suited for long running-connections like channels, as opposed to using sessions or other authentication approaches.
+ 
+ ## Fault Tolerance and Reliability Guarantees
+ 
+diff --git a/installer/templates/phx_web/components/core_components.ex b/installer/templates/phx_web/components/core_components.ex
+index b686599bc..465482005 100644
+--- a/installer/templates/phx_web/components/core_components.ex
++++ b/installer/templates/phx_web/components/core_components.ex
+@@ -2,9 +2,9 @@ defmodule <%= @web_namespace %>.CoreComponents do
+   @moduledoc """
+   Provides core UI components.
+ 
+-  At the first glance, this module may seem daunting, but its goal is
+-  to provide some core building blocks in your application, such as modals,
+-  tables, and forms. The components are mostly markup and well documented
++  At first glance, this module may seem daunting, but its goal is to provide
++  core building blocks for your application, such as modals, tables, and
++  forms. The components consist mostly of markup and are well-documented
+   with doc strings and declarative assigns. You may customize and style
+   them in any way you want, based on your application growth and needs.
+ 
+@@ -97,7 +97,7 @@ defmodule <%= @web_namespace %>.CoreComponents do
+       <.flash kind={:info} flash={@flash} />
+       <.flash kind={:info} phx-mounted={show("#flash")}>Welcome Back!</.flash>
+   """
+-  attr :id, :string, default: "flash", doc: "the optional id of flash container"
++  attr :id, :string, default: nil, doc: "the optional id of flash container"
+   attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
+   attr :title, :string, default: nil
+   attr :kind, :atom, values: [:info, :error], doc: "used for styling and flash lookup"
+@@ -109,7 +109,7 @@ defmodule <%= @web_namespace %>.CoreComponents do
+     ~H"""
+     <div
+       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
+-      id={@id}
++      id={@id || "flash-#{@kind}"}
+       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
+       role="alert"
+       class={[
+diff --git a/lib/mix/tasks/phx.gen.release.ex b/lib/mix/tasks/phx.gen.release.ex
+index dc97c567e..d1b09db61 100644
+--- a/lib/mix/tasks/phx.gen.release.ex
++++ b/lib/mix/tasks/phx.gen.release.ex
+@@ -232,12 +232,19 @@ defmodule Mix.Tasks.Phx.Gen.Release do
+     end
+   end
+ 
++  defp ensure_app!(app) do
++    if function_exported?(Mix, :ensure_application!, 1) do
++      apply(Mix, :ensure_application!, [app])
++    else
++      {:ok, _} = Application.ensure_all_started(app)
++    end
++  end
++
+   defp fetch_body!(url) do
+     url = String.to_charlist(url)
+     Logger.debug("Fetching latest image information from #{url}")
+-
+-    {:ok, _} = Application.ensure_all_started(:inets)
+-    {:ok, _} = Application.ensure_all_started(:ssl)
++    ensure_app!(:inets)
++    ensure_app!(:ssl)
+ 
+     if proxy = System.get_env("HTTP_PROXY") || System.get_env("http_proxy") do
+       Logger.debug("Using HTTP_PROXY: #{proxy}")
+diff --git a/lib/mix/tasks/phx.routes.ex b/lib/mix/tasks/phx.routes.ex
+index d3d090400..d12348c4a 100644
+--- a/lib/mix/tasks/phx.routes.ex
++++ b/lib/mix/tasks/phx.routes.ex
+@@ -34,6 +34,7 @@ defmodule Mix.Tasks.Phx.Routes do
+   ## Options
+ 
+     * `--info` - locate the controller function definition called by the given url
++    * `--method` - what HTTP method to use with the given url, only works when used with `--info` and defaults to `get`
+ 
+   ## Examples
+ 
+@@ -51,6 +52,13 @@ defmodule Mix.Tasks.Phx.Routes do
+         Module: RouteInfoTestWeb.PageController
+         Function: :index
+         /home/my_app/controllers/page_controller.ex:4
++
++  Print information about the controller function called by a specified url and HTTP method:
++
++      $ mix phx.routes --info http://0.0.0.0:4000/users --method post
++        Module: RouteInfoTestWeb.UserController
++        Function: :create
++        /home/my_app/controllers/user_controller.ex:24
+   """
+ 
+   @doc false
+@@ -78,10 +86,11 @@ defmodule Mix.Tasks.Phx.Routes do
+     end
+   end
+ 
+-  def get_url_info(url, {router_mod, _opts}) do
++  def get_url_info(url, {router_mod, opts}) do
+     %{path: path} = URI.parse(url)
+ 
+-    meta = Phoenix.Router.route_info(router_mod, "GET", path, "")
++    method = opts |> Keyword.get(:method, "get") |> String.upcase()
++    meta = Phoenix.Router.route_info(router_mod, method, path, "")
+     %{plug: plug, plug_opts: plug_opts} = meta
+ 
+     {module, func_name} =
+diff --git a/lib/phoenix/channel.ex b/lib/phoenix/channel.ex
+index 8080aff3c..48ac52850 100644
+--- a/lib/phoenix/channel.ex
++++ b/lib/phoenix/channel.ex
+@@ -347,7 +347,7 @@ defmodule Phoenix.Channel do
+   alias Phoenix.Socket
+   alias Phoenix.Channel.Server
+ 
+-  @type payload :: map | {:binary, binary}
++  @type payload :: map | term | {:binary, binary}
+   @type reply :: status :: atom | {status :: atom, response :: payload}
+   @type socket_ref ::
+           {transport_pid :: Pid, serializer :: module, topic :: binary, ref :: binary,
+@@ -359,6 +359,8 @@ defmodule Phoenix.Channel do
+   To authorize a socket, return `{:ok, socket}` or `{:ok, reply, socket}`. To
+   refuse authorization, return `{:error, reason}`.
+ 
++  Payloads are serialized before sending with the configured serializer.
++
+   ## Example
+ 
+       def join("room:lobby", payload, socket) do
+@@ -378,12 +380,13 @@ defmodule Phoenix.Channel do
+   @doc """
+   Handle incoming `event`s.
+ 
++  Payloads are serialized before sending with the configured serializer.
++
+   ## Example
+ 
+       def handle_in("ping", payload, socket) do
+         {:reply, {:ok, payload}, socket}
+       end
+-
+   """
+   @callback handle_in(event :: String.t(), payload :: payload, socket :: Socket.t()) ::
+               {:noreply, Socket.t()}
+@@ -663,6 +666,8 @@ defmodule Phoenix.Channel do
+   client may expect only one reply; in that case, `push/3` would be preferable
+   for the additional messages.
+ 
++  Payloads are serialized before sending with the configured serializer.
++
+   ## Examples
+ 
+       def handle_in("work", payload, socket) do
+diff --git a/lib/phoenix/channel/server.ex b/lib/phoenix/channel/server.ex
+index e3f2ff686..b5b4906d6 100644
+--- a/lib/phoenix/channel/server.ex
++++ b/lib/phoenix/channel/server.ex
+@@ -235,6 +235,8 @@ defmodule Phoenix.Channel.Server do
+   @doc """
+   Pushes a message with the given topic, event and payload
+   to the given process.
++
++  Payloads are serialized before sending with the configured serializer.
+   """
+   def push(pid, join_ref, topic, event, payload, serializer)
+       when is_binary(topic) and is_binary(event) do
+@@ -245,6 +247,8 @@ defmodule Phoenix.Channel.Server do
+ 
+   @doc """
+   Replies to a given ref to the transport process.
++
++  Payloads are serialized before sending with the configured serializer.
+   """
+   def reply(pid, join_ref, ref, topic, {status, payload}, serializer)
+       when is_binary(topic) do
+diff --git a/lib/phoenix/code_reloader/proxy.ex b/lib/phoenix/code_reloader/proxy.ex
+index 2ada872bf..c6a6b0fd0 100644
+--- a/lib/phoenix/code_reloader/proxy.ex
++++ b/lib/phoenix/code_reloader/proxy.ex
+@@ -62,10 +62,14 @@ defmodule Phoenix.CodeReloader.Proxy do
+     "\n#{message}\n"
+   end
+ 
+-  defp diagnostic_to_chars(%{severity: severity, message: message, file: file, position: position}) do
++  defp diagnostic_to_chars(%{severity: severity, message: message, file: file, position: position}) when is_binary(file) do
+     "\n#{severity}: #{message}\n  #{Path.relative_to_cwd(file)}#{position(position)}\n"
+   end
+ 
++  defp diagnostic_to_chars(%{severity: severity, message: message}) do
++    "\n#{severity}: #{message}\n"
++  end
++
+   defp position({line, col}), do: ":#{line}:#{col}"
+   defp position(line) when is_integer(line) and line > 0, do: ":#{line}"
+   defp position(_), do: ""
+diff --git a/lib/phoenix/endpoint.ex b/lib/phoenix/endpoint.ex
+index 7af9c3991..551456970 100644
+--- a/lib/phoenix/endpoint.ex
++++ b/lib/phoenix/endpoint.ex
+@@ -578,7 +578,20 @@ defmodule Phoenix.Endpoint do
+       @doc """
+       Generates a route to a static file in `priv/static`.
+       """
+-      def static_path(path), do: persistent!().static_path <> elem(static_lookup(path), 0)
++      def static_path(path) do
++        {path, fragment} = path_and_fragment(path)
++
++        persistent!().static_path <> elem(static_lookup(path), 0) <> fragment
++      end
++
++      defp path_and_fragment(path_incl_fragment) do
++        path_incl_fragment
++        |> String.split("#", parts: 2)
++        |> case do
++          [path, fragment] -> {path, "#" <> fragment}
++          [path | _] -> {path, ""}
++        end
++      end
+ 
+       @doc """
+       Generates a base64-encoded cryptographic hash (sha512) to a static file
+diff --git a/lib/phoenix/socket.ex b/lib/phoenix/socket.ex
+index e30e665e3..468c0c043 100644
+--- a/lib/phoenix/socket.ex
++++ b/lib/phoenix/socket.ex
+@@ -555,13 +555,13 @@ defmodule Phoenix.Socket do
+             {:ok, serializer}
+ 
+           :error ->
+-            Logger.error "The client's requested transport version \"#{vsn}\" " <>
++            Logger.warning "The client's requested transport version \"#{vsn}\" " <>
+                           "does not match server's version requirements of #{inspect serializers}"
+             :error
+         end
+ 
+       :error ->
+-        Logger.error "Client sent invalid transport version \"#{vsn}\""
++        Logger.warning "Client sent invalid transport version \"#{vsn}\""
+         :error
+     end
+   end
+@@ -599,7 +599,7 @@ defmodule Phoenix.Socket do
+             {:ok, {state, %{socket | id: id}}}
+ 
+           invalid ->
+-            Logger.error "#{inspect handler}.id/1 returned invalid identifier " <>
++            Logger.warning "#{inspect handler}.id/1 returned invalid identifier " <>
+                            "#{inspect invalid}. Expected nil or a string."
+             :error
+         end
+diff --git a/priv/templates/phx.gen.live/core_components.ex b/priv/templates/phx.gen.live/core_components.ex
+index b686599bc..465482005 100644
+--- a/priv/templates/phx.gen.live/core_components.ex
++++ b/priv/templates/phx.gen.live/core_components.ex
+@@ -2,9 +2,9 @@ defmodule <%= @web_namespace %>.CoreComponents do
+   @moduledoc """
+   Provides core UI components.
+ 
+-  At the first glance, this module may seem daunting, but its goal is
+-  to provide some core building blocks in your application, such as modals,
+-  tables, and forms. The components are mostly markup and well documented
++  At first glance, this module may seem daunting, but its goal is to provide
++  core building blocks for your application, such as modals, tables, and
++  forms. The components consist mostly of markup and are well-documented
+   with doc strings and declarative assigns. You may customize and style
+   them in any way you want, based on your application growth and needs.
+ 
+@@ -97,7 +97,7 @@ defmodule <%= @web_namespace %>.CoreComponents do
+       <.flash kind={:info} flash={@flash} />
+       <.flash kind={:info} phx-mounted={show("#flash")}>Welcome Back!</.flash>
+   """
+-  attr :id, :string, default: "flash", doc: "the optional id of flash container"
++  attr :id, :string, default: nil, doc: "the optional id of flash container"
+   attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
+   attr :title, :string, default: nil
+   attr :kind, :atom, values: [:info, :error], doc: "used for styling and flash lookup"
+@@ -109,7 +109,7 @@ defmodule <%= @web_namespace %>.CoreComponents do
+     ~H"""
+     <div
+       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
+-      id={@id}
++      id={@id || "flash-#{@kind}"}
+       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
+       role="alert"
+       class={[
+diff --git a/priv/templates/phx.gen.release/Dockerfile.eex b/priv/templates/phx.gen.release/Dockerfile.eex
+index 409d3733e..8f7c77614 100644
+--- a/priv/templates/phx.gen.release/Dockerfile.eex
++++ b/priv/templates/phx.gen.release/Dockerfile.eex
+@@ -67,7 +67,8 @@ RUN mix release
+ # the compiled release and other runtime necessities
+ FROM ${RUNNER_IMAGE}
+ 
+-RUN apt-get update -y && apt-get install -y libstdc++6 openssl libncurses5 locales \
++RUN apt-get update -y && \
++  apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates \
+   && apt-get clean && rm -f /var/lib/apt/lists/*_*
+ 
+ # Set the locale

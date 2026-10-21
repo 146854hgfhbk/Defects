@@ -1,0 +1,132 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-068",
+  "bug_id": "JULIA-068",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "jump-dev/MathOptInterface.jl",
+  "repository_url": "https://github.com/jump-dev/MathOptInterface.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "b12036d7798d3a7cc685de9b3a3989e35b841066",
+  "fixed_revision": "55e1268944fdcfb66beba9c42f87d83251f36cf7",
+  "candidate_sha": "55e1268944fdcfb66beba9c42f87d83251f36cf7",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "b12036d7798d3a7cc685de9b3a3989e35b841066",
+  "changed_production_files": [
+    "src/Bridges/debug.jl"
+  ],
+  "changed_test_files": [
+    "test/Bridges/General/test_debug.jl"
+  ],
+  "trigger_tests": [
+    "active bridges handles absent objective"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "87bd5a2d89eb77b5b8daa44a728a2d15f61352315cb03f500194563a473c96d8",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/Bridges/General/test_debug.jl",
+        "basis": "minimal public MOI bridge behavior exercising the same absent-objective fix path"
+      },
+      "upstream_test_patch_sha256": "a5c6ee8e37021764c4a31e2cab68e31b638df0f6a7d771023aeb8c7a82b60b02"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "55e1268944fdcfb66beba9c42f87d83251f36cf7",
+    "project": "jump-dev/MathOptInterface.jl",
+    "input_sha256": "2dd563ae6b30a151e58fc7c294acbd4733d4d04171b359dcd862a682bfcc4449",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:53:33Z",
+    "usage": {
+      "prompt_tokens": 2285,
+      "completion_tokens": 536,
+      "total_tokens": 2821
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.9,\n  \"summary\": \"Fix for a KeyError crash in `print_active_bridges` when handling certain constrained variable cases (e.g., MOI.Parameter). The issue #2943 clearly documents the error with a stack trace showing a KeyError when calling `print_active_bridges` after adding a constrained variable with `MOI.Parameter`. The fix targets `src/Bridges/debug.jl` (production code) and includes a test file.\",\n  \"evidence\": \"Issue #2943 provides a clear reproducible bug report with a stack trace showing 'ERROR: KeyError: key (MathOptInterface.Parameter{Float64},) not found' when calling `print_active_bridges`. The PR title from the issue matches: '[Bridges] fix print_active_bridges for some constrained variable cases'. The commit modifies `src/Bridges/debug.jl` (production code) and adds `test/Bridges/General/test_debug.jl` (test file), indicating an isolated bug fix with test evidence.\",\n  \"missing_evidence\": \"Cannot see the actual diff to confirm the exact nature of the code change, but the issue description, file paths, and test file all consistently point to a real bug fix.\",\n  \"validation_risks\": \"Without seeing the diff, there's a small risk the fix could include additional refactoring or feature changes beyond the bug fix itself.\",\n  \"suggested_tests\": \"Test that `print_active_bridges` does not throw a KeyError when constrained variables with sets like `MOI.Parameter` are present. Test with various constrained variable set types that are directly supported by the inner optimizer.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.9,
+    "summary": "Fix for a KeyError crash in `print_active_bridges` when handling certain constrained variable cases (e.g., MOI.Parameter). The issue #2943 clearly documents the error with a stack trace showing a KeyError when calling `print_active_bridges` after adding a constrained variable with `MOI.Parameter`. The fix targets `src/Bridges/debug.jl` (production code) and includes a test file.",
+    "evidence": "Issue #2943 provides a clear reproducible bug report with a stack trace showing 'ERROR: KeyError: key (MathOptInterface.Parameter{Float64},) not found' when calling `print_active_bridges`. The PR title from the issue matches: '[Bridges] fix print_active_bridges for some constrained variable cases'. The commit modifies `src/Bridges/debug.jl` (production code) and adds `test/Bridges/General/test_debug.jl` (test file), indicating an isolated bug fix with test evidence.",
+    "missing_evidence": "Cannot see the actual diff to confirm the exact nature of the code change, but the issue description, file paths, and test file all consistently point to a real bug fix.",
+    "validation_risks": "Without seeing the diff, there's a small risk the fix could include additional refactoring or feature changes beyond the bug fix itself.",
+    "suggested_tests": "Test that `print_active_bridges` does not throw a KeyError when constrained variables with sets like `MOI.Parameter` are present. Test with various constrained variable set types that are directly supported by the inner optimizer."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "active bridges handles absent objective"
+    ],
+    "exception_types": [
+      "45ccd26a3bd7398265baa4fe32c7b4a785a0ae3db9fcee01f69f400a5fb478c6",
+      "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7"
+    ],
+    "fingerprints": [
+      "45ccd26a3bd7398265baa4fe32c7b4a785a0ae3db9fcee01f69f400a5fb478c6",
+      "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "55e1268944fdcfb66beba9c42f87d83251f36cf7",
+    "parent_sha": "b12036d7798d3a7cc685de9b3a3989e35b841066",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "8f30b4f54d07f692137c978787f2b1b7d0bf56995f1f22472e67e4a68a9dd5dd",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

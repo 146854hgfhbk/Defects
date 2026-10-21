@@ -1,0 +1,100 @@
+diff --git a/Changes b/Changes
+index df6d15688709f97251755a7313628d991507fe0a..c8b355acafe95b1e04d99892390ed1bf0c93e1a4 100644
+--- a/Changes
++++ b/Changes
+@@ -2,6 +2,11 @@ Revision history for Path-Tiny
+ 
+ {{$NEXT}}
+ 
++    [Bug fixes]
++
++    - Fixed spew/edit to a long filename approaching the filesystem length
++      limit.
++
+ 0.130     2022-10-20 07:08:01-04:00 America/New_York
+ 
+     [Bug fixes]
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index e8497ab02cafaa18a3b2b89c1e4a5839ae135bec..96c88eb5f63fb3a0a77a5d311e3153c6a56d6eda 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -472,6 +472,21 @@ sub _resolve_symlinks {
+     return $new;
+ }
+ 
++sub _replacment_path {
++    my ($self) = @_;
++
++    my $unique_suffix = $$ . int( rand( 2**31 ) );
++    my $temp          = path( $self . $unique_suffix );
++
++    # If filename with process+random suffix is too long, use a shorter
++    # version that doesn't preserve the basename.
++    if ( length $temp->basename > 255 ) {
++        $temp = $self->sibling( "temp" . $unique_suffix );
++    }
++
++    return $temp;
++}
++
+ #--------------------------------------------------------------------------#
+ # Public methods
+ #--------------------------------------------------------------------------#
+@@ -959,10 +974,10 @@ sub edit_lines {
+     # get default binmode from caller's lexical scope (see "perldoc open")
+     $binmode = ( ( caller(0) )[10] || {} )->{'open>'} unless defined $binmode;
+ 
+-    # writing need to follow the link and create the tempfile in the same
++    # writing needs to follow the link and create the tempfile in the same
+     # dir for later atomic rename
+     my $resolved_path = $self->_resolve_symlinks;
+-    my $temp          = path( $resolved_path . $$ . int( rand( 2**31 ) ) );
++    my $temp          = $resolved_path->_replacment_path;
+ 
+     my $temp_fh = $temp->filehandle( { exclusive => 1, locked => 1 }, ">", $binmode );
+     my $in_fh = $self->filehandle( { locked => 1 }, '<', $binmode );
+@@ -2018,7 +2033,6 @@ Current API available since 0.011.
+ 
+ =cut
+ 
+-# XXX add "unsafe" option to disable flocking and atomic?  Check benchmarks on append() first.
+ sub spew {
+     my ( $self, @data ) = @_;
+     my $args = ( @data && ref $data[0] eq 'HASH' ) ? shift @data : {};
+@@ -2027,12 +2041,12 @@ sub spew {
+     # get default binmode from caller's lexical scope (see "perldoc open")
+     $binmode = ( ( caller(0) )[10] || {} )->{'open>'} unless defined $binmode;
+ 
+-    # spewing need to follow the link
+-    # and create the tempfile in the same dir
++    # writing needs to follow the link and create the tempfile in the same
++    # dir for later atomic rename
+     my $resolved_path = $self->_resolve_symlinks;
++    my $temp          = $resolved_path->_replacment_path;
+ 
+-    my $temp = path( $resolved_path . $$ . int( rand( 2**31 ) ) );
+-    my $fh = $temp->filehandle( { exclusive => 1, locked => 1 }, ">", $binmode );
++    my $fh   = $temp->filehandle( { exclusive => 1, locked => 1 }, ">", $binmode );
+     print {$fh} map { ref eq 'ARRAY' ? @$_ : $_ } @data;
+     close $fh or $self->_throw( 'close', $temp->[PATH] );
+ 
+diff --git a/t/filesystem.t b/t/filesystem.t
+index de7f08a5d0f9bd43a9988a754b7edfc19a96f1d2..c9bf52be0d84e3360b53e4e3e5cb7eb079e40e6e 100644
+--- a/t/filesystem.t
++++ b/t/filesystem.t
+@@ -338,6 +338,15 @@ subtest "copy()" => sub {
+     );
+ }
+ 
++{
++    # Only run if a 255 length filename is allowed. Test checks that the temp
++    # file created doesn't exceed 255 characters.
++    my $file = $tmpdir->child("A" x 255);
++    if ( eval { $file->touch; 1 } ) {;
++        ok( path($file)->spew("Hello"), "spew to long filename" );
++    }
++}
++
+ SKIP: {
+     my $newtmp = Path::Tiny->tempdir;
+     my $file   = $newtmp->child("foo.txt");

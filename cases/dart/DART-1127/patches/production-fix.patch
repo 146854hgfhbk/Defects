@@ -1,0 +1,20 @@
+diff --git a/sembast/lib/src/jdb.dart b/sembast/lib/src/jdb.dart
+index 0898addcc2d7777f0f407b4ea7cf5d74e1db4f80..b3f95280c53c0dba29c3f71bd8883e83c14c2e3e 100644
+--- a/sembast/lib/src/jdb.dart
++++ b/sembast/lib/src/jdb.dart
+@@ -88,12 +88,11 @@ class JdbWriteEntry extends JdbEntry {
+ 
+   /// Used internally to check for corruption first when importing.
+   @override
+-  Object? get valueOrNull => _txnRecordNull;
++  Object? get valueOrNull => _txnRecordValueOrNull;
+ 
+-  // Object? get valueOrNull => _value ??= txnRecord!.record.value;
+-  Object? get _txnRecordNull => txnRecord!.record.value;
++  Object? get _txnRecordValueOrNull => txnRecord?.record.value;
+ 
+-  /// value.
++  /// Value. Should not be overriden.
+   @override
+   Value get value {
+     try {

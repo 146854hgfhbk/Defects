@@ -1,0 +1,133 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-016",
+  "bug_id": "JULIA-016",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/350"
+  ],
+  "issue_id": 350,
+  "buggy_revision": "3a12196b274edd174a74851409ebe58c40835db0",
+  "fixed_revision": "17b92856fa20381e6625ca0b2530496ef299457c",
+  "candidate_sha": "17b92856fa20381e6625ca0b2530496ef299457c",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "3a12196b274edd174a74851409ebe58c40835db0",
+  "changed_production_files": [
+    "src/parser.jl"
+  ],
+  "changed_test_files": [
+    "test/diagnostics.jl",
+    "test/parser.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-016 import-path diagnostics"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "96d8d3bffced55a0cf872120014fc0595bd3dbb669cb76f588a2113855f2e9aa",
+    "oracle": {
+      "mwe_basis": "upstream parser diagnostic regression assertions",
+      "source_evidence": "Literal assertions from JuliaSyntax test/diagnostics.jl and test/parser.jl in the fixing boundary: import A: (..) has no diagnostics; a leading colon reports expected identifier.",
+      "upstream_test_patch_sha256": "f974ab6df8a3c068833e18234b97ade5581d2dc35e4759795768f559b2f21c66"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "17b92856fa20381e6625ca0b2530496ef299457c",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "47da3a810385ab4f715b9c98c0a5b5d3f406879ed08e35b5f890869b3d42e2fe",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:52:19Z",
+    "usage": {
+      "prompt_tokens": 2450,
+      "completion_tokens": 562,
+      "total_tokens": 3012
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.9,\n  \"summary\": \"This commit fixes two parser bugs: (1) `using :A` was incorrectly accepted instead of producing an error, and (2) a spurious 'parentheses are not required here' warning was emitted for `using A: (..)` where parentheses are actually required. Both are clearly documented defects with issues #350 and #473, and the fix is in production parser code with corresponding test updates.\",\n  \"evidence\": \"Issue #473 demonstrates that `using :A` was parsed as valid when it should have been an error (inconsistent with the reference parser `fl_parseall`). Issue #350 shows a false warning about unnecessary parentheses in `using A: (..)`. The commit fixes both in `src/parser.jl` with test additions in `test/diagnostics.jl` and `test/parser.jl`. The PR/issue #477 explicitly states 'Fix #473 fix #350'.\",\n  \"missing_evidence\": \"The actual diff content is not provided, so the exact code changes cannot be inspected. However, the issue descriptions, file paths, and linked issues provide strong circumstantial evidence.\",\n  \"validation_risks\": \"Without seeing the exact diff, there's a small risk the fix might include additional refactoring or behavioral changes beyond the bug fixes. The fix touches parser logic which could have subtle interactions with other parse paths.\",\n  \"suggested_tests\": \"Test that `using :A` produces a parse error. Test that `using A: (..)` does not emit the 'parentheses are not required here' warning. Test that `using A: (x, y)` still correctly warns about unnecessary parentheses where applicable.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.9,
+    "summary": "This commit fixes two parser bugs: (1) `using :A` was incorrectly accepted instead of producing an error, and (2) a spurious 'parentheses are not required here' warning was emitted for `using A: (..)` where parentheses are actually required. Both are clearly documented defects with issues #350 and #473, and the fix is in production parser code with corresponding test updates.",
+    "evidence": "Issue #473 demonstrates that `using :A` was parsed as valid when it should have been an error (inconsistent with the reference parser `fl_parseall`). Issue #350 shows a false warning about unnecessary parentheses in `using A: (..)`. The commit fixes both in `src/parser.jl` with test additions in `test/diagnostics.jl` and `test/parser.jl`. The PR/issue #477 explicitly states 'Fix #473 fix #350'.",
+    "missing_evidence": "The actual diff content is not provided, so the exact code changes cannot be inspected. However, the issue descriptions, file paths, and linked issues provide strong circumstantial evidence.",
+    "validation_risks": "Without seeing the exact diff, there's a small risk the fix might include additional refactoring or behavioral changes beyond the bug fixes. The fix touches parser logic which could have subtle interactions with other parse paths.",
+    "suggested_tests": "Test that `using :A` produces a parse error. Test that `using A: (..)` does not emit the 'parentheses are not required here' warning. Test that `using A: (x, y)` still correctly warns about unnecessary parentheses where applicable."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-016 import-path diagnostics"
+    ],
+    "exception_types": [
+      "06dbada4836598cfe5ddd3a8ebe20b5440044d504cf3b02a9f414e2a718a3df6",
+      "7d8106f460930a64a08ab37244ae1443e254d27dc04dbdbd7d51130d78874e2f"
+    ],
+    "fingerprints": [
+      "06dbada4836598cfe5ddd3a8ebe20b5440044d504cf3b02a9f414e2a718a3df6",
+      "7d8106f460930a64a08ab37244ae1443e254d27dc04dbdbd7d51130d78874e2f"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "17b92856fa20381e6625ca0b2530496ef299457c",
+    "parent_sha": "3a12196b274edd174a74851409ebe58c40835db0",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "acd5e8bd351c9abfaf6921c61610071ebaea5ff0b7c96e50e8fce017f7b3e54f",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

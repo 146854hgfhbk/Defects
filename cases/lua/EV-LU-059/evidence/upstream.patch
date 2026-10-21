@@ -1,0 +1,38 @@
+diff --git a/moses.lua b/moses.lua
+index ffdaeb0e97acaa571a0372f9ec1407e47d31b916..eef35342c66fab4824376464bc0de1ded760d220 100644
+--- a/moses.lua
++++ b/moses.lua
+@@ -1475,7 +1475,7 @@ function M.zip(...)
+   for i = 1,n do
+     if not _ans[i] then _ans[i] = {} end    
+     for k, array in ipairs(args) do
+-      if array[i] then _ans[i][#_ans[i]+1] = array[i] end
++      if (array[i]~= nil) then _ans[i][#_ans[i]+1] = array[i] end
+     end
+   end
+   return _ans
+diff --git a/moses_min.lua b/moses_min.lua
+index e2117cbbdbcbfe79708f273ec67f272a6879105c..feba2ca10a5f4d9db068619629209eb8820100d6 100644
+--- a/moses_min.lua
++++ b/moses_min.lua
+@@ -258,7 +258,7 @@ function S1wg_DG.zip(...)local cdxFVpZw={...}
+ local Y=S1wg_DG.max(cdxFVpZw,function(BuX1r)return#BuX1r end)local o9Uh={}
+ for Wyf83f2=1,Y do if not o9Uh[Wyf83f2]then o9Uh[Wyf83f2]={}end
+ for P0olj,z in
+-kyWtqIf0(cdxFVpZw)do if z[Wyf83f2]then
++kyWtqIf0(cdxFVpZw)do if(z[Wyf83f2]~=nil)then
+ o9Uh[Wyf83f2][#o9Uh[Wyf83f2]+1]=z[Wyf83f2]end end end;return o9Uh end
+ function S1wg_DG.zipWith(EHCCkt,...)local x={...}
+ local xNWVmS=S1wg_DG.max(x,function(Pkis6H28)return#Pkis6H28 end)local kGWnkgDu={}for tSE=1,xNWVmS do
+diff --git a/spec/array_spec.lua b/spec/array_spec.lua
+index 6e618adda70dfe2e61e45d3e6f26bfd6a829cc31..e69e8daf343abdc6d3f1259000a693f74b8ad7a6 100644
+--- a/spec/array_spec.lua
++++ b/spec/array_spec.lua
+@@ -598,6 +598,7 @@ describe('Array functions specs', function()
+     it('zips together values from different arrays sharing the same index', function()   
+       local names = {'Bob','Alice','James'}; local ages = {22, 23}
+       assert.is_true(M.isEqual(M.zip(names,ages),{{'Bob',22},{'Alice',23},{'James'}}))
++      assert.is_true(M.isEqual(M.zip({false},{false}),{{false,false}}))
+     end)     
+   end)  
+   

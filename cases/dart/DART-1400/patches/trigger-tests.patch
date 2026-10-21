@@ -1,0 +1,59 @@
+diff --git a/test/allow_anything_test.dart b/test/allow_anything_test.dart
+index efaf0935834b53a315087e1a4380430ffa0714af..29038a793412e4121215279b21e6893bff558e72 100644
+--- a/test/allow_anything_test.dart
++++ b/test/allow_anything_test.dart
+@@ -3,8 +3,11 @@
+ // BSD-style license that can be found in the LICENSE file.
+ 
+ import 'package:args/args.dart';
++import 'package:args/command_runner.dart';
+ import 'package:test/test.dart';
+ 
++import 'test_utils.dart';
++
+ void main() {
+   group('new ArgParser.allowAnything()', () {
+     ArgParser parser;
+@@ -51,5 +54,13 @@ void main() {
+       expect(results.command.arguments, equals(['--foo', '-abc', '--', 'bar']));
+       expect(results.command.name, equals('command'));
+     });
++
++    test('works as a subcommand in a CommandRunner', () async {
++      var commandRunner = CommandRunner('command', 'Description of command');
++      var command = AllowAnythingCommand();
++      commandRunner..addCommand(command);
++
++      await commandRunner.run([command.name, '--foo', '--bar', '-b', 'qux']);
++    });
+   });
+ }
+diff --git a/test/test_utils.dart b/test/test_utils.dart
+index 0aa566ff54b0184ab79d1f30a2112ab87026271c..8c6373fabf732bf8fa5d32d840724f0803a1b527 100644
+--- a/test/test_utils.dart
++++ b/test/test_utils.dart
+@@ -207,6 +207,24 @@ class AsyncCommand extends Command {
+   Future run() => Future.value().then((_) => hasRun = true);
+ }
+ 
++class AllowAnythingCommand extends Command {
++  var hasRun = false;
++
++  @override
++  final name = 'allowAnything';
++
++  @override
++  final description = 'A command using allowAnything.';
++
++  @override
++  final argParser = ArgParser.allowAnything();
++
++  @override
++  void run() {
++    hasRun = true;
++  }
++}
++
+ void throwsIllegalArg(function, {String reason}) {
+   expect(function, throwsArgumentError, reason: reason);
+ }

@@ -1,0 +1,53 @@
+diff --git a/Changes b/Changes
+index 68d4b2c7e..a2ecbe77f 100644
+--- a/Changes
++++ b/Changes
+@@ -1,5 +1,7 @@
+ {{$NEXT}}
+ 
++    - ipc_wait now reports exit and signal values
++
+ 1.302114  2017-11-21 15:28:39-08:00 America/Los_Angeles (TRIAL RELEASE)
+ 
+     - Added pre-subtest hook to Test2::API (#801 from dakkar)
+diff --git a/lib/Test2/API/Instance.pm b/lib/Test2/API/Instance.pm
+index c72199253..39a3cd022 100644
+--- a/lib/Test2/API/Instance.pm
++++ b/lib/Test2/API/Instance.pm
+@@ -455,8 +455,10 @@ sub _ipc_wait {
+                 last if $pid == -1;
+                 next unless $err;
+                 $fail++;
+-                $err = $err >> 8;
+-                warn "Process $pid did not exit cleanly (status: $err)\n";
++
++                my $sig = $err & 127;
++                my $exit = $err >> 8;
++                warn "Process $pid did not exit cleanly (wstat: $err, exit: $exit, sig: $sig)\n";
+             }
+ 
+             alarm 0;
+diff --git a/t/Test2/modules/API/Instance.t b/t/Test2/modules/API/Instance.t
+index 33e515464..8e7e9a8a3 100644
+--- a/t/Test2/modules/API/Instance.t
++++ b/t/Test2/modules/API/Instance.t
+@@ -184,7 +184,18 @@ if (CAN_REALLY_FORK) {
+         local $SIG{__WARN__} = sub { push @warnings => @_ };
+         is(Test2::API::Instance::_ipc_wait, 255, "Process exited badly");
+     }
+-    like($warnings[0], qr/Process .* did not exit cleanly \(status: 255\)/, "Warn about exit");
++    like($warnings[0], qr/Process .* did not exit cleanly \(wstat: \S+, exit: 255, sig: 0\)/, "Warn about exit");
++
++    $pid = fork;
++    die "Failed to fork!" unless defined $pid;
++    unless($pid) { sleep 20; exit 0 }
++    kill('TERM', $pid) or die "Failed to send signal";
++    @warnings = ();
++    {
++        local $SIG{__WARN__} = sub { push @warnings => @_ };
++        is(Test2::API::Instance::_ipc_wait, 255, "Process exited badly");
++    }
++    like($warnings[0], qr/Process .* did not exit cleanly \(wstat: \S+, exit: 0, sig: 15\)/, "Warn about exit");
+ }
+ 
+ if (CAN_THREAD && $] ge '5.010') {

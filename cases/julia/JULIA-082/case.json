@@ -1,0 +1,116 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-082",
+  "bug_id": "JULIA-082",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "SciML/SciMLBase.jl",
+  "repository_url": "https://github.com/SciML/SciMLBase.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "f864bc45ca748c9e89de4339184ff95dd692a226",
+  "fixed_revision": "6f3b54524156273bc024fe116d21d278f2e77c46",
+  "candidate_sha": "6f3b54524156273bc024fe116d21d278f2e77c46",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "f864bc45ca748c9e89de4339184ff95dd692a226",
+  "changed_production_files": [
+    "src/solutions/ode_solutions.jl"
+  ],
+  "changed_test_files": [
+    "test/solution_interface.jl"
+  ],
+  "trigger_tests": [
+    "ODESolution property replacement preserves state metadata"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "ceaa412285037736726426acdb5a54606c25a9fb6daeec69e9a173fa483f6a49",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/solution_interface.jl",
+        "basis": "behavioral assertions isolated from upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "75746185e2664d1e65d4c31db4ac3d62649093e1dd5725198dc0e220bf4927bf"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "6f3b54524156273bc024fe116d21d278f2e77c46",
+    "project": "SciML/SciMLBase.jl",
+    "input_sha256": "33669f9fceddf2c96196e17656cd79828be305a205aa7b7778927edaf37c300c",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:53:50Z",
+    "usage": {
+      "prompt_tokens": 1830,
+      "completion_tokens": 534,
+      "total_tokens": 2364
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.85,\n  \"summary\": \"Fix for a regression in ODESolution's ConstructionBase.setproperties that throws MethodError when updating retcode on null-state (u::Vector{Nothing}) solutions because ndims(Nothing) is undefined.\",\n  \"evidence\": \"Issue #1473 provides detailed root cause analysis: commit 55d81af15 made setproperties unconditionally recompute N as ndims(eltype(u))+1, which fails for Vector{Nothing}. Git bisect confirmed the regression. The fix is in src/solutions/ode_solutions.jl (production code) and test/solution_interface.jl provides regression tests. Validation shows 72/72 solution interface tests and 4430/4430 remake tests passing.\",\n  \"missing_evidence\": \"The actual diff content is not provided, so I cannot verify the exact code change. However the issue description, file list, and commit metadata are consistent with an isolated bug fix.\",\n  \"validation_risks\": \"Without seeing the diff, there's a small risk the fix includes additional refactoring or feature additions beyond the bug fix. The issue mentions 'support rebuilding with both Vector{Nothing} and u = nothing' which could be construed as new capability, but given context it's restoring previously working behavior.\",\n  \"suggested_tests\": \"Test that solution_new_retcode works on an ODESolution with u::Vector{Nothing}. Test that setproperties on a null-state ODESolution changing only retcode preserves type parameters. Test that setproperties with u=nothing also works correctly.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.85,
+    "summary": "Fix for a regression in ODESolution's ConstructionBase.setproperties that throws MethodError when updating retcode on null-state (u::Vector{Nothing}) solutions because ndims(Nothing) is undefined.",
+    "evidence": "Issue #1473 provides detailed root cause analysis: commit 55d81af15 made setproperties unconditionally recompute N as ndims(eltype(u))+1, which fails for Vector{Nothing}. Git bisect confirmed the regression. The fix is in src/solutions/ode_solutions.jl (production code) and test/solution_interface.jl provides regression tests. Validation shows 72/72 solution interface tests and 4430/4430 remake tests passing.",
+    "missing_evidence": "The actual diff content is not provided, so I cannot verify the exact code change. However the issue description, file list, and commit metadata are consistent with an isolated bug fix.",
+    "validation_risks": "Without seeing the diff, there's a small risk the fix includes additional refactoring or feature additions beyond the bug fix. The issue mentions 'support rebuilding with both Vector{Nothing} and u = nothing' which could be construed as new capability, but given context it's restoring previously working behavior.",
+    "suggested_tests": "Test that solution_new_retcode works on an ODESolution with u::Vector{Nothing}. Test that setproperties on a null-state ODESolution changing only retcode preserves type parameters. Test that setproperties with u=nothing also works correctly."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "ODESolution property replacement preserves state metadata"
+    ],
+    "exception_types": [
+      "ef35c90a29cc38f9bc5145671de5cc0ce80f98b979a8e38c8f5e9d87f2d0f7d2"
+    ],
+    "fingerprints": [
+      "ef35c90a29cc38f9bc5145671de5cc0ce80f98b979a8e38c8f5e9d87f2d0f7d2"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

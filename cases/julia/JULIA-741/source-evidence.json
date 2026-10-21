@@ -1,0 +1,98 @@
+{
+  "candidate_sha": "86d7f9062e1285057faf40e4481ce1b28a569424",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "SWE-rebench-V2",
+  "instance_id": "julialang__juliasyntax.jl-130",
+  "swe_rebench": {
+    "base_commit": "fd9e981ce618941465b0c95520147a46655ee9a8",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "Trivia attachment",
+      "Unicode normalization in tree conversion",
+      "Expr conversion",
+      "Parsing values from strings",
+      "Hooks for Core integration",
+      "Parse JuliaSyntax",
+      "Parse Base at /usr/local/julia/bin/../share/julia/base",
+      "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 88,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/88",
+      "state": "closed",
+      "title": "Reworking some Julia AST forms",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": false,
+      "labels": [
+        "enhancement",
+        "design",
+        "trees"
+      ],
+      "body_excerpt": "With JuliaSyntax, we've got our own green tree (`GreenNode`) and AST (`SyntaxNode`) which often differ from `Expr`, due to the requirement that children are strictly in source order.  Some current differences are described in https://github.com/JuliaLang/JuliaSyntax.jl#tree-differences-between-greennode-and-expr. Given that we've been forced to diverge we might as well make the most of this and reconsider some aspects of `Expr` for two reasons:\r\n\r\n* To give extra textural information to users of green tree (eg, presence of parentheses), without the need to recompute this information by inspecting the trivia. (These nodes will probably be elided during AST conversion?)\r\n* To give extra information to AST users like macro writers (eg, conditional ternary is the same as `:if` for `Expr` users)\r\n\r\nList of possible changes\r\n\r\n* [x] Insertion of extra blocks inconsistent in various places, sometimes due to the need of `Expr` to hold `LineNumberNode`.  Avoid this!\r\n    * [x] `let` argument lists (#126)\r\n    * [x] short form functions have a block for the body line number\r\n    * [x] `elseif` conditional has a block for the line number\r\n    * [x] anon function `->` has a block only for the body line number\r\n* [x] Containers for string-like constructs - these are very useful for tooling which works with the tokens of the source text. Also separating the delimiters from the text they delimit removes a whole class of tokenization errors and lets the parser deal with them.\r\n    * [x] string (always use K\"string\" to wrap strings, even when they only contain a single `K\"String\"` token. See #94)\r\n    * [x] char (add a new `K\"char\"` for containing characters along with their delimiters?). See #121 \r\n    * [x] backticks (use `K\"`\"` or add `K\"backticks\"`?)\r\n    * [x] `var\"\"` syntax (use `K\"var\"`? as the head?) (#127)\r\n* [x] Faithful representation of the source text / avoid premature lowering\r\n    * [x] `K\"macrocall\"` - allow users to easily distinguish macrocalls with parentheses fro"
+    },
+    {
+      "number": 129,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/129",
+      "state": "closed",
+      "title": "`const` without assignment should be an error except in `struct`",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug",
+        "parser"
+      ],
+      "body_excerpt": "Having copied the flisp parser's behavior, we also suffer from the following bug:\r\n\r\nhttps://github.com/JuliaLang/julia/issues/45024\r\n\r\nThat is, the following should be an error but it's not\r\n\r\n```julia\r\njulia> JuliaSyntax.parse(Expr, \"const a\")\r\n:(const a)\r\n```"
+    },
+    {
+      "number": 130,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/130",
+      "state": "closed",
+      "title": "Fix const struct field errors + cleanup `global const` AST",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Here I've replicated the fix from JuliaLang/julia#45024 so that `const x` (ie, without an assignment) is only valid within a `struct` and is otherwise an error.\r\n\r\nAlso avoid lowering the syntax `global const` into `const global` within the parser; do this in Expr conversion instead. This more closely reflects the structure of the source, allowing trivia attachment to be more natural. Part of #88\r\n\r\nFix #129."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        129
+      ],
+      "pull_request": 130,
+      "fix_commit": "86d7f9062e1285057faf40e4481ce1b28a569424",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Fix const struct field errors + cleanup `global const` AST (#130)\n\nHere I've replicated the fix from JuliaLang/julia#45024 so that\r\n`const x` (ie, without an assignment) is only valid within a `struct`\r\nand is otherwise an error.\r\n\r\nAlso avoid lowering the syntax `global const` into `const global` within\r\nthe parser; do this in `Expr` conversion instead. This more closely\r\nreflects the structure of the source, allowing trivia attachment to be\r\nmore natural.",
+    "commit_issue_refs": [
+      130
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 130,
+    "pull_request_title": "Fix const struct field errors + cleanup `global const` AST",
+    "pull_request_issue_refs": [
+      88,
+      129
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    129
+  ],
+  "cross_repository_issue_records": []
+}

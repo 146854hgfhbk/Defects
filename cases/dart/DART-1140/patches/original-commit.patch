@@ -1,0 +1,71 @@
+diff --git a/lib/src/front_end/ast_node_visitor.dart b/lib/src/front_end/ast_node_visitor.dart
+index d33c0c724e6bececb350bc4a3ff58f24fa9b4125..8e3416304b7ab2eedfda09d9e5036a3fc954a395 100644
+--- a/lib/src/front_end/ast_node_visitor.dart
++++ b/lib/src/front_end/ast_node_visitor.dart
+@@ -1587,7 +1587,18 @@ final class AstNodeVisitor extends ThrowingAstVisitor<void> with PieceFactory {
+ 
+   @override
+   void visitNullAwareElement(NullAwareElement node) {
+-    writePrefix(node.question, node.value);
++    // A null-aware element containing a dot shorthand means there is a `?` and
++    // `.` next to each other. In that case, make sure we put a space between
++    // them so that they don't incorrectly get collapsed into a `?.` null-aware
++    // access token.
++    var space = switch (node.value) {
++      DotShorthandConstructorInvocation() => true,
++      DotShorthandInvocation() => true,
++      DotShorthandPropertyAccess() => true,
++      _ => false,
++    };
++
++    writePrefix(node.question, space: space, node.value);
+   }
+ 
+   @override
+diff --git a/test/tall/expression/collection_null_aware.stmt b/test/tall/expression/collection_null_aware.stmt
+index 4847d717d85dfb039c0f43a8dc4cecaa5baca740..38563acc54dc36330c2c3fa9b3952e5fbc4ebd19 100644
+--- a/test/tall/expression/collection_null_aware.stmt
++++ b/test/tall/expression/collection_null_aware.stmt
+@@ -27,3 +27,17 @@ var list = [
+   ?(veryLongExpression +
+       thatIsForcedToSplit),
+ ];
++>>> (experiment dot-shorthands) Preserves space for dot shorthand.
++### If the space between `?` and `.` is removed, it would become a single `?.`
++### token and thus a parse error.
++var list = [
++  ?  .  property  ,
++  ?  .  invocation  (  )  ,
++  ?  .  new  (  )  ,
++];
++<<< 3.10
++var list = [
++  ? .property,
++  ? .invocation(),
++  ? .new(),
++];
+diff --git a/test/tall/expression/collection_null_aware_comment.stmt b/test/tall/expression/collection_null_aware_comment.stmt
+index 8e6aa9029bf5e6fba7ce34a5bdb342139117ac25..e8bbd8b3e758765a2986241a94b95ab29c8c4528 100644
+--- a/test/tall/expression/collection_null_aware_comment.stmt
++++ b/test/tall/expression/collection_null_aware_comment.stmt
+@@ -33,3 +33,20 @@ var map = {
+       ? // c
+       value,
+ };
++>>> (experiment dot-shorthands) Comment between `?` and `.` of dot shorthand.
++var list = [
++  ?  /* c */  .  property  ,
++  ?  // c
++  .  invocation  (  )  ,
++  ?  /// c
++  .  new  (  )  ,
++];
++<<< 3.10
++var list = [
++  ? /* c */ .property,
++  ? // c
++  .invocation(),
++  ?
++  /// c
++  .new(),
++];

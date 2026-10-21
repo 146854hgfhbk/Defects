@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-814",
+  "technical_evidence_sha256": "48832db34b3c83110c980568c103c1069b24d0148151d9de735911ad92c2eb70",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "eea4b2fb9819316cdb38a04ede983e370981321514dcdac5d8cc0cc31d07737f",
+  "reviewed_at": "2026-08-12T10:02:40.599654+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/http#1934",
+  "rationale": "Issue #1934 describes a resource leak where aborting an AbortableRequest after send() returns but before reading the response body fails to release the underlying dart:io HttpClientResponse, causing the connection to stay held. The triggering test 'aborting without reading the response frees the underlying connection' reproduces this exact scenario with maxConnectionsPerHost=1, demonstrating that the next request hangs (times out at 5s) when the connection is not released. The minimized production patch adds abortResponse() that explicitly cancels the native response when responseListenStarted is false (unawaited(response.listen(null, onError: (_, __) {}).cancel())), fixing the leak. The patch also refactors comment formatting and fixes a typo ('reponseController' → 'responseController') but contains no feature additions, configuration changes, or test-only modifications. The trigger tests use only existing APIs (AbortableRequest, abortTrigger) present in the buggy revision. Strict runtime evidence confirms all three trigger tests fail on buggy (deterministically reproduce), pass on fixed, and the full suite is green on fixed. No duplicate root causes exist in active_same_project_root_causes.\n\nIssue #1934 describes a resource leak: when an AbortableRequest is aborted after send() returns but before the response body is listened to, IOClient never cancels the underlying dart:io HttpClientResponse, causing the connection to remain held and subsequent requests in a bounded pool to hang. The minimized production patch fixes exactly this by moving abort handling outside onListen into a new abortResponse() function that cancels the native response via response.listen(null, onError: (_, __) {}).cancel() when responseListenStarted is false. The three trigger tests verify the fix: the first test demonstrates the hang/timeout on buggy (connection not released) and success on fixed (connection released); the other two verify error handling in streaming and fully-read states. All tests use only existing APIs (AbortableRequest, abortTrigger) present in the buggy revision. The patch contains only the abort-handling logic change plus comment rewrites—no formatting, features, or unrelated refactors. The CHANGELOG diff is a separate file documenting the fix. Strict runtime validation confirms: buggy reproduces only the declared trigger, fixed passes all tests deterministically across 3 repetitions and 44 matrix runs. No active same-project root causes supplied for duplicate checking.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T10:02:24.802931+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "eea4b2fb9819316cdb38a04ede983e370981321514dcdac5d8cc0cc31d07737f",
+      "response_sha256": "8b275b5c313b07477e82de47245fd88cf705f7f826985e02a5fef742b0441662",
+      "response_id": "msg_d9079d20-33e1-4204-96",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 7007
+        },
+        "cache_creation_input_tokens": 7007,
+        "cache_read_input_tokens": 16620,
+        "input_tokens": 22692,
+        "output_tokens": 1104
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/http#1934",
+      "rationale": "Issue #1934 describes a resource leak where aborting an AbortableRequest after send() returns but before reading the response body fails to release the underlying dart:io HttpClientResponse, causing the connection to stay held. The triggering test 'aborting without reading the response frees the underlying connection' reproduces this exact scenario with maxConnectionsPerHost=1, demonstrating that the next request hangs (times out at 5s) when the connection is not released. The minimized production patch adds abortResponse() that explicitly cancels the native response when responseListenStarted is false (unawaited(response.listen(null, onError: (_, __) {}).cancel())), fixing the leak. The patch also refactors comment formatting and fixes a typo ('reponseController' → 'responseController') but contains no feature additions, configuration changes, or test-only modifications. The trigger tests use only existing APIs (AbortableRequest, abortTrigger) present in the buggy revision. Strict runtime evidence confirms all three trigger tests fail on buggy (deterministically reproduce), pass on fixed, and the full suite is green on fixed. No duplicate root causes exist in active_same_project_root_causes.",
+      "evidence_paths": [
+        "source_candidate.origin_pull_request.body",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "strict_post_minimization.checks.trigger.deterministic"
+      ],
+      "risks": [
+        "The primary trigger test relies on 5-second timeout to detect connection leak; wall-clock dependent but deterministic per strict evidence",
+        "The 'aborting while streaming' test races abort completion against I/O event delivery; deterministic per strict evidence (fingerprint_groups=3)",
+        "Connection pooling behavior depends on dart:io SDK implementation; strict evidence shows deterministic reproduction across 3 repetitions"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T10:02:40.599432+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "eea4b2fb9819316cdb38a04ede983e370981321514dcdac5d8cc0cc31d07737f",
+      "response_sha256": "6c224d1e91fc420dd56e6ba77f910d384415c66bcc4df4c501c8f5eb0515ec2a",
+      "response_id": "msg_18168926-caa2-437d-83",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 6540
+        },
+        "cache_creation_input_tokens": 6540,
+        "cache_read_input_tokens": 16735,
+        "input_tokens": 22692,
+        "output_tokens": 1082
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/http#1934",
+      "rationale": "Issue #1934 describes a resource leak: when an AbortableRequest is aborted after send() returns but before the response body is listened to, IOClient never cancels the underlying dart:io HttpClientResponse, causing the connection to remain held and subsequent requests in a bounded pool to hang. The minimized production patch fixes exactly this by moving abort handling outside onListen into a new abortResponse() function that cancels the native response via response.listen(null, onError: (_, __) {}).cancel() when responseListenStarted is false. The three trigger tests verify the fix: the first test demonstrates the hang/timeout on buggy (connection not released) and success on fixed (connection released); the other two verify error handling in streaming and fully-read states. All tests use only existing APIs (AbortableRequest, abortTrigger) present in the buggy revision. The patch contains only the abort-handling logic change plus comment rewrites—no formatting, features, or unrelated refactors. The CHANGELOG diff is a separate file documenting the fix. Strict runtime validation confirms: buggy reproduces only the declared trigger, fixed passes all tests deterministically across 3 repetitions and 44 matrix runs. No active same-project root causes supplied for duplicate checking.",
+      "evidence_paths": [
+        "source_candidate.origin_pull_request.body",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.trigger.deterministic"
+      ],
+      "risks": [
+        "Connection-release timing depends on dart:io SDK implementation and may vary across Dart versions",
+        "The 'aborting while streaming' test races abort against I/O event delivery, introducing potential flakiness",
+        "Timeout-based hang detection (5s) makes the trigger slower than pure assertion-based tests"
+      ]
+    }
+  ]
+}

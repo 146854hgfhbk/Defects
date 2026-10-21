@@ -1,0 +1,122 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-187",
+  "bug_id": "JULIA-187",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaNLSolvers/Optim.jl",
+  "repository_url": "https://github.com/JuliaNLSolvers/Optim.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "73729e39e406392b6fb8cace6250b761ad003549",
+  "fixed_revision": "ff988fbc1eccc4c1772528fe5e821afea352d93e",
+  "candidate_sha": "ff988fbc1eccc4c1772528fe5e821afea352d93e",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "73729e39e406392b6fb8cace6250b761ad003549",
+  "changed_production_files": [
+    "src/multivariate/solvers/constrained/lbfgsb.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "subspace backtracking measures from the Cauchy point"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "634d90e8b5ca1580ae5622be891618270749418e56c9327686e330f3e95e62bf",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/multivariate/solvers/constrained/lbfgsb.jl",
+        "basis": "deterministic public optimizer behavior isolated from upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "b4d77c15d615a494d479d267d235fc6dcb7e547076a5b392b0d6640ee8c2a97c"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "ff988fbc1eccc4c1772528fe5e821afea352d93e",
+    "project": "JuliaNLSolvers/Optim.jl",
+    "input_sha256": "c2936231186f77fa48568a1dc6dafe39bfc1a75683c79c9b071865c57d7bcc3d",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:15:50Z",
+    "usage": {
+      "prompt_tokens": 1269,
+      "completion_tokens": 568,
+      "total_tokens": 1837
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"unknown\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.62, \"summary\": \"The commit fixes a bug in the LBFGS-B subspace backtracking implementation where the measurement was not correctly taken from the Cauchy point. The commit subject clearly describes a defect fix, and there is a trigger test named 'subspace backtracking measures from the Cauchy point' that validates the corrected behavior.\", \"evidence\": \"The commit subject 'Fix LBFGSB subspace backtracking to measure from the Cauchy point (#1272)' clearly describes a bug fix. The trigger test 'subspace backtracking measures from the Cauchy point' directly validates the corrected behavior, indicating that the previous code was measuring from the wrong reference point. The PR number #1272 is referenced in the commit message, suggesting a reviewed fix.\", \"missing_evidence\": \"No diff content (production_files and test_files are empty), no issue body text, no file_details available to inspect the actual code change. The traceability_class is UNVERIFIED. Cannot confirm the scope or isolation of the fix without seeing the actual diff.\", \"validation_risks\": \"Without seeing the actual code change, there is a risk that the fix could be more complex than a simple bug fix or could include additional changes. The empty file lists prevent verification of isolation.\", \"suggested_tests\": [\"Test LBFGS-B convergence on box-constrained problems where the Cauchy point is on a constraint boundary\", \"Test that the subspace minimization step length is computed relative to the Cauchy point, not the starting point\", \"Regression test comparing LBFGS-B results against known solutions for problems where this bug would cause incorrect convergence\"]}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "unknown",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.62,
+    "summary": "The commit fixes a bug in the LBFGS-B subspace backtracking implementation where the measurement was not correctly taken from the Cauchy point. The commit subject clearly describes a defect fix, and there is a trigger test named 'subspace backtracking measures from the Cauchy point' that validates the corrected behavior.",
+    "evidence": "The commit subject 'Fix LBFGSB subspace backtracking to measure from the Cauchy point (#1272)' clearly describes a bug fix. The trigger test 'subspace backtracking measures from the Cauchy point' directly validates the corrected behavior, indicating that the previous code was measuring from the wrong reference point. The PR number #1272 is referenced in the commit message, suggesting a reviewed fix.",
+    "missing_evidence": "No diff content (production_files and test_files are empty), no issue body text, no file_details available to inspect the actual code change. The traceability_class is UNVERIFIED. Cannot confirm the scope or isolation of the fix without seeing the actual diff.",
+    "validation_risks": "Without seeing the actual code change, there is a risk that the fix could be more complex than a simple bug fix or could include additional changes. The empty file lists prevent verification of isolation.",
+    "suggested_tests": [
+      "Test LBFGS-B convergence on box-constrained problems where the Cauchy point is on a constraint boundary",
+      "Test that the subspace minimization step length is computed relative to the Cauchy point, not the starting point",
+      "Regression test comparing LBFGS-B results against known solutions for problems where this bug would cause incorrect convergence"
+    ]
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "subspace backtracking measures from the Cauchy point"
+    ],
+    "exception_types": [
+      "7fc7495506930edfcc9b37b10ed2cacaeeb2cc147afac39156f6a141dcc853ba"
+    ],
+    "fingerprints": [
+      "7fc7495506930edfcc9b37b10ed2cacaeeb2cc147afac39156f6a141dcc853ba"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

@@ -1,0 +1,16 @@
+diff --git a/lib/src/source_visitor.dart b/lib/src/source_visitor.dart
+index 820290a4..b0ea90c5 100644
+--- a/lib/src/source_visitor.dart
++++ b/lib/src/source_visitor.dart
+@@ -184,7 +184,11 @@ class SourceVisitor extends ThrowingAstVisitor {
+     visit(node.name);
+     token(node.period);
+     visit(node.constructorName);
++
++    // Metadata annotations are always const contexts.
++    _constNesting++;
+     visit(node.arguments);
++    _constNesting--;
+   }
+ 
+   /// Visits an argument list.

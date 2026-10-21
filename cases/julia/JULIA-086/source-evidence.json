@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "73729e39e406392b6fb8cace6250b761ad003549",
+  "project": "JuliaNLSolvers/Optim.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1270,
+      "url": "https://github.com/JuliaNLSolvers/Optim.jl/pull/1270",
+      "state": "closed",
+      "title": "Fix the sign of the hard-case trust region step",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "## The bug\n\nIn the hard case, `solve_tr_subproblem!` builds the step from formula 4.45 in Nocedal & Wright: `s = p + τz`, where `p` solves `(H + λI)p = -g` on the nondegenerate eigenspace and `z` is a unit eigenvector for the smallest eigenvalue. `calc_p!` already returns `p` with the minus sign applied, but the step was assembled with `axpby!(tau, z, -1, s)`, which computes `τz - p`.\n\nThe reversed step has the same norm as the correct one (`p ⊥ z`), so the trust region constraint still holds and `hard_case`/`lambda`/norm checks all pass, but the linear term of the model flips sign: the returned step is not the subproblem minimizer, and the model value used in the ρ acceptance test is inflated by `2·Σ qgᵢ²/(λᵢ+λ)`. On the analytic instance `H = diag(-2, 1)`, `g = [0, 1]`, `Δ = 1`, the returned model value was `-1/2` where the minimizer gives `-7/6`, and the step satisfied `(H + λI)s = +g` instead of `-g`.\n\n## The fix\n\n- Assemble the step with `axpy!(tau, z, s)` so `s = p + τz`.\n- Drop the second `calc_p!` call, which recomputed the `p` already held in `s`.\n- Move the `initial_safeguards` call into the non-hard-case branch, so the returned `lambda` is the value the hard-case step was actually built with.\n\n## Tests\n\nThe existing hard-case test checked `hard_case`, `lambda`, and the step norm, all of which the reversed step also satisfies, which is how this survived. It now also checks the KKT residual `(H + λI)s = -g`, and there is a new analytically solvable 2×2 hard case with a known step and model value (`m = -7/6`). Both new checks fail on master and pass with this change. The full newton_trust_region test file passes.\n\nThis PR was written with the assistance of generative AI.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 1270,
+      "pull_request_repository": "JuliaNLSolvers/Optim.jl",
+      "pull_request_url": "https://github.com/JuliaNLSolvers/Optim.jl/pull/1270",
+      "fix_commit": "73729e39e406392b6fb8cace6250b761ad003549",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix the sign of the hard-case trust region step (#1270)\n\nIn the hard case, solve_tr_subproblem! builds the step from formula 4.45\nin Nocedal & Wright: s = p + tau*z, where p is the particular solution\nof (H + lambda*I)p = -g on the nondegenerate eigenspace and z is a unit\neigenvector for the smallest eigenvalue. calc_p! already returns p with\nthe minus sign applied, but the step was assembled with\naxpby!(tau, z, -1, s), which computes tau*z - p. The reversed step has\nthe same norm (p and z are orthogonal), so the trust region constraint\nstill holds, but the linear term of the model flips sign: the returned\nstep is not the subproblem minimizer, and the model value handed to the\nrho test is inflated by 2*sum(qg[i]^2/(lambda[i]+lambda)).\n\nAssemble the step with axpy!(tau, z, s) instead, and drop the second\ncalc_p! call, which recomputed the p already held in s. Also move the\ninitial_safeguards call into the non-hard-case branch so the returned\nlambda is the one the hard-case step was built with rather than a\nsafeguarded value that corresponds to no step.\n\nThe existing hard-case test checked hard_case, lambda, and the step\nnorm, all of which the reversed step also satisfies. Add a KKT residual\ncheck ((H + lambda*I)s = -g) to that test and an analytically solvable\n2x2 hard case with known step and model value.\n\nCo-authored-by: Claude Fable 5 <noreply@anthropic.com>",
+    "commit_issue_refs": [
+      1270
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1270,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Fix the sign of the hard-case trust region step",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [],
+  "pull_request_record": {
+    "number": 1270,
+    "repository": "JuliaNLSolvers/Optim.jl",
+    "url": "https://github.com/JuliaNLSolvers/Optim.jl/pull/1270",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-08-17T09:58:33Z",
+    "merge_commit_sha": "73729e39e406392b6fb8cace6250b761ad003549",
+    "title": "Fix the sign of the hard-case trust region step",
+    "body_excerpt": "## The bug\n\nIn the hard case, `solve_tr_subproblem!` builds the step from formula 4.45 in Nocedal & Wright: `s = p + τz`, where `p` solves `(H + λI)p = -g` on the nondegenerate eigenspace and `z` is a unit eigenvector for the smallest eigenvalue. `calc_p!` already returns `p` with the minus sign applied, but the step was assembled with `axpby!(tau, z, -1, s)`, which computes `τz - p`.\n\nThe reversed step has the same norm as the correct one (`p ⊥ z`), so the trust region constraint still holds and `hard_case`/`lambda`/norm checks all pass, but the linear term of the model flips sign: the returned step is not the subproblem minimizer, and the model value used in the ρ acceptance test is inflated by `2·Σ qgᵢ²/(λᵢ+λ)`. On the analytic instance `H = diag(-2, 1)`, `g = [0, 1]`, `Δ = 1`, the returned model value was `-1/2` where the minimizer gives `-7/6`, and the step satisfied `(H + λI)s = +g` instead of `-g`.\n\n## The fix\n\n- Assemble the step with `axpy!(tau, z, s)` so `s = p + τz`.\n- Drop the second `calc_p!` call, which recomputed the `p` already held in `s`.\n- Move the `initial_safeguards` call into the non-hard-case branch, so the returned `lambda` is the value the hard-case step was actually built with.\n\n## Tests\n\nThe existing hard-case test checked `hard_case`, `lambda`, and the step norm, all of which the reversed step also satisfies, which is how this survived. It now also checks the KKT residual `(H + λI)s = -g`, and there is a new analytically solvable 2×2 hard case with a known step and model value (`m = -7/6`). Both new checks fail on master and pass with this change. The full newton_trust_region test file passes.\n\nThis PR was written with the assistance of generative AI.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

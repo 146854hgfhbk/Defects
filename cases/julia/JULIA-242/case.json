@@ -1,0 +1,132 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-242",
+  "bug_id": "JULIA-242",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "meggart/DiskArrays.jl",
+  "repository_url": "https://github.com/meggart/DiskArrays.jl.git",
+  "issue_urls": [
+    "https://github.com/meggart/DiskArrays.jl/issues/165"
+  ],
+  "issue_id": 165,
+  "buggy_revision": "c926307231f0227e36d66dbcf1f445b0b9a08850",
+  "fixed_revision": "309f613b69c9ab116cffe6b5363f70a521a93c5f",
+  "candidate_sha": "309f613b69c9ab116cffe6b5363f70a521a93c5f",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "c926307231f0227e36d66dbcf1f445b0b9a08850",
+  "changed_production_files": [
+    "src/diskarray.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-242 CartesianIndex disk write"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "ca455731ea60e792ac28a201f7180d443f84890f0135b4f11e07c756c56aee33",
+    "oracle": {
+      "mwe_basis": "upstream regression assertion and issue MethodError",
+      "source_evidence": "Minimal form of the assertion added by DiskArrays PR #166 for issue #165: writing through a scalar CartesianIndex must update the corresponding backing-array element.",
+      "upstream_test_patch_sha256": "801b5e99d847cabb0a710dd640d9ff69c8be176c4b707cfb0d4493d81f25ae03"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "309f613b69c9ab116cffe6b5363f70a521a93c5f",
+    "project": "meggart/DiskArrays.jl",
+    "input_sha256": "da2ef9ff929aaf919daca6402d1506e97002c04926f627881493dd652d5383ee",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:51:33Z",
+    "usage": {
+      "prompt_tokens": 2001,
+      "completion_tokens": 555,
+      "total_tokens": 2556
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.90,\n  \"summary\": \"Fix for missing method dispatches for CartesianIndex arguments in need_batch_index and splitcs functions. Before this fix, indexing a DiskArray with a CartesianIndex would fail because the dispatch path had no method handling CartesianIndex (only CartesianIndices was handled). The commit adds the missing methods and a corresponding test.\",\n  \"evidence\": \"The commit title explicitly states 'Fix need_batch for cartesianindex arguments (#166)'. The patch adds two new method signatures: `need_batch_index(i::CartesianIndex{N}, ...)` and `splitcs(i::CartesianIndex, cs)` which mirror existing methods for `CartesianIndices` but handle the singular `CartesianIndex` case. The test adds `a[CartesianIndex(1,1,1)] = -10` which would have errored (MethodError) before the fix, confirming existing behavior was violated.\",\n  \"missing_evidence\": \"No explicit issue body is provided (issue_records is empty), so we rely on the PR reference #166 in the commit message. No CI logs showing the pre-fix failure are available.\",\n  \"validation_risks\": \"The fix is small and well-scoped. The only risk is ensuring the test correctly triggers the batched indexing path in DiskArrays rather than falling through to a default method.\",\n  \"suggested_tests\": \"1. Test `a[CartesianIndex(1,1,1)]` read access (getindex) in addition to setindex. 2. Test with CartesianIndex of different dimensionalities (e.g., 2D). 3. Verify that mixed indexing like `a[CartesianIndex(1,1), 1]` still works correctly.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.9,
+    "summary": "Fix for missing method dispatches for CartesianIndex arguments in need_batch_index and splitcs functions. Before this fix, indexing a DiskArray with a CartesianIndex would fail because the dispatch path had no method handling CartesianIndex (only CartesianIndices was handled). The commit adds the missing methods and a corresponding test.",
+    "evidence": "The commit title explicitly states 'Fix need_batch for cartesianindex arguments (#166)'. The patch adds two new method signatures: `need_batch_index(i::CartesianIndex{N}, ...)` and `splitcs(i::CartesianIndex, cs)` which mirror existing methods for `CartesianIndices` but handle the singular `CartesianIndex` case. The test adds `a[CartesianIndex(1,1,1)] = -10` which would have errored (MethodError) before the fix, confirming existing behavior was violated.",
+    "missing_evidence": "No explicit issue body is provided (issue_records is empty), so we rely on the PR reference #166 in the commit message. No CI logs showing the pre-fix failure are available.",
+    "validation_risks": "The fix is small and well-scoped. The only risk is ensuring the test correctly triggers the batched indexing path in DiskArrays rather than falling through to a default method.",
+    "suggested_tests": "1. Test `a[CartesianIndex(1,1,1)]` read access (getindex) in addition to setindex. 2. Test with CartesianIndex of different dimensionalities (e.g., 2D). 3. Verify that mixed indexing like `a[CartesianIndex(1,1), 1]` still works correctly."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-242 CartesianIndex disk write"
+    ],
+    "exception_types": [
+      "915b6af76c62263f47a630908dd99eeb6d1119ebf49c4bbd86d86b869554ee99"
+    ],
+    "fingerprints": [
+      "915b6af76c62263f47a630908dd99eeb6d1119ebf49c4bbd86d86b869554ee99"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "309f613b69c9ab116cffe6b5363f70a521a93c5f",
+    "parent_sha": "c926307231f0227e36d66dbcf1f445b0b9a08850",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "1e57dfb49c3898aff3d5da32f74a2aa0e92439babd61f4dc3ff4ff4b01befbad",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

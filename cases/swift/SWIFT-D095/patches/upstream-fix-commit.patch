@@ -1,0 +1,248 @@
+diff --git a/Sources/SwiftParser/Lexer/Cursor.swift b/Sources/SwiftParser/Lexer/Cursor.swift
+index 40a645af..ab755c22 100644
+--- a/Sources/SwiftParser/Lexer/Cursor.swift
++++ b/Sources/SwiftParser/Lexer/Cursor.swift
+@@ -684,7 +684,7 @@ extension Lexer.Cursor {
+ 
+   /// Returns `true` if the comment spaned multiple lines and `false` otherwise.
+   /// Assumes that the curser is currently pointing at the `*` of the opening `/*`.
+-  mutating func advanceToEndOfSlashStarComment() -> Bool {
++  mutating func advanceToEndOfSlashStarComment(slashPosition: Lexer.Cursor) -> TriviaResult {
+     precondition(self.previous == UInt8(ascii: "/"))
+     // Make sure to advance over the * so that we don't incorrectly handle /*/ as
+     // the beginning and end of the comment.
+@@ -692,16 +692,17 @@ extension Lexer.Cursor {
+     precondition(consumedStar)
+ 
+     var depth = 1
+-    var isMultiline = false
++    var newlinePresence = NewlinePresence.absent
++    var error: LexingDiagnostic? = nil
+ 
+-    while true {
++    LOOP: while true {
+       switch self.advance() {
+       case UInt8(ascii: "*"):
+         // Check for a '*/'
+         if self.advance(matching: "/") {
+           depth -= 1
+           if depth == 0 {
+-            return isMultiline
++            break LOOP
+           }
+         }
+       case UInt8(ascii: "/"):
+@@ -711,14 +712,17 @@ extension Lexer.Cursor {
+         }
+ 
+       case UInt8(ascii: "\n"), UInt8(ascii: "\r"):
+-        isMultiline = true
++        newlinePresence = .present
+         continue
+       case nil:
+-        return isMultiline
++        error = LexingDiagnostic(.unterminatedBlockComment, position: slashPosition)
++        break LOOP
+       case .some:
+         continue
+       }
+     }
++
++    return TriviaResult(newlinePresence: newlinePresence, error: error)
+   }
+ 
+   /// If this is the opening delimiter of a raw string literal, return the number
+@@ -1063,7 +1067,7 @@ extension Lexer.Cursor {
+ // MARK: - Trivia
+ 
+ extension Lexer.Cursor {
+-  fileprivate enum NewlinePresence {
++  enum NewlinePresence {
+     case absent
+     case present
+   }
+@@ -1080,7 +1084,7 @@ extension Lexer.Cursor {
+     case escapedNewlineInMultiLineStringLiteral
+   }
+ 
+-  fileprivate struct TriviaResult {
++  struct TriviaResult {
+     let newlinePresence: NewlinePresence
+     let error: LexingDiagnostic?
+   }
+@@ -1137,7 +1141,11 @@ extension Lexer.Cursor {
+           self.advanceToEndOfLine()
+           continue
+         case UInt8(ascii: "*"):
+-          _ = self.advanceToEndOfSlashStarComment()
++          let starSlashResult = self.advanceToEndOfSlashStarComment(slashPosition: start)
++          if starSlashResult.newlinePresence == .present {
++            newlinePresence = .present
++          }
++          error = error ?? starSlashResult.error
+           continue
+         default:
+           break
+diff --git a/Sources/SwiftParser/TriviaParser.swift b/Sources/SwiftParser/TriviaParser.swift
+index b3a1ab5b..28dbec44 100644
+--- a/Sources/SwiftParser/TriviaParser.swift
++++ b/Sources/SwiftParser/TriviaParser.swift
+@@ -191,7 +191,7 @@ extension Lexer.Cursor {
+     // "/**/": .blockComment.
+     precondition(self.previous == UInt8(ascii: "/") && self.is(at: "*"))
+     let isDocComment = self.input.count > 2 && self.is(offset: 1, at: "*") && self.is(offset: 2, notAt: "/")
+-    _ = self.advanceToEndOfSlashStarComment()
++    _ = self.advanceToEndOfSlashStarComment(slashPosition: start)
+     let contents = start.text(upTo: self)
+     return isDocComment ? .docBlockComment(contents) : .blockComment(contents)
+   }
+diff --git a/Sources/SwiftParserDiagnostics/LexerDiagnosticMessages.swift b/Sources/SwiftParserDiagnostics/LexerDiagnosticMessages.swift
+index 52958b40..f69d5649 100644
+--- a/Sources/SwiftParserDiagnostics/LexerDiagnosticMessages.swift
++++ b/Sources/SwiftParserDiagnostics/LexerDiagnosticMessages.swift
+@@ -58,6 +58,7 @@ public enum StaticTokenError: String, DiagnosticMessage {
+   case spaceAtEndOfRegexLiteral = "bare slash regex literal may not end with space"
+   case multilineRegexClosingNotOnNewline = "multi-line regex closing delimiter must appear on new line"
+   case unprintableAsciiCharacter = "unprintable ASCII character found in source file"
++  case unterminatedBlockComment = "unterminated '/*' comment"
+ 
+   public var message: String { self.rawValue }
+ 
+@@ -160,16 +161,17 @@ public extension SwiftSyntax.TokenDiagnostic {
+     case .invalidNumberOfHexDigitsInUnicodeEscape: return StaticTokenError.invalidNumberOfHexDigitsInUnicodeEscape
+     case .invalidOctalDigitInIntegerLiteral: return InvalidDigitInIntegerLiteral(kind: .octal(scalarAtErrorOffset))
+     case .invalidUtf8: return StaticTokenError.invalidUtf8
+-    case .tokenDiagnosticOffsetOverflow: return StaticTokenError.tokenDiagnosticOffsetOverflow
++    case .multilineRegexClosingNotOnNewline: return StaticTokenError.multilineRegexClosingNotOnNewline
+     case .nonBreakingSpace: return StaticTokenWarning.nonBreakingSpace
+     case .nulCharacter: return StaticTokenWarning.nulCharacter
+     case .sourceConflictMarker: return StaticTokenError.sourceConflictMarker
++    case .spaceAtEndOfRegexLiteral: return StaticTokenError.spaceAtEndOfRegexLiteral
++    case .spaceAtStartOfRegexLiteral: return StaticTokenError.spaceAtStartOfRegexLiteral
++    case .tokenDiagnosticOffsetOverflow: return StaticTokenError.tokenDiagnosticOffsetOverflow
+     case .unexpectedBlockCommentEnd: return StaticTokenError.unexpectedBlockCommentEnd
+     case .unicodeCurlyQuote: return StaticTokenError.unicodeCurlyQuote
+-    case .spaceAtStartOfRegexLiteral: return StaticTokenError.spaceAtStartOfRegexLiteral
+-    case .spaceAtEndOfRegexLiteral: return StaticTokenError.spaceAtEndOfRegexLiteral
+-    case .multilineRegexClosingNotOnNewline: return StaticTokenError.multilineRegexClosingNotOnNewline
+     case .unprintableAsciiCharacter: return StaticTokenError.unprintableAsciiCharacter
++    case .unterminatedBlockComment: return StaticTokenError.unterminatedBlockComment
+     }
+   }
+ 
+diff --git a/Sources/SwiftSyntax/TokenDiagnostic.swift b/Sources/SwiftSyntax/TokenDiagnostic.swift
+index 64ab846e..e6040d90 100644
+--- a/Sources/SwiftSyntax/TokenDiagnostic.swift
++++ b/Sources/SwiftSyntax/TokenDiagnostic.swift
+@@ -41,17 +41,18 @@ public struct TokenDiagnostic: Hashable {
+     case invalidNumberOfHexDigitsInUnicodeEscape
+     case invalidOctalDigitInIntegerLiteral
+     case invalidUtf8
+-    /// The lexer dicovered an error but was not able to represent the offset of the error because it would overflow `LexerErrorOffset`.
+-    case tokenDiagnosticOffsetOverflow
++    case multilineRegexClosingNotOnNewline
+     case nonBreakingSpace
+     case nulCharacter
+     case sourceConflictMarker
++    case spaceAtEndOfRegexLiteral
++    case spaceAtStartOfRegexLiteral
++    /// The lexer dicovered an error but was not able to represent the offset of the error because it would overflow `LexerErrorOffset`.
++    case tokenDiagnosticOffsetOverflow
+     case unexpectedBlockCommentEnd
+     case unicodeCurlyQuote
+     case unprintableAsciiCharacter
+-    case spaceAtStartOfRegexLiteral
+-    case spaceAtEndOfRegexLiteral
+-    case multilineRegexClosingNotOnNewline
++    case unterminatedBlockComment
+   }
+ 
+   public let kind: Kind
+@@ -118,16 +119,17 @@ public struct TokenDiagnostic: Hashable {
+     case .invalidNumberOfHexDigitsInUnicodeEscape: return .error
+     case .invalidOctalDigitInIntegerLiteral: return .error
+     case .invalidUtf8: return .error
+-    case .tokenDiagnosticOffsetOverflow: return .error
++    case .multilineRegexClosingNotOnNewline: return .error
+     case .nonBreakingSpace: return .warning
+     case .nulCharacter: return .warning
+     case .sourceConflictMarker: return .error
++    case .spaceAtEndOfRegexLiteral: return .error
++    case .spaceAtStartOfRegexLiteral: return .error
++    case .tokenDiagnosticOffsetOverflow: return .error
+     case .unexpectedBlockCommentEnd: return .error
+     case .unicodeCurlyQuote: return .error
+     case .unprintableAsciiCharacter: return .error
+-    case .spaceAtStartOfRegexLiteral: return .error
+-    case .spaceAtEndOfRegexLiteral: return .error
+-    case .multilineRegexClosingNotOnNewline: return .error
++    case .unterminatedBlockComment: return .error
+     }
+   }
+ }
+diff --git a/Tests/SwiftParserTest/LexerTests.swift b/Tests/SwiftParserTest/LexerTests.swift
+index 8ea04a80..021e7d9f 100644
+--- a/Tests/SwiftParserTest/LexerTests.swift
++++ b/Tests/SwiftParserTest/LexerTests.swift
+@@ -562,9 +562,9 @@ public class LexerTests: XCTestCase {
+       ]
+     )
+     assertLexemes(
+-      "^/*/",
++      "^1️⃣/*/",
+       lexemes: [
+-        LexemeSpec(.binaryOperator, text: "^", trailing: "/*/")
++        LexemeSpec(.binaryOperator, text: "^", trailing: "/*/", diagnostic: "unterminated '/*' comment")
+       ]
+     )
+   }
+@@ -1461,4 +1461,22 @@ public class LexerTests: XCTestCase {
+       ]
+     )
+   }
++
++  func testUnterminatedBlockComment() {
++    assertLexemes(
++      "1️⃣/*",
++      lexemes: [
++        LexemeSpec(.eof, leading: "/*", text: "", diagnostic: "unterminated '/*' comment")
++      ]
++    )
++  }
++
++  func testSlashStartSlash() {
++    assertLexemes(
++      "1️⃣/*/",
++      lexemes: [
++        LexemeSpec(.eof, leading: "/*/", text: "", diagnostic: "unterminated '/*' comment")
++      ]
++    )
++  }
+ }
+diff --git a/Tests/SwiftParserTest/translated/GenericDisambiguationTests.swift b/Tests/SwiftParserTest/translated/GenericDisambiguationTests.swift
+index d93ea1b9..8e234dcb 100644
+--- a/Tests/SwiftParserTest/translated/GenericDisambiguationTests.swift
++++ b/Tests/SwiftParserTest/translated/GenericDisambiguationTests.swift
+@@ -195,9 +195,6 @@ final class GenericDisambiguationTests: XCTestCase {
+   func testGenericDisambiguation12() {
+     assertParse(
+       """
+-      // FIXME: Nested generic types. Need to be able to express $T0<A, B, C> in the
+-      // typechecker.
+-      /*
+       A<B>.C<D>.e()
+       """
+     )
+@@ -216,11 +213,7 @@ final class GenericDisambiguationTests: XCTestCase {
+       """
+       meta(A<B>.C<D>.self)
+       meta2(A<B>.C<D>.self, 0)
+-       1️⃣*/
+-      """,
+-      diagnostics: [
+-        DiagnosticSpec(message: "extraneous code '*/' at top level")
+-      ]
++      """
+     )
+   }
+ 

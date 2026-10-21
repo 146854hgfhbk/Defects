@@ -1,0 +1,15 @@
+diff --git a/Tests/SwiftSoupTests/HtmlParserTest.swift b/Tests/SwiftSoupTests/HtmlParserTest.swift
+index 7a0e7d97a5e596702b3ee4d384bd6ec851110ca3..4867b588c9fc25360e7dc3777a20c70edf9deda4 100644
+--- a/Tests/SwiftSoupTests/HtmlParserTest.swift
++++ b/Tests/SwiftSoupTests/HtmlParserTest.swift
+@@ -621,4 +621,10 @@ class HtmlParserTest: XCTestCase {
+ 		XCTAssertEqual(try doc.select("span").first()!.children().size(), 0) // the span gets closed
+ 		XCTAssertEqual(try doc.select("table").size(), 1) // only one table
+ 	}
++    
++    func testParse_DoesNotCrashOnUnterminatedHtmlEntity() throws {
++        let html = "<a href='&lt"
++        let doc = try SwiftSoup.parse(html)
++        XCTAssertEqual(try doc.body()?.text(), "")
++    }
+ }

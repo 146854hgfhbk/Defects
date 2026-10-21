@@ -1,0 +1,14 @@
+diff --git a/lua/pl/xml.lua b/lua/pl/xml.lua
+--- a/lua/pl/xml.lua
++++ b/lua/pl/xml.lua
+@@ -572,6 +572,10 @@ do
+   -- @usage
+   -- local esc = xml.xml_escape([["'<>&]])  --> "&quot;&apos;&lt;&gt;&amp;"
+   function _M.xml_escape(str)
++    str = s_gsub(str, "[%z\1-\8\11\12\14-\31\127]", function(c)
++      return ("\\x%02X"):format(c:byte())
++    end)
++
+     return (s_gsub(str, "['&<>\"]", escape_table))
+   end
+ end

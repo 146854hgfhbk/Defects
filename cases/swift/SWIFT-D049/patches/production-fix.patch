@@ -1,0 +1,32 @@
+diff --git a/Sources/ArgumentParser/Parsing/ArgumentSet.swift b/Sources/ArgumentParser/Parsing/ArgumentSet.swift
+index 520f864044d7334a5d84366988bb73bb04466585..2c5b366be6e61426c88d7765dc8f3cce839410b8 100644
+--- a/Sources/ArgumentParser/Parsing/ArgumentSet.swift
++++ b/Sources/ArgumentParser/Parsing/ArgumentSet.swift
+@@ -221,6 +221,7 @@ extension ArgumentSet {
+         if let value = parsed.value {
+           // This was `--foo=bar` style:
+           try update(origin, parsed.name, value, &result)
++          usedOrigins.formUnion(origin)
+         } else if argument.allowsJoinedValue,
+            let (origin2, value) = inputArguments.extractJoinedElement(at: originElement)
+         {
+@@ -243,6 +244,7 @@ extension ArgumentSet {
+         if let value = parsed.value {
+           // This was `--foo=bar` style:
+           try update(origin, parsed.name, value, &result)
++          usedOrigins.formUnion(origin)
+         } else if argument.allowsJoinedValue,
+             let (origin2, value) = inputArguments.extractJoinedElement(at: originElement) {
+           // Found a joined argument
+@@ -320,6 +322,11 @@ extension ArgumentSet {
+           inputArguments.removeAll(in: usedOrigins)
+         }
+         
++        // Clear out the initial origin first, since it can include
++        // the exploded elements of an options group (see issue #327).
++        usedOrigins.formUnion(origin)
++        inputArguments.removeAll(in: origin)
++        
+         // ...and then consume the arguments until hitting an option
+         while let (origin2, value) = inputArguments.popNextElementIfValue() {
+           let origins = origin.inserting(origin2)

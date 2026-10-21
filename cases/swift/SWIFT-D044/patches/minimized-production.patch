@@ -1,0 +1,29 @@
+diff --git a/Sources/OpenAPIRuntime/Interface/HTTPBody.swift b/Sources/OpenAPIRuntime/Interface/HTTPBody.swift
+--- a/Sources/OpenAPIRuntime/Interface/HTTPBody.swift
++++ b/Sources/OpenAPIRuntime/Interface/HTTPBody.swift
+@@ -341,10 +331,12 @@ extension HTTPBody: AsyncSequence {
+     /// Creates and returns an asynchronous iterator
+     ///
+     /// - Returns: An asynchronous iterator for byte chunks.
++    /// - Note: The returned sequence throws an error if no further iterations are allowed. See ``IterationBehavior``.
+     public func makeAsyncIterator() -> AsyncIterator {
+-        // The crash on error is intentional here.
+-        try! tryToMarkIteratorCreated()
+-        return .init(sequence.makeAsyncIterator())
++        do {
++            try tryToMarkIteratorCreated()
++            return .init(sequence.makeAsyncIterator())
++        } catch { return .init(throwing: error) }
+     }
+ }
+ 
+@@ -563,6 +551,9 @@ extension HTTPBody {
+             var iterator = iterator
+             self.produceNext = { try await iterator.next() }
+         }
++        /// Creates an iterator throwing the given error when iterated.
++        /// - Parameter error: The error to throw on iteration.
++        fileprivate init(throwing error: any Error) { self.produceNext = { throw error } }
+ 
+         /// Advances the iterator to the next element and returns it asynchronously.
+         ///

@@ -1,0 +1,132 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-064",
+  "bug_id": "JULIA-064",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaStats/StatsBase.jl",
+  "repository_url": "https://github.com/JuliaStats/StatsBase.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "5a3aaa6da3b83ac1895c26ca806949a72312fc37",
+  "fixed_revision": "4c9e55929eb8409de0e3dd1b03d22b7db62e0cda",
+  "candidate_sha": "4c9e55929eb8409de0e3dd1b03d22b7db62e0cda",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "5a3aaa6da3b83ac1895c26ca806949a72312fc37",
+  "changed_production_files": [
+    "src/misc.jl",
+    "src/ranking.jl"
+  ],
+  "changed_test_files": [
+    "test/misc.jl",
+    "test/ranking.jl"
+  ],
+  "trigger_tests": [
+    "inverse_rle validates run lengths"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "153d32a4dfe60a208eac24d90d6f3724941371740ad0683560861eaabed98312",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/misc.jl",
+        "basis": "assertion copied from the upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "3f2cada746a183908a35e120fafb15ce58d076ec39eb5b4005c492d27cc83276"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "4c9e55929eb8409de0e3dd1b03d22b7db62e0cda",
+    "project": "JuliaStats/StatsBase.jl",
+    "input_sha256": "ad1c5d586d16c9f6ed9081298c57d19adb8bbb3f68d25196db78b465d81a3377",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:53:23Z",
+    "usage": {
+      "prompt_tokens": 1251,
+      "completion_tokens": 434,
+      "total_tokens": 1685
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"Fix for a bug where error paths raised UndefVarError instead of the intended DimensionMismatch because `raise_dimerror` was not defined. The fix defines or corrects this function so the proper error is raised when dimension lengths don't match.\", \"evidence\": \"Issue #922 clearly describes a real defect: the error path raised UndefVarError (due to undefined `raise_dimerror`) instead of the intended DimensionMismatch. The commit modifies production files (src/misc.jl, src/ranking.jl) and corresponding test files, indicating a focused bug fix with test coverage.\", \"missing_evidence\": \"Actual diff content is not available to confirm the exact code change, but the issue description is unambiguous about the nature of the defect and its fix.\", \"validation_risks\": \"Without seeing the actual diff, there's a small risk the commit includes additional unrelated changes. The fix touches two production files which may indicate slightly broader scope than a single-line fix.\", \"suggested_tests\": \"Test that calling functions with mismatched dimension lengths raises DimensionMismatch (not UndefVarError). Verify both src/misc.jl and src/ranking.jl code paths.\"}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for a bug where error paths raised UndefVarError instead of the intended DimensionMismatch because `raise_dimerror` was not defined. The fix defines or corrects this function so the proper error is raised when dimension lengths don't match.",
+    "evidence": "Issue #922 clearly describes a real defect: the error path raised UndefVarError (due to undefined `raise_dimerror`) instead of the intended DimensionMismatch. The commit modifies production files (src/misc.jl, src/ranking.jl) and corresponding test files, indicating a focused bug fix with test coverage.",
+    "missing_evidence": "Actual diff content is not available to confirm the exact code change, but the issue description is unambiguous about the nature of the defect and its fix.",
+    "validation_risks": "Without seeing the actual diff, there's a small risk the commit includes additional unrelated changes. The fix touches two production files which may indicate slightly broader scope than a single-line fix.",
+    "suggested_tests": "Test that calling functions with mismatched dimension lengths raises DimensionMismatch (not UndefVarError). Verify both src/misc.jl and src/ranking.jl code paths."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "inverse_rle validates run lengths"
+    ],
+    "exception_types": [
+      "401572c14218fd13e6fc50b7718ddfe1cd33d4cc1eee93cc4c08ff9e4783e4c3"
+    ],
+    "fingerprints": [
+      "401572c14218fd13e6fc50b7718ddfe1cd33d4cc1eee93cc4c08ff9e4783e4c3"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "4c9e55929eb8409de0e3dd1b03d22b7db62e0cda",
+    "parent_sha": "5a3aaa6da3b83ac1895c26ca806949a72312fc37",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "31b00d7bff0f65f86e9a17e233822804ca469ab23aaa2b5e0a9d259e7843c999",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

@@ -1,0 +1,12 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/MultilineExpressionWrappingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/MultilineExpressionWrappingRule.kt
+index 7a981581..c2a95fdf 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/MultilineExpressionWrappingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/MultilineExpressionWrappingRule.kt
+@@ -74,6 +75,7 @@ public class MultilineExpressionWrappingRule :
+         emit: (offset: Int, errorMessage: String, canBeAutoCorrected: Boolean) -> Unit,
+     ) {
+         if (node.elementType in CHAINABLE_EXPRESSION &&
++            !node.isPartOfSpreadOperatorExpression() &&
+             (node.treeParent.elementType !in CHAINABLE_EXPRESSION || node.isRightHandSideOfBinaryExpression())
+         ) {
+             visitExpression(node, emit, autoCorrect)

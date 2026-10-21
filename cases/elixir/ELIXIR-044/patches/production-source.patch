@@ -1,0 +1,46 @@
+diff --git a/lib/recode/config.ex b/lib/recode/config.ex
+index 5196dd2..284f6ca 100644
+--- a/lib/recode/config.ex
++++ b/lib/recode/config.ex
+@@ -68,12 +68,12 @@ defmodule Recode.Config do
+       dry: <%= @config[:dry] %>,
+       # Can also be set/reset with `--verbose`/`--no-verbose`.
+       verbose: <%= @config[:verbose] %>,
+-      # Can be overwritten by calling `mix recode "lib/**/*.ex"`.
++      # Can be overwriten by calling `mix recode "lib/**/*.ex"`.
+       inputs: <%= inspect @config[:inputs] %>,
+       formatter: <%= inspect @config[:formatter] %>,
+       tasks: [
+         # Tasks could be added by a tuple of the tasks module name and an options
+-        # keyword list. A task can be deactivated by `active: false`. The execution of
++        # keyword list. A task can be deactived by `active: false`. The execution of
+         # a deactivated task can be forced by calling `mix recode --task ModuleName`.
+         <%= for task <- @config[:tasks] do %><%= inspect task %>,
+         <% end %>
+diff --git a/lib/recode/runner/impl.ex b/lib/recode/runner/impl.ex
+index ec9f342..1b7cd6a 100644
+--- a/lib/recode/runner/impl.ex
++++ b/lib/recode/runner/impl.ex
+@@ -159,7 +159,7 @@ defmodule Recode.Runner.Impl do
+     |> Keyword.fetch!(:tasks)
+     |> tasks(:active)
+     |> tasks(:autocorrect, config[:autocorrect])
+-    |> tasks(:check, config[:check])
++    |> tasks(:check, Keyword.get(config, :check, true))
+   end
+ 
+   defp tasks(tasks, :autocorrect, autocorrect) do
+@@ -171,11 +171,11 @@ defmodule Recode.Runner.Impl do
+ 
+   defp tasks(tasks, :check, false) do
+     Enum.reject(tasks, fn {task, _opts} ->
+-      task.config(:check) && !task.config(:correct)
++      Task.checker?(task) && !Task.corrector?(task)
+     end)
+   end
+ 
+-  defp tasks(tasks, :check, _config), do: tasks
++  defp tasks(tasks, :check, true), do: tasks
+ 
+   defp tasks(tasks, :active) do
+     Enum.filter(tasks, fn {_task, config} -> Keyword.get(config, :active, true) end)

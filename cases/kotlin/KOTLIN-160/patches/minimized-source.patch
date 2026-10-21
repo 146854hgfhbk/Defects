@@ -1,0 +1,39 @@
+diff --git a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/Integration.kt b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/Integration.kt
+index 41bfc3158..af4ebd902 100644
+--- a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/Integration.kt
++++ b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/Integration.kt
+@@ -281,16 +274,25 @@ internal class Integration(
+         import("org.jetbrains.kotlinx.dataframe.dataTypes.*")
+         import("org.jetbrains.kotlinx.dataframe.impl.codeGen.urlCodeGenReader")
+ 
+-        updateVariable<Any> { instance, property ->
+-            when (instance) {
+-                is AnyCol -> updateAnyColVariable(instance, property, codeGen)
+-                is ColumnGroup<*> -> updateColumnGroupVariable(instance, property, codeGen)
+-                is AnyRow -> updateAnyRowVariable(instance, property, codeGen)
+-                is AnyFrame -> updateAnyFrameVariable(instance, property, codeGen)
+-                is ImportDataSchema -> updateImportDataSchemaVariable(instance, property)
+-                else -> null
++        addTypeConverter(object : FieldHandler {
++            override val execution = FieldHandlerFactory.createUpdateExecution<Any> { instance, property ->
++                when (instance) {
++                    is AnyCol -> updateAnyColVariable(instance, property, codeGen)
++                    is ColumnGroup<*> -> updateColumnGroupVariable(instance, property, codeGen)
++                    is AnyRow -> updateAnyRowVariable(instance, property, codeGen)
++                    is AnyFrame -> updateAnyFrameVariable(instance, property, codeGen)
++                    is ImportDataSchema -> updateImportDataSchemaVariable(instance, property)
++                    else -> error("${instance::class} should not be handled by Dataframe field handler")
++                }
+             }
+-        }
++            override fun accepts(value: Any?, property: KProperty<*>): Boolean {
++                return value is AnyCol ||
++                    value is ColumnGroup<*> ||
++                    value is AnyRow ||
++                    value is AnyFrame ||
++                    value is ImportDataSchema
++            }
++        })
+ 
+         fun KotlinKernelHost.addDataSchemas(classes: List<KClass<*>>) {
+             val code = classes.joinToString("\n") {

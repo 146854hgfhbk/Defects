@@ -1,0 +1,35 @@
+diff --git a/Sources/OpenAPIURLSession/URLSessionTransport.swift b/Sources/OpenAPIURLSession/URLSessionTransport.swift
+index 7f73ab4..1561969 100644
+--- a/Sources/OpenAPIURLSession/URLSessionTransport.swift
++++ b/Sources/OpenAPIURLSession/URLSessionTransport.swift
+@@ -160,7 +160,7 @@ extension URLRequest {
+         guard var baseUrlComponents = URLComponents(string: baseURL.absoluteString) else {
+             throw URLSessionTransportError.invalidRequestURL(request: request, baseURL: baseURL)
+         }
+-        baseUrlComponents.path += request.path
++        baseUrlComponents.percentEncodedPath += request.path
+         baseUrlComponents.percentEncodedQuery = request.query
+         guard let url = baseUrlComponents.url else {
+             throw URLSessionTransportError.invalidRequestURL(request: request, baseURL: baseURL)
+diff --git a/Tests/OpenAPIURLSessionTests/URLSessionTransportTests.swift b/Tests/OpenAPIURLSessionTests/URLSessionTransportTests.swift
+index 6e9d02b..25411b8 100644
+--- a/Tests/OpenAPIURLSessionTests/URLSessionTransportTests.swift
++++ b/Tests/OpenAPIURLSessionTests/URLSessionTransportTests.swift
+@@ -32,7 +32,7 @@ class URLSessionTransportTests: XCTestCase {
+ 
+     func testRequestConversion() throws {
+         let request = OpenAPIRuntime.Request(
+-            path: "/hello/Maria",
++            path: "/hello%20world/Maria",
+             query: "greeting=Howdy",
+             method: .post,
+             headerFields: [
+@@ -41,7 +41,7 @@ class URLSessionTransportTests: XCTestCase {
+             body: Data("👋".utf8)
+         )
+         let urlRequest = try URLRequest(request, baseURL: URL(string: "http://example.com/api")!)
+-        XCTAssertEqual(urlRequest.url, URL(string: "http://example.com/api/hello/Maria?greeting=Howdy"))
++        XCTAssertEqual(urlRequest.url, URL(string: "http://example.com/api/hello%20world/Maria?greeting=Howdy"))
+         XCTAssertEqual(urlRequest.httpMethod, "POST")
+         XCTAssertEqual(urlRequest.allHTTPHeaderFields, ["X-Mumble": "mumble"])
+         XCTAssertEqual(urlRequest.httpBody, Data("👋".utf8))

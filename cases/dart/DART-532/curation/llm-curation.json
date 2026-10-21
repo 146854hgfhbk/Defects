@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-532",
+  "technical_evidence_sha256": "fb12f2eb6ba3315f9d74acdcb9c87802dd69d87e1ccb5345f546885d234e2792",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "cc550b7cdf292791bcd48a1b1e2c28437da3a14f4b167b72c79a5a9cc1de4bf7",
+  "reviewed_at": "2026-08-11T23:16:48.424487+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "canonical/appstream.dart#15",
+  "rationale": "Issue #15 reports a concrete YamlException ('Duplicate mapping key' on line 25023) when parsing Ubuntu/Debian appstream metadata with duplicate keys, rendering AppstreamCollection.fromYaml unusable on real system data. The minimized production patch adds exactly one private helper _removeInvalidDocuments that filters out YAML documents throwing YamlException, then wraps the existing loadYamlDocuments call—no public API change, no refactor, no unrelated logic. The trigger test is the verbatim test added in the fixing commit: it calls the pre-existing factory AppstreamCollection.fromYaml with inline YAML containing duplicate 'oars-1.1' keys and asserts components.isEmpty. Strict runtime evidence confirms the test fails deterministically on buggy (trigger.buggy_differential passed, reproduced exactly this selector), passes on fixed (trigger.fixed_clean passed), and full-suite behavior matches (full_suite.buggy_reproduces_only_triggers passed). The trigger uses only the existing fromYaml factory available in the parent revision; no new production API is required. No duplicate in active_same_project_root_causes.\n\nIssue #15 documents a concrete YamlException ('Duplicate mapping key' on line 25023) when AppstreamCollection.fromYaml parses Ubuntu/Debian DEP-11 metadata containing duplicate keys, making the library unusable on those systems. The minimized production patch adds only _removeInvalidDocuments (a pre-processor that filters out documents throwing YamlException) and wraps the existing loadYamlDocuments call—no formatting, refactor, feature extension, or unrelated change. The trigger test is the unmodified test from the fixing commit, uses the existing AppstreamCollection.fromYaml factory (no new API), and asserts components.isEmpty for YAML with duplicate 'oars-1.1' keys. Strict runtime evidence confirms the test fails deterministically on buggy (differential reproduced), passes on fixed, and all full-suite runs reproduce only this trigger on buggy while passing all tests on fixed. No duplicate root causes exist in the active registry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:16:35.005506+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "cc550b7cdf292791bcd48a1b1e2c28437da3a14f4b167b72c79a5a9cc1de4bf7",
+      "response_sha256": "7810360fd8e48bdb320757aa6b2aa909b2950f74b000e9f608c2a80ceabba47b",
+      "response_id": "msg_143a562f-9585-4268-bb",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2788
+        },
+        "cache_creation_input_tokens": 2788,
+        "cache_read_input_tokens": 6371,
+        "input_tokens": 8288,
+        "output_tokens": 1139
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "canonical/appstream.dart#15",
+      "rationale": "Issue #15 reports a concrete YamlException ('Duplicate mapping key' on line 25023) when parsing Ubuntu/Debian appstream metadata with duplicate keys, rendering AppstreamCollection.fromYaml unusable on real system data. The minimized production patch adds exactly one private helper _removeInvalidDocuments that filters out YAML documents throwing YamlException, then wraps the existing loadYamlDocuments call—no public API change, no refactor, no unrelated logic. The trigger test is the verbatim test added in the fixing commit: it calls the pre-existing factory AppstreamCollection.fromYaml with inline YAML containing duplicate 'oars-1.1' keys and asserts components.isEmpty. Strict runtime evidence confirms the test fails deterministically on buggy (trigger.buggy_differential passed, reproduced exactly this selector), passes on fixed (trigger.fixed_clean passed), and full-suite behavior matches (full_suite.buggy_reproduces_only_triggers passed). The trigger uses only the existing fromYaml factory available in the parent revision; no new production API is required. No duplicate in active_same_project_root_causes.",
+      "evidence_paths": [
+        "issue_urls[0]: https://github.com/canonical/appstream.dart/issues/15",
+        "patches/minimized-production.patch: single hunk adding _removeInvalidDocuments and wrapping loadYamlDocuments",
+        "patches/trigger-tests.patch: upstream test calling AppstreamCollection.fromYaml with duplicate-key YAML",
+        "strict_post_minimization.checks.trigger.buggy_differential.detail: reproduced=[('test/appstream_test.dart', 'collection - yaml with duplicate mapping keys')]",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed: true",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers.passed: true"
+      ],
+      "risks": [
+        "The fix silently drops malformed documents rather than throwing; behavioral change is by design but may mask other YAML errors in multi-document streams",
+        "The separator literal '\\n---\\n' can theoretically mis-split documents with that sequence in block scalars, though strict evidence shows no regression in existing tests"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:16:48.424183+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "cc550b7cdf292791bcd48a1b1e2c28437da3a14f4b167b72c79a5a9cc1de4bf7",
+      "response_sha256": "aff95ac1d8077b51ff11e5581e662786182d6b6eb879c2ec42493bbde1629ee6",
+      "response_id": "msg_8cd162c1-a7e0-47e4-b8",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3001
+        },
+        "cache_creation_input_tokens": 3001,
+        "cache_read_input_tokens": 6318,
+        "input_tokens": 8288,
+        "output_tokens": 960
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "canonical/appstream.dart#15",
+      "rationale": "Issue #15 documents a concrete YamlException ('Duplicate mapping key' on line 25023) when AppstreamCollection.fromYaml parses Ubuntu/Debian DEP-11 metadata containing duplicate keys, making the library unusable on those systems. The minimized production patch adds only _removeInvalidDocuments (a pre-processor that filters out documents throwing YamlException) and wraps the existing loadYamlDocuments call—no formatting, refactor, feature extension, or unrelated change. The trigger test is the unmodified test from the fixing commit, uses the existing AppstreamCollection.fromYaml factory (no new API), and asserts components.isEmpty for YAML with duplicate 'oars-1.1' keys. Strict runtime evidence confirms the test fails deterministically on buggy (differential reproduced), passes on fixed, and all full-suite runs reproduce only this trigger on buggy while passing all tests on fixed. No duplicate root causes exist in the active registry.",
+      "evidence_paths": [
+        "issue_urls[0]",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "trigger_tests[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The fix splits on literal '\\n---\\n' which could mishandle block scalars containing that sequence, though strict evidence shows no other test regressions",
+        "Test asserts only components.isEmpty rather than the specific exception type, though differential execution confirms YamlException on buggy vs success on fixed"
+      ]
+    }
+  ]
+}

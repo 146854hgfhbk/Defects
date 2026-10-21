@@ -1,0 +1,30 @@
+diff --git a/spec/cli_spec.lua b/spec/cli_spec.lua
+index 2b43abcf2caffeaab98ea223b708d989014ceb4e..9dfafc1bf1c58922cad41baab0931fd1f08a6cd5 100644
+--- a/spec/cli_spec.lua
++++ b/spec/cli_spec.lua
+@@ -524,8 +524,8 @@ Checking spec/samples/bad_flow.lua                6 warnings
+ 
+     spec/samples/bad_flow.lua:1:28: empty if branch
+     spec/samples/bad_flow.lua:6:4: empty do..end block
+-    spec/samples/bad_flow.lua:12:15: left-hand side of assignment is too long
+-    spec/samples/bad_flow.lua:16:15: left-hand side of assignment is too short
++    spec/samples/bad_flow.lua:12:15: right side of assignment has less values than left side expects
++    spec/samples/bad_flow.lua:16:15: right side of assignment has more values than left side expects
+     spec/samples/bad_flow.lua:21:7: unreachable code
+     spec/samples/bad_flow.lua:25:1: loop is executed at most once
+ 
+diff --git a/src/luacheck/format.lua b/src/luacheck/format.lua
+index 0677b2e1ee4f50c4ec864e536ad1af86ef833b7f..e5178278828bf3f5cd8d10ab4e25c493a0df6466 100644
+--- a/src/luacheck/format.lua
++++ b/src/luacheck/format.lua
+@@ -91,8 +91,8 @@ local message_formats = {
+    ["511"] = "unreachable code",
+    ["512"] = "loop is executed at most once",
+    ["521"] = "unused label {label!}",
+-   ["531"] = "left-hand side of assignment is too short",
+-   ["532"] = "left-hand side of assignment is too long",
++   ["531"] = "right side of assignment has more values than left side expects",
++   ["532"] = "right side of assignment has less values than left side expects",
+    ["541"] = "empty do..end block",
+    ["542"] = "empty if branch",
+    ["551"] = "empty statement",

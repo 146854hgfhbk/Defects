@@ -1,0 +1,103 @@
+diff --git a/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/List.test.ets b/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/List.test.ets
+index 657d19416..2df7d80bf 100644
+--- a/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Ability.test';
++import row075EmitterTest from './Row075Emitter.test';
+ 
+ export default function testsuite() {
+   abilityTest();
+-}
+\ No newline at end of file
++  row075EmitterTest();
++}
+diff --git a/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/Row075Emitter.test.ets b/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/Row075Emitter.test.ets
+new file mode 100644
+index 000000000..10b64888a
+--- /dev/null
++++ b/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/Row075Emitter.test.ets
+@@ -0,0 +1,81 @@
++/*
++ * Copyright (c) 2023 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import Want from '@ohos.app.ability.Want';
++import { describe, it } from '@ohos/hypium';
++import { Driver, MatchPattern, ON } from '@ohos.UiTest';
++import { logger } from '../util/Logger';
++
++const TAG: string = 'Sample_Row075EmitterTest';
++const BUNDLE = 'LanguageBaseClassLibrary';
++const delegator = AbilityDelegatorRegistry.getAbilityDelegator();
++const driver: Driver = Driver.create();
++
++async function getResourceString(resource: Resource): Promise<string> {
++  return delegator.getAppContext().resourceManager.getStringValue(resource);
++}
++
++async function startApp(): Promise<void> {
++  let want: Want = {
++    bundleName: 'com.samples.languagebaseclasslibrary',
++    abilityName: 'EntryAbility'
++  };
++  delegator.startAbility(want, (err) => {
++    logger.info(TAG, `${BUNDLE}_startAbility end err ${JSON.stringify(err)}`);
++  });
++  await driver.delayMs(1200);
++}
++
++async function openHashMapPage(): Promise<void> {
++  await driver.assertComponentExist(ON.id('menu_list'));
++  let menuList = await driver.findComponent(ON.id('menu_list'));
++  let hashMapItem = await menuList.scrollSearch(ON.text(await getResourceString($r('app.string.hash_map'))));
++  await hashMapItem.click();
++  await driver.delayMs(500);
++  await driver.assertComponentExist(ON.text(await getResourceString($r('app.string.hash_map'))));
++  await driver.assertComponentExist(ON.id('add'));
++}
++
++async function addHashMapItem(key: string, value: string): Promise<void> {
++  let addBtn = await driver.findComponent(ON.id('add'));
++  await addBtn.click();
++  await driver.delayMs(500);
++  let keyInput = await driver.findComponent(ON.id('add_key'));
++  await keyInput.inputText(key);
++  await driver.delayMs(200);
++  let valueInput = await driver.findComponent(ON.id('add_value'));
++  await valueInput.inputText(value);
++  await driver.delayMs(200);
++  let addConfirm = await driver.findComponent(ON.id('add_confirm'));
++  await addConfirm.click();
++  await driver.delayMs(1200);
++}
++
++export default function row075EmitterTest() {
++  describe('Row075EmitterTest', () => {
++    it(BUNDLE + 'HashMapEmitterDataSurvivesConfirm_001', 0, async (done: Function) => {
++      logger.info(TAG, `${BUNDLE}HashMapEmitterDataSurvivesConfirm_001 begin`);
++      await startApp();
++      await openHashMapPage();
++      await addHashMapItem('row075Key', 'row075Value');
++      await driver.assertComponentExist(ON.text('Key: row075Key', MatchPattern.CONTAINS));
++      await driver.assertComponentExist(ON.text('Value: row075Value', MatchPattern.CONTAINS));
++      await driver.assertComponentExist(ON.id('delete0'));
++      done();
++      logger.info(TAG, `${BUNDLE}HashMapEmitterDataSurvivesConfirm_001 end`);
++    });
++  });
++}

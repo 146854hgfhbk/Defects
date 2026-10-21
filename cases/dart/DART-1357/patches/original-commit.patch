@@ -1,0 +1,50 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a8a277e004377ac5662c3ed6057854932c25f901..d8f5f1665c1043304326d08fe3460545e1583ba6 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,9 @@
++#### 0.27.0-dev
++
++   * Fix: when removing the last item, `LinkedLruHashMap` was put into a state
++     such that the next cache eviction could cause a null-pointer exception.
++     Issue [#385](https://github.com/google/quiver-dart/issues/385).
++
+ #### 0.26.0 - 2017-11-01
+    * BREAKING CHANGE: eliminated deprecated `flip`. Replaced by `reverse` in
+      0.25.0.
+diff --git a/lib/src/collection/lru_map.dart b/lib/src/collection/lru_map.dart
+index bb6f0a175ed0fae08ebee5612d152432db1a7ce2..6a05ee12961cb3f70eb0148c0074503b94cf30d5 100644
+--- a/lib/src/collection/lru_map.dart
++++ b/lib/src/collection/lru_map.dart
+@@ -197,7 +197,9 @@ class LinkedLruHashMap<K, V> implements LruMap<K, V> {
+   V remove(Object key) {
+     final entry = _entries.remove(key);
+     if (entry != null) {
+-      if (entry == _head) {
++      if (entry == _head && entry == _tail) {
++        _head = _tail = null;
++      } else if (entry == _head) {
+         _head = _head.next;
+       } else if (entry == _tail) {
+         _tail.previous.next = null;
+diff --git a/test/collection/lru_map_test.dart b/test/collection/lru_map_test.dart
+index 803597bae1e9d00b92801db9e2fb038fccb8db0f..25e827ccde3fff4a35ff87200193eda8cdfe8355 100644
+--- a/test/collection/lru_map_test.dart
++++ b/test/collection/lru_map_test.dart
+@@ -173,6 +173,16 @@ void main() {
+         expect(lruMap.remove('D'), isNull);
+       });
+ 
++      test('can remove the last item (head and tail)', () {
++        // See: https://github.com/google/quiver-dart/issues/385
++        lruMap = new LruMap(maximumSize: 1)
++          ..addAll({'A': 'Alpha'})
++          ..remove('A');
++        lruMap['B'] = 'Beta';
++        lruMap['C'] = 'Charlie';
++        expect(lruMap.keys.toList(), ['C']);
++      });
++
+       test('can remove the head', () {
+         lruMap.remove('C');
+         expect(lruMap.keys.toList(), ['B', 'A']);

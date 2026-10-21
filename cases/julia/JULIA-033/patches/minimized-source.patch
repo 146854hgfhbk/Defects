@@ -1,0 +1,12 @@
+diff --git a/src/hooks.jl b/src/hooks.jl
+--- a/src/hooks.jl
++++ b/src/hooks.jl
+@@ -179,7 +180,7 @@ function core_parser_hook(code, filename::String, lineno::Int, offset::Int, opti
+ 
+         if any_error(stream)
+             tree = build_tree(SyntaxNode, stream, first_line=lineno, filename=filename)
+-            tag = _incomplete_tag(tree, lastindex(code))
++            tag = _incomplete_tag(tree, pos_before_trivia)
+             if _has_v1_10_hooks
+                 exc = ParseError(stream, filename=filename, first_line=lineno,
+                                  incomplete_tag=tag)

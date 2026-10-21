@@ -1,0 +1,27 @@
+diff --git a/spec/check_spec.lua b/spec/check_spec.lua
+index 51281c2c8f8f4bec7ed076542196f3f3fe82740f..4aa5fa1a6cdc8b58da30a1f70a094760e5cca1b2 100644
+--- a/spec/check_spec.lua
++++ b/spec/check_spec.lua
+@@ -345,6 +345,9 @@ elseif (...)[2] then
+ elseif (...)[3] then
+    a = b()
+    a.k3 = 3
++elseif (...)[4] then
++   a = b(1) or b(2)
++   a.k4 = 4
+ else
+    a = {}
+    return a
+diff --git a/src/luacheck/analyze.lua b/src/luacheck/analyze.lua
+index 11500857db1f49510b68d4dc96921a8b5fa1a5ab..01fa79ac8e262ea31069051e1e6909e3f1b63840 100644
+--- a/src/luacheck/analyze.lua
++++ b/src/luacheck/analyze.lua
+@@ -180,7 +180,7 @@ local function is_function_var(var)
+       #var.values == 2 and var.values[1].empty and var.values[2].type == "func")
+ end
+ 
+-local externally_accessible_tags = utils.array_to_set({"Id", "Index", "Call", "Invoke", "Dots"})
++local externally_accessible_tags = utils.array_to_set({"Id", "Index", "Call", "Invoke", "Op", "Paren", "Dots"})
+ 
+ local function externally_accessible(value)
+    return value.type ~= "var" or (value.node and externally_accessible_tags[value.node.tag])

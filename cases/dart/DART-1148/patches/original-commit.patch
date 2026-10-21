@@ -1,0 +1,72 @@
+diff --git a/source_gen/CHANGELOG.md b/source_gen/CHANGELOG.md
+index eeaaae8c8014493f8f326544ac0782231266716c..b4ca2eef0192449aaaaab79e68312231ff15fe8e 100644
+--- a/source_gen/CHANGELOG.md
++++ b/source_gen/CHANGELOG.md
+@@ -1,5 +1,10 @@
+ ## 1.1.2-dev
+ 
++- Include the `LibraryElement` in `LibraryReader.allElements`,
++  `LibraryReader.annotatedWith`, and `LibraryReader.annotatedWithExact`. Run
++  `GeneratorForAnnotation` generators on library elements when the `library`
++  statement has the annotation.
++
+ ## 1.1.1
+ 
+ - Drop dependency on `package:pedantic`.
+diff --git a/source_gen/lib/src/library.dart b/source_gen/lib/src/library.dart
+index 0d43362b83c68fba322917074cae66438a983e14..92f0f1ef741acbc2ea8eb7a725f25e6606916558 100644
+--- a/source_gen/lib/src/library.dart
++++ b/source_gen/lib/src/library.dart
+@@ -34,7 +34,7 @@ class LibraryReader {
+   }
+ 
+   /// All of the declarations in this library.
+-  Iterable<Element> get allElements => element.topLevelElements;
++  Iterable<Element> get allElements => [element, ...element.topLevelElements];
+ 
+   /// All of the declarations in this library annotated with [checker].
+   Iterable<AnnotatedElement> annotatedWith(TypeChecker checker,
+diff --git a/source_gen/pubspec.yaml b/source_gen/pubspec.yaml
+index 3714a355ea124dea3ce99afed6b6893a62aaeb1e..d7fdc339d9cf3be2443170049fc9c0fb8ac0befc 100644
+--- a/source_gen/pubspec.yaml
++++ b/source_gen/pubspec.yaml
+@@ -1,5 +1,5 @@
+ name: source_gen
+-version: 1.1.2-dev
++version: 1.2.0-dev
+ description: >-
+   Source code generation builders and utilities for the Dart build system
+ repository: https://github.com/dart-lang/source_gen
+diff --git a/source_gen/test/generator_for_annotation_test.dart b/source_gen/test/generator_for_annotation_test.dart
+index b787c4f8140798a6f2c67d896efad9edacd6e1f9..ab54c08ecd47c6e6d5ffa9bfdc45c2389e8ee580 100644
+--- a/source_gen/test/generator_for_annotation_test.dart
++++ b/source_gen/test/generator_for_annotation_test.dart
+@@ -98,6 +98,28 @@ void main() {
+     expect(resolver.parsedUnits, {input});
+     expect(resolver.resolvedLibs, isEmpty);
+   });
++
++  test('applies to annotated libraries', () async {
++    final builder = LibraryBuilder(_StubGenerator<Deprecated>(
++        'Deprecated',
++        (element) => '// ${element.displayName}'));
++    await testBuilder(builder, {
++      'a|lib/file.dart': '''
++      @deprecated
++      library foo;
++      '''
++    }, outputs: {
++      'a|lib/file.g.dart': '''
++// GENERATED CODE - DO NOT MODIFY BY HAND
++
++// **************************************************************************
++// Generator: Deprecated
++// **************************************************************************
++
++// foo
++'''
++    });
++  });
+ }
+ 
+ class _StubGenerator<T> extends GeneratorForAnnotation<T> {

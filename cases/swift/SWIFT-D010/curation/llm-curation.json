@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-414",
+  "technical_evidence_sha256": "8344f3c17e934d4853219d03ac399851cc7675a0551f41208e8f6054d587cccb",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "de0cafab00597c371528056060c9411d9e4d24a44c44bc0bce1f080a9dda3a1f",
+  "reviewed_at": "2026-09-05T16:18:31.829957+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "pointfreeco/swift-dependencies#155",
+  "rationale": "Issue #155 reports that the macro already accepted `@autoclosure` closure parameters but expanded to non-compiling forwarding code (`self.execute(p0)` with the compiler diagnostic 'Add () to forward @autoclosure parameter'). That is a pre-existing defect in existing behavior, not a missing feature: the parameter shape parsed fine and produced broken output. The minimized production patch touches one file and exactly two hunks in Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift: the appliedParameters mapping now emits `&p<i>` for inout, `p<i>()` for autoclosure, `p<i>` otherwise, plus the fileprivate `isAutoclosure`/`isInout` helpers that mapping calls. The `isInout` helper is the prior inline inout predicate relocated so the single `.map` can branch three ways; it is required by hunk 1 rather than an independent cleanup, and no formatting-only, doc, config, or feature-extension change is present. No new public or production API is introduced. The trigger is the unchanged upstream test testAutoclosure from the same commit, using the pre-existing assertMacro/BaseTestCase harness, and it asserts the expansion `self.bar(p0(), p1, p2())` for a signature mixing autoclosure and plain closure parameters, which is the exact defect shape from the issue plus a control for non-autoclosure params. Strict machine evidence reports build.both_versions, selectors.present_and_unique, trigger.buggy_differential (reproduced selector DependencyEndpointMacroTests.swift::testAutoclosure), trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green all passing both originally and post-minimization, with zero failed checks and post_minimization_validation PASS. active_same_project_root_causes is empty, and #155 is the sole entry in allowed_root_cause_ids.\n\nIssue #155 reports that the macro already accepted `@autoclosure` closure parameters but expanded to non-compiling forwarding code (`self.execute(p0)` with the compiler error 'Add () to forward @autoclosure parameter'), i.e. a violation of the macro's existing contract rather than a missing capability despite the 'Support' wording in the commit subject. The minimized production patch touches exactly one production file, DependencyEndpointMacro.swift, and changes the `appliedParameters` mapping so each parameter is forwarded as `&p<i>` when inout, `p<i>()` when autoclosure, and `p<i>` otherwise, with `isInout`/`isAutoclosure` added as fileprivate helpers on TupleTypeElementSyntax. The `isInout` extraction is the pre-existing inout predicate moved into the helper needed by the restructured single-pass map, not an independent refactor; there is no formatting-only, doc-only, config-only, or feature-extension content, and no new public API is introduced (helpers are fileprivate). The trigger is the unchanged upstream test `testAutoclosure` from the same fixing commit, using the already-present assertMacro/BaseTestCase harness, and it asserts the expansion `self.bar(p0(), p1, p2())` for a signature mixing autoclosure and plain closure parameters, which is the same defect surface described in the issue and depends on no API added by the fix. Machine-generated strict evidence (original and post-minimization) passes every gate: build on both revisions, unique selector, buggy differential with `testAutoclosure` reproduced in isolation and as the only new full-suite failure, fixed all-green including reversed runs, deterministic across 3 repetitions and a complete 32-run matrix. Registry check: active_same_project_root_causes is empty and pointfreeco/swift-dependencies#155 is the sole allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T16:17:51.679594+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "de0cafab00597c371528056060c9411d9e4d24a44c44bc0bce1f080a9dda3a1f",
+      "response_sha256": "9dc9bce36b14a9b73bdba9fc99e95ad14c203e1b43cb47653bb3eb5398a85afb",
+      "response_id": "msg_fa5550db2c7143e1ba4340646d97a389",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6272222539966833,
+        "input_tokens": 20257,
+        "output_tokens": 760
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "pointfreeco/swift-dependencies#155",
+      "rationale": "Issue #155 reports that the macro already accepted `@autoclosure` closure parameters but expanded to non-compiling forwarding code (`self.execute(p0)` with the compiler diagnostic 'Add () to forward @autoclosure parameter'). That is a pre-existing defect in existing behavior, not a missing feature: the parameter shape parsed fine and produced broken output. The minimized production patch touches one file and exactly two hunks in Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift: the appliedParameters mapping now emits `&p<i>` for inout, `p<i>()` for autoclosure, `p<i>` otherwise, plus the fileprivate `isAutoclosure`/`isInout` helpers that mapping calls. The `isInout` helper is the prior inline inout predicate relocated so the single `.map` can branch three ways; it is required by hunk 1 rather than an independent cleanup, and no formatting-only, doc, config, or feature-extension change is present. No new public or production API is introduced. The trigger is the unchanged upstream test testAutoclosure from the same commit, using the pre-existing assertMacro/BaseTestCase harness, and it asserts the expansion `self.bar(p0(), p1, p2())` for a signature mixing autoclosure and plain closure parameters, which is the exact defect shape from the issue plus a control for non-autoclosure params. Strict machine evidence reports build.both_versions, selectors.present_and_unique, trigger.buggy_differential (reproduced selector DependencyEndpointMacroTests.swift::testAutoclosure), trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green all passing both originally and post-minimization, with zero failed checks and post_minimization_validation PASS. active_same_project_root_causes is empty, and #155 is the sole entry in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests[0]",
+        "traceability.paths[0]"
+      ],
+      "risks": [
+        "The trigger is a snapshot-style macro expansion assertion, so unrelated swift-syntax or formatting drift in the expansion string could break it independently of the defect; the recorded runs used one pinned toolchain.",
+        "The test verifies the emitted expansion text rather than compiling the expanded code, so it proves the forwarding string changed but does not directly demonstrate the original compiler error the issue reported.",
+        "Issue #155 is written against @DependencyClient while the fix lands in DependencyEndpointMacro; the shared forwarding path makes these the same defect, but the supplied evidence does not include the DependencyClient-level expansion.",
+        "issue_evidence and semantic_justification are null in case.json; issue content was read from the embedded source_candidate.issue_check payload rather than a separately fetched issue record.",
+        "Behavior preservation of the relocated inout predicate rests on the full-suite green result rather than a dedicated inout-forwarding assertion in the trigger."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T16:18:31.829082+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "de0cafab00597c371528056060c9411d9e4d24a44c44bc0bce1f080a9dda3a1f",
+      "response_sha256": "cdecaa735abd0becc2df766845bd121750218f42df64e9b8e02e6fdcaf1c78ff",
+      "response_id": "msg_886415fe6bfc4065a2f0b392c103d649",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6042741306135987,
+        "input_tokens": 20498,
+        "output_tokens": 734
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "pointfreeco/swift-dependencies#155",
+      "rationale": "Issue #155 reports that the macro already accepted `@autoclosure` closure parameters but expanded to non-compiling forwarding code (`self.execute(p0)` with the compiler error 'Add () to forward @autoclosure parameter'), i.e. a violation of the macro's existing contract rather than a missing capability despite the 'Support' wording in the commit subject. The minimized production patch touches exactly one production file, DependencyEndpointMacro.swift, and changes the `appliedParameters` mapping so each parameter is forwarded as `&p<i>` when inout, `p<i>()` when autoclosure, and `p<i>` otherwise, with `isInout`/`isAutoclosure` added as fileprivate helpers on TupleTypeElementSyntax. The `isInout` extraction is the pre-existing inout predicate moved into the helper needed by the restructured single-pass map, not an independent refactor; there is no formatting-only, doc-only, config-only, or feature-extension content, and no new public API is introduced (helpers are fileprivate). The trigger is the unchanged upstream test `testAutoclosure` from the same fixing commit, using the already-present assertMacro/BaseTestCase harness, and it asserts the expansion `self.bar(p0(), p1, p2())` for a signature mixing autoclosure and plain closure parameters, which is the same defect surface described in the issue and depends on no API added by the fix. Machine-generated strict evidence (original and post-minimization) passes every gate: build on both revisions, unique selector, buggy differential with `testAutoclosure` reproduced in isolation and as the only new full-suite failure, fixed all-green including reversed runs, deterministic across 3 repetitions and a complete 32-run matrix. Registry check: active_same_project_root_causes is empty and pointfreeco/swift-dependencies#155 is the sole allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "traceability.paths[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests[0]"
+      ],
+      "risks": [
+        "The trigger is a snapshot-style macro expansion assertion, so it validates the generated text rather than compiling the generated code; swift-syntax or formatting drift could make it brittle across toolchains even though the reported symptom was a compile error.",
+        "The issue is written against @DependencyClient while the fix lands in DependencyEndpointMacro; the linkage relies on DependencyClient delegating endpoint generation and is inferred from the patch and PR body, not directly demonstrated by a @DependencyClient-level trigger.",
+        "issue_evidence and semantic_justification fields are null, so issue content is only available via the embedded source_candidate issue_check payload.",
+        "No trigger covers the inout path that was refactored into isInout, so regression protection for that branch rests on the pre-existing suite passing green on the fixed revision."
+      ]
+    }
+  ]
+}

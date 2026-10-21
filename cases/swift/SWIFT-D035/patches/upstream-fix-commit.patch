@@ -1,0 +1,71 @@
+diff --git a/Sources/SwiftFormat/Rules/OrderedImports.swift b/Sources/SwiftFormat/Rules/OrderedImports.swift
+index 55e3793..fd1caf1 100644
+--- a/Sources/SwiftFormat/Rules/OrderedImports.swift
++++ b/Sources/SwiftFormat/Rules/OrderedImports.swift
+@@ -476,6 +476,31 @@ private func convertToCodeBlockItems(lines: [Line]) -> [CodeBlockItemSyntax] {
+     }
+   }
+ 
++  // If trivia accumulated past the last syntax node (e.g. a trailing comment
++  // that import reordering left behind), attach it to the last code block
++  // item's trailing trivia so it is preserved in the output instead of being
++  // silently dropped. The loop above accumulates an artificial newline after
++  // every iteration to separate the current line from the next one — those
++  // trailing newlines are meaningless when there is no following line and are
++  // stripped before the attachment.
++  while let last = pendingLeadingTrivia.last, case .newlines = last {
++    pendingLeadingTrivia.removeLast()
++  }
++  let hasComment = pendingLeadingTrivia.contains { piece in
++    switch piece {
++    case .lineComment, .blockComment, .docLineComment, .docBlockComment:
++      return true
++    default:
++      return false
++    }
++  }
++  if hasComment, !output.isEmpty {
++    let lastIndex = output.index(before: output.endIndex)
++    var lastItem = output[lastIndex]
++    lastItem.trailingTrivia = Trivia(pieces: lastItem.trailingTrivia.pieces + pendingLeadingTrivia)
++    output[lastIndex] = lastItem
++  }
++
+   return output
+ }
+ 
+diff --git a/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift b/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift
+index 932b6a2..4562663 100644
+--- a/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift
++++ b/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift
+@@ -288,6 +288,30 @@ final class OrderedImportsTests: LintOrFormatRuleTestCase {
+     )
+   }
+ 
++  func testCommentBetweenImportGroupsIsPreserved() {
++    // A free-standing comment, separated from the surrounding imports by
++    // blank lines, was previously dropped entirely when the rule ran the
++    // import group through its line/trivia normalisation. See
++    // https://github.com/swiftlang/swift-format/issues/1080.
++    assertFormatting(
++      OrderedImports.self,
++      input: """
++        import A
++
++        // Comment
++
++        import B
++        """,
++      expected: """
++        import A
++        import B
++
++        // Comment
++        """,
++      findings: []
++    )
++  }
++
+   func testMultipleCodeBlocksPerLine() {
+     assertFormatting(
+       OrderedImports.self,

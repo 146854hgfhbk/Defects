@@ -1,0 +1,126 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-510",
+  "bug_id": "JULIA-510",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "jump-dev/MathOptInterface.jl",
+  "repository_url": "https://github.com/jump-dev/MathOptInterface.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "03d9ada0465ecac462f78bd5fcd39ec471003fe9",
+  "fixed_revision": "4d85a2a880e77b4158b60187bafa377facfd6726",
+  "candidate_sha": "4d85a2a880e77b4158b60187bafa377facfd6726",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "03d9ada0465ecac462f78bd5fcd39ec471003fe9",
+  "changed_production_files": [
+    "src/Utilities/functions.jl"
+  ],
+  "changed_test_files": [
+    "test/Utilities/test_functions.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-510 deep nonlinear canonicalization"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "17e7b83a52a3db28a7cf9d0b105d2823840851cb22985789e9710c54c77fad1d",
+    "oracle": {
+      "mwe_basis": {
+        "upstream_test_file": "test/Utilities/test_functions.jl",
+        "upstream_test": "test_ScalarNonlinearFunction_is_canonical",
+        "public_api": "MOI.Utilities.canonicalize!(::MOI.ScalarNonlinearFunction)",
+        "defect": "recursive traversal overflows on deeply nested nonlinear functions"
+      },
+      "source_evidence": "exact deep-expression regression scenario introduced by the fixed commit"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "4d85a2a880e77b4158b60187bafa377facfd6726",
+    "project": "jump-dev/MathOptInterface.jl",
+    "input_sha256": "ed3d7d472fcbfa1939a11f3900ed79c4cda4f5db4a30d7356665ae3e0998ee5f",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:36:49Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.6739236500497512,
+      "input_tokens": 4612,
+      "output_tokens": 765
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.62, \"summary\": \"Single-hunk change to canonicalize!(::MOI.ScalarNonlinearFunction) in src/Utilities/functions.jl replaces recursive descent with an explicit worklist stack, and also changes the traversal condition: nested ScalarNonlinearFunction arguments are now always descended into, while is_canonical gating applies only to non-nonlinear arguments. That is a behavioral change, not just a control-flow rewrite: under the old code a nested nonlinear argument deemed 'canonical' (or one whose is_canonical result short-circuited descent) left inner affine/quadratic terms uncanonicalized, and deep nesting risked recursion depth issues. Accompanying test changes in test/Utilities/test_functions.jl plus a stable pre/post differential support treating this as a genuine defect fix.\", \"evidence\": \"Minimized patch is globally minimal (1 of 1 hunk, all hunks necessary), touching one production file and one matching test file. Runtime evidence reports strict_differential=stable_differential over 3 repetitions with a dedicated trigger script, and fixed_full_suite_passed=true, i.e. the trigger reproduces failure on parent 03d9ada and passes on 4d85a2a with no other suite regressions. The inline comment ('Don't use recursion here. This gets called for all scalar nonlinear constraints.') indicates the recursion path was problematic in production use, and the reordered branch (arg isa ScalarNonlinearFunction -> push, else is_canonical check) alters which subexpressions get canonicalized.\", \"missing_evidence\": \"No PR title/body, no commit subject, and no linked issue, so traceability is UNVERIFIED and intent (stack-depth safety vs. missed nested canonicalization) cannot be confirmed. trigger_tests is empty, so the specific failing test name is not identified. The full production patch and the test diff contents are not provided, so I cannot read the added assertions or confirm whether is_canonical has a fallback for non-function argument types.\", \"validation_risks\": \"If the true motivation was purely recursion-depth/performance, the failing trigger could be a stack-overflow or timing-sensitive test, which would make it a poor Defects4J-style trigger (deep-nesting stack overflow tests can be environment- and Julia-version-dependent). Without the named trigger test, there is a risk the differential comes from a newly added test rather than a pre-existing behavioral contract. Also verify the iterative version preserves the return value semantics (it returns f, relying on in-place mutation of nested args).\", \"suggested_tests\": \"1) Build an SNF with a nested SNF whose inner argument is a non-canonical ScalarAffineFunction (duplicate variable terms, zero coefficients) and assert canonicalize! canonicalizes the innermost terms. 2) Same, but where the nested SNF itself would be reported canonical by is_canonical, to pin the changed gating condition. 3) Confirm idempotency: canonicalize! applied twice yields an equal function. 4) Verify no mutation/aliasing surprises when the same nested SNF object appears as an argument in two places. 5) If a depth test is used, keep nesting depth modest and deterministic to avoid version-dependent stack limits.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.62,
+    "summary": "Single-hunk change to canonicalize!(::MOI.ScalarNonlinearFunction) in src/Utilities/functions.jl replaces recursive descent with an explicit worklist stack, and also changes the traversal condition: nested ScalarNonlinearFunction arguments are now always descended into, while is_canonical gating applies only to non-nonlinear arguments. That is a behavioral change, not just a control-flow rewrite: under the old code a nested nonlinear argument deemed 'canonical' (or one whose is_canonical result short-circuited descent) left inner affine/quadratic terms uncanonicalized, and deep nesting risked recursion depth issues. Accompanying test changes in test/Utilities/test_functions.jl plus a stable pre/post differential support treating this as a genuine defect fix.",
+    "evidence": "Minimized patch is globally minimal (1 of 1 hunk, all hunks necessary), touching one production file and one matching test file. Runtime evidence reports strict_differential=stable_differential over 3 repetitions with a dedicated trigger script, and fixed_full_suite_passed=true, i.e. the trigger reproduces failure on parent 03d9ada and passes on 4d85a2a with no other suite regressions. The inline comment ('Don't use recursion here. This gets called for all scalar nonlinear constraints.') indicates the recursion path was problematic in production use, and the reordered branch (arg isa ScalarNonlinearFunction -> push, else is_canonical check) alters which subexpressions get canonicalized.",
+    "missing_evidence": "No PR title/body, no commit subject, and no linked issue, so traceability is UNVERIFIED and intent (stack-depth safety vs. missed nested canonicalization) cannot be confirmed. trigger_tests is empty, so the specific failing test name is not identified. The full production patch and the test diff contents are not provided, so I cannot read the added assertions or confirm whether is_canonical has a fallback for non-function argument types.",
+    "validation_risks": "If the true motivation was purely recursion-depth/performance, the failing trigger could be a stack-overflow or timing-sensitive test, which would make it a poor Defects4J-style trigger (deep-nesting stack overflow tests can be environment- and Julia-version-dependent). Without the named trigger test, there is a risk the differential comes from a newly added test rather than a pre-existing behavioral contract. Also verify the iterative version preserves the return value semantics (it returns f, relying on in-place mutation of nested args).",
+    "suggested_tests": "1) Build an SNF with a nested SNF whose inner argument is a non-canonical ScalarAffineFunction (duplicate variable terms, zero coefficients) and assert canonicalize! canonicalizes the innermost terms. 2) Same, but where the nested SNF itself would be reported canonical by is_canonical, to pin the changed gating condition. 3) Confirm idempotency: canonicalize! applied twice yields an equal function. 4) Verify no mutation/aliasing surprises when the same nested SNF object appears as an argument in two places. 5) If a depth test is used, keep nesting depth modest and deterministic to avoid version-dependent stack limits."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-510 deep nonlinear canonicalization"
+    ],
+    "exception_types": [
+      "e390171f84e8cc702ed192d5ba6d343461a1aad09f87a2408d3e82911b6ba58d"
+    ],
+    "fingerprints": [
+      "e390171f84e8cc702ed192d5ba6d343461a1aad09f87a2408d3e82911b6ba58d"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

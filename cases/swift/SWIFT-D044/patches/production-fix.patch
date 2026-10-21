@@ -1,0 +1,106 @@
+diff --git a/Sources/OpenAPIRuntime/Interface/HTTPBody.swift b/Sources/OpenAPIRuntime/Interface/HTTPBody.swift
+index 648c504afebabd45f21fa870a7be4bc077271e01..59292ec9b32ac98d0e73a40d1b9dfc332c3bf6ab 100644
+--- a/Sources/OpenAPIRuntime/Interface/HTTPBody.swift
++++ b/Sources/OpenAPIRuntime/Interface/HTTPBody.swift
+@@ -159,16 +159,6 @@ public final class HTTPBody: @unchecked Sendable {
+         return locked_iteratorCreated
+     }
+ 
+-    /// Verifying that creating another iterator is allowed based on
+-    /// the values of `iterationBehavior` and `locked_iteratorCreated`.
+-    /// - Throws: If another iterator is not allowed to be created.
+-    private func checkIfCanCreateIterator() throws {
+-        lock.lock()
+-        defer { lock.unlock() }
+-        guard iterationBehavior == .single else { return }
+-        if locked_iteratorCreated { throw TooManyIterationsError() }
+-    }
+-
+     /// Tries to mark an iterator as created, verifying that it is allowed
+     /// based on the values of `iterationBehavior` and `locked_iteratorCreated`.
+     /// - Throws: If another iterator is not allowed to be created.
+@@ -341,10 +331,12 @@ extension HTTPBody: AsyncSequence {
+     /// Creates and returns an asynchronous iterator
+     ///
+     /// - Returns: An asynchronous iterator for byte chunks.
++    /// - Note: The returned sequence throws an error if no further iterations are allowed. See ``IterationBehavior``.
+     public func makeAsyncIterator() -> AsyncIterator {
+-        // The crash on error is intentional here.
+-        try! tryToMarkIteratorCreated()
+-        return .init(sequence.makeAsyncIterator())
++        do {
++            try tryToMarkIteratorCreated()
++            return .init(sequence.makeAsyncIterator())
++        } catch { return .init(throwing: error) }
+     }
+ }
+ 
+@@ -381,10 +373,6 @@ extension HTTPBody {
+     ///   than `maxBytes`.
+     /// - Returns: A byte chunk containing all the accumulated bytes.
+     fileprivate func collect(upTo maxBytes: Int) async throws -> ByteChunk {
+-
+-        // Check that we're allowed to iterate again.
+-        try checkIfCanCreateIterator()
+-
+         // If the length is known, verify it's within the limit.
+         if case .known(let knownBytes) = length {
+             guard knownBytes <= maxBytes else { throw TooManyBytesError(maxBytes: maxBytes) }
+@@ -563,6 +551,9 @@ extension HTTPBody {
+             var iterator = iterator
+             self.produceNext = { try await iterator.next() }
+         }
++        /// Creates an iterator throwing the given error when iterated.
++        /// - Parameter error: The error to throw on iteration.
++        fileprivate init(throwing error: any Error) { self.produceNext = { throw error } }
+ 
+         /// Advances the iterator to the next element and returns it asynchronously.
+         ///
+diff --git a/Sources/OpenAPIRuntime/Multipart/MultipartPublicTypes.swift b/Sources/OpenAPIRuntime/Multipart/MultipartPublicTypes.swift
+index 2e4234e675c98d833046fd7d6b579dc30d826858..6db356c351248955b1cfdae8bf67e1363d3d5542 100644
+--- a/Sources/OpenAPIRuntime/Multipart/MultipartPublicTypes.swift
++++ b/Sources/OpenAPIRuntime/Multipart/MultipartPublicTypes.swift
+@@ -209,16 +209,6 @@ public final class MultipartBody<Part: Sendable>: @unchecked Sendable {
+         var errorDescription: String? { description }
+     }
+ 
+-    /// Verifying that creating another iterator is allowed based on the values of `iterationBehavior`
+-    /// and `locked_iteratorCreated`.
+-    /// - Throws: If another iterator is not allowed to be created.
+-    internal func checkIfCanCreateIterator() throws {
+-        lock.lock()
+-        defer { lock.unlock() }
+-        guard iterationBehavior == .single else { return }
+-        if locked_iteratorCreated { throw TooManyIterationsError() }
+-    }
+-
+     /// Tries to mark an iterator as created, verifying that it is allowed based on the values
+     /// of `iterationBehavior` and `locked_iteratorCreated`.
+     /// - Throws: If another iterator is not allowed to be created.
+@@ -331,10 +321,12 @@ extension MultipartBody: AsyncSequence {
+     /// Creates and returns an asynchronous iterator
+     ///
+     /// - Returns: An asynchronous iterator for parts.
++    /// - Note: The returned sequence throws an error if no further iterations are allowed. See ``IterationBehavior``.
+     public func makeAsyncIterator() -> AsyncIterator {
+-        // The crash on error is intentional here.
+-        try! tryToMarkIteratorCreated()
+-        return .init(sequence.makeAsyncIterator())
++        do {
++            try tryToMarkIteratorCreated()
++            return .init(sequence.makeAsyncIterator())
++        } catch { return .init(throwing: error) }
+     }
+ }
+ 
+@@ -355,6 +347,10 @@ extension MultipartBody {
+             self.produceNext = { try await iterator.next() }
+         }
+ 
++        /// Creates an iterator throwing the given error when iterated.
++        /// - Parameter error: The error to throw on iteration.
++        fileprivate init(throwing error: any Error) { self.produceNext = { throw error } }
++
+         /// Advances the iterator to the next element and returns it asynchronously.
+         ///
+         /// - Returns: The next element in the sequence, or `nil` if there are no more elements.

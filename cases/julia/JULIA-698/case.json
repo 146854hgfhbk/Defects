@@ -1,0 +1,248 @@
+{
+  "bug_id": "JULIA-698",
+  "buggy_revision": "1fe9910ada898cbe4fa4f6f272c00fdfdb911119",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "dcb0fc2a3d66fa5e82522b97b4bc0fb0949a2ffb",
+  "case_id": "JULIA-698",
+  "changed_production_files": [
+    "src/layouting/data_limits.jl"
+  ],
+  "changed_test_files": [
+    "test/boundingboxes.jl",
+    "test/runtests.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "dcb0fc2a3d66fa5e82522b97b4bc0fb0949a2ffb",
+  "instance_id": "juliaplots__makie.jl-2184",
+  "issue_id": 2145,
+  "issue_urls": [
+    "https://github.com/JuliaPlots/Makie.jl/issues/2145"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "parent_sha": "1fe9910ada898cbe4fa4f6f272c00fdfdb911119",
+  "project": "JuliaPlots/Makie.jl",
+  "repository_url": "https://github.com/JuliaPlots/Makie.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "candidate_sha": "dcb0fc2a3d66fa5e82522b97b4bc0fb0949a2ffb",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.82,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Production change limited to src/layouting/data_limits.jl, one hunk, marked globally minimal with all hunks necessary. Issue #2145 (\"boundingbox(plot) is broken\", most calls return NaN for mesh/scatter/lines/etc.) and PR #2184 (\"Fixes #2145\", self-labelled bug fix, unit tests added). Test patch adds test/boundingboxes.jl and wires it into test/runtests.jl. Runtime evidence: stable_differential across 3 repetitions with the full suite passing on the fixed revision.",
+    "input_sha256": "c3e26c20c0ea53b29a79b7f99413b8fac86e2bd2472884204c69dfd34dafe0ab",
+    "missing_evidence": "No explicit trigger test names are listed (trigger_mode is test_patch_suite), so the specific failing test case in test/boundingboxes.jl is not identified. PR number, title, and commit subject are empty, so the mapping to PR #2184 rests on the issue records rather than commit metadata.",
+    "project": "JuliaPlots/Makie.jl",
+    "provider": "claude",
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"Single-hunk fix to foreach_plot for Combined plots: previously it always recursed into plot.plots, so atomic/primitive plots with no children were skipped entirely, which is the mechanism behind boundingbox(plot) returning NaN for scatter, lines, mesh, etc. The fix applies f to the plot itself when it has no child plots. Linked issue #2145 and PR #2184 describe exactly this broken existing behavior, and test/boundingboxes.jl covers it.\", \"evidence\": \"Production change limited to src/layouting/data_limits.jl, one hunk, marked globally minimal with all hunks necessary. Issue #2145 (\\\"boundingbox(plot) is broken\\\", most calls return NaN for mesh/scatter/lines/etc.) and PR #2184 (\\\"Fixes #2145\\\", self-labelled bug fix, unit tests added). Test patch adds test/boundingboxes.jl and wires it into test/runtests.jl. Runtime evidence: stable_differential across 3 repetitions with the full suite passing on the fixed revision.\", \"missing_evidence\": \"No explicit trigger test names are listed (trigger_mode is test_patch_suite), so the specific failing test case in test/boundingboxes.jl is not identified. PR number, title, and commit subject are empty, so the mapping to PR #2184 rests on the issue records rather than commit metadata.\", \"validation_risks\": \"boundingbox results for GL/CairoMakie-backed plots can depend on backend availability and float precision, so assertions may be tolerance-sensitive. The whole test file is new, so many of its cases likely fail pre-fix rather than a single targeted test; the harness should confirm at least one deterministic failing case attributable to this hunk. Behavior change also affects any other caller of foreach_plot (e.g. data limits), so unrelated regressions are conceivable though the suite passed.\", \"suggested_tests\": \"Assert boundingbox on primitive plots returns finite, correct extents: scatter of known points, lines, linesegments, mesh, meshscatter, heatmap, image, surface, volume. Add a case for a recipe with child plots to confirm recursion still aggregates children. Add a direct unit test that foreach_plot on a childless Combined invokes the callback exactly once with that plot.\"}",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-31T04:37:06Z",
+    "suggested_tests": "Assert boundingbox on primitive plots returns finite, correct extents: scatter of known points, lines, linesegments, mesh, meshscatter, heatmap, image, surface, volume. Add a case for a recipe with child plots to confirm recursion still aggregates children. Add a direct unit test that foreach_plot on a childless Combined invokes the callback exactly once with that plot.",
+    "summary": "Single-hunk fix to foreach_plot for Combined plots: previously it always recursed into plot.plots, so atomic/primitive plots with no children were skipped entirely, which is the mechanism behind boundingbox(plot) returning NaN for scatter, lines, mesh, etc. The fix applies f to the plot itself when it has no child plots. Linked issue #2145 and PR #2184 describe exactly this broken existing behavior, and test/boundingboxes.jl covers it.",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.3473812014262023,
+      "input_tokens": 3903,
+      "output_tokens": 571
+    },
+    "validation_risks": "boundingbox results for GL/CairoMakie-backed plots can depend on backend availability and float precision, so assertions may be tolerance-sensitive. The whole test file is new, so many of its cases likely fail pre-fix rather than a single targeted test; the harness should confirm at least one deterministic failing case attributable to this hunk. Behavior change also affects any other caller of foreach_plot (e.g. data limits), so unrelated regressions are conceivable though the suite passed."
+  },
+  "revision_mode": "real_upstream_commit",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "Unit tests"
+    ],
+    "PASS_TO_PASS": [],
+    "base_commit": "1fe9910ada898cbe4fa4f6f272c00fdfdb911119",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "created_at": "2022-07-26 20:42:16",
+    "image_name": "docker.io/swerebenchv2/juliaplots-makie.jl:2184-1fe9910",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. --check-bounds=yes -e 'using Pkg; Pkg.test(\"Makie\"; coverage=false)'"
+    },
+    "instance_id": "juliaplots__makie.jl-2184",
+    "interface": "Function: boundingbox(plot)\nLocation: exported from Makie (see src/.../boundingbox.jl)\nInputs: \n- **plot**: a concrete Makie plot object (e.g., result of `mesh`, `surface`, `meshscatter`, `volume`, `scatter`, `lines`, `linesegments`, `heatmap`, `image`, or `text!`). The function must accept any object that implements Makie’s internal `AbstractPlot` interface.\nOutputs: \n- Returns a `BoundingBox3D`‑like struct with two fields:\n  - `origin::Point3f` – the 3‑D coordinates of the lower‑corner of the axis‑aligned bounding box.\n  - `widths::Vec3f` – the extents of the box along the X, Y, and Z axes.\n  - The values are in data space for geometric plots and in pixel space for text plots.\nDescription: \nComputes an axis‑aligned bounding box that encloses all data represented by the given plot. It is used by the tests to verify that the new implementation correctly handles a wide variety of plot types, returning finite, correct origins and sizes instead of NaNs.\n",
+    "issue_url": "https://github.com/JuliaPlots/Makie.jl/issues/2145",
+    "language": "julia",
+    "license": "MIT",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.93,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [],
+        "intent_completeness": "partial",
+        "pr_categories": [
+          "regression_bug"
+        ],
+        "reasoning": "The issue reports that `boundingbox(plot)` returns NaN for most plot types and expects it to return correct geometrical bounds. The provided test suite defines explicit expected origins and widths for several atomic plot types, giving clear acceptance criteria. The golden patch fixes a missing case in `foreach_plot` for empty `Combined` plots, directly addressing the cause of the NaN results, and aligns with the tests. No test‑code coupling, naming, external dependencies, or hidden knowledge issues are evident, so the task is solvable as specified.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 2,
+      "num_modified_lines": null,
+      "pr_author": "ffreyer",
+      "pr_labels": null,
+      "pr_url": "https://github.com/MakieOrg/Makie.jl/pull/2184"
+    },
+    "patch": "diff --git a/src/layouting/data_limits.jl b/src/layouting/data_limits.jl\nindex 31c00650f00..e9f5ad05f70 100644\n--- a/src/layouting/data_limits.jl\n+++ b/src/layouting/data_limits.jl\n@@ -131,8 +131,14 @@ end\n \n foreach_plot(f, s::Figure) = foreach_plot(f, s.scene)\n foreach_plot(f, s::FigureAxisPlot) = foreach_plot(f, s.figure)\n-foreach_plot(f, plot::Combined) = foreach_plot(f, plot.plots)\n foreach_plot(f, list::AbstractVector) = foreach(f, list)\n+function foreach_plot(f, plot::Combined)\n+    if isempty(plot.plots)\n+        f(plot)\n+    else\n+        foreach_plot(f, plot.plots)\n+    end\n+end\n \n function foreach_transformed(f, point_iterator, model, trans_func)\n     for point in point_iterator\n",
+    "pr_description": "# Description\r\n\r\nFixes #2145 (boundingbox returning NaN)\r\n\r\n## Type of change\r\n\r\n- [x] Bug fix (non-breaking change which fixes an issue)\r\n\r\n## Checklist\r\n\r\n- [ ] Added an entry in NEWS.md (for new features and breaking changes)\r\n- [x] Added unit tests for new algorithms, conversion methods, etc.\r\n\r\nShould this have a NEWS entry?",
+    "pr_url": "https://github.com/MakieOrg/Makie.jl/pull/2184",
+    "problem_statement": "`boundingbox(plot)` is broken\nMost `boundingbox(plot)` calls just return NaN. This includes:\r\n- mesh\r\n- scatter\r\n- lines\r\n- linesegments\r\n- meshscatter\r\n- volume\r\n- surface\r\n- heatmap\r\n- image\r\n\r\nThe only one that works is `text`. Though that one currently transforms to pixel space which probably shouldn't happen by default.",
+    "repo": "JuliaPlots/Makie.jl",
+    "test_patch": "diff --git a/test/boundingboxes.jl b/test/boundingboxes.jl\nnew file mode 100644\nindex 00000000000..57b033b65fc\n--- /dev/null\n+++ b/test/boundingboxes.jl\n@@ -0,0 +1,58 @@\n+@testset \"boundingbox(plot)\" begin\n+    cat = FileIO.load(Makie.assetpath(\"cat.obj\"))\n+\n+    # Testing atomic plots here. Everything else should be derived from them\n+\n+    fig, ax, p = mesh(cat)\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(-0.1678, -0.002068, -0.358661)\n+    @test bb.widths ≈ Vec3f(0.339423, 0.92186, 1.3318559)\n+\n+    fig, ax, p = surface([x*y for x in 1:10, y in 1:10])\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(0.0, 0.0, 1.0)\n+    @test bb.widths ≈ Vec3f(10.0, 10.0, 99.0)\n+\n+    fig, ax, p = meshscatter([Point3f(x, y, z) for x in 1:5 for y in 1:5 for z in 1:5])\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(1)\n+    @test bb.widths ≈ Vec3f(4)\n+\n+    fig, ax, p = volume(rand(5, 5, 5))\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(0)\n+    @test bb.widths ≈ Vec3f(5)\n+\n+    fig, ax, p = scatter(1:10)\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(1, 1, 0)\n+    @test bb.widths ≈ Vec3f(9, 9, 0)\n+\n+    fig, ax, p = lines(1:10)\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(1, 1, 0)\n+    @test bb.widths ≈ Vec3f(9, 9, 0)\n+\n+    fig, ax, p = linesegments(1:10)\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(1, 1, 0)\n+    @test bb.widths ≈ Vec3f(9, 9, 0)\n+\n+    fig, ax, p = heatmap(rand(10, 10))\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(0.5, 0.5, 0)\n+    @test bb.widths ≈ Vec3f(10.0, 10.0, 0)\n+    \n+    fig, ax, p = image(rand(10, 10))\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(0)\n+    @test bb.widths ≈ Vec3f(10.0, 10.0, 0)\n+\n+    # text transforms to pixel space atm (TODO)\n+    fig = Figure(resolution = (400, 400))\n+    ax = Axis(fig[1, 1])\n+    p = text!(ax, Point2f(10), text = \"test\")\n+    bb = boundingbox(p)\n+    @test bb.origin ≈ Point3f(340, 341, 0)\n+    @test bb.widths ≈ Vec3f(32.24, 23.3, 0)\n+end\n\\ No newline at end of file\ndiff --git a/test/runtests.jl b/test/runtests.jl\nindex 9c89ac747be..1a03c8e5ec6 100644\n--- a/test/runtests.jl\n+++ b/test/runtests.jl\n@@ -28,4 +28,5 @@ using Makie: volume\n     include(\"stack.jl\")\n     include(\"events.jl\")\n     include(\"text.jl\")\n+    include(\"boundingboxes.jl\")\n end\n"
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "boundingbox(plot)"
+      ],
+      "assertion_expression_sha256": [
+        "25ad1cd8456031868a6ba9a7adb526d226c6602e059557b240e790a5b010421f",
+        "44de195d3abdd27a02e8e4ff234ad21f87695e3a8d6158ef48787dfcc4e6abf0",
+        "eb10c8ecda506d5c00a85ab4425001a56602ba57a13beb409f0df9f6595e0559",
+        "8f40778944d8067b17ec941455c3dffabcab346f1dc03885d0607640a44ec2e8",
+        "49a2ae4f9a2b47d24967a423bb2d8cf2306c55c8414fdc3aaaebef6239228069",
+        "0ae65a4debb02064e71b5c695698122a85f76f908ae93ab6ccdb5cf3f738b05b",
+        "a6e26492dc381bcc68c1e76f3a20d00c0f47463bb661236361987fcd75cf3753",
+        "9162761b6dc80764c3d5d93cc429450efbd9f0678a4b3fb261eb95dd502ffc2b",
+        "c5dca8917249bdaf9262d3e4f771cfe1fe4421a1c42bc99293bc8666011cc11d",
+        "0f461d77aab10a9272219c843101f486d210a50843a0552c2fa9c4663f772180",
+        "34129905c512d411c215fc6c579b23c6651d2072a15cf319bf5643af828eed6d",
+        "42266ba828f13836566384a1009088a0799faa301bbe1d0cc0789466405af89f",
+        "218ff48f492f1f6d661f263d9c28549bb05b8e7a03101f8f17c89732f5882e34",
+        "c81e325ded68bf5a4d32b638088441fbbf088220662ad9189c4e05e04c42f3c8"
+      ],
+      "f2p_tests": [
+        "Unit tests"
+      ],
+      "inferred_testset_context": [
+        "#659 Volume errors if data is not a cube"
+      ],
+      "mwe_basis": "exact_assertions_from_upstream_fix_test_patch",
+      "schema_version": 1,
+      "source_evidence": {
+        "path": "trigger/upstream-tests.patch",
+        "sha256": "559c0cb8c9c99259f4b910cd9d818b3fccb5e1579c7a08d2dcd25f456a35e2e4",
+        "test_files": [
+          "test/boundingboxes.jl",
+          "test/runtests.jl"
+        ],
+        "test_files_sha256": {
+          "test/boundingboxes.jl": "a505ac663233d5c3ddca3977e8a57a0ddfd4f396da76df7f2ea3dc226ae2742d",
+          "test/runtests.jl": "dd15333faf50118c7b2addd7a4968d21f1e39d22f9ff765d3334be4b43759227"
+        }
+      }
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "e2b76d51739ddcf55ae142e79bf5affbb7cdd93127145f6f025cee957259066e",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "volume bounding box"
+  ],
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "volume bounding box"
+    ],
+    "exception_types": [
+      "6bd7fe8ee3b6d5a1bca2fc091a42eb8fc8c1f50f5783c9704e3b4d70cf7c5b59",
+      "b0acccf078a1d30c366e527c63b6ff613ad639c3db309e0e8c6ea6ddf23f9916"
+    ],
+    "fingerprints": [
+      "6bd7fe8ee3b6d5a1bca2fc091a42eb8fc8c1f50f5783c9704e3b4d70cf7c5b59",
+      "b0acccf078a1d30c366e527c63b6ff613ad639c3db309e0e8c6ea6ddf23f9916"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

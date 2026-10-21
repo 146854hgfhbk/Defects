@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-209",
+  "technical_evidence_sha256": "c727e7022a54d0ed569010c847ad7befd021a49360fc8efa2c99bc52055f7415",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "2d981ebf4f22eb11153abdbed3f4d913786db0fe5bc3c11da0a6adb7312b505b",
+  "reviewed_at": "2026-09-09T06:36:01.318137+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "swiftlang/swift-format#714",
+  "rationale": "Issue #714 reports that NoAccessLevelOnExtensionDeclaration strips the extension's explicit access level but leaves @_spi behind on the extension, where it no longer distributes to members, and supplies an exact input/expected reproducer. The minimized production patch touches only Sources/SwiftFormat/Rules/NoAccessLevelOnExtensionDeclaration.swift: it threads the collected @_spi attributes through the insideExtension state, removes them from the extension when the access keyword is moved, prepends them to each rewritten member via the new fileprivate prepending helper, and adds the fileprivate isSPIAttribute predicate. The accompanying trivia rework (capturing result.leadingTrivia instead of accessKeyword.leadingTrivia and re-homing it onto the surviving first attribute or the extension keyword) is required because the token that previously carried leading trivia can now be deleted, so it is part of the same defect, not an unrelated refactor. The switch restructuring from direct returns to a withModifier binding, including the two re-wrapped call sites, is a mechanical consequence of needing a single post-switch prepending call and line-length limits; no feature, doc-only, config-only, or test-only change is present in the minimized patch. The trigger is the unchanged upstream test hunk from the same fixing commit; testSPIAttributeIsMovedToMembers reproduces the issue's reproducer verbatim and all four triggers use only pre-existing APIs (assertFormatting, FindingSpec, NoteSpec, the public rule type), so they compile on both revisions and fail on the buggy revision as genuine output/finding assertion mismatches rather than unavailable-symbol errors. Strict evidence for both the original and post-minimization matrices passes every gate (build.both_versions, trigger.buggy_differential with all four selectors reproduced, trigger.fixed_clean, trigger.deterministic, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, 50 matrix runs at 3 repetitions). The active same-project root-cause registry is empty and swiftlang/swift-format#714 is the sole allowed key, so no duplicate exists.\n\nIssue #714 reports that NoAccessLevelOnExtensionDeclaration moves an extension's explicit access level down to members but leaves @_spi behind on the extension, where it no longer has any effect, silently dropping the members' SPI grouping. The issue body supplies the exact input/expected pair ('@_spi(Something) public extension Foo { var bar: String { \"\" } }' -> 'extension Foo { @_spi(Something) public var bar: String { \"\" } }'), and the trigger test testSPIAttributeIsMovedToMembers reproduces that pair verbatim. The fix commit message and PR #1211 body ('fixes #714: move @_spi with access level') describe the same defect, and the minimized patch touches only Sources/SwiftFormat/Rules/NoAccessLevelOnExtensionDeclaration.swift. Every hunk is causally required: the .insideExtension state gains an spiAttributes payload, the extension visit collects and strips @_spi only when an access keyword is actually moved, members get those attributes prepended by the new fileprivate prepending(_:to:) helper, isSPIAttribute is a new fileprivate predicate, and the leading-trivia rework (capturing result.leadingTrivia instead of accessKeyword.leadingTrivia) is needed because removing @_spi changes which token now carries the declaration's leading trivia. The switch statement's conversion from direct returns to a withModifier binding plus the two re-wrapped call sites are mechanical consequences of routing every case through prepending under the project's line-length limit, not an independent refactor; no configuration, documentation, or feature-extension changes are present. The triggers are the unchanged upstream tests from the same commit and use only pre-existing public API (the rule type, assertFormatting, FindingSpec, NoteSpec); isSPIAttribute is fileprivate and never referenced from tests, so there is no fix-only-API compile dependency. Strict evidence confirms build.both_versions PASS, trigger.buggy_differential reproducing all four declared selectors as genuine assertion failures on the buggy revision, trigger.fixed_clean PASS, trigger.deterministic with 3 repetitions over 50 matrix runs, full_suite.buggy_reproduces_only_triggers PASS, and full_suite.fixed_all_green PASS, both before and after minimization (0 hunks removed, post_minimization_validation PASS). active_same_project_root_causes is empty and swiftlang/swift-format#714 is the sole allowed root cause id, so this is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T06:35:30.123768+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "2d981ebf4f22eb11153abdbed3f4d913786db0fe5bc3c11da0a6adb7312b505b",
+      "response_sha256": "1f30f97907cd010609f24d9ad337162bd71bfae2651042dfc31492721d1acb41",
+      "response_id": "msg_4f09799fe0ed4fa2b39552ea7065adc5",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.856633048424544,
+        "input_tokens": 41226,
+        "output_tokens": 757
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#714",
+      "rationale": "Issue #714 reports that NoAccessLevelOnExtensionDeclaration strips the extension's explicit access level but leaves @_spi behind on the extension, where it no longer distributes to members, and supplies an exact input/expected reproducer. The minimized production patch touches only Sources/SwiftFormat/Rules/NoAccessLevelOnExtensionDeclaration.swift: it threads the collected @_spi attributes through the insideExtension state, removes them from the extension when the access keyword is moved, prepends them to each rewritten member via the new fileprivate prepending helper, and adds the fileprivate isSPIAttribute predicate. The accompanying trivia rework (capturing result.leadingTrivia instead of accessKeyword.leadingTrivia and re-homing it onto the surviving first attribute or the extension keyword) is required because the token that previously carried leading trivia can now be deleted, so it is part of the same defect, not an unrelated refactor. The switch restructuring from direct returns to a withModifier binding, including the two re-wrapped call sites, is a mechanical consequence of needing a single post-switch prepending call and line-length limits; no feature, doc-only, config-only, or test-only change is present in the minimized patch. The trigger is the unchanged upstream test hunk from the same fixing commit; testSPIAttributeIsMovedToMembers reproduces the issue's reproducer verbatim and all four triggers use only pre-existing APIs (assertFormatting, FindingSpec, NoteSpec, the public rule type), so they compile on both revisions and fail on the buggy revision as genuine output/finding assertion mismatches rather than unavailable-symbol errors. Strict evidence for both the original and post-minimization matrices passes every gate (build.both_versions, trigger.buggy_differential with all four selectors reproduced, trigger.fixed_clean, trigger.deterministic, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, 50 matrix runs at 3 repetitions). The active same-project root-cause registry is empty and swiftlang/swift-format#714 is the sole allowed key, so no duplicate exists.",
+      "evidence_paths": [
+        "issue_evidence.body",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "minimized_production_patch_reference.post_minimization_validation",
+        "trigger_tests",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The leading-trivia rework is slightly broader than the strict @_spi move and could alter output for extensions whose first token is an attribute rather than the access keyword; only the existing suite (reported all-green on the fixed revision) guards this.",
+        "swift-format expectations are whitespace-exact, so the four triggers couple the defect to precise spacing of the moved @_spi attributes, not just to the SPI semantics.",
+        "The fifth added test (redundant internal keeps @_spi on the extension) is not a trigger and pins behavior that is unchanged by the patch, so it provides no FAIL_TO_PASS signal.",
+        "Contributor-side claims in the PR body (e.g. the swiftc private-module-interface comparison and full-suite counts) are unverified narrative; only the machine-generated strict gates were relied on."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T06:36:01.317088+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "2d981ebf4f22eb11153abdbed3f4d913786db0fe5bc3c11da0a6adb7312b505b",
+      "response_sha256": "32daf6aacc3bf90adf830f5df5f6e186d29ae91904e8bf32a40a290465b53eb3",
+      "response_id": "msg_4b53678fc6744b53a2683b5fe8c24ee9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7526355988391377,
+        "input_tokens": 41410,
+        "output_tokens": 846
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#714",
+      "rationale": "Issue #714 reports that NoAccessLevelOnExtensionDeclaration moves an extension's explicit access level down to members but leaves @_spi behind on the extension, where it no longer has any effect, silently dropping the members' SPI grouping. The issue body supplies the exact input/expected pair ('@_spi(Something) public extension Foo { var bar: String { \"\" } }' -> 'extension Foo { @_spi(Something) public var bar: String { \"\" } }'), and the trigger test testSPIAttributeIsMovedToMembers reproduces that pair verbatim. The fix commit message and PR #1211 body ('fixes #714: move @_spi with access level') describe the same defect, and the minimized patch touches only Sources/SwiftFormat/Rules/NoAccessLevelOnExtensionDeclaration.swift. Every hunk is causally required: the .insideExtension state gains an spiAttributes payload, the extension visit collects and strips @_spi only when an access keyword is actually moved, members get those attributes prepended by the new fileprivate prepending(_:to:) helper, isSPIAttribute is a new fileprivate predicate, and the leading-trivia rework (capturing result.leadingTrivia instead of accessKeyword.leadingTrivia) is needed because removing @_spi changes which token now carries the declaration's leading trivia. The switch statement's conversion from direct returns to a withModifier binding plus the two re-wrapped call sites are mechanical consequences of routing every case through prepending under the project's line-length limit, not an independent refactor; no configuration, documentation, or feature-extension changes are present. The triggers are the unchanged upstream tests from the same commit and use only pre-existing public API (the rule type, assertFormatting, FindingSpec, NoteSpec); isSPIAttribute is fileprivate and never referenced from tests, so there is no fix-only-API compile dependency. Strict evidence confirms build.both_versions PASS, trigger.buggy_differential reproducing all four declared selectors as genuine assertion failures on the buggy revision, trigger.fixed_clean PASS, trigger.deterministic with 3 repetitions over 50 matrix runs, full_suite.buggy_reproduces_only_triggers PASS, and full_suite.fixed_all_green PASS, both before and after minimization (0 hunks removed, post_minimization_validation PASS). active_same_project_root_causes is empty and swiftlang/swift-format#714 is the sole allowed root cause id, so this is not a duplicate.",
+      "evidence_paths": [
+        "issue_evidence.body",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "minimized_patch_reference.post_minimization_validation",
+        "source_candidate.origin_pull_request.body",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The leading-trivia handling change is broader in reach than the @_spi move itself and could alter output for extensions whose first token is not the access keyword; the fixed-revision full suite is green, but coverage of such inputs beyond testSPIAttributeMovesButOtherAttributesStayOnExtension is unverified.",
+        "The switch default branch still returns early without prepending, so a decl kind not enumerated there would silently keep the old behavior; no trigger covers that path.",
+        "testSPIAttributePreservedOnExtensionWhenAccessLevelIsRedundant is part of the trigger patch but is not a declared FAIL_TO_PASS selector, so it only guards against regression rather than demonstrating the defect.",
+        "Assertions in this suite are whitespace-exact, so the triggers are sensitive to formatting details beyond the reported semantic defect."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+diff --git a/lib/src/trace.dart b/lib/src/trace.dart
+index dc7fd5d2e1dacf75bce91295ab79dbc5e06246e0..7e30b950412410d440b474ca6a6e9f6d1fea38b5 100644
+--- a/lib/src/trace.dart
++++ b/lib/src/trace.dart
+@@ -146,7 +146,11 @@ class Trace implements StackTrace {
+   static List<Frame> _parseVM(String trace) {
+     // Ignore [vmChainGap]. This matches the behavior of
+     // `Chain.parse().toTrace()`.
+-    var lines = trace.trim().replaceAll(vmChainGap, '').split('\n');
++    var lines = trace
++        .trim()
++        .replaceAll(vmChainGap, '')
++        .split('\n')
++        .where((line) => line.isNotEmpty);
+     var frames = lines
+         .take(lines.length - 1)
+         .map((line) => Frame.parseVM(line))
+diff --git a/lib/src/utils.dart b/lib/src/utils.dart
+index 838a093b5cbf2f37a17991a92d5a142ae81af2a9..0dd1755af4747867ac44c7f7352c6463ab7a3b38 100644
+--- a/lib/src/utils.dart
++++ b/lib/src/utils.dart
+@@ -8,7 +8,7 @@ const chainGap = '===== asynchronous gap ===========================\n';
+ 
+ /// The line used in the string representation of VM stack chains to represent
+ /// the gap between traces.
+-const vmChainGap = '<asynchronous suspension>\n';
++final vmChainGap = RegExp(r'^<asynchronous suspension>\n?$', multiLine: true);
+ 
+ // TODO(nweiz): When cross-platform imports work, use them to set this.
+ /// Whether we're running in a JS context.

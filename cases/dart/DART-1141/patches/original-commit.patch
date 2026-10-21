@@ -1,0 +1,152 @@
+diff --git a/benchmark/case/large.expect b/benchmark/case/large.expect
+index f71df6b30128c9b7eadc308613b4924e92e950fb..d90d9f6ce8d3997e19d1138c66f51ba3127d6422 100644
+--- a/benchmark/case/large.expect
++++ b/benchmark/case/large.expect
+@@ -1,6 +1,7 @@
+ // Copyright (c) 2012, the Dart project authors.  Please see the AUTHORS file
+ // for details. All rights reserved. Use of this source code is governed by a
+ // BSD-style license that can be found in the LICENSE file.
++
+ library pub.solver.backtracking_solver;
+ 
+ import 'dart:async';
+diff --git a/lib/src/front_end/sequence_builder.dart b/lib/src/front_end/sequence_builder.dart
+index d5839860dc4dc7a65d3a9276ea3c5ef2fa40fe53..7d16f557db23245f34dba82d8265c2d4f991f8f0 100644
+--- a/lib/src/front_end/sequence_builder.dart
++++ b/lib/src/front_end/sequence_builder.dart
+@@ -107,6 +107,9 @@ class SequenceBuilder {
+ 
+   /// Writes any comments appearing before [token] to the sequence.
+   ///
++  /// Also handles blank lines between preceding comments and elements and the
++  /// subsequent element.
++  ///
+   /// Comments between sequence elements get special handling where comments
+   /// on their own line become standalone sequence elements.
+   void addCommentsBefore(Token token, {int? indent}) {
+@@ -152,7 +155,13 @@ class SequenceBuilder {
+     if (comments.requiresNewline) _mustSplit = true;
+ 
+     // Write a blank before the token if there should be one.
+-    if (comments.linesBeforeNextToken > 1) addBlank();
++    if (comments.linesBeforeNextToken > 1) {
++      // If we just wrote a comment, then allow a blank line between it and the
++      // element.
++      if (comments.isNotEmpty) _allowBlank = true;
++
++      addBlank();
++    }
+   }
+ 
+   void _add(int indent, Piece piece) {
+diff --git a/test/tall/regression/1400/1415.unit b/test/tall/regression/1400/1415.unit
+new file mode 100644
+index 0000000000000000000000000000000000000000..311950ac6989ebdcefe3d75761a54c875151e32c
+--- /dev/null
++++ b/test/tall/regression/1400/1415.unit
+@@ -0,0 +1,20 @@
++>>>
++// Comment.
++
++main() {}
++<<<
++// Comment.
++
++main() {}
++>>>
++// Copyright (c) 2022, the Dart project authors.  Please see the AUTHORS file
++// for details. All rights reserved. Use of this source code is governed by a
++// BSD-style license that can be found in the LICENSE file.
++
++import 'package:analyzer/dart/ast/ast.dart';
++<<<
++// Copyright (c) 2022, the Dart project authors.  Please see the AUTHORS file
++// for details. All rights reserved. Use of this source code is governed by a
++// BSD-style license that can be found in the LICENSE file.
++
++import 'package:analyzer/dart/ast/ast.dart';
+\ No newline at end of file
+diff --git a/test/tall/statement/block_comment.stmt b/test/tall/statement/block_comment.stmt
+index 06369baf20387b1a9863d320a303349ea40f91dd..c8cbfe23cc0f693f094367fe7057ee046989fb84 100644
+--- a/test/tall/statement/block_comment.stmt
++++ b/test/tall/statement/block_comment.stmt
+@@ -96,4 +96,21 @@ line */
+   a:
+   b:
+   c;
++}
++>>> Preserve one blank line between a leading comment and statement.
++{
++
++
++
++// comment
++
++
++
++a;
++}
++<<<
++{
++  // comment
++
++  a;
+ }
+\ No newline at end of file
+diff --git a/test/tall/top_level/comment.unit b/test/tall/top_level/comment.unit
+index 52da0a4eeb3bf5bc11e6b6c6c71e69ba5fe50c3e..a4ca3783cb998d8bc1281bdff2011fe5a1c9672f 100644
+--- a/test/tall/top_level/comment.unit
++++ b/test/tall/top_level/comment.unit
+@@ -100,4 +100,50 @@ void b() => body;
+ /// Doc function.
+ void c() {
+   ;
+-}
+\ No newline at end of file
++}
++>>> Preserve one blank line between a leading comment and declaration.
++// comment
++
++
++
++var a = 1;
++<<<
++// comment
++
++var a = 1;
++>>> Preserve one blank line between a leading comment and directive.
++// comment
++
++
++
++import 'x.dart';
++<<<
++// comment
++
++import 'x.dart';
++>>> Preserve one blank line between comments and declarations.
++// comment
++var a = 1;
++
++// comment
++
++var b = 2;
++
++
++
++// comment
++
++
++
++var c = 3;
++<<<
++// comment
++var a = 1;
++
++// comment
++
++var b = 2;
++
++// comment
++
++var c = 3;

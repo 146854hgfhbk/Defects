@@ -1,0 +1,119 @@
+diff --git a/test/protobuf/conformance_regressions_test.exs b/test/protobuf/conformance_regressions_test.exs
+index 6f89be8..dc5e992 100644
+--- a/test/protobuf/conformance_regressions_test.exs
++++ b/test/protobuf/conformance_regressions_test.exs
+@@ -83,6 +83,18 @@ defmodule Protobuf.ConformanceRegressionsTest do
+ 
+     @describetag message_type: "protobuf_test_messages.proto3.TestAllTypesProto3"
+ 
++    test "Required.Proto2.ProtobufInput.ValidDataMap.INT32.INT32.MissingDefault.JsonOutput" do
++      mod = ProtobufTestMessages.Proto2.TestAllTypesProto2
++      problematic_payload = <<194, 3, 0>>
++      assert %{map_int32_int32: %{0 => 0}} = mod.decode(problematic_payload)
++    end
++    
++    test "Required.Proto3.JsonInput.Int32FieldQuotedExponentialValue.JsonOutput" do
++      mod = ProtobufTestMessages.Proto3.TestAllTypesProto3
++      problematic_payload = ~S({"optionalInt32": "1e5"})
++      assert %{optional_int32: 100_000} = Protobuf.JSON.decode!(problematic_payload, mod)
++    end
++
+     test "Recommended.Proto3.JsonInput.NullValueInOtherOneofNewFormat.Validator",
+          %{message_mod: message_mod} do
+       json = "{\"oneofNullValue\": null}"
+@@ -104,11 +116,6 @@ defmodule Protobuf.ConformanceRegressionsTest do
+     end
+   end
+ 
+-  # Fails on OTP 25.
+-  if :erlang.system_info(:otp_release) >= ~c"25" do
+-    @tag :skip
+-  end
+-
+   test "memory leak and infinite loop regression" do
+     mod = ProtobufTestMessages.Proto2.TestAllTypesProto2
+ 
+diff --git a/test/protobuf/encoder_test.exs b/test/protobuf/encoder_test.exs
+index 12a9f32..527d0a9 100644
+--- a/test/protobuf/encoder_test.exs
++++ b/test/protobuf/encoder_test.exs
+@@ -296,6 +296,17 @@ defmodule Protobuf.EncoderTest do
+     end
+   end
+ 
++  test "raises correct error for nested protobufs" do
++    message = """
++    Got error when encoding TestMsg.Foo#e: ** (Protobuf.EncodeError) Got error when \
++    encoding TestMsg.Foo.Bar#a: ** (Protobuf.EncodeError) "not_a_number" is invalid for type :int32\
++    """
++
++    assert_raise Protobuf.EncodeError, message, fn ->
++      Encoder.encode(%TestMsg.Foo{a: 90, e: %TestMsg.Foo.Bar{a: "not_a_number"}})
++    end
++  end
++
+   test "encodes with transformer module" do
+     msg = %TestMsg.ContainsTransformModule{field: 0}
+     assert Encoder.encode(msg) == <<10, 0>>
+diff --git a/test/protobuf/json_test.exs b/test/protobuf/json_test.exs
+index 5d10efd..9285f92 100644
+--- a/test/protobuf/json_test.exs
++++ b/test/protobuf/json_test.exs
+@@ -8,6 +8,12 @@ defmodule Protobuf.JSONTest do
+     assert Protobuf.JSON.encode!(%TestMsg.Foo2{b: 10}) == ~S|{"b":"10"}|
+   end
+ 
++  test "encode_to_iodata variants encode to iodata" do
++    assert iodata = Protobuf.JSON.encode_to_iodata!(%TestMsg.Foo2{b: 10})
++    assert {:ok, ^iodata} = Protobuf.JSON.encode_to_iodata(%TestMsg.Foo2{b: 10})
++    assert IO.iodata_to_binary(iodata) == ~S|{"b":"10"}|
++  end
++
+   test "encoding string field with invalid UTF-8 data" do
+     message = %Scalars{string: "   \xff   "}
+     assert {:error, %Jason.EncodeError{}} = Protobuf.JSON.encode(message)
+diff --git a/test/protobuf/protoc/generator/message_test.exs b/test/protobuf/protoc/generator/message_test.exs
+index 3bef634..9bc642d 100644
+--- a/test/protobuf/protoc/generator/message_test.exs
++++ b/test/protobuf/protoc/generator/message_test.exs
+@@ -731,27 +731,6 @@ defmodule Protobuf.Protoc.Generator.MessageTest do
+       assert msg =~ "field :simple, 1, type: :int32\n"
+       assert msg =~ "field :the_field_name, 2, type: :string, json_name: \"theFieldName\"\n"
+     end
+-
+-    test "is omitted when syntax is not proto3" do
+-      ctx = %Context{}
+-
+-      desc = %Google.Protobuf.DescriptorProto{
+-        name: "Foo",
+-        field: [
+-          %Google.Protobuf.FieldDescriptorProto{
+-            name: "the_field_name",
+-            json_name: "theFieldName",
+-            number: 1,
+-            type: :TYPE_STRING,
+-            label: :LABEL_REQUIRED
+-          }
+-        ]
+-      }
+-
+-      {[], [{_mod, msg}]} = Generator.generate(ctx, desc)
+-
+-      assert msg =~ "field :the_field_name, 1, required: true, type: :string\n"
+-    end
+   end
+ 
+   test "generate/2 repeated enum field" do
+diff --git a/test/protobuf/protoc/generator_test.exs b/test/protobuf/protoc/generator_test.exs
+index 8abebac..3964f04 100644
+--- a/test/protobuf/protoc/generator_test.exs
++++ b/test/protobuf/protoc/generator_test.exs
+@@ -12,7 +12,7 @@ defmodule Protobuf.Protoc.GeneratorTest do
+       desc = %Google.Protobuf.FileDescriptorProto{name: "name.proto"}
+ 
+       assert Generator.generate(ctx, desc) ==
+-               {nil, [%CodeGeneratorResponse.File{name: "name.pb.ex", content: ""}]}
++               {nil, [%CodeGeneratorResponse.File{name: "name.pb.ex", content: "\n"}]}
+     end
+ 
+     test "uses the package prefix" do

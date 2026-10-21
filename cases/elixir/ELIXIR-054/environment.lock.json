@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "case_id": "ELIXIR-054",
+  "language": "elixir",
+  "execution_backend": "swe_rebench_v2_docker",
+  "image_name": "local/defects4x/elixir-msz-hammox-python:20260929",
+  "base_image_name": "swerebenchv2/msz-hammox:13-e18767b",
+  "install": [
+    "export HOME=/workspace",
+    "mix deps.get",
+    "mix compile"
+  ],
+  "test_cmd": "mix test --trace",
+  "license": "Apache-2.0",
+  "timezone": "UTC",
+  "locale": "en_US.UTF-8",
+  "file_encoding": "UTF-8",
+  "docker_specs": {
+    "_variant": null,
+    "bazel_version": null,
+    "bun_version": null,
+    "cargo_version": null,
+    "deno_version": null,
+    "docker_version": null,
+    "erlang_version": null,
+    "gcc_version": null,
+    "go_version": null,
+    "helm_version": null,
+    "java_version": null,
+    "jdk_version": null,
+    "llvm_version": null,
+    "lua_version": null,
+    "luajit_version": null,
+    "neovim_version": null,
+    "node_version": null,
+    "npm_version": null,
+    "nvim_version": null,
+    "pnpm_version": null,
+    "python_image": null,
+    "python_version": null,
+    "redis_version": null,
+    "ruby_version": "8.3.16",
+    "rust_version": null,
+    "rustc_version": null,
+    "solana_version": null,
+    "sqlite_version": null
+  },
+  "image_digest": "local/defects4x/elixir-msz-hammox-python@sha256:45d4e61c0c59a417fa0216872ff1c9b22fa65bae0678580ef51c7d0e49070a99",
+  "image_digest_source": "BLOCKER-REPAIR-20261014 derived python-compatible image",
+  "reference_runtime": {
+    "elixir": "Elixir 1.16.3 (compiled with Erlang/OTP 26)",
+    "mix": "Mix 1.16.3 (compiled with Erlang/OTP 26)",
+    "mix_lock_fingerprint": "5a6dbaa375f1cf81fb2aa1d2e6f4d960"
+  },
+  "repair_metadata": {
+    "repair_id": "BLOCKER-REPAIR-20261014",
+    "dependency_sidecar": "runtime/dependency-supplement-20261010/elixir",
+    "image_archive": "runtime/dependency-supplement-20261010/elixir/images/elixir-blocker-images-20261014.tar.zst",
+    "offline_dependency_resolution": "MIX_ENV=test mix deps.get before mix compile"
+  },
+  "runtime_repair": {
+    "reason": "reference image lacked python command; derived image provides /usr/local/bin/python -> python3",
+    "base_image_digest": "sha256:4279f5cf67cbc4b892ca448efec720d6a3c96ea0195a73fec0a6b20b14ec1cea",
+    "derived_image_digest": "sha256:45d4e61c0c59a417fa0216872ff1c9b22fa65bae0678580ef51c7d0e49070a99"
+  }
+}

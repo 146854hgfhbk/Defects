@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-310",
+  "technical_evidence_sha256": "e1b235d57572b24cfa65d63e9b423573cdf9cd0fd2c5922e993b4ed8f0207e6a",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "6cf33637124854fe4d3be2f0ad0964f886acaf81802510ea889c5b87f794e946",
+  "reviewed_at": "2026-08-11T23:15:51.478185+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1586",
+  "rationale": "Issue #1586 reports a null check crash when formatting a doc comment before a pattern variable declaration. The minimized production patch adds exactly one switch case to handle PatternVariableDeclarationStatement by recursing to its wrapped declaration's firstNonCommentToken, plus 5 lines of clarifying comments. The trigger test (tall/regression/1500/1586.unit) was added by the fixing commit itself and is byte-exact with patches/trigger-tests.patch. Strict runtime validation confirms: buggy revision fails deterministically on the trigger (3 repetitions), fixed revision passes cleanly (isolated, suite, reversed), and full suite passes on fixed. No unrelated refactor, formatting, or feature extension is present. The active_same_project_root_causes list is empty, confirming no duplicate.\n\nIssue #1586 reports a null-check crash when formatting a doc comment before a pattern variable declaration. The minimized production patch adds exactly one switch case to handle PatternVariableDeclarationStatement by recursing into its wrapped PatternVariableDeclaration, plus three comment blocks—no refactoring, formatting changes, or unrelated logic. The trigger test (tall/regression/1500/1586.unit) was added by the fixing commit itself and byte-matches the commit diff. Strict runtime evidence confirms deterministic failure at buggy (3 fingerprint groups, reproduced in isolation), clean pass at fixed (all 32 matrix runs passed), and full-suite consistency (buggy suite failures include only the declared trigger). The trigger encodes the exact reproducer from the issue (doc comment + pattern variable declaration). No active same-project root causes exist to duplicate against.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:15:38.149412+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "6cf33637124854fe4d3be2f0ad0964f886acaf81802510ea889c5b87f794e946",
+      "response_sha256": "c9bc9bce74594c30d8721a292e8f3ee58cb1a12379ce67ee6f583cd6ea713ab8",
+      "response_id": "msg_e1b15544-03cb-4f38-a9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2865
+        },
+        "cache_creation_input_tokens": 2865,
+        "cache_read_input_tokens": 7624,
+        "input_tokens": 9912,
+        "output_tokens": 744
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1586",
+      "rationale": "Issue #1586 reports a null check crash when formatting a doc comment before a pattern variable declaration. The minimized production patch adds exactly one switch case to handle PatternVariableDeclarationStatement by recursing to its wrapped declaration's firstNonCommentToken, plus 5 lines of clarifying comments. The trigger test (tall/regression/1500/1586.unit) was added by the fixing commit itself and is byte-exact with patches/trigger-tests.patch. Strict runtime validation confirms: buggy revision fails deterministically on the trigger (3 repetitions), fixed revision passes cleanly (isolated, suite, reversed), and full suite passes on fixed. No unrelated refactor, formatting, or feature extension is present. The active_same_project_root_causes list is empty, confirming no duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.passed=true",
+        "trigger_reduction.status=EXECUTABLY_VALIDATED_PENDING_LLM_EQUIVALENCE",
+        "traceability.verified_fix_issue_numbers=[1586]",
+        "active_same_project_root_causes=[]"
+      ],
+      "risks": [
+        "Trigger test is a fixture-based formatting regression test; reproducibility depends on dart_style's tall format test harness remaining stable."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:15:51.477994+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "6cf33637124854fe4d3be2f0ad0964f886acaf81802510ea889c5b87f794e946",
+      "response_sha256": "222ec7b6a3bc34d5bd3e2c220b2e54649527cd53ca22f5716447cc737aafd94b",
+      "response_id": "msg_86e52b11-5bd8-40f1-bd",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2949
+        },
+        "cache_creation_input_tokens": 2949,
+        "cache_read_input_tokens": 7604,
+        "input_tokens": 9912,
+        "output_tokens": 978
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1586",
+      "rationale": "Issue #1586 reports a null-check crash when formatting a doc comment before a pattern variable declaration. The minimized production patch adds exactly one switch case to handle PatternVariableDeclarationStatement by recursing into its wrapped PatternVariableDeclaration, plus three comment blocks—no refactoring, formatting changes, or unrelated logic. The trigger test (tall/regression/1500/1586.unit) was added by the fixing commit itself and byte-matches the commit diff. Strict runtime evidence confirms deterministic failure at buggy (3 fingerprint groups, reproduced in isolation), clean pass at fixed (all 32 matrix runs passed), and full-suite consistency (buggy suite failures include only the declared trigger). The trigger encodes the exact reproducer from the issue (doc comment + pattern variable declaration). No active same-project root causes exist to duplicate against.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed=true",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed=true",
+        "strict_post_minimization.checks.trigger.deterministic.passed=true",
+        "traceability.verified_fix_issue_numbers=[1586]",
+        "trigger_reduction.status=EXECUTABLY_VALIDATED_PENDING_LLM_EQUIVALENCE",
+        "trigger_reduction.trigger_origin.primary=selected_fixed_commit"
+      ],
+      "risks": [
+        "Trigger is a .unit fixture consumed by the tall_format_test.dart harness rather than a standalone Dart test; failure isolation depends on fixture discovery logic.",
+        "The minimized patch includes three new comment blocks (8 added lines total, 4 of which are code); while comments do not alter runtime behavior, they slightly exceed pure logic changes."
+      ]
+    }
+  ]
+}

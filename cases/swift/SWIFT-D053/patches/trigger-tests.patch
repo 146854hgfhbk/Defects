@@ -1,0 +1,93 @@
+diff --git a/Tests/YamsTests/ConstructorTests.swift b/Tests/YamsTests/ConstructorTests.swift
+index 143155f5eab1fc586ab0a4304c615fe7411ee8a5..46193efac7a73b5db3440da2cab2881a0876380f 100644
+--- a/Tests/YamsTests/ConstructorTests.swift
++++ b/Tests/YamsTests/ConstructorTests.swift
+@@ -287,6 +287,67 @@ class ConstructorTests: XCTestCase { // swiftlint:disable:this type_body_length
+         YamsAssertEqual(objects, expected)
+     }
+ 
++    func testQuotationMark() throws {
++        // swiftlint:disable line_length
++        // ```terminal.sh-session
++        // $ python
++        // Python 3.6.4 (default, Mar 16 2018, 17:10:15)
++        // [GCC 4.2.1 Compatible Apple LLVM 9.1.0 (clang-902.0.37.1)] on darwin
++        // Type "help", "copyright", "credits" or "license" for more information.
++        // >>> import yaml
++        // >>> yaml.load(r"""plain: 10.10
++        // ... single quote: '10.10'
++        // ... double quote: "10.10"
++        // ... literal: |
++        // ...     10.10
++        // ... literal single quote: |
++        // ...     '10.10'
++        // ... literal double quote: |
++        // ...     "10.10"
++        // ... folded: >
++        // ...     10.10
++        // ... folded single quote: >
++        // ...     '10.10'
++        // ... folded double quote: >
++        // ...     "10.10"
++        // ... """)
++        // {'plain': 10.1, 'single quote': '10.10', 'double quote': '10.10', 'literal': '10.10\n', 'literal single quote': "'10.10'\n", 'literal double quote': '"10.10"\n', 'folded': '10.10\n', 'folded single quote': "'10.10'\n", 'folded double quote': '"10.10"\n'}
++        // >>>
++        // ```
++        // swiftlint:enable line_length
++        let example = """
++            plain: 10.10
++            single quote: '10.10'
++            double quote: "10.10"
++            literal: |
++              10.10
++            literal single quote: |
++              '10.10'
++            literal double quote: |
++              "10.10"
++            folded: >
++              10.10
++            folded single quote: >
++              '10.10'
++            folded double quote: >
++              "10.10"
++
++            """
++        let objects = try Yams.load(yaml: example)
++        let expected: [String: Any] = [
++            "plain": 10.10,
++            "single quote": "10.10",
++            "double quote": "10.10",
++            "literal": "10.10\n",
++            "literal single quote": "'10.10'\n",
++            "literal double quote": "\"10.10\"\n",
++            "folded": "10.10\n",
++            "folded single quote": "'10.10'\n",
++            "folded double quote": "\"10.10\"\n"
++        ]
++        YamsAssertEqual(objects, expected)
++    }
++
+     func testSet() throws {
+         let example = """
+             # Explicitly typed set.
+@@ -429,6 +490,7 @@ extension ConstructorTests {
+             ("testNull", testNull),
+             ("testOmap", testOmap),
+             ("testPairs", testPairs),
++            ("testQuotationMark", testQuotationMark),
+             ("testSet", testSet),
+             ("testSeq", testSeq),
+             ("testTimestamp", testTimestamp),
+diff --git a/Tests/YamsTests/YamlErrorTests.swift b/Tests/YamsTests/YamlErrorTests.swift
+index 3c122c23456fbd2548c0aa4c33136111a8368bbc..7c7c1d354593d519b5b52354c3acdc553a0662a4 100644
+--- a/Tests/YamsTests/YamlErrorTests.swift
++++ b/Tests/YamsTests/YamlErrorTests.swift
+@@ -65,7 +65,7 @@ class YamlErrorTests: XCTestCase {
+ 
+         let parser = try Parser(yaml: invalidYAML)
+         // first iteration returns scalar
+-        XCTAssertEqual(try parser.nextRoot(), Node("", Tag(.null), .literal))
++        XCTAssertEqual(try parser.nextRoot(), Node("", Tag(.str), .literal))
+         // second iteration throws error
+         XCTAssertThrowsError(try parser.nextRoot()) { error in
+             XCTAssertTrue(error is YamlError)

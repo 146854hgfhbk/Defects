@@ -1,0 +1,58 @@
+diff --git a/test/document_test.dart b/test/document_test.dart
+index e5a937705341d3cc20a6f03fd4aa235dc9d5ffe3..e9744e1c0b7c52efa4c8cefabd1b19f09389fb1d 100644
+--- a/test/document_test.dart
++++ b/test/document_test.dart
+@@ -16,5 +16,53 @@ void main() {
+           const TypeMatcher<Text>()
+               .having((e) => e.text, 'text', equals('< &')));
+     });
++
++    test('encodeHtml true allow code block escaping', () {
++      var document = Document(encodeHtml: true);
++      var result = document.parseInline("```<p>Hello <em>Markdown</em></p>```");
++      expect(result, hasLength(1));
++      expect(
++          result[0],
++          const TypeMatcher<Element>().having(
++              (e) => e.textContent,
++              'text',
++              equals(
++                  "&lt;p&gt;Hello &lt;em&gt;Markdown&lt;/em&gt;&lt;/p&gt;")));
++    });
++
++    test('encodeHtml false prevents code block escaping', () {
++      var document = Document(encodeHtml: false);
++      var result = document.parseInline("```<p>Hello <em>Markdown</em></p>```");
++      expect(result, hasLength(1));
++      expect(
++          result[0],
++          const TypeMatcher<Element>().having((e) => e.textContent, 'text',
++              equals("<p>Hello <em>Markdown</em></p>")));
++    });
++
++    test('encodeHtml true allow code block escaping (BlockParser)', () {
++      var document = Document(encodeHtml: true);
++      var lines = "```\n<p>Hello <em>Markdown</em></p>\n```\n".split('\n');
++      var result = document.parseLines(lines);
++      expect(result, hasLength(1));
++      expect(
++          result[0],
++          const TypeMatcher<Element>().having(
++              (e) => e.textContent,
++              'text',
++              equals(
++                  "&lt;p&gt;Hello &lt;em&gt;Markdown&lt;/em&gt;&lt;/p&gt;\n")));
++    });
++
++    test('encodeHtml false prevents code block escaping (BlockParser)', () {
++      var document = Document(encodeHtml: false);
++      var lines = "```\n<p>Hello <em>Markdown</em></p>\n```\n".split('\n');
++      var result = document.parseLines(lines);
++      expect(result, hasLength(1));
++      expect(
++          result[0],
++          const TypeMatcher<Element>().having((e) => e.textContent, 'text',
++              equals("<p>Hello <em>Markdown</em></p>\n")));
++    });
+   });
+ }

@@ -1,0 +1,19 @@
+diff --git a/test/norm/schema_test.exs b/test/norm/schema_test.exs
+index bc0df4a..ee4163a 100644
+--- a/test/norm/schema_test.exs
++++ b/test/norm/schema_test.exs
+@@ -58,6 +58,14 @@ defmodule Norm.SchemaTest do
+     assert %{bool: false} == conform!(%{bool: false}, s)
+   end
+ 
++  test "allows keys to have nil values" do
++    s = schema(%{foo: spec(is_nil())})
++
++    assert %{foo: nil} == conform!(%{foo: nil}, s)
++    assert {:error, errors} = conform(%{foo: 123}, s)
++    assert errors == ["val: 123 in: :foo fails: is_nil()"]
++  end
++
+   describe "generation" do
+     test "works with maps" do
+       s =

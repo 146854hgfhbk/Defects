@@ -1,0 +1,69 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3d3b106..501140d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -6,6 +6,7 @@
+ * Ensure comment formatting is idempotent (#1606).
+ * Better indentation of leading comments on property accesses in binary operator
+   operands (#1611).
++* Don't crash on doc comments in local variable declarations (#1621).
+ 
+ ## 3.0.0
+ 
+diff --git a/lib/src/ast_extensions.dart b/lib/src/ast_extensions.dart
+index 9c82eca..0b9fd22 100644
+--- a/lib/src/ast_extensions.dart
++++ b/lib/src/ast_extensions.dart
+@@ -31,14 +31,18 @@ extension AstNodeExtensions on AstNode {
+       AnnotatedNode(metadata: [var annotation, ...]) => annotation.beginToken,
+       AnnotatedNode(firstTokenAfterCommentAndMetadata: var token) => token,
+ 
+-      // DefaultFormalParameter is not an AnnotatedNode, but its first child
+-      // (parameter) *is* an AnnotatedNode, so we can't just use beginToken.
++      // The inner [NormalFormalParameter] is an [AnnotatedNode].
+       DefaultFormalParameter(:var parameter) => parameter.firstNonCommentToken,
+ 
+-      // A pattern variable statement isn't itself an AnnotatedNode, but the
+-      // [PatternVariableDeclaration] that it wraps is.
++      // The inner [PatternVariableDeclaration] is an [AnnotatedNode].
+       PatternVariableDeclarationStatement(:var declaration) =>
+         declaration.firstNonCommentToken,
++
++      // The inner [VariableDeclarationList] is an [AnnotatedNode].
++      VariableDeclarationStatement(:var variables) =>
++        variables.firstNonCommentToken,
++
++      // Otherwise, we don't have to worry about doc comments.
+       _ => beginToken
+     };
+   }
+diff --git a/test/tall/regression/1600/1621.unit b/test/tall/regression/1600/1621.unit
+new file mode 100644
+index 0000000..4d7319e
+--- /dev/null
++++ b/test/tall/regression/1600/1621.unit
+@@ -0,0 +1,24 @@
++>>>
++/*member: readLocalInAnonymousClosure:*/
++readLocalInAnonymousClosure(/**/ parameter) {
++  var /**/ local = parameter;
++  return /*fields=[local],free=[local]*/ () => local;
++}
++<<<
++/*member: readLocalInAnonymousClosure:*/
++readLocalInAnonymousClosure(/**/ parameter) {
++  var /**/ local = parameter;
++  return /*fields=[local],free=[local]*/ () => local;
++}
++>>>
++class C {
++  @override
++  // ignore: overridden_fields
++  final FunctionEntity _member;
++}
++<<<
++class C {
++  @override
++  // ignore: overridden_fields
++  final FunctionEntity _member;
++}

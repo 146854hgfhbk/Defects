@@ -1,0 +1,55 @@
+diff --git a/lib/phoenix/endpoint.ex b/lib/phoenix/endpoint.ex
+index 600ac464d..15b42731a 100644
+--- a/lib/phoenix/endpoint.ex
++++ b/lib/phoenix/endpoint.ex
+@@ -204,7 +204,7 @@ defmodule Phoenix.Endpoint do
+ 
+   Phoenix allows you to choose which webserver adapter to use. The default
+   is `Phoenix.Endpoint.Cowboy2Adapter` which can be configured via the
+-  following options.
++  following top-level options.
+ 
+     * `:http` - the configuration for the HTTP server. It accepts all options
+       as defined by [`Plug.Cowboy`](https://hexdocs.pm/plug_cowboy/). Defaults
+@@ -215,9 +215,10 @@ defmodule Phoenix.Endpoint do
+       to `false`
+ 
+     * `:drainer` - a drainer process that triggers when your application is
+-      shutting to wait for any on-going request to finish. It accepts all
+-      options as defined by [`Plug.Cowboy`](https://hexdocs.pm/plug_cowboy/Plug.Cowboy.Drainer.html).
+-      Defaults to `[]` and can be disabled by setting it to false.
++      shutting down to wait for any on-going request to finish. It accepts all
++      options as defined by [`Plug.Cowboy.Drainer`](https://hexdocs.pm/plug_cowboy/Plug.Cowboy.Drainer.html).
++      Defaults to `[]`, which will start a drainer process for each configured endpoint,
++      but can be disabled by setting it to `false`.
+ 
+   ## Endpoint API
+ 
+diff --git a/lib/phoenix/endpoint/cowboy2_adapter.ex b/lib/phoenix/endpoint/cowboy2_adapter.ex
+index ed54cba89..f2d07f5b1 100644
+--- a/lib/phoenix/endpoint/cowboy2_adapter.ex
++++ b/lib/phoenix/endpoint/cowboy2_adapter.ex
+@@ -16,7 +16,7 @@ defmodule Phoenix.Endpoint.Cowboy2Adapter do
+ 
+     * `:drainer` - a drainer process that triggers when your application is
+       shutting down to wait for any on-going request to finish. It accepts all
+-      options as defined by [`Plug.Cowboy`](https://hexdocs.pm/plug_cowboy/Plug.Cowboy.Drainer.html).
++      options as defined by [`Plug.Cowboy.Drainer`](https://hexdocs.pm/plug_cowboy/Plug.Cowboy.Drainer.html).
+       Defaults to `[]`, which will start a drainer process for each configured endpoint,
+       but can be disabled by setting it to `false`.
+ 
+diff --git a/lib/phoenix/param.ex b/lib/phoenix/param.ex
+index 8a51ffcf5..7ccd2b767 100644
+--- a/lib/phoenix/param.ex
++++ b/lib/phoenix/param.ex
+@@ -58,6 +58,10 @@ defimpl Phoenix.Param, for: Integer do
+   def to_param(int), do: Integer.to_string(int)
+ end
+ 
++defimpl Phoenix.Param, for: Float do
++  def to_param(float), do: Float.to_string(float)
++end
++
+ defimpl Phoenix.Param, for: BitString do
+   def to_param(bin) when is_binary(bin), do: bin
+ end

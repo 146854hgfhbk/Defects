@@ -1,0 +1,125 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-008",
+  "bug_id": "JULIA-008",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaData/CSV.jl",
+  "repository_url": "https://github.com/JuliaData/CSV.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaData/CSV.jl/issues/1185"
+  ],
+  "issue_id": 1185,
+  "buggy_revision": "2f01e198919291dccce7205ddc5ea934577ed465",
+  "fixed_revision": "0a1fb3cfb431b00af9434dd5b056b509632001c2",
+  "candidate_sha": "0a1fb3cfb431b00af9434dd5b056b509632001c2",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "2f01e198919291dccce7205ddc5ea934577ed465",
+  "changed_production_files": [
+    "src/detection.jl"
+  ],
+  "changed_test_files": [
+    "test/basics.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-008 decimal comma delimiter detection"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "522dd5da64e13f47b5815ee30593faf1bc0f2ac964fccd85b02127e83e1e4d3d",
+    "oracle": {
+      "public_api": "CSV.File decimal-comma parsing with detected semicolon delimiter",
+      "upstream_test_file": "test/basics.jl",
+      "source_evidence": "isolated from the upstream fix assertions in test/basics.jl",
+      "upstream_test_patch_sha256": "2757a8c205f157e164a87924cbc15c30da1755ae02987e4c3c4bc500504d738e"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.12.7",
+    "julia_version_origin": "fixed_revision_era_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.12.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "0a1fb3cfb431b00af9434dd5b056b509632001c2",
+    "project": "JuliaData/CSV.jl",
+    "input_sha256": "3e96d390ea8188e3f6ec68983768528516b78fa5c7efcaaeaa7d3223d612e8ef",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:50:54Z",
+    "usage": {
+      "prompt_tokens": 2724,
+      "completion_tokens": 632,
+      "total_tokens": 3356
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"Fix for incorrect automatic delimiter detection in CSV.jl when files use comma as decimal separator and semicolon as delimiter. The auto-detection would incorrectly choose comma as the delimiter because commas appeared consistently across data rows, even though the header clearly used semicolons.\",\n  \"evidence\": \"Issue #1185 reports a real user-facing bug: automatic delimiter detection fails for semicolon-delimited files with comma decimals. The fix modifies the detection algorithm in src/detection.jl to prefer delimiters that appear in the header line before falling back to the existing row-consistency heuristic. A regression test is included that verifies semicolon-delimited data with comma decimals is parsed correctly without explicitly specifying delim=';'.\",\n  \"missing_evidence\": \"The traceability_class is UNVERIFIED and the trigger_tests reference is 'JULIA-008 upstream fix test patch' which appears synthetic rather than from actual CI. The commit and PR #1186 mention 'Co-authored by Codex' suggesting AI generation, though the fix itself is legitimate. No independent CI logs confirming the test suite passes are provided.\",\n  \"validation_risks\": \"The header-preference logic could theoretically cause regressions in edge cases where a delimiter appears in the header incidentally (e.g., within quoted fields). The fallback to the original behavior mitigates this risk. The fix relies on headerbvc being properly populated when headerpos > 0, which should be verified.\",\n  \"suggested_tests\": \"1. Test with a file where the header contains commas inside quoted fields but uses semicolons as delimiters. 2. Test with tab-delimited files that have commas in data. 3. Test with files that have no header (header=false) to ensure the fallback path works correctly. 4. Test with the exact MWE file from issue #1185.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for incorrect automatic delimiter detection in CSV.jl when files use comma as decimal separator and semicolon as delimiter. The auto-detection would incorrectly choose comma as the delimiter because commas appeared consistently across data rows, even though the header clearly used semicolons.",
+    "evidence": "Issue #1185 reports a real user-facing bug: automatic delimiter detection fails for semicolon-delimited files with comma decimals. The fix modifies the detection algorithm in src/detection.jl to prefer delimiters that appear in the header line before falling back to the existing row-consistency heuristic. A regression test is included that verifies semicolon-delimited data with comma decimals is parsed correctly without explicitly specifying delim=';'.",
+    "missing_evidence": "The traceability_class is UNVERIFIED and the trigger_tests reference is 'JULIA-008 upstream fix test patch' which appears synthetic rather than from actual CI. The commit and PR #1186 mention 'Co-authored by Codex' suggesting AI generation, though the fix itself is legitimate. No independent CI logs confirming the test suite passes are provided.",
+    "validation_risks": "The header-preference logic could theoretically cause regressions in edge cases where a delimiter appears in the header incidentally (e.g., within quoted fields). The fallback to the original behavior mitigates this risk. The fix relies on headerbvc being properly populated when headerpos > 0, which should be verified.",
+    "suggested_tests": "1. Test with a file where the header contains commas inside quoted fields but uses semicolons as delimiters. 2. Test with tab-delimited files that have commas in data. 3. Test with files that have no header (header=false) to ensure the fallback path works correctly. 4. Test with the exact MWE file from issue #1185."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-008 decimal comma delimiter detection"
+    ],
+    "exception_types": [
+      "54a7d6031b04fb529b5fe4d66ad92ed280695b657d9e4f50f9f255a0ee84934b",
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+      "6bb328f9fdbc4ba020038cdf0a4c9e87b35f344e376224e0ee9dfd53d8e798c7",
+      "86139a511c38c118f71fbc3c6c5730886b08ec0a5632874ef62695aa072524cb",
+      "bed6de0fc9c786151dc09a5b0b8613ca06c5e7873e3ff2c030f1d40daa4c2ced"
+    ],
+    "fingerprints": [
+      "54a7d6031b04fb529b5fe4d66ad92ed280695b657d9e4f50f9f255a0ee84934b",
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+      "6bb328f9fdbc4ba020038cdf0a4c9e87b35f344e376224e0ee9dfd53d8e798c7",
+      "86139a511c38c118f71fbc3c6c5730886b08ec0a5632874ef62695aa072524cb",
+      "bed6de0fc9c786151dc09a5b0b8613ca06c5e7873e3ff2c030f1d40daa4c2ced"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

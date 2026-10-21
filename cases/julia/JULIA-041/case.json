@@ -1,0 +1,116 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-041",
+  "bug_id": "JULIA-041",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "jump-dev/MathOptInterface.jl",
+  "repository_url": "https://github.com/jump-dev/MathOptInterface.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "54c24745e7b8fa41812b1300832ad33aa2f02c24",
+  "fixed_revision": "33831d19f54629b1c1eee5577ac93e007b8a878b",
+  "candidate_sha": "33831d19f54629b1c1eee5577ac93e007b8a878b",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "54c24745e7b8fa41812b1300832ad33aa2f02c24",
+  "changed_production_files": [
+    "src/FileFormats/LP/read.jl"
+  ],
+  "changed_test_files": [
+    "test/FileFormats/LP/test_LP.jl"
+  ],
+  "trigger_tests": [
+    "LP negative upper bound retains default lower bound"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "eabcb0366ab246bfc75ad2cb040db2ab1ecd578331dec72d22268fbc6ccf66db",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/FileFormats/LP/test_LP.jl",
+        "basis": "LP public read/write round-trip assertion copied from upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "037b70167f926ac652190dc785289198de33039e06e1930d82d7e58dc768ce28"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "33831d19f54629b1c1eee5577ac93e007b8a878b",
+    "project": "jump-dev/MathOptInterface.jl",
+    "input_sha256": "ac2befcef2e69d4cb3ae94e74cd6ec3419c8ffb8b40a9130b639454b0c1e5797",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:52:46Z",
+    "usage": {
+      "prompt_tokens": 2098,
+      "completion_tokens": 539,
+      "total_tokens": 2637
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.93,\n  \"summary\": \"Fix for incorrect default lower bound handling in the LP file format reader when a variable has only an upper bound specified (especially a negative one). The LP spec states that `x <= -1.0` with no explicit lower bound means the lower bound is 0, making the model infeasible, but MathOptInterface was incorrectly setting the lower bound to -Inf.\",\n  \"evidence\": \"Issue #2994 clearly documents the bug with a reproducible example using Gurobi showing the correct behavior (infeasible model) vs MathOptInterface's incorrect behavior. The issue traces the regression to PR #1810 where an incorrect assumption about default bounds was made. The fix is isolated to `src/FileFormats/LP/read.jl` with corresponding test changes in `test/FileFormats/LP/test_LP.jl`.\",\n  \"missing_evidence\": \"The actual diff content is not provided, so the exact code change cannot be inspected. However, the issue description, commit message context, and file paths all strongly support this being a targeted bug fix.\",\n  \"validation_risks\": \"Low risk. The fix corrects LP format spec compliance. Edge cases around variables with only upper bounds or with explicit lower bounds should be tested.\",\n  \"suggested_tests\": \"Test reading an LP file with `x <= -1.0` (no lower bound) and verify the lower bound defaults to 0 (not -Inf). Test that explicit lower bounds still work correctly. Test that variables with no bounds section get the correct defaults (0 to +Inf for continuous).\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.93,
+    "summary": "Fix for incorrect default lower bound handling in the LP file format reader when a variable has only an upper bound specified (especially a negative one). The LP spec states that `x <= -1.0` with no explicit lower bound means the lower bound is 0, making the model infeasible, but MathOptInterface was incorrectly setting the lower bound to -Inf.",
+    "evidence": "Issue #2994 clearly documents the bug with a reproducible example using Gurobi showing the correct behavior (infeasible model) vs MathOptInterface's incorrect behavior. The issue traces the regression to PR #1810 where an incorrect assumption about default bounds was made. The fix is isolated to `src/FileFormats/LP/read.jl` with corresponding test changes in `test/FileFormats/LP/test_LP.jl`.",
+    "missing_evidence": "The actual diff content is not provided, so the exact code change cannot be inspected. However, the issue description, commit message context, and file paths all strongly support this being a targeted bug fix.",
+    "validation_risks": "Low risk. The fix corrects LP format spec compliance. Edge cases around variables with only upper bounds or with explicit lower bounds should be tested.",
+    "suggested_tests": "Test reading an LP file with `x <= -1.0` (no lower bound) and verify the lower bound defaults to 0 (not -Inf). Test that explicit lower bounds still work correctly. Test that variables with no bounds section get the correct defaults (0 to +Inf for continuous)."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "LP negative upper bound retains default lower bound"
+    ],
+    "exception_types": [
+      "b0d9d4e34e29a7a377800414c0ccc7a16fd1636df7d2d18c23b661620388e6dc"
+    ],
+    "fingerprints": [
+      "b0d9d4e34e29a7a377800414c0ccc7a16fd1636df7d2d18c23b661620388e6dc"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

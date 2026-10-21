@@ -1,0 +1,13 @@
+diff --git a/lib/cachex/actions/warm.ex b/lib/cachex/actions/warm.ex
+index 8651538..e798898 100644
+--- a/lib/cachex/actions/warm.ex
++++ b/lib/cachex/actions/warm.ex
+@@ -31,7 +31,7 @@ defmodule Cachex.Actions.Warm do
+       warmers
+       |> Enum.filter(&filter_mod(&1, only))
+       |> Enum.map(&spawn_call(&1, wait))
+-      |> Task.yield_many()
++      |> Task.yield_many(:infinity)
+       |> Enum.map(&extract_name/1)
+ 
+     {:ok, warmed}

@@ -1,0 +1,30 @@
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/AnnotationRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/AnnotationRuleTest.kt
+index ab4813140f..47a499216a 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/AnnotationRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/AnnotationRuleTest.kt
+@@ -724,7 +724,7 @@ class AnnotationRuleTest {
+         }
+
+         @Test
+-        fun `Given a custom type with multiple annotations on it type parameter(s)`() {
++        fun `Given a custom type with multiple annotations on it type parameter(s)`() { // xxx
+             val code =
+                 """
+                 val fooBar: FooBar<String, @Foo String, @Foo @Bar String, @Bar("bar") @Foo String> = FooBar()
+@@ -986,4 +986,16 @@ class AnnotationRuleTest {
+             """.trimIndent()
+         annotationRuleAssertThat(code).hasNoLintViolations()
+     }
++
++    @Test
++    fun `Issue 2399 - Given a type projection with an annotated type reference`() {
++        val code =
++            """
++            val foo: List<
++                @Bar("bar")
++                Any,
++            >? = null
++            """.trimIndent()
++        annotationRuleAssertThat(code).hasNoLintViolations()
++    }
+ }

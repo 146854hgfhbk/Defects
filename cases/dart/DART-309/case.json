@@ -1,0 +1,830 @@
+{
+ "buggy_revision": "89577e750840c3655e5703004fb774d6564e02b9",
+ "fixed_tree": "8a44e45eda29cf7953c1a3ad3014c4968d5ee6ff",
+ "pull_request_url": "https://github.com/dart-lang/dart_style/pull/1587",
+ "production_files": [
+  "lib/src/front_end/delimited_list_builder.dart",
+  "lib/src/front_end/piece_factory.dart"
+ ],
+ "repository_evidence": {
+  "checked_at": "2026-08-05T05:14:04.112674+00:00",
+  "api_url": "https://api.github.com/repos/dart-lang/dart_style",
+  "html_url": "https://github.com/dart-lang/dart_style",
+  "private": false,
+  "visibility": "public",
+  "archived": false,
+  "license_spdx": "BSD-3-Clause"
+ },
+ "language": "Dart",
+ "buggy_tree": "a1b07af07cb5798c0b63b36fa7e44cfea68cab54",
+ "trigger_tests": [
+  {
+   "path": "test/tall_format_test.dart",
+   "name": "tall/expression/list_comment.stmt"
+  },
+  {
+   "path": "test/tall_format_test.dart",
+   "name": "tall/regression/1500/1584.unit"
+  }
+ ],
+ "case_id": "DART-309",
+ "schema_version": 1,
+ "trigger_reduction": {
+  "status": "PASS",
+  "upstream_trigger_patch": {
+   "path": "patches/trigger-tests.patch",
+   "sha256": "6213cd26a295124876f347262ca8572fce7256545e0a6b3762a8ed59b5c44504",
+   "bytes": 17908
+  },
+  "later_trigger_commit": "9a8a34241acfb5656e3a85948a73d843f0ab26a9",
+  "removed_external_dependency": false,
+  "rationale": "Trigger tests come from a later upstream commit that references the verified fix issue; must still pass AB/BA/AB validation."
+ },
+ "repository_url": "https://github.com/dart-lang/dart_style.git",
+ "materialized_at": "2026-08-05T05:14:04.116834+00:00",
+ "source_evidence_sha256": "8f3b61c7b7fdd7f7748f79f36c7ffdf49ccfb92900a5fb19e05d787f9b7bd29e",
+ "commit_files": {
+  "all": [
+   "lib/src/front_end/delimited_list_builder.dart",
+   "lib/src/front_end/piece_factory.dart",
+   "pubspec.yaml",
+   "test/tall/expression/list_comment.stmt",
+   "test/tall/regression/1500/1584.unit"
+  ],
+  "production": [
+   "lib/src/front_end/delimited_list_builder.dart",
+   "lib/src/front_end/piece_factory.dart"
+  ],
+  "tests": [],
+  "other": [
+   "pubspec.yaml",
+   "test/tall/expression/list_comment.stmt",
+   "test/tall/regression/1500/1584.unit"
+  ]
+ },
+ "repository_path": "__REFERENCE_USER_HOME__/dart-defects-miner-review/workspaces/later-trigger-materialization/repositories/dart-lang__dart_style",
+ "fixed_revision": "914d1d6f569bc5aecc03adb1f53ef23d2b3ebb61",
+ "issue_urls": [
+  "https://github.com/dart-lang/dart_style/issues/1584"
+ ],
+ "commit_url": "https://github.com/dart-lang/dart_style/commit/914d1d6f569bc5aecc03adb1f53ef23d2b3ebb61",
+ "patches": {
+  "original_commit": {
+   "path": "patches/original-commit.patch",
+   "sha256": "35e87afad709d803cc029f85f951928e0121f414a2b5186da22faa7a4add6b64",
+   "bytes": 20348
+  },
+  "production_fix": {
+   "path": "patches/production-fix.patch",
+   "sha256": "c28016039923c7da69482ae3e870958cc2170059f73dd987040f564b52b8df23",
+   "bytes": 2124
+  },
+  "trigger_tests": {
+   "path": "patches/trigger-tests.patch",
+   "sha256": "6213cd26a295124876f347262ca8572fce7256545e0a6b3762a8ed59b5c44504",
+   "bytes": 17908
+  }
+ },
+ "dart_sdk_version": "Dart SDK version: 2.19.6",
+ "sdk_version": "2.19.6",
+ "build": {
+  "directory": ".",
+  "dependency_command": [
+   "dart",
+   "pub",
+   "get"
+  ],
+  "analyze_command": [
+   "dart",
+   "analyze"
+  ],
+  "test_command": [
+   "dart",
+   "test",
+   "--reporter=json"
+  ],
+  "timeout_seconds": 7200
+ },
+ "trigger_test_files": [
+  "test/tall_format_test.dart"
+ ],
+ "commit_stats": {
+  "production_hunk_count": 3,
+  "maximum_exact_subset_candidates": 7,
+  "hunk_count_source": "verified_production_patch"
+ },
+ "project": "dart-lang/dart_style",
+ "traceability": {
+  "requires_unique_fix_commit": true,
+  "verified_fix_issue_numbers": [
+   1584
+  ],
+  "paths": [
+   {
+    "issue_number": 1584,
+    "path": "fix_commit_message_mentions_issue_id"
+   }
+  ],
+  "pull_request_number": 1587,
+  "selected_from_multi_commit_pull_request": false,
+  "later_trigger_commit": "9a8a34241acfb5656e3a85948a73d843f0ab26a9",
+  "later_trigger_score": 100,
+  "commit_message_issue_literal": {
+   "status": "PASS",
+   "verified_issue_numbers": [
+    1584
+   ],
+   "literal_issue_numbers_found": [
+    1584
+   ],
+   "fixing_commit_message": "Don't drop comments in collection literals with preserved newlines.\n\nA line comment in a collection literal triggers special formatting\nwhere we allow multiple elements in a single line, like:\n\n```\nlist = [\n  // Comment.\n  1, 2, 3\n  4, 5,\n  6,\n];\n```\n\nThe formatter models that by having a DelimitedListBuilder for the\nentire collection literal. Then the elements that should be packed onto\na single line are formatted using a separate DelimitedListBuilder for\neach line.\n\nIn the very rare case where you have a comment after the last element\non a line but *before* the subsequent comma, the comment would get\ndropped. This is because the comment was sitting in the inner\nDelimitedListBuilder for the line waiting to be put somewhere, but we\nthen discard that builder to start a new line or when the whole list is\ndone.\n\nThis fixes that. Whenever we're done with a line, we hoist any remaining\ncomments up to the outer DelimitedListBuilder. That way the comment gets\nput after the comma at the end of the line.\n\nAlso bump the min SDK constraint to 3.4.0. I don't think dart_style\nworks with an older version because of analyzer's SDK constraints.\n\nFix #1584.",
+   "accepted_path": "fix_commit_message_mentions_issue_id",
+   "strict_defects4j_literal_rule": true
+  },
+  "historical_paths_before_publication_repair": [
+   {
+    "issue_number": 1584,
+    "path": "fix_commit_to_issue"
+   }
+  ],
+  "unique_fix_boundary_verified": true,
+  "class": "STRICT_DIRECT",
+  "strict_defects4j_tracker_rule": true
+ },
+ "status": "active",
+ "acceptance": {
+  "differential_validation": "PASS",
+  "patch_minimization": "PASS",
+  "full_suite_validation": "PASS",
+  "human_curation": "NOT_REQUIRED_BY_DATASET_POLICY",
+  "semantic_curation": "PASS",
+  "curation_method": "llm_api_consensus",
+  "release_eligible": true,
+  "llm_confirmed": true,
+  "publication_gate": "PASS",
+  "human_minimization_review": "PASS"
+ },
+ "validation": {
+  "status": "stable_differential",
+  "generated_at": "2026-08-11T08:30:05.588157+00:00",
+  "report": "validation/validation.json",
+  "report_sha256": "44d2341247ea2a2b61ab51da0f01e7f266216be6c06bc66fc9ee63f7625782bd",
+  "engine": "validation_engine.py",
+  "fresh_worktree_per_repetition": true,
+  "repetitions": 3,
+  "infrastructure_error_count": 0,
+  "exact_trigger_test_selectors": [
+   {
+    "path": "test/tall_format_test.dart",
+    "name": "tall/expression/list_comment.stmt"
+   },
+   {
+    "path": "test/tall_format_test.dart",
+    "name": "tall/regression/1500/1584.unit"
+   }
+  ],
+  "test_network_policy": "os_enforced",
+  "strict_raw_evidence": {
+   "schema_version": 1,
+   "case_id": "DART-309",
+   "repetitions": 3,
+   "full_suite_repetitions": 1,
+   "require_analyze_clean": false,
+   "passed": true,
+   "checks": {
+    "selectors.present_and_unique": {
+     "passed": true,
+     "detail": "declared=2 valid=2 unique=2"
+    },
+    "matrix.repetitions": {
+     "passed": true,
+     "detail": "observed=[1, 2, 3] minimum_count=3"
+    },
+    "matrix.complete": {
+     "passed": true,
+     "detail": "runs=38"
+    },
+    "build.both_versions": {
+     "passed": true,
+     "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+    },
+    "trigger.fixed_clean": {
+     "passed": true,
+     "detail": "all fixed isolated/suite/reversed runs must pass"
+    },
+    "trigger.buggy_differential": {
+     "passed": true,
+     "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('test/tall_format_test.dart', 'tall/expression/list_comment.stmt'), ('test/tall_format_test.dart', 'tall/regression/1500/1584.unit')]"
+    },
+    "trigger.deterministic": {
+     "passed": true,
+     "detail": "fingerprint_groups=4 expected=4"
+    },
+    "full_suite.fixed_all_green": {
+     "passed": true,
+     "detail": "runs=1 bad=0"
+    },
+    "full_suite.buggy_reproduces_only_triggers": {
+     "passed": true,
+     "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['test/tall_format_test.dart::tall/expression/list_comment.stmt', 'test/tall_format_test.dart::tall/regression/1500/1584.unit']"
+    }
+   },
+   "failed_checks": []
+  },
+  "dependency_snapshots": {
+   "fixed": {
+    "pubspec_lock": "environment/original-fixed-pubspec.lock",
+    "pubspec_lock_sha256": "f849ab148068e48d799e5fb7fc5f46d73ad965d65d4124bb17c0df86ce3d0f7f",
+    "package_config": "environment/original-fixed-package_config.json",
+    "package_config_sha256": "2538208633beec33d3da6db5b840e64540b1d4c633f2ba97c1323d9d48035303",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "73.0.0",
+     "_macros": "0.3.2",
+     "analyzer": "6.8.0",
+     "args": "2.7.0",
+     "async": "2.13.1",
+     "boolean_selector": "2.1.2",
+     "cli_config": "0.2.0",
+     "cli_util": "0.4.2",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.1",
+     "crypto": "3.0.7",
+     "dart_flutter_team_lints": "3.2.1",
+     "file": "7.0.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "grinder": "0.9.5",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.1",
+     "lints": "5.0.0",
+     "logging": "1.3.0",
+     "macros": "0.1.2-main.4",
+     "matcher": "0.12.17",
+     "meta": "1.19.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.2",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "test_descriptor": "2.0.2",
+     "test_process": "2.1.1",
+     "typed_data": "1.4.0",
+     "vm_service": "15.2.0",
+     "watcher": "1.2.1",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   },
+   "buggy": {
+    "pubspec_lock": "environment/original-buggy-pubspec.lock",
+    "pubspec_lock_sha256": "f849ab148068e48d799e5fb7fc5f46d73ad965d65d4124bb17c0df86ce3d0f7f",
+    "package_config": "environment/original-buggy-package_config.json",
+    "package_config_sha256": "0ab20d0dde1b82662c78da9fe8ee235349edd4aa49e0af6e82ea5e3cee987bdd",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "73.0.0",
+     "_macros": "0.3.2",
+     "analyzer": "6.8.0",
+     "args": "2.7.0",
+     "async": "2.13.1",
+     "boolean_selector": "2.1.2",
+     "cli_config": "0.2.0",
+     "cli_util": "0.4.2",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.1",
+     "crypto": "3.0.7",
+     "dart_flutter_team_lints": "3.2.1",
+     "file": "7.0.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "grinder": "0.9.5",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.1",
+     "lints": "5.0.0",
+     "logging": "1.3.0",
+     "macros": "0.1.2-main.4",
+     "matcher": "0.12.17",
+     "meta": "1.19.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.2",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "test_descriptor": "2.0.2",
+     "test_process": "2.1.1",
+     "typed_data": "1.4.0",
+     "vm_service": "15.2.0",
+     "watcher": "1.2.1",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   }
+  },
+  "dart_sdk_lock": {
+   "path": "environment/original-dart-sdk.lock.json",
+   "sha256": "e33e243b73de28a9e7dd79428743593086fc920af86e29ea43d5ff0f1233945d"
+  },
+  "validation_image_digest": "sha256:4236d04fca8fbf2e08f3e86f45109c0aa9dc7a00ab0280e9538ee42ced699871",
+  "validation_image_lock": {
+   "path": "environment/original-validation-image.lock.json",
+   "sha256": "ff029b7bb4060de90aec9a1e489ed2cb7e3040e480557c874557f00d3968d03d"
+  }
+ },
+ "bug_id": "DART-309",
+ "issue_id": 1584,
+ "issue_ids": [
+  1584
+ ],
+ "issue_url": "https://github.com/dart-lang/dart_style/issues/1584",
+ "buggy_commit": "89577e750840c3655e5703004fb774d6564e02b9",
+ "fixed_commit": "914d1d6f569bc5aecc03adb1f53ef23d2b3ebb61",
+ "patch": "patches/minimized-production.patch",
+ "changed_source_files": [
+  "lib/src/front_end/delimited_list_builder.dart",
+  "lib/src/front_end/piece_factory.dart"
+ ],
+ "triggering_test": [
+  "test/tall_format_test.dart::tall/expression/list_comment.stmt",
+  "test/tall_format_test.dart::tall/regression/1500/1584.unit"
+ ],
+ "expected_failure": {
+  "test_id": "test/tall_format_test.dart::tall/expression/list_comment.stmt line 147: Comment before comma with other comments.",
+  "error": "The formatter produced unexpected output. Input was: var x = [ 1 // Comment 1. , 2 // Comment 2. ]; Which formatted to: var x = [ 1, 2, // Comment 2. ];",
+  "failure_fingerprint": "43cf7cc226de50c4ac0a6eaf48d7d6453361d2782492c1e6045bba1162749901",
+  "all_trigger_failures": [
+   {
+    "test_id": "test/tall_format_test.dart::tall/expression/list_comment.stmt line 147: Comment before comma with other comments.",
+    "error": "The formatter produced unexpected output. Input was: var x = [ 1 // Comment 1. , 2 // Comment 2. ]; Which formatted to: var x = [ 1, 2, // Comment 2. ];",
+    "failure_fingerprint": "43cf7cc226de50c4ac0a6eaf48d7d6453361d2782492c1e6045bba1162749901",
+    "repetition_count": 3,
+    "deterministic": true
+   },
+   {
+    "test_id": "test/tall_format_test.dart::tall/regression/1500/1584.unit line 250",
+    "error": "The formatter produced unexpected output. Input was: void aaaa() { aaaa('aaaaaaaa aaaaa aaaa', () { final aaaaaAaaa = { '/a/11aa9a9aaa', // aaaa '/a/047a6a9', // aaa '/a/020aa3', // aaaaaa '/a/11aa9aaa8_', // aaa '/a/02a1aa', // aaaaaaaa '/a/0a2aaaa', // aaaaaaaaaaaaaaaaa '/a/0a3_aaa', // aaaaaaaa '/a/06_a_', // aaa '/a/02a_aa', // aaaaa '/a/0aaaa8a', // aaaaaaa '/a/11a_7aa2aa', // aaaaaaaaaa '/a/11aaaaaaaa', // aaaa '/a/0a3aa66', // aaaaaaaaa '/a/0a3aaa2', // aaaa '/a/03aaaa', // aaaaaaaa '/a/11aa1a1aaa', // aaaa '/a/11aaa2aa0a', // aaaaa '/a/11aaa8aa35', // aaaaaaaa '/a/06aaaa8', // aaaaaa '/a/026aaa', // aaaaa '/a/0aaa75a', // aaaaaaaa '/a/07aaa', // aaaaaaa '/a/0aaaa5a', // aaaaaaa '/a/0aa2a_a', // aaa '/a/0aaaa7a', // aaa aaaaa '/a/121a7aa2', // aaa aaaaa '/a/04aaaaa', // aaaaaa aaaaaa '/a/0aaaaaa', // aaaaa aaaaaa '/a/0154aa', // aaaaa aaaa aaaaa '/a/0aaaaa3', // aaaaa '/a/03aa4aa', // aa '/a/0a_9a3a', // aaaaaa '/a/0aaaaa1', // aaaaaaaa '/a/11aaaaaaa_', // aaaaaaaa_aaaaaaaa '/a/011a8a4a', // aaaa '/a/11aa0a444a' // aaaaaa aaaaaaaaa , }; for (final aaa in aaaaaAaaa) { aaaaaa(aaaaaaaAaaaAaaaAaa(aaa)).aaAaaAaaa(); } }); aaaa('aaaaaaa null for aa aaaaaaa aaa', () { aaaaaa(aaaaaaaAaaaAaaaAaa('/a/000')).aaAaaa(); }); } Which formatted to: void aaaa() { aaaa('aaaaaaaa aaaaa aaaa', () { final aaaaaAaaa = { '/a/11aa9a9aaa', // aaaa '/a/047a6a9', // aaa '/a/020aa3', // aaaaaa '/a/11aa9aaa8_', // aaa '/a/02a1aa', // aaaaaaaa '/a/0a2aaaa', // aaaaaaaaaaaaaaaaa '/a/0a3_aaa', // aaaaaaaa '/a/06_a_', // aaa '/a/02a_aa', // aaaaa '/a/0aaaa8a', // aaaaaaa '/a/11a_7aa2aa', // aaaaaaaaaa '/a/11aaaaaaaa', // aaaa '/a/0a3aa66', // aaaaaaaaa '/a/0a3aaa2', // aaaa '/a/03aaaa', // aaaaaaaa '/a/11aa1a1aaa', // aaaa '/a/11aaa2aa0a', // aaaaa '/a/11aaa8aa35', // aaaaaaaa '/a/06aaaa8', // aaaaaa '/a/026aaa', // aaaaa '/a/0aaa75a', // aaaaaaaa '/a/07aaa', // aaaaaaa '/a/0aaaa5a', // aaaaaaa '/a/0aa2a_a', // aaa '/a/0aaaa7a', // aaa aaaaa '/a/121a7aa2', // aaa aaaaa '/a/04aaaaa', // aaaaaa aaaaaa '/a/0aaaaaa', // aaaaa aaaaaa '/a/0154aa', // aaaaa aaaa aaaaa '/a/0aaaaa3', // aaaaa '/a/03aa4aa', // aa '/a/0a_9a3a', // aaaaaa '/a/0aaaaa1', // aaaaaaaa '/a/11aaaaaaa_', // aaaaaaaa_aaaaaaaa '/a/011a8a4a', // aaaa '/a/11aa0a444a', }; for (final aaa in aaaaaAaaa) { aaaaaa(aaaaaaaAaaaAaaaAaa(aaa)).aaAaaAaaa(); } }); aaaa('aaaaaaa null for aa aaaaaaa aaa', () { aaaaaa(aaaaaaaAaaaAaaaAaa('/a/000')).aaAaaa(); }); }",
+    "failure_fingerprint": "361924e77a63ef956b14ef1d32a104c5bc9b73002efd911b4c02150f05331b69",
+    "repetition_count": 3,
+    "deterministic": true
+   }
+  ]
+ },
+ "fixed_test_result": {
+  "status": "PASS",
+  "exit_code": 0,
+  "counts": {
+   "started": 5096,
+   "passed": 5096,
+   "failed": 0,
+   "skipped": 0
+  },
+  "full_suite_run_count": 1,
+  "all_full_suite_runs_passed": true,
+  "strict_report_passed": true
+ },
+ "build_command": [
+  "dart",
+  "analyze"
+ ],
+ "test_command": [
+  "dart",
+  "test",
+  "--reporter=json"
+ ],
+ "language_version": "3.5.4",
+ "dependency_versions": {
+  "_fe_analyzer_shared": "73.0.0",
+  "_macros": "0.3.2",
+  "analyzer": "6.8.0",
+  "args": "2.7.0",
+  "async": "2.13.1",
+  "boolean_selector": "2.1.2",
+  "cli_config": "0.2.0",
+  "cli_util": "0.4.2",
+  "collection": "1.19.1",
+  "convert": "3.1.2",
+  "coverage": "1.15.1",
+  "crypto": "3.0.7",
+  "dart_flutter_team_lints": "3.2.1",
+  "file": "7.0.1",
+  "frontend_server_client": "4.0.0",
+  "glob": "2.1.3",
+  "grinder": "0.9.5",
+  "http_multi_server": "3.2.2",
+  "http_parser": "4.1.2",
+  "io": "1.0.5",
+  "js": "0.7.1",
+  "lints": "5.0.0",
+  "logging": "1.3.0",
+  "macros": "0.1.2-main.4",
+  "matcher": "0.12.17",
+  "meta": "1.19.0",
+  "mime": "2.0.0",
+  "node_preamble": "2.0.2",
+  "package_config": "2.2.0",
+  "path": "1.9.1",
+  "pool": "1.5.2",
+  "pub_semver": "2.2.0",
+  "shelf": "1.4.2",
+  "shelf_packages_handler": "3.0.2",
+  "shelf_static": "1.1.3",
+  "shelf_web_socket": "3.0.0",
+  "source_map_stack_trace": "2.1.2",
+  "source_maps": "0.10.13",
+  "source_span": "1.10.2",
+  "stack_trace": "1.12.1",
+  "stream_channel": "2.1.4",
+  "string_scanner": "1.4.1",
+  "term_glyph": "1.2.2",
+  "test": "1.26.3",
+  "test_api": "0.7.7",
+  "test_core": "0.6.12",
+  "test_descriptor": "2.0.2",
+  "test_process": "2.1.1",
+  "typed_data": "1.4.0",
+  "vm_service": "15.2.0",
+  "watcher": "1.2.1",
+  "web": "1.1.1",
+  "web_socket": "1.0.1",
+  "web_socket_channel": "3.0.3",
+  "webkit_inspection_protocol": "1.2.1",
+  "yaml": "3.1.3"
+ },
+ "operating_system_or_container": {
+  "platform": "linux_x64",
+  "host_system": "Linux",
+  "host_machine": "x86_64",
+  "validation_image": "dart-defects-validation:3.5.4-v3",
+  "validation_image_digest": "sha256:4236d04fca8fbf2e08f3e86f45109c0aa9dc7a00ab0280e9538ee42ced699871"
+ },
+ "timezone": "UTC",
+ "reproducibility_status": "validated_historical_evidence; verified_online_bootstrap_plus_os_enforced_offline_execution",
+ "deprecation_reason": null,
+ "minimized_patch": {
+  "path": "patches/minimized-production.patch",
+  "sha256": "c28016039923c7da69482ae3e870958cc2170059f73dd987040f564b52b8df23",
+  "original_hunk_count": 3,
+  "retained_hunks": [
+   1,
+   2,
+   3
+  ],
+  "retained_hunk_count": 3,
+  "removed_hunk_count": 0,
+  "screening_only": false,
+  "post_minimization_validation": "PASS",
+  "evidence_grade": "portable_release_evidence",
+  "fallback_from_subset": null,
+  "fallback_reason": "candidate_subset_failed_post_minimization_validation",
+  "automatic_minimization": {
+   "minimal_hunks": null
+  },
+  "semantic_selection": {
+   "retained_hunks": [
+    1,
+    2,
+    3
+   ],
+   "reason": "retain the complete production patch because the automatic minimal subset failed post-minimization full-suite validation"
+  },
+  "evidence_reused": true,
+  "reuse_reason": "minimized_patch_identical_to_original_production_patch"
+ },
+ "post_minimization_validation": {
+  "status": "stable_differential",
+  "generated_at": "2026-08-11T08:30:05.588157+00:00",
+  "report": "validation/post-minimization.json",
+  "report_sha256": "7fa0091dd317b62b90b8de05dd10e29208959b755b767c903a8cd48561b1fd59",
+  "engine": "validation_engine.py",
+  "fresh_worktree_per_repetition": true,
+  "repetitions": 3,
+  "infrastructure_error_count": 0,
+  "exact_trigger_test_selectors": [
+   {
+    "path": "test/tall_format_test.dart",
+    "name": "tall/expression/list_comment.stmt"
+   },
+   {
+    "path": "test/tall_format_test.dart",
+    "name": "tall/regression/1500/1584.unit"
+   }
+  ],
+  "test_network_policy": "os_enforced",
+  "dependency_snapshots": {
+   "fixed": {
+    "pubspec_lock": "environment/original-fixed-pubspec.lock",
+    "pubspec_lock_sha256": "f849ab148068e48d799e5fb7fc5f46d73ad965d65d4124bb17c0df86ce3d0f7f",
+    "package_config": "environment/original-fixed-package_config.json",
+    "package_config_sha256": "2538208633beec33d3da6db5b840e64540b1d4c633f2ba97c1323d9d48035303",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "73.0.0",
+     "_macros": "0.3.2",
+     "analyzer": "6.8.0",
+     "args": "2.7.0",
+     "async": "2.13.1",
+     "boolean_selector": "2.1.2",
+     "cli_config": "0.2.0",
+     "cli_util": "0.4.2",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.1",
+     "crypto": "3.0.7",
+     "dart_flutter_team_lints": "3.2.1",
+     "file": "7.0.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "grinder": "0.9.5",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.1",
+     "lints": "5.0.0",
+     "logging": "1.3.0",
+     "macros": "0.1.2-main.4",
+     "matcher": "0.12.17",
+     "meta": "1.19.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.2",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "test_descriptor": "2.0.2",
+     "test_process": "2.1.1",
+     "typed_data": "1.4.0",
+     "vm_service": "15.2.0",
+     "watcher": "1.2.1",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   },
+   "buggy": {
+    "pubspec_lock": "environment/original-buggy-pubspec.lock",
+    "pubspec_lock_sha256": "f849ab148068e48d799e5fb7fc5f46d73ad965d65d4124bb17c0df86ce3d0f7f",
+    "package_config": "environment/original-buggy-package_config.json",
+    "package_config_sha256": "0ab20d0dde1b82662c78da9fe8ee235349edd4aa49e0af6e82ea5e3cee987bdd",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "73.0.0",
+     "_macros": "0.3.2",
+     "analyzer": "6.8.0",
+     "args": "2.7.0",
+     "async": "2.13.1",
+     "boolean_selector": "2.1.2",
+     "cli_config": "0.2.0",
+     "cli_util": "0.4.2",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.1",
+     "crypto": "3.0.7",
+     "dart_flutter_team_lints": "3.2.1",
+     "file": "7.0.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "grinder": "0.9.5",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.1",
+     "lints": "5.0.0",
+     "logging": "1.3.0",
+     "macros": "0.1.2-main.4",
+     "matcher": "0.12.17",
+     "meta": "1.19.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.2",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "test_descriptor": "2.0.2",
+     "test_process": "2.1.1",
+     "typed_data": "1.4.0",
+     "vm_service": "15.2.0",
+     "watcher": "1.2.1",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   }
+  },
+  "dart_sdk_lock": {
+   "path": "environment/original-dart-sdk.lock.json",
+   "sha256": "e33e243b73de28a9e7dd79428743593086fc920af86e29ea43d5ff0f1233945d"
+  },
+  "validation_image_digest": "sha256:4236d04fca8fbf2e08f3e86f45109c0aa9dc7a00ab0280e9538ee42ced699871",
+  "validation_image_lock": {
+   "path": "environment/original-validation-image.lock.json",
+   "sha256": "ff029b7bb4060de90aec9a1e489ed2cb7e3040e480557c874557f00d3968d03d"
+  },
+  "reuse_reason": "minimized_patch_identical_to_original_production_patch",
+  "evidence_reused_from": "validation/validation.json"
+ },
+ "reproduction": {
+  "network_mode": "two_stage_online_materialization_then_offline_execution",
+  "runner": {
+   "path": "tools/reproduce_case.py",
+   "sha256": "78adb9a64b99141c7ac69e9e61ab31bfc598b632a3173ec35eada6e271324ad0",
+   "bytes": 14262
+  },
+  "validation_engine": {
+   "path": "tools/validation_engine.py",
+   "sha256": "c8fa6a8ecf8ed3526637cdb1c76dec2eba7506280e6e6f815ad2193e1c86a353",
+   "bytes": 69063
+  },
+  "commands": {
+   "prepare": {
+    "path": "commands/DART-309-prepare",
+    "sha256": "be7ea2297cd15d5cbf708004e901ce6d90f538b4f1b6e22e37c38dec2cb2f317",
+    "bytes": 1086
+   },
+   "b": {
+    "path": "commands/DART-309b",
+    "sha256": "649225b8f005f672d0f6d98e6517525d678cd774097dfea8c524c18e1a376a95",
+    "bytes": 1323
+   },
+   "f": {
+    "path": "commands/DART-309f",
+    "sha256": "1e8df2827352644cabd512bcb7e5e1087014312c0ec459c975fe69e8182b00ca",
+    "bytes": 1323
+   }
+  },
+  "historical_validation_image_digest": "sha256:4236d04fca8fbf2e08f3e86f45109c0aa9dc7a00ab0280e9538ee42ced699871",
+  "materialization_stage": {
+   "network": "online",
+   "command": {
+    "path": "commands/DART-309-prepare",
+    "sha256": "be7ea2297cd15d5cbf708004e901ce6d90f538b4f1b6e22e37c38dec2cb2f317",
+    "bytes": 1086
+   },
+   "verification": [
+    "fixed/buggy commit SHA",
+    "fixed/buggy Git tree",
+    "post-minimization dependency lock SHA-256",
+    "dependency package tree hashes"
+   ]
+  },
+  "execution_stage": {
+   "network": "os_enforced_none",
+   "buggy_command": {
+    "path": "commands/DART-309b",
+    "sha256": "649225b8f005f672d0f6d98e6517525d678cd774097dfea8c524c18e1a376a95",
+    "bytes": 1323
+   },
+   "fixed_command": {
+    "path": "commands/DART-309f",
+    "sha256": "1e8df2827352644cabd512bcb7e5e1087014312c0ec459c975fe69e8182b00ca",
+    "bytes": 1323
+   }
+  },
+  "prepare_runner": {
+   "path": "tools/prepare_case.py",
+   "sha256": "dd2ed2dbe01d75e24477cfd2c284a51551d2cbcb8937ec5c76556f81ce0b8c7b",
+   "bytes": 7632
+  },
+  "publication_updated_at": "2026-08-15T17:09:29.368750+00:00"
+ },
+ "release_policy": {
+  "path": "environment/release-policy.json",
+  "sha256": "7a077bd1bd6b994976dfc5929e1b547979e64944b36e8b9783843ac67abb5c4e"
+ },
+ "reproduction_verification": {
+  "path": "reproduction/verification.json",
+  "sha256": "b69977cd1eafa15cc2ac75f1cce859162f92708891c57978764b8b830274a0e4"
+ },
+ "network_isolation_attestation": {
+  "path": "environment/network-isolation.json",
+  "sha256": "07cb8ff852a31fe9cdd6341ba922ac1201d228a568956bb5e32f399f4127bcca"
+ },
+ "auxiliary_changed_files": [],
+ "final_patch_file_manifest_source": "patches/minimized-production.patch",
+ "publication": {
+  "schema_version": 1,
+  "generated_at": "2026-08-15T17:06:52.631943+00:00",
+  "active": true,
+  "case_count_preservation_policy": "no_case_removed",
+  "reproduction_mode": "verified_online_bootstrap_offline_test_execution",
+  "raw_historical_logs_in_distribution": false,
+  "structured_validation_and_failure_fingerprints_retained": true,
+  "traceability_path": "fix_commit_message_mentions_issue_id",
+  "strict_commit_message_issue_literal": true,
+  "active_missing_file_references_removed": true
+ },
+ "reproduction_environment": {
+  "dockerfile": "environment/Dockerfile.reproduction",
+  "dockerfile_sha256": "7c6fcfdf5ad2d60afc7f068a1d09358fc3ecbd35dc10f955010424e8a07de969",
+  "requirements": "environment/requirements-reproduction.txt",
+  "requirements_sha256": "01e08410080741c1f164e3b7459ea15db5966cef6629bfeb2691175f269efd00",
+  "dart_sdk_lock": "environment/original-dart-sdk.lock.json",
+  "historical_validation_image_lock": "environment/original-validation-image.lock.json",
+  "relationship_to_historical_image": "SDK archive is bitwise pinned; reproduction image is rebuildable and is not claimed to equal the historical image ID."
+ },
+ "historical_prepack_artifacts": {
+  "repository_bundle": {
+   "path": "sources/repository.bundle",
+   "sha256": "c320a127ec21855115be36f0bd73ea8e95fb98dcdda695ea22fb59bb75988907",
+   "bytes": 3706447,
+   "refs": {
+    "buggy": "refs/heads/buggy",
+    "fixed": "refs/heads/fixed"
+   },
+   "included_in_distribution": false,
+   "role": "historical_prepack_audit_reference"
+  },
+  "dependency_cache": {
+   "archive": "environment/dependency-cache.tar.gz",
+   "archive_sha256": "6466dd71b152a6fe348520f96ccf8b12f627f39c3628be4d4794cf941dc6662f",
+   "manifest": "environment/dependency-cache-manifest.json",
+   "manifest_sha256": "a812b30ae4756385800a190016d8adf83f6c6a2a75b3c8ca3f5b3015bc6d8aca",
+   "package_count": 55,
+   "included_in_distribution": false,
+   "role": "historical_prepack_audit_reference"
+  }
+ },
+ "dataset_tier": "active",
+ "human_minimization_review": {
+  "decision": "APPROVE_AS_IS",
+  "reviewer_role": "dataset_owner",
+  "reviewed_at": "2026-09-13T10:43:23Z",
+  "record": "curation/human-minimization-review.json",
+  "record_sha256": "22a55d28e9b2954be28c1445142f750bd787d078fccb62dc898d26045da9636f",
+  "minimized_patch_sha256": "c28016039923c7da69482ae3e870958cc2170059f73dd987040f564b52b8df23",
+  "rerun_required": false
+ }
+}

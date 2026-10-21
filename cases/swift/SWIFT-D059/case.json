@@ -1,0 +1,412 @@
+{
+  "schema_version": 3,
+  "case_id": "SWIFT-003",
+  "bug_id": 1,
+  "language": "Swift",
+  "project": "apple/swift-configuration",
+  "repository_url": "https://github.com/apple/swift-configuration.git",
+  "issue_id": 122,
+  "issue_url": "https://github.com/apple/swift-configuration/issues/122",
+  "issue_title": "EnvironmentVariablesProvider: split(separator:) leads to inconsistent boolean array decoding between whitespace-only and empty elements",
+  "buggy_revision": "1e9d7e2b4e3bf680f1c781616bf26ae8a353dc2f",
+  "fixed_revision": "f7a76a251e32cc905950fcf718cd49bf764327c8",
+  "revision_mode": "direct_parent_to_upstream_fix",
+  "patch": "patches/minimized-source.patch",
+  "patch_sha256": "f52eff0e32b022438d775c5619406bef01590e63ed46140b72d345de4266527c",
+  "patch_minimization": {
+    "status": "minimized",
+    "strategy": "executable_hunk_deletion_1_minimal",
+    "original_patch_path": "patches/original-source.patch",
+    "minimized_patch_path": "patches/minimized-source.patch",
+    "original_patch_sha256": "c553cf74ffe2cc7267c5494e9e864be9961413ee437b0900c3555a3fb6e654c9",
+    "minimized_patch_sha256": "f52eff0e32b022438d775c5619406bef01590e63ed46140b72d345de4266527c",
+    "original_hunk_count": 2,
+    "retained_hunks": [
+      2
+    ],
+    "removed_hunk_count": 1,
+    "minimality_guarantee": "hunk-level 1-minimal under the recorded environment",
+    "evidence": "validation/minimization-audit.json",
+    "human_signoff": "PENDING"
+  },
+  "triggering_test": "valueForKeyOfBoolAndBoolArrayTypes()",
+  "trigger_tests": [
+    "valueForKeyOfBoolAndBoolArrayTypes()",
+    "valueForKeyOfDoubleArrayTypes()",
+    "valueForKeyOfIntArrayTypes()"
+  ],
+  "trigger_kind": "runtime_test_failure",
+  "expected_failure": {
+    "kind": "stable fixed-pass / buggy-fail after subtracting deterministic common broken tests",
+    "diagnostic_location": null,
+    "diagnostic_message": null
+  },
+  "changed_production_files": [
+    "Sources/Configuration/Providers/CLI/CLIArgumentParser.swift",
+    "Sources/Configuration/Providers/EnvironmentVariables/EnvironmentVariablesProvider.swift"
+  ],
+  "changed_test_files": [
+    "Tests/ConfigurationTests/EnvironmentVariablesProviderTests.swift"
+  ],
+  "commit_message": "Update EnvironmentValueArrayDecoder to emit empty values when present (#133)\n\n### Motivation\n\nCloses #122\n\n### Modifications\n\n- Set `omittingEmptySubsequences` to `false` in\n`String.split(separator:omittingEmptySubsequences:)` when decoding a\nstring that represents Bool, Int, or Double arrays separated by commas\nin `EnvironmentValuesProvider`.\n- Update `CLIArgumentParser.swift:125` to use `split` instead of\n`components(separatedBy:)`, ensuring homogeneous usage of Swift’s\nsplitting APIs.\n\n### Result\n\nA string representing an array of values separated by `\",\"` will now\nemit empty values when two separators appear together while parsing\n`EnvironmentValuesProvider` dictionaries.\nThis results in treating an empty value as an empty string and,\nconsequently, throwing an error when parsed by individual value decoders\nfor Int, Double, and Bool.\n\nThe additional update enforces homogeneous API usage and favors Swift’s\nnative `split(separator:)` method.\n\n### Test Plan\n\nAdd tests covering empty values in Int, Double, and Bool arrays.",
+  "commit_url": "https://github.com/apple/swift-configuration/commit/f7a76a251e32cc905950fcf718cd49bf764327c8",
+  "build_command": [
+    "swift",
+    "build",
+    "--build-tests"
+  ],
+  "test_command": [
+    "swift",
+    "test",
+    "--parallel",
+    "--num-workers",
+    "1"
+  ],
+  "language_version": "6.2.4",
+  "dependency_versions": {
+    "swift-async-algorithms": {
+      "version": "1.1.5",
+      "revision": "3da39bbc4e687d4192af7c9cf4eab805745a0b9c",
+      "location": "https://github.com/apple/swift-async-algorithms.git"
+    },
+    "swift-collections": {
+      "version": "1.6.0",
+      "revision": "a0cb0954ecb21e4e31b0070e6ed5674e8556685a",
+      "location": "https://github.com/apple/swift-collections"
+    },
+    "swift-log": {
+      "version": "1.15.0",
+      "revision": "3ffafb9722d5d918c614feb496c8789a3b59d222",
+      "location": "https://github.com/apple/swift-log.git"
+    },
+    "swift-service-lifecycle": {
+      "version": "2.12.0",
+      "revision": "7f9326b0326ff86e3646295ea6e891f68c471c5e",
+      "location": "https://github.com/swift-server/swift-service-lifecycle"
+    },
+    "swift-system": {
+      "version": "1.8.1",
+      "revision": "869129b7bf4ecc57b97d0193ad29690ca2134750",
+      "location": "https://github.com/apple/swift-system"
+    }
+  },
+  "operating_system_or_container": "Linux/x86_64 (Ubuntu 26.04 LTS)",
+  "architecture": "x86_64",
+  "verification": {
+    "source": "defects4x_swift_elixir_linux_fast (zhjia)",
+    "protocol": "defects4j-style-native-linux-v1",
+    "accepted": true,
+    "verified_at": "2026-09-01T18:43:04.469267+00:00",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "expected_failure": null,
+    "reason": "verified_bug",
+    "transition": {
+      "accepted": true,
+      "broken": [],
+      "details": {
+        "buggy_failure_count": 11,
+        "equation": "T = U - B",
+        "fixed_failure_count": 0,
+        "trigger_count": 11
+      },
+      "reason": "stable_transition",
+      "triggers": [
+        {
+          "location": "",
+          "message": "run with 103 tests in 33 suites",
+          "signature": "ac97347af209477a7a576835ea6d3e2be373c45a3ed3368653afa8954f04800d",
+          "test_id": "run with 103 tests in 33 suites"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfBoolAndBoolArrayTypes()",
+          "signature": "7b9ab12d72a7e07dda1e1422828ad6a03fc2dc84a4db21c7bc1caacc0270dde0",
+          "test_id": "valueForKeyOfBoolAndBoolArrayTypes()"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfBoolAndBoolArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:128:9: Expectation",
+          "signature": "39f49e424c96af8ed6cdeab3068399b38cf4e18cf0349382b993c3060b122a83",
+          "test_id": "valueForKeyOfBoolAndBoolArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:128:9: Expectation"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfDoubleArrayTypes()",
+          "signature": "9bc2adcfd5b19fca1ed140ca237033096a8e39edcd17375f2b1bc86324c84dc4",
+          "test_id": "valueForKeyOfDoubleArrayTypes()"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfDoubleArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:173:9: Expectation",
+          "signature": "ed7e141c35e4f71800d9282cb15731e42975c776700f1553a31079ba4ef457f4",
+          "test_id": "valueForKeyOfDoubleArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:173:9: Expectation"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfDoubleArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:175:9: Expectation",
+          "signature": "fb75e37dd1cb8ca6e74cf4695e7678876616542a04bd380926af54acff081b21",
+          "test_id": "valueForKeyOfDoubleArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:175:9: Expectation"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfDoubleArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:177:9: Expectation",
+          "signature": "3343ecf39634aa0f0dd662ba2f26988fd0164b83066b42e4be73bac412f51981",
+          "test_id": "valueForKeyOfDoubleArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:177:9: Expectation"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfIntArrayTypes()",
+          "signature": "aa0fb967deed409caa2b67302b334f92ef08aed7b93f6f7948f8565120c48ec6",
+          "test_id": "valueForKeyOfIntArrayTypes()"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfIntArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:146:9: Expectation",
+          "signature": "3a0d46ad2d901bd6ebaeb8a80a2fe4fcfe2c91144171f8ad429ddb93a13b2986",
+          "test_id": "valueForKeyOfIntArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:146:9: Expectation"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfIntArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:148:9: Expectation",
+          "signature": "20fc17e4ceec2cb1bbed31de1cb1e504900191e86f52db79b67399bd62837955",
+          "test_id": "valueForKeyOfIntArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:148:9: Expectation"
+        },
+        {
+          "location": "",
+          "message": "valueForKeyOfIntArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:150:9: Expectation",
+          "signature": "1627c5ca606a209c9c11b592c955395d6a1f41eb57ce48639a5a5487be9c6ee9",
+          "test_id": "valueForKeyOfIntArrayTypes() recorded an issue at EnvironmentVariablesProviderTests.swift:150:9: Expectation"
+        }
+      ]
+    },
+    "evidence_source": "source-evidence/logs"
+  },
+  "validation": {
+    "status": "defects4j_semantic_verification",
+    "protocol": "defects4j-style-native-linux-v1",
+    "accepted": true,
+    "accepted_at": "2026-09-01T18:43:04.469267+00:00",
+    "evidence_path": "validation/source-evidence/logs",
+    "revision_mode": "direct_parent_revision",
+    "historical_revision_mode": "base_plus_gold_patch",
+    "revision_mode_evidence": "repair/boundary-verification.json",
+    "revision_mode_metadata_repaired_at": "2026-09-12",
+    "historical_validation_not_rewritten": true,
+    "execution_evidence_revision_mode": "base_plus_gold_patch",
+    "upstream_boundary_mode": "direct_parent_revision"
+  },
+  "source_index_collected_at": "2026-09-07 (wechat index.jsonl)",
+  "trigger_source": "zhjia defects4x dataset trigger_tests/<id> (compile::file:line:col or test-name list)",
+  "timezone": "UTC",
+  "reproducibility_status": "direct_parent_historical_execution_evidence_current_protocol_deferred",
+  "deprecation_reason": null,
+  "metadata_repaired_at": "2026-09-10",
+  "dataset_id": "SWIFT-D059",
+  "buggy_commit": "1e9d7e2b4e3bf680f1c781616bf26ae8a353dc2f",
+  "fixed_commit": "f7a76a251e32cc905950fcf718cd49bf764327c8",
+  "changed_source_files": [
+    "Sources/Configuration/Providers/EnvironmentVariables/EnvironmentVariablesProvider.swift"
+  ],
+  "revision_alias_semantics": "buggy_commit/fixed_commit identify upstream provenance; experimental b/f identities are in artifacts",
+  "upstream_fix": {
+    "commit": "f7a76a251e32cc905950fcf718cd49bf764327c8",
+    "parents": [
+      "1e9d7e2b4e3bf680f1c781616bf26ae8a353dc2f"
+    ],
+    "buggy_baseline_is_parent": true,
+    "single_parent_matches_baseline": true,
+    "commit_message": "Update EnvironmentValueArrayDecoder to emit empty values when present (#133)\n\n### Motivation\n\nCloses #122\n\n### Modifications\n\n- Set `omittingEmptySubsequences` to `false` in\n`String.split(separator:omittingEmptySubsequences:)` when decoding a\nstring that represents Bool, Int, or Double arrays separated by commas\nin `EnvironmentValuesProvider`.\n- Update `CLIArgumentParser.swift:125` to use `split` instead of\n`components(separatedBy:)`, ensuring homogeneous usage of Swift’s\nsplitting APIs.\n\n### Result\n\nA string representing an array of values separated by `\",\"` will now\nemit empty values when two separators appear together while parsing\n`EnvironmentValuesProvider` dictionaries.\nThis results in treating an empty value as an empty string and,\nconsequently, throwing an error when parsed by individual value decoders\nfor Int, Double, and Bool.\n\nThe additional update enforces homogeneous API usage and favors Swift’s\nnative `split(separator:)` method.\n\n### Test Plan\n\nAdd tests covering empty values in Int, Double, and Bool arrays.",
+    "boundary_evidence": "repair/boundary-verification.json",
+    "boundary_evidence_sha256": "4a51886f1e546c21a5357daef6d2f0628f84a3ad27a0abe67b41ecd2a6723332"
+  },
+  "fixed_revision_kind": "upstream_provenance_use_artifacts_for_experiment",
+  "artifacts": {
+    "buggy": {
+      "commit": "21e7444f5d1298be9df8c55e7fa8e55a6946297e",
+      "tree": "04c2791880ee17f68c40d232c2042779ba74a5fa"
+    },
+    "fixed": {
+      "commit": "b8e1a8fb353ca868d8daed95348652b96a9e8864",
+      "tree": "0a8b6f2746551f1b8252b6417510718d2f81b112",
+      "equals_upstream_tree": false
+    },
+    "construction": "base + compatibility(if present) + trigger; fixed adds production patch",
+    "synthetic_commit_identity_disclosed": true,
+    "upstream_history_not_rewritten": true
+  },
+  "traceability": {
+    "reference_mode": "DIRECT_COMMIT_ISSUE_REF",
+    "direct_commit_issue_reference": true,
+    "source": "authentic_local_git_commit_object",
+    "strict_direct_reference_satisfied": true,
+    "traceability_closed": true,
+    "publication_profile_satisfied": true,
+    "strict_direct_profile_satisfied": true,
+    "pr_mediated_chain_verified": false
+  },
+  "patches": {
+    "trigger_tests": {
+      "path": "validation/minimization-evidence/trigger.patch",
+      "sha256": "d0055ab991e08f10bac91700324a5efdcc7d891cf6013bde3cb3c47061c5a9c4",
+      "bytes": 4732
+    },
+    "production_fix": {
+      "path": "patches/original-source.patch",
+      "sha256": "c553cf74ffe2cc7267c5494e9e864be9961413ee437b0900c3555a3fb6e654c9"
+    }
+  },
+  "minimized_patch": {
+    "path": "patches/minimized-source.patch",
+    "sha256": "f52eff0e32b022438d775c5619406bef01590e63ed46140b72d345de4266527c"
+  },
+  "cohort": "runtime_test",
+  "build": {
+    "directory": ".",
+    "analyze_command": [
+      "swift",
+      "build",
+      "--build-tests"
+    ],
+    "test_command": [
+      "swift",
+      "test",
+      "--parallel",
+      "--num-workers",
+      "1"
+    ],
+    "dependency_command": [
+      "swift",
+      "package",
+      "resolve",
+      "--skip-update"
+    ],
+    "require_analyze_clean": true
+  },
+  "language_metadata": {
+    "compiler_version": "6.2.4",
+    "package_tools_version": "6.2",
+    "note": "Compiler version is distinct from Package.swift tools/language mode; recovered manifest records may fill package_tools_version"
+  },
+  "auto_baseline_full_suite": false,
+  "test_suite_policy": {
+    "name": "explicitly_filtered_regression_suite",
+    "excluded_selectors": [],
+    "exclusions": [],
+    "failed_process_may_be_waived": false,
+    "fresh_filtered_suite_validation_required": false,
+    "trigger_exclusion_forbidden": true
+  },
+  "fixed_test_result": {
+    "status": "HISTORICAL_RESULTS_RETAINED",
+    "historical_full_suite_exit_codes": [],
+    "current_suite_success_required": {
+      "exit_code": 0,
+      "failed_tests": 0,
+      "repetitions": 3
+    },
+    "current_protocol_rerun_performed": false
+  },
+  "current_validation": {
+    "protocol": "explicit-isolated-order-and-filtered-full-suite-v1",
+    "required_repetitions": 3,
+    "full_suite_repetitions": 3,
+    "historical_logs_preserved": true,
+    "historical_reverse_runs_are_order_evidence": false,
+    "same_process_permutation_claimed": false,
+    "new_full_validation_performed": false,
+    "status": "PENDING_CURRENT_PROTOCOL_RERUN",
+    "bound_delivery_reports": [],
+    "raw_log_recovery_waived_by_user": true,
+    "waiver_scope": "historical raw-log recovery only; no metadata upgrade to PASS"
+  },
+  "runtime_release": {
+    "asset_manifest": "../../../runtime-assets.manifest.json",
+    "entrypoint": "../../../benchmark.py",
+    "image_id": "sha256:e41298db66d39df2c32eb783c8a3ee290dea4dec4bde9309da0687190d37e247",
+    "swift_executable": "/usr/bin/swift",
+    "external_assets_are_required": true,
+    "artifact_tree_verified": true,
+    "historical_workspace": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/h60-completion-20260908T1405-r2/SWIFT-003/fixed",
+    "image_binding": "recovered shared historical image; requires current-protocol validation",
+    "assets": [
+      {
+        "kind": "experiment_bundle",
+        "case_relative_path": "sources/experiment.bundle",
+        "sha256": "4ccc0acda75236d557b86aeaf5d34ba23c30b81a410041abbd263de72f219f43",
+        "bytes": 516100,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/4ccc0acda75236d557b86aeaf5d34ba23c30b81a410041abbd263de72f219f43"
+      },
+      {
+        "kind": "dependency_snapshot",
+        "case_relative_path": "environment/dependencies.tar.gz",
+        "sha256": "4f17251f0d760de7859723d61a12518b13b74f7a7740e77a8302b12901f46889",
+        "bytes": 36201712,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/4f17251f0d760de7859723d61a12518b13b74f7a7740e77a8302b12901f46889"
+      }
+    ],
+    "wrapper_evidence": [],
+    "d4x_image_repair": "declared 5.10.1 image cannot build swift-tools 6.2.0 package; original validation used swift-testing 6.2.3"
+  },
+  "human_curation": {
+    "status": "APPROVED",
+    "approval_template": "repair/human-review.json",
+    "agent_cannot_sign_as_human": true,
+    "reviewer": "dataset_owner",
+    "reviewed_at": "2026-09-13T10:22:32+00:00"
+  },
+  "acceptance": {
+    "human_curation": "PASS",
+    "release_eligible": false,
+    "current_protocol_validation": "PENDING"
+  },
+  "status": "release_candidate",
+  "release": {
+    "state": "RC",
+    "strict_active": false,
+    "blockers": [],
+    "deprecation_reason": null,
+    "deferred_gates": [
+      "current_protocol_validation_pending"
+    ],
+    "structural_boundary_status": "DIRECT",
+    "publication_profile_traceability": "PASS",
+    "strict_direct_traceability": "PASS",
+    "execution_evidence_policy": "HISTORICAL_EVIDENCE_PRESERVED_CURRENT_PROTOCOL_DEFERRED",
+    "human_signoff_policy": "APPROVED",
+    "classic_runtime_profile": "RUNTIME_TEST",
+    "publication_profile_cohort": "RUNTIME_CORE",
+    "defects4j_core_validation": "PASS"
+  },
+  "repair": {
+    "date": "2026-09-10",
+    "base_archive_sha256": "21599edfd4c0c560677f781fdd84da40fa22fb14472aaaf7174b7dec81d9df21",
+    "previous_metadata": "repair-history/case.before-repair.json",
+    "code_history": null,
+    "historical_reports_not_rewritten": true,
+    "raw_log_recovery_out_of_scope": true,
+    "stage1_metadata_hardening": {
+      "performed_at": "2026-09-12",
+      "authoritative_boundary": "repair/boundary-verification.json",
+      "historical_execution_evidence_preserved": true,
+      "no_execution_result_invented": true
+    }
+  },
+  "dependency_snapshot": {
+    "lock": "environment/runtime-Package.resolved",
+    "sha256": "8c41262983bdb95ff95f559c04af05eedcfc803506016d16dbe21b1c0509a5cb",
+    "source": "historical SwiftPM workspace",
+    "source_workspace": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/h60-completion-20260908T1405-r2/SWIFT-003/fixed",
+    "graph_identity_sha256": "179fb6ed26d1c2066db184131d448e1d30a14215868e605d678e2492072a5b01",
+    "archive_format": "build-checkouts-repositories-v1"
+  },
+  "historical_execution_revision_mode": "base_plus_gold_patch",
+  "defects4j_core_validation": {
+    "status": "PASS",
+    "classification": "HISTORICAL_SEMANTIC_RAW_PASS",
+    "report": "validation/defects4j-core-reacceptance.json",
+    "report_sha256": "1f4eef2233cb8d58210803cf3d38b1ded50bbf456e3b1ddfd9246c32cd1521f0",
+    "generated_at": "2026-09-12",
+    "does_not_claim_current_protocol_rerun": true
+  }
+}

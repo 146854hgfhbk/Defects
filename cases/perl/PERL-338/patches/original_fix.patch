@@ -1,0 +1,50 @@
+diff --git a/lib/ExtUtils/MM_Any.pm b/lib/ExtUtils/MM_Any.pm
+index b7579b44..0a5c8895 100644
+--- a/lib/ExtUtils/MM_Any.pm
++++ b/lib/ExtUtils/MM_Any.pm
+@@ -2899,13 +2899,20 @@ Takes a path to a file or dir and returns an empty string if we don't
+ want to include this file in the library.  Otherwise it returns the
+ the $path unchanged.
+ 
+-Mainly used to exclude version control administrative directories from
+-installation.
++Mainly used to exclude version control administrative directories
++and base-level F<README.pod> from installation.
+ 
+ =cut
+ 
+ sub libscan {
+     my($self,$path) = @_;
++
++    if ($path =~ m<^README\.pod$>i) {
++        my $ref = ref $self;
++        warn "WARNING: Older versions of $ref may errantly install $path as part of this distribution. It is recommended to avoid using this path in CPAN modules.\n";
++        return '';
++    }
++
+     my($dirs,$file) = ($self->splitpath($path))[1,2];
+     return '' if grep /^(?:RCS|CVS|SCCS|\.svn|_darcs)$/,
+                      $self->splitdir($dirs), $file;
+diff --git a/t/MM_Unix.t b/t/MM_Unix.t
+index 9a8d18f3..388bc545 100644
+--- a/t/MM_Unix.t
++++ b/t/MM_Unix.t
+@@ -12,7 +12,7 @@ BEGIN {
+         plan skip_all => 'Non-Unix platform';
+     }
+     else {
+-        plan tests => 110;
++        plan tests => 113;
+     }
+ }
+ 
+@@ -150,6 +150,9 @@ is ($t->has_link_code(),1); is ($t->{HAS_LINK_CODE},1);
+ ###############################################################################
+ # libscan
+ 
++is ($t->libscan('Readme.pod'),      '', 'libscan excludes base Readme.pod');
++is ($t->libscan('README.pod'),      '', 'libscan excludes base README.pod');
++is ($t->libscan('lib/Foo/README.pod'),      'lib/Foo/README.pod', 'libscan accepts README.pod in a subdirectory');
+ is ($t->libscan('foo/RCS/bar'),     '', 'libscan on RCS');
+ is ($t->libscan('CVS/bar/car'),     '', 'libscan on CVS');
+ is ($t->libscan('SCCS'),            '', 'libscan on SCCS');

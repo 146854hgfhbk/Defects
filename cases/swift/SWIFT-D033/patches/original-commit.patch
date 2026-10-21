@@ -1,0 +1,119 @@
+diff --git a/Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift b/Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift
+index e5c897b7a2d9cfa3483e0ee8d62a989208c015fd..e62ffa4dc37108f41ee42cebfdecae53da8732a2 100644
+--- a/Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift
++++ b/Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift
+@@ -646,18 +646,21 @@ private final class TokenStreamCreator: SyntaxVisitor {
+   }
+ 
+   override func visit(_ node: ForStmtSyntax) -> SyntaxVisitorContinueKind {
+-    // If we have a `(try) await` clause, allow breaking after the `for` so that the `(try) await`
+-    // can fall onto the next line if needed, and if both `try await` are present, keep them
+-    // together. Otherwise, keep `for` glued to the token after it so that we break somewhere later
+-    // on the line.
+-    if let awaitKeyword = node.awaitKeyword {
++    // If we have a `(try) await` or `unsafe` clause, allow breaking after the `for` so that the
++    // modifiers can fall onto the next line if needed, and if multiple modifiers are present, keep
++    // them together. Otherwise, keep `for` glued to the token after it so that we break somewhere
++    // later on the line.
++    let modifiers = [node.tryKeyword, node.awaitKeyword, node.unsafeKeyword].compactMap { $0 }
++    if let first = modifiers.first, let last = modifiers.last {
+       after(node.forKeyword, tokens: .break)
+-      if let tryKeyword = node.tryKeyword {
+-        before(tryKeyword, tokens: .open)
+-        after(tryKeyword, tokens: .break)
+-        after(awaitKeyword, tokens: .close, .break)
++      if modifiers.count == 1 {
++        after(first, tokens: .break)
+       } else {
+-        after(awaitKeyword, tokens: .break)
++        before(first, tokens: .open)
++        for i in 0..<(modifiers.count - 1) {
++          after(modifiers[i], tokens: .break)
++        }
++        after(last, tokens: .close, .break)
+       }
+     } else {
+       after(node.forKeyword, tokens: .space)
+diff --git a/Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift b/Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift
+index bdcbf760d9107b498910b1203e8b57203b49f3d3..6cdd7e52b75c59baa15654eabba94401cab891e2 100644
+--- a/Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift
++++ b/Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift
+@@ -390,4 +390,78 @@ final class ForInStmtTests: PrettyPrintTestCase {
+ 
+     assertPrettyPrintEqual(input: input, expected: expected, linelength: 14)
+   }
++
++  func testForUnsafe() {
++    let input = """
++      for unsafe x in xs {}
++      """
++
++    let expected80 = """
++      for unsafe x in xs {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected80, linelength: 80)
++
++    let expected10 = """
++      for unsafe
++        x in xs
++      {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected10, linelength: 10)
++  }
++
++  func testForTryAwaitUnsafe() {
++    let input = """
++      for try await unsafe x in xs {}
++      """
++
++    let expected80 = """
++      for try await unsafe x in xs {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected80, linelength: 80)
++
++    let expected10 = """
++      for
++        try
++        await
++        unsafe x
++        in xs
++      {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected10, linelength: 10)
++  }
++
++  func testForUnsafeWrapPattern() {
++    let input = """
++      for unsafe (aVeryLongVariableNameThatWillForceAWrap, anotherVeryLongVariableName) in someCollection {}
++      """
++    let expected = """
++      for unsafe (
++        aVeryLongVariableNameThatWillForceAWrap,
++        anotherVeryLongVariableName
++      ) in someCollection {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected, linelength: 40)
++  }
++
++  func testForTryAwaitUnsafeWrapPattern() {
++    let input = """
++      for try await unsafe (aVeryLongVariableNameThatWillForceAWrap, anotherVeryLongVariableName) in someCollection {}
++      """
++    let expected = """
++      for try await unsafe
++        (
++          aVeryLongVariableNameThatWillForceAWrap,
++          anotherVeryLongVariableName
++        )
++        in someCollection
++      {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected, linelength: 20)
++  }
+ }

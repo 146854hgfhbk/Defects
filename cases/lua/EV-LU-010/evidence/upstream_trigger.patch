@@ -1,0 +1,40 @@
+diff --git a/tests/test-path.lua b/tests/test-path.lua
+index 7496d22..50dd488 100644
+--- a/tests/test-path.lua
++++ b/tests/test-path.lua
+@@ -55,4 +55,16 @@ end
+ 
+ asserteq(norm '1/2/../3/4/../5',norm '1/3/5')
+ 
++assert(path.join("somepath",".") == "somepath"..path.sep..".")
++assert(path.join(".","readme.txt") == "."..path.sep.."readme.txt")
++assert(path.join("/a_dir", "abs_path/") == "/a_dir"..path.sep.."abs_path/")
++assert(path.join("a_dir", "/abs_path/") == "/abs_path/")
++assert(path.join("a_dir", "/abs_path/", "/abs_path2/") == "/abs_path2/")
++assert(path.join("a_dir", "/abs_path/", "not_abs_path2/") == "/abs_path/not_abs_path2/")
++assert(path.join("a_dir", "/abs_path/", "not_abs_path2/", "/abs_path3/", "not_abs_path4/") == "/abs_path3/not_abs_path4/")
++assert(path.join("first","second","third") == "first"..path.sep.."second"..path.sep.."third")
++assert(path.join("first","second","") == "first"..path.sep.."second"..path.sep)
++assert(path.join("first","","third") == "first"..path.sep.."third")
++assert(path.join("","second","third") == "second"..path.sep.."third")
++assert(path.join("","") == "")
+ 
+diff --git a/tests/testp.lua b/tests/testp.lua
+deleted file mode 100644
+index 3805901..0000000
+--- a/tests/testp.lua
++++ /dev/null
+@@ -1,13 +0,0 @@
+-require 'pl'
+-
+-norm = path.normpath
+-
+-p = norm '/a/b'
+-
+-assert(norm '/a/fred/../b' == p)
+-assert(norm '/a//b' == p)
+-
+-if path.is_windows then
+-  assert(norm [[\a\.\b]] == p)
+-end
+-

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-202",
+  "technical_evidence_sha256": "aa6d3eb27c96cf7d729608dee86e232fe8844c6ebc7b36c55e0cded2b091a859",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "65c6df310815cd963a5c86909a69535dae4e70e3c0ccb5b9e8693432710de3db",
+  "reviewed_at": "2026-08-11T23:15:26.459456+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "jama5262/jiffy#257",
+  "rationale": "Issue #257 reports a FormatException when calling dayOfYear in Bengali locale due to int.parse failing on locale-formatted numerals (৩২৯). The minimized production patch replaces int.parse with NumberFormat.decimalPattern(locale.code).parse() in both quarterOfYear and dayOfYear methods, introducing a private _toInt helper. The two trigger tests exercise these exact pre-existing APIs with Bengali locale ('bn') and verify expected numeric outputs (266 for day 1997-09-23, 2 for quarter 2022-04-01). Strict runtime validation confirms both triggers fail deterministically on buggy (FormatException) and pass on fixed, with full suite green on fixed and no spurious failures. The patch contains only the locale-aware parsing fix with no formatting, refactoring, documentation, or feature extension. No active duplicates exist in the same project.\n\nIssue #257 reports a FormatException when calling .dayOfYear in Bengali locale due to int.parse failing on locale-formatted numerals (৩২৯). The production fix replaces int.parse with NumberFormat.decimalPattern(locale.code).parse() in both dayOfYear and quarterOfYear methods, introducing a private _toInt helper. The two trigger tests exercise the exact same public APIs (dayOfYear and quarterOfYear) with Bengali locale that would throw FormatException on the buggy revision. Strict validation confirms both triggers reproduce deterministically on buggy (FormatException) and pass on fixed (returns expected integer values 266 and 2). The minimized patch is identical to the production fix, contains no refactor/formatting/documentation changes, adds only a private helper, and touches a single production file with 2 method call replacements plus the 4-line helper.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:15:13.292752+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "65c6df310815cd963a5c86909a69535dae4e70e3c0ccb5b9e8693432710de3db",
+      "response_sha256": "ca1b51da15acc1cb4a3a76163eab6f7fea8261410a8158ade378241b850da815",
+      "response_id": "msg_58683205-c837-46fa-8c",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3300
+        },
+        "cache_creation_input_tokens": 3300,
+        "cache_read_input_tokens": 8268,
+        "input_tokens": 10871,
+        "output_tokens": 893
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "jama5262/jiffy#257",
+      "rationale": "Issue #257 reports a FormatException when calling dayOfYear in Bengali locale due to int.parse failing on locale-formatted numerals (৩২৯). The minimized production patch replaces int.parse with NumberFormat.decimalPattern(locale.code).parse() in both quarterOfYear and dayOfYear methods, introducing a private _toInt helper. The two trigger tests exercise these exact pre-existing APIs with Bengali locale ('bn') and verify expected numeric outputs (266 for day 1997-09-23, 2 for quarter 2022-04-01). Strict runtime validation confirms both triggers fail deterministically on buggy (FormatException) and pass on fixed, with full suite green on fixed and no spurious failures. The patch contains only the locale-aware parsing fix with no formatting, refactoring, documentation, or feature extension. No active duplicates exist in the same project.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "source_candidate.origin_pull_request.body",
+        "issue_urls[0]",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "Trigger tests mutate global locale state (Jiffy.setLocale) without visible reset, though suite-level isolation appears effective in validation",
+        "Expected numeric values depend on intl package locale data for Bengali; version drift could alter failure modes, though current validation confirms FormatException on buggy"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:15:26.459223+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "65c6df310815cd963a5c86909a69535dae4e70e3c0ccb5b9e8693432710de3db",
+      "response_sha256": "e03f383415f511a507aae1542dfb87837baf68fcbe745106f45cd31baed84c3d",
+      "response_id": "msg_18e6d7fc-6557-415b-b2",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3534
+        },
+        "cache_creation_input_tokens": 3534,
+        "cache_read_input_tokens": 8210,
+        "input_tokens": 10871,
+        "output_tokens": 931
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "jama5262/jiffy#257",
+      "rationale": "Issue #257 reports a FormatException when calling .dayOfYear in Bengali locale due to int.parse failing on locale-formatted numerals (৩২৯). The production fix replaces int.parse with NumberFormat.decimalPattern(locale.code).parse() in both dayOfYear and quarterOfYear methods, introducing a private _toInt helper. The two trigger tests exercise the exact same public APIs (dayOfYear and quarterOfYear) with Bengali locale that would throw FormatException on the buggy revision. Strict validation confirms both triggers reproduce deterministically on buggy (FormatException) and pass on fixed (returns expected integer values 266 and 2). The minimized patch is identical to the production fix, contains no refactor/formatting/documentation changes, adds only a private helper, and touches a single production file with 2 method call replacements plus the 4-line helper.",
+      "evidence_paths": [
+        "source_candidate.issue_check.linked_issues[1].body",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests[0].name",
+        "trigger_tests[1].name"
+      ],
+      "risks": [
+        "Trigger tests mutate global Jiffy locale state without visible reset; ordering-dependent interactions with other tests in getter_test.dart are possible but mitigated by full-suite validation passing",
+        "Expected integer values (266, 2) depend on intl package locale data for Bengali; version drift could alter failure mode, though strict validation used pinned dependencies"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "schema_version": "defects4x-manifest-v2",
+  "bug_id": "EV-LU-167",
+  "repository": "kikito/inspect.lua",
+  "language": "lua",
+  "p3_state": "SUPERSEDED_BY_STRICT_GATE",
+  "provenance_triage_class": "BUG_LIKELY",
+  "buggy_sha": "a9986352070deb273d2aef38c682390a79d61bf3",
+  "fixed_sha": "d051ae061c85309d2200c838cddeb6887553001a",
+  "bug_summary": "fix endless recursion when using inspect to reimplement global tostring",
+  "source_file": "inspect.lua",
+  "regression_test_file": "spec/inspect_spec.lua",
+  "runtime_image": "defects4x/penlight-p3:lua54-v2",
+  "runtime_mounts": [
+    "penlight:ro",
+    "luacov:ro"
+  ],
+  "buggy_exit_code": 1,
+  "fixed_exit_code": 0,
+  "reproduction_mode": "fixed-test-overlay-on-buggy",
+  "provenance_grade": "ISSUE_PR_LINKED",
+  "oracle_scope": "upstream_regression_targeted",
+  "active_status": "active",
+  "deprecation_reason": null,
+  "provenance": {
+    "commit_url": "https://github.com/kikito/inspect.lua/commit/d051ae061c85309d2200c838cddeb6887553001a",
+    "evidence_type": "PR",
+    "issue_urls": [],
+    "pr_urls": [
+      "https://github.com/kikito/inspect.lua/pull/27"
+    ],
+    "gate_status": "RESOLVED",
+    "release_tier": "ISSUE_PR_LINKED"
+  },
+  "patch_policy": "source_only_minimized_patch_pending_hunk_signoff",
+  "minimized_patch": "evidence/minimized.patch",
+  "trigger_selector": {
+    "selector_kind": "busted_filter",
+    "test_file": "spec/inspect_spec.lua",
+    "filter": "inspect allows changing the global tostring",
+    "command": [
+      "busted",
+      "--filter",
+      "inspect allows changing the global tostring",
+      "spec/inspect_spec.lua"
+    ],
+    "precision": "single_named_test_case"
+  },
+  "stability_repeats": 3,
+  "full_suite_command": [
+    "busted",
+    "spec"
+  ],
+  "runtime_identity_policy": "portable_fingerprint",
+  "timezone": "UTC",
+  "locale": "C.UTF-8",
+  "strict_qualification_status": "QUALIFIED",
+  "historical_runtime_image_id": "sha256:3aa692f226e88b1e62aa8940ff1952a58a8545122d2a4b83cb8dc3d229f5f58b",
+  "container_digest_kind": "historical_local_image_id_not_a_gate",
+  "artifact_format": "Defects4X-Golden-v2-core100-restored",
+  "reproduction_status": "QUALIFIED",
+  "release_profile": "core100_targeted_defects4j_style",
+  "targeted_qualification_status": "QUALIFIED_TARGETED_3X",
+  "stability_evidence": [
+    "golden/logs",
+    "validation/fresh-docker-20260903",
+    "validation/fresh-docker-20260904-rc2"
+  ],
+  "semantic_defect_status": "ACCEPT",
+  "semantic_review_profile": "semantic_v3_final_20260920",
+  "d4j_traceability_status": "REPORT_EXISTS_COMMIT_MESSAGE_NO_REPORT_ID",
+  "d4j_traceability_audit_date": "2026-09-21",
+  "d4j_traceability_rerun_required": false
+}

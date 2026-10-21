@@ -1,0 +1,71 @@
+diff --git a/test/absinthe/introspection_test.exs b/test/absinthe/introspection_test.exs
+index d58e93a8..bdbefdfa 100644
+--- a/test/absinthe/introspection_test.exs
++++ b/test/absinthe/introspection_test.exs
+@@ -545,4 +545,36 @@ defmodule Absinthe.IntrospectionTest do
+       result
+     )
+   end
++
++  test "properly render partial default value input objects" do
++    {:ok, result} =
++      """
++      {
++        __schema {
++          queryType {
++            fields {
++              name
++              args {
++                name
++                defaultValue
++              }
++            }
++          }
++        }
++      }
++      """
++      |> run(Absinthe.Fixtures.ArgumentsSchema)
++
++    fields = get_in(result, [:data, "__schema", "queryType", "fields"])
++
++    assert %{
++             "args" => [
++               %{"defaultValue" => "{exclude: [2, 3], include: [1]}", "name" => "filterAll"},
++               %{"defaultValue" => "{}", "name" => "filterEmpty"},
++               %{"defaultValue" => "{exclude: [1, 2, 3]}", "name" => "filterExclude"},
++               %{"defaultValue" => "{include: [1, 2, 3]}", "name" => "filterInclude"}
++             ],
++             "name" => "filterNumbers"
++           } in fields
++  end
+ end
+diff --git a/test/support/fixtures/arguments_schema.ex b/test/support/fixtures/arguments_schema.ex
+index 57a0da35..bb27010e 100644
+--- a/test/support/fixtures/arguments_schema.ex
++++ b/test/support/fixtures/arguments_schema.ex
+@@ -56,6 +56,11 @@ defmodule Absinthe.Fixtures.ArgumentsSchema do
+     field :non_null_field, non_null(:string)
+   end
+ 
++  input_object :filter do
++    field :include, list_of(:integer)
++    field :exclude, list_of(:integer)
++  end
++
+   query do
+     field :stuff, :integer do
+       arg :stuff, non_null(:input_stuff)
+@@ -65,6 +70,13 @@ defmodule Absinthe.Fixtures.ArgumentsSchema do
+       end
+     end
+ 
++    field :filter_numbers, list_of(:integer) do
++      arg :filter_empty, :filter, default_value: %{}
++      arg :filter_include, :filter, default_value: %{include: [1, 2, 3]}
++      arg :filter_exclude, :filter, default_value: %{exclude: [1, 2, 3]}
++      arg :filter_all, :filter, default_value: %{include: [1], exclude: [2, 3]}
++    end
++
+     field :test_boolean_input_object, :boolean do
+       arg :input, non_null(:boolean_input_object)
+ 

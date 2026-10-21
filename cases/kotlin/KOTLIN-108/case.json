@@ -1,0 +1,138 @@
+{
+  "schema_version": 2,
+  "case_id": "KOTLIN-108",
+  "bug_id": "KOTLIN-108",
+  "language": "Kotlin",
+  "project": "ktlint/ktlint",
+  "repository_url": "https://github.com/ktlint/ktlint.git",
+  "issue_urls": [
+    "https://github.com/ktlint/ktlint/issues/3220"
+  ],
+  "buggy_revision": "225559824f7d5bcafe46e4ef6581ccc66a3cc447",
+  "fixed_revision": "7c33d3c322dd5e10fea2b4696d352c5b7e9d14b2",
+  "issue_id": "3220",
+  "changed_production_files": [
+    "ktlint-rule-engine/src/main/kotlin/com/pinterest/ktlint/rule/engine/internal/RuleExecutionContext.kt"
+  ],
+  "patch": "patches/minimized-source.patch",
+  "triggering_test": "com.pinterest.ktlint.rule.engine.api.KtLintTest",
+  "trigger_tests": [
+    "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+  ],
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "com.pinterest.ktlint.rule.engine.api.KtLintTest.Issue 3220 - Given some code that contains the UTF8 BOM character somewhere but not a the start then ensure this character is not removed()"
+    ],
+    "exception_types": [
+      "org.opentest4j.AssertionFailedError"
+    ],
+    "fingerprints": [
+      "e5cf507a08b5cb43d06a512c566f6abd8f4eb04d4ac49a2f55c40c2a38865913"
+    ]
+  },
+  "fixed_test_result": "pass",
+  "trigger_test_patch": "trigger-tests.patch",
+  "trigger_test_origin": "fixed_revision",
+  "build": {
+    "system": "Gradle Wrapper",
+    "gradle_version": "9.4.0",
+    "java_version": 25,
+    "android_sdk_required": false,
+    "compile_task": ":ktlint-rule-engine:testClasses",
+    "test_task": ":ktlint-rule-engine:test",
+    "test_results_glob": "**/build/test-results/**/TEST-*.xml",
+    "build_command": "./gradlew :ktlint-rule-engine:testClasses",
+    "test_command": "./gradlew :ktlint-rule-engine:test"
+  },
+  "language_version": "Kotlin 2.3.10",
+  "dependency_versions": {
+    "kotlin": "2.3.10",
+    "gradle": "9.4.0",
+    "java": "25.0.3"
+  },
+  "operating_system_or_container": "Linux/x86_64 (Ubuntu 26.04 LTS)",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "environment_lock": "environment.lock.json",
+  "validation": {
+    "status": "PASS_LINUX_STRICT",
+    "report": "validation/validation.json",
+    "report_sha256": "3a63a7c1bd1ac5514e220c16f5f39861c2f32d02d43ad0456cec23b7fef333c0",
+    "generated_by": "Linux reference replay evidence reconstruction from original run artifacts",
+    "linux_reference_validated_at": "2026-09-07T09:41:00Z",
+    "linux_reference_acceptance": "PASS_LINUX_STRICT",
+    "repetitions": 3,
+    "fresh_worktree_per_repetition": true,
+    "compile_valid": true,
+    "full_suite_valid": true,
+    "full_suite_replayed_on_linux": true,
+    "raw_linux_evidence": "validation/linux-evidence/EVIDENCE_MANIFEST.json",
+    "historical_windows_validation": "validation/history/windows/validation.json"
+  },
+  "provenance": {
+    "release_remediation": {
+      "remediated_at": "2026-08-15T11:41:43Z",
+      "canonical_tree": "cases",
+      "previous_status": null,
+      "previous_patch_path": "patches/minimized-source.patch",
+      "previous_patch_sha256": null,
+      "legacy_provenance_trigger_patch_sha256": null,
+      "release_trigger_patch_sha256": "e5673a2940a5d8a3e8f8088f6582743423418299bb76022ca788dadcf926a640",
+      "trigger_historical_binding": "not_previously_declared",
+      "source_patch_evidence": "minimization_evidence",
+      "source_patch_evidence_file": "patches/minimization.json",
+      "package_dynamic_replayed": false,
+      "raw_run_artifacts_bundled": false,
+      "historical_snapshot": true,
+      "superseded_by_final_dynamic_acceptance": true,
+      "note_on_package_dynamic_replayed": "false records the 2026-08-15 remediation snapshot; final_dynamic_acceptance is authoritative for the 2026-08-17 replay."
+    }
+  },
+  "patch_sha256": "96578622b8b113c921c5fe61c4881aad49171b4ca0accabbc7617f4dd7031060",
+  "original_source_patch": "patches/original-source.patch",
+  "original_source_patch_sha256": "96578622b8b113c921c5fe61c4881aad49171b4ca0accabbc7617f4dd7031060",
+  "trigger_test_patch_sha256": "e5673a2940a5d8a3e8f8088f6582743423418299bb76022ca788dadcf926a640",
+  "test_identity": {
+    "scheme": "base-revision-plus-trigger-overlay-sha256-v1",
+    "trigger_overlay_sha256": "e5673a2940a5d8a3e8f8088f6582743423418299bb76022ca788dadcf926a640",
+    "buggy_base_revision": "225559824f7d5bcafe46e4ef6581ccc66a3cc447",
+    "fixed_base_revision": "7c33d3c322dd5e10fea2b4696d352c5b7e9d14b2",
+    "note": "Final release identity: trigger overlay bytes are bound by SHA-256 and base revisions are the final published buggy/fixed identities."
+  },
+  "status": "candidate_validated",
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "jvm",
+    "reason_code": null,
+    "reason": "Final dynamic acceptance pass completed from clean reconstruction; fixed passed and buggy reproduced the declared trigger differential."
+  },
+  "release_integrity": "release-integrity.json",
+  "final_dynamic_acceptance": {
+    "status": "PASS_STRICT",
+    "fresh_replay_completed": true,
+    "accepted_at": "2026-09-07T09:41:00Z",
+    "fixed_result": "PASS",
+    "buggy_trigger_result": "FAIL_AS_EXPECTED",
+    "raw_run_artifacts_bundled": true,
+    "evidence_location": "validation/linux-evidence/EVIDENCE_MANIFEST.json",
+    "repair_note": "JDK security/cacerts environment repaired; fresh replay passed.",
+    "reference_platform": "Linux/x86_64 (Ubuntu 26.04 LTS)"
+  },
+  "revision_mode": "real_upstream_commit",
+  "patch_direction": "buggy_to_fixed",
+  "patch_semantics": {
+    "canonical_direction": "buggy_to_fixed",
+    "official_defects4j_reference_convention": "reverse_patch_applied_to_fixed_to_reintroduce_bug",
+    "note": "Direction is explicitly declared because this Defects4J-style Kotlin release is not byte-format-identical to the Defects4J internal patch store."
+  },
+  "defects4j_style_alignment": {
+    "dynamic_reproduction": "PASS_STRICT",
+    "patch_direction_declared": true,
+    "manual_review_adaptation": "LLM-assisted curation may replace the original Defects4J human-review stage for this dataset task"
+  },
+  "benchmark_tier": "strict-upstream-boundary",
+  "upstream_boundary_strict_eligible": true
+}

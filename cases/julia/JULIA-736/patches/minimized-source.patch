@@ -1,0 +1,28 @@
+diff --git a/src/arb/arb.jl b/src/arb/arb.jl
+--- a/src/arb/arb.jl
++++ b/src/arb/arb.jl
+@@ -1960,6 +1957,24 @@ function _arb_set(x::ArbFieldElemOrPtr, y::Real, p::Int)
+   _arb_set(x, BigFloat(y), p)
+ end
+ 
++function _arb_set(x::ArbFieldElemOrPtr, y::Irrational)
++  _arb_set(x, y, precision(parent(x)))
++end
++
++function _arb_set(x::ArbFieldElemOrPtr, y::Irrational, p::Int)
++  if y == pi
++    @ccall libflint.arb_const_pi(x::Ref{ArbFieldElem}, p::Int)::Nothing
++  elseif y == MathConstants.e
++    @ccall libflint.arb_const_e(x::Ref{ArbFieldElem}, p::Int)::Nothing
++  elseif y == MathConstants.catalan
++    @ccall libflint.arb_const_catalan(x::Ref{ArbFieldElem}, p::Int)::Nothing
++  elseif y == MathConstants.eulergamma
++    @ccall libflint.arb_const_euler(x::Ref{ArbFieldElem}, p::Int)::Nothing
++  else
++    _arb_set(x, BigFloat(y; precision=p), p)
++  end
++end
++
+ ################################################################################
+ #
+ #  Parent object overloading

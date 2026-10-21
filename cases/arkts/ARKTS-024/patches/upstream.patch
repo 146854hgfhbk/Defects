@@ -1,0 +1,83 @@
+diff --git a/code/BasicFeature/Web/Browser/entry/src/main/ets/common/TitleBar.ets b/code/BasicFeature/Web/Browser/entry/src/main/ets/common/TitleBar.ets
+index 58ce8501c1..d6ee398fe2 100644
+--- a/code/BasicFeature/Web/Browser/entry/src/main/ets/common/TitleBar.ets
++++ b/code/BasicFeature/Web/Browser/entry/src/main/ets/common/TitleBar.ets
+@@ -101,7 +101,8 @@ export struct TabletTitle {
+               this.browser.Refresh();
+               break;
+             case 4:
+-              this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl($rawfile('pad.html'));
++              this.browser.webControllerArray[this.browser.tabArrayIndex]?.controller
++                .loadUrl($rawfile('pad.html'));
+               break;
+           }
+         })
+@@ -120,7 +121,8 @@ export struct TabletTitle {
+         .onSubmit((enterKey: EnterKeyType) => {
+           Logger.info(TAG, `onSubmit`)
+           if (this.addr.length !== 0) {
+-            this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl(`https://${this.addr}`);
++            this.browser.webControllerArray[this.browser.tabArrayIndex]?.controller
++              .loadUrl(`https://${this.addr}`);
+             this.addr = '';
+           }
+         })
+@@ -216,19 +218,20 @@ export struct WebTab {
+   testObj = {
+     test: (addr) => {
+       Logger.info(TAG, `addr= ${this.browser.tabArrayIndex}`);
+-      this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl(`https://${addr}`);
++      this.browser.webControllerArray[this.browser.tabArrayIndex]?.controller.loadUrl(`https://${addr}`);
+     },
+     searchWord: (word: string) => {
+       Logger.info(`search word= ${word}`);
+       let code = encodeURI(word);
+-      this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl(`https://www.bing.com/search?q=${code}`);
++      this.browser.webControllerArray[this.browser.tabArrayIndex]?.controller
++        .loadUrl(`https://www.bing.com/search?q=${code}`);
+     }
+   }
+ 
+   aboutToAppear() {
+     webview.once('webInited', () => {
+       try {
+-        this.userAgent = this.browser.webControllerArray[this.browser.tabArrayIndex].controller.getUserAgent();
++        this.userAgent = this.browser.webControllerArray[this.browser.tabArrayIndex]?.controller.getUserAgent();
+         Logger.info(`getUserAgent successed, detail: ${this.userAgent}`);
+       } catch (error) {
+         Logger.error(`getUserAgent failed, error info: ${this.userAgent}`);
+diff --git a/code/BasicFeature/Web/Browser/entry/src/main/ets/model/Browser.ets b/code/BasicFeature/Web/Browser/entry/src/main/ets/model/Browser.ets
+index e92f67b829..23f28a66cc 100644
+--- a/code/BasicFeature/Web/Browser/entry/src/main/ets/model/Browser.ets
++++ b/code/BasicFeature/Web/Browser/entry/src/main/ets/model/Browser.ets
+@@ -111,22 +111,22 @@ export class Browser {
+ 
+   loadUrl(addr: string) {
+     addr = "https://" + addr;
+-    this.webControllerArray[this.tabArrayIndex].controller.loadUrl(addr);
++    this.webControllerArray[this.tabArrayIndex]?.controller.loadUrl(addr);
+   }
+ 
+   Back() {
+-    if (this.webControllerArray[this.tabArrayIndex].controller.accessBackward()) {
+-      this.webControllerArray[this.tabArrayIndex].controller.backward()
++    if (this.webControllerArray[this.tabArrayIndex]?.controller.accessBackward()) {
++      this.webControllerArray[this.tabArrayIndex]?.controller.backward();
+     }
+   }
+ 
+   Forward() {
+-    if (this.webControllerArray[this.tabArrayIndex].controller.accessForward()) {
+-      this.webControllerArray[this.tabArrayIndex].controller.forward()
++    if (this.webControllerArray[this.tabArrayIndex]?.controller.accessForward()) {
++      this.webControllerArray[this.tabArrayIndex]?.controller.forward();
+     }
+   }
+ 
+   Refresh() {
+-    this.webControllerArray[this.tabArrayIndex].controller.refresh()
++    this.webControllerArray[this.tabArrayIndex]?.controller.refresh();
+   }
+-}
++}
+\ No newline at end of file

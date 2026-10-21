@@ -1,0 +1,50 @@
+diff --git a/injectable_generator/test/code_builder/builder_utils_test.dart b/injectable_generator/test/code_builder/builder_utils_test.dart
+index 5aee7b484cee6c319354631c5f8c031069c53b48..265da1812d01be3a6b1963ddcaec4c65c4aea5e2 100644
+--- a/injectable_generator/test/code_builder/builder_utils_test.dart
++++ b/injectable_generator/test/code_builder/builder_utils_test.dart
+@@ -1269,6 +1269,45 @@ void main() {
+       },
+     );
+ 
++    test(
++      'should terminate sorting when a no-env dependency waits on an unsortable env variant',
++      () {
++        final dep1 = DependencyConfig.factory(
++          'Service',
++          typeImpl: 'ProdService',
++          envs: ['prod'],
++          deps: ['ExternalDependency'],
++        );
++        final dep2 = DependencyConfig.factory(
++          'Service',
++          typeImpl: 'DevService',
++          envs: ['dev'],
++        );
++        final consumer = DependencyConfig.factory(
++          'Consumer',
++          deps: ['Service'],
++        );
++        final deps = [consumer, dep1, dep2];
++
++        expect(
++          lookupDependency(
++            InjectedDependency(
++              type: const ImportableType(name: 'ExternalDependency'),
++              paramName: 'externalDependency',
++            ),
++            deps,
++          ),
++          isNull,
++        );
++        final result = sortDependencies(deps);
++
++        expect(result, unorderedEquals(deps));
++        final consumerIndex = result.indexOf(consumer);
++        expect(result.indexOf(dep1), lessThan(consumerIndex));
++        expect(result.indexOf(dep2), lessThan(consumerIndex));
++      },
++    );
++
+     test('should handle partial environment matches - not all envs found', () {
+       final dep1 = DependencyConfig(
+         type: const ImportableType(name: 'Config'),

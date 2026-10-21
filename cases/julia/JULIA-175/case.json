@@ -1,0 +1,121 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-175",
+  "bug_id": "JULIA-175",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "94b15aca52ed05fa0d707d966247e2dd8940b666",
+  "fixed_revision": "ebcc56a2eefeddb2c2007ae9628408f061fa2af6",
+  "candidate_sha": "ebcc56a2eefeddb2c2007ae9628408f061fa2af6",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "94b15aca52ed05fa0d707d966247e2dd8940b666",
+  "changed_production_files": [
+    "src/parser.jl"
+  ],
+  "changed_test_files": [
+    "test/parser.jl"
+  ],
+  "trigger_tests": [
+    "typed unary expression parsing"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "5830ff5c3ec1c702c8431035c81b32642e77a53459c59423df123cba2a3020a0",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/parser.jl",
+        "basis": "assertion copied from the upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "18a1179857f9be8792db33067fbef14c406d8c7fe1e18fd452ef36bb1127fdc4"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "ebcc56a2eefeddb2c2007ae9628408f061fa2af6",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "1cb24d8395c7b3495e828c60882fe683eb413424293c512d2273e068dedfb7dc",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:55:14Z",
+    "usage": {
+      "prompt_tokens": 1264,
+      "completion_tokens": 488,
+      "total_tokens": 1752
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"Fix for a parser crash when parsing signed literals with type assertions (e.g., `-1::Int`). The issue explicitly states 'the parser just crashed on this kind of input' which is a clear defect in existing behavior.\", \"evidence\": \"Issue #462 explicitly describes a crash bug: 'Previously the parser just crashed on this kind of input - a bug which is also present in the old parser.' The fix modifies production code (src/parser.jl) and includes a test file change (test/parser.jl). The change is isolated to the parser and addresses a crash rather than adding new functionality.\", \"missing_evidence\": \"The actual diff content is not provided, so I cannot verify the exact code change or the test assertions. The PR body is empty, suggesting this may have been a direct commit rather than a PR-based change.\", \"validation_risks\": \"Without seeing the actual diff, there's a small risk that the fix could be more extensive than a simple bug fix. However, the issue description is very clear about this being a crash fix for existing syntax.\", \"suggested_tests\": [\"Parse `-1::Int` and verify it produces valid AST without crashing\", \"Parse `-1::Int` in ccall context to verify practical usage works\", \"Verify that signed literal parsing still works correctly without type assertions (regression test)\", \"Test edge cases like `-1.0::Float64` and `-(1)::Int`\"]}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for a parser crash when parsing signed literals with type assertions (e.g., `-1::Int`). The issue explicitly states 'the parser just crashed on this kind of input' which is a clear defect in existing behavior.",
+    "evidence": "Issue #462 explicitly describes a crash bug: 'Previously the parser just crashed on this kind of input - a bug which is also present in the old parser.' The fix modifies production code (src/parser.jl) and includes a test file change (test/parser.jl). The change is isolated to the parser and addresses a crash rather than adding new functionality.",
+    "missing_evidence": "The actual diff content is not provided, so I cannot verify the exact code change or the test assertions. The PR body is empty, suggesting this may have been a direct commit rather than a PR-based change.",
+    "validation_risks": "Without seeing the actual diff, there's a small risk that the fix could be more extensive than a simple bug fix. However, the issue description is very clear about this being a crash fix for existing syntax.",
+    "suggested_tests": [
+      "Parse `-1::Int` and verify it produces valid AST without crashing",
+      "Parse `-1::Int` in ccall context to verify practical usage works",
+      "Verify that signed literal parsing still works correctly without type assertions (regression test)",
+      "Test edge cases like `-1.0::Float64` and `-(1)::Int`"
+    ]
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "typed unary expression parsing"
+    ],
+    "exception_types": [
+      "2b8aa50563582bb5a3f58f92abc10f504f18e6f0bafb973e868183f4d97c687e"
+    ],
+    "fingerprints": [
+      "2b8aa50563582bb5a3f58f92abc10f504f18e6f0bafb973e868183f4d97c687e"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

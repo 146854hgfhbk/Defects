@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "589b0cdb810e7c42b60653403dd388e973aa3805",
+  "project": "aviatesk/JET.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 857,
+      "url": "https://github.com/aviatesk/JET.jl/pull/857",
+      "state": "closed",
+      "title": "toplevel: Isolate conditional closures in Test expressions",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Test.jl macro replacements left anonymous functions in top-level lowered code. For example:\r\n\r\n    @test_broken any(items) do item\r\n        first_check(item)\r\n    end && any(items) do item\r\n        second_check(item)\r\n    end\r\n\r\nThe closure in the right-hand branch became a concrete definition requirement. Reaching it could concretely execute the first `any` call, causing side effects or top-level errors instead of inference reports.\r\n\r\nThis change outlines only thunk-safe tested expressions containing conditionally defined anonymous functions into zero-argument functions. Calls, expression-level control flow, literals, and type expressions are accepted by an explicit whitelist. Bindings, named definitions, control transfers, and unknown macros remain inline. The `skip=` path defines the thunk outside its generated branch and invokes it only when enabled.\r\n\r\nA minimal reproducer now reports an undefined global in the first closure through inference instead of concrete top-level execution. The focused `@test macros` tests pass 96/96.\r\n\r\nThis is a Test-specific mitigation for a general virtual-process limitation. A future fix should distinguish compiler-generated closure materialization from runtime concretization during statement selection. It can avoid selecting enclosing control flow when closure setup has no runtime-value dependencies, while retaining current behavior otherwise.\r\n\r\nWarm median timings were neutral versus disabling the wrapping: 4.44 seconds versus 4.57 seconds for Struct2JSONSchema, which had no eligible expressions, and 20.83 seconds versus 21.18 seconds for JET's test file, which had two."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 857,
+      "pull_request_repository": "aviatesk/JET.jl",
+      "pull_request_url": "https://github.com/aviatesk/JET.jl/pull/857",
+      "fix_commit": "589b0cdb810e7c42b60653403dd388e973aa3805",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "toplevel: Isolate conditional closures in Test expressions (#857)",
+    "commit_issue_refs": [
+      857
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 857,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "toplevel: Isolate conditional closures in Test expressions",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [],
+  "pull_request_record": {
+    "number": 857,
+    "repository": "aviatesk/JET.jl",
+    "url": "https://github.com/aviatesk/JET.jl/pull/857",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-08-07T08:59:46Z",
+    "merge_commit_sha": "589b0cdb810e7c42b60653403dd388e973aa3805",
+    "title": "toplevel: Isolate conditional closures in Test expressions",
+    "body_excerpt": "Test.jl macro replacements left anonymous functions in top-level lowered code. For example:\r\n\r\n    @test_broken any(items) do item\r\n        first_check(item)\r\n    end && any(items) do item\r\n        second_check(item)\r\n    end\r\n\r\nThe closure in the right-hand branch became a concrete definition requirement. Reaching it could concretely execute the first `any` call, causing side effects or top-level errors instead of inference reports.\r\n\r\nThis change outlines only thunk-safe tested expressions containing conditionally defined anonymous functions into zero-argument functions. Calls, expression-level control flow, literals, and type expressions are accepted by an explicit whitelist. Bindings, named definitions, control transfers, and unknown macros remain inline. The `skip=` path defines the thunk outside its generated branch and invokes it only when enabled.\r\n\r\nA minimal reproducer now reports an undefined global in the first closure through inference instead of concrete top-level execution. The focused `@test macros` tests pass 96/96.\r\n\r\nThis is a Test-specific mitigation for a general virtual-process limitation. A future fix should distinguish compiler-generated closure materialization from runtime concretization during statement selection. It can avoid selecting enclosing control flow when closure setup has no runtime-value dependencies, while retaining current behavior otherwise.\r\n\r\nWarm median timings were neutral versus disabling the wrapping: 4.44 seconds versus 4.57 seconds for Struct2JSONSchema, which had no eligible expressions, and 20.83 seconds versus 21.18 seconds for JET's test file, which had two.",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

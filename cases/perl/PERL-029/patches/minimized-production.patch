@@ -1,0 +1,35 @@
+diff --git a/CSV_XS.pm b/CSV_XS.pm
+index eef5af617f6aeb3b19557ff3858cc3f612b29584..44fe124076f2009916254be8c3d57f40b0c3e3ba 100644
+--- a/CSV_XS.pm
++++ b/CSV_XS.pm
+@@ -2608,7 +2608,8 @@ X<getline_all>
+ This will return a reference to a list of L<getline ($fh)|/getline> results.
+ In this call, C<keep_meta_info> is disabled.  If C<$offset> is negative, as
+ with C<splice>, only the last  C<abs ($offset)> records of C<$fh> are taken
+-into consideration.
++into consideration. Parameters C<$offset> and C<$length> are expected to be
++an integers. Non-integer values are interpreted as integer without check.
+ 
+ Given a CSV file with 10 lines:
+ 
+diff --git a/CSV_XS.xs b/CSV_XS.xs
+index 326f90050900cf3f93a32ba39a93a9ce0735a2c3..fcc3a83ba2bae26007274d99c096e5aa81300ed0 100644
+--- a/CSV_XS.xs
++++ b/CSV_XS.xs
+@@ -2195,14 +2195,14 @@ static SV *cx_xsParse_all (pTHX_ SV *self, HV *hv, SV *io, SV *off, SV *len) {
+ 
+     SetupCsv (&csv, hv, self);
+ 
+-    if (SvIOK (off)) {
++    if (SvOK (off)) {
+ 	skip = SvIV (off);
+ 	if (skip < 0) {
+ 	    tail = -skip;
+ 	    skip = -1;
+ 	    }
+ 	}
+-    if (SvIOK (len))
++    if (SvOK (len))
+ 	length = SvIV (len);
+ 
+     while (c_xsParse (csv, hv, row, NULL, io, 1)) {

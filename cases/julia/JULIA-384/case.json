@@ -1,0 +1,303 @@
+{
+  "bug_id": "JULIA-384",
+  "buggy_revision": "4e1ce3694b0cab8fdaf18560c0df042eda918854",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "swe_rebench_julia_base_1.10",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "fec9dfe403e512710fb46398eb9880a65cc8d9d9",
+  "case_id": "JULIA-384",
+  "changed_production_files": [
+    "src/gpmr.jl"
+  ],
+  "changed_test_files": [
+    "test/test_gpmr.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "fec9dfe403e512710fb46398eb9880a65cc8d9d9",
+  "instance_id": "juliasmoothoptimizers__krylov.jl-467",
+  "issue_id": 466,
+  "issue_urls": [
+    "https://github.com/JuliaSmoothOptimizers/Krylov.jl/issues/466"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "parent_sha": "4e1ce3694b0cab8fdaf18560c0df042eda918854",
+  "project": "JuliaSmoothOptimizers/Krylov.jl",
+  "repository_url": "https://github.com/JuliaSmoothOptimizers/Krylov.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "candidate_sha": "fec9dfe403e512710fb46398eb9880a65cc8d9d9",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.78,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Linked closed issue reports 'NaN with GPMR on certain systems' with a concrete reproducer (saddle-point system solvable by TRICG/TRIMR) and asks for graceful termination instead of NaN. Production change is confined to src/gpmr.jl; test/test_gpmr.jl was updated in the same commit. Minimization reports 1 kept hunk, globally minimal, all hunks necessary. Runtime evidence: strict_differential = stable_differential over 3 repetitions with the full suite passing on the fixed version, trigger_mode = test_patch_suite.",
+    "input_sha256": "412b65db2f2ffdca8f0643c8175bfb879bb46fb8f3dadec33e1eca8320631e09",
+    "missing_evidence": "No PR number, title, or body; traceability_class is UNVERIFIED, so the issue-to-commit link is inferred from content rather than an explicit reference. trigger_tests is empty, so the specific failing test name on the parent commit is not identified. No pre-fix failure log showing the NaN/assertion failure text.",
+    "project": "JuliaSmoothOptimizers/Krylov.jl",
+    "provider": "claude",
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.78, \"summary\": \"GPMR returned NaN solutions when the triangular factor Rₖ became singular (breakdown / inconsistent system), because the back-substitution divided by a zero diagonal entry. The commit guards that division (and, in the full commit, detects the Krylov breakdown and reports it via status/stats.inconsistent). The minimized patch is a single hunk in src/gpmr.jl that sets ζᵢ = 0 when rᵢ.ᵢ ≤ eps(T) instead of dividing, which is the behavioral core of the fix.\", \"evidence\": \"Linked closed issue reports 'NaN with GPMR on certain systems' with a concrete reproducer (saddle-point system solvable by TRICG/TRIMR) and asks for graceful termination instead of NaN. Production change is confined to src/gpmr.jl; test/test_gpmr.jl was updated in the same commit. Minimization reports 1 kept hunk, globally minimal, all hunks necessary. Runtime evidence: strict_differential = stable_differential over 3 repetitions with the full suite passing on the fixed version, trigger_mode = test_patch_suite.\", \"missing_evidence\": \"No PR number, title, or body; traceability_class is UNVERIFIED, so the issue-to-commit link is inferred from content rather than an explicit reference. trigger_tests is empty, so the specific failing test name on the parent commit is not identified. No pre-fix failure log showing the NaN/assertion failure text.\", \"validation_risks\": \"The full commit bundles non-behavioral and diagnostic changes (verbose @printf columns for hₖ₊₁.ₖ and fₖ₊₁.ₖ, new status strings, stats.inconsistent semantics) alongside the NaN fix; a test that asserts on status strings or printed output would tie the reproduction to non-core changes rather than the minimized hunk. The guard uses `R[pos] ≤ eps(T)` rather than an absolute value, so behavior for negative diagonal entries differs and any test near that threshold could be sensitive to floating-point scale or BLAS/platform differences. Reproducing the original issue may need the specific matrix from the issue attachment, which is not in-repo; a synthetic inconsistent system must be constructed to hit breakdown deterministically.\", \"suggested_tests\": \"Construct a small GPMR problem where the Krylov breakdown occurs (e.g. rank-deficient/inconsistent generalized saddle-point system with A and B chosen so Auₖ ∈ Span{v₁..vₖ} and Bvₖ ∈ Span{u₁..uₖ} within a few iterations) and assert that all entries of x and y are finite (no NaN/Inf) and that the solver terminates. Add an assertion that stats.solved is false and stats.inconsistent is true for that system, and a regression check that a well-conditioned consistent GPMR problem still converges to the same solution and residual as before (guarding against the eps(T) threshold firing spuriously). Also test in Float32 and Float64 to confirm the eps(T) guard scales correctly.\"}\n```",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-31T04:36:48Z",
+    "suggested_tests": "Construct a small GPMR problem where the Krylov breakdown occurs (e.g. rank-deficient/inconsistent generalized saddle-point system with A and B chosen so Auₖ ∈ Span{v₁..vₖ} and Bvₖ ∈ Span{u₁..uₖ} within a few iterations) and assert that all entries of x and y are finite (no NaN/Inf) and that the solver terminates. Add an assertion that stats.solved is false and stats.inconsistent is true for that system, and a regression check that a well-conditioned consistent GPMR problem still converges to the same solution and residual as before (guarding against the eps(T) threshold firing spuriously). Also test in Float32 and Float64 to confirm the eps(T) guard scales correctly.",
+    "summary": "GPMR returned NaN solutions when the triangular factor Rₖ became singular (breakdown / inconsistent system), because the back-substitution divided by a zero diagonal entry. The commit guards that division (and, in the full commit, detects the Krylov breakdown and reports it via status/stats.inconsistent). The minimized patch is a single hunk in src/gpmr.jl that sets ζᵢ = 0 when rᵢ.ᵢ ≤ eps(T) instead of dividing, which is the behavioral core of the fix.",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.5340344153897181,
+      "input_tokens": 6882,
+      "output_tokens": 753
+    },
+    "validation_risks": "The full commit bundles non-behavioral and diagnostic changes (verbose @printf columns for hₖ₊₁.ₖ and fₖ₊₁.ₖ, new status strings, stats.inconsistent semantics) alongside the NaN fix; a test that asserts on status strings or printed output would tie the reproduction to non-core changes rather than the minimized hunk. The guard uses `R[pos] ≤ eps(T)` rather than an absolute value, so behavior for negative diagonal entries differs and any test near that threshold could be sensitive to floating-point scale or BLAS/platform differences. Reproducing the original issue may need the specific matrix from the issue attachment, which is not in-repo; a synthetic inconsistent system must be constructed to hit breakdown deterministically."
+  },
+  "revision_mode": "real_upstream_commit",
+  "schema_version": 2,
+  "source": "SWE-rebench-V2",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "gpmr",
+      "fom",
+      "gmres",
+      "bicgstab",
+      "usymlq",
+      "tricg",
+      "bilqr",
+      "trimr",
+      "trilqr",
+      "usymqr",
+      "qmr",
+      "lnlq",
+      "diom",
+      "cgs",
+      "dqgmres",
+      "cg",
+      "cg_lanczos",
+      "minres",
+      "minres_qlp",
+      "symmlq",
+      "bilq",
+      "cgls",
+      "crls",
+      "cgne",
+      "crmr",
+      "lslq",
+      "lsqr",
+      "lsmr",
+      "craig",
+      "craigmr",
+      "cr",
+      "alloc",
+      "mp",
+      "solvers"
+    ],
+    "PASS_TO_PASS": [
+      "aux",
+      "stats"
+    ],
+    "base_commit": "3d9200420140d116a8441f1ae9cdb373e921ed27",
+    "boundary_type": "RECONSTRUCTED",
+    "created_at": "2021-12-09 09:47:40",
+    "image_name": "docker.io/swerebenchv2/juliasmoothoptimizers-krylov.jl:467-3d92004",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Test; include(\"test/runtests.jl\")'"
+    },
+    "instance_id": "juliasmoothoptimizers__krylov.jl-467",
+    "interface": "Method: gpmr(A, B, b, c; λ::Real=1.0, μ::Real=0.0, kwargs...)\nLocation: src/gpmr.jl\nInputs:\n- A :: AbstractMatrix{T}: first block matrix of the saddle‑point system (m×n).\n- B :: AbstractMatrix{T}: second block matrix (n×m), usually the transpose or adjoint of A.\n- b :: AbstractVector{T}: right‑hand side of the first block (length m, non‑zero).\n- c :: AbstractVector{T}: right‑hand side of the second block (length n, non‑zero).\n- λ :: Real (optional keyword): regularization/shift parameter for the (1,1) block of the generalized saddle‑point matrix; default 1.0.\n- μ :: Real (optional keyword): regularization/shift parameter for the (2,2) block; default 0.0.\n- kwargs… :: additional optional keyword arguments (preconditioners, tolerances, etc.) passed to the solver.\nOutputs:\n- x :: Vector{T}: approximate solution of the first block.\n- y :: Vector{T}: approximate solution of the second block.\n- stats :: GpmrStats (or similar) with fields:\n  * solved :: Bool – true if the residual norm satisfied the tolerance.\n  * inconsistent :: Bool – true when a breakdown is detected and a least‑squares solution is returned.\n  * status :: String – textual description of the termination condition.\nDescription: Solves the (generalized) saddle‑point system  \n\\[\n\\begin{bmatrix} λI & A \\\\ B & μI \\end{bmatrix}\\begin{bmatrix}x\\\\y\\end{bmatrix}\n = \\begin{bmatrix}b\\\\c\\end{bmatrix}\n\\]  \nusing the GPMR iterative method.  The optional λ, μ allow shifting the (1,1) and (2,2) blocks; the solver detects breakdowns (both orthogonalisation scalars vanish) and reports them via stats.inconsistent.\n\nFunction: ssy_mo_breakdown(transpose::Bool=false)\nLocation: test/test_utils.jl\nInputs:\n- transpose :: Bool (optional, default false): when true, returns a matrix A that is the transpose‑case of the breakdown example; when false, returns the standard case.\nOutputs:\n- A :: Matrix{Float64}: a small rectangular matrix that triggers a breakdown in the orthogonal tridiagonalisation / Hessenberg reduction steps of GPMR.\n- b :: Vector{Float64}: vector of ones with length equal to the number of rows of A (non‑zero).\n- c :: Vector{Float64}: vector of ones with length equal to the number of columns of A (non‑zero).\nDescription: Generates a minimal test problem that forces a breakdown in the GPMR algorithm, used by the test suite to verify correct handling of singular orthogonalisation coefficients and the `stats.inconsistent` flag.",
+    "issue_url": "https://github.com/JuliaSmoothOptimizers/Krylov.jl/issues/466",
+    "language": "julia",
+    "license": "custom-check-github",
+    "merge_commit": "fec9dfe403e512710fb46398eb9880a65cc8d9d9",
+    "merged_at": "2021-12-19T20:15:17Z",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.78,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [
+          "https://github.com/JuliaSmoothOptimizers/Krylov.jl/files/7677986/bug.gpmr.zip"
+        ],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports NaN during GPMR on a specific saddle‑point system and asks for graceful termination instead of failure. The proposed tests check that the algorithm handles breakdowns and inconsistent systems without NaN, exposing a new stats.inconsistent flag. The tests align with a reasonable fix (detecting zero recurrence coefficients and marking inconsistency) and do not rely on unrelated modules or external specifications, so the problem is clearly specified and solvable. Minor misalignment is that the tests expect a stats.inconsistent field which the issue did not explicitly mention, but this is a natural extension of the requested behavior.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 3,
+      "num_modified_lines": null,
+      "pr_author": "amontoison",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaSmoothOptimizers/Krylov.jl/pull/467"
+    },
+    "patch": "diff --git a/src/gpmr.jl b/src/gpmr.jl\nindex 8946bfa5b..da4b9b92e 100644\n--- a/src/gpmr.jl\n+++ b/src/gpmr.jl\n@@ -172,18 +172,19 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs\n   zt[1] = β\n   zt[2] = γ\n \n-  (verbose > 0) && @printf(\"%5s  %7s\\n\", \"k\", \"‖rₖ‖\")\n-  display(iter, verbose) && @printf(\"%5d  %7.1e\\n\", iter, rNorm)\n+  (verbose > 0) && @printf(\"%5s  %7s  %7s  %7s\\n\", \"k\", \"‖rₖ‖\", \"hₖ₊₁.ₖ\", \"fₖ₊₁.ₖ\")\n+  display(iter, verbose) && @printf(\"%5d  %7.1e  %7s  %7s\\n\", iter, rNorm, \"✗ ✗ ✗ ✗\", \"✗ ✗ ✗ ✗\")\n \n   # Determine λ and μ associated to generalized saddle point systems.\n   gsp && (λ = one(T) ; μ = zero(T))\n \n   # Stopping criterion.\n+  breakdown = false\n   solved = rNorm ≤ ε\n   tired = iter ≥ itmax\n   status = \"unknown\"\n \n-  while !(solved || tired)\n+  while !(solved || tired || breakdown)\n \n     # Update iteration index.\n     iter = iter + 1\n@@ -347,19 +348,35 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs\n     nr = nr + 4k-1\n \n     # Update stopping criterion.\n+    breakdown = Faux ≤ eps(T) && Haux ≤ eps(T)\n     solved = rNorm ≤ ε\n     tired = iter ≥ itmax\n-    display(iter, verbose) && @printf(\"%5d  %7.1e\\n\", iter, rNorm)\n+    display(iter, verbose) && @printf(\"%5d  %7.1e  %7.1e  %7.1e\\n\", iter, rNorm, Haux, Faux)\n \n     # Compute vₖ₊₁ and uₖ₊₁\n-    if !(solved || tired)\n+    if !(solved || tired || breakdown)\n       if iter ≥ mem\n         push!(V, S(undef, m))\n         push!(U, S(undef, n))\n         push!(zt, zero(T), zero(T))\n       end\n-      @. V[k+1] = q / Haux  # hₖ₊₁.ₖvₖ₊₁ = q\n-      @. U[k+1] = p / Faux  # fₖ₊₁.ₖuₖ₊₁ = p\n+\n+      # hₖ₊₁.ₖ ≠ 0\n+      if Haux > eps(T)\n+        @. V[k+1] = q / Haux  # hₖ₊₁.ₖvₖ₊₁ = q\n+      else\n+        # Breakdown -- hₖ₊₁.ₖ = ‖q‖₂ = 0 and Auₖ ∈ Span{v₁, ..., vₖ}\n+        V[k+1] .= zero(T)  # vₖ₊₁ = 0 such that vₖ₊₁ ⊥ Span{v₁, ..., vₖ}\n+      end\n+\n+      # fₖ₊₁.ₖ ≠ 0\n+      if Faux > eps(T)\n+        @. U[k+1] = p / Faux  # fₖ₊₁.ₖuₖ₊₁ = p\n+      else\n+        # Breakdown -- fₖ₊₁.ₖ = ‖p‖₂ = 0 and Bvₖ ∈ Span{u₁, ..., uₖ}\n+        U[k+1] .= zero(T)  # uₖ₊₁ = 0 such that uₖ₊₁ ⊥ Span{u₁, ..., uₖ}\n+      end\n+\n       zt[2k+1] = τbar₂ₖ₊₁\n       zt[2k+2] = τbar₂ₖ₊₂\n     end\n@@ -373,7 +390,12 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs\n       zt[i] = zt[i] - R[pos] * zt[j]  # ζᵢ ← ζᵢ - rᵢ.ⱼζⱼ\n       pos = pos - j + 1               # position of rᵢ.ⱼ₋₁\n     end\n-    zt[i] = zt[i] / R[pos]            # ζᵢ ← ζᵢ / rᵢ.ᵢ\n+    # Rₖ can be singular is the system is inconsistent\n+    if R[pos] ≤ eps(T)\n+      zt[i] = zero(T)\n+    else\n+      zt[i] = zt[i] / R[pos]          # ζᵢ ← ζᵢ / rᵢ.ᵢ\n+    end\n   end\n \n   # Compute xₖ and yₖ\n@@ -392,11 +414,13 @@ function gpmr!(solver :: GpmrSolver{T,S}, A, B, b :: AbstractVector{T}, c :: Abs\n   restart && @kaxpy!(m, one(T), Δx, x)\n   restart && @kaxpy!(n, one(T), Δy, y)\n \n-  status = tired ? \"maximum number of iterations exceeded\" : \"solution good enough given atol and rtol\"\n+  tired     && (status = \"maximum number of iterations exceeded\")\n+  breakdown && (status = \"found approximate least-squares solution\")\n+  solved    && (status = \"solution good enough given atol and rtol\")\n \n   # Update stats\n   stats.solved = solved\n-  stats.inconsistent = false\n+  stats.inconsistent = !solved && breakdown\n   stats.status = status\n   return solver\n end\n",
+    "pr_description": "close #466 \r\n\r\n@dpo \r\nOur orthogonal Hessenberg process continues if `hₖ₊₁.ₖ = 0` or `fₖ₊₁.ₖ = 0`.\r\nWe just need to not normalize `vₖ₊₁` or `uₖ₊₁` if we encounter these cases.\r\n\r\nIn our article, we propose to handle breakdowns theoretically like this\r\n```\r\n\"\"\"In case of breakdown, which happens if Auₖ ∈ Span{v₁ , ... , vₖ} or Bvₖ ∈ Span{u₁ , ... , uₖ},\r\nwe choose an arbitrary unit vₖ₊₁ ⊥ Span{v₁, ... , vₖ} or uₖ₊₁ ⊥ Span{u₁, ... , uₖ}\r\nand set βₖ₊₁ = 0 or γₖ₊₁ = 0, respectively.\"\"\"\r\n```\r\nin the proof of the orthogonal Hessenberg process (GPMR paper).\r\nFor this reason,  the process should be stopped after `p := min{m,n}` iterations.\r\n\r\nBut numerically, it also works to set `βₖ₊₁ = vₖ₊₁ = 0` if `Auₖ ∈ Span{v₁ , ... , vₖ}` or `γₖ₊₁ = uₖ₊₁ = 0` if `Bvₖ ∈ Span{u₁ , ... , uₖ}`.\r\nWe can continue the process until `max{m,n}`.\r\nAt `max{m,n}`, in the worst case, `hₖ₊₁.ₖ = fₖ₊₁.ₖ = 0` and the exact solution is found.\r\nIt's the missing piece to prove the convergence of GPMR !",
+    "pr_number": 467,
+    "pr_title": "Hotfix for breakdowns in GPMR",
+    "pr_url": "https://github.com/JuliaSmoothOptimizers/Krylov.jl/pull/467",
+    "problem_statement": "NaN with GPMR on certain systems\n[bug gpmr.zip](https://github.com/JuliaSmoothOptimizers/Krylov.jl/files/7677986/bug.gpmr.zip)\r\n\r\nHi, I have an issue with GPMR when solving some systems (I provided one in the above zip file with the code to read it):\r\n\r\n```julia\r\nusing SparseArrays, LinearAlgebra, Krylov, DelimitedFiles, MatrixMarket\r\nread_path = raw\"C:\\Users\\Geoffroy Leconte\\Documents\\doctorat\\code\\bugs\\bug gpmr\"\r\nA = MatrixMarket.mmread(string(read_path, \"/A.mtx\"))\r\nE = readdlm(string(read_path, \"/E.rhs\"), Float64)[:]\r\nδ = readdlm(string(read_path, \"/delta.rhs\"), Float64)[:][1]\r\nξ1 = readdlm(string(read_path, \"/xi1.rhs\"), Float64)[:]\r\nξ2 = readdlm(string(read_path, \"/xi2.rhs\"), Float64)[:]\r\n\r\n(x, y, stats) = gpmr(A', A, ξ1, ξ2, \r\n                      C = inv(Diagonal(sqrt.(E))), E = inv(Diagonal(sqrt.(E))), \r\n                      D = (1.0 / sqrt(δ)) .* I,  F = (1.0 / sqrt(δ)) .* I, λ = -1.0)\r\n```\r\nThis leads to `NaN`. I don't know if it is supposed to fail on such a system but if it is, it would be convenient to have something that terminates the algorithm and returns an error.\r\n\r\nSince this is a saddle-point system I can solve it with TRIMR or TRICG (and it works):\r\n```julia\r\n(x, y, stats) = tricg(A', ξ1, ξ2, M = inv(Diagonal(E)), N = (1.0 / δ) .* I, flip=true)\r\n```",
+    "repo": "JuliaSmoothOptimizers/Krylov.jl",
+    "test_patch": "diff --git a/test/test_gpmr.jl b/test/test_gpmr.jl\nindex 0a26985a6..090bec890 100644\n--- a/test/test_gpmr.jl\n+++ b/test/test_gpmr.jl\n@@ -41,6 +41,30 @@\n     @test_throws ErrorException(\"c must be nonzero\") gpmr(A, B, b, c)\n     b .= 0\n     @test_throws ErrorException(\"b must be nonzero\") gpmr(A, B, b, c)\n+\n+    # Test breakdowns\n+    A, b, c = ssy_mo_breakdown(transpose)\n+    λ = 1.0\n+    μ = -1.0\n+    K = [I A; A' -I]\n+    d = [b; c]\n+    x, y, stats = gpmr(A, A', b, c, λ=λ, μ=μ)\n+    r =  d - K * [x; y]\n+    resid = norm(r) / norm(d)\n+    @test(resid ≤ gpmr_tol)\n+\n+    # Test inconsistent linear systems\n+    A, b, c = ssy_mo_breakdown(transpose)\n+    K = [I A; A' I]\n+    d = [b; c]\n+    n, m = size(K)\n+    p = rank(K)\n+    @test(p < n)\n+    x, y, stats = gpmr(A, A', b, c)\n+    r =  d - K * [x; y]\n+    Aresid = norm(K' * r) / norm(K' * d)\n+    @test(Aresid ≤ gpmr_tol)\n+    @test(stats.inconsistent)\n   end\n \n   # Test underdetermined adjoint systems.\ndiff --git a/test/test_utils.jl b/test/test_utils.jl\nindex 0c864b1b3..540c9c63e 100644\n--- a/test/test_utils.jl\n+++ b/test/test_utils.jl\n@@ -331,3 +331,16 @@ function jacobi(A; T=Float64, pd=true)\n   P⁻¹ = Diagonal(J)\n   return P⁻¹\n end\n+\n+# Generate a breakdown in the orthogonal tridiagonalization process and the orthogonal Hessenberg reduction process.\n+function ssy_mo_breakdown(transpose :: Bool=false)\n+  if transpose\n+    A = [1.0 -1.0; 0.0 1.0; -1.0 0.0]\n+  else\n+    A = [1.0 0.0 -1.0; -1.0 1.0 0.0]\n+  end\n+  n, m = size(A)\n+  b = ones(n)\n+  c = ones(m)\n+  return A, b, c\n+end\n"
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [],
+      "assertion_expression_sha256": [],
+      "f2p_tests": [
+        "gpmr",
+        "fom",
+        "gmres",
+        "bicgstab",
+        "usymlq",
+        "tricg",
+        "bilqr",
+        "trimr",
+        "trilqr",
+        "usymqr",
+        "qmr",
+        "lnlq",
+        "diom",
+        "cgs",
+        "dqgmres",
+        "cg",
+        "cg_lanczos",
+        "minres",
+        "minres_qlp",
+        "symmlq",
+        "bilq",
+        "cgls",
+        "crls",
+        "cgne",
+        "crmr",
+        "lslq",
+        "lsqr",
+        "lsmr",
+        "craig",
+        "craigmr",
+        "cr",
+        "alloc",
+        "mp",
+        "solvers"
+      ],
+      "inferred_testset_context": [
+        "gpmr"
+      ],
+      "mwe_basis": "exact_assertions_from_upstream_fix_test_patch",
+      "schema_version": 1,
+      "source_evidence": {
+        "path": "trigger/upstream-tests.patch",
+        "sha256": "f6ab16301b645cb14dcf1ce2496a696636982ea1ef0fde7d8815b9370631b6ec",
+        "test_files": [
+          "test/test_gpmr.jl",
+          "test/test_utils.jl"
+        ],
+        "test_files_sha256": {
+          "test/test_gpmr.jl": "e3b79615e2fda0063dc6790d8f79e1f320fa7c97347f53acbc9d30cea93923bf",
+          "test/test_utils.jl": "31d9fd6278bc73dd00ee782cc70a7002542fa621ea3531e8b25ecbc11303269d"
+        }
+      }
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "b1a6291e0961f6e522748f2751c9c11a00e8c1c78f43da9becf1e3b220848d1e",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "GPMR inconsistent systems"
+  ],
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "GPMR inconsistent systems"
+    ],
+    "exception_types": [
+      "f9d31bfafddfc205296533b86bae4994061198aaf812f4a96d3d6d328cebd2ec"
+    ],
+    "fingerprints": [
+      "f9d31bfafddfc205296533b86bae4994061198aaf812f4a96d3d6d328cebd2ec"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

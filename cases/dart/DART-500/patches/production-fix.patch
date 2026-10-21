@@ -1,0 +1,167 @@
+diff --git a/lib/csv.dart b/lib/csv.dart
+index 1afb215..f4b9862 100644
+--- a/lib/csv.dart
++++ b/lib/csv.dart
+@@ -8,6 +8,7 @@ import 'src/complex_converter.dart';
+ import 'csv_settings_autodetection.dart';
+ 
+ part 'csv_to_list_converter.dart';
++
+ part 'list_to_csv_converter.dart';
+ 
+ /// The RFC conform default value for field delimiter.
+diff --git a/lib/csv_to_list_converter.dart b/lib/csv_to_list_converter.dart
+index ce74b90..18f36c0 100644
+--- a/lib/csv_to_list_converter.dart
++++ b/lib/csv_to_list_converter.dart
+@@ -45,10 +45,8 @@ class CsvToListConverter extends StreamTransformerBase<String, List>
+       bool? shouldParseNumbers,
+       bool? allowInvalid})
+       : textDelimiter = textDelimiter,
+-        textEndDelimiter =
+-            textEndDelimiter ?? textDelimiter,
+-        shouldParseNumbers =
+-            shouldParseNumbers ?? true,
++        textEndDelimiter = textEndDelimiter ?? textDelimiter,
++        shouldParseNumbers = shouldParseNumbers ?? true,
+         allowInvalid = allowInvalid ?? true;
+ 
+   /// Verifies current settings.
+diff --git a/lib/list_to_csv_converter.dart b/lib/list_to_csv_converter.dart
+index 4e04513..148953f 100644
+--- a/lib/list_to_csv_converter.dart
++++ b/lib/list_to_csv_converter.dart
+@@ -108,8 +108,7 @@ class ListToCsvConverter extends StreamTransformerBase<List, String>
+       this.eol = defaultEol,
+       this.delimitAllFields = defaultDelimitAllFields})
+       : textDelimiter = textDelimiter,
+-        textEndDelimiter =
+-            textEndDelimiter ?? textDelimiter;
++        textEndDelimiter = textEndDelimiter ?? textDelimiter;
+ 
+   /// Converts rows -- a [List] of [List]s into a csv String.
+   ///
+@@ -237,7 +236,9 @@ class ListToCsvConverter extends StreamTransformerBase<List, String>
+           ..write(valString) // 5,3
+           ..write(textEndDelimiter); // "
+       } else {
+-        sb..write(fieldDel)..write(valString);
++        sb
++          ..write(fieldDel)
++          ..write(valString);
+       }
+       fieldDel = fieldDelimiter;
+       return sb;
+diff --git a/lib/src/csv_argument_errors.dart b/lib/src/csv_argument_errors.dart
+index 968203d..b22f1df 100644
+--- a/lib/src/csv_argument_errors.dart
++++ b/lib/src/csv_argument_errors.dart
+@@ -2,22 +2,26 @@ part of csv_parser;
+ 
+ class EolNullError extends ArgumentError {
+   static const String msg = 'The eol character must not be null';
++
+   EolNullError() : super(msg);
+ }
+ 
+ class FieldDelimiterNullError extends ArgumentError {
+   static const String msg = 'The field delimiter character must not be null';
++
+   FieldDelimiterNullError() : super(msg);
+ }
+ 
+ class TextDelimiterNullError extends ArgumentError {
+   static const String msg = 'The text delimiter character must not be null';
++
+   TextDelimiterNullError() : super(msg);
+ }
+ 
+ class TextEndDelimiterNullError extends ArgumentError {
+   static const String msg =
+       'The text end delimiter character must not be null.';
++
+   TextEndDelimiterNullError() : super(msg);
+ }
+ 
+diff --git a/lib/src/csv_parser.dart b/lib/src/csv_parser.dart
+index 12db847..165a4a2 100644
+--- a/lib/src/csv_parser.dart
++++ b/lib/src/csv_parser.dart
+@@ -166,10 +166,10 @@ class CsvParser {
+ 
+   /// Are we inside a quoted text/string ([_insideString] must be true as well
+   /// if [_insideQuotedString] is true).
+-  bool? _insideQuotedString;
++  bool _insideQuotedString = false;
+ 
+   /// Did we just now parse a [textEndDelimiter]?
+-  bool? _previousWasTextEndDelimiter;
++  bool _previousWasTextEndDelimiter = false;
+ 
+   // Counters for multi-character matching:
+ 
+@@ -224,8 +224,7 @@ class CsvParser {
+         textEndDelimiter = _argValue(allowInvalid, textEndDelimiter, '"',
+             userValue2: textDelimiter),
+         eol = _argValue(allowInvalid, eol, '\r\n'),
+-        shouldParseNumbers =
+-            shouldParseNumbers ?? true,
++        shouldParseNumbers = shouldParseNumbers ?? true,
+         allowInvalid = allowInvalid ?? true,
+         _matchingFieldDelimiter = 0,
+         _matchingTextDelimiter = 0,
+@@ -290,15 +289,15 @@ class CsvParser {
+   // See the implementation note at the start of this class.
+   bool _match(String c, bool matching) {
+     final onlyTextEndDelimiterMatches =
+-        _insideQuotedString! && !_previousWasTextEndDelimiter!;
++        _insideQuotedString && !_previousWasTextEndDelimiter;
+ 
+     // never look for a start text delimiter inside a quoted string.
+     // (even if _previousWasTextEndDelimiter)
+     final matchTextDelimiters =
+-        !_insideQuotedString! && (!matching || _matchingTextDelimiter > 0);
++        !_insideQuotedString && (!matching || _matchingTextDelimiter > 0);
+ 
+     final matchTextEndDelimiters =
+-        _insideQuotedString! && (!matching || _matchingTextEndDelimiter > 0);
++        _insideQuotedString && (!matching || _matchingTextEndDelimiter > 0);
+ 
+     final matchFieldDelimiters = !onlyTextEndDelimiterMatches &&
+         (!matching || _matchingFieldDelimiter > 0);
+@@ -395,7 +394,7 @@ class CsvParser {
+     // We must be inside a quoted string, otherwise textEndDelimiter isn't
+     // even considered.
+ 
+-    if (_previousWasTextEndDelimiter!) {
++    if (_previousWasTextEndDelimiter) {
+       // we have just read a textEndDelimiter
+       // so this is the second textEndDelimiter → output textDelimiter
+       _addTextToField(textEndDelimiter);
+@@ -409,7 +408,7 @@ class CsvParser {
+   ParsingResult _consumeEol() {
+     _resetMatcher();
+ 
+-    assert(_insideQuotedString == false || _previousWasTextEndDelimiter!);
++    assert(_insideQuotedString == false || _previousWasTextEndDelimiter);
+ 
+     _insideString = false;
+     _insideQuotedString = false;
+@@ -426,7 +425,7 @@ class CsvParser {
+     _resetMatcher();
+ 
+     _insideString = false;
+-    assert(_insideQuotedString == false || _previousWasTextEndDelimiter!);
++    assert(_insideQuotedString == false || _previousWasTextEndDelimiter);
+     _insideQuotedString = false;
+ 
+     var quoted = _previousWasTextEndDelimiter;
+@@ -629,7 +628,7 @@ class CsvParser {
+     if (!allowInvalid &&
+         result.stopReason == ParsingStopReason.EndOfString &&
+         fieldCompleteWhenEndOfString &&
+-        _insideQuotedString!) {
++        (_insideQuotedString && !_previousWasTextEndDelimiter)) {
+       throw InvalidCsvException(textEndDelimiter);
+     }
+     return result;

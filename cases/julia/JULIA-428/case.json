@@ -1,0 +1,259 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-428",
+  "bug_id": "JULIA-428",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "meggart/DiskArrays.jl",
+  "repository_url": "https://github.com/meggart/DiskArrays.jl.git",
+  "issue_urls": [
+    "https://github.com/meggart/DiskArrays.jl/issues/51"
+  ],
+  "issue_id": 51,
+  "buggy_revision": "e3886ce6e417843c6e5560c25442e2c71ca5ee72",
+  "fixed_revision": "39a2de3a2cc11e9932164a790bf28987777c3d6a",
+  "candidate_sha": "39a2de3a2cc11e9932164a790bf28987777c3d6a",
+  "source": "SWE-rebench-V2",
+  "instance_id": "meggart__diskarrays.jl-52",
+  "swe": {
+    "base_commit": "e3886ce6e417843c6e5560c25442e2c71ca5ee72",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/JuliaIO/DiskArrays.jl/pull/52",
+    "pr_number": 52,
+    "merge_commit": "39a2de3a2cc11e9932164a790bf28987777c3d6a",
+    "issue_url": "https://github.com/meggart/DiskArrays.jl/issues/51",
+    "merged_at": "2022-02-15T13:12:55Z",
+    "pr_title": "Fix views of unchunked diskarrays",
+    "patch": "diff --git a/Project.toml b/Project.toml\nindex a15fc6b..70e475e 100644\n--- a/Project.toml\n+++ b/Project.toml\n@@ -1,7 +1,7 @@\n name = \"DiskArrays\"\n uuid = \"3c3547ce-8d99-4f5e-a174-61eb10b00ae3\"\n authors = [\"Fabian Gans <fgans@bgc-jena.mpg.de>\"]\n-version = \"0.3.0\"\n+version = \"0.3.1\"\n \n [compat]\n julia = \"1.6\"\ndiff --git a/src/subarrays.jl b/src/subarrays.jl\nindex dfd8fdb..90cb57d 100644\n--- a/src/subarrays.jl\n+++ b/src/subarrays.jl\n@@ -32,5 +32,5 @@ function eachchunk_view(::Chunked, vv)\n   newchunks = [subsetchunks(chunksparent.chunks[i], pinds[i]) for i in 1:length(pinds) if !in(i,iomit)]\n   GridChunks(newchunks...)\n end\n-eachchunk_view(::Unchunked, a) = GridChunks(a,estimate_chunksize(a))\n+eachchunk_view(::Unchunked, a) = estimate_chunksize(a)\n haschunks(a::SubDiskArray) = haschunks(parent(a.v))\n",
+    "test_patch": "diff --git a/test/runtests.jl b/test/runtests.jl\nindex 342e522..ab7b74e 100644\n--- a/test/runtests.jl\n+++ b/test/runtests.jl\n@@ -38,6 +38,19 @@ function DiskArrays.writeblock!(a::_DiskArray,v,i::AbstractUnitRange...)\n   view(a.parent,i...) .= v\n end\n \n+struct UnchunkedDiskArray{T,N,P<:AbstractArray{T,N}} <: AbstractDiskArray{T,N}\n+  p::P\n+end\n+DiskArrays.haschunks(::UnchunkedDiskArray) = DiskArrays.Unchunked()\n+Base.size(a::UnchunkedDiskArray) = size(a.p)\n+function DiskArrays.readblock!(a::UnchunkedDiskArray,aout,i::AbstractUnitRange...)\n+  ndims(a) == length(i) || error(\"Number of indices is not correct\")\n+  all(r->isa(r,AbstractUnitRange),i) || error(\"Not all indices are unit ranges\")\n+  #println(\"reading from indices \", join(string.(i),\" \"))\n+  aout .= a.p[i...]\n+end\n+\n+\n function test_getindex(a)\n   @test a[2,3,1] == 10\n   @test a[2,3] == 10\n@@ -204,6 +217,13 @@ end\n   @test DiskArrays.max_chunksize(gridc) == (5,2,4)\n end\n \n+@testset \"Unchunked DiskArrays\" begin\n+  a = UnchunkedDiskArray(reshape(1:1000,(10,20,5)))\n+  v = view(a,1:2,1,1:3)\n+  @test v == [1 201 401; 2 202 402] \n+end\n+\n+\n @testset \"Index interpretation\" begin\n   import DiskArrays: DimsDropper, Reshaper\n   a = zeros(3,3,1)\n",
+    "FAIL_TO_PASS": [
+      "Index interpretation",
+      "AbstractDiskArray getindex",
+      "AbstractDiskArray setindex",
+      "Zerodimensional",
+      "Views",
+      "Reductions",
+      "Broadcast",
+      "Broadcast with length 1 final dim",
+      "Reshape",
+      "Permutedims",
+      "Unchunked String arrays"
+    ],
+    "PASS_TO_PASS": [
+      "GridChunks object",
+      "Unchunked DiskArrays"
+    ],
+    "problem_statement": "Changes to iteration over an `Unchunked` SubDiskArray?\nEquality of an array and a view of a DiskArray based `Raster` has broken with 0.3 when the array is `Unchunked`:\r\n\r\n```julia\r\nusing Rasters\r\nurl = \"https://download.osgeo.org/geotiff/samples/gdal_eg/cea.tif\"\r\npath = download(url)\r\nA = Raster(path)\r\nview(A, 1, 2:3, 1) == [0x00, 0x6b]\r\n```\r\n\r\nGives the error:\r\n```julia\r\nERROR: MethodError: Cannot `convert` an object of type Tuple{UnitRange{Int64}} to an object of type Int64\r\nClosest candidates are:\r\n  convert(::Type{T}, ::Base.TwicePrecision) where T<:Number at /opt/julia/share/julia/base/twiceprecision.jl:262\r\n  convert(::Type{T}, ::AbstractChar) where T<:Number at /opt/julia/share/julia/base/char.jl:185\r\n  convert(::Type{T}, ::CartesianIndex{1}) where T<:Number at /opt/julia/share/julia/base/multidimensional.jl:136\r\n  ...\r\n\r\nStacktrace:\r\n  [1] DiskArrays.RegularChunks(cs::Tuple{UnitRange{Int64}}, offset::Int64, s::Int64)\r\n    @ DiskArrays ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:17\r\n  [2] (::DiskArrays.var\"#34#37\")(s::Int64, cs::Tuple{UnitRange{Int64}}, of::Int64)\r\n    @ DiskArrays ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:101\r\n  [3] (::Base.var\"#4#5\"{DiskArrays.var\"#34#37\"})(a::Tuple{Int64, Tuple{UnitRange{Int64}}, Int64})\r\n    @ Base ./generator.jl:36\r\n  [4] iterate\r\n    @ ./generator.jl:47 [inlined]\r\n  [5] collect(itr::Base.Generator{Base.Iterators.Zip{Tuple{Tuple{Int64}, DiskArrays.GridChunks{1}, Tuple{Int64}}}, Base.var\"#4#5\"{DiskArrays.var\"#34#37\"}})\r\n    @ Base ./array.jl:724\r\n  [6] map\r\n    @ ./abstractarray.jl:2948 [inlined]\r\n  [7] DiskArrays.GridChunks(a::Tuple{Int64}, chunksize::DiskArrays.GridChunks{1}; offset::Tuple{Int64})\r\n    @ DiskArrays ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:100\r\n  [8] #GridChunks#28\r\n    @ ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:98 [inlined]\r\n  [9] GridChunks\r\n    @ ~/.julia/packages/DiskArrays/7xJDq/src/chunks.jl:98 [inlined]\r\n [10] eachchunk_view(#unused#::DiskArrays.Unchunked, a::SubArray{UInt8, 1, FileArray{GDALfile, UInt8, 3, Nothing, DiskArrays.GridChunks{3}, DiskArrays.Unchunked}, Tuple{Int64, UnitRange{Int64}, Int64}, false})\r\n    @ DiskArrays ~/.julia/packages/DiskArrays/7xJDq/src/subarrays.jl:35\r\n [11] eachchunk(a::DiskArrays.SubDiskArray{UInt8, 1})\r\n    @ DiskArrays ~/.julia/packages/DiskArrays/7xJDq/src/subarrays.jl:26\r\n [12] iterate(a::DiskArrays.SubDiskArray{UInt8, 1})\r\n    @ DiskArrays ~/.julia/packages/DiskArrays/7xJDq/src/iterator.jl:4\r\n [13] iterate\r\n    @ ~/.julia/dev/DimensionalData/src/array/array.jl:66 [inlined]\r\n [14] _zip_iterate_some\r\n    @ ./iterators.jl:358 [inlined]\r\n [15] _zip_iterate_all\r\n    @ ./iterators.jl:350 [inlined]\r\n [16] iterate\r\n    @ ./iterators.jl:340 [inlined]\r\n [17] ==(A::Raster{UInt8, 1, Tuple{Y{Projected{Float64, LinRange{Float64, Int64}, ReverseOrdered, Regular{Float64}, Intervals{Start}, Metadata{GDALfile, Dict{Any, Any}}, WellKnownText{GeoFormatTypes.CRS, String}, Nothing, Y{Colon}}}}, Tuple{X{Projected{Float64, LinRange{Float64, Int64}, ForwardOrdered, Regular{Float64}, Intervals{Start}, Metadata{GDALfile, Dict{Any, Any}}, WellKnownText{GeoFormatTypes.CRS, String}, Nothing, X{Colon}}}, Band{Categorical{Int64, UnitRange{Int64}, ForwardOrdered, NoMetadata}}}, DiskArrays.SubDiskArray{UInt8, 1}, Symbol, Metadata{GDALfile, Dict{Symbol, Any}}, Nothing}, B::Vector{UInt8})\r\n    @ Base ./abstractarray.jl:2539\r\n [18] top-level scope\r\n    @ REPL[125]:1\r\n```\r\n\r\n@meggart if you know what is going on with this stacktrace that would be helpful",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. --startup-file=no -e 'using Pkg; Pkg.test(\"DiskArrays\"; coverage=false)'"
+    },
+    "license": "custom-check-github",
+    "image_name": "docker.io/swerebenchv2/meggart-diskarrays.jl:52-e3886ce",
+    "instance_id": "meggart__diskarrays.jl-52",
+    "repo": "meggart/DiskArrays.jl",
+    "pr_description": "So far, DiskArrays that returned \"Unchunked\" as their chunk status seem to not have had tests yet, which lead to #51 . This fixes #51 and adds at least one test that would have covered this use case. It might make sense to add some more tests here, maybe @rafaqz has a few ideas from DimensionalData?",
+    "created_at": "2022-02-15 11:17:07",
+    "language": "julia",
+    "interface": "Method: UnchunkedDiskArray.haschunks(self)  \nLocation: DiskArrays.haschunks(::UnchunkedDiskArray) → DiskArrays.Unchunked()  \nInputs: `self` – an instance of `UnchunkedDiskArray{T,N,P}` (no additional arguments).  \nOutputs: Returns the singleton `DiskArrays.Unchunked()` indicating that the array has no chunking.  \nDescription: Declares that the custom disk array type is unchunked so that the DiskArrays infrastructure treats it as having a single logical chunk.\n\nMethod: UnchunkedDiskArray.size(self)  \nLocation: Base.size(a::UnchunkedDiskArray) → size(a.p)  \nInputs: `self` – an `UnchunkedDiskArray{T,N,P}` instance.  \nOutputs: A tuple of integers representing the dimensions of the underlying parent array `a.p`.  \nDescription: Provides the standard `size` interface for the disk array by delegating to the stored in‑memory array.\n\nFunction: DiskArrays.readblock!(a::UnchunkedDiskArray, aout, i::AbstractUnitRange...)  \nLocation: DiskArrays.readblock! implementation for `UnchunkedDiskArray`.  \nInputs:  \n- `a` – the `UnchunkedDiskArray{T,N,P}` source array.  \n- `aout` – an pre‑allocated output array (or view) that will receive the data.  \n- `i` – a variadic list of `AbstractUnitRange` objects, one per dimension, specifying the block to read.  \nConstraints: The number of index ranges must equal `ndims(a)`; each index must be an `AbstractUnitRange`.  \nOutputs: Writes the selected slice `a.p[i...]` into `aout`; returns `nothing`.  \nDescription: Reads a contiguous block from the underlying parent array into the provided output buffer, enabling `view` and other DiskArrays operations to work with unchunked storage.  \n",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.98,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [
+          "https://download.osgeo.org/geotiff/samples/gdal_eg/cea.tif"
+        ],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "regression_bug"
+        ],
+        "reasoning": "The issue reports a breakage when comparing a view of an Unchunked SubDiskArray to a plain array, providing a reproducible example and stacktrace. The added test mirrors this scenario by creating an UnchunkedDiskArray, taking a view, and asserting equality, directly aligning with the reported behavior. No test‑suite coupling, naming expectations, external dependencies beyond a URL, ambiguous specs, unrelated patch artifacts, or hidden domain knowledge are evident. Therefore the task is clearly specified and solvable.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 3,
+      "num_modified_lines": null,
+      "pr_author": "meggart",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaIO/DiskArrays.jl/pull/52"
+    }
+  },
+  "parent_sha": "e3886ce6e417843c6e5560c25442e2c71ca5ee72",
+  "changed_production_files": [
+    "src/subarrays.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl"
+  ],
+  "trigger_tests": [
+    "Index interpretation",
+    "AbstractDiskArray getindex",
+    "AbstractDiskArray setindex",
+    "Zerodimensional",
+    "Views",
+    "Reductions",
+    "Broadcast",
+    "Broadcast with length 1 final dim",
+    "Reshape",
+    "Permutedims",
+    "Unchunked String arrays"
+  ],
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "Index interpretation",
+        "AbstractDiskArray getindex",
+        "AbstractDiskArray setindex",
+        "Zerodimensional",
+        "Views",
+        "Reductions",
+        "Broadcast",
+        "Broadcast with length 1 final dim",
+        "Reshape",
+        "Permutedims",
+        "Unchunked String arrays"
+      ],
+      "added_testsets": [
+        "Unchunked DiskArrays"
+      ],
+      "assertion_expression_sha256": [
+        "c983504e6aae9e85ada55afe2110a6ed9e982d1db1da0001d326dea4db33f164"
+      ]
+    },
+    "sha256": "7bb1c9ce87de76d46a2cb715ef8686275cb5ac8739b463be6ab29c6cfd292de8"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "swe_rebench_julia_base_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "39a2de3a2cc11e9932164a790bf28987777c3d6a",
+    "project": "meggart/DiskArrays.jl",
+    "input_sha256": "5e66dafed11a3f89461a6c62eb3bc5688fd393728ac9ed34b4e3045e718120bb",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:18:10Z",
+    "usage": {
+      "prompt_tokens": 1337,
+      "completion_tokens": 489,
+      "total_tokens": 1826
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"The commit fixes views of unchunked DiskArrays, as indicated by the commit subject 'Fix views of unchunked diskarrays (#52)'. It modifies a single production file (src/subarrays.jl) and includes test changes. The fix addresses existing broken behavior for a specific case (views of unchunked arrays).\", \"evidence\": \"Commit subject explicitly states 'Fix views of unchunked diskarrays (#52)', indicating a bug fix. The change touches one production file (src/subarrays.jl) and tests (test/runtests.jl). The trigger tests include 'Views' and 'Unchunked String arrays' which are directly related to the fix. The PR number #52 in the commit message suggests a tracked issue/PR.\", \"missing_evidence\": \"No PR body or issue body available to confirm the exact defect symptoms. No diff content to verify the nature of the fix. No detailed file changes available to confirm it's purely a bug fix rather than a feature extension.\", \"validation_risks\": \"Without seeing the actual diff, there's a small risk that the fix could include additional feature-like behavior beyond the bug fix. The traceability class is UNVERIFIED.\", \"suggested_tests\": \"Test that views of unchunked DiskArrays can be created and accessed without errors. Test that indexing into views of unchunked arrays returns correct values. Test that setindex on views of unchunked arrays works correctly.\"}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "The commit fixes views of unchunked DiskArrays, as indicated by the commit subject 'Fix views of unchunked diskarrays (#52)'. It modifies a single production file (src/subarrays.jl) and includes test changes. The fix addresses existing broken behavior for a specific case (views of unchunked arrays).",
+    "evidence": "Commit subject explicitly states 'Fix views of unchunked diskarrays (#52)', indicating a bug fix. The change touches one production file (src/subarrays.jl) and tests (test/runtests.jl). The trigger tests include 'Views' and 'Unchunked String arrays' which are directly related to the fix. The PR number #52 in the commit message suggests a tracked issue/PR.",
+    "missing_evidence": "No PR body or issue body available to confirm the exact defect symptoms. No diff content to verify the nature of the fix. No detailed file changes available to confirm it's purely a bug fix rather than a feature extension.",
+    "validation_risks": "Without seeing the actual diff, there's a small risk that the fix could include additional feature-like behavior beyond the bug fix. The traceability class is UNVERIFIED.",
+    "suggested_tests": "Test that views of unchunked DiskArrays can be created and accessed without errors. Test that indexing into views of unchunked arrays returns correct values. Test that setindex on views of unchunked arrays works correctly."
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 11,
+    "tests": [
+      "Index interpretation",
+      "AbstractDiskArray getindex",
+      "AbstractDiskArray setindex",
+      "Zerodimensional",
+      "Views",
+      "Reductions",
+      "Broadcast",
+      "Broadcast with length 1 final dim",
+      "Reshape",
+      "Permutedims",
+      "Unchunked String arrays"
+    ],
+    "exception_types": [
+      "445bbeb6ca7da5f02dabd5115a4887bf2299993bd744683ef0ca2a0b9416d494",
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866"
+    ],
+    "fingerprints": [
+      "445bbeb6ca7da5f02dabd5115a4887bf2299993bd744683ef0ca2a0b9416d494",
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

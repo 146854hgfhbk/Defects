@@ -1,0 +1,169 @@
+{
+  "candidate_sha": "e7c619d65fff5fda0babaebec28d4ea7f4ce456e",
+  "project": "JuliaDiff/ForwardDiff.jl",
+  "source": "revision_recovery",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/issues/1",
+      "state": "closed",
+      "title": "source code transformation",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "I'd like to propose using source code transformation instead of operator overloading. Operator overloading is slow in general and not really optimized in Julia; the compiler doesn't seem to optimize away the temporary objects, and the GC isn't great at handling them. \n\nOn the other hand, Julia makes implementing source code transformation much easier than in other languages. The AST of a function is (mostly) user accessible:\n\n``` julia\njulia> x(t) = 2t\n\njulia> methods(x).defs.func.code\nAST(:($(Expr(:lambda, {:t}, {{}, {{:t, :Any, 0}}, {}}, quote  # none, line 1:\n        return *(2,t)\n    end))))\n```\n\nThe transformed functions can be compiled with the JIT, so that AD incurs only a one-time cost. With this approach, AD in Julia will be very competitive with the state of the art.\n\nOf course, development time is limited, and I'm not sure how much I'll be able to work on this in the short term. It is certainly reasonable to go forward with an operator overloading approach just to get something working and to have a basis for comparison. \n"
+    },
+    {
+      "number": 8,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/issues/8",
+      "state": "closed",
+      "title": "Package separation",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "@fredo-dedup, I opened this as a separate issue, so as to comply with what has been asked. Once you create your `ReverseDiffSource` package and place your autodiff code there, I will then clean up the present `ForwardDiff` to register it.\n"
+    },
+    {
+      "number": 16,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/issues/16",
+      "state": "closed",
+      "title": "[PkgEval] ForwardDiff may have a testing issue on Julia 0.3 (2014-06-17)",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "[PackageEvaluator.jl](https://github.com/IainNZ/PackageEvaluator.jl) is a script that runs nightly. It attempts to load all Julia packages and run their tests (if available) on both the stable version of Julia (0.2) and the nightly build of the unstable version (0.3). The results of this script are used to generate a [package listing](http://iainnz.github.io/packages.julialang.org/) enhanced with testing results.\n#### On Julia 0.3\n- On **2014-06-16** the testing status was `Tests pass.`\n- On **2014-06-17** the testing status changed to `Tests fail, but package loads.`\n\n`Tests pass.` means that PackageEvaluator found the tests for your package, executed them, and they all passed.\n\n`Tests fail, but package loads.` means that PackageEvaluator found the tests for your package, executed them, and they didn't pass. However, trying to load your package with `using` worked.\n\n_This issue was filed because your testing status became worse. No additional issues will be filed if your package remains in this state, and no issue will be filed if it improves. If you'd like to opt-out of these status-change messages, reply to this message saying you'd like to and @IainNZ will add an exception. If you'd like to discuss [PackageEvaluator.jl](https://github.com/IainNZ/PackageEvaluator.jl) please file an issue at the repository. For example, your package may be untestable on the test machine due to a dependency - an exception can be added._\n\n_Test log_:\n\n```\nINFO: Cloning cache of ForwardDiff from git://github.com/JuliaDiff/ForwardDiff.jl.git\nINFO: Installing Calculus v0.1.4\nINFO: Installing DualNumbers v0.1.0\nINFO: Installing ForwardDiff v0.0.2\nINFO: Package database updated\nERROR: mismatch of non-finite elements: \n  hessian(output) = [NaN]\n  hessianf(args...) = -352.65949394886985\n in test_approx_eq at test.jl:101\n in test_approx_eq at test.jl:119\n in include at ./boot.jl:244\n in include_from_node1 at ./loading.jl:128\n in anonymous at no file:8\n in include at ./boot.jl:244\n in includ"
+    },
+    {
+      "number": 24,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/issues/24",
+      "state": "closed",
+      "title": "Bug in `typed_fad_gradient`",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "Consider the following function \n\n```\nusing ForwardDiff;\nsrand(1)\ny = randn(100);\nx = randn(100,2);\ng(theta)  = x.*(y-x*theta);\ngn(theta) = vec(sum(g(theta), 1));\ngn([.1,.1])\n```\n\nI want to use `typed_fad_gradient` to calculate the derivative of `gn` with respect to `theta`. This code \n\n```\n    h1 = ForwardDiff.typed_fad_gradient(gn, Float64);\n    h1([.1,.1])\n```\n\nprovides the correct gradient\n\n```\n 2x2 Array{Float64,2}:\n  -103.869     11.1779\n    11.1779  -119.393\n```\n\nas it can be seen by comparing it with the analytic gradient\n\n```\n    -x'x\n```\n\nSuppose now the function to be derived is defined using a linear algebra\noperation, i.e.,\n\n```\n p = ones(100);\n wgn(theta) = g(theta)'p;\n h2 = ForwardDiff.typed_fad_gradient(wgn, Float64);\n h2([.1,.1])\n```\n\nAlthough `wgn([.1,.1]).==gn([.1,.1])`, the gradient returned by `type_fad_gradient` is\n\n```\n 2x2 Array{Float64,2}:\n  103.869   -11.1779\n  -11.1779  119.393  \n```\n\nwhich is different from `h1([.1,.1])` and from `-x'x` by a factor of `-1`.\n"
+    },
+    {
+      "number": 386,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/pull/386",
+      "state": "closed",
+      "title": "expand NaN-safe mode to cover individual zeros in Partials",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This likely further decreases performance when NaN-safe mode is engaged, but I think it's more correct so it's worth the perf hit either way. NaN-safe mode is already the expected slow path so this shouldn't change user expectations too much. \r\n\r\nI'll do at least a simple benchmark to get a ballpark performance impact for the docs. Also need to add a test or two.\r\n\r\ncc @AndreasNoack this fixes your example; does it help with whatever actual problem you were encountering?\r\n"
+    },
+    {
+      "number": 719,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/issues/719",
+      "state": "closed",
+      "title": "Tag v1.0",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "Given this package has not had a breaking change in the last 6 years, perhaps it would be worth just tagging v1.0?"
+    },
+    {
+      "number": 745,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/issues/745",
+      "state": "closed",
+      "title": "Product of Inf terms leading to NaNs",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "nan-safe-mode"
+      ],
+      "body_excerpt": "ForwardDiff (v1.0.1 as well as v0.10.38) fails to compute the gradient when the inputs are too large for the following function.\n```julia\njulia> using ForwardDiff\n\njulia> foo(a) = a[1] * exp(-a[2])\nfoo (generic function with 1 method)\n\njulia> ForwardDiff.gradient(foo, [1., -1e3])\n2-element Vector{Float64}:\n NaN\n NaN\n```\n\nThe correct gradient should be `[Inf, -Inf]`. This works for values `a2` small enough such that `exp(a2)` is finite."
+    },
+    {
+      "number": 774,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/issues/774",
+      "state": "closed",
+      "title": "NaN-safe mode is not NaN-safe enough",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug",
+        "nan-safe-mode"
+      ],
+      "body_excerpt": "NaN-safe mode is actually not NaN-safe enough.\n\nWith NaN-safe mode enabled:\n\n```julia\njulia> using ForwardDiff\n\njulia> log(ForwardDiff.Dual{:tag}(0.0, 0.0))\nDual{:tag}(-Inf,0.0)\n\njulia> log(ForwardDiff.Dual{:tag}(0.0, 0.0, 1.0))\nDual{:tag}(-Inf,NaN,Inf)\n```\n\nThis can be triggered also using the ForwardDiff API:\n\n```julia\njulia> ForwardDiff.derivative(log ∘ zero, 1.0)\n0.0\n\njulia> f(x) = log(zero(x[1]) + x[2])\nf (generic function with 1 method)\n\njulia> ForwardDiff.gradient(f, [1.0, 0.0])\n2-element Vector{Float64}:\n NaN\n  Inf\n```\n\nThe problem is that NaN-safe mode checks whether ALL partials are zero whereas actually it should be applied for each zero partial. Thus one can work around the issue by enforcing that there's only one partial:\n\n```julia\njulia> ForwardDiff.gradient(f, [1.0, 0.0], ForwardDiff.GradientConfig(f, [1.0, 0.0], ForwardDiff.Chunk{1}()))\n2-element Vector{Float64}:\n  0.0\n Inf\n```\n\n---\n\nEdit: Another instance of this issue is https://github.com/JuliaDiff/ForwardDiff.jl/issues/745"
+    },
+    {
+      "number": 776,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/pull/776",
+      "state": "closed",
+      "title": "CI tests with NaN-safe mode",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fixes #775.\r\n\r\nCode coverage change: https://app.codecov.io/github/JuliaDiff/ForwardDiff.jl/pull/776/indirect-changes"
+    },
+    {
+      "number": 777,
+      "url": "https://github.com/JuliaDiff/ForwardDiff.jl/pull/777",
+      "state": "closed",
+      "title": "Fix NaN-safe mode",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fixes #774. Fixes #745. Closes #386.\r\n\r\nOn this PR, ForwardDiff with NaN-safe mode gives for the example in #774\r\n\r\n```julia\r\njulia> using ForwardDiff\r\n\r\njulia> log(ForwardDiff.Dual{:tag}(0.0, 0.0))\r\nDual{:tag}(-Inf,0.0)\r\n\r\njulia> log(ForwardDiff.Dual{:tag}(0.0, 0.0, 1.0))\r\nDual{:tag}(-Inf,0.0,Inf)\r\n\r\njulia> ForwardDiff.derivative(log ∘ zero, 1.0)\r\n0.0\r\n\r\njulia> f(x) = log(zero(x[1]) + x[2])\r\nf (generic function with 1 method)\r\n\r\njulia> ForwardDiff.gradient(f, [1.0, 0.0])\r\n2-element Vector{Float64}:\r\n  0.0\r\n Inf\r\n```\r\n\r\nand the example in #745:\r\n\r\n```julia\r\njulia> using ForwardDiff\r\n\r\njulia> foo(a) = a[1] * exp(-a[2])\r\nfoo (generic function with 1 method)\r\n\r\njulia> ForwardDiff.gradient(foo, [1., -1e3])\r\n2-element Vector{Float64}:\r\n  Inf\r\n -Inf\r\n```\r\n\r\n---\r\n\r\nBased on #776, so NaN-safe mode can actually be tested in CI.\r\n\r\n---\r\n\r\nEdit: I just realized that @jrevels tried to address this issue in https://github.com/JuliaDiff/ForwardDiff.jl/pull/386\r\n\r\n---\r\n\r\nThe Rosenbrock benchmark\r\n\r\n```julia\r\njulia> using ForwardDiff, Chairmarks\r\n\r\njulia> function rosenbrock(x::Vector)\r\n           a = 1.0\r\n           b = 100.0\r\n           result = 0.0\r\n           for i in 1:length(x)-1\r\n               result += (a - x[i])^2 + b*(x[i+1] - x[i]^2)^2\r\n           end\r\n           return result\r\n       end\r\n\r\njulia> @be rand(1000) ForwardDiff.gradient($rosenbrock, _)\r\n```\r\n\r\nand [the native code analysis in https://github.com/JuliaDiff/ForwardDiff.jl/issues/719#issuecomment-2484955066](https://github.com/JuliaDiff/ForwardDiff.jl/issues/719#issuecomment-2484955066)\r\n\r\n```julia\r\njulia> a = ForwardDiff.Dual(1.0,2.0,3.0,4.0,5.0)\r\nDual{Nothing}(1.0,2.0,3.0,4.0,5.0)\r\n\r\njulia> @code_native debuginfo=:none ForwardDiff._mul_partials(a.partials, a.partials, 2.0, 1.0)\r\n```\r\n\r\nindicates that this PR does not impact performance when NaN-safe mode is disabled but actually can improve performance when NaN-safe mode is enabled:\r\n\r\n## master\r\n\r\nNaN-safe mode disabled:\r\n\r\n```julia\r\njulia> @be rand(1000) F"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        1,
+        16,
+        24,
+        745,
+        774
+      ],
+      "pull_request": 777,
+      "fix_commit": "e7c619d65fff5fda0babaebec28d4ea7f4ce456e",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Fix NaN-safe mode (#777)\n\n* CI tests with NaN-safe mode\n\n* Fix NaN-safe mode",
+    "commit_issue_refs": [
+      777
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 777,
+    "pull_request_title": "Fix NaN-safe mode",
+    "pull_request_issue_refs": [
+      0,
+      1,
+      8,
+      16,
+      24,
+      386,
+      719,
+      745,
+      774,
+      776
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    774,
+    745,
+    386
+  ],
+  "cross_repository_issue_records": []
+}

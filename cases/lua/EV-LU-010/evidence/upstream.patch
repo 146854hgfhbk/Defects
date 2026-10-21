@@ -1,0 +1,109 @@
+diff --git a/spec/check_spec.lua b/spec/check_spec.lua
+index 387c967de7a5acffe9d8cca12fdb100f0f3c545f..8fc1f2a775357c47d0db507166bf48bbc7762a95 100644
+--- a/spec/check_spec.lua
++++ b/spec/check_spec.lua
+@@ -93,7 +93,7 @@ end
+ 
+    it("detects unused implicit self", function()
+       assert.same({
+-         {code = "212", name = "self", self = true, line = 2, column = 13}
++         {code = "212", name = "self", self = true, line = 2, column = 11}
+       }, check[[
+ local a = {}
+ function a:b()
+@@ -273,9 +273,9 @@ end
+    it("marks redefinition of implicit self", function()
+       assert.same({
+          {code = "112", name = "t", line = 1, column = 10},
+-         {code = "212", name = "self", line = 1, column = 13, self = true},
+-         {code = "212", name = "self", line = 3, column = 16, self = true},
+-         {code = "432", name = "self", line = 3, column = 16, self = true, prev_line = 1, prev_column = 13}
++         {code = "212", name = "self", line = 1, column = 11, self = true},
++         {code = "212", name = "self", line = 3, column = 14, self = true},
++         {code = "432", name = "self", line = 3, column = 14, self = true, prev_line = 1, prev_column = 11}
+       }, check[[
+ function t:f()
+    local o = {}
+@@ -286,8 +286,8 @@ end
+       assert.same({
+          {code = "112", name = "t", line = 1, column = 10},
+          {code = "212", name = "self", line = 1, column = 14},
+-         {code = "212", name = "self", line = 3, column = 16, self = true},
+-         {code = "432", name = "self", line = 3, column = 16, prev_line = 1, prev_column = 14}
++         {code = "212", name = "self", line = 3, column = 14, self = true},
++         {code = "432", name = "self", line = 3, column = 14, prev_line = 1, prev_column = 14}
+       }, check[[
+ function t.f(self)
+    local o = {}
+@@ -297,9 +297,9 @@ end
+ 
+       assert.same({
+          {code = "112", name = "t", line = 1, column = 10},
+-         {code = "212", name = "self", line = 1, column = 13, self = true},
++         {code = "212", name = "self", line = 1, column = 11, self = true},
+          {code = "212", name = "self", line = 3, column = 17},
+-         {code = "432", name = "self", line = 3, column = 17, prev_line = 1, prev_column = 13}
++         {code = "432", name = "self", line = 3, column = 17, prev_line = 1, prev_column = 11}
+       }, check[[
+ function t:f()
+    local o = {}
+diff --git a/spec/cli_spec.lua b/spec/cli_spec.lua
+index e100912c6426bf86fad5d7afd8c2ee94d5e0c609..a74c0917c1184dfd8a66cb706dcf89b970daea87 100644
+--- a/spec/cli_spec.lua
++++ b/spec/cli_spec.lua
+@@ -459,7 +459,7 @@ Total: 6 warnings / 0 errors in 1 file
+       assert.equal([[
+ Checking spec/samples/redefined.lua               Failure
+ 
+-    spec/samples/redefined.lua:3:13: unused argument self
++    spec/samples/redefined.lua:3:11: unused argument self
+     spec/samples/redefined.lua:4:10: shadowing upvalue a on line 1
+     spec/samples/redefined.lua:4:13: variable self is never set
+     spec/samples/redefined.lua:4:13: variable self was previously defined as an argument on line 3
+diff --git a/spec/parser_spec.lua b/spec/parser_spec.lua
+index 51f51d8cd2f49b509c0edc0181f5bd1948b1abf3..a88c4a309ea1d5fb8a17d7b5ceebc97ab2bf2ad6 100644
+--- a/spec/parser_spec.lua
++++ b/spec/parser_spec.lua
+@@ -859,7 +859,7 @@ end
+                            {tag = "Function", location = {line = 6, column = 1, offset = 83},
+                               end_location = {line = 10, column = 1, offset = 142},
+                               {
+-                                 {tag = "Id", "self", implicit = true, location = {line = 6, column = 15, offset = 97}},
++                                 {tag = "Id", "self", implicit = true, location = {line = 6, column = 11, offset = 93}},
+                                  {tag = "Id", "arg", location = {line = 6, column = 16, offset = 98}}
+                               },
+                               {
+diff --git a/src/luacheck/parser.lua b/src/luacheck/parser.lua
+index 94518936ed24a19e4844d2f8e0d0184152248865..f2322cd8db3a5bdee71c795daf89b6a0bf5ea711 100644
+--- a/src/luacheck/parser.lua
++++ b/src/luacheck/parser.lua
+@@ -504,24 +504,19 @@ statements["function"] = function(state)
+    skip_token(state)  -- Skip "function".
+    local lhs_location = location(state)
+    local lhs = parse_id(state)
+-   local is_method = false
++   local self_location
+ 
+-   while (not is_method) and (state.token == "." or state.token == ":") do
+-      is_method = state.token == ":"
++   while (not self_location) and (state.token == "." or state.token == ":") do
++      self_location = state.token == ":" and location(state)
+       skip_token(state)  -- Skip "." or ":".
+       lhs = init_ast_node({lhs, parse_id(state, "String")}, lhs_location, "Index")
+    end
+ 
+-   local arg_location  -- Location of implicit "self" argument.
+-   if is_method then
+-      arg_location = location(state)
+-   end
+-
+    local function_node = parse_function(state, function_location)
+ 
+-   if is_method then
++   if self_location then
+       -- Insert implicit "self" argument.
+-      local self_arg = init_ast_node({"self", implicit = true}, arg_location, "Id")
++      local self_arg = init_ast_node({"self", implicit = true}, self_location, "Id")
+       table.insert(function_node[1], 1, self_arg)
+    end
+ 

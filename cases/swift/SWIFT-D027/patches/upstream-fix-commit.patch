@@ -1,0 +1,26 @@
+diff --git a/Sources/WebSocketKit/WebSocketClient.swift b/Sources/WebSocketKit/WebSocketClient.swift
+index e952190..9d9302c 100644
+--- a/Sources/WebSocketKit/WebSocketClient.swift
++++ b/Sources/WebSocketKit/WebSocketClient.swift
+@@ -117,7 +117,7 @@ public final class WebSocketClient: Sendable {
+                 } else {
+                     let relativePath = path.hasPrefix("/") ? path : "/" + path
+                     let port = proxyPort.map { ":\($0)" } ?? ""
+-                    uri = "\(scheme)://\(host)\(relativePath)\(port)"
++                    uri = "\(scheme)://\(host)\(port)\(relativePath)"
+ 
+                     if scheme == "ws" {
+                         upgradeRequestHeaders.add(contentsOf: proxyHeaders)
+diff --git a/Tests/WebSocketKitTests/WebSocketKitTests.swift b/Tests/WebSocketKitTests/WebSocketKitTests.swift
+index 4be932e..0ebe426 100644
+--- a/Tests/WebSocketKitTests/WebSocketKitTests.swift
++++ b/Tests/WebSocketKitTests/WebSocketKitTests.swift
+@@ -348,7 +348,7 @@ final class WebSocketKitTests: XCTestCase {
+ 
+         let localWebsocketBin: WebsocketBin
+         let verifyProxyHead = { @Sendable (ctx: ChannelHandlerContext, requestHead: HTTPRequestHead) in
+-            XCTAssertEqual(requestHead.uri, "ws://apple.com/:\(ctx.localAddress!.port!)")
++            XCTAssertEqual(requestHead.uri, "ws://apple.com:\(ctx.localAddress!.port!)/")
+             XCTAssertEqual(requestHead.headers.first(name: "Host"), "apple.com")
+         }
+         localWebsocketBin = WebsocketBin(

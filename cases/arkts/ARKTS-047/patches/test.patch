@@ -1,0 +1,60 @@
+diff --git a/entry/src/ohosTest/ets/test/List.test.ets b/entry/src/ohosTest/ets/test/List.test.ets
+--- a/entry/src/ohosTest/ets/test/List.test.ets
++++ b/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,8 @@
+  */
+ 
+ import appTest from './app.test';
+-
++import remoteDeviceModelTest from './RemoteDeviceModel.test';
+ export default function testsuite() {
++  remoteDeviceModelTest();
+   appTest();
+ }
+diff --git a/entry/src/ohosTest/ets/test/RemoteDeviceModel.test.ets b/entry/src/ohosTest/ets/test/RemoteDeviceModel.test.ets
+new file mode 100644
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/RemoteDeviceModel.test.ets
+@@ -0,0 +1,42 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ */
++import deviceManager from '@ohos.distributedDeviceManager';
++import { describe, expect, it } from '@ohos/hypium';
++import { RemoteDeviceModel } from '../../../main/ets/model/RemoteDeviceModel';
++
++function createDevice(deviceId: string): deviceManager.DeviceBasicInfo {
++  return {
++    deviceId: deviceId,
++    deviceName: 'device-' + deviceId,
++    deviceType: 'default',
++    networkId: 'network-' + deviceId
++  } as deviceManager.DeviceBasicInfo;
++}
++
++export default function row20FixTest() {
++  describe('Row20FixTest', () => {
++    it('ChangeStateOnline_Duplicate_001', 0, () => {
++      let model = new RemoteDeviceModel();
++      let device = createDevice('same-device');
++
++      model.deviceList = [device];
++      model.changeStateOnline(device);
++
++      expect(model.deviceList!.length).assertEqual(1);
++      expect(model.deviceList![0].deviceId).assertEqual('same-device');
++    });
++
++    it('ChangeStateOnline_NewDevice_001', 0, () => {
++      let model = new RemoteDeviceModel();
++      let first = createDevice('first-device');
++      let second = createDevice('second-device');
++
++      model.deviceList = [first];
++      model.changeStateOnline(second);
++
++      expect(model.deviceList!.length).assertEqual(2);
++      expect(model.deviceList![1].deviceId).assertEqual('second-device');
++    });
++  });
++}

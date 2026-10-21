@@ -1,0 +1,25 @@
+diff --git a/detekt-rules/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryAbstractClassSpec.kt b/detekt-rules/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryAbstractClassSpec.kt
+index 7bb03d5b756..b4719c64fef 100644
+--- a/detekt-rules/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryAbstractClassSpec.kt
++++ b/detekt-rules/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryAbstractClassSpec.kt
+@@ -38,6 +38,20 @@ class UnnecessaryAbstractClassSpec : Spek({
+                     "An abstract class without a concrete member can be refactored to an interface."
+                 )
+             }
++
++            it("does not report an abstract class with concrete members derived from a base class") {
++                val code = """
++                    abstract class A {
++                        abstract fun f()
++                        val i: Int = 0
++                    }
++
++                    abstract class B : A() {
++                        abstract fun g()
++                    } 
++                """
++                assertThat(subject.compileAndLintWithContext(wrapper.env, code)).isEmpty()
++            }
+         }
+ 
+         context("abstract classes with no abstract members") {

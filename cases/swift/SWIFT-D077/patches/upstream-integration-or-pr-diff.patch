@@ -1,0 +1,77 @@
+diff --git a/Sources/SpyableMacro/Factories/ReceivedArgumentsFactory.swift b/Sources/SpyableMacro/Factories/ReceivedArgumentsFactory.swift
+index 3a43f6b..9ee89b4 100644
+--- a/Sources/SpyableMacro/Factories/ReceivedArgumentsFactory.swift
++++ b/Sources/SpyableMacro/Factories/ReceivedArgumentsFactory.swift
+@@ -72,6 +72,15 @@ struct ReceivedArgumentsFactory {
+           ),
+           questionMark: .postfixQuestionMarkToken()
+         )
++      } else if onlyParameterType.is(SomeOrAnyTypeSyntax.self) {
++        variableType = OptionalTypeSyntax(
++          wrappedType: TupleTypeSyntax(
++            elements: TupleTypeElementListSyntax {
++              TupleTypeElementSyntax(type: onlyParameterType)
++            }
++          ),
++          questionMark: .postfixQuestionMarkToken()
++        )
+       } else {
+         variableType = OptionalTypeSyntax(
+           wrappedType: onlyParameterType,
+diff --git a/Tests/SpyableMacroTests/Factories/UT_ReceivedArgumentsFactory.swift b/Tests/SpyableMacroTests/Factories/UT_ReceivedArgumentsFactory.swift
+index 4189d55..949e530 100644
+--- a/Tests/SpyableMacroTests/Factories/UT_ReceivedArgumentsFactory.swift
++++ b/Tests/SpyableMacroTests/Factories/UT_ReceivedArgumentsFactory.swift
+@@ -23,6 +23,14 @@ final class UT_ReceivedArgumentsFactory: XCTestCase {
+     )
+   }
+ 
++  func testVariableDeclarationSingleExistentialTypeArgument() throws {
++    try assertProtocolFunction(
++      withFunctionDeclaration: "func foo(bar: any BarProtocol)",
++      prefixForVariable: "_prefix_",
++      expectingVariableDeclaration: "var _prefix_ReceivedBar: (any BarProtocol)?"
++    )
++  }
++
+   func testVariableDeclarationSingleArgumentDoubleParameterName() throws {
+     try assertProtocolFunction(
+       withFunctionDeclaration: "func foo(firstName secondName: (String, Int))",
+diff --git a/Tests/SpyableMacroTests/Factories/UT_SpyFactory.swift b/Tests/SpyableMacroTests/Factories/UT_SpyFactory.swift
+index 4a6ffb4..6845ca9 100644
+--- a/Tests/SpyableMacroTests/Factories/UT_SpyFactory.swift
++++ b/Tests/SpyableMacroTests/Factories/UT_SpyFactory.swift
+@@ -65,6 +65,33 @@ final class UT_SpyFactory: XCTestCase {
+     )
+   }
+ 
++  func testDeclarationExistentialTypeArguments() throws {
++    try assertProtocol(
++      withDeclaration: """
++        protocol ViewModelProtocol {
++            func foo(model: any ModelProtocol)
++        }
++        """,
++      expectingClassDeclaration: """
++        class ViewModelProtocolSpy: ViewModelProtocol {
++            var fooModelCallsCount = 0
++            var fooModelCalled: Bool {
++                return fooModelCallsCount > 0
++            }
++            var fooModelReceivedModel: (any ModelProtocol)?
++            var fooModelReceivedInvocations: [any ModelProtocol] = []
++            var fooModelClosure: ((any ModelProtocol) -> Void)?
++            func foo(model: any ModelProtocol) {
++                fooModelCallsCount += 1
++                fooModelReceivedModel = (model)
++                fooModelReceivedInvocations.append((model))
++                fooModelClosure?(model)
++            }
++        }
++        """
++    )
++  }
++
+   func testDeclarationEscapingAutoClosureArgument() throws {
+     try assertProtocol(
+       withDeclaration: """

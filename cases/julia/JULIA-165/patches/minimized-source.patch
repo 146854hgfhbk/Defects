@@ -1,0 +1,13 @@
+diff --git a/src/toplevel/virtualprocess.jl b/src/toplevel/virtualprocess.jl
+--- a/src/toplevel/virtualprocess.jl
++++ b/src/toplevel/virtualprocess.jl
+@@ -1434,8 +1434,7 @@ function select_direct_requirement!(concretize, stmts, edges)
+             LoweredCodeUtils.istypedef(stmt) ||   # don't abstract away type definitions
+             (isexpr(stmt, :call) && length(stmt.args) ≥ 1 && stmt.args[1] == GlobalRef(Core, :_defaultctors)) ||
+             ismoduleusage(stmt) || # module usages are handled by `ConcreteInterpreter`
+-            isexpr(stmt, :globaldecl) ||
+-            isexpr(stmt, :latestworld))
++            isexpr(stmt, :globaldecl))
+             concretize[idx] = true
+             continue
+         end

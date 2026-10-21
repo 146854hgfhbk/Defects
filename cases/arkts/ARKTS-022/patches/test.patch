@@ -1,0 +1,105 @@
+diff --git a/entry/src/ohosTest/ets/test/CameraVideoProfile.test.ets b/entry/src/ohosTest/ets/test/CameraVideoProfile.test.ets
+new file mode 100644
+index 0000000..9973c8a
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/CameraVideoProfile.test.ets
+@@ -0,0 +1,83 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import abilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import type common from '@ohos.app.ability.common';
++import { describe, expect, it } from '@ohos/hypium';
++import type camera from '@ohos.multimedia.camera';
++import { Constants } from '../../../main/ets/common/Constants';
++import { GlobalContext } from '../../../main/ets/common/GlobalContext';
++
++const BUNDLE_NAME = 'com.samples.camerajs';
++const MODULE_NAME = 'entry';
++const ABILITY_NAME = 'MainAbility';
++
++async function startMainAbility(): Promise<void> {
++  let delegator = abilityDelegatorRegistry.getAbilityDelegator();
++  GlobalContext.get().setCameraSettingContext(delegator.getAppContext() as common.UIAbilityContext);
++  await delegator.startAbility({
++    bundleName: BUNDLE_NAME,
++    moduleName: MODULE_NAME,
++    abilityName: ABILITY_NAME
++  });
++}
++
++function profile(width: number, height: number, frame: number): camera.VideoProfile {
++  return {
++    format: 1003,
++    size: {
++      width: width,
++      height: height
++    },
++    frameRateRange: {
++      min: frame,
++      max: frame
++    }
++  };
++}
++
++function buildCapabilities(): ESObject {
++  let previewProfile: camera.Profile = profile(1280, 720, Constants.VIDEO_FRAME_30);
++  let photoProfile: camera.Profile = profile(1280, 720, Constants.VIDEO_FRAME_30);
++  return {
++    previewProfiles: [previewProfile],
++    photoProfiles: [photoProfile],
++    videoProfiles: [
++      profile(1920, 1080, Constants.VIDEO_FRAME_30),
++      profile(1280, 720, Constants.VIDEO_FRAME_30)
++    ],
++    depthProfiles: [profile(1280, 720, Constants.VIDEO_FRAME_30)]
++  };
++}
++
++export default function CameraVideoProfileTest() {
++  describe('CameraVideoProfileTest', () => {
++    it('PhoneVideoMode_SelectsUsableVideoProfile_001', 0, async () => {
++      await startMainAbility();
++      AppStorage.setOrCreate<string>('deviceType', Constants.PHONE);
++      AppStorage.setOrCreate<number>('defaultAspectRatio', 16 / 9);
++
++      let cameraServiceModule: ESObject = await import('../../../main/ets/model/CameraService');
++      let cameraService: ESObject = cameraServiceModule.default;
++      cameraService.setCameraMode(1);
++      cameraService.switchProfiles(buildCapabilities());
++
++      let videoProfile: camera.VideoProfile = cameraService.videoProfileObj as camera.VideoProfile;
++      expect(videoProfile.size.width).assertEqual(1280);
++      expect(videoProfile.size.height).assertEqual(720);
++      expect(videoProfile.frameRateRange.max).assertEqual(Constants.VIDEO_FRAME_30);
++    });
++  });
++}
+diff --git a/entry/src/ohosTest/ets/test/List.test.ets b/entry/src/ohosTest/ets/test/List.test.ets
+index f108cae..1b976e5 100644
+--- a/entry/src/ohosTest/ets/test/List.test.ets
++++ b/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,7 +13,9 @@
+ * limitations under the License.
+ */
+ import abilityTest from './Ability.test';
++import CameraVideoProfileTest from './CameraVideoProfile.test';
+ 
+ export default function testsuite() {
+   abilityTest();
+-}
+\ No newline at end of file
++  CameraVideoProfileTest();
++}

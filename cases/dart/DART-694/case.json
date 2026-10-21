@@ -1,0 +1,962 @@
+{
+ "commit_url": "https://github.com/SkrOYC/acp-dart/commit/3a8ca6b500c896ac173396ea0f9fe2d52a0da2a5",
+ "commit_files": {
+  "all": [
+   "CHANGELOG.md",
+   "README.md",
+   "lib/src/acp.dart",
+   "lib/src/stream.dart",
+   "test/acp_test.dart",
+   "test/stream_test.dart"
+  ],
+  "production": [
+   "lib/src/acp.dart",
+   "lib/src/stream.dart"
+  ],
+  "tests": [
+   "test/acp_test.dart",
+   "test/stream_test.dart"
+  ],
+  "other": [
+   "CHANGELOG.md",
+   "README.md"
+  ]
+ },
+ "source_evidence_sha256": "49eb0bdace7da8a114267921892a27af40154d7f68f097de124596be3253e13b",
+ "production_files": [
+  "lib/src/acp.dart",
+  "lib/src/stream.dart"
+ ],
+ "buggy_tree": "a4125048de775bfef542953ccd7debd59f23bb73",
+ "patches": {
+  "original_commit": {
+   "path": "patches/original-commit.patch",
+   "sha256": "263824ca6753fd1ce7ebc029c1c6d4c7627229e5087e38a3060786abcb15717c",
+   "bytes": 12091
+  },
+  "production_fix": {
+   "path": "patches/production-fix.patch",
+   "sha256": "dcd7783c0f419561fe3c3cfb1fed63d56f0d7a039f00c505af46f0cb65c67961",
+   "bytes": 3819
+  },
+  "trigger_tests": {
+   "path": "patches/trigger-tests.patch",
+   "sha256": "cf3fde32e5a6e02bf59314184dd882c96b996d52f21d2323a759be6ab0359106",
+   "bytes": 5732
+  }
+ },
+ "schema_version": 1,
+ "fixed_revision": "3a8ca6b500c896ac173396ea0f9fe2d52a0da2a5",
+ "trigger_test_files": [
+  "test/acp_test.dart",
+  "test/stream_test.dart"
+ ],
+ "buggy_revision": "77e9ea09251971574ae24f653e8a24ad9febc7da",
+ "language": "Dart",
+ "trigger_tests": [
+  {
+   "path": "test/acp_test.dart",
+   "name": "maps validation-like exceptions to invalid params"
+  },
+  {
+   "path": "test/acp_test.dart",
+   "name": "maps unexpected exceptions to internal error"
+  },
+  {
+   "path": "test/acp_test.dart",
+   "name": "maps invalid request params to invalid params error"
+  },
+  {
+   "path": "test/stream_test.dart",
+   "name": "skips malformed JSON lines and continues processing"
+  }
+ ],
+ "claude_screen": {
+  "model": "claude-opus-5",
+  "api_version": "2023-06-01",
+  "prompt_decision": "ACCEPT_FOR_VALIDATION",
+  "confidence": 0.92,
+  "runtime_acceptance": false
+ },
+ "trigger_reduction": {
+  "status": "PASS",
+  "upstream_trigger_patch": {
+   "path": "patches/trigger-tests.patch",
+   "sha256": "cf3fde32e5a6e02bf59314184dd882c96b996d52f21d2323a759be6ab0359106",
+   "bytes": 5732
+  },
+  "removed_external_dependency": false,
+  "rationale": "The triggering test patch is the unchanged upstream test portion of the single fixing commit."
+ },
+ "pull_request_url": "https://github.com/SkrOYC/acp-dart/pull/15",
+ "build": {
+  "directory": ".",
+  "dependency_command": [
+   "dart",
+   "pub",
+   "get"
+  ],
+  "analyze_command": [
+   "dart",
+   "analyze"
+  ],
+  "test_command": [
+   "dart",
+   "test",
+   "--reporter=json"
+  ],
+  "timeout_seconds": 1200
+ },
+ "repository_url": "https://github.com/SkrOYC/acp-dart.git",
+ "fixed_tree": "fb5fd497262b0da42c4ba1aec4cdb4a9154cb056",
+ "case_id": "DART-694",
+ "commit_stats": {
+  "production_hunk_count": 4,
+  "maximum_exact_subset_candidates": null,
+  "hunk_count_source": "materialize_git_diff"
+ },
+ "project": "SkrOYC/acp-dart",
+ "repository_path": "__REFERENCE_USER_HOME__/dart-defects-miner-review/workspaces/repositories/SkrOYC__acp-dart",
+ "materialized_at": "2026-08-11T22:56:24.284140+00:00",
+ "issue_urls": [
+  "https://github.com/SkrOYC/acp-dart/issues/8"
+ ],
+ "traceability": {
+  "requires_unique_fix_commit": true,
+  "verified_fix_issue_numbers": [
+   8
+  ],
+  "paths": [
+   {
+    "issue_number": 8,
+    "path": "fix_commit_message_mentions_issue_id"
+   }
+  ],
+  "pull_request_number": 15,
+  "selected_from_multi_commit_pull_request": true,
+  "commit_message_issue_literal": {
+   "status": "PASS",
+   "verified_issue_numbers": [
+    8
+   ],
+   "literal_issue_numbers_found": [
+    8
+   ],
+   "fixing_commit_message": "Align error mapping and NDJSON malformed-line handling with TS SDK\n\nMap connection request exceptions to JSON-RPC errors using TS-aligned semantics: propagate RequestError as-is, classify validation-like failures (TypeError, FormatException, ArgumentError) as -32602 Invalid params, and map unexpected failures to -32603 Internal error while preserving structured error data when possible.\n\nUpdate ndJsonStream to tolerate malformed non-empty lines by logging parse failures and continuing to process subsequent valid frames instead of terminating the stream.\n\nAdd regression coverage for:\n\n- invalid params mapping on validation-like failures\n\n- internal error fallback on unexpected exceptions\n\n- malformed NDJSON line handling with continue behavior\n\nDocument the behavior in README and CHANGELOG.\n\nRefs #8",
+   "accepted_path": "fix_commit_message_mentions_issue_id",
+   "strict_defects4j_literal_rule": true
+  },
+  "historical_paths_before_publication_repair": [
+   {
+    "issue_number": 8,
+    "path": "fix_commit_to_issue"
+   }
+  ],
+  "unique_fix_boundary_verified": true,
+  "class": "STRICT_DIRECT",
+  "strict_defects4j_tracker_rule": true
+ },
+ "repository_evidence": {
+  "checked_at": "2026-08-11T22:56:21.233228+00:00",
+  "api_url": "https://api.github.com/repos/SkrOYC/acp-dart",
+  "html_url": "https://github.com/SkrOYC/acp-dart",
+  "private": false,
+  "visibility": "public",
+  "archived": false,
+  "license_spdx": "MIT"
+ },
+ "status": "active",
+ "acceptance": {
+  "differential_validation": "PASS",
+  "patch_minimization": "PASS",
+  "full_suite_validation": "PASS",
+  "human_curation": "NOT_REQUIRED_BY_DATASET_POLICY",
+  "semantic_curation": "PASS",
+  "curation_method": "llm_api_consensus",
+  "release_eligible": true,
+  "llm_confirmed": true,
+  "publication_gate": "PASS",
+  "human_minimization_review": "PASS"
+ },
+ "validation": {
+  "status": "stable_differential",
+  "generated_at": "2026-08-11T23:33:23.472945+00:00",
+  "report": "validation/validation.json",
+  "report_sha256": "8f04f229c02652e005f7eb7b2e0fc0ecb54f54ad212f0f9580e44d53d6451b9b",
+  "engine": "validation_engine.py",
+  "fresh_worktree_per_repetition": true,
+  "repetitions": 3,
+  "infrastructure_error_count": 0,
+  "exact_trigger_test_selectors": [
+   {
+    "path": "test/acp_test.dart",
+    "name": "maps validation-like exceptions to invalid params"
+   },
+   {
+    "path": "test/acp_test.dart",
+    "name": "maps unexpected exceptions to internal error"
+   },
+   {
+    "path": "test/acp_test.dart",
+    "name": "maps invalid request params to invalid params error"
+   },
+   {
+    "path": "test/stream_test.dart",
+    "name": "skips malformed JSON lines and continues processing"
+   }
+  ],
+  "test_network_policy": "os_enforced",
+  "strict_raw_evidence": {
+   "schema_version": 1,
+   "case_id": "DART-694",
+   "repetitions": 3,
+   "full_suite_repetitions": 1,
+   "require_analyze_clean": false,
+   "passed": true,
+   "checks": {
+    "selectors.present_and_unique": {
+     "passed": true,
+     "detail": "declared=4 valid=4 unique=4"
+    },
+    "matrix.repetitions": {
+     "passed": true,
+     "detail": "observed=[1, 2, 3] minimum_count=3"
+    },
+    "matrix.complete": {
+     "passed": true,
+     "detail": "runs=50"
+    },
+    "build.both_versions": {
+     "passed": true,
+     "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+    },
+    "trigger.fixed_clean": {
+     "passed": true,
+     "detail": "all fixed isolated/suite/reversed runs must pass"
+    },
+    "trigger.buggy_differential": {
+     "passed": true,
+     "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('test/acp_test.dart', 'maps invalid request params to invalid params error'), ('test/acp_test.dart', 'maps validation-like exceptions to invalid params'), ('test/stream_test.dart', 'skips malformed JSON lines and continues processing')]"
+    },
+    "trigger.deterministic": {
+     "passed": true,
+     "detail": "fingerprint_groups=5 expected=5"
+    },
+    "full_suite.fixed_all_green": {
+     "passed": true,
+     "detail": "runs=1 bad=0"
+    },
+    "full_suite.buggy_reproduces_only_triggers": {
+     "passed": true,
+     "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['test/acp_test.dart::maps invalid request params to invalid params error', 'test/acp_test.dart::maps validation-like exceptions to invalid params', 'test/stream_test.dart::skips malformed JSON lines and continues processing']"
+    }
+   },
+   "failed_checks": []
+  },
+  "dependency_snapshots": {
+   "fixed": {
+    "pubspec_lock": "environment/original-fixed-pubspec.lock",
+    "pubspec_lock_sha256": "8ea51e276052d799b508e50bd984cb4515e6629fa228fced9a91467a94fc0fd2",
+    "package_config": "environment/original-fixed-package_config.json",
+    "package_config_sha256": "4131b38daffa03001bcf0916531ed66be6dc5e375c7f9a312a7b7425dd2ba685",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "89.0.0",
+     "analyzer": "8.2.0",
+     "args": "2.7.0",
+     "async": "2.13.0",
+     "boolean_selector": "2.1.2",
+     "build": "4.0.0",
+     "build_config": "1.2.0",
+     "build_daemon": "4.0.4",
+     "build_runner": "2.8.0",
+     "built_collection": "5.1.1",
+     "built_value": "8.12.0",
+     "checked_yaml": "2.0.4",
+     "cli_config": "0.2.0",
+     "code_builder": "4.11.0",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.0",
+     "crypto": "3.0.6",
+     "dart_style": "3.1.2",
+     "file": "7.0.1",
+     "fixnum": "1.1.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "graphs": "2.3.2",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.2",
+     "json_annotation": "4.9.0",
+     "json_serializable": "6.11.1",
+     "lints": "6.0.0",
+     "logging": "1.3.0",
+     "matcher": "0.12.17",
+     "meta": "1.17.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "pubspec_parse": "1.5.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_gen": "4.0.1",
+     "source_helper": "1.3.8",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.1",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "stream_transform": "2.1.1",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "typed_data": "1.4.0",
+     "vm_service": "15.0.2",
+     "watcher": "1.1.3",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   },
+   "buggy": {
+    "pubspec_lock": "environment/original-buggy-pubspec.lock",
+    "pubspec_lock_sha256": "8ea51e276052d799b508e50bd984cb4515e6629fa228fced9a91467a94fc0fd2",
+    "package_config": "environment/original-buggy-package_config.json",
+    "package_config_sha256": "4131b38daffa03001bcf0916531ed66be6dc5e375c7f9a312a7b7425dd2ba685",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "89.0.0",
+     "analyzer": "8.2.0",
+     "args": "2.7.0",
+     "async": "2.13.0",
+     "boolean_selector": "2.1.2",
+     "build": "4.0.0",
+     "build_config": "1.2.0",
+     "build_daemon": "4.0.4",
+     "build_runner": "2.8.0",
+     "built_collection": "5.1.1",
+     "built_value": "8.12.0",
+     "checked_yaml": "2.0.4",
+     "cli_config": "0.2.0",
+     "code_builder": "4.11.0",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.0",
+     "crypto": "3.0.6",
+     "dart_style": "3.1.2",
+     "file": "7.0.1",
+     "fixnum": "1.1.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "graphs": "2.3.2",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.2",
+     "json_annotation": "4.9.0",
+     "json_serializable": "6.11.1",
+     "lints": "6.0.0",
+     "logging": "1.3.0",
+     "matcher": "0.12.17",
+     "meta": "1.17.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "pubspec_parse": "1.5.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_gen": "4.0.1",
+     "source_helper": "1.3.8",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.1",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "stream_transform": "2.1.1",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "typed_data": "1.4.0",
+     "vm_service": "15.0.2",
+     "watcher": "1.1.3",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   }
+  },
+  "dart_sdk_lock": {
+   "path": "environment/original-dart-sdk.lock.json",
+   "sha256": "f4b75e28faeeafdc1f74af78daf80b9309fd2909e355e209f57a4228935d9395"
+  },
+  "validation_image_digest": "sha256:41a6ea1a8907f09e5d47983d19fc43231c8cee96bcbb7df977648941118aedca",
+  "validation_image_lock": {
+   "path": "environment/original-validation-image.lock.json",
+   "sha256": "c77bf37b7b155dba2c174f784bce7ba3e9e02d2aaba0da696ff7fee7df68a06e"
+  }
+ },
+ "bug_id": "DART-694",
+ "issue_id": 8,
+ "issue_ids": [
+  8
+ ],
+ "issue_url": "https://github.com/SkrOYC/acp-dart/issues/8",
+ "buggy_commit": "77e9ea09251971574ae24f653e8a24ad9febc7da",
+ "fixed_commit": "3a8ca6b500c896ac173396ea0f9fe2d52a0da2a5",
+ "patch": "patches/minimized-production.patch",
+ "changed_source_files": [
+  "lib/src/acp.dart",
+  "lib/src/stream.dart"
+ ],
+ "triggering_test": [
+  "test/acp_test.dart::maps invalid request params to invalid params error",
+  "test/acp_test.dart::maps validation-like exceptions to invalid params",
+  "test/stream_test.dart::skips malformed JSON lines and continues processing"
+ ],
+ "expected_failure": {
+  "test_id": "test/acp_test.dart::Connection maps validation-like exceptions to invalid params",
+  "error": "Expected: <-32602> Actual: <-32603>",
+  "failure_fingerprint": "2884656d95d7a10fc0f848dd08523308344c33e4118b54957491f219ebbd0d34",
+  "all_trigger_failures": [
+   {
+    "test_id": "test/acp_test.dart::Connection maps validation-like exceptions to invalid params",
+    "error": "Expected: <-32602> Actual: <-32603>",
+    "failure_fingerprint": "2884656d95d7a10fc0f848dd08523308344c33e4118b54957491f219ebbd0d34",
+    "repetition_count": 3,
+    "deterministic": true
+   },
+   {
+    "test_id": "test/acp_test.dart::AgentSideConnection maps invalid request params to invalid params error",
+    "error": "Expected: <-32602> Actual: <-32603>",
+    "failure_fingerprint": "c3c34179ad0ae6049823177977f6ea8e99b141c559eab9df13ba361dfb06a820",
+    "repetition_count": 3,
+    "deterministic": true
+   },
+   {
+    "test_id": "test/stream_test.dart::NDJSON Stream skips malformed JSON lines and continues processing",
+    "error": "Unexpected parse error: FormatException: Failed to parse JSON message: invalid json, error: FormatException: Unexpected character (at character 1) invalid json ^",
+    "failure_fingerprint": "018143f781e5ac68e065250b2f0141352611d523e9fd5a5b47cd65fe20864b55",
+    "repetition_count": 3,
+    "deterministic": true
+   }
+  ]
+ },
+ "fixed_test_result": {
+  "status": "PASS",
+  "exit_code": 0,
+  "counts": {
+   "started": 91,
+   "passed": 91,
+   "failed": 0,
+   "skipped": 0
+  },
+  "full_suite_run_count": 1,
+  "all_full_suite_runs_passed": true,
+  "strict_report_passed": true
+ },
+ "build_command": [
+  "dart",
+  "analyze"
+ ],
+ "test_command": [
+  "dart",
+  "test",
+  "--reporter=json"
+ ],
+ "language_version": "3.12.2",
+ "dependency_versions": {
+  "_fe_analyzer_shared": "89.0.0",
+  "analyzer": "8.2.0",
+  "args": "2.7.0",
+  "async": "2.13.0",
+  "boolean_selector": "2.1.2",
+  "build": "4.0.0",
+  "build_config": "1.2.0",
+  "build_daemon": "4.0.4",
+  "build_runner": "2.8.0",
+  "built_collection": "5.1.1",
+  "built_value": "8.12.0",
+  "checked_yaml": "2.0.4",
+  "cli_config": "0.2.0",
+  "code_builder": "4.11.0",
+  "collection": "1.19.1",
+  "convert": "3.1.2",
+  "coverage": "1.15.0",
+  "crypto": "3.0.6",
+  "dart_style": "3.1.2",
+  "file": "7.0.1",
+  "fixnum": "1.1.1",
+  "frontend_server_client": "4.0.0",
+  "glob": "2.1.3",
+  "graphs": "2.3.2",
+  "http_multi_server": "3.2.2",
+  "http_parser": "4.1.2",
+  "io": "1.0.5",
+  "js": "0.7.2",
+  "json_annotation": "4.9.0",
+  "json_serializable": "6.11.1",
+  "lints": "6.0.0",
+  "logging": "1.3.0",
+  "matcher": "0.12.17",
+  "meta": "1.17.0",
+  "mime": "2.0.0",
+  "node_preamble": "2.0.2",
+  "package_config": "2.2.0",
+  "path": "1.9.1",
+  "pool": "1.5.2",
+  "pub_semver": "2.2.0",
+  "pubspec_parse": "1.5.0",
+  "shelf": "1.4.2",
+  "shelf_packages_handler": "3.0.2",
+  "shelf_static": "1.1.3",
+  "shelf_web_socket": "3.0.0",
+  "source_gen": "4.0.1",
+  "source_helper": "1.3.8",
+  "source_map_stack_trace": "2.1.2",
+  "source_maps": "0.10.13",
+  "source_span": "1.10.1",
+  "stack_trace": "1.12.1",
+  "stream_channel": "2.1.4",
+  "stream_transform": "2.1.1",
+  "string_scanner": "1.4.1",
+  "term_glyph": "1.2.2",
+  "test": "1.26.3",
+  "test_api": "0.7.7",
+  "test_core": "0.6.12",
+  "typed_data": "1.4.0",
+  "vm_service": "15.0.2",
+  "watcher": "1.1.3",
+  "web": "1.1.1",
+  "web_socket": "1.0.1",
+  "web_socket_channel": "3.0.3",
+  "webkit_inspection_protocol": "1.2.1",
+  "yaml": "3.1.3"
+ },
+ "operating_system_or_container": {
+  "platform": "linux_x64",
+  "host_system": "Linux",
+  "host_machine": "x86_64",
+  "validation_image": "dart-defects-validation:3.12.2-v3",
+  "validation_image_digest": "sha256:41a6ea1a8907f09e5d47983d19fc43231c8cee96bcbb7df977648941118aedca"
+ },
+ "timezone": "UTC",
+ "reproducibility_status": "validated_historical_evidence; verified_online_bootstrap_plus_os_enforced_offline_execution",
+ "deprecation_reason": null,
+ "minimized_patch": {
+  "path": "patches/minimized-production.patch",
+  "sha256": "dcd7783c0f419561fe3c3cfb1fed63d56f0d7a039f00c505af46f0cb65c67961",
+  "original_hunk_count": 4,
+  "retained_hunks": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "retained_hunk_count": 4,
+  "removed_hunk_count": 0,
+  "screening_only": false,
+  "post_minimization_validation": "PASS",
+  "evidence_grade": "portable_release_evidence",
+  "fallback_from_subset": null,
+  "fallback_reason": "candidate_subset_failed_post_minimization_validation",
+  "automatic_minimization": {
+   "minimal_hunks": null
+  },
+  "semantic_selection": {
+   "retained_hunks": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "reason": "retain the complete production patch because the automatic minimal subset failed post-minimization full-suite validation"
+  },
+  "evidence_reused": true,
+  "reuse_reason": "minimized_patch_identical_to_original_production_patch"
+ },
+ "post_minimization_validation": {
+  "status": "stable_differential",
+  "generated_at": "2026-08-11T23:33:23.472945+00:00",
+  "report": "validation/post-minimization.json",
+  "report_sha256": "0313a6f8bbe3845c64e650f1001e1c5ce432d9b0c246cb23167ae6911321c8d3",
+  "engine": "validation_engine.py",
+  "fresh_worktree_per_repetition": true,
+  "repetitions": 3,
+  "infrastructure_error_count": 0,
+  "exact_trigger_test_selectors": [
+   {
+    "path": "test/acp_test.dart",
+    "name": "maps validation-like exceptions to invalid params"
+   },
+   {
+    "path": "test/acp_test.dart",
+    "name": "maps unexpected exceptions to internal error"
+   },
+   {
+    "path": "test/acp_test.dart",
+    "name": "maps invalid request params to invalid params error"
+   },
+   {
+    "path": "test/stream_test.dart",
+    "name": "skips malformed JSON lines and continues processing"
+   }
+  ],
+  "test_network_policy": "os_enforced",
+  "dependency_snapshots": {
+   "fixed": {
+    "pubspec_lock": "environment/original-fixed-pubspec.lock",
+    "pubspec_lock_sha256": "8ea51e276052d799b508e50bd984cb4515e6629fa228fced9a91467a94fc0fd2",
+    "package_config": "environment/original-fixed-package_config.json",
+    "package_config_sha256": "4131b38daffa03001bcf0916531ed66be6dc5e375c7f9a312a7b7425dd2ba685",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "89.0.0",
+     "analyzer": "8.2.0",
+     "args": "2.7.0",
+     "async": "2.13.0",
+     "boolean_selector": "2.1.2",
+     "build": "4.0.0",
+     "build_config": "1.2.0",
+     "build_daemon": "4.0.4",
+     "build_runner": "2.8.0",
+     "built_collection": "5.1.1",
+     "built_value": "8.12.0",
+     "checked_yaml": "2.0.4",
+     "cli_config": "0.2.0",
+     "code_builder": "4.11.0",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.0",
+     "crypto": "3.0.6",
+     "dart_style": "3.1.2",
+     "file": "7.0.1",
+     "fixnum": "1.1.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "graphs": "2.3.2",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.2",
+     "json_annotation": "4.9.0",
+     "json_serializable": "6.11.1",
+     "lints": "6.0.0",
+     "logging": "1.3.0",
+     "matcher": "0.12.17",
+     "meta": "1.17.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "pubspec_parse": "1.5.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_gen": "4.0.1",
+     "source_helper": "1.3.8",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.1",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "stream_transform": "2.1.1",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "typed_data": "1.4.0",
+     "vm_service": "15.0.2",
+     "watcher": "1.1.3",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   },
+   "buggy": {
+    "pubspec_lock": "environment/original-buggy-pubspec.lock",
+    "pubspec_lock_sha256": "8ea51e276052d799b508e50bd984cb4515e6629fa228fced9a91467a94fc0fd2",
+    "package_config": "environment/original-buggy-package_config.json",
+    "package_config_sha256": "4131b38daffa03001bcf0916531ed66be6dc5e375c7f9a312a7b7425dd2ba685",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "89.0.0",
+     "analyzer": "8.2.0",
+     "args": "2.7.0",
+     "async": "2.13.0",
+     "boolean_selector": "2.1.2",
+     "build": "4.0.0",
+     "build_config": "1.2.0",
+     "build_daemon": "4.0.4",
+     "build_runner": "2.8.0",
+     "built_collection": "5.1.1",
+     "built_value": "8.12.0",
+     "checked_yaml": "2.0.4",
+     "cli_config": "0.2.0",
+     "code_builder": "4.11.0",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.0",
+     "crypto": "3.0.6",
+     "dart_style": "3.1.2",
+     "file": "7.0.1",
+     "fixnum": "1.1.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "graphs": "2.3.2",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.2",
+     "json_annotation": "4.9.0",
+     "json_serializable": "6.11.1",
+     "lints": "6.0.0",
+     "logging": "1.3.0",
+     "matcher": "0.12.17",
+     "meta": "1.17.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "pubspec_parse": "1.5.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_gen": "4.0.1",
+     "source_helper": "1.3.8",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.1",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "stream_transform": "2.1.1",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "typed_data": "1.4.0",
+     "vm_service": "15.0.2",
+     "watcher": "1.1.3",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   }
+  },
+  "dart_sdk_lock": {
+   "path": "environment/original-dart-sdk.lock.json",
+   "sha256": "f4b75e28faeeafdc1f74af78daf80b9309fd2909e355e209f57a4228935d9395"
+  },
+  "validation_image_digest": "sha256:41a6ea1a8907f09e5d47983d19fc43231c8cee96bcbb7df977648941118aedca",
+  "validation_image_lock": {
+   "path": "environment/original-validation-image.lock.json",
+   "sha256": "c77bf37b7b155dba2c174f784bce7ba3e9e02d2aaba0da696ff7fee7df68a06e"
+  },
+  "reuse_reason": "minimized_patch_identical_to_original_production_patch",
+  "evidence_reused_from": "validation/validation.json"
+ },
+ "reproduction": {
+  "network_mode": "two_stage_online_materialization_then_offline_execution",
+  "runner": {
+   "path": "tools/reproduce_case.py",
+   "sha256": "78adb9a64b99141c7ac69e9e61ab31bfc598b632a3173ec35eada6e271324ad0",
+   "bytes": 14262
+  },
+  "validation_engine": {
+   "path": "tools/validation_engine.py",
+   "sha256": "c8fa6a8ecf8ed3526637cdb1c76dec2eba7506280e6e6f815ad2193e1c86a353",
+   "bytes": 69063
+  },
+  "commands": {
+   "prepare": {
+    "path": "commands/DART-694-prepare",
+    "sha256": "86d330987093f9fb81a72ee6812ea985715066b9c1dde89aa27766c1dd395476",
+    "bytes": 1086
+   },
+   "b": {
+    "path": "commands/DART-694b",
+    "sha256": "5fe29b0683b7aab946f894e9d9dfa3bb892919681451ba9a2a7f3d1b8163a4bb",
+    "bytes": 1323
+   },
+   "f": {
+    "path": "commands/DART-694f",
+    "sha256": "3c5a37c71d1c07efc2c8b7aa1cc78f0bad315816ac716aa5b016c9577e546651",
+    "bytes": 1323
+   }
+  },
+  "historical_validation_image_digest": "sha256:41a6ea1a8907f09e5d47983d19fc43231c8cee96bcbb7df977648941118aedca",
+  "materialization_stage": {
+   "network": "online",
+   "command": {
+    "path": "commands/DART-694-prepare",
+    "sha256": "86d330987093f9fb81a72ee6812ea985715066b9c1dde89aa27766c1dd395476",
+    "bytes": 1086
+   },
+   "verification": [
+    "fixed/buggy commit SHA",
+    "fixed/buggy Git tree",
+    "post-minimization dependency lock SHA-256",
+    "dependency package tree hashes"
+   ]
+  },
+  "execution_stage": {
+   "network": "os_enforced_none",
+   "buggy_command": {
+    "path": "commands/DART-694b",
+    "sha256": "5fe29b0683b7aab946f894e9d9dfa3bb892919681451ba9a2a7f3d1b8163a4bb",
+    "bytes": 1323
+   },
+   "fixed_command": {
+    "path": "commands/DART-694f",
+    "sha256": "3c5a37c71d1c07efc2c8b7aa1cc78f0bad315816ac716aa5b016c9577e546651",
+    "bytes": 1323
+   }
+  },
+  "prepare_runner": {
+   "path": "tools/prepare_case.py",
+   "sha256": "dd2ed2dbe01d75e24477cfd2c284a51551d2cbcb8937ec5c76556f81ce0b8c7b",
+   "bytes": 7632
+  },
+  "publication_updated_at": "2026-08-15T17:09:29.368750+00:00"
+ },
+ "release_policy": {
+  "path": "environment/release-policy.json",
+  "sha256": "7a077bd1bd6b994976dfc5929e1b547979e64944b36e8b9783843ac67abb5c4e"
+ },
+ "reproduction_verification": {
+  "path": "reproduction/verification.json",
+  "sha256": "ba5c467b59b8213235845b48eb50f64666328e53379eedc96bfe5e0734799c2b"
+ },
+ "network_isolation_attestation": {
+  "path": "environment/network-isolation.json",
+  "sha256": "1dcacaaf317f2bdd915821f205d666d1ada336044e0a31f5c81001402fd31ec0"
+ },
+ "fix_boundary_evidence": {
+  "status": "PASS",
+  "selected_fix_commit": "3a8ca6b500c896ac173396ea0f9fe2d52a0da2a5",
+  "production_files": [
+   "lib/src/acp.dart",
+   "lib/src/stream.dart"
+  ],
+  "review_method": "manual_commit_diff_and_trigger_scope_review",
+  "reviewed_at": "2026-08-12T10:43:20.750658+00:00",
+  "rationale": "The selected commit establishes invalid-params mapping and tolerant NDJSON continuation; the later overlap adds sanitization and callback-based diagnostics.",
+  "reviewed_commits": [
+   {
+    "sha": "4c0323909e1ac7bfb9cf404e48d41ebb4db8b10c",
+    "files": [
+     "CHANGELOG.md",
+     "README.md",
+     "lib/src/acp.dart",
+     "lib/src/stream.dart",
+     "test/acp_test.dart",
+     "test/stream_test.dart"
+    ],
+    "same_production_files": [
+     "lib/src/acp.dart",
+     "lib/src/stream.dart"
+    ],
+    "classification": "unrelated_hunks"
+   }
+  ]
+ },
+ "auxiliary_changed_files": [],
+ "final_patch_file_manifest_source": "patches/minimized-production.patch",
+ "publication": {
+  "schema_version": 1,
+  "generated_at": "2026-08-15T17:06:52.631943+00:00",
+  "active": true,
+  "case_count_preservation_policy": "no_case_removed",
+  "reproduction_mode": "verified_online_bootstrap_offline_test_execution",
+  "raw_historical_logs_in_distribution": false,
+  "structured_validation_and_failure_fingerprints_retained": true,
+  "traceability_path": "fix_commit_message_mentions_issue_id",
+  "strict_commit_message_issue_literal": true,
+  "active_missing_file_references_removed": true
+ },
+ "reproduction_environment": {
+  "dockerfile": "environment/Dockerfile.reproduction",
+  "dockerfile_sha256": "033cecc4eccc4f84e1e5f8f440e017cd46ce0b716cc6a2972f7fac74d22fcddc",
+  "requirements": "environment/requirements-reproduction.txt",
+  "requirements_sha256": "01e08410080741c1f164e3b7459ea15db5966cef6629bfeb2691175f269efd00",
+  "dart_sdk_lock": "environment/original-dart-sdk.lock.json",
+  "historical_validation_image_lock": "environment/original-validation-image.lock.json",
+  "relationship_to_historical_image": "SDK archive is bitwise pinned; reproduction image is rebuildable and is not claimed to equal the historical image ID."
+ },
+ "historical_prepack_artifacts": {
+  "repository_bundle": {
+   "path": "sources/repository.bundle",
+   "sha256": "e05b47510d233130275ce4071997db1d390d61d0c9a746647260e5ef98482f4a",
+   "bytes": 168506,
+   "refs": {
+    "buggy": "refs/heads/buggy",
+    "fixed": "refs/heads/fixed"
+   },
+   "included_in_distribution": false,
+   "role": "historical_prepack_audit_reference"
+  },
+  "dependency_cache": {
+   "archive": "environment/dependency-cache.tar.gz",
+   "archive_sha256": "3c0678d126e37a53b2951ebedaa9528fc4724787aaa9c47da549b72cbb8cbbc1",
+   "manifest": "environment/dependency-cache-manifest.json",
+   "manifest_sha256": "60f7db5edcc421f1714d47162e06411a77a08660db953efea07d6841e16ca4ad",
+   "package_count": 66,
+   "included_in_distribution": false,
+   "role": "historical_prepack_audit_reference"
+  }
+ },
+ "trigger_metadata": {
+  "pre_20260816_declared_triggering_test": [
+   "test/acp_test.dart::maps invalid request params to invalid params error",
+   "test/acp_test.dart::maps unexpected exceptions to internal error",
+   "test/acp_test.dart::maps validation-like exceptions to invalid params",
+   "test/stream_test.dart::skips malformed JSON lines and continues processing"
+  ],
+  "validated_non_triggering_regression_tests": [
+   "test/acp_test.dart::maps unexpected exceptions to internal error"
+  ],
+  "canonical_source": "validation/post-minimization.json:derived.reproducing_test_selectors",
+  "canonicalized_at": "2026-08-16T16:20:00+08:00"
+ },
+ "dataset_tier": "active",
+ "human_minimization_review": {
+  "decision": "APPROVE_AS_IS",
+  "reviewer_role": "dataset_owner",
+  "reviewed_at": "2026-09-13T10:43:23Z",
+  "record": "curation/human-minimization-review.json",
+  "record_sha256": "3213e1ef67114a875ba0e64969bc37b1e34737d0502967abefe4234bdbfb781a",
+  "minimized_patch_sha256": "dcd7783c0f419561fe3c3cfb1fed63d56f0d7a039f00c505af46f0cb65c67961",
+  "rerun_required": false
+ }
+}

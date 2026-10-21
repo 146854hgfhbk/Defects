@@ -1,0 +1,31 @@
+{
+  "case_id": "JULIA-718",
+  "mode": "dedicated_script",
+  "oracle": {
+    "added_testsets": [
+      "@only_one resets its region for each task batch"
+    ],
+    "assertion_expression_sha256": [],
+    "f2p_tests": [
+      "@only_one resets its region for each task batch"
+    ],
+    "mwe_basis": {
+      "defect": "OnlyOneRegion kept a permanent boolean latch, so @only_one ran only in the first batch rather than once per task region.",
+      "public_api": "OhMyThreads.@tasks, @set ntasks, and @only_one",
+      "source_evidence": {
+        "extraction": "PR #100 adds the same @tasks loop with ntasks = 2 and asserts x == 5. This self-contained MWE preserves that behavioral oracle and does not inspect source text.",
+        "upstream_tests_patch_sha256": "3d29f1a4ab0465f562b75a89f0bda711ae2c544ed9093438c42263fa5c22feb2"
+      },
+      "upstream_issue": 100,
+      "upstream_pull_request": 100,
+      "upstream_test_files": [
+        "test/runtests.jl"
+      ]
+    },
+    "schema_version": 1
+  },
+  "origin": "manual_mwe_from_upstream_fix",
+  "schema_version": 1,
+  "script_sha256": "abc56137b7abfe7c8d6e5a99f2eecaa12f053461d77b5aa87cbae3b66770a706",
+  "status": "trigger_ready"
+}

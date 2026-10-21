@@ -1,0 +1,42 @@
+diff --git a/code/BasicFeature/Security/AppAccountManager/entry/src/main/ets/common/ModifyInfo.ets b/code/BasicFeature/Security/AppAccountManager/entry/src/main/ets/common/ModifyInfo.ets
+index c6da421530..5b3118e84a 100644
+--- a/code/BasicFeature/Security/AppAccountManager/entry/src/main/ets/common/ModifyInfo.ets
++++ b/code/BasicFeature/Security/AppAccountManager/entry/src/main/ets/common/ModifyInfo.ets
+@@ -310,8 +310,8 @@ export struct ModifyInfo {
+               })
+           } else if (this.passWord !== '' && this.confirmPassword !== '') {
+             await this.storage.putStorageValue(getContext(), this.username, this.passWord, this.bundleName)
+-            let email = await this.getInfo('null', `${this.username}_${this.bundleName}`, `email_${this.bundleName}`)
+-            let signature = await this.getInfo('null', `${this.username}_${this.bundleName}`, `signature_${this.bundleName}`)
++            let email = await this.getInfo('', `${this.username}_${this.bundleName}`, `email_${this.bundleName}`)
++            let signature = await this.getInfo('', `${this.username}_${this.bundleName}`, `signature_${this.bundleName}`)
+             AlertDialog.show(
+               {
+                 message: $r('app.string.modify_info'),
+@@ -335,8 +335,8 @@ export struct ModifyInfo {
+               })
+           }
+           else {
+-            let email = await this.getInfo('null', `${this.username}_${this.bundleName}`, `email_${this.bundleName}`)
+-            let signature = await this.getInfo('null', `${this.username}_${this.bundleName}`, `signature_${this.bundleName}`)
++            let email = await this.getInfo('', `${this.username}_${this.bundleName}`, `email_${this.bundleName}`)
++            let signature = await this.getInfo('', `${this.username}_${this.bundleName}`, `signature_${this.bundleName}`)
+             AlertDialog.show(
+               {
+                 message: $r('app.string.modify_info'),
+diff --git a/code/BasicFeature/Security/AppAccountManager/entry/src/main/ets/common/RegisterInfo.ets b/code/BasicFeature/Security/AppAccountManager/entry/src/main/ets/common/RegisterInfo.ets
+index a4b7c8eff3..b9408bbbf5 100644
+--- a/code/BasicFeature/Security/AppAccountManager/entry/src/main/ets/common/RegisterInfo.ets
++++ b/code/BasicFeature/Security/AppAccountManager/entry/src/main/ets/common/RegisterInfo.ets
+@@ -200,10 +200,7 @@ export struct RegisterInfo {
+               .maxLength(20)
+               .type(item.inputType)
+               .maxLength(item.length)
+-                // .inputFilter(item.inputFilter)
+-              .inputFilter('', (e) => {
+-                console.log(`zhanghong,e:${JSON.stringify(e)}`)
+-              })
++              .inputFilter(item.inputFilter)
+               .fontWeight(FontWeight.Bold)
+               .placeholderFont({ size: 16, weight: FontWeight.Normal })
+               .onChange(async (value: string) => {

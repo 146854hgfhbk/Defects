@@ -1,0 +1,140 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-490",
+  "bug_id": "JULIA-490",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "SciML/RuntimeGeneratedFunctions.jl",
+  "repository_url": "https://github.com/SciML/RuntimeGeneratedFunctions.jl.git",
+  "issue_urls": [
+    "https://github.com/SciML/RuntimeGeneratedFunctions.jl/issues/141"
+  ],
+  "issue_id": 141,
+  "buggy_revision": "d7fdff8d643ac814f6173bcece311e31140c7b11",
+  "fixed_revision": "38c1835e8b82c9354c7c8687d6e6235b33f37b65",
+  "candidate_sha": "38c1835e8b82c9354c7c8687d6e6235b33f37b65",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "d7fdff8d643ac814f6173bcece311e31140c7b11",
+  "changed_production_files": [
+    "src/RuntimeGeneratedFunctions.jl"
+  ],
+  "changed_test_files": [
+    "test/core_tests.jl",
+    "test/shared/threaded_rgf.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-490 concurrent generated functions"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 90,
+    "sha256": "35438e09880f7ec5038a596a0e0736f4b8f63fcdaccda06cb422c2a674cbe3d2",
+    "oracle": {
+      "public_api": "RuntimeGeneratedFunctions macro under concurrent use",
+      "upstream_test_file": "test/shared/threaded_rgf.jl",
+      "source_evidence": "isolated from the upstream subprocess regression in test/shared/threaded_rgf.jl",
+      "upstream_test_patch_sha256": "ae062578778207f3a0ea50d15ec01b137e5a03fba71913423c77f67e5f48c616"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "38c1835e8b82c9354c7c8687d6e6235b33f37b65",
+    "project": "SciML/RuntimeGeneratedFunctions.jl",
+    "input_sha256": "e1646126575fa20029e722d286b34f7dbf9cfae7c72814382726008fe384e024",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T11:52:19Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.6795927669320067,
+      "input_tokens": 14358,
+      "output_tokens": 939
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"The commit fixes a real multithreaded deadlock in RuntimeGeneratedFunctions.jl: `_lookup_body` acquired the `_cache_lock` SpinLock while running inside a `@generated` expansion (holding Julia's compiler lock), while `_cache_body` held `_cache_lock` during a Dict insert that could itself trigger codegen and block on the compiler lock. The fix makes cache reads lock-free by replacing the plain `Dict` with an internal `_BodyCache` (an atomically published stack of immutable-once-published Dicts, merged on the logarithmic method) and keeps writers serialized on `_cache_lock`. This is a behavior fix to production code, not a feature, refactor, docs, or diagnostic change.\", \"evidence\": \"Production patch is confined to src/RuntimeGeneratedFunctions.jl and addresses one concern (the cache/lock interaction): `_lookup_body` drops its `lock(_cache_lock)`, `_cache_body`/`drop_expr` route through `_cache_get`/`_cache_getindex`/`_cache_setindex!`, and `init` allocates `_BodyCache()` instead of `Dict()`. Linked issue #141 (closed) and PR #143 titled 'Fix multithreaded deadlock between the body cache and the compiler lock' describe exactly this lock-order inversion, matching the diff and its comments. The upstream test patch converts the pre-existing inline threaded test into test/shared/threaded_rgf.jl and runs it as a subprocess with --threads=8 plus a 600s watchdog, asserting `success(proc)`, because the failure mode is a hang rather than a wrong answer. Concurrency was already exercised by the prior test, so the buggy parent violates existing expected behavior. Runtime evidence reports stable_differential over 3 repetitions with the full suite passing after the fix; minimization reports 4/4 hunks necessary and globally minimal.\", \"missing_evidence\": \"No PR number/title/body in the commit metadata itself and no commit stats; the reproducer from the PR body is truncated. Issue #141's body is empty in the record, so the original report's exact symptoms (100% CPU hang, thread count, Julia version) are only known via the PR narrative. No timing data on how long the trigger takes or how reliably the parent hangs versus passes on lower thread counts.\", \"validation_risks\": \"The trigger detects a deadlock, so its failure signal is a timeout/kill rather than an assertion, which is inherently scheduling-dependent: on a validation host with few cores or with JULIA_NUM_THREADS constrained, the buggy parent may not hang and the test could pass unexpectedly (false negative). The 600s watchdog makes a failing run slow and could interact badly with harness-level timeouts. The test also spawns a subprocess requiring joinpath(Sys.BINDIR, \\\"julia\\\") and an active project, so sandboxes without process spawning or with a different Julia layout will error for infrastructure reasons rather than the defect. Three repetitions is modest evidence for a concurrency bug. Finally, the cache object shape stored as `#_RuntimeGeneratedFunctions_cache` changes from Dict to _BodyCache, so any test or downstream code reaching into that internal field would break for reasons unrelated to the deadlock.\", \"suggested_tests\": \"Pin the trigger environment explicitly (--threads=8 and, ideally, at least 4 physical cores) and record wall-clock time for both parent and fixed runs to confirm the parent reliably hits the watchdog. Run the threaded script many more times (20+) on both parent and fixed commits to quantify hang reproducibility. Add a direct unit test of the new cache: insert many ids under `_cache_lock` and assert `_cache_getindex` returns the newest value for updated keys, that a missing key throws KeyError, and that level sizes stay logarithmic. Add a test that a WeakRef entry rewritten by drop_expr shadows the stale entry. Keep the existing GC/drop_expr and serialization tests as regression guards, and verify `RGFPrecompTest` still loads given init now stores a _BodyCache in precompiled modules.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "The commit fixes a real multithreaded deadlock in RuntimeGeneratedFunctions.jl: `_lookup_body` acquired the `_cache_lock` SpinLock while running inside a `@generated` expansion (holding Julia's compiler lock), while `_cache_body` held `_cache_lock` during a Dict insert that could itself trigger codegen and block on the compiler lock. The fix makes cache reads lock-free by replacing the plain `Dict` with an internal `_BodyCache` (an atomically published stack of immutable-once-published Dicts, merged on the logarithmic method) and keeps writers serialized on `_cache_lock`. This is a behavior fix to production code, not a feature, refactor, docs, or diagnostic change.",
+    "evidence": "Production patch is confined to src/RuntimeGeneratedFunctions.jl and addresses one concern (the cache/lock interaction): `_lookup_body` drops its `lock(_cache_lock)`, `_cache_body`/`drop_expr` route through `_cache_get`/`_cache_getindex`/`_cache_setindex!`, and `init` allocates `_BodyCache()` instead of `Dict()`. Linked issue #141 (closed) and PR #143 titled 'Fix multithreaded deadlock between the body cache and the compiler lock' describe exactly this lock-order inversion, matching the diff and its comments. The upstream test patch converts the pre-existing inline threaded test into test/shared/threaded_rgf.jl and runs it as a subprocess with --threads=8 plus a 600s watchdog, asserting `success(proc)`, because the failure mode is a hang rather than a wrong answer. Concurrency was already exercised by the prior test, so the buggy parent violates existing expected behavior. Runtime evidence reports stable_differential over 3 repetitions with the full suite passing after the fix; minimization reports 4/4 hunks necessary and globally minimal.",
+    "missing_evidence": "No PR number/title/body in the commit metadata itself and no commit stats; the reproducer from the PR body is truncated. Issue #141's body is empty in the record, so the original report's exact symptoms (100% CPU hang, thread count, Julia version) are only known via the PR narrative. No timing data on how long the trigger takes or how reliably the parent hangs versus passes on lower thread counts.",
+    "validation_risks": "The trigger detects a deadlock, so its failure signal is a timeout/kill rather than an assertion, which is inherently scheduling-dependent: on a validation host with few cores or with JULIA_NUM_THREADS constrained, the buggy parent may not hang and the test could pass unexpectedly (false negative). The 600s watchdog makes a failing run slow and could interact badly with harness-level timeouts. The test also spawns a subprocess requiring joinpath(Sys.BINDIR, \"julia\") and an active project, so sandboxes without process spawning or with a different Julia layout will error for infrastructure reasons rather than the defect. Three repetitions is modest evidence for a concurrency bug. Finally, the cache object shape stored as `#_RuntimeGeneratedFunctions_cache` changes from Dict to _BodyCache, so any test or downstream code reaching into that internal field would break for reasons unrelated to the deadlock.",
+    "suggested_tests": "Pin the trigger environment explicitly (--threads=8 and, ideally, at least 4 physical cores) and record wall-clock time for both parent and fixed runs to confirm the parent reliably hits the watchdog. Run the threaded script many more times (20+) on both parent and fixed commits to quantify hang reproducibility. Add a direct unit test of the new cache: insert many ids under `_cache_lock` and assert `_cache_getindex` returns the newest value for updated keys, that a missing key throws KeyError, and that level sizes stay logarithmic. Add a test that a WeakRef entry rewritten by drop_expr shadows the stale entry. Keep the existing GC/drop_expr and serialization tests as regression guards, and verify `RGFPrecompTest` still loads given init now stores a _BodyCache in precompiled modules."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-490 concurrent generated functions"
+    ],
+    "exception_types": [
+      "5b1138d832a8c3830f3d322cd59de5e40d716fe62c8b6843d024488ae6cb8257"
+    ],
+    "fingerprints": [
+      "5b1138d832a8c3830f3d322cd59de5e40d716fe62c8b6843d024488ae6cb8257"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "38c1835e8b82c9354c7c8687d6e6235b33f37b65",
+    "parent_sha": "d7fdff8d643ac814f6173bcece311e31140c7b11",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "a496287f31e614b78e32ffb40b9791ad16e94efb2a31961666d28fc4a858ad42",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

@@ -1,0 +1,48 @@
+diff --git a/lib/src/front_end/delimited_list_builder.dart b/lib/src/front_end/delimited_list_builder.dart
+index a4bf9da..639c0c0 100644
+--- a/lib/src/front_end/delimited_list_builder.dart
++++ b/lib/src/front_end/delimited_list_builder.dart
+@@ -138,6 +138,20 @@ final class DelimitedListBuilder {
+     _commentsBeforeComma = CommentSequence.empty;
+   }
+ 
++  /// Adds the contents of [lineBuilder] to this outer [DelimitedListBuilder].
++  ///
++  /// This is used when preserving newlines inside a collection literal. The
++  /// [lineBuilder] will be used for the elements that should be packed onto a
++  /// single line, and this builder is for the rows that are each on their own
++  /// line.
++  void addLineBuilder(DelimitedListBuilder lineBuilder) {
++    // Add the elements of the line to this builder.
++    add(lineBuilder.build());
++
++    // Make sure that any trailing comments on the line aren't lost.
++    _commentsBeforeComma = lineBuilder._commentsBeforeComma;
++  }
++
+   /// Writes any comments appearing before [token] to the list.
+   void addCommentsBefore(Token token) {
+     // Handle comments between the preceding element and this one.
+diff --git a/lib/src/front_end/piece_factory.dart b/lib/src/front_end/piece_factory.dart
+index a3ff648..fa0f0fe 100644
+--- a/lib/src/front_end/piece_factory.dart
++++ b/lib/src/front_end/piece_factory.dart
+@@ -1082,7 +1082,7 @@ mixin PieceFactory {
+               elements[i - 1].endToken, element.beginToken)) {
+         // This element begins a new line. Add the elements on the previous
+         // line to the list builder and start a new line.
+-        builder.add(lineBuilder.build());
++        builder.addLineBuilder(lineBuilder);
+         lineBuilder = DelimitedListBuilder(this, lineStyle);
+         atLineStart = true;
+       }
+@@ -1097,7 +1097,8 @@ mixin PieceFactory {
+       atLineStart = false;
+     }
+ 
+-    if (!atLineStart) builder.add(lineBuilder.build());
++    // Finish the last line if there is anything on it.
++    if (!atLineStart) builder.addLineBuilder(lineBuilder);
+   }
+ 
+   /// Writes a [VariablePiece] for a named or wildcard variable pattern.

@@ -1,0 +1,131 @@
+{
+  "schema_version": 2,
+  "case_id": "KOTLIN-229",
+  "status": "candidate_validated",
+  "candidate_source": "Kotlin/kotlin-swe-bench",
+  "source_task_id": "pinterest_ktlint-2607",
+  "revision_mode": "real_upstream_commit",
+  "project": "pinterest/ktlint",
+  "license": "MIT",
+  "pull_request_number": 2607,
+  "pr_url": "https://github.com/pinterest/ktlint/pull/2607",
+  "issue_urls": [
+    "https://github.com/pinterest/ktlint/issues/2601"
+  ],
+  "buggy_revision": "2b396bd088c910616fb44e2589b7877976930ebb",
+  "fixed_revision": "a0763b8609b4ee7a7d9f894a2e5909bf76351865",
+  "upstream_head_revision": null,
+  "patch": "patches/minimized-source.patch",
+  "patch_sha256": "d667ffc0184422e2bcdf2888576d94391f585f7672caf4a678540450adb0d2c0",
+  "changed_production_files": [
+    "ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/ASTNodeExtension.kt",
+    "ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/MaxLineLengthRule.kt"
+  ],
+  "trigger_tests": [
+    "com.pinterest.ktlint.rule.engine.core.api.ASTNodeExtensionTest.Issue 2602 - Given that getFirstLeafOnLineOrSelf is called for a block comment containing a new line then do not throw a null pointer exception*"
+  ],
+  "trigger_test_filters": {},
+  "trigger_test_patch": "trigger-tests.patch",
+  "environment_lock": "environment.lock.json",
+  "build": {
+    "system": "Gradle Wrapper",
+    "gradle_version": "8.6",
+    "java_version": 21,
+    "android_sdk_required": false,
+    "compile_task": ":ktlint-rule-engine-core:testClasses",
+    "test_task": ":ktlint-rule-engine-core:test",
+    "test_results_glob": "ktlint-rule-engine-core/build/test-results/**/TEST-*.xml",
+    "build_command": ".\\gradlew.bat :ktlint-rule-engine-core:testClasses",
+    "test_command": ".\\gradlew.bat :ktlint-rule-engine-core:test",
+    "gradle_identity_source": "RC2 wrapper identity audit of materialized buggy/fixed source trees",
+    "gradle_identity_corrected_in": "1.0.0-rc2"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "generated_by": "validation_engine.py",
+    "validated_at": "2026-08-17T02:45:00Z",
+    "repetitions": 3,
+    "fresh_worktree_per_repetition": true,
+    "individual_trigger_processes": true,
+    "compile_valid": true,
+    "full_suite_valid": true,
+    "failure_fingerprints": [
+      "fresh-replay-3x-stable"
+    ],
+    "buggy_failed_tests": [
+      "com.pinterest.ktlint.rule.engine.core.api.ASTNodeExtensionTest.Issue 2602 - Given that getFirstLeafOnLineOrSelf is called for a block comment containing a new line then do not throw a null pointer exception()"
+    ],
+    "fixed_failed_tests": [],
+    "broken_tests": [],
+    "flaky_tests": [],
+    "order_dependent_tests": [],
+    "report": "validation/validation.json",
+    "report_sha256": "e1c1fa0e3fcd4f1d9303651bea0ed126d6da1894226d2ac7c3527dc34927b728"
+  },
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "com.pinterest.ktlint.rule.engine.core.api.ASTNodeExtensionTest.Issue 2602 - Given that getFirstLeafOnLineOrSelf is called for a block comment containing a new line then do not throw a null pointer exception()"
+    ],
+    "exception_types": [
+      "java.lang.AssertionError"
+    ],
+    "fingerprints": [
+      "97926e6253f16a0fad857e438952325da9e9ca0f4ed7c7f4e3c5f8f070e127e9"
+    ],
+    "fingerprint_source": "validation/validation.json::trigger_failures[*].stack_sha256"
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "jvm",
+    "reason_code": null,
+    "reason": "Real upstream single-commit fix with fresh 3x stable differential replay."
+  },
+  "release_integrity": "release-integrity.json",
+  "provenance": {
+    "real_fix_commit": "a0763b8609b4ee7a7d9f894a2e5909bf76351865",
+    "real_fix_commit_message": "a0763b86 Prevent exception in `binary-expression-wrapping` rule in case it is preceded on the same l",
+    "buggy_strategy": "real_upstream_commit",
+    "trigger_name_note": "The upstream regression test added by fixed commit a0763b8 is named 'Issue 2602', while the fixing commit and PR close issue #2601. The upstream test name is retained verbatim."
+  },
+  "reproducibility_status": "stable_differential",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "issue_id": 2601,
+  "patch_direction": "buggy_to_fixed",
+  "trigger_test_patch_sha256": "2343a0757fd12afb415b793ecbb372a7cd4538743036f5f2038f55f6bd4b6be8",
+  "test_identity": {
+    "scheme": "base-revision-plus-trigger-overlay-sha256-v1",
+    "trigger_overlay_sha256": "2343a0757fd12afb415b793ecbb372a7cd4538743036f5f2038f55f6bd4b6be8",
+    "buggy_base_revision": "2b396bd088c910616fb44e2589b7877976930ebb",
+    "fixed_base_revision": "a0763b8609b4ee7a7d9f894a2e5909bf76351865",
+    "note": "Final release identity: trigger overlay bytes are bound by SHA-256 and base revisions are the published upstream buggy/fixed identities."
+  },
+  "final_dynamic_acceptance": {
+    "status": "PASS_STRICT",
+    "fresh_replay_completed": true,
+    "accepted_at": "2026-08-17T02:45:00Z",
+    "fixed_result": "PASS",
+    "buggy_trigger_result": "FAIL_AS_EXPECTED",
+    "raw_run_artifacts_bundled": true,
+    "evidence_location": "validation/rc2-strict-20260912",
+    "repair_note": null,
+    "rc2_strict_recertified_at": "2026-09-12T04:36:38.781695+00:00",
+    "rc2_verifier_contract": "PASS_STRICT_3X_TARGET_BOUND_WITH_FIXED_FULL_SUITE"
+  },
+  "language": "Kotlin",
+  "benchmark_tier": "strict-upstream-boundary",
+  "upstream_boundary_strict_eligible": true,
+  "rc2_strict_recertification": {
+    "status": "PASS_STRICT",
+    "framework_version_used": "1.0.0-rc2",
+    "repetitions": 3,
+    "formal_validation": true,
+    "environment_override_used": false,
+    "evidence_location": "validation/rc2-strict-20260912",
+    "evidence_manifest_sha256": "1933bc34fc43beb37cae2bcc6001f31927935fd676b45151b14b18ba758c3e3e",
+    "summary_sha256": "f552d23f2f7653c28cde6c8dddbef61532348ec9c10f932b0a07b0469edd56ea",
+    "generated_at": "2026-09-12T04:36:38.781695+00:00"
+  }
+}

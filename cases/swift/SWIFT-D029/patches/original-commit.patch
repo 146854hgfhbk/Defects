@@ -1,0 +1,59 @@
+diff --git a/Sources/IdentifiedCollections/IdentifiedArray/IdentifiedArray+Equatable.swift b/Sources/IdentifiedCollections/IdentifiedArray/IdentifiedArray+Equatable.swift
+index d7d5fc3a64aa9a9ae6ab7d5260bee49366a39f32..44227ce442914d99c13b33dc8b4bd63ae6a342b6 100644
+--- a/Sources/IdentifiedCollections/IdentifiedArray/IdentifiedArray+Equatable.swift
++++ b/Sources/IdentifiedCollections/IdentifiedArray/IdentifiedArray+Equatable.swift
+@@ -1,6 +1,6 @@
+ extension IdentifiedArray: Equatable where Element: Equatable {
+   @inlinable
+   public static func == (lhs: Self, rhs: Self) -> Bool {
+-    lhs.id == rhs.id && lhs.elementsEqual(rhs)
++    lhs.elementsEqual(rhs)
+   }
+ }
+diff --git a/Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift b/Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift
+index 658bc820ab7bc3930a544e3edbb9877efe2bbb99..cb7c331b8933aa21a22aaad995c4b378da2da807 100644
+--- a/Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift
++++ b/Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift
+@@ -229,4 +229,42 @@ final class IdentifiedArrayTests: XCTestCase {
+     array.remove(atOffsets: [0, 2])
+     XCTAssertEqual(array, [2])
+   }
++  func testEquatable() {
++    struct Foo: Identifiable, Equatable {
++        var id: String = "id"
++        var value: String = "value"
++    }
++    // Create arrays using all of the initializers
++    var arrays: [IdentifiedArray<String, Foo>] = [
++        IdentifiedArray<String, Foo>(),
++        IdentifiedArray<String, Foo>(uncheckedUniqueElements: [], id: \.id),
++        IdentifiedArray<String, Foo>(uniqueElements: [], id: \.id),
++        IdentifiedArray<String, Foo>(uncheckedUniqueElements: []),
++        IdentifiedArray<String, Foo>(uniqueElements: [])
++    ]
++    arrays.forEach({ lhs in
++        arrays.forEach({ rhs in
++            XCTAssertEqual(lhs, rhs)
++        })
++    })
++    // add an element to each array
++    arrays.indices.forEach({
++        arrays[$0].append(Foo())
++    })
++    arrays.forEach({ lhs in
++        arrays.forEach({ rhs in
++            XCTAssertEqual(lhs, rhs)
++        })
++    })
++    // modify all arrays
++    arrays.indices.forEach({
++        arrays[$0].append(Foo(id: "id2", value: "\($0)"))
++    })
++    arrays.enumerated().forEach({ lhsIndex, lhs in
++        arrays.enumerated().forEach({ rhsIndex, rhs in
++            guard rhsIndex != lhsIndex else { return }
++            XCTAssertNotEqual(lhs, rhs)
++        })
++    })
++  }
+ }

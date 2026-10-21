@@ -1,0 +1,412 @@
+diff --git a/Makefile.PL b/Makefile.PL
+index 44affb4c4eaeed7aaa7bcbebe40c404c8ca87460..bc4bce66f240664749db9aeb67789d06e0bce9ba 100644
+--- a/Makefile.PL
++++ b/Makefile.PL
+@@ -25,7 +25,7 @@ my %WriteMakefileArgs = (
+     "File::Copy" => 0,
+     "File::Glob" => 0,
+     "File::Path" => "2.07",
+-    "File::Spec" => "3.40",
++    "File::Spec" => "0.86",
+     "File::Temp" => "0.19",
+     "File::stat" => 0,
+     "JSON::PP" => "2.27300",
+@@ -38,7 +38,7 @@ my %WriteMakefileArgs = (
+   "TEST_REQUIRES" => {
+     "ExtUtils::MakeMaker" => 0,
+     "File::Basename" => 0,
+-    "File::Spec" => "3.40",
++    "File::Spec" => "0.86",
+     "File::Spec::Functions" => 0,
+     "File::Spec::Unix" => 0,
+     "File::Temp" => "0.19",
+@@ -65,7 +65,7 @@ my %FallbackPrereqs = (
+   "File::Copy" => 0,
+   "File::Glob" => 0,
+   "File::Path" => "2.07",
+-  "File::Spec" => "3.40",
++  "File::Spec" => "0.86",
+   "File::Spec::Functions" => 0,
+   "File::Spec::Unix" => 0,
+   "File::Temp" => "0.19",
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index 20a1b5bebd2f343f4235e491156e08d806c4d0e2..9b3a3444aebcb91bcbe6e668191d56e52a9abf33 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -10,7 +10,7 @@ our $VERSION = '0.078';
+ # Dependencies
+ use Config;
+ use Exporter 5.57   (qw/import/);
+-use File::Spec 3.40 ();
++use File::Spec 0.86 ();          # shipped with 5.8.1
+ use Carp ();
+ 
+ our @EXPORT    = qw/path/;
+@@ -73,6 +73,10 @@ sub _is_root {
+     return IS_WIN32() ? ( $_[0] =~ /^$WIN32_ROOT$/ ) : ( $_[0] eq '/' );
+ }
+ 
++BEGIN {
++    *_same = IS_WIN32() ? sub { lc( $_[0] ) eq lc( $_[1] ) } : sub { $_[0] eq $_[1] };
++}
++
+ # mode bits encoded for chmod in symbolic mode
+ my %MODEBITS = ( om => 0007, gm => 0070, um => 0700 ); ## no critic
+ { my $m = 0; $MODEBITS{$_} = ( 1 << $m++ ) for qw/ox ow or gx gw gr ux uw ur/ };
+@@ -223,6 +227,7 @@ sub path {
+     # canonicalize, but with unix slashes and put back trailing volume slash
+     my $cpath = $path = File::Spec->canonpath($path);
+     $path =~ tr[\\][/] if IS_WIN32();
++    $path = "/" if $path eq '/..'; # for old File::Spec
+     $path .= "/" if IS_WIN32() && $path =~ m{^$UNC_VOL$};
+ 
+     # root paths must always have a trailing slash, but other paths must not
+@@ -1414,6 +1419,10 @@ Current API available since 0.001.
+ # doesn't throw an error resolving non-existent basename
+ sub realpath {
+     my $self = shift;
++    while ( -l $self->[PATH] ) {
++        my $resolved = readlink $self->[PATH] or $self->_throw( 'readlink', $self->[PATH] );
++        $self = path($resolved);
++    }
+     require Cwd;
+     $self->_splitpath if !defined $self->[FILE];
+     my $check_parent =
+@@ -1441,8 +1450,103 @@ Current API available since 0.001.
+ 
+ =cut
+ 
+-# Easy to get wrong, so wash it through File::Spec (sigh)
+-sub relative { path( File::Spec->abs2rel( $_[0]->[PATH], $_[1] ) ) }
++sub relative {
++    my ( $self, $base ) = @_;
++    $base = "." unless defined $base and length $base;
++
++    # relative paths must be converted to absolute first
++    if ( $self->is_relative ) {
++        return $self->absolute->relative($base);
++    }
++
++    # normalize volumes if they exist
++    $base = path($base)->absolute;
++    if ( length $base->volume && !length $self->volume ) {
++        $self = $self->absolute;
++    }
++
++    # can't make paths relative across volumes
++    if ( !_same( $self->volume, $base->volume ) ) {
++        Carp::croak("relative() can't cross volumes: '$self' vs '$base'");
++    }
++
++    # if same absolute path, relative is current directory
++    return path(".") if _same( $self->[PATH], $base->[PATH] );
++
++    # if base is a prefix of self, chop prefix off self
++    if ( $base->subsumes($self) ) {
++        $base = "" if $base->is_rootdir;
++        my $relative = "$self";
++        $relative =~ s{\A$base/}{};
++        return path($relative);
++    }
++
++    # base is not a prefix, so must find a common prefix (even if root)
++    my ( @common, @self_parts, @base_parts );
++    @base_parts = split /\//, $base->_just_filepath;
++
++    # if self is rootdir, then common directory is root (shown as empty
++    # string for later joins); otherwise, must be computed from path parts.
++    if ( $self->is_rootdir ) {
++        @common = ("");
++        shift @base_parts;
++    }
++    else {
++        @self_parts = split /\//, $self->_just_filepath;
++
++        while ( @self_parts && @base_parts && _same( $self_parts[0], $base_parts[0] ) ) {
++            push @common, shift @base_parts;
++            shift @self_parts;
++        }
++    }
++
++    # if there are any symlinks from common to base, we have a problem, as
++    # you can't guarantee that updir from base reaches the common prefix;
++    # we must resolve symlinks and try again; likewise, any updirs are
++    # a problem as it throws off calculation of updirs needed to get from
++    # self's path to the common prefix.
++    if ( my $new_base = $self->_resolve_between( \@common, \@base_parts ) ) {
++        return $self->relative($new_base);
++    }
++
++    # otherwise, symlinks in common or from common to A don't matter as
++    # those don't involve updirs
++    my @new_path = ( ("..") x ( 0+ @base_parts ), @self_parts );
++    return path(@new_path);
++}
++
++sub _just_filepath {
++    my $self     = shift;
++    my $self_vol = $self->volume;
++    return "$self" if !length $self_vol;
++
++    ( my $self_path = "$self" ) =~ s{\A$self_vol}{};
++
++    return $self_path;
++}
++
++sub _resolve_between {
++    my ( $self, $common, $base ) = @_;
++    my $path = $self->volume . join( "/", @$common );
++    my $changed = 0;
++    for my $p (@$base) {
++        $path .= "/$p";
++        if ( $p eq '..' ) {
++            $changed = 1;
++            if ( -e $path ) {
++                $path = path($path)->realpath->[PATH];
++            }
++            else {
++                $path =~ s{/[^/]+/..$}{/};
++            }
++        }
++        if ( -l $path ) {
++            $changed = 1;
++            $path    = path($path)->realpath->[PATH];
++        }
++    }
++    return $changed ? path($path) : undef;
++}
+ 
+ =method remove
+ 
+@@ -1896,7 +2000,7 @@ sub throw {
+ =for Pod::Coverage
+ openr_utf8 opena_utf8 openw_utf8 openrw_utf8
+ openr_raw opena_raw openw_raw openrw_raw
+-IS_BSD IS_WIN32 FREEZE THAW TO_JSON
++IS_BSD IS_WIN32 FREEZE THAW TO_JSON abs2rel
+ 
+ =head1 SYNOPSIS
+ 
+diff --git a/t/filesystem.t b/t/filesystem.t
+index ec5146cd24b635f9f4d8d57c85eac08035af9b23..816fb71ee2d791b16cd75d53c41b6f6aaeafa7cb 100644
+--- a/t/filesystem.t
++++ b/t/filesystem.t
+@@ -347,6 +347,8 @@ SKIP: {
+     skip "symlink unavailable", 1 if $@;
+     ok( $link->lstat->size, "lstat" );
+ 
++    is( $link->realpath, $file->realpath, "realpath resolves symlinks" );
++
+     ok $link->remove, 'remove symbolic link';
+     ok $file->remove;
+ 
+diff --git a/t/lib/TestUtils.pm b/t/lib/TestUtils.pm
+index d91bedbafc4433542acd36fdafbbc16e02492269..38c134a15482e8c0f102e87ccdae428af3486d7a 100644
+--- a/t/lib/TestUtils.pm
++++ b/t/lib/TestUtils.pm
+@@ -12,6 +12,7 @@ use Exporter;
+ our @ISA    = qw/Exporter/;
+ our @EXPORT = qw(
+   exception
++  pushd
+   tempd
+ );
+ 
+@@ -30,9 +31,14 @@ sub exception(&) {
+ }
+ 
+ sub tempd {
++    return pushd( File::Temp->newdir );
++}
++
++sub pushd {
++    my $temp  = shift;
+     my $guard = TestUtils::_Guard->new(
+         {
+-            temp   => File::Temp->newdir,
++            temp   => $temp,
+             origin => getcwd(),
+             code   => sub { chdir $_[0]{origin} },
+         }
+diff --git a/t/rel-abs.t b/t/rel-abs.t
+index 3b20e29b6d7d44fcf8889002478f9c860cb58024..68829b31d5b9ca9ef1646276508a401a5e8c2c22 100644
+--- a/t/rel-abs.t
++++ b/t/rel-abs.t
+@@ -4,10 +4,12 @@ use warnings;
+ use Test::More 0.96;
+ 
+ use lib 't/lib';
+-use TestUtils qw/exception/;
++use TestUtils qw/exception pushd tempd/;
+ 
+ use Path::Tiny;
+ 
++# absolute() tests
++
+ my $rel1 = path(".");
+ my $abs1 = $rel1->absolute;
+ is( $abs1->absolute, $abs1, "absolute of absolute is identity" );
+@@ -17,5 +19,163 @@ my $abs2 = $rel2->absolute;
+ 
+ is( $rel2->absolute($abs1), $abs2, "absolute on base" );
+ 
++# Note: in following relative() tests, capital 'A', 'B' denotes absolute path
++# and lower case 'a', 'b' denotes relative paths. 'R' denotes the root
++# directory. When there are multiple
++# letters together, they indicate how paths relate in the hierarchy:
++# A subsumes AB, ABC and ABD have a common prefix (referred to as AB).
++# The presence of an underscore indicates a symlink somewhere in that segment
++# of a path: ABC_D indicates a symlink somewhere between ABC and ABC_D.
++
++my @symlink_free_cases = (
++    # identical (absolute and relative cases)
++    [ "A->rel(A)", "/foo/bar", "/foo/bar", "." ],
++    [ "a->rel(a)", "foo/bar",  "foo/bar",  "." ],
++    # descends -- absolute
++    [ "AB->rel(A)", "/foo/bar/baz", "/",        "foo/bar/baz" ],
++    [ "AB->rel(A)", "/foo/bar/baz", "/foo",     "bar/baz" ],
++    [ "AB->rel(A)", "/foo/bar/baz", "/foo/bar", "baz" ],
++    # descends -- relative
++    [ "ab->rel(a)", "foo/bar/baz", "",        "foo/bar/baz" ],
++    [ "ab->rel(a)", "foo/bar/baz", ".",       "foo/bar/baz" ],
++    [ "ab->rel(a)", "foo/bar/baz", "foo",     "bar/baz" ],
++    [ "ab->rel(a)", "foo/bar/baz", "foo/bar", "baz" ],
++    # common prefix -- absolute (same volume)
++    [ "R->rel(A)",      "/",            "/bam",             ".." ],
++    [ "R->rel(AB)",     "/",            "/bam/baz",         "../.." ],
++    [ "ABC->rel(D)",    "/foo/bar/baz", "/bam",             "../foo/bar/baz" ],
++    [ "ABC->rel(AD)",   "/foo/bar/baz", "/foo/bam",         "../bar/baz" ],
++    [ "ABC->rel(ABD)",  "/foo/bar/baz", "/foo/bar/bam",     "../baz" ],
++    [ "ABC->rel(DE)",   "/foo/bar/baz", "/bim/bam",         "../../foo/bar/baz" ],
++    [ "ABC->rel(ADE)",  "/foo/bar/baz", "/foo/bim/bam",     "../../bar/baz" ],
++    [ "ABC->rel(ABDE)", "/foo/bar/baz", "/foo/bar/bim/bam", "../../baz" ],
++    # common prefix -- relative (same volume)
++    [ "abc->rel(d)",    "foo/bar/baz", "bam",             "../foo/bar/baz" ],
++    [ "abc->rel(ad)",   "foo/bar/baz", "foo/bam",         "../bar/baz" ],
++    [ "abc->rel(abd)",  "foo/bar/baz", "foo/bar/bam",     "../baz" ],
++    [ "abc->rel(de)",   "foo/bar/baz", "bim/bam",         "../../foo/bar/baz" ],
++    [ "abc->rel(ade)",  "foo/bar/baz", "foo/bim/bam",     "../../bar/baz" ],
++    [ "abc->rel(abde)", "foo/bar/baz", "foo/bar/bim/bam", "../../baz" ],
++    # both paths relative (not identical)
++    [ "ab->rel(a)",   "foo/bar",     "foo",     "bar" ],
++    [ "abc->rel(ab)", "foo/bar/baz", "foo/bim", "../bar/baz" ],
++    [ "a->rel(b)",    "foo",         "bar",     "../foo" ],
++);
++
++for my $c (@symlink_free_cases) {
++    my ( $label, $path, $base, $result ) = @$c;
++    is( path($path)->relative($base), $result, $label );
++}
++
++my @one_rel_from_root = (
++    [ "A->rel(b) from rootdir", "/foo/bar", "baz",  "../foo/bar" ],
++    [ "a->rel(B) from rootdir", "foo/bar",  "/baz", "../foo/bar" ],
++);
++
++{
++    my $wd = pushd("/");
++    for my $c (@one_rel_from_root) {
++        my ( $label, $path, $base, $result ) = @$c;
++        is( path($path)->relative($base), $result, $label );
++    }
++}
++
++{
++    my $wd  = tempd("/");
++    my $cwd = Path::Tiny::cwd->realpath;
++
++    # A->rel(b) from tmpdir -- need to find updir from ./b to root
++    my $base = $cwd->child("baz");
++    my ( undef, @parts ) = split "/", $base;
++    my $up_to_root = path( "../" x @parts );
++    is(
++        path("/foo/bar")->relative("baz"),
++        $up_to_root->child("foo/bar"),
++        "A->rel(b) from tmpdir"
++    );
++
++    # a->rel(B) from tempdir -- path is .. + cwd + a
++    is(
++        path("foo/bar")->relative("/baz"),
++        path( "..", $cwd, "foo/bar" ),
++        "a->rel(B) from tmpdir"
++    );
++
++}
++
++subtest "relative on absolute paths with symlinks" => sub {
++    my $wd   = tempd;
++    my $cwd  = path(".")->realpath;
++    my $deep = $cwd->child("foo/bar/baz/bam/bim/buz/wiz/was/woz");
++    $deep->mkpath();
++
++    eval { symlink "foo/bar/baz", "baz" };
++    plan skip_all => "No symlink support"
++      if $@;
++
++    # (a) symlink in common path
++    #
++    #   A_BCD->rel(A_BEF) - common point A_BC - result: ../../C/D
++    #
++    $cwd->child("A")->mkpath;
++    symlink $deep, "A/B" or die "$!";
++    my $path = $cwd->child("A/B/C/D");
++    $path->mkpath;
++    is( $path->relative( $cwd->child("A/B/E/F") ), "../../C/D", "A_BCD->rel(A_BEF)" );
++    $cwd->child("A")->remove_tree;
++    $deep->remove_tree;
++    $deep->mkpath;
++
++    # (b) symlink in path from common to original path
++    #
++    #   ABC_DE->rel(ABFG) - common point AB - result: ../../C/D/E
++    #
++    $cwd->child("A/B/C")->mkpath;
++    symlink $deep, "A/B/C/D" or die "$!";
++    $path = $cwd->child("A/B/C/D/E");
++    $path->mkpath;
++    is( $path->relative( $cwd->child("A/B/F/G") ), "../../C/D/E",
++        "ABC_DE->rel(ABC_FG)" );
++    $cwd->child("A")->remove_tree;
++    $deep->remove_tree;
++    $deep->mkpath;
++
++    # (c) symlink in path from common to new base; all path exist
++    #
++    #   ABCD->rel(ABE_FG) - common point AB -  result depends on E_F resolution
++    #
++    $path = $cwd->child("A/B/C/D");
++    $path->mkpath;
++    $cwd->child("A/B/E")->mkpath;
++    symlink $deep, "A/B/E/F" or die $!;
++    my $base = $cwd->child("A/B/E/F/G");
++    $base->mkpath;
++    my $expect = $path->relative( $deep->child("G") );
++    is( $path->relative($base), $expect, "ABCD->rel(ABE_FG) [real paths]" );
++    $cwd->child("A")->remove_tree;
++    $deep->remove_tree;
++    $deep->mkpath;
++
++    # (d) symlink in path from common to new base; paths after symlink
++    # don't exist
++    #
++    #   ABCD->rel(ABE_FGH) - common point AB -  result depends on E_F resolution
++    #
++    $path = $cwd->child("A/B/C/D");
++    $path->mkpath;
++    $cwd->child("A/B/E")->mkpath;
++    symlink $deep, "A/B/E/F" or die $!;
++    $base   = $cwd->child("A/B/E/F/G/H");
++    $expect = $path->relative( $deep->child("G/H") );
++    is( $path->relative($base), $expect, "ABCD->rel(ABE_FGH) [unreal paths]" );
++
++};
++
++# XXX need to test common prefix case where both are abs but one
++# has volume and one doesn't. (Win32: UNC and drive letters)
++
++# XXX need to test A->rel(B) where A and B are different volumes,
++# including UNC and drive letters
++
+ done_testing;
+ # COPYRIGHT

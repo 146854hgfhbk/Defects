@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "57af9a0a2645c7bcc9fe456e0e0fb746a46722f6",
+  "project": "JuliaIO/JLD2.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 669,
+      "url": "https://github.com/JuliaIO/JLD2.jl/pull/669",
+      "state": "closed",
+      "title": "Avoid mutating filters.",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This PR changes the mutating function `set_local!(filter, odr, dataspace, datasetcreationprops)` to the non-mutating\r\n`set_local(filter, odr, dataspace, datasetcreationprops)` and also makes `Shuffle` a `struct` instead of a `mutable struct`.\r\n\r\nThis is not a breaking change because `set_local!` is not used by any plugins yet, and currently, the internal filter interface is still experimental.\r\n\r\nI imagine people will create global variables with filter options like:\r\n\r\n```\r\nconst filters = [Shuffle(), Deflate()]\r\n```\r\n\r\nAnd then reuse this in multiple threads. With the current `set_local!` function for `Shuffle`, this would be a race condition.\r\nThis PR fixes that issue.\r\n"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 669,
+      "pull_request_repository": "JuliaIO/JLD2.jl",
+      "pull_request_url": "https://github.com/JuliaIO/JLD2.jl/pull/669",
+      "fix_commit": "57af9a0a2645c7bcc9fe456e0e0fb746a46722f6",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Make all filters immutable (#669)",
+    "commit_issue_refs": [
+      669
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 669,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Avoid mutating filters.",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [],
+  "pull_request_record": {
+    "number": 669,
+    "repository": "JuliaIO/JLD2.jl",
+    "url": "https://github.com/JuliaIO/JLD2.jl/pull/669",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2025-09-01T21:23:46Z",
+    "merge_commit_sha": "57af9a0a2645c7bcc9fe456e0e0fb746a46722f6",
+    "title": "Avoid mutating filters.",
+    "body_excerpt": "This PR changes the mutating function `set_local!(filter, odr, dataspace, datasetcreationprops)` to the non-mutating\r\n`set_local(filter, odr, dataspace, datasetcreationprops)` and also makes `Shuffle` a `struct` instead of a `mutable struct`.\r\n\r\nThis is not a breaking change because `set_local!` is not used by any plugins yet, and currently, the internal filter interface is still experimental.\r\n\r\nI imagine people will create global variables with filter options like:\r\n\r\n```\r\nconst filters = [Shuffle(), Deflate()]\r\n```\r\n\r\nAnd then reuse this in multiple threads. With the current `set_local!` function for `Shuffle`, this would be a race condition.\r\nThis PR fixes that issue.\r\n",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

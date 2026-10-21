@@ -1,0 +1,147 @@
+diff --git a/Changes b/Changes
+index 6d7600554c262b78fbc060c64a82fd81ec4128d4..9a0459cffe55c1144975d9f2d91f012e831b9f2e 100644
+--- a/Changes
++++ b/Changes
+@@ -21,6 +21,7 @@
+     - Document that Test2::Plugin::BailOnFail and Test2::Plugin::DieOnFail cannot act on a failure inside a forked subtest until the owning process merges it [github #1081]
+     - Use Test2::V0 instead of the deprecated Test2::Bundle::Extended in the Test2::Tools::AsyncSubtest and Test2::Tools::Spec examples [github #1079]
+     - Fail a Test::More subtest whose code dies, reporting the exception inside it, instead of reporting the subtest as passing. The exception still propagates. [github #1075]
++    - Return the number of assertions made from done_testing() in Test2::Tools::Basic and Test2::Tools::Tiny, so a test file ending in it is true to do() [github #1073]
+ 
+ 1.302222  2026-06-15 10:18:50-07:00 America/Los_Angeles
+ 
+diff --git a/lib/Test2/Tools/Basic.pm b/lib/Test2/Tools/Basic.pm
+index 2b98f2f01c41ce55623a3450bc7ee417da850262..675ef26518d637b4ae499511fca0a792ba8243c9 100644
+--- a/lib/Test2/Tools/Basic.pm
++++ b/lib/Test2/Tools/Basic.pm
+@@ -104,7 +104,9 @@ sub skip_all {
+ sub done_testing {
+     my $ctx = context();
+     $ctx->hub->finalize($ctx->trace, 1);
++    my $count = $ctx->hub->count;
+     $ctx->release;
++    return $count;
+ }
+ 
+ sub bail_out {
+@@ -202,6 +204,8 @@ tests are run.
+ Used to mark the end of testing. This is a safe way to have a dynamic or
+ unknown number of tests.
+ 
++Returns the number of assertions that were made, which is 0 when none were.
++
+ =item bail_out($reason)
+ 
+ Invoked when something has gone horribly wrong: stop everything, kill all threads and
+diff --git a/lib/Test2/Tools/Tiny.pm b/lib/Test2/Tools/Tiny.pm
+index b574eb714dd6288963987112eec35c60bb8ff8fd..b47f9cb866d976b2f7e55fd732d93176260cc5a9 100644
+--- a/lib/Test2/Tools/Tiny.pm
++++ b/lib/Test2/Tools/Tiny.pm
+@@ -208,7 +208,9 @@ sub plan {
+ sub done_testing {
+     my $ctx = context();
+     $ctx->done_testing;
++    my $count = $ctx->hub->count;
+     $ctx->release;
++    return $count;
+ }
+ 
+ sub warnings(&) {
+@@ -364,6 +366,8 @@ Set the plan.
+ 
+ Set the plan to the current test count.
+ 
++Returns the number of assertions that were made, which is 0 when none were.
++
+ =item $warnings = warnings { ... }
+ 
+ Capture an arrayref of warnings from the block.
+diff --git a/t/AI/regression/1073-done-testing-return.t b/t/AI/regression/1073-done-testing-return.t
+new file mode 100644
+index 0000000000000000000000000000000000000000..d1397d52fb9171c4ac8493af9d31d80c9fb92865
+--- /dev/null
++++ b/t/AI/regression/1073-done-testing-return.t
+@@ -0,0 +1,83 @@
++use strict;
++use warnings;
++
++use Test2::V0;
++use File::Temp qw/tempdir/;
++use File::Spec;
++
++# done_testing() returns the number of assertions made, so a test file that
++# ends with it is true to do() when it ran anything.
++
++my $dir = tempdir(CLEANUP => 1);
++
++my $write = sub {
++    my ($name, $body) = @_;
++
++    my $file = File::Spec->catfile($dir, $name);
++    open(my $fh, '>', $file) or die "Could not write '$file': $!";
++    print $fh $body;
++    close($fh) or die "Could not close '$file': $!";
++
++    return $file;
++};
++
++# The program the child runs lives in a file, so only paths and the perl
++# binary are passed on the command line. A '$' cannot be escaped in a way both
++# a POSIX shell and cmd.exe understand, so no program text may go there.
++my $run = sub {
++    my ($name, $body, @args) = @_;
++
++    my $file = $write->("$name.pl", $body);
++    my $cmd_args = join ' ', map { qq{"$_"} } $file, @args;
++
++    # Assign before returning: returning the backticks directly would evaluate
++    # them in the caller's context, giving a list of lines to a list caller.
++    my $out = `"$^X" "-I" "lib" $cmd_args 2>&1`;
++
++    return $out;
++};
++
++subtest tools_basic => sub {
++    my ($out) = $run->(basic_three => <<'    EOT');
++        use Test2::Tools::Basic;
++        ok(1, "one"); ok(1, "two"); ok(1, "three");
++        print STDERR "RETURN(" . done_testing() . ")\n";
++    EOT
++    like($out, qr/RETURN\(3\)/, "returns the number of assertions made");
++
++    ($out) = $run->(basic_none => <<'    EOT');
++        use Test2::Tools::Basic;
++        my $got = done_testing();
++        print STDERR "RETURN(" . (defined($got) ? $got : 'undef') . ")\n";
++    EOT
++    like($out, qr/RETURN\(0\)/, "returns zero when nothing ran");
++};
++
++subtest tools_tiny => sub {
++    my ($out) = $run->(tiny_two => <<'    EOT');
++        use Test2::Tools::Tiny;
++        ok(1, "one"); ok(1, "two");
++        print STDERR "RETURN(" . done_testing() . ")\n";
++    EOT
++    like($out, qr/RETURN\(2\)/, "returns the number of assertions made");
++
++    ($out) = $run->(tiny_none => <<'    EOT');
++        use Test2::Tools::Tiny;
++        my $got = done_testing();
++        print STDERR "RETURN(" . (defined($got) ? $got : 'undef') . ")\n";
++    EOT
++    like($out, qr/RETURN\(0\)/, "returns zero when nothing ran");
++};
++
++subtest do_a_test_file => sub {
++    my $target = $write->("as_do.t", "use Test2::V0;\nok(1, 'ran');\ndone_testing;\n");
++
++    my $out = $run->(do_driver => <<'    EOT', $target);
++        my $got = do $ARGV[0];
++        print STDERR "DO(" . (defined($got) ? $got : 'undef') . ")\n";
++    EOT
++
++    like($out, qr/DO\(1\)/, "do() on a test file is true when it ran an assertion");
++};
++
++done_testing;

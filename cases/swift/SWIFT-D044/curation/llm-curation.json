@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1402",
+  "technical_evidence_sha256": "db2b89beba400b214c868351c7d3ebe8d5ebe2db9a59ad47c1a69a7f571ed7c5",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "f77be2166745e551a5023c5ff0d592f19ea981412a497ba8da8cbb3972d279ab",
+  "reviewed_at": "2026-09-09T11:00:08.376060+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-openapi-runtime#502",
+  "rationale": "Issue 502 (\"Potential Crash: HTTPBody.collect(upTo:) is not thread safe\") is traced through merged PR #95 to fix commit 95307ba, whose head commit message states the fix returns a sequence throwing TooManyIterationsError instead of crashing. The retained minimized hunks are exactly that behavior change in Sources/OpenAPIRuntime/Interface/HTTPBody.swift: `makeAsyncIterator()` replaces `try! tryToMarkIteratorCreated()` with a do/catch that returns `.init(throwing: error)`, plus the new `fileprivate init(throwing:)` on AsyncIterator that the catch branch requires. No refactor, feature, config, or test-only content is in the minimized production patch; the two added doc lines are inline documentation of the changed declarations, not a standalone documentation change. The trigger extends the pre-existing Test_HTTPBody.testIterationBehavior_single with `for try await _ in body {}` after the body was already consumed, using AsyncSequence conformance that exists on the buggy revision (no fix-only symbol), so the same trigger source compiles on both revisions; on buggy the `try!` traps, on fixed the iterator throws and the catch block passes. Strict evidence records build.both_versions PASS, trigger.buggy_differential reproducing Test_HTTPBody.swift::testIterationBehavior_single, trigger.fixed_clean PASS, trigger.deterministic over 3 repetitions, full_suite.fixed_all_green, and post_minimization_validation PASS. active_same_project_root_causes is empty, so no duplicate root cause.\n\nLinked issue 502 (\"Potential Crash: HTTPBody.collect(upTo:) is not thread safe\", closed) and PR #95 commit b496acf (\"return async sequence which throws TooManyIterationsError instead of crashing which fixes thread safety issue and potential crash in collect(upTo:)\") describe one defect: HTTPBody.makeAsyncIterator used `try! tryToMarkIteratorCreated()`, so a second iteration attempt traps instead of surfacing an error, and the check-then-mark sequencing made that trap reachable from collect(upTo:) under concurrency. The minimized patch retains exactly the two semantic hunks that fix this: makeAsyncIterator now wraps tryToMarkIteratorCreated in do/catch and returns `.init(throwing: error)`, plus the new fileprivate `init(throwing:)` on AsyncIterator that the catch branch requires. The only non-code additions are the doc comments attached to those same two declarations; no refactor, feature extension, config, or test change is present in the minimized production patch (the dropped hunks were dead-code removal of the now-redundant checkIfCanCreateIterator and its call site). The trigger is a verbatim subset of the upstream test diff: appending `do { for try await _ in body {} ; XCTFail(...) } catch {}` to Test_HTTPBody.testIterationBehavior_single. It uses only API that already exists on the buggy revision (HTTPBody conforms to AsyncSequence there), so the same source builds on both revisions and the buggy failure is a genuine runtime trap from `try!`, not a missing-symbol compile error; the fixed revision throws and the test passes. Strict evidence for both the original and post-minimization runs reports all gates passed: build on both revisions, unique selector, buggy differential reproducing only Test_HTTPBody.swift::testIterationBehavior_single, deterministic over 3 repetitions across a 32-run matrix, fixed isolated/suite/reversed clean, and fixed full suite green. active_same_project_root_causes is empty, so no duplicate root cause, and apple/swift-openapi-runtime#502 is the single allowed key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T10:59:22.787813+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "f77be2166745e551a5023c5ff0d592f19ea981412a497ba8da8cbb3972d279ab",
+      "response_sha256": "ad57071be572d883866464d26b0b60c11704015ca90b93e6d78ba2cc223ac203",
+      "response_id": "msg_f895be4a8b68449ca975812529203567",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7779521666998342,
+        "input_tokens": 21428,
+        "output_tokens": 645
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-openapi-runtime#502",
+      "rationale": "Issue 502 (\"Potential Crash: HTTPBody.collect(upTo:) is not thread safe\") is traced through merged PR #95 to fix commit 95307ba, whose head commit message states the fix returns a sequence throwing TooManyIterationsError instead of crashing. The retained minimized hunks are exactly that behavior change in Sources/OpenAPIRuntime/Interface/HTTPBody.swift: `makeAsyncIterator()` replaces `try! tryToMarkIteratorCreated()` with a do/catch that returns `.init(throwing: error)`, plus the new `fileprivate init(throwing:)` on AsyncIterator that the catch branch requires. No refactor, feature, config, or test-only content is in the minimized production patch; the two added doc lines are inline documentation of the changed declarations, not a standalone documentation change. The trigger extends the pre-existing Test_HTTPBody.testIterationBehavior_single with `for try await _ in body {}` after the body was already consumed, using AsyncSequence conformance that exists on the buggy revision (no fix-only symbol), so the same trigger source compiles on both revisions; on buggy the `try!` traps, on fixed the iterator throws and the catch block passes. Strict evidence records build.both_versions PASS, trigger.buggy_differential reproducing Test_HTTPBody.swift::testIterationBehavior_single, trigger.fixed_clean PASS, trigger.deterministic over 3 repetitions, full_suite.fixed_all_green, and post_minimization_validation PASS. active_same_project_root_causes is empty, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "traceability.paths",
+        "source_candidate.origin_pull_request.commits"
+      ],
+      "risks": [
+        "The public issue text itself was not supplied (issue_evidence is null); the defect description rests on the linked issue title/state metadata and the PR commit subjects.",
+        "The issue is filed in apple/swift-openapi-generator#502 while the root cause id is normalized to apple/swift-openapi-runtime#502 per allowed_root_cause_ids.",
+        "Minimization drops the removal of the check-then-act `checkIfCanCreateIterator()` call in `collect(upTo:)` and the parallel MultipartBody changes, so the residual time-of-check race path and the multipart variant are not exercised by the retained trigger.",
+        "The buggy-side failure is a fatalError trap from `try!` rather than an assertion failure, so the failing signal depends on the harness treating a crashed test process as a FAIL for that selector."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T11:00:08.375378+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "f77be2166745e551a5023c5ff0d592f19ea981412a497ba8da8cbb3972d279ab",
+      "response_sha256": "6a42b315cc306e64bb4927c7ccd52dc28832b048b5939027d6f863b19737f541",
+      "response_id": "msg_a5402010ce354c979f6ade17f68cea8a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8214445384079602,
+        "input_tokens": 21948,
+        "output_tokens": 762
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-openapi-runtime#502",
+      "rationale": "Linked issue 502 (\"Potential Crash: HTTPBody.collect(upTo:) is not thread safe\", closed) and PR #95 commit b496acf (\"return async sequence which throws TooManyIterationsError instead of crashing which fixes thread safety issue and potential crash in collect(upTo:)\") describe one defect: HTTPBody.makeAsyncIterator used `try! tryToMarkIteratorCreated()`, so a second iteration attempt traps instead of surfacing an error, and the check-then-mark sequencing made that trap reachable from collect(upTo:) under concurrency. The minimized patch retains exactly the two semantic hunks that fix this: makeAsyncIterator now wraps tryToMarkIteratorCreated in do/catch and returns `.init(throwing: error)`, plus the new fileprivate `init(throwing:)` on AsyncIterator that the catch branch requires. The only non-code additions are the doc comments attached to those same two declarations; no refactor, feature extension, config, or test change is present in the minimized production patch (the dropped hunks were dead-code removal of the now-redundant checkIfCanCreateIterator and its call site). The trigger is a verbatim subset of the upstream test diff: appending `do { for try await _ in body {} ; XCTFail(...) } catch {}` to Test_HTTPBody.testIterationBehavior_single. It uses only API that already exists on the buggy revision (HTTPBody conforms to AsyncSequence there), so the same source builds on both revisions and the buggy failure is a genuine runtime trap from `try!`, not a missing-symbol compile error; the fixed revision throws and the test passes. Strict evidence for both the original and post-minimization runs reports all gates passed: build on both revisions, unique selector, buggy differential reproducing only Test_HTTPBody.swift::testIterationBehavior_single, deterministic over 3 repetitions across a 32-run matrix, fixed isolated/suite/reversed clean, and fixed full suite green. active_same_project_root_causes is empty, so no duplicate root cause, and apple/swift-openapi-runtime#502 is the single allowed key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/upstream-trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0]",
+        "source_candidate.origin_pull_request.commits[0].subject",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "Minimization keeps the redundant `try checkIfCanCreateIterator()` pre-check in collect(upTo:), so the check-then-mark window still exists on the fixed revision; the minimized fix removes the crash (trap becomes a thrown error) rather than the ordering itself.",
+        "The trigger covers only HTTPBody; the identical MultipartBody defect fixed in the same commit is unverified by the declared selector.",
+        "Issue body text was not supplied (issue_evidence is null); traceability rests on the issue title, its closed state, and the linked PR/commit subjects.",
+        "The buggy-side failure is a fatalError trap, so its manifestation in the harness depends on crash reporting rather than an assertion message."
+      ]
+    }
+  ]
+}

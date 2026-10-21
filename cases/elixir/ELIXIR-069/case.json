@@ -1,0 +1,263 @@
+{
+  "schema_version": 2,
+  "case_id": "ELIXIR-069",
+  "id": "ELIXIR-069",
+  "upstream_id": "plataformatec__broadway-95",
+  "language": "Elixir",
+  "project": "plataformatec/broadway",
+  "repo": "plataformatec/broadway",
+  "provenance": {
+    "source_dataset": "SWE-rebench-V2",
+    "source_dataset_id": "nebius/SWE-rebench-V2",
+    "source_revision": "475dd5e",
+    "pr_url": "https://github.com/plataformatec/broadway/pull/95",
+    "issue_id": 92,
+    "issue_url": "https://github.com/plataformatec/broadway/issues/92",
+    "issue_relation": "PR_DESCRIPTION_ISSUE_REFERENCE",
+    "pr_merge_commit": "4ad5a3cfb2800456779107708dbd88f774340f34",
+    "pr_merged": true,
+    "pr_base_sha": "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf",
+    "pr_head_sha": "602a32fa80b8625b7ca443cbbe442f9905764a38",
+    "pr_commit_count": 5,
+    "fix_commit_relation": "multi_commit_pr(5)"
+  },
+  "buggy_revision": "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf",
+  "fixed_revision": "4ad5a3cfb2800456779107708dbd88f774340f34",
+  "revision_mode": "base_plus_gold_patch",
+  "revisions": {
+    "revision_mode": "base_plus_gold_patch",
+    "buggy": "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf",
+    "fixed": {
+      "declared_commit": "4ad5a3cfb2800456779107708dbd88f774340f34",
+      "base_commit": "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf",
+      "patch": "patches/minimized-source.patch",
+      "note": "replay is base + canonical patch; the merge commit is the declared upstream reference"
+    }
+  },
+  "patch": {
+    "path": "patches/minimized-source.patch",
+    "upstream_path": "patches/upstream.patch",
+    "sha256": "91aa664a72b78da0f4e24e2a99b68fc16a13c3379e4d611352713e70e3e14c68",
+    "upstream_sha256": "a72255579460da44f46fd2cf0e9286da144ff68e202f5546e861d2d7a946e15b",
+    "changed_source_files": [
+      "lib/broadway.ex",
+      "lib/broadway/batcher.ex",
+      "lib/broadway/message.ex"
+    ]
+  },
+  "patch_sha256": "91aa664a72b78da0f4e24e2a99b68fc16a13c3379e4d611352713e70e3e14c68",
+  "trigger_test_patch": "patches/trigger-tests.patch",
+  "trigger_test_patch_sha256": "0a78416c88ccd2c9ed538d88690b815b1591ae7394b844787fc8a18cfda72ff5",
+  "triggering_tests": [
+    "batcher all messages in the batch are marked as {:failed, reason} on bad return",
+    "batcher all messages in the batch are marked as {:failed, reason} when an error is raised",
+    "batcher consumers do not crash on broken link",
+    "handle batcher crash batcher will be restarted in order to handle other messages",
+    "handle batcher crash only the messages in the crashing batcher are lost",
+    "handle processor crash batches are created normally (without the lost messages)",
+    "handle processor crash only the messages in the crashing processor are lost",
+    "processor failed messages are not forwarded to the batcher",
+    "processor messages are marked as {:failed, reason} on bad batcher",
+    "processor messages are marked as {:failed, reason} on bad return",
+    "processor messages are marked as {:failed, reason} when an error is raised while processing",
+    "processor processors do not crash on broken link",
+    "processor successful messages are marked as :ok",
+    "put_batch_key generate batches based on :batch_size",
+    "put_batch_mode bulk",
+    "put_batch_mode flush by default",
+    "put_batcher generate batches based on :batch_size",
+    "shutdown shutting down broadway waits until all events are processed even on incomplete batches"
+  ],
+  "trigger_tests": [
+    "batcher all messages in the batch are marked as {:failed, reason} on bad return",
+    "batcher all messages in the batch are marked as {:failed, reason} when an error is raised",
+    "batcher consumers do not crash on broken link",
+    "handle batcher crash batcher will be restarted in order to handle other messages",
+    "handle batcher crash only the messages in the crashing batcher are lost",
+    "handle processor crash batches are created normally (without the lost messages)",
+    "handle processor crash only the messages in the crashing processor are lost",
+    "processor failed messages are not forwarded to the batcher",
+    "processor messages are marked as {:failed, reason} on bad batcher",
+    "processor messages are marked as {:failed, reason} on bad return",
+    "processor messages are marked as {:failed, reason} when an error is raised while processing",
+    "processor processors do not crash on broken link",
+    "processor successful messages are marked as :ok",
+    "put_batch_key generate batches based on :batch_size",
+    "put_batch_mode bulk",
+    "put_batch_mode flush by default",
+    "put_batcher generate batches based on :batch_size",
+    "shutdown shutting down broadway waits until all events are processed even on incomplete batches"
+  ],
+  "expected_failure": {
+    "test_count": 18,
+    "tests": [
+      "batcher all messages in the batch are marked as {:failed, reason} on bad return",
+      "batcher all messages in the batch are marked as {:failed, reason} when an error is raised",
+      "batcher consumers do not crash on broken link",
+      "handle batcher crash batcher will be restarted in order to handle other messages",
+      "handle batcher crash only the messages in the crashing batcher are lost",
+      "handle processor crash batches are created normally (without the lost messages)",
+      "handle processor crash only the messages in the crashing processor are lost",
+      "processor failed messages are not forwarded to the batcher",
+      "processor messages are marked as {:failed, reason} on bad batcher",
+      "processor messages are marked as {:failed, reason} on bad return",
+      "processor messages are marked as {:failed, reason} when an error is raised while processing",
+      "processor processors do not crash on broken link",
+      "processor successful messages are marked as :ok",
+      "put_batch_key generate batches based on :batch_size",
+      "put_batch_mode bulk",
+      "put_batch_mode flush by default",
+      "put_batcher generate batches based on :batch_size",
+      "shutdown shutting down broadway waits until all events are processed even on incomplete batches"
+    ],
+    "exception_types": [],
+    "fingerprints": []
+  },
+  "minimization": {
+    "status": "HUMAN_REVIEWED_MINIMIZED_V1",
+    "policy": "drop non-production files; production only documentation/comment/format; same-file dangling guard",
+    "removed_hunks": 2,
+    "removed_files": [],
+    "forced_kept": [],
+    "upstream_equals_minimized": false,
+    "report": "patches/minimization.json",
+    "llm_review": "llm-hunk-review.json",
+    "review_status": "human_minimization_signoff_completed",
+    "reviewer_type": "human_dataset_curator",
+    "human_signoff": "completed",
+    "dynamic_revalidation": false,
+    "human_signoff_date": "2026-09-12",
+    "human_signoff_scope": "patch_minimization_only"
+  },
+  "environment": {
+    "backend": "swe_rebench_v2_docker",
+    "image": "docker.io/swerebenchv2/plataformatec-broadway:95-ec377ca"
+  },
+  "environment_lock": "environment.lock.json",
+  "commands": {
+    "test": "mix test --trace"
+  },
+  "validation": {
+    "status": "PASS",
+    "report": "validation/phase-d.json",
+    "report_sha256": "f8081192d7be042173dd1f627eb7ac9d230517d2c4e6e0989e98f7c28b5c2720",
+    "protocol": "v5-f2p",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "result": "PASS"
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "elixir",
+    "reason_code": null,
+    "reason": null,
+    "llm_semantic_decision": "BUG_FIX",
+    "human_confirmation": false
+  },
+  "release_integrity": "release-integrity.json",
+  "status": "ACTIVE",
+  "fixed_revision_kind": "upstream_pr_merge_commit",
+  "fixed_revision_parents": [
+    "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf"
+  ],
+  "artifacts": {
+    "curation_decision": "curation-decision.json",
+    "llm_hunk_review": "llm-hunk-review.json",
+    "llm_semantic_review": "llm-semantic-review.json",
+    "minimization_decisions": "minimization-decisions.json",
+    "manual_minimization_confirmation": "manual-minimization-confirmation.json",
+    "minimization_report": "patches/minimization.json"
+  },
+  "execution_validation": {
+    "status": "PASS",
+    "protocol": "v5-f2p",
+    "evidence": "validation/phase-d.json",
+    "evidence_sha256": "f8081192d7be042173dd1f627eb7ac9d230517d2c4e6e0989e98f7c28b5c2720",
+    "validated_at": "2026-09-11T14:26:22Z",
+    "b_failures": [
+      21,
+      21,
+      21
+    ],
+    "f_failures": [
+      3,
+      3,
+      3
+    ],
+    "gold_failures": [
+      3
+    ],
+    "dyn_dropped": 0
+  },
+  "bug_id": "ELIXIR-069",
+  "fixed_test_result": "pass",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "build_command": [
+    "export HOME=/workspace",
+    "mix deps.get",
+    "mix compile"
+  ],
+  "test_command": "mix test --trace",
+  "language_version": {
+    "elixir": "1.16.3",
+    "otp": "26"
+  },
+  "dependency_versions": {
+    "mix_lock_md5": "e02bac4482569d0c5a8a0c3c7f2a36b8"
+  },
+  "operating_system_or_container": {
+    "container_image": "docker.io/swerebenchv2/plataformatec-broadway:95-ec377ca",
+    "image_id": "sha256:74945f8a23e48fcb1cd48a1c58c80a51de6776725b6cd989be4cd8ea699759ec",
+    "platform": "linux/amd64"
+  },
+  "traceability": {
+    "issue_id": 92,
+    "issue_url": "https://github.com/plataformatec/broadway/issues/92",
+    "pr_url": "https://github.com/plataformatec/broadway/pull/95",
+    "issue_closed": true,
+    "pr_merged": true,
+    "issue_referenced_in": "pull_request_body",
+    "fix_commit": "4ad5a3cfb2800456779107708dbd88f774340f34",
+    "fix_commit_count": 1,
+    "single_parent_fix": true,
+    "upstream_fix_parents": [
+      "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf"
+    ],
+    "upstream_fix_parent": "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf",
+    "fix_commit_is_merge": false,
+    "provenance_strength": "PR_BODY_REFERENCE"
+  },
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "DONE",
+    "full_suite_validation": "PASS",
+    "protocol": "v5-f2p"
+  },
+  "upstream": {
+    "fix_commit": "4ad5a3cfb2800456779107708dbd88f774340f34",
+    "fix_parent": "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf",
+    "issue_url": "https://github.com/plataformatec/broadway/issues/92",
+    "pr_url": "https://github.com/plataformatec/broadway/pull/95"
+  },
+  "benchmark_revision": {
+    "mode": "base_plus_gold_patch",
+    "base_revision": "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf",
+    "declared_fixed_revision": "4ad5a3cfb2800456779107708dbd88f774340f34",
+    "fixed_construction": "base_plus_minimized_patch"
+  },
+  "upstream_revision": {
+    "fix_commit": "4ad5a3cfb2800456779107708dbd88f774340f34",
+    "fix_parent": "ec377ca3ed62fd805907b117f4c6c13c3bd31cdf",
+    "issue_url": "https://github.com/plataformatec/broadway/issues/92",
+    "pr_url": "https://github.com/plataformatec/broadway/pull/95"
+  },
+  "excluded_tests_manifest": "validation/excluded-tests.json",
+  "canonical_test_policy": {
+    "raw_test_command": "mix test --trace",
+    "canonical_runner": "python3 tools/defects4x test --bug 69 --version <b|f> --workdir <checkout> --canonical --execute",
+    "fixed_acceptance": "PASS only after a normal, non-empty ExUnit completion with a valid summary and no infrastructure/process error; a non-zero raw exit may be normalized only when the summary failure count matches parsed failure identities and every identity is explicitly listed in validation/excluded-tests.json and reproduced in upstream GOLD."
+  },
+  "canonical_test_command": "python3 tools/defects4x test --bug 69 --version f --workdir <checkout> --canonical --execute"
+}

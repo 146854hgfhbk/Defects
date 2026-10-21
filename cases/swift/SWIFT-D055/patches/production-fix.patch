@@ -1,0 +1,95 @@
+diff --git a/Sources/Element.swift b/Sources/Element.swift
+index 89d1f973c6ad4dd045bbc95500746e5594e22ae9..4f1d81b59231fd23dc5830196290b6cff5b74359 100644
+--- a/Sources/Element.swift
++++ b/Sources/Element.swift
+@@ -1056,14 +1056,14 @@ open class Element: Node {
+     public func cssSelector() throws -> String {
+         let elementId = id()
+         if !elementId.isEmpty {
+-            return "#" + elementId
++            return "#" + Element.cssEscapeIdentifier(elementId)
+         }
+         
+         // Translate HTML namespace ns:tag to CSS namespace syntax ns|tag
+         let tagName: String = self.tagName().replacingOccurrences(of: ":", with: "|")
+         var selector: String = tagName
+         let cl = try classNames()
+-        let classes: String = cl.joined(separator: ".")
++        let classes: String = cl.map(Element.cssEscapeIdentifier).joined(separator: ".")
+         if !classes.isEmpty {
+             selector.append(".")
+             selector.append(classes)
+@@ -1081,6 +1081,22 @@ open class Element: Node {
+         
+         return try parent()!.cssSelector() + (selector)
+     }
++
++    private static func cssEscapeIdentifier(_ identifier: String) -> String {
++        var escaped = ""
++        escaped.reserveCapacity(identifier.count)
++
++        for character in identifier {
++            if Character.isLetterOrDigit(character) || character == "-" || character == "_" {
++                escaped.append(character)
++            } else {
++                escaped.append("\\")
++                escaped.append(character)
++            }
++        }
++
++        return escaped
++    }
+     
+     /**
+      Get sibling elements. If the element has no sibling elements, returns an empty list. An element is not a sibling
+diff --git a/Sources/QueryParser.swift b/Sources/QueryParser.swift
+index cfc3cd95e2860fca6cf686de50ce6a730375e0e8..a6b11eca95e71b95821c61f115b76e1f395a30ab 100644
+--- a/Sources/QueryParser.swift
++++ b/Sources/QueryParser.swift
+@@ -163,7 +163,12 @@ public class QueryParser {
+     private func consumeSubQuery() -> String {
+         var sq = ""
+         while (!tq.isEmpty()) {
+-            if (tq.matches("(")) {
++            if tq.matchesCS("\\") {
++                sq.append(tq.consume())
++                if !tq.isEmpty() {
++                    sq.append(tq.consume())
++                }
++            } else if (tq.matches("(")) {
+                 sq.append("(")
+                 sq.append(tq.chompBalanced("(", ")"))
+                 sq.append(")")
+diff --git a/Sources/TokenQueue.swift b/Sources/TokenQueue.swift
+index a7588a14490e14e1656f324340d63e8874b91170..b8b3e600ec24dfeca0200b138d4e3c91d7c32c5d 100644
+--- a/Sources/TokenQueue.swift
++++ b/Sources/TokenQueue.swift
+@@ -415,12 +415,24 @@ open class TokenQueue {
+      - returns: identifier
+      */
+     open func consumeCssIdentifier() -> String {
+-        let start = pos
+-        while (!isEmpty() && (matchesWord() || matchesAny("-", "_"))) {
+-            pos+=1
++        let accum = StringBuilder()
++        while !isEmpty() {
++            let c = queue.charAt(pos)
++            if c == TokenQueue.ESC {
++                pos += 1
++                if !isEmpty() {
++                    accum.append(queue.charAt(pos))
++                    pos += 1
++                }
++            } else if Character.isLetterOrDigit(c) || c == "-" || c == "_" {
++                accum.append(c)
++                pos += 1
++            } else {
++                break
++            }
+         }
+ 
+-        return queue.substring(start, pos - start)
++        return accum.toString()
+     }
+ 
+     /**

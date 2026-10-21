@@ -1,0 +1,16 @@
+diff --git a/coil-network-cache-control/src/commonMain/kotlin/coil3/network/cachecontrol/CacheControlCacheStrategy.kt b/coil-network-cache-control/src/commonMain/kotlin/coil3/network/cachecontrol/CacheControlCacheStrategy.kt
+index b7811f5e..45abe668 100644
+--- a/coil-network-cache-control/src/commonMain/kotlin/coil3/network/cachecontrol/CacheControlCacheStrategy.kt
++++ b/coil-network-cache-control/src/commonMain/kotlin/coil3/network/cachecontrol/CacheControlCacheStrategy.kt
+@@ -118,7 +118,10 @@ class CacheControlCacheStrategy @JvmOverloads constructor(
+                         servedDateString = value
+                     }
+                     name.equals("Expires", ignoreCase = true) -> {
+-                        expires = Instant.parse(value, BROWSER_DATE_TIME_FORMAT)
++                        expires = when (value) {
++                            "0" -> Instant.DISTANT_PAST
++                            else -> Instant.parse(value, BROWSER_DATE_TIME_FORMAT)
++                        }
+                     }
+                     name.equals("Last-Modified", ignoreCase = true) -> {
+                         lastModified = Instant.parse(value, BROWSER_DATE_TIME_FORMAT)

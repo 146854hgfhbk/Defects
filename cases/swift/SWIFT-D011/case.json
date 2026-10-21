@@ -1,0 +1,692 @@
+{
+  "schema_version": 3,
+  "case_id": "SWIFT-415",
+  "language": "Swift",
+  "status": "release_candidate",
+  "project": "pointfreeco/swift-dependencies",
+  "repository_url": "https://github.com/pointfreeco/swift-dependencies.git",
+  "repository_evidence": {
+    "checked_at": "2026-09-03T10:49:55.952534+00:00",
+    "api_url": "https://api.github.com/repos/pointfreeco/swift-dependencies",
+    "html_url": "https://github.com/pointfreeco/swift-dependencies",
+    "private": false,
+    "visibility": "public",
+    "archived": false,
+    "public_verification_source": "github_api",
+    "license_spdx": "MIT",
+    "license_source": "github_api"
+  },
+  "commit_url": "https://github.com/pointfreeco/swift-dependencies/commit/cace5f89ac86a3c481ff3fc10cf8b4b80e4375bd",
+  "pull_request_url": "https://github.com/pointfreeco/swift-dependencies/pull/158",
+  "issue_urls": [
+    "https://github.com/pointfreeco/swift-dependencies/issues/148"
+  ],
+  "traceability": {
+    "requires_unique_fix_commit": true,
+    "verified_fix_issue_numbers": [
+      148
+    ],
+    "paths": [
+      {
+        "issue_number": 148,
+        "path": "fix_commit_to_merged_pr_to_issue"
+      }
+    ],
+    "pull_request_number": 158,
+    "selected_from_multi_commit_pull_request": true,
+    "reference_mode": "PR_MEDIATED",
+    "direct_commit_issue_reference": false,
+    "source": "authentic_local_git_commit_object",
+    "strict_direct_reference_satisfied": false,
+    "traceability_closed": true,
+    "publication_profile_satisfied": true,
+    "strict_direct_profile_satisfied": false,
+    "pr_mediated_chain_verified": true,
+    "policy_note": "Issue→PR→fixing commit chain is verified; commit message itself does not directly name the Issue."
+  },
+  "semantic_justification": {
+    "defect_identity": "Issue #148 and PR #158 concern @DependencyEndpoint generating invalid Swift for fatalError-based defaults. The retained fix handles the same missing-return expansion defect for the Void plus immediately-invoked-closure subcase exercised by the fixing commit's test.",
+    "pre_pr_baseline_evidence": {
+      "repository_bundle": "sources/repository.bundle",
+      "repository_bundle_sha256": "4a30b22f9976c50b3a72fa0065bc0b3049e2e33b9bc945c43eec21dfd73c2527",
+      "pr_base_commit": "6c2bbde0b2bfaa2f9dc800ecc9c9af00337029cc",
+      "pr_base_tree": "4dbd7105841f74fbd03016a4dba31e98cfb04450",
+      "source_path": "Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift",
+      "source_blob": "742b3efc92884693d714ba768af816292e5d2ab9",
+      "ancestry_check": "git merge-base 6c2bbde 9b56680 equals 6c2bbde0b2bfaa2f9dc800ecc9c9af00337029cc",
+      "pre_existing_condition": "At lines 79-83 of the PR-base source, the rewrite is guarded by `if !functionType.isVoid, closure.statements.count == 1, ...`; therefore the Void path exclusion predates the PR branch and was not introduced by the selected intra-PR buggy revision."
+    },
+    "trigger_relation": "The declared trigger changes the existing upstream fatalError macro-expansion case to `() -> Void = { { fatalError() }() }`. On the buggy revision the pre-existing Void guard suppresses the return rewrite; the retained production hunk permits that rewrite when the expression is an immediately-invoked closure. This uses only the pre-existing @DependencyEndpoint API.",
+    "scope_note": "The unrelated `}fixes:` whitespace correction is test-only, outside the sole declared trigger selector, and absent from the minimized production patch."
+  },
+  "fixed_revision": "cace5f89ac86a3c481ff3fc10cf8b4b80e4375bd",
+  "buggy_revision": "9b56680d64a4921317e1732173b317d1f60afa16",
+  "fixed_tree": "a5bca79ca630b3a3d0f9d4add7ed1a615f83a248",
+  "buggy_tree": "3b00bdcdf9dffac819a7e71915d3652d62bebdcd",
+  "repository_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/batch100/validation-repositories-expansion5/SWIFT-415",
+  "repository_bundle": {
+    "path": "sources/repository.bundle",
+    "sha256": "4a30b22f9976c50b3a72fa0065bc0b3049e2e33b9bc945c43eec21dfd73c2527",
+    "bytes": 245800,
+    "refs": {
+      "buggy": "refs/heads/buggy",
+      "fixed": "refs/heads/fixed"
+    },
+    "repaired_at": "2026-09-03T10:56:33.712175+00:00",
+    "previous_incomplete_bundle": "sources/repository.partial.bundle"
+  },
+  "production_files": [
+    "Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift"
+  ],
+  "trigger_test_files": [
+    "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift"
+  ],
+  "trigger_tests": [
+    {
+      "path": "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift",
+      "name": "testFatalError_SilenceWarning"
+    }
+  ],
+  "commit_files": {
+    "all": [
+      "Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift",
+      "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift"
+    ],
+    "production": [
+      "Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift"
+    ],
+    "tests": [
+      "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift"
+    ],
+    "other": []
+  },
+  "commit_stats": {
+    "production_hunk_count": 2,
+    "maximum_exact_subset_candidates": 3,
+    "hunk_count_source": "materialize_git_diff"
+  },
+  "patches": {
+    "original_commit": {
+      "path": "patches/original-commit.patch",
+      "sha256": "0921316e17b87cc698e7410746ca19deb62a62416ccfc3d1f21c409691ded19b",
+      "bytes": 3079
+    },
+    "production_fix": {
+      "path": "patches/production-fix.patch",
+      "sha256": "0fd759eea9dcba5c96cdc24bafa776c945040e2e72c27b2e61b47efb2812c786",
+      "bytes": 1379
+    },
+    "trigger_tests": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "2d5483756a5989c9cf2ff42d700ac0c786dcb2ed8e1273b8a634e05f89e0e56e",
+      "bytes": 1700
+    }
+  },
+  "trigger_reduction": {
+    "status": "PASS",
+    "upstream_trigger_patch": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "2d5483756a5989c9cf2ff42d700ac0c786dcb2ed8e1273b8a634e05f89e0e56e",
+      "bytes": 1700
+    },
+    "removed_external_dependency": false,
+    "rationale": "The triggering patch is the unchanged upstream test or project-native fixture portion of the single fixing commit."
+  },
+  "build": {
+    "directory": ".",
+    "dependency_command": [
+      "swift",
+      "package",
+      "resolve",
+      "--skip-update"
+    ],
+    "analyze_command": [
+      "swift",
+      "build",
+      "--build-tests"
+    ],
+    "test_command": [
+      "swift",
+      "test",
+      "--parallel",
+      "--num-workers",
+      "1"
+    ],
+    "timeout_seconds": 1200,
+    "require_analyze_clean": true
+  },
+  "source_evidence_sha256": "00932c1329205eafa095061e0e6a6201a93c085467113a63818c74ddd4324acc",
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "PASS",
+    "full_suite_validation": "PASS",
+    "human_curation": "PASS",
+    "release_eligible": false,
+    "semantic_curation": "PASS",
+    "curation_method": "llm_api_consensus",
+    "llm_confirmed": true,
+    "current_protocol_validation": "PENDING"
+  },
+  "materialized_at": "2026-09-03T10:50:01.053553+00:00",
+  "claude_screen": {
+    "model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "prompt_decision": "ACCEPT_FOR_VALIDATION",
+    "confidence": 0.71,
+    "runtime_acceptance": false
+  },
+  "validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-07T04:29:29.601955+00:00",
+    "report": "validation/validation.json",
+    "report_sha256": "c2116198ed30c1ac9dffca186ef8759247e8d9e5a02e5651c767ffccc92e4f3d",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift",
+        "name": "testFatalError_SilenceWarning"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-415",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift', 'testFatalError_SilenceWarning')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift::testFatalError_SilenceWarning']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/original-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "0d6caf80f83ce4eb4954507b8876c3a7b8dedea622583ca3bf974e4a934c235b",
+        "package_config": "environment/original-fixed-workspace-state.json",
+        "package_config_sha256": "8ef06649a803e51e321a409390e54982760d60870037eca97bdf1ebcc5552df0",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "combine-schedulers": "1.0.0",
+          "swift-argument-parser": "1.2.2",
+          "swift-benchmark": "0.1.2",
+          "swift-clocks": "1.0.0",
+          "swift-concurrency-extras": "1.0.0",
+          "swift-docc-plugin": "1.3.0",
+          "swift-docc-symbolkit": "1.0.0",
+          "swift-macro-testing": "0.2.1",
+          "swift-snapshot-testing": "1.14.2",
+          "swift-syntax": "509.0.1",
+          "xctest-dynamic-overlay": "1.0.2"
+        }
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/original-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "0d6caf80f83ce4eb4954507b8876c3a7b8dedea622583ca3bf974e4a934c235b",
+        "package_config": "environment/original-buggy-workspace-state.json",
+        "package_config_sha256": "8ef06649a803e51e321a409390e54982760d60870037eca97bdf1ebcc5552df0",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "combine-schedulers": "1.0.0",
+          "swift-argument-parser": "1.2.2",
+          "swift-benchmark": "0.1.2",
+          "swift-clocks": "1.0.0",
+          "swift-concurrency-extras": "1.0.0",
+          "swift-docc-plugin": "1.3.0",
+          "swift-docc-symbolkit": "1.0.0",
+          "swift-macro-testing": "0.2.1",
+          "swift-snapshot-testing": "1.14.2",
+          "swift-syntax": "509.0.1",
+          "xctest-dynamic-overlay": "1.0.2"
+        }
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/original-swift-toolchain.lock.json",
+      "sha256": "840936ddd3f8b7640431a8f5e516102e58e929a8e02fad0941d43e9843fd45dd"
+    },
+    "validation_image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "validation_image_lock": {
+      "path": "environment/original-validation-image.lock.json",
+      "sha256": "afe67743141ac2790d9ec10c09dc570377e6a5c122e285d5f4826cd66c99e30d"
+    }
+  },
+  "bug_id": "SWIFT-415",
+  "issue_id": 148,
+  "issue_ids": [
+    148
+  ],
+  "issue_url": "https://github.com/pointfreeco/swift-dependencies/issues/148",
+  "buggy_commit": "9b56680d64a4921317e1732173b317d1f60afa16",
+  "fixed_commit": "cace5f89ac86a3c481ff3fc10cf8b4b80e4375bd",
+  "patch": "patches/minimized-production.patch",
+  "changed_source_files": [
+    "Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift"
+  ],
+  "triggering_test": [
+    "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift::testFatalError_SilenceWarning"
+  ],
+  "expected_failure": {
+    "test_id": "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift::testFatalError_SilenceWarning",
+    "error": "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift:902: DependencyEndpointMacroTests.testFatalError_SilenceWarning : failed - Expanded output (+) differed from expected output (−). Difference: …",
+    "failure_fingerprint": "9cbc4b42e635e1cc59671b731dfd943c807dcf09a1c5d216ef8b61207cdb3091",
+    "all_trigger_failures": [
+      {
+        "test_id": "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift::testFatalError_SilenceWarning",
+        "error": "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift:902: DependencyEndpointMacroTests.testFatalError_SilenceWarning : failed - Expanded output (+) differed from expected output (−). Difference: …",
+        "failure_fingerprint": "9cbc4b42e635e1cc59671b731dfd943c807dcf09a1c5d216ef8b61207cdb3091",
+        "repetition_count": 3,
+        "deterministic": true
+      }
+    ]
+  },
+  "fixed_test_result": {
+    "status": "HISTORICAL_RESULTS_RETAINED",
+    "historical_full_suite_exit_codes": [
+      0,
+      0
+    ],
+    "current_suite_success_required": {
+      "exit_code": 0,
+      "failed_tests": 0,
+      "repetitions": 3
+    },
+    "current_protocol_rerun_performed": false
+  },
+  "build_command": [
+    "swift",
+    "build",
+    "--build-tests"
+  ],
+  "test_command": [
+    "swift",
+    "test",
+    "--parallel",
+    "--num-workers",
+    "1"
+  ],
+  "language_version": "6.2.3",
+  "dependency_versions": {
+    "combine-schedulers": "1.0.0",
+    "swift-argument-parser": "1.2.2",
+    "swift-benchmark": "0.1.2",
+    "swift-clocks": "1.0.0",
+    "swift-concurrency-extras": "1.0.0",
+    "swift-docc-plugin": "1.3.0",
+    "swift-docc-symbolkit": "1.0.0",
+    "swift-macro-testing": "0.2.1",
+    "swift-snapshot-testing": "1.14.2",
+    "swift-syntax": "509.0.1",
+    "xctest-dynamic-overlay": "1.0.2"
+  },
+  "operating_system_or_container": {
+    "platform": "ubuntu22.04-offline-overlay",
+    "host_system": "Linux",
+    "host_machine": "x86_64",
+    "validation_image": "swift-defects-validation:6.2.3-recovered-20260906-v2",
+    "validation_image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460"
+  },
+  "timezone": "UTC",
+  "reproducibility_status": "direct_parent_historical_execution_evidence_current_protocol_deferred",
+  "deprecation_reason": null,
+  "minimized_patch": {
+    "path": "patches/minimized-production.patch",
+    "sha256": "73f869dd01031ca2de7d3368ed54d3273ebe9989b5fae3c87e37ec23308e6aa1",
+    "original_hunk_count": 2,
+    "retained_hunks": [
+      2
+    ],
+    "retained_hunk_count": 1,
+    "removed_hunk_count": 1,
+    "screening_only": false,
+    "post_minimization_validation": "PASS",
+    "evidence_grade": "portable_release_evidence",
+    "automatic_minimization": {
+      "minimal_hunks": [
+        2
+      ],
+      "chosen_subset": [
+        2
+      ]
+    }
+  },
+  "post_minimization_validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-07T04:38:23.830084+00:00",
+    "report": "validation/post-minimization.json",
+    "report_sha256": "c0d90a468323a8e212c9a8d5fa91ba19235d1104706a60281d333fb703ba171b",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift",
+        "name": "testFatalError_SilenceWarning"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-415",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift', 'testFatalError_SilenceWarning')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift::testFatalError_SilenceWarning']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/post-minimization-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "0d6caf80f83ce4eb4954507b8876c3a7b8dedea622583ca3bf974e4a934c235b",
+        "package_config": "environment/post-minimization-fixed-workspace-state.json",
+        "package_config_sha256": "8ef06649a803e51e321a409390e54982760d60870037eca97bdf1ebcc5552df0",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "combine-schedulers": "1.0.0",
+          "swift-argument-parser": "1.2.2",
+          "swift-benchmark": "0.1.2",
+          "swift-clocks": "1.0.0",
+          "swift-concurrency-extras": "1.0.0",
+          "swift-docc-plugin": "1.3.0",
+          "swift-docc-symbolkit": "1.0.0",
+          "swift-macro-testing": "0.2.1",
+          "swift-snapshot-testing": "1.14.2",
+          "swift-syntax": "509.0.1",
+          "xctest-dynamic-overlay": "1.0.2"
+        }
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/post-minimization-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "0d6caf80f83ce4eb4954507b8876c3a7b8dedea622583ca3bf974e4a934c235b",
+        "package_config": "environment/post-minimization-buggy-workspace-state.json",
+        "package_config_sha256": "8ef06649a803e51e321a409390e54982760d60870037eca97bdf1ebcc5552df0",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "combine-schedulers": "1.0.0",
+          "swift-argument-parser": "1.2.2",
+          "swift-benchmark": "0.1.2",
+          "swift-clocks": "1.0.0",
+          "swift-concurrency-extras": "1.0.0",
+          "swift-docc-plugin": "1.3.0",
+          "swift-docc-symbolkit": "1.0.0",
+          "swift-macro-testing": "0.2.1",
+          "swift-snapshot-testing": "1.14.2",
+          "swift-syntax": "509.0.1",
+          "xctest-dynamic-overlay": "1.0.2"
+        }
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/post-minimization-swift-toolchain.lock.json",
+      "sha256": "840936ddd3f8b7640431a8f5e516102e58e929a8e02fad0941d43e9843fd45dd"
+    },
+    "validation_image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "validation_image_lock": {
+      "path": "environment/post-minimization-validation-image.lock.json",
+      "sha256": "afe67743141ac2790d9ec10c09dc570377e6a5c122e285d5f4826cd66c99e30d"
+    }
+  },
+  "dependency_cache": {
+    "archive": "environment/dependency-cache.tar.gz",
+    "archive_sha256": "1091f15c6f31acf336254d56ca6af57cdab03aa0523d2c448523b02f6b7c557b",
+    "manifest": "environment/dependency-cache-manifest.json",
+    "manifest_sha256": "be4bcdac7b43c3ee9aef10bd0583ec6850696dbcb44e5fc0deb0ef54b7619214",
+    "package_count": 11
+  },
+  "reproduction": {
+    "image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "network_mode": "none",
+    "runner": {
+      "path": "tools/reproduce_case.py",
+      "sha256": "76f2272bc755c430c15781b1a86a48b14ffcc7ae5ce446761e005a293277f00a",
+      "bytes": 16974
+    },
+    "validation_engine": {
+      "path": "tools/validation_engine.py",
+      "sha256": "1ce54c9fb7fe1b453da4349efce42cc7f338be53180572e59f2f0bea18b17a82",
+      "bytes": 90495
+    },
+    "commands": {
+      "b": {
+        "path": "commands/SWIFT-415b",
+        "sha256": "ca26e022a23f68654b5ff6a298254d99bff395903931df47d5bc0c9111c289b4",
+        "bytes": 185
+      },
+      "f": {
+        "path": "commands/SWIFT-415f",
+        "sha256": "e43a4df918a4aadff77bd379b668bdab0e5c7cf8e142929a8aa956e0e7e8fbe5",
+        "bytes": 185
+      }
+    }
+  },
+  "release_policy": {
+    "path": "environment/release-policy.json",
+    "sha256": "c0630d38fec5ddc7e0b23bc55edab956aed494143166c40ab92e119ababa9ff8"
+  },
+  "reproduction_verification": {
+    "path": "reproduction/verification.json",
+    "sha256": "2f156e0c115d466ad2645b6e5cf2a47dedb123c277ad6672c8e5e5f2ef9aabdb"
+  },
+  "network_isolation_attestation": {
+    "path": "environment/network-isolation.json",
+    "sha256": "8d9b2fb5e0c5b81aa5a3b1b2cffb4efa6b3be9f879246cdb0910d63b8b18f087"
+  },
+  "dataset_id": "SWIFT-D011",
+  "patch_sha256": "73f869dd01031ca2de7d3368ed54d3273ebe9989b5fae3c87e37ec23308e6aa1",
+  "revision_alias_semantics": "buggy_commit/fixed_commit identify upstream provenance; experimental b/f identities are in artifacts",
+  "upstream_fix": {
+    "commit": "cace5f89ac86a3c481ff3fc10cf8b4b80e4375bd",
+    "parents": [
+      "9b56680d64a4921317e1732173b317d1f60afa16"
+    ],
+    "buggy_baseline_is_parent": true,
+    "single_parent_matches_baseline": true,
+    "commit_message": "fix",
+    "boundary_evidence": "repair/boundary-verification.json",
+    "boundary_evidence_sha256": "4af0266199e5f9a87945591c893e5a96703498c1ad7d79419f0bdbaa1c8e715e"
+  },
+  "fixed_revision_kind": "upstream_provenance_use_artifacts_for_experiment",
+  "artifacts": {
+    "buggy": {
+      "commit": "30c6644cb747346b4a81130c57a853fa0431da19",
+      "tree": "3a32ec3e25ccfc65a427d9d151d619f083fb7928"
+    },
+    "fixed": {
+      "commit": "8f800a229bc1adb539ee086fe4b45fa3bea27a46",
+      "tree": "3ba6e38ddb667964d052dc57efcc0855e164a5cc",
+      "equals_upstream_tree": false
+    },
+    "construction": "base + compatibility(if present) + trigger; fixed adds production patch",
+    "synthetic_commit_identity_disclosed": true,
+    "upstream_history_not_rewritten": true
+  },
+  "cohort": "runtime_test",
+  "trigger_kind": "runtime_test_failure",
+  "language_metadata": {
+    "compiler_version": "6.2.3",
+    "package_tools_version": null,
+    "note": "Compiler version is distinct from Package.swift tools/language mode; recovered manifest records may fill package_tools_version"
+  },
+  "auto_baseline_full_suite": false,
+  "test_suite_policy": {
+    "name": "explicitly_filtered_regression_suite",
+    "excluded_selectors": [],
+    "exclusions": [],
+    "failed_process_may_be_waived": false,
+    "fresh_filtered_suite_validation_required": false,
+    "trigger_exclusion_forbidden": true
+  },
+  "current_validation": {
+    "protocol": "explicit-isolated-order-and-filtered-full-suite-v1",
+    "required_repetitions": 3,
+    "full_suite_repetitions": 3,
+    "historical_logs_preserved": true,
+    "historical_reverse_runs_are_order_evidence": false,
+    "same_process_permutation_claimed": false,
+    "new_full_validation_performed": false,
+    "status": "PENDING_CURRENT_PROTOCOL_RERUN",
+    "bound_delivery_reports": [],
+    "raw_log_recovery_waived_by_user": true,
+    "waiver_scope": "historical raw-log recovery only; no metadata upgrade to PASS"
+  },
+  "runtime_release": {
+    "asset_manifest": "../../../runtime-assets.manifest.json",
+    "entrypoint": "../../../benchmark.py",
+    "image_id": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "swift_executable": "/usr/bin/swift",
+    "external_assets_are_required": true,
+    "artifact_tree_verified": true,
+    "assets": [
+      {
+        "kind": "repository_bundle",
+        "case_relative_path": "sources/repository.bundle",
+        "sha256": "4a30b22f9976c50b3a72fa0065bc0b3049e2e33b9bc945c43eec21dfd73c2527",
+        "bytes": 245800,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/4a30b22f9976c50b3a72fa0065bc0b3049e2e33b9bc945c43eec21dfd73c2527"
+      },
+      {
+        "kind": "dependency_cache",
+        "case_relative_path": "environment/dependency-cache.tar.gz",
+        "sha256": "1091f15c6f31acf336254d56ca6af57cdab03aa0523d2c448523b02f6b7c557b",
+        "bytes": 230631152,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/1091f15c6f31acf336254d56ca6af57cdab03aa0523d2c448523b02f6b7c557b"
+      },
+      {
+        "kind": "experiment_bundle",
+        "case_relative_path": "sources/experiment.bundle",
+        "sha256": "55b06d2490b618a912e1f26494cc1f7988e3ed846b01aab4debf295d6f7b0607",
+        "bytes": 245983,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/55b06d2490b618a912e1f26494cc1f7988e3ed846b01aab4debf295d6f7b0607"
+      }
+    ],
+    "wrapper_evidence": []
+  },
+  "human_curation": {
+    "status": "APPROVED",
+    "approval_template": "repair/human-review.json",
+    "agent_cannot_sign_as_human": true,
+    "reviewer": "dataset_owner",
+    "reviewed_at": "2026-09-13T10:22:32+00:00"
+  },
+  "release": {
+    "state": "RC",
+    "strict_active": false,
+    "blockers": [
+      "strict_direct_issue_reference_not_satisfied"
+    ],
+    "deprecation_reason": null,
+    "deferred_gates": [
+      "current_protocol_validation_pending"
+    ],
+    "structural_boundary_status": "DIRECT",
+    "publication_profile_traceability": "PASS",
+    "strict_direct_traceability": "EXTENSION_PR_MEDIATED",
+    "execution_evidence_policy": "HISTORICAL_EVIDENCE_PRESERVED_CURRENT_PROTOCOL_DEFERRED",
+    "human_signoff_policy": "APPROVED",
+    "classic_runtime_profile": "RUNTIME_TEST",
+    "publication_profile_cohort": "RUNTIME_CORE",
+    "defects4j_core_validation": "PASS"
+  },
+  "repair": {
+    "date": "2026-09-10",
+    "base_archive_sha256": "21599edfd4c0c560677f781fdd84da40fa22fb14472aaaf7174b7dec81d9df21",
+    "previous_metadata": "repair-history/case.before-repair.json",
+    "code_history": "repair-history/tools",
+    "historical_reports_not_rewritten": true,
+    "raw_log_recovery_out_of_scope": true,
+    "stage1_metadata_hardening": {
+      "performed_at": "2026-09-12",
+      "authoritative_boundary": "repair/boundary-verification.json",
+      "historical_execution_evidence_preserved": true,
+      "no_execution_result_invented": true
+    }
+  },
+  "defects4j_core_validation": {
+    "status": "PASS",
+    "classification": "HISTORICAL_STRICT_RAW_PASS",
+    "report": "validation/defects4j-core-reacceptance.json",
+    "report_sha256": "257ee9de3d8e91b1390497877467cf49becbba5f417eb82fa63075aea3b0fe7a",
+    "generated_at": "2026-09-12",
+    "does_not_claim_current_protocol_rerun": true
+  }
+}

@@ -1,0 +1,22 @@
+diff --git a/lua/pl/stringx.lua b/lua/pl/stringx.lua
+index 8454f088e110fd06b3eba65608d841e4403bd801..8ba6763a964fa8d2edad3e848aaf8e187d70f8dd 100644
+--- a/lua/pl/stringx.lua
++++ b/lua/pl/stringx.lua
+@@ -210,10 +210,14 @@ end
+ -- @usage stringx.expandtabs('\tone,two,three', 4)   == '    one,two,three'
+ -- @usage stringx.expandtabs('  \tone,two,three', 4) == '    one,two,three'
+ function stringx.expandtabs(s,tabsize)
+-    assert_string(1,s)
+-    tabsize = tabsize or 8
+-    return (s:gsub("([^\t\r\n]*)\t", function(before_tab)
++  assert_string(1,s)
++  tabsize = tabsize or 8
++  return (s:gsub("([^\t\r\n]*)\t", function(before_tab)
++      if tabsize == 0 then
++        return before_tab
++      else
+         return before_tab .. (" "):rep(tabsize - #before_tab % tabsize)
++      end
+     end))
+ end
+ 

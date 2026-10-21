@@ -1,0 +1,98 @@
+diff --git a/spec/check_spec.lua b/spec/check_spec.lua
+index 4aa5fa1a6cdc8b58da30a1f70a094760e5cca1b2..f765f2d7940917af6a86faba39d5b12d1462bf03 100644
+--- a/spec/check_spec.lua
++++ b/spec/check_spec.lua
+@@ -617,6 +617,17 @@ end
+       ]])
+    end)
+ 
++   it("detects unreachable functions", function()
++      assert.same({
++         {code = "231", name = "f", line = 1, column = 7, end_column = 7},
++         {code = "511", line = 3, column = 1, end_column = 8}
++      }, check[[
++local f = nil
++do return end
++function f() end
++      ]])
++   end)
++
+    it("detects unreachable code in nested function", function()
+       assert.same({
+          {code = "511", line = 4, column = 7, end_column = 12}
+diff --git a/src/luacheck/core_utils.lua b/src/luacheck/core_utils.lua
+index a80a40c66826804aa9480f6903defd554225b64c..3460c2f025c778ef537400061ea234d70311cbc9 100644
+--- a/src/luacheck/core_utils.lua
++++ b/src/luacheck/core_utils.lua
+@@ -58,16 +58,33 @@ function core_utils.is_definition(opts, warning)
+    return opts.allow_defined or (opts.allow_defined_top and warning.top)
+ end
+ 
+-local function location_comparator(event1, event2)
+-   -- If two events share location, neither can be an invalid comment event.
+-   -- However, they can be equal by identity due to the way table.sort is implemented.
+-   return event1.line < event2.line or
+-      event1.line == event2.line and (event1.column < event2.column or
+-      event1.column == event2.column and event1.code and event1.code < event2.code)
++local function event_priority(event)
++   -- Inline option boundaries have priority over inline option declarations
++   -- so that `-- luacheck: push ignore foo` is interpreted correctly (push first).
++   if event.push or event.pop then
++      return -2
++   elseif event.options then
++      return -1
++   else
++      return tonumber(event.code)
++   end
++end
++
++local function event_comparator(event1, event2)
++   if event1.line ~= event2.line then
++      return event1.line < event2.line
++   elseif event1.column ~= event2.column then
++      return event1.column < event2.column
++   else
++      return event_priority(event1) < event_priority(event2)
++   end
+ end
+ 
++-- Sorts an array of warnings, inline options (tables with `options` field)
++-- or inline option boundaries (tables with `push` or `pop` field) by location
++-- information as provided in `line` and `column` fields.
+ function core_utils.sort_by_location(array)
+-   table.sort(array, location_comparator)
++   table.sort(array, event_comparator)
+ end
+ 
+ return core_utils
+diff --git a/src/luacheck/inline_options.lua b/src/luacheck/inline_options.lua
+index ec13cb892d77a2f9e02e6b919bfecfc49ae31b3e..6fccc5da1a99e3dc3739eb74315d3d83a66cedb6 100644
+--- a/src/luacheck/inline_options.lua
++++ b/src/luacheck/inline_options.lua
+@@ -98,7 +98,7 @@ local function add_inline_option(events, per_line_opts, body, location, end_colu
+    end
+ 
+    if body == "push" or body == "pop" then
+-      table.insert(events, {code = 1, [body] = true, line = location.line, column = location.column, end_column = end_column})
++      table.insert(events, {[body] = true, line = location.line, column = location.column, end_column = end_column})
+ 
+       if after_push then
+          body = after_push
+@@ -120,7 +120,7 @@ local function add_inline_option(events, per_line_opts, body, location, end_colu
+ 
+       table.insert(per_line_opts[location.line], opts)
+    else
+-      table.insert(events, {code = 2, options = opts, line = location.line, column = location.column, end_column = end_column})
++      table.insert(events, {options = opts, line = location.line, column = location.column, end_column = end_column})
+    end
+ 
+    return true
+@@ -216,7 +216,7 @@ local function handle_events(events, per_line_opts)
+ 
+    -- Go through all events.
+    for _, event in ipairs(events) do
+-      if type(event.code) == "string" then
++      if event.code then
+          -- It's a warning, put it into list of not handled warnings.
+          table.insert(unfiltered_warnings, event)
+       elseif event.options then

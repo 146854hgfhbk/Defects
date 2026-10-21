@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-407",
+  "technical_evidence_sha256": "69792cb8d986308d7e934cea766047a76ac20250d5d81572d6aee89c13d7489d",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "fb4ea349b2d87272e15bda5888b3666cd89c6b55a0d79b86c36937fa10d215fa",
+  "reviewed_at": "2026-09-07T17:13:55.210963+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "scinfu/swiftsoup#356",
+  "rationale": "Issue #356 (labeled 'bug', closed) carries a Crashlytics trace showing 'Index out of range' inside CharacterReader.matchesAny(_:) reached from Tokeniser.consumeCharacterReference during SwiftSoup.parse. The production patch touches only Sources/CharacterReader.swift and consists solely of bounds guards on the same indexing defect: hunk 1 adds 'guard input.count > pos' before 'buffer[0] = input[pos]' in matchesAny(ParsingStrings) (the exact frame in the reported trace), and hunks 2 and 3 extend the pre-existing 'pos < end' guards in matchesAny([[UInt8]]) and matchesDigit with the same 'input.count > pos' condition. No signature changes, no new API, no formatting-only, docs-only, or config-only edits; the test file change is separated into patches/trigger-tests.patch. The trigger testParse_DoesNotCrashOnUnterminatedHtmlEntity parses the truncated entity \"<a href='&lt\" through the pre-existing public surface (SwiftSoup.parse, doc.body()?.text()), which is precisely the reporter's call sequence, and depends on no API introduced by the fix. Strict machine evidence passes on both the original and post-minimization patch sets: build.both_versions PASS, trigger.buggy_differential reproduced on the declared selector, trigger.deterministic with 3 fingerprint groups over 3 repetitions, trigger.fixed_clean PASS, full_suite.fixed_all_green PASS, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty and scinfu/swiftsoup#356 is the supplied verified issue key, so this root cause is not a duplicate.\n\nIssue #356 (labeled 'bug', closed) reports a Crashlytics index-out-of-range trap at CharacterReader.matchesAny(_:) reached from Tokeniser.consumeCharacterReference during SwiftSoup.parse. The minimized production patch touches only Sources/CharacterReader.swift and adds `input.count > pos` bounds guards to the three read-side helpers on that path (matchesAny(ParsingStrings), matchesAny([[UInt8]]), matchesDigit), with no signature changes, no new API, and no doc/config/test content. The trigger, testParse_DoesNotCrashOnUnterminatedHtmlEntity, is the unchanged upstream test from the same fixing commit and exercises only pre-existing public API (SwiftSoup.parse, doc.body()?.text()) with a hardcoded truncated-entity string \"<a href='&lt\", so it compiles and traps at the buggy parent c1f3348. Strict machine evidence for both the original and post-minimization patches passes every gate: build.both_versions, trigger.buggy_differential with reproduced selector HtmlParserTest::testParse_DoesNotCrashOnUnterminatedHtmlEntity, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32 matrix runs), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty, so scinfu/swiftsoup#356 is not a duplicate and is the allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T17:13:29.463096+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "fb4ea349b2d87272e15bda5888b3666cd89c6b55a0d79b86c36937fa10d215fa",
+      "response_sha256": "85b56e51596ac8ed271c62004d4230aa60b10f8e95b2385bdb261b3092f41b54",
+      "response_id": "msg_43de9572beb94c8685a3a0ab9a3be396",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6553826991044777,
+        "input_tokens": 15464,
+        "output_tokens": 727
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#356",
+      "rationale": "Issue #356 (labeled 'bug', closed) carries a Crashlytics trace showing 'Index out of range' inside CharacterReader.matchesAny(_:) reached from Tokeniser.consumeCharacterReference during SwiftSoup.parse. The production patch touches only Sources/CharacterReader.swift and consists solely of bounds guards on the same indexing defect: hunk 1 adds 'guard input.count > pos' before 'buffer[0] = input[pos]' in matchesAny(ParsingStrings) (the exact frame in the reported trace), and hunks 2 and 3 extend the pre-existing 'pos < end' guards in matchesAny([[UInt8]]) and matchesDigit with the same 'input.count > pos' condition. No signature changes, no new API, no formatting-only, docs-only, or config-only edits; the test file change is separated into patches/trigger-tests.patch. The trigger testParse_DoesNotCrashOnUnterminatedHtmlEntity parses the truncated entity \"<a href='&lt\" through the pre-existing public surface (SwiftSoup.parse, doc.body()?.text()), which is precisely the reporter's call sequence, and depends on no API introduced by the fix. Strict machine evidence passes on both the original and post-minimization patch sets: build.both_versions PASS, trigger.buggy_differential reproduced on the declared selector, trigger.deterministic with 3 fingerprint groups over 3 repetitions, trigger.fixed_clean PASS, full_suite.fixed_all_green PASS, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty and scinfu/swiftsoup#356 is the supplied verified issue key, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.production_files[0].patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "trigger_tests[0]"
+      ],
+      "risks": [
+        "Automatic minimization retained all 3 hunks only because every subset probe failed during dependency environment setup (minimized_patch_reference.semantic_selection), so hunks 2 and 3 are not demonstrated to be necessary for the trigger; the matchesDigit guard in particular may be defensive hardening for the same defect class rather than required for this reproduction.",
+        "The trigger's oracle depends on process-crash-to-failure attribution for an 'Index out of range' trap rather than a normal XCTest assertion failure, plus the assertion that body text is empty; the strict matrix confirms the differential but the failure mode is a trap, not a semantic assertion.",
+        "issue_evidence is null; issue content is taken from the fetched linked-issue body embedded in source_candidate rather than an independently captured issue snapshot.",
+        "The reporter could not supply the crashing input, so the curator-adjacent input \"<a href='&lt\" is a reconstruction of the reported code path; it matches the trace frames but is not confirmed to be the original crashing document."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T17:13:55.210249+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "fb4ea349b2d87272e15bda5888b3666cd89c6b55a0d79b86c36937fa10d215fa",
+      "response_sha256": "59ebecadb97429975c7b33dac2502d1b26aaf83a68bba0cd2bdaa149f6bd9fc7",
+      "response_id": "msg_7ef79a052b164a4ea06e6c7e37a949fe",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5676057218242123,
+        "input_tokens": 15368,
+        "output_tokens": 659
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#356",
+      "rationale": "Issue #356 (labeled 'bug', closed) reports a Crashlytics index-out-of-range trap at CharacterReader.matchesAny(_:) reached from Tokeniser.consumeCharacterReference during SwiftSoup.parse. The minimized production patch touches only Sources/CharacterReader.swift and adds `input.count > pos` bounds guards to the three read-side helpers on that path (matchesAny(ParsingStrings), matchesAny([[UInt8]]), matchesDigit), with no signature changes, no new API, and no doc/config/test content. The trigger, testParse_DoesNotCrashOnUnterminatedHtmlEntity, is the unchanged upstream test from the same fixing commit and exercises only pre-existing public API (SwiftSoup.parse, doc.body()?.text()) with a hardcoded truncated-entity string \"<a href='&lt\", so it compiles and traps at the buggy parent c1f3348. Strict machine evidence for both the original and post-minimization patches passes every gate: build.both_versions, trigger.buggy_differential with reproduced selector HtmlParserTest::testParse_DoesNotCrashOnUnterminatedHtmlEntity, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32 matrix runs), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty, so scinfu/swiftsoup#356 is not a duplicate and is the allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "Automatic minimization retained all 3 hunks only because every subset probe failed during dependency environment setup (semantic_selection.reason), so hunks 2 and 3 may be defensive siblings not strictly required by the single trigger; they address the identical out-of-range root cause but their necessity is unverified.",
+        "issue_evidence is null at the case level; the issue body is available only through the embedded source_candidate payload, and the reporter never disclosed the crashing input, so the trigger is a same-crash-site reproduction rather than the exact reported input.",
+        "The pre-fix failure is a runtime trap rather than an XCTest assertion, so the harness signal depends on treating process abort as the trigger; the recorded gates indicate this was handled, but suite-level masking of neighbors on buggy runs remains a structural limitation.",
+        "The post-fix assertion doc.body()?.text() == \"\" pins parser output for truncated entities and could become brittle if entity-recovery behavior is intentionally changed upstream."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-581",
+  "bug_id": "JULIA-581",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "aviatesk/JET.jl",
+  "repository_url": "https://github.com/aviatesk/JET.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "391727999b509fe9f18bbf9064df459ff2fa8567",
+  "fixed_revision": "0aefd9f06b36bfbd92463ced385244323ac38aba",
+  "candidate_sha": "0aefd9f06b36bfbd92463ced385244323ac38aba",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "391727999b509fe9f18bbf9064df459ff2fa8567",
+  "changed_production_files": [
+    "src/JETBase.jl"
+  ],
+  "changed_test_files": [
+    "test/toplevel/test_virtualprocess.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-581 JET multi-module include report MWE"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "9410cf2b2df9edc293631393b586c50c04987628418b63964d9321740f08450e",
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "JULIA-581 JET multi-module include report MWE"
+      ],
+      "added_testsets": [],
+      "assertion_expression_sha256": [],
+      "mwe_basis": {
+        "upstream_pull_request": 849,
+        "upstream_test_file": "test/toplevel/test_virtualprocess.jl",
+        "defect": "report_package populated only the first FileInfo for a source included by multiple modules",
+        "public_api": "JET.report_package and JET.get_reports"
+      }
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.12.7",
+    "julia_version_origin": "project_compat_modern_floor",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.12.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "0aefd9f06b36bfbd92463ced385244323ac38aba",
+    "project": "aviatesk/JET.jl",
+    "input_sha256": "ffe7558a4a461d3344915e6a8807ea9a00cb11beafced15aae0ba9c5f7bf7e3e",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T11:52:13Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.5166563045439468,
+      "input_tokens": 8668,
+      "output_tokens": 893
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"JET's `report_package` walked `Revise.srcfiles(pkgdata)` alone and called `maybe_parse_from_cache!(pkgdata, file)`, which resolves a path to a single `FileInfo`. When one source file is included by two modules, Revise holds multiple `FileInfo` entries for that path, so only the first got its signatures populated and half the findings were silently dropped. The fix zips `srcfiles` with `pkgdata.fileinfos` and parses/extracts per `FileInfo`, so every module's copy of the shared file is analyzed. The minimized patch keeps only this hunk; the remaining hunks in the original commit (revise_lock synchronization, captured world age, extended-data merge helper) are hardening that minimization proved unnecessary for the trigger.\", \"evidence\": \"Issue 849 (\\\"toplevel: Fix Revise signature collection\\\") states directly that report_package \\\"only populated the first `FileInfo` when one source file was included into multiple modules\\\", matching the production diff's change from `for file in Revise.srcfiles(pkgdata)` to `for (file, fi) in zip(Revise.srcfiles(pkgdata), pkgdata.fileinfos)`. Upstream test patch adds an `additional_sources` hook and a `MultiModuleInclude` package whose modules A and B both include shared.jl, asserting `count(r -> is_global_undef_var(r, :shared_missing), reports) == 2`. The dedicated trigger reproduces this through the public API (`JET.report_package` / `JET.get_reports`) and errors when the count is not 2. Runtime evidence reports stable_differential over 3 repetitions with the full suite passing on the fixed revision. Minimization is marked complete, globally minimal, 1 of 6 hunks retained.\", \"missing_evidence\": \"No PR title/body or commit stats were supplied and traceability_class is UNVERIFIED, so the mapping rests on the issue body rather than a linked commit message. The pre-fix failure output is not shown, only the assertion that would fail (expected 2, presumably 1). It is not documented whether the trigger was executed against the parent commit to confirm the buggy count, though strict_differential implies it was.\", \"validation_risks\": \"The trigger builds a temp package, activates a temp project, and runs Pkg.precompile plus Base.require, so it depends on network-free Pkg operations, writable temp space, and mutates the active project (restored in a finally block). Analysis runs on `Threads.@spawn :default` tasks, and the minimized patch deliberately drops the revise_lock synchronization from the original commit, so report ordering and any latent race remain in play; the oracle counts matches rather than asserting order, which mitigates but does not eliminate flakiness. The count also depends on Revise's internal FileInfo layout, so a Revise version bump could change the expected value. String matching on `sprint(show, r)` in the dedicated script is looser than the upstream `is_global_undef_var` check and could match unrelated report text.\", \"suggested_tests\": \"Run the upstream testset directly (`test/toplevel/test_virtualprocess.jl`, MultiModuleInclude case) and assert exactly 2 UndefVarErrorReports for `:shared_missing`; confirm it yields 1 on the parent commit. Add a three-module include of the same file and assert 3 reports to check the fix scales beyond the first duplicate. Add a control case with a file included by exactly one module to confirm no double-counting was introduced. Assert `isempty(res.res.toplevel_error_reports)` alongside the count so a parse regression cannot masquerade as a pass. Repeat the trigger with `JULIA_NUM_THREADS=1` and with multiple threads to separate the include-collection defect from thread-ordering noise.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "JET's `report_package` walked `Revise.srcfiles(pkgdata)` alone and called `maybe_parse_from_cache!(pkgdata, file)`, which resolves a path to a single `FileInfo`. When one source file is included by two modules, Revise holds multiple `FileInfo` entries for that path, so only the first got its signatures populated and half the findings were silently dropped. The fix zips `srcfiles` with `pkgdata.fileinfos` and parses/extracts per `FileInfo`, so every module's copy of the shared file is analyzed. The minimized patch keeps only this hunk; the remaining hunks in the original commit (revise_lock synchronization, captured world age, extended-data merge helper) are hardening that minimization proved unnecessary for the trigger.",
+    "evidence": "Issue 849 (\"toplevel: Fix Revise signature collection\") states directly that report_package \"only populated the first `FileInfo` when one source file was included into multiple modules\", matching the production diff's change from `for file in Revise.srcfiles(pkgdata)` to `for (file, fi) in zip(Revise.srcfiles(pkgdata), pkgdata.fileinfos)`. Upstream test patch adds an `additional_sources` hook and a `MultiModuleInclude` package whose modules A and B both include shared.jl, asserting `count(r -> is_global_undef_var(r, :shared_missing), reports) == 2`. The dedicated trigger reproduces this through the public API (`JET.report_package` / `JET.get_reports`) and errors when the count is not 2. Runtime evidence reports stable_differential over 3 repetitions with the full suite passing on the fixed revision. Minimization is marked complete, globally minimal, 1 of 6 hunks retained.",
+    "missing_evidence": "No PR title/body or commit stats were supplied and traceability_class is UNVERIFIED, so the mapping rests on the issue body rather than a linked commit message. The pre-fix failure output is not shown, only the assertion that would fail (expected 2, presumably 1). It is not documented whether the trigger was executed against the parent commit to confirm the buggy count, though strict_differential implies it was.",
+    "validation_risks": "The trigger builds a temp package, activates a temp project, and runs Pkg.precompile plus Base.require, so it depends on network-free Pkg operations, writable temp space, and mutates the active project (restored in a finally block). Analysis runs on `Threads.@spawn :default` tasks, and the minimized patch deliberately drops the revise_lock synchronization from the original commit, so report ordering and any latent race remain in play; the oracle counts matches rather than asserting order, which mitigates but does not eliminate flakiness. The count also depends on Revise's internal FileInfo layout, so a Revise version bump could change the expected value. String matching on `sprint(show, r)` in the dedicated script is looser than the upstream `is_global_undef_var` check and could match unrelated report text.",
+    "suggested_tests": "Run the upstream testset directly (`test/toplevel/test_virtualprocess.jl`, MultiModuleInclude case) and assert exactly 2 UndefVarErrorReports for `:shared_missing`; confirm it yields 1 on the parent commit. Add a three-module include of the same file and assert 3 reports to check the fix scales beyond the first duplicate. Add a control case with a file included by exactly one module to confirm no double-counting was introduced. Assert `isempty(res.res.toplevel_error_reports)` alongside the count so a parse regression cannot masquerade as a pass. Repeat the trigger with `JULIA_NUM_THREADS=1` and with multiple threads to separate the include-collection defect from thread-ordering noise."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-581 JET multi-module include report MWE"
+    ],
+    "exception_types": [
+      "TRIGGER_EXIT_1"
+    ],
+    "fingerprints": [
+      "TRIGGER_EXIT_1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "0aefd9f06b36bfbd92463ced385244323ac38aba",
+    "parent_sha": "391727999b509fe9f18bbf9064df459ff2fa8567",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "62c45be2911dc8d2650533a9ff06efc244404c839695cca96d95711ab6003759",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

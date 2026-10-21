@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-969",
+  "technical_evidence_sha256": "4b4fd0eb7b3534089a44a8992b684ba1f2091e2ccc93d47d1c009d469b0b07c7",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "ae17e876290cd571333f447ec23221c46e792c66b8dc69dd4cd9496eb2ba1afd",
+  "reviewed_at": "2026-08-14T07:46:29.738762+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1181",
+  "rationale": "Issue #1181 (\"Crash in patterns branch when switch statement's last case is empty\") reports a crash with a concrete reproducer and diagnoses the root cause precisely: ChunkBuilder divides chunks at the hard split before an empty trailing case, so a rule that appears only in a constraint gets an index assigned before line splitting, breaking LineSplitter's null-index assumption. The minimized production patch attacks exactly that: Chunk gains preventDivide()/_canDivide default true, ChunkBuilder threads a _pendingPreventDivide flag through writeNewline and applies it when a hardened chunk is written (replacing the _calculateRuleRanges range-scan the issue itself describes as inadequate and too slow to fix by traversal), and SourceVisitor marks the switch-case and parameter-metadata newlines with preventDivide: true. This is the fix mechanism, not a drive-by refactor; the commit message and PR #1182 body describe it as the replacement solution for the same bug. Minimization already stripped the genuinely unrelated pieces present in the original commit: the whitespace-only reformat of DartFormatter._parse, the debug.dart variable-hoisting cleanup, and the pubspec.yaml analyzer version bump are absent from patches/minimized-production.patch. No test-only or config-only content remains in the production patch. The trigger is the unchanged upstream fixture from the same commit, test/regression/1100/1181.stmt, containing verbatim the switch statement from the issue body, exercised through the existing test/formatter_test.dart harness; it introduces no dependency on preventDivide() or any other API added by the fix. Strict evidence confirms build.both_versions passed, trigger.buggy_differential reproduced test/formatter_test.dart::regression 1181.stmt with the other two declared selectors passing on buggy as required, trigger.deterministic across 3 repetitions, trigger.fixed_clean, and full_suite.fixed_all_green with buggy full-suite failures limited to the reproduced trigger, both pre- and post-minimization. active_same_project_root_causes is empty and dart-lang/dart_style#1181 is the sole allowed verified issue key.\n\nIssue #1181 ('Crash in patterns branch when switch statement's last case is empty') gives the exact repro `switch (e) { case E.e1: break; case E.e2: }` and diagnoses the mechanism: because the last case is empty, the case-body rule does not reappear after the hard split, so ChunkBuilder divides between cases, a rule receives a non-null index via a constraint, and LineSplitter's null-index assumption is violated. The new fixture test/regression/1100/1181.stmt is byte-for-byte that repro, and strict evidence confirms it is the sole reproduced selector (test/formatter_test.dart::regression 1181.stmt fails on 35a5d9fc, passes on ac9113e2, deterministic over 3 repetitions, fixed full suite green). The minimized production patch is confined to the divide-decision mechanism the issue calls out as needing replacement: Chunk gains preventDivide() with _canDivide defaulting to true, ChunkBuilder tracks _pendingPreventDivide and marks hard-split chunks at write time instead of post-hoc _calculateRuleRanges scanning, and SourceVisitor threads preventDivide through the switch-case and parameter-metadata newline sites named in the issue. Removal of _calculateRuleRanges is the substitution of the faulty algorithm, not a drive-by refactor. Minimization correctly dropped the unrelated items present in the original commit: the dart_formatter.dart line-wrap reformat, the debug.dart variable relocation, and the pubspec.yaml analyzer ^5.5.0 to ^5.6.0 bump. The trigger is a project-native .stmt fixture consumed by the pre-existing formatter_test.dart harness and exercises only public formatting, not preventDivide() or the writeNewline preventDivide parameter introduced by the fix. active_same_project_root_causes is empty and the root cause matches the single allowed verified key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T07:46:00.031810+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ae17e876290cd571333f447ec23221c46e792c66b8dc69dd4cd9496eb2ba1afd",
+      "response_sha256": "8c388ebe16a51aede26ba658c40b7c3595cbde01da0683cf7fd7ee7bff752ee3",
+      "response_id": "msg_478376ad2b024c54ab181f1f9c07421f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8197616011608624,
+        "input_tokens": 32670,
+        "output_tokens": 873
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1181",
+      "rationale": "Issue #1181 (\"Crash in patterns branch when switch statement's last case is empty\") reports a crash with a concrete reproducer and diagnoses the root cause precisely: ChunkBuilder divides chunks at the hard split before an empty trailing case, so a rule that appears only in a constraint gets an index assigned before line splitting, breaking LineSplitter's null-index assumption. The minimized production patch attacks exactly that: Chunk gains preventDivide()/_canDivide default true, ChunkBuilder threads a _pendingPreventDivide flag through writeNewline and applies it when a hardened chunk is written (replacing the _calculateRuleRanges range-scan the issue itself describes as inadequate and too slow to fix by traversal), and SourceVisitor marks the switch-case and parameter-metadata newlines with preventDivide: true. This is the fix mechanism, not a drive-by refactor; the commit message and PR #1182 body describe it as the replacement solution for the same bug. Minimization already stripped the genuinely unrelated pieces present in the original commit: the whitespace-only reformat of DartFormatter._parse, the debug.dart variable-hoisting cleanup, and the pubspec.yaml analyzer version bump are absent from patches/minimized-production.patch. No test-only or config-only content remains in the production patch. The trigger is the unchanged upstream fixture from the same commit, test/regression/1100/1181.stmt, containing verbatim the switch statement from the issue body, exercised through the existing test/formatter_test.dart harness; it introduces no dependency on preventDivide() or any other API added by the fix. Strict evidence confirms build.both_versions passed, trigger.buggy_differential reproduced test/formatter_test.dart::regression 1181.stmt with the other two declared selectors passing on buggy as required, trigger.deterministic across 3 repetitions, trigger.fixed_clean, and full_suite.fixed_all_green with buggy full-suite failures limited to the reproduced trigger, both pre- and post-minimization. active_same_project_root_causes is empty and dart-lang/dart_style#1181 is the sole allowed verified issue key.",
+      "evidence_paths": [
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.origin_pull_request.commits[0].message",
+        "patches/minimized-production.patch:lib/src/chunk.dart",
+        "patches/minimized-production.patch:lib/src/chunk_builder.dart",
+        "patches/minimized-production.patch:lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch:test/regression/1100/1181.stmt",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "Two of the three declared trigger selectors (comments functions.unit, comments switch.stmt) do not reproduce the defect on the buggy revision; only regression 1181.stmt is differential, so the fixture-level granularity of the harness means those two add no fault-localization signal.",
+        "The buggy revision sits on the non-default 'patterns' feature branch (PR base_ref = patterns), so the defect and its fix are branch-local rather than on main at that time.",
+        "The fix replaces one whole mechanism (_calculateRuleRanges) with another (_pendingPreventDivide), a broad change touching all hardened-split division decisions; the single regression fixture plus the passing full suite is the only evidence that formatting behavior elsewhere is unchanged.",
+        "The minimized patch omits the pubspec.yaml analyzer ^5.5.0 -> ^5.6.0 bump present in the original commit; the strict build gate passed without it, but resolved dependency versions were not otherwise pinned in the supplied evidence."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T07:46:29.738445+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ae17e876290cd571333f447ec23221c46e792c66b8dc69dd4cd9496eb2ba1afd",
+      "response_sha256": "853a08116aac04c0820a6f2ca7fa183a469261cf1acb0bd8ce885b0508f34698",
+      "response_id": "msg_9714d6a14230483aa74196f2f4620a7d",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6914237788059702,
+        "input_tokens": 32638,
+        "output_tokens": 754
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1181",
+      "rationale": "Issue #1181 ('Crash in patterns branch when switch statement's last case is empty') gives the exact repro `switch (e) { case E.e1: break; case E.e2: }` and diagnoses the mechanism: because the last case is empty, the case-body rule does not reappear after the hard split, so ChunkBuilder divides between cases, a rule receives a non-null index via a constraint, and LineSplitter's null-index assumption is violated. The new fixture test/regression/1100/1181.stmt is byte-for-byte that repro, and strict evidence confirms it is the sole reproduced selector (test/formatter_test.dart::regression 1181.stmt fails on 35a5d9fc, passes on ac9113e2, deterministic over 3 repetitions, fixed full suite green). The minimized production patch is confined to the divide-decision mechanism the issue calls out as needing replacement: Chunk gains preventDivide() with _canDivide defaulting to true, ChunkBuilder tracks _pendingPreventDivide and marks hard-split chunks at write time instead of post-hoc _calculateRuleRanges scanning, and SourceVisitor threads preventDivide through the switch-case and parameter-metadata newline sites named in the issue. Removal of _calculateRuleRanges is the substitution of the faulty algorithm, not a drive-by refactor. Minimization correctly dropped the unrelated items present in the original commit: the dart_formatter.dart line-wrap reformat, the debug.dart variable relocation, and the pubspec.yaml analyzer ^5.5.0 to ^5.6.0 bump. The trigger is a project-native .stmt fixture consumed by the pre-existing formatter_test.dart harness and exercises only public formatting, not preventDivide() or the writeNewline preventDivide parameter introduced by the fix. active_same_project_root_causes is empty and the root cause matches the single allowed verified key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/minimized-production.patch:lib/src/chunk.dart",
+        "patches/minimized-production.patch:lib/src/chunk_builder.dart",
+        "patches/minimized-production.patch:lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch:test/regression/1100/1181.stmt",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "active_same_project_root_causes",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "Two of the three declared selectors (comments functions.unit, comments switch.stmt) do not reproduce the defect; they assert behavior the old rule-range algorithm already produced, so only regression 1181.stmt carries differential signal.",
+        "The buggy revision sits on the unreleased 'patterns' feature branch, so the defect window is branch-local rather than present in a published release.",
+        "The fix replaces an algorithm rather than patching it, so behavioral equivalence for divide decisions outside switch cases and parameter metadata rests on the fixed-revision full-suite pass (1 repetition) rather than on targeted assertions."
+      ]
+    }
+  ]
+}

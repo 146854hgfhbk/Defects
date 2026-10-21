@@ -1,0 +1,31 @@
+diff --git a/test/appstream_test.dart b/test/appstream_test.dart
+index 3715a54..630868e 100644
+--- a/test/appstream_test.dart
++++ b/test/appstream_test.dart
+@@ -449,6 +449,26 @@ void main() {
+         throwsFormatException);
+   });
+ 
++  test('collection - yaml with duplicate mapping keys', () async {
++    var collection = AppstreamCollection.fromYaml("""---
++File: DEP-11
++Version: '0.12'
++Origin: ubuntu-hirsute-main
++---
++Type: console-application
++ID: com.example.Hello
++Package: hello
++Name:
++  C: Hello World
++Summary:
++  C: A simple example application
++ContentRating:
++  oars-1.1: {}
++  oars-1.1: {}
++""");
++    expect(collection.components, isEmpty);
++  });
++
+   test('collection - empty - yaml', () async {
+     var collection = AppstreamCollection.fromYaml("""---
+ File: DEP-11

@@ -1,0 +1,59 @@
+{
+  "candidate_sha": "4649fc73440f7a68e452d06588c0f522d2a7d302",
+  "project": "fredrikekre/Runic.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 109,
+      "url": "https://github.com/fredrikekre/Runic.jl/issues/109",
+      "state": "closed",
+      "title": "ERROR: failed to format input: Runic.AssertionError: is_leaf(space_node) && kind(space_node) === K\"Whitespace\"",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "This is with Julia 1.11.1 and Runic 1.0.0: I tried to format the files in [GAP.jl](http://github.com/oscar-system/GAP.jl/) and got this:\r\n```\r\nrunic src/constructors.jl\r\nERROR: failed to format input: Runic.AssertionError: is_leaf(space_node) && kind(space_node) === K\"Whitespace\". This is unexpected, please file an issue with a reproducible example at https://github.com/fredrikekre/Runic.jl/issues/new.\r\nStacktrace:\r\n [1] indent_function_or_macro(ctx::Runic.Context, node::Runic.Node)\r\n   @ Runic ~/.julia/packages/Runic/Ll7qO/src/runestone.jl:1752\r\n [2] insert_delete_mark_newlines(ctx::Runic.Context, node::Runic.Node)\r\n   @ Runic ~/.julia/packages/Runic/Ll7qO/src/runestone.jl:3108\r\n [3] format_node!(ctx::Runic.Context, node::Runic.Node)\r\n   @ Runic ~/.julia/packages/Runic/Ll7qO/src/Runic.jl:435\r\n [4] format_node_with_kids!(ctx::Runic.Context, node::Runic.Node)\r\n   @ Runic ~/.julia/packages/Runic/Ll7qO/src/Runic.jl:354\r\n [5] format_node!(ctx::Runic.Context, node::Runic.Node)\r\n   @ Runic ~/.julia/packages/Runic/Ll7qO/src/Runic.jl:465\r\n```\r\n\r\n\r\nI've narrowed it down to this code, however reading that into Julia will kill Julia:\r\n```\r\nfunction(::Type{T})(::Int) where T\r\nend\r\n```\r\nSo here is a less deadly version that also exhibits the issue:\r\n```\r\nfunction(::Type{T})(::Int) where T<:StepRange\r\nend\r\n```\r\nActually `creduce` also produced this, which to my surprise is valid Julia code but I don't understand why.\r\n```\r\nfunction()() end\r\n```"
+    },
+    {
+      "number": 110,
+      "url": "https://github.com/fredrikekre/Runic.jl/pull/110",
+      "state": "closed",
+      "title": "Fix bad assertion in function signatures",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This patch removes an assertion about whitespace after the `function`\nkeyword in the indent pass. The core issue is the\n`is_longform_anon_function` predicate which is wrong for the testcases,\nbut the assert is not needed since we can just use the next\nnon-whitespace noce as the signature in all cases. Fixes #109.\n"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "fix_commit_to_issue",
+      "issue_numbers": [
+        109
+      ],
+      "fix_commit": "4649fc73440f7a68e452d06588c0f522d2a7d302",
+      "evidence_source": "fix_commit_message"
+    }
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix bad assertion in function signatures (#110)\n\nThis patch removes an assertion about whitespace after the `function`\r\nkeyword in the indent pass. The core issue is the\r\n`is_longform_anon_function` predicate which is wrong for the testcases,\r\nbut the assert is not needed since we can just use the next\r\nnon-whitespace noce as the signature in all cases. Fixes #109.",
+    "commit_issue_refs": [
+      109,
+      110
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": null,
+    "pull_request_title": "",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    109
+  ],
+  "cross_repository_issue_records": []
+}

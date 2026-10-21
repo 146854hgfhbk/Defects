@@ -1,0 +1,200 @@
+diff --git a/Examples/Tests/MacroExamples/Implementation/Peer/AddAsyncMacroTests.swift b/Examples/Tests/MacroExamples/Implementation/Peer/AddAsyncMacroTests.swift
+index 89227d3bda8..79178633770 100644
+--- a/Examples/Tests/MacroExamples/Implementation/Peer/AddAsyncMacroTests.swift
++++ b/Examples/Tests/MacroExamples/Implementation/Peer/AddAsyncMacroTests.swift
+@@ -43,6 +43,7 @@ final class AddAsyncMacroTests: XCTestCase {
+               }
+             }
+           }
++
+         }
+         """#,
+       macros: macros,
+@@ -70,6 +71,7 @@ final class AddAsyncMacroTests: XCTestCase {
+               continuation.resume(returning: returnValue)
+             }
+           }
++
+         }
+         """,
+       macros: macros,
+diff --git a/Examples/Tests/MacroExamples/Implementation/Peer/AddCompletionHandlerMacroTests.swift b/Examples/Tests/MacroExamples/Implementation/Peer/AddCompletionHandlerMacroTests.swift
+index a6025fc1179..eab2c5521d6 100644
+--- a/Examples/Tests/MacroExamples/Implementation/Peer/AddCompletionHandlerMacroTests.swift
++++ b/Examples/Tests/MacroExamples/Implementation/Peer/AddCompletionHandlerMacroTests.swift
+@@ -35,6 +35,7 @@ final class AddCompletionHandlerMacroTests: XCTestCase {
+           Task {
+             completionHandler(await f(a: a, for: b, value))
+           }
++
+         }
+         """,
+       macros: macros,
+diff --git a/Tests/SwiftBasicFormatTest/BasicFormatTests.swift b/Tests/SwiftBasicFormatTest/BasicFormatTests.swift
+index 97ab4bb2ca5..15e5fa1d582 100644
+--- a/Tests/SwiftBasicFormatTest/BasicFormatTests.swift
++++ b/Tests/SwiftBasicFormatTest/BasicFormatTests.swift
+@@ -588,6 +588,7 @@ final class BasicFormatTest: XCTestCase {
+         func test() {
+             Task {
+             }
++
+         }
+         """
+     )
+diff --git a/Tests/SwiftParserTest/DeclarationTests.swift b/Tests/SwiftParserTest/DeclarationTests.swift
+index f06ad334a26..d7a6363c242 100644
+--- a/Tests/SwiftParserTest/DeclarationTests.swift
++++ b/Tests/SwiftParserTest/DeclarationTests.swift
+@@ -3141,4 +3141,17 @@ final class DeclarationTests: ParserTestCase {
+       experimentalFeatures: .nonescapableTypes
+     )
+   }
++
++  func testDeclarationEndingWithNewline() {
++    let inputs: [UInt: String] = [
++      #line: "var x = 0\n",
++      #line: "var x = 0 garbage\n",
++      #line: "var x = 0 \n",
++    ]
++
++    for (line, input) in inputs {
++      let decl = DeclSyntax(stringLiteral: input)
++      XCTAssertEqual(decl.description, input, line: line)
++    }
++  }
+ }
+diff --git a/Tests/SwiftSyntaxMacroExpansionTest/MemberMacroTests.swift b/Tests/SwiftSyntaxMacroExpansionTest/MemberMacroTests.swift
+index a281cc69744..95e783fec41 100644
+--- a/Tests/SwiftSyntaxMacroExpansionTest/MemberMacroTests.swift
++++ b/Tests/SwiftSyntaxMacroExpansionTest/MemberMacroTests.swift
+@@ -299,4 +299,129 @@ final class MemberMacroTests: XCTestCase {
+       ]
+     )
+   }
++
++  func testAddMemberToEmptyDeclaration() {
++    struct TestMacro: MemberMacro {
++      static func expansion(
++        of node: AttributeSyntax,
++        providingMembersOf declaration: some DeclGroupSyntax,
++        conformingTo protocols: [TypeSyntax],
++        in context: some MacroExpansionContext
++      ) throws -> [DeclSyntax] {
++        return [DeclSyntax("var x = 0")]
++      }
++    }
++
++    assertMacroExpansion(
++      """
++      @Test
++      struct Foo {}
++      """,
++      expandedSource: """
++        struct Foo {
++
++          var x = 0
++        }
++        """,
++      macros: [
++        "Test": TestMacro.self
++      ],
++      indentationWidth: indentationWidth
++    )
++  }
++
++  func testAddTwoMembersToEmptyDeclaration() {
++    struct TestMacro: MemberMacro {
++      static func expansion(
++        of node: AttributeSyntax,
++        providingMembersOf declaration: some DeclGroupSyntax,
++        conformingTo protocols: [TypeSyntax],
++        in context: some MacroExpansionContext
++      ) throws -> [DeclSyntax] {
++        return [DeclSyntax("var x = 0"), DeclSyntax("var x = 0")]
++      }
++    }
++
++    assertMacroExpansion(
++      """
++      @Test
++      struct Foo {}
++      """,
++      expandedSource: """
++        struct Foo {
++
++          var x = 0
++
++          var x = 0
++        }
++        """,
++      macros: [
++        "Test": TestMacro.self
++      ],
++      indentationWidth: indentationWidth
++    )
++  }
++
++  func testAddMemberToEmptyDeclarationWithEndingNewline() {
++    struct TestMacro: MemberMacro {
++      static func expansion(
++        of node: AttributeSyntax,
++        providingMembersOf declaration: some DeclGroupSyntax,
++        conformingTo protocols: [TypeSyntax],
++        in context: some MacroExpansionContext
++      ) throws -> [DeclSyntax] {
++        return [DeclSyntax("var x = 0\n")]
++      }
++    }
++
++    assertMacroExpansion(
++      """
++      @Test
++      struct Foo {}
++      """,
++      expandedSource: """
++        struct Foo {
++
++          var x = 0
++        }
++        """,
++      macros: [
++        "Test": TestMacro.self
++      ],
++      indentationWidth: indentationWidth
++    )
++  }
++
++  func testAddMemberToDeclarationWithASingleVariable() {
++    struct TestMacro: MemberMacro {
++      static func expansion(
++        of node: AttributeSyntax,
++        providingMembersOf declaration: some DeclGroupSyntax,
++        conformingTo protocols: [TypeSyntax],
++        in context: some MacroExpansionContext
++      ) throws -> [DeclSyntax] {
++        return [DeclSyntax("var x = 0\n")]
++      }
++    }
++
++    assertMacroExpansion(
++      """
++      @Test
++      struct Foo {
++        var y = 0
++      }
++      """,
++      expandedSource: """
++        struct Foo {
++          var y = 0
++
++          var x = 0
++        }
++        """,
++      macros: [
++        "Test": TestMacro.self
++      ],
++      indentationWidth: indentationWidth
++    )
++  }
+ }

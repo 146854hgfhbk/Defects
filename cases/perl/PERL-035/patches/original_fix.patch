@@ -1,0 +1,34 @@
+diff --git a/lib/HTTP/Status.pm b/lib/HTTP/Status.pm
+index 22e2539074ee94773473ba3f2d252cdf58948e2d..730b1605d11d0d9c2001083b483e58f84ab5e0a6 100644
+--- a/lib/HTTP/Status.pm
++++ b/lib/HTTP/Status.pm
+@@ -127,7 +127,7 @@ our %EXPORT_TAGS = (
+ );
+ 
+ sub status_message ($) {
+-    $StatusCode{ $_[0] } || is_info( $_[0] ) ? 'OK'
++    $StatusCode{ $_[0] } or is_info( $_[0] ) ? 'OK'
+       : is_success( $_[0] )      ? 'OK'
+       : is_redirect( $_[0] )     ? 'Redirect'
+       : is_client_error( $_[0] ) ? 'Client Error'
+diff --git a/t/status-message.t b/t/status-message.t
+index cf57cde8345703f9254a0d9a2aaed3ee93c34132..045c1e27cfe9a538be0785bfb7cce688bf402281 100644
+--- a/t/status-message.t
++++ b/t/status-message.t
+@@ -2,7 +2,6 @@ use strict;
+ use warnings;
+ 
+ use Test::More;
+-plan tests => 7;
+ 
+ use HTTP::Status qw(status_message);
+ 
+@@ -13,3 +12,8 @@ is(status_message(399), "Redirect");
+ is(status_message(499), "Client Error");
+ is(status_message(599), "Server Error");
+ is(status_message(600), undef);
++
++
++is(status_message(404), "Not Found", "Found the 404");
++
++done_testing;

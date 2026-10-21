@@ -1,0 +1,86 @@
+diff --git a/Sources/Segment/Utilities/JSON.swift b/Sources/Segment/Utilities/JSON.swift
+index 63de64e..fd8a79a 100644
+--- a/Sources/Segment/Utilities/JSON.swift
++++ b/Sources/Segment/Utilities/JSON.swift
+@@ -76,7 +76,7 @@ public enum JSON: Equatable {
+     public init<T: Codable>(with value: T) throws {
+         let encoder = JSONSafeEncoder.default
+         let json = try encoder.encode(value)
+-        let output = try JSONSerialization.jsonObject(with: json)
++        let output = try JSONSerialization.jsonObject(with: json, options: .fragmentsAllowed)
+         try self.init(output)
+     }
+     
+@@ -113,6 +113,8 @@ public enum JSON: Equatable {
+             self = .object(try object.mapValues(JSON.init))
+         case let json as JSON:
+             self = json
++        case let codable as Codable:
++            self = try Self.init(with: codable)
+         // we don't work with whatever is being supplied
+         default:
+             throw JSONError.nonJSONType(type: "\(value.self)")
+diff --git a/Tests/Segment-Tests/JSON_Tests.swift b/Tests/Segment-Tests/JSON_Tests.swift
+index 829b73d..fd74477 100644
+--- a/Tests/Segment-Tests/JSON_Tests.swift
++++ b/Tests/Segment-Tests/JSON_Tests.swift
+@@ -411,4 +411,59 @@ class JSONTests: XCTestCase {
+             XCTFail()
+         }
+     }
++    
++    func testJSONCodableDict() throws {
++        enum StringEnum: String, Codable {
++            case test1
++            case test2
++            case test3
++        }
++        
++        enum IntEnum: Int, Codable {
++            case test1
++            case test2
++            case test3
++        }
++        
++        struct SubStruct: Codable {
++            var x: Int = 23
++        }
++        
++        struct CodableStruct: Codable {
++            var a: Int = 47
++            var b: String = "hello"
++            var c: SubStruct = SubStruct()
++        }
++        
++        let dict: [String: Any] = [
++            "uuid": UUID(),
++            "strEnum": StringEnum.test2,
++            "intEnum": IntEnum.test2,
++            "struct": CodableStruct()
++        ]
++        
++        do {
++            let json = try JSON(dict)
++            print(json.prettyPrint())
++            
++            let strEnum: String? = json[keyPath: "strEnum"]
++            XCTAssertEqual(strEnum, "test2")
++            
++            let intEnum: Int? = json[keyPath: "intEnum"]
++            XCTAssertEqual(intEnum, 1)
++            
++            let b: String? = json[keyPath: "struct.b"]
++            XCTAssertEqual(b, "hello")
++            
++            let x: Int? = json[keyPath: "struct.c.x"]
++            XCTAssertEqual(x, 23)
++            
++            let uuid: String? = json[keyPath: "uuid"]
++            XCTAssertEqual(uuid!.count, 36)
++            
++        } catch {
++            print(error)
++            XCTFail()
++        }
++    }
+ }

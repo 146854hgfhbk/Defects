@@ -1,0 +1,50 @@
+diff --git a/code/BasicFeature/TaskManagement/ReminderAgentManager/entry/src/main/ets/pages/alarmClock/AlarmClock.ets b/code/BasicFeature/TaskManagement/ReminderAgentManager/entry/src/main/ets/pages/alarmClock/AlarmClock.ets
+index 923eb48471..0e138c8b45 100644
+--- a/code/BasicFeature/TaskManagement/ReminderAgentManager/entry/src/main/ets/pages/alarmClock/AlarmClock.ets
++++ b/code/BasicFeature/TaskManagement/ReminderAgentManager/entry/src/main/ets/pages/alarmClock/AlarmClock.ets
+@@ -77,12 +77,14 @@ export struct AlarmClock {
+               Text(item)
+                 .fontSize(24)
+               Blank()
+-              Toggle({ type: ToggleType.Switch, isOn: AlarmClockReminder.alarmClockReminders[index].isStart })
+-                .margin({ left: 8 })
+-                .id(`clockSwitch${index}`)
+-                .onChange(async (isOn: boolean) => {
+-                  await AlarmClockReminder.setToggle(isOn, index)
+-                })
++              if (AlarmClockReminder.alarmClockReminders[index]) {
++                Toggle({ type: ToggleType.Switch, isOn: AlarmClockReminder.alarmClockReminders[index].isStart })
++                  .margin({ left: 8 })
++                  .id(`clockSwitch${index}`)
++                  .onChange(async (isOn: boolean) => {
++                    await AlarmClockReminder.setToggle(isOn, index);
++                  })
++              }
+             }
+             .width('100%')
+             .borderRadius(24)
+diff --git a/code/BasicFeature/TaskManagement/ReminderAgentManager/entry/src/main/ets/pages/calendar/Calendar.ets b/code/BasicFeature/TaskManagement/ReminderAgentManager/entry/src/main/ets/pages/calendar/Calendar.ets
+index da7cfc901a..0a8fecbc84 100644
+--- a/code/BasicFeature/TaskManagement/ReminderAgentManager/entry/src/main/ets/pages/calendar/Calendar.ets
++++ b/code/BasicFeature/TaskManagement/ReminderAgentManager/entry/src/main/ets/pages/calendar/Calendar.ets
+@@ -67,12 +67,14 @@ export struct ReminderCalendar {
+               Text(item)
+                 .fontSize(24)
+               Blank()
+-              Toggle({ type: ToggleType.Switch, isOn: CalendarReminder.calendarReminders[index].isStart })
+-                .margin({ left: 8 })
+-                .id(`calendarSwitch${index}`)
+-                .onChange(async (isOn: boolean) => {
+-                  await CalendarReminder.setToggle(isOn, index)
+-                })
++              if(CalendarReminder.calendarReminders[index]){
++                Toggle({ type: ToggleType.Switch, isOn: CalendarReminder.calendarReminders[index].isStart })
++                  .margin({ left: 8 })
++                  .id(`calendarSwitch${index}`)
++                  .onChange(async (isOn: boolean) => {
++                    await CalendarReminder.setToggle(isOn, index);
++                  })
++              }
+             }
+             .width('100%')
+             .borderRadius(24)

@@ -1,0 +1,97 @@
+diff --git a/lib/src/jwt.dart b/lib/src/jwt.dart
+index 77ff3761c038e9687c3f53dfa3776b9754981957..2c14a8bced1641c7d97a9c8adb0fc7f0041596dc 100644
+--- a/lib/src/jwt.dart
++++ b/lib/src/jwt.dart
+@@ -18,6 +18,11 @@ class JWT {
+   /// - RSAPublicKey with RSA algorithm
+   /// - ECPublicKey with ECDSA algorithm
+   /// - EdDSAPublicKey with EdDSA algorithm
++  ///
++  /// [issueAt] allows to verify that the token wasn't issued too long ago. The
++  /// value is a timestamp (number of seconds since epoch) that is compared to
++  /// the value of the 'iat' claim. Verification fails if the 'iat' claim is
++  /// before [issueAt].
+   static JWT verify(
+     String token,
+     JWTKey key, {
+@@ -88,8 +93,11 @@ class JWT {
+           final iat = DateTime.fromMillisecondsSinceEpoch(
+             (payload['iat'] * 1000).toInt(),
+           );
+-          if (!iat.isAtSameMomentAs(clock.now())) {
+-            throw JWTInvalidException('invalid issue at');
++          final issueAtTime =
++              DateTime.fromMillisecondsSinceEpoch(issueAt.inMilliseconds);
++          // Verify that the token isn't expired
++          if (iat.isBefore(issueAtTime)) {
++            throw JWTInvalidException('expired issue at');
+           }
+         }
+ 
+diff --git a/test/verify_test.dart b/test/verify_test.dart
+index 3c513317c156d06da45537a28a8c99b506fea4e0..568c1d22a726ba1c8954ea6205f5fa241c00ece0 100644
+--- a/test/verify_test.dart
++++ b/test/verify_test.dart
+@@ -27,6 +27,62 @@ final edKey = EdDSAPublicKey(
+ 
+ void main() {
+   group('Verify a JWT', () {
++    group('Claims', () {
++      group('iat', () {
++        final oneMinuteAgo = DateTime.now().subtract(Duration(minutes: 1));
++        test('exact issueAt passes validation', () {
++          final jwt = JWT(
++            {
++              'foo': 'bar',
++              'iat': oneMinuteAgo.millisecondsSinceEpoch ~/ 1000,
++            },
++          );
++          final verified = JWT.tryVerify(
++            jwt.sign(hsKey, noIssueAt: true),
++            hsKey,
++            issueAt:
++                Duration(seconds: oneMinuteAgo.millisecondsSinceEpoch ~/ 1000),
++          );
++          expect(verified, isNotNull);
++        });
++        test('expired issueAt fails validation', () {
++          final jwt = JWT(
++            {
++              'foo': 'bar',
++              'iat': oneMinuteAgo
++                      .subtract(Duration(seconds: 1))
++                      .millisecondsSinceEpoch ~/
++                  1000,
++            },
++          );
++          final verified = JWT.tryVerify(
++            jwt.sign(hsKey, noIssueAt: true),
++            hsKey,
++            issueAt:
++                Duration(seconds: oneMinuteAgo.millisecondsSinceEpoch ~/ 1000),
++          );
++          expect(verified, isNull);
++        });
++        test('fresher issueAt passes validation', () {
++          final jwt = JWT(
++            {
++              'foo': 'bar',
++              'iat': oneMinuteAgo
++                      .add(Duration(seconds: 1))
++                      .millisecondsSinceEpoch ~/
++                  1000,
++            },
++          );
++          final verified = JWT.tryVerify(
++            jwt.sign(hsKey, noIssueAt: true),
++            hsKey,
++            issueAt:
++                Duration(seconds: oneMinuteAgo.millisecondsSinceEpoch ~/ 1000),
++          );
++          expect(verified, isNotNull);
++        });
++      });
++    });
+     //------//
+     // HMAC //
+     //------//

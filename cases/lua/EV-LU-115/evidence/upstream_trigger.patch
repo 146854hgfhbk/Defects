@@ -1,0 +1,44 @@
+diff --git a/spec/check_spec.lua b/spec/check_spec.lua
+index 6e9fb1a..425cb8f 100644
+--- a/spec/check_spec.lua
++++ b/spec/check_spec.lua
+@@ -407,6 +407,26 @@ return
+       ]])
+    end)
+ 
++   it("detects unreachable expressions", function()
++      assert.same({
++         {code = "511", line = 3, column = 7, end_column = 9}
++      }, check[[
++repeat
++    return
++until ...
++      ]])
++
++      assert.same({
++         {code = "511", line = 3, column = 8, end_column = 10}
++      }, check[[
++if true then
++   (...)()
++elseif ... then
++   (...)()
++end
++      ]])
++   end)
++
+    it("detects accessing uninitialized variables", function()
+       assert.same({
+          {code = "113", name = "get", line = 6, column = 8, end_column = 10},
+diff --git a/spec/parser_spec.lua b/spec/parser_spec.lua
+index 83412fc..ad1731e 100644
+--- a/spec/parser_spec.lua
++++ b/spec/parser_spec.lua
+@@ -868,7 +868,7 @@ end
+                               },
+                               {
+                                  {tag = "If", location = {line = 7, column = 4, offset = 106}, first_token = "if",
+-                                    {tag = "Id", "arg", location = {line = 7, column = 7, offset = 109}},
++                                    {tag = "Id", "arg", location = {line = 7, column = 7, offset = 109}, first_token = "arg"},
+                                     {location = {line = 7, column = 11, offset = 113}, -- Branch location.
+                                        {tag = "Call", location = {line = 8, column = 7, offset = 124}, first_token = "print",
+                                           {tag = "Id", "print", location = {line = 8, column = 7, offset = 124}},

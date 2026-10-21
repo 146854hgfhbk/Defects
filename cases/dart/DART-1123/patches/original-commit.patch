@@ -1,0 +1,81 @@
+diff --git a/pkgs/args/CHANGELOG.md b/pkgs/args/CHANGELOG.md
+index fb75a1f529dfe648914b0a9c7706800c17b8306f..a19d5cd575ca4035828bd1fe85721ce863b34e0c 100644
+--- a/pkgs/args/CHANGELOG.md
++++ b/pkgs/args/CHANGELOG.md
+@@ -1,4 +1,4 @@
+-## 2.8.0
++## 2.8.0-wip
+ 
+ * Allow designating a top-level command or a subcommand as a default one by
+   passing `isDefault: true` to `addCommand` or `addSubcommand`.
+@@ -8,6 +8,7 @@
+   (Fixes #103).
+ * Remove sorting of the subcommands in usage output. Ordering will depend on the
+   order that `addSubCommand` is called.
++* Remove extra newlines following separators when using flags without help text.
+ 
+ ## 2.7.0
+ 
+diff --git a/pkgs/args/lib/src/usage.dart b/pkgs/args/lib/src/usage.dart
+index c6b531086df79e6ac5f00fc202238851ec7fe1df..19e855f6ade4953081b25f7b60c29f6742877b5b 100644
+--- a/pkgs/args/lib/src/usage.dart
++++ b/pkgs/args/lib/src/usage.dart
+@@ -81,6 +81,7 @@ class _Usage {
+     if (_buffer.isNotEmpty) _buffer.write('\n\n');
+     _buffer.write(separator);
+     _newlinesNeeded = 1;
++    _currentColumn = 0;
+   }
+ 
+   void _writeOption(Option option) {
+diff --git a/pkgs/args/pubspec.yaml b/pkgs/args/pubspec.yaml
+index d65ca0b2f13633dbcfc80b75547fcd3e79f289c0..58e094a953e4810f1db885dc57480b226efec205 100644
+--- a/pkgs/args/pubspec.yaml
++++ b/pkgs/args/pubspec.yaml
+@@ -1,5 +1,5 @@
+ name: args
+-version: 2.8.0
++version: 2.8.0-wip
+ description: >-
+   Library for defining parsers for parsing raw command-line arguments into a set
+   of options and values using GNU and POSIX style options.
+diff --git a/pkgs/args/test/usage_test.dart b/pkgs/args/test/usage_test.dart
+index 95a5ef178ac9d390d6889310d20adc2f02161521..d67ba1e90c791a4c3b143afa6becf6c2f095f3ba 100644
+--- a/pkgs/args/test/usage_test.dart
++++ b/pkgs/args/test/usage_test.dart
+@@ -455,6 +455,35 @@ void main() {
+             --[no-]wombat    Third
+             ''');
+       });
++      test('consistently attaches separator headers to options', () {
++        var parser = ArgParser()
++          ..addSeparator('Group 1')
++          ..addFlag('flag-1')
++          ..addSeparator('Group 2 (follows no options with help)')
++          ..addFlag('flag-2', help: 'something')
++          ..addFlag('flag-3')
++          ..addSeparator('Group 3 (follows non-trailing option with help)')
++          ..addFlag('flag-4')
++          ..addFlag('flag-5', help: 'something')
++          ..addSeparator('Group 4 (follows trailing option with help)')
++          ..addFlag('flag-6');
++
++        validateUsage(parser, '''
++            Group 1
++            --[no-]flag-1    
++
++            Group 2 (follows no options with help)
++            --[no-]flag-2    something
++            --[no-]flag-3    
++
++            Group 3 (follows non-trailing option with help)
++            --[no-]flag-4    
++            --[no-]flag-5    something
++
++            Group 4 (follows trailing option with help)
++            --[no-]flag-6    
++            ''');
++      });
+ 
+       test("doesn't add extra newlines after a multiline option", () {
+         var parser = ArgParser();

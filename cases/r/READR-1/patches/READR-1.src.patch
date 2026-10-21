@@ -1,0 +1,25 @@
+diff --git a/R/col_types.R b/R/col_types.R
+index 42585218..274f3a26 100644
+--- a/R/col_types.R
++++ b/R/col_types.R
+@@ -135,7 +135,7 @@ format.col_spec <- function(x, n = Inf, condense = NULL, ...) {
+     vapply(seq_along(cols),
+       function(i) {
+         col_funs <- sub("^collector_", "col_", class(cols[[i]])[[1]])
+-        args <- vapply(cols[[i]], deparse2, character(1), sep = "\n    ")
++        args <- vapply(cols[[i]], deparse, character(1))
+         args <- paste(names(args), args, sep = " = ", collapse = ", ")
+ 
+         col_names <- names(cols)[[i]]
+diff --git a/R/utils.R b/R/utils.R
+index e4f37721..ed7a48f8 100644
+--- a/R/utils.R
++++ b/R/utils.R
+@@ -15,7 +15,3 @@ show_progress <- function() {
+   !interactive() || # not an interactive session
+   !is.null(getOption("knitr.in.progress")) # Not actively knitting a document
+ }
+-
+-deparse2 <- function(expr, ..., sep = "\n") {
+-  paste(deparse(expr, ...), collapse = sep)
+-}

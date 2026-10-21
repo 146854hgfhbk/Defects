@@ -1,0 +1,111 @@
+diff --git a/code/BasicFeature/Security/AppAccountManager/entry/src/ohosTest/ets/test/AppAccountManagerRegression.test.ets b/code/BasicFeature/Security/AppAccountManager/entry/src/ohosTest/ets/test/AppAccountManagerRegression.test.ets
+new file mode 100644
+index 000000000..4f0cb606a
+--- /dev/null
++++ b/code/BasicFeature/Security/AppAccountManager/entry/src/ohosTest/ets/test/AppAccountManagerRegression.test.ets
+@@ -0,0 +1,89 @@
++/*
++ * Copyright (c) 2022 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++import { Driver, ON, Component } from '@ohos.UiTest';
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import hilog from '@ohos.hilog';
++
++const TAG = '[Sample_AppAccountManagerRegression]';
++const DOMAIN = 0xF811;
++const BUNDLE = 'AppAccountManagerRegression_';
++const WAIT_MS = 1000;
++
++let driver: Driver = Driver.create();
++
++async function startEntryAbility() {
++  let abilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator();
++  await abilityDelegator.startAbility({
++    bundleName: 'ohos.samples.etsappaccountmanager',
++    abilityName: 'EntryAbility'
++  });
++  await driver.delayMs(WAIT_MS);
++}
++
++async function allowInputMethodPermissionIfPresent() {
++  await driver.delayMs(WAIT_MS);
++  try {
++    let confirmButton: Component = await driver.findComponent(ON.id('Paf.Permission.button_confirm'));
++    await confirmButton.click();
++    await driver.delayMs(WAIT_MS);
++  } catch (error) {
++    hilog.info(DOMAIN, TAG, `No input method permission page: ${JSON.stringify(error)}`);
++  }
++}
++
++async function clickById(id: string) {
++  await allowInputMethodPermissionIfPresent();
++  try {
++    await driver.assertComponentExist(ON.id(id));
++  } catch (error) {
++    await allowInputMethodPermissionIfPresent();
++    await driver.assertComponentExist(ON.id(id));
++  }
++  let component: Component = await driver.findComponent(ON.id(id));
++  await component.click();
++  await driver.delayMs(WAIT_MS);
++}
++
++export default function appAccountManagerRegressionTest() {
++  describe('AppAccountManagerRegression', function () {
++    it(BUNDLE + 'RegisterUsernameRejectsSpecialCharacters_001', 0, async () => {
++      hilog.info(DOMAIN, TAG, BUNDLE + 'RegisterUsernameRejectsSpecialCharacters_001 begin');
++      await startEntryAbility();
++      await allowInputMethodPermissionIfPresent();
++      await clickById('MusicApp');
++      await clickById('register');
++
++      await allowInputMethodPermissionIfPresent();
++      await driver.assertComponentExist(ON.id('Register1'));
++      let usernameInput: Component = await driver.findComponent(ON.id('Register1'));
++      await usernameInput.inputText('bug$name316');
++      await driver.delayMs(WAIT_MS);
++      await allowInputMethodPermissionIfPresent();
++      await driver.assertComponentExist(ON.id('Register1'));
++      usernameInput = await driver.findComponent(ON.id('Register1'));
++      await usernameInput.inputText('bug$name316');
++      await driver.delayMs(WAIT_MS);
++
++      let usernameValue = await usernameInput.getText();
++      if (usernameValue.indexOf('$') >= 0) {
++        hilog.info(DOMAIN, TAG, `username still contains rejected character: ${usernameValue}`);
++        expect().assertFail();
++      }
++      hilog.info(DOMAIN, TAG, BUNDLE + 'RegisterUsernameRejectsSpecialCharacters_001 end');
++    });
++  });
++}
+diff --git a/code/BasicFeature/Security/AppAccountManager/entry/src/ohosTest/ets/test/List.test.ets b/code/BasicFeature/Security/AppAccountManager/entry/src/ohosTest/ets/test/List.test.ets
+index b5e347398..5daab5fa7 100644
+--- a/code/BasicFeature/Security/AppAccountManager/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/BasicFeature/Security/AppAccountManager/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import appTest from './App.test'
++import appAccountManagerRegressionTest from './AppAccountManagerRegression.test'
+ 
+ export default function testsuite() {
+   appTest()
+-}
+\ No newline at end of file
++  appAccountManagerRegressionTest()
++}

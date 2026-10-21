@@ -1,0 +1,16 @@
+diff --git a/test/simulator_test.dart b/test/simulator_test.dart
+index 4d8a637..8628179 100644
+--- a/test/simulator_test.dart
++++ b/test/simulator_test.dart
+@@ -49,4 +49,11 @@ void main() {
+     expect(tooFar, equals(false));
+     expect(farEnough, equals(true));
+   });
++
++  test('simulator reset waits for simulation to complete', () async {
++    Simulator.registerAction(100, () => Simulator.endSimulation());
++    Simulator.registerAction(100, () => Simulator.reset());
++    Simulator.registerAction(100, () => true);
++    await Simulator.run();
++  });
+ }

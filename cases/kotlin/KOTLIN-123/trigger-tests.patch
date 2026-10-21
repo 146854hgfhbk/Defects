@@ -1,0 +1,64 @@
+diff --git a/AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt b/AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt
+index b0918293756e..8ce0957c9827 100644
+--- a/AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt
++++ b/AnkiDroid/src/test/java/com/ichi2/anki/NoteEditorTest.kt
+@@ -631,6 +631,32 @@ class NoteEditorTest : RobolectricTest() {
+             }
+         }
+ 
++    @Test
++    fun `hasUnsavedChanges - note is unchanged`() =
++        withNoteEditorEditing(addBasicNote("hello world")) {
++            this.setField(0, "hello world")
++            assertFalse(hasUnsavedChanges())
++        }
++
++    @Test
++    fun `hasUnsavedChanges - note is changed`() =
++        withNoteEditorEditing(addBasicNote("hello world")) {
++            this.setField(0, "hi")
++            assertTrue(hasUnsavedChanges())
++        }
++
++    @Test
++    fun `hasUnsavedChanges - note contained a newline`() =
++        withNoteEditorEditing(addBasicNote("hello\nworld")) {
++            assertFalse(hasUnsavedChanges())
++        }
++
++    @Test
++    fun `hasUnsavedChanges - note contained a HTML newline - 20174`() =
++        withNoteEditorEditing(addBasicNote("hello<br>world")) {
++            assertFalse(hasUnsavedChanges())
++        }
++
+     private suspend fun withNoteEditorAdding(
+         from: FromScreen = FromScreen.DECK_LIST,
+         block: suspend NoteEditorFragment.() -> Unit,
+@@ -639,6 +665,13 @@ class NoteEditorTest : RobolectricTest() {
+         editor.block()
+     }
+ 
++    private fun withNoteEditorEditing(
++        note: Note,
++        block: suspend NoteEditorFragment.() -> Unit,
++    ) = runTest {
++        block(getNoteEditorEditingExistingBasicNote(note, from = REVIEWER))
++    }
++
+     private fun moveToDynamicDeck(note: Note): DeckId {
+         val dyn = addDynamicDeck("All")
+         col.decks.select(dyn)
+diff --git a/AnkiDroid/build.gradle b/AnkiDroid/build.gradle
+index 3aaaf5f..51e9705 100644
+--- a/AnkiDroid/build.gradle
++++ b/AnkiDroid/build.gradle
+@@ -306,7 +306,7 @@ tasks.register('installGitHook', Copy) {
+     }
+ }
+ // to run manually: `./gradlew installGitHook`
+-tasks.named('preBuild').configure { dependsOn('installGitHook') }
++// installGitHook disabled for benchmark worktree environment
+ 
+ tasks.register('copyTestLibIntoAndroidTest', Copy) {
+     into new File(rootProject.rootDir, 'AnkiDroid/src/androidTest/java/com/ichi2/testutils')

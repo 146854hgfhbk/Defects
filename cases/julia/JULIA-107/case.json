@@ -1,0 +1,117 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-107",
+  "bug_id": "JULIA-107",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaStats/StatsModels.jl",
+  "repository_url": "https://github.com/JuliaStats/StatsModels.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "63d72c4d1a9d7d4c11e49b9e43c69d9d2581ca00",
+  "fixed_revision": "98f7fb67e1e2ed243e8a1abd05ab8065b12bf350",
+  "candidate_sha": "98f7fb67e1e2ed243e8a1abd05ab8065b12bf350",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "63d72c4d1a9d7d4c11e49b9e43c69d9d2581ca00",
+  "changed_production_files": [
+    "src/schema.jl"
+  ],
+  "changed_test_files": [
+    "test/contrasts.jl",
+    "test/formula.jl"
+  ],
+  "trigger_tests": [
+    "contrast types must be instantiated"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "cfc79cb7b558703f36c8cdb897bcfdb47db9f689384c7411456b12cde47d8464",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/contrasts.jl",
+        "basis": "public schema contrast error behavior isolated from upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "d4c5343ee217c7a3c634a3b02bf53611b1cc17c3a50235f4de7b724375614656"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "98f7fb67e1e2ed243e8a1abd05ab8065b12bf350",
+    "project": "JuliaStats/StatsModels.jl",
+    "input_sha256": "1af67ff970785ff271131340bc6b253391b96d039a67a445cbee268e37164b63",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:15:35Z",
+    "usage": {
+      "prompt_tokens": 1541,
+      "completion_tokens": 605,
+      "total_tokens": 2146
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.55, \"summary\": \"The commit fixes a real defect in schema.jl where passing `:x => DummyCoding` (a type instead of an instance) was a footgun that previously errored but stopped erroring due to another fix. The production change adds a specific method to catch this case and restore the error. The issue body confirms existing behavior was violated (the error path disappeared) and needed to be restored.\", \"evidence\": \"Issue #283 explicitly states 'a fix to one issue caused a previously erroring path to no longer error. I restored the error with a specific method to catch the footgun of passing `:x => DummyCoding` (instead of `:x => DummyCoding()`) earlier.' The production file src/schema.jl is modified alongside test file changes. The commit subject says 'fix tests on nightly' which references restoring correct behavior.\", \"missing_evidence\": \"Cannot see the actual diff to confirm the exact nature of the production code change in schema.jl. The fix is partially motivated by test infrastructure changes (@test_broken behavior on nightly) which adds some ambiguity about whether this is purely a bug fix or partly test maintenance.\", \"validation_risks\": \"The fix is partially driven by test infrastructure changes (Julia nightly changing @test_broken semantics), which means some test changes may be adapting to upstream rather than testing a bug fix. The two drop_term test changes appear to be semantic acceptance of changed behavior rather than bug fixes. Only the DummyCoding type vs instance footgun restoration is clearly a production bug fix.\", \"suggested_tests\": \"Test that passing a contrast type (e.g., `:x => DummyCoding`) instead of an instance (`:x => DummyCoding()`) throws an appropriate error. Test that passing a proper instance works correctly.\"}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.55,
+    "summary": "The commit fixes a real defect in schema.jl where passing `:x => DummyCoding` (a type instead of an instance) was a footgun that previously errored but stopped erroring due to another fix. The production change adds a specific method to catch this case and restore the error. The issue body confirms existing behavior was violated (the error path disappeared) and needed to be restored.",
+    "evidence": "Issue #283 explicitly states 'a fix to one issue caused a previously erroring path to no longer error. I restored the error with a specific method to catch the footgun of passing `:x => DummyCoding` (instead of `:x => DummyCoding()`) earlier.' The production file src/schema.jl is modified alongside test file changes. The commit subject says 'fix tests on nightly' which references restoring correct behavior.",
+    "missing_evidence": "Cannot see the actual diff to confirm the exact nature of the production code change in schema.jl. The fix is partially motivated by test infrastructure changes (@test_broken behavior on nightly) which adds some ambiguity about whether this is purely a bug fix or partly test maintenance.",
+    "validation_risks": "The fix is partially driven by test infrastructure changes (Julia nightly changing @test_broken semantics), which means some test changes may be adapting to upstream rather than testing a bug fix. The two drop_term test changes appear to be semantic acceptance of changed behavior rather than bug fixes. Only the DummyCoding type vs instance footgun restoration is clearly a production bug fix.",
+    "suggested_tests": "Test that passing a contrast type (e.g., `:x => DummyCoding`) instead of an instance (`:x => DummyCoding()`) throws an appropriate error. Test that passing a proper instance works correctly."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "contrast types must be instantiated"
+    ],
+    "exception_types": [
+      "5d72cb23a6dbfc5e5156f4e1d2ec99bc2f14338fac1a4375eff15da2d0109774"
+    ],
+    "fingerprints": [
+      "5d72cb23a6dbfc5e5156f4e1d2ec99bc2f14338fac1a4375eff15da2d0109774"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

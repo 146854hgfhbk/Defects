@@ -1,0 +1,272 @@
+{
+  "bug_id": "JULIA-722",
+  "buggy_revision": "b2b2441aa806b8868e6d12519548919e54407fb8",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "618e2850a57bae809edae872b7261f2b4592031d",
+  "case_id": "JULIA-722",
+  "changed_production_files": [
+    "src/source_files.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl",
+    "test/source_files.jl",
+    "test/test_utils.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "618e2850a57bae809edae872b7261f2b4592031d",
+  "instance_id": "julialang__juliasyntax.jl-156",
+  "issue_id": 145,
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/145"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "parent_sha": "b2b2441aa806b8868e6d12519548919e54407fb8",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "candidate_sha": "618e2850a57bae809edae872b7261f2b4592031d",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.78,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Linked issue #145 ('Wrong row reported for juxtaposed string error') is closed and shows concrete wrong output: second error reported at line 2 col 1 for a single-line input. Commit subject 'Fix source line reporting at EOF' and PR body 'Fix #145' align with the issue. Production change confined to src/source_files.jl, which owns line-index/source_location logic. Trigger test 'SourceFile lines and column indexing' in test/source_files.jl provides a behavioral assertion; test/runtests.jl and test/test_utils.jl changes are consistent with registering a new test file and shared helpers rather than production changes.",
+    "input_sha256": "66193288f6fcc6026356123e47102ba7419ca1e2818b1da7f6fb0f2d4357f2ac",
+    "missing_evidence": "No diff hunks, no before/after test output, and no runtime_evidence were provided, so I could not verify that the trigger test actually fails on the parent commit and passes on the fix commit, nor confirm the exact nature of the three hunks (e.g., whether any hunk is a refactor or signature change). The contents of the test/test_utils.jl edit are unknown; if it changed shared helper semantics, other tests could be coupled to the fix.",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "provider": "claude",
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.78, \"summary\": \"PR #156 fixes incorrect line/column computation for positions at end-of-file in SourceFile (src/source_files.jl), addressing issue #145 where a parse error at EOF was reported at row 2, column 1 instead of the correct final-line position. The change is small (3 hunks, one production file) and accompanied by a test file exercising SourceFile line and column indexing.\", \"evidence\": \"Linked issue #145 ('Wrong row reported for juxtaposed string error') is closed and shows concrete wrong output: second error reported at line 2 col 1 for a single-line input. Commit subject 'Fix source line reporting at EOF' and PR body 'Fix #145' align with the issue. Production change confined to src/source_files.jl, which owns line-index/source_location logic. Trigger test 'SourceFile lines and column indexing' in test/source_files.jl provides a behavioral assertion; test/runtests.jl and test/test_utils.jl changes are consistent with registering a new test file and shared helpers rather than production changes.\", \"missing_evidence\": \"No diff hunks, no before/after test output, and no runtime_evidence were provided, so I could not verify that the trigger test actually fails on the parent commit and passes on the fix commit, nor confirm the exact nature of the three hunks (e.g., whether any hunk is a refactor or signature change). The contents of the test/test_utils.jl edit are unknown; if it changed shared helper semantics, other tests could be coupled to the fix.\", \"validation_risks\": \"test/source_files.jl appears to be newly added, so the trigger test may not exist at the parent commit; validation harness must handle applying the new test file against the unfixed production code. Changes to test/runtests.jl and test/test_utils.jl mean the test-side patch is not confined to a single file, which can complicate a clean test-only overlay. Line/column indexing fixes can also shift expected locations in unrelated diagnostic-comparison tests, so a broader suite run is needed to confirm a single, isolated failure.\", \"suggested_tests\": \"Run the 'SourceFile lines and column indexing' testset and assert source_line/source_location for an index one past the last character, for input with and without a trailing newline, for empty input, and for multi-line input ending in a newline. Add an end-to-end parser check reproducing issue #145 (parse \\\"\\\\\\\"a\\\\\\\"\\\\\\\"\\\") asserting the 'unterminated string literal' diagnostic is reported on line 1 at the final column rather than line 2 column 1. Also run the full test suite to verify no other location-dependent expectations regress.\"}",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-30T04:01:42Z",
+    "suggested_tests": "Run the 'SourceFile lines and column indexing' testset and assert source_line/source_location for an index one past the last character, for input with and without a trailing newline, for empty input, and for multi-line input ending in a newline. Add an end-to-end parser check reproducing issue #145 (parse \"\\\"a\\\"\\\"\") asserting the 'unterminated string literal' diagnostic is reported on line 1 at the final column rather than line 2 column 1. Also run the full test suite to verify no other location-dependent expectations regress.",
+    "summary": "PR #156 fixes incorrect line/column computation for positions at end-of-file in SourceFile (src/source_files.jl), addressing issue #145 where a parse error at EOF was reported at row 2, column 1 instead of the correct final-line position. The change is small (3 hunks, one production file) and accompanied by a test file exercising SourceFile line and column indexing.",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.4152069540630183,
+      "input_tokens": 3256,
+      "output_tokens": 660
+    },
+    "validation_risks": "test/source_files.jl appears to be newly added, so the trigger test may not exist at the parent commit; validation harness must handle applying the new test file against the unfixed production code. Changes to test/runtests.jl and test/test_utils.jl mean the test-side patch is not confined to a single file, which can complicate a clean test-only overlay. Line/column indexing fixes can also shift expected locations in unrelated diagnostic-comparison tests, so a broader suite run is needed to confirm a single, isolated failure."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "SourceFile lines and column indexing"
+    ],
+    "PASS_TO_PASS": [
+      "Tokenize",
+      "ParseStream",
+      "ParseStream constructors",
+      "ParseStream tree traversal",
+      "Trivia attachment",
+      "Unicode normalization in tree conversion",
+      "diagnostics for literal parsing",
+      "Expr conversion",
+      "Parsing literals from strings",
+      "Hooks for Core integration",
+      "Parse JuliaSyntax",
+      "Parse Base at /usr/local/julia/bin/../share/julia/base",
+      "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+    ],
+    "base_commit": "b2b2441aa806b8868e6d12519548919e54407fb8",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "created_at": "2022-11-23 06:13:46",
+    "image_name": "docker.io/swerebenchv2/julialang-juliasyntax.jl:156-b2b2441",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "instance_id": "julialang__juliasyntax.jl-156",
+    "interface": "Function: source_location(source::SourceFile, byte_index::Integer)\nLocation: src/source_files.jl\nInputs:\n- **source**: a `SourceFile` instance containing the parsed source code (code string and line start table).\n- **byte_index**: a 1‑based integer byte offset into `source.code`. Must be within the code range (1 ≤ byte_index ≤ ncodeunits(source.code)+1).\nOutputs:\n- Returns a tuple `(line::Int, column::Int)` where `line` is the 1‑based line number and `column` is the 1‑based column (character) position of the given byte index. If `byte_index` points exactly to the end of the file, the line is adjusted to the last actual line.\nDescription: Computes the human‑readable line and column location for a byte offset in a `SourceFile`. Used by the test suite to verify correct line/column indexing, especially around newline handling and end‑of‑file offsets.\n",
+    "issue_url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/145",
+    "language": "julia",
+    "license": "custom-check-github",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.92,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [],
+        "intent_completeness": "partial",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports that a juxtaposed string literal error is reported on the wrong row/column, implying a bug in the source location mapping. The added test suite checks the `source_location` function for various line/column scenarios, directly exercising the logic needed to fix the reported row error. The tests align with the implied requirement and there are no signs of test coupling, hidden naming expectations, external dependencies, or ambiguous specifications beyond the brief description. Consequently the task is a clear, solvable bug fix without environment‑preparation problems.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 3,
+      "num_modified_lines": null,
+      "pr_author": "c42f",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/156"
+    },
+    "patch": "diff --git a/src/source_files.jl b/src/source_files.jl\nindex fa95794a..bff823f9 100644\n--- a/src/source_files.jl\n+++ b/src/source_files.jl\n@@ -23,7 +23,7 @@ function SourceFile(code::AbstractString; filename=nothing)\n         code[i] == '\\n' && push!(line_starts, i+1)\n     end\n     if isempty(code) || last(code) != '\\n'\n-        push!(line_starts, lastindex(code)+1)\n+        push!(line_starts, ncodeunits(code)+1)\n     end\n     SourceFile(code, filename, line_starts)\n end\n@@ -34,14 +34,15 @@ end\n \n # Get line number of the given byte within the code\n function source_line(source::SourceFile, byte_index)\n-    searchsortedlast(source.line_starts, byte_index)\n+    line = searchsortedlast(source.line_starts, byte_index)\n+    return (line < lastindex(source.line_starts)) ? line : line-1\n end\n \n \"\"\"\n Get line number and character within the line at the given byte index.\n \"\"\"\n function source_location(source::SourceFile, byte_index)\n-    line = searchsortedlast(source.line_starts, byte_index)\n+    line = source_line(source, byte_index)\n     i = source.line_starts[line]\n     column = 1\n     while i < byte_index\n@@ -57,7 +58,7 @@ Get byte range of the source line at byte_index, buffered by\n \"\"\"\n function source_line_range(source::SourceFile, byte_index;\n                            context_lines_before=0, context_lines_after=0)\n-    line = searchsortedlast(source.line_starts, byte_index)\n+    line = source_line(source, byte_index)\n     fbyte = source.line_starts[max(line-context_lines_before, 1)]\n     lbyte = source.line_starts[min(line+1+context_lines_after, end)] - 1\n     fbyte,lbyte\n",
+    "pr_description": "Fix #145",
+    "pr_url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/156",
+    "problem_statement": "Wrong row reported for juxtaposed string error\nIn the following example, the second error is incorrectly reported to occur on row 2, column 1\r\n\r\n```julia\r\njulia> \"a\"\"\r\nERROR: ParseError:\r\nError: cannot juxtapose string literal\r\n@ REPL[13]:1:4\r\n\"a\"\"\r\nError: unterminated string literal\r\n@ REPL[13]:2:1\r\n\"a\"\"\r\n```",
+    "repo": "JuliaLang/JuliaSyntax.jl",
+    "test_patch": "diff --git a/test/runtests.jl b/test/runtests.jl\nindex b08da533..fad4278d 100644\n--- a/test/runtests.jl\n+++ b/test/runtests.jl\n@@ -17,12 +17,10 @@ include(\"parser.jl\")\n include(\"diagnostics.jl\")\n include(\"parser_api.jl\")\n include(\"expr.jl\")\n-@testset \"Parsing values from strings\" begin\n+@testset \"Parsing literals from strings\" begin\n     include(\"value_parsing.jl\")\n end\n include(\"hooks.jl\")\n include(\"parse_packages.jl\")\n+include(\"source_files.jl\")\n \n-# Prototypes\n-#include(\"syntax_interpolation.jl\")\n-#include(\"simple_parser.jl\")\ndiff --git a/test/source_files.jl b/test/source_files.jl\nnew file mode 100644\nindex 00000000..99071926\n--- /dev/null\n+++ b/test/source_files.jl\n@@ -0,0 +1,12 @@\n+@testset \"SourceFile lines and column indexing\" begin\n+    @test source_location(SourceFile(\"a\"), 1) == (1,1)\n+    @test source_location(SourceFile(\"a\"), 2) == (1,2)\n+\n+    @test source_location(SourceFile(\"a\\n\"), 2) == (1,2)\n+    @test source_location(SourceFile(\"a\\n\"), 3) == (1,3)\n+\n+    @test source_location(SourceFile(\"a\\nb\\n\"), 2) == (1,2)\n+    @test source_location(SourceFile(\"a\\nb\\n\"), 3) == (2,1)\n+    @test source_location(SourceFile(\"a\\nb\\n\"), 4) == (2,2)\n+    @test source_location(SourceFile(\"a\\nb\\n\"), 5) == (2,3)\n+end\ndiff --git a/test/test_utils.jl b/test/test_utils.jl\nindex 1cd77284..03bda337 100644\n--- a/test/test_utils.jl\n+++ b/test/test_utils.jl\n@@ -7,6 +7,7 @@ using .JuliaSyntax:\n     ParseState,\n     Diagnostic,\n     SourceFile,\n+    source_location,\n     parse!,\n     parse,\n     parseall,\n"
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "Parsing literals from strings",
+        "SourceFile lines and column indexing"
+      ],
+      "assertion_expression_sha256": [
+        "9c4241d14b2e331ff0d48ae7e03ff5dd352785b0df5beb9bd924d59d692394d7",
+        "d74d71f1c68617bd75fc35f5ea182defe82cc4ecd19fc6b87e4d5c87baf91a6a",
+        "4465b4839282fc277fa24b0a536fb0a869067a088b201bafa2b4cbbac554f4bb",
+        "df1edd5b0133b6bc169a786653684a8b4b5ee1b24f9277df279e74a38a7e8f65",
+        "c988577a27bbfb118ba2c98eaee2d7f685c78135276869a362cfe84f6ff15c71",
+        "659b38ad411a08a692d84fd6811c2ee85c0dac81ab43ea669c066f9d5bb41692",
+        "d3a77b56afd758052cfb5a4e57c6e4b0536160f541879735707eee1ba954f5cb",
+        "eec1bfecd44d58eb51e15d7a3db019865c1d4e673e23000ec7cccded9c170d89"
+      ],
+      "f2p_tests": [
+        "SourceFile lines and column indexing"
+      ],
+      "inferred_testset_context": [
+        "Tokenize"
+      ],
+      "mwe_basis": "exact_assertions_from_upstream_fix_test_patch",
+      "schema_version": 1,
+      "source_evidence": {
+        "path": "trigger/upstream-tests.patch",
+        "sha256": "e349dc1ea180b402af924a837bfc625ada72823d457d8f36f605b6c37e45675b",
+        "test_files": [
+          "test/runtests.jl",
+          "test/source_files.jl",
+          "test/test_utils.jl"
+        ],
+        "test_files_sha256": {
+          "test/runtests.jl": "a849e22d7382994661b9ddc6ab9e4b784bf6ba2446290c1c3d073f9bb6eebd5b",
+          "test/source_files.jl": "7e87e0c84c9c7c75cff5831316a71bfac05e3b3e7ebe5a43ec3ed94a7ba785ea",
+          "test/test_utils.jl": "7d7b0dda39abfb9d5cb02054726ee54b4b9cba287e931abd2f757904eee6bbc0"
+        }
+      }
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "02cd75e9ce27122c5281cd69a97a7fccc7d07cd5d5f69a9d038bbc0f460e8782",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "SourceFile lines and column indexing"
+  ],
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "SourceFile lines and column indexing"
+    ],
+    "exception_types": [
+      "1c95db510b0f73eaf42e2e87179f46e03c99ed7859f9a52fba0c292385557953"
+    ],
+    "fingerprints": [
+      "1c95db510b0f73eaf42e2e87179f46e03c99ed7859f9a52fba0c292385557953"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "618e2850a57bae809edae872b7261f2b4592031d",
+    "parent_sha": "b2b2441aa806b8868e6d12519548919e54407fb8",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "57980b8079c91cb4fdff28ec564230c6dea8303ae045a53a492db848b0f02b4d",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

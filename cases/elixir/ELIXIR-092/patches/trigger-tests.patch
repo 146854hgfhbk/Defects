@@ -1,0 +1,36 @@
+diff --git a/test/mimic_test.exs b/test/mimic_test.exs
+index 5ffaa0e..cdde541 100644
+--- a/test/mimic_test.exs
++++ b/test/mimic_test.exs
+@@ -112,7 +112,7 @@ defmodule Mimic.Test do
+     end
+   end
+ 
+-  describe "stub_with/1 private mode" do
++  describe "stub_with/2 private mode" do
+     setup :set_mimic_private
+ 
+     test "called multiple times" do
+@@ -127,6 +127,22 @@ defmodule Mimic.Test do
+ 
+       assert_raise Mimic.UnexpectedCallError, fn -> Calculator.mult(4, 9) end
+     end
++
++    test "undefined mocking module" do
++      assert_raise ArgumentError,
++                   "Module MissingModule not defined",
++                   fn ->
++                     stub_with(Calculator, MissingModule)
++                   end
++    end
++
++    test "undefined mocked module" do
++      assert_raise ArgumentError,
++                   "Module MissingModule has not been copied.  See docs for Mimic.copy/1",
++                   fn ->
++                     stub_with(MissingModule, InverseCalculator)
++                   end
++    end
+   end
+ 
+   describe "stub/3 private mode" do

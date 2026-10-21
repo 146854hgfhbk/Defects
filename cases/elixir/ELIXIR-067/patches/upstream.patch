@@ -1,0 +1,697 @@
+diff --git a/guides/asset_management.md b/guides/asset_management.md
+index b789ee177..c56cc7115 100644
+--- a/guides/asset_management.md
++++ b/guides/asset_management.md
+@@ -20,7 +20,7 @@ If you want to import JavaScript dependencies, you have at least three options t
+    import topbar from "../vendor/topbar"
+    ```
+ 
+-2. Call `npm install topbar --save` inside your assets directory and `esbuild` will be able to automatically pick them up:
++2. Call `npm install topbar --prefix assets` will create `package.json` and `package-lock.json` inside your assets directory and `esbuild` will be able to automatically pick them up:
+ 
+    ```js
+    import topbar from "topbar"
+diff --git a/guides/cheatsheets/router.cheatmd b/guides/cheatsheets/router.cheatmd
+index 1f0af13e7..65d976ace 100644
+--- a/guides/cheatsheets/router.cheatmd
++++ b/guides/cheatsheets/router.cheatmd
+@@ -49,7 +49,7 @@ end
+ ~p"/users/3/posts" # user_id is 3
+ ~p"/users/3/posts/17" # user_id is 3 and post_id = 17
+ ```
+-For more info check the [resources docs.](routing-1.html#resources)
++For more info check the [resources docs.](routing.html#resources)
+ 
+ ### Scopes
+ 
+diff --git a/guides/components.md b/guides/components.md
+index c75ccbef4..f78aa38a3 100644
+--- a/guides/components.md
++++ b/guides/components.md
+@@ -62,11 +62,7 @@ Next we need to update `show.html.heex`:
+ </section>
+ ```
+ 
+-When we reload `http://localhost:4000/hello/Frank`, we should see the same content as before.
+-
+-Since templates are embedded inside the `HelloHTML` module, we were able to invoke the view function simply as `<.greet messenger="..." />`.
+-
+-If the component was defined elsewhere, we can also type `<HelloWeb.HelloHTML.greet messenger="..." />`.
++When we reload `http://localhost:4000/hello/Frank`, we should see the same content as before. Since the `show.html.heex` template is embedded within the `HelloHTML` module, we were able to invoke the function component directly as `<.greet messenger="..." />`. If the component was defined elsewhere, we would need to give its full name: `<HelloWeb.HelloHTML.greet messenger="..." />`.
+ 
+ By declaring attributes as required, Phoenix will warn at compile time if we call the `<.greet />` component without passing attributes. If an attribute is optional, you can specify the `:default` option with a value:
+ 
+@@ -74,19 +70,22 @@ By declaring attributes as required, Phoenix will warn at compile time if we cal
+ attr :messenger, :string, default: nil
+ ```
+ 
+-Although this is a quick example, it shows the different roles function components play in Phoenix:
+-
+-* Function components can be defined as functions that receive `assigns` as argument and call the `~H` sigil, as we did in `greet/1`
++Overall, function components are the essential building block of Phoenix rendering stack. The majority of the times, they are functions that receive a single argument called `assigns` and call the `~H` sigil, as we did in `greet/1`. They can also be invoked from templates, with compile-time validation of its attributes declared via `attr`.
+ 
+-* Function components can be embedded from template files, that's how we load `show.html.heex` into `HelloWeb.HelloHTML`
++In fact, every template embedded into `HelloHTML` is a function component in itself. `show.html.heex` simply becomes a function component named `show`. This also means you can directly render function components directly from the controller, skipping the `show.html.heex` template:
+ 
+-* Function components can declare which attributes are expected, which are validated at compilation time
+-
+-* Function components can be directly rendered from controllers
++```elixir
++def HelloWeb.HelloController do
++  use HelloWeb, :controller
+ 
+-* Function components can be directly rendered from other function components, as we called `<.greet messenger={@messenger} />` from `show.html.heex`
++  def show(conn, %{"messenger" => messenger}) do
++    # Render the HelloWeb.HelloHTML.greet/1 component
++    render(conn, :greet, messenger: messenger)
++  end
++end
++```
+ 
+-And there's more. Before we go deeper, let's fully understand the expressive power behind the HEEx template language.
++Next, let's fully understand the expressive power behind the HEEx template language.
+ 
+ ## HEEx
+ 
+@@ -240,3 +239,5 @@ CoreComponents also play an important role in Phoenix code generators, as the co
+   * Read the official documentation for [`Phoenix.Component`](https://hexdocs.pm/phoenix_live_view/Phoenix.Component.html)
+ 
+   * Read the official documentation for [HEEx and the ~H sigils](https://hexdocs.pm/phoenix_live_view/Phoenix.Component.html#sigil_H/2)
++
++  * If you are looking for higher level components beyond the minimal ones included by Phoenix, [the LiveView project keeps a list of component systems](https://github.com/phoenixframework/phoenix_live_view#component-systems)
+diff --git a/guides/controllers.md b/guides/controllers.md
+index 6ca334642..3bb93589e 100644
+--- a/guides/controllers.md
++++ b/guides/controllers.md
+@@ -47,7 +47,7 @@ defmodule HelloWeb.PageController do
+   ...
+ 
+   def index(conn, _params) do
+-    render(conn, :index)
++    render(conn, :home)
+   end
+ end
+ ```
+diff --git a/guides/deployment/fly.md b/guides/deployment/fly.md
+index 1388a0a9b..b2513090c 100644
+--- a/guides/deployment/fly.md
++++ b/guides/deployment/fly.md
+@@ -390,11 +390,11 @@ $ fly scale count 2
+ 
+ Refer to the [Fly.io Elixir documentation](https://fly.io/docs/getting-started/elixir) for additional information.
+ 
+-[Working with Fly.io applications](https://fly.io/docs/getting-started/working-with-fly-apps/) covers things like:
++[The Fly.io docs](https://fly.io/docs/) covers things like:
+ 
+-* Status and logs
+-* Custom domains
+-* Certificates
++* [Status](https://fly.io/docs/flyctl/status/) and [logs](https://fly.io/docs/monitoring/logging-overview/)
++* [Custom domains](https://fly.io/docs/networking/custom-domain/)
++* [Certificates](https://fly.io/docs/networking/custom-domain-api/)
+ 
+ ## Troubleshooting
+ 
+diff --git a/guides/introduction/up_and_running.md b/guides/introduction/up_and_running.md
+index 8d07024b1..df1871d49 100644
+--- a/guides/introduction/up_and_running.md
++++ b/guides/introduction/up_and_running.md
+@@ -86,7 +86,7 @@ And finally, we'll start the Phoenix server:
+ 
+ ```console
+ $ mix phx.server
+-[info] Running HelloWeb.Endpoint with cowboy 2.9.0 at 127.0.0.1:4000 (http)
++[info] Running HelloWeb.Endpoint with Bandit 1.5.7 at 127.0.0.1:4000 (http)
+ [info] Access HelloWeb.Endpoint at http://localhost:4000
+ [watch] build finished, watching for changes...
+ ...
+diff --git a/installer/lib/mix/tasks/phx.new.ex b/installer/lib/mix/tasks/phx.new.ex
+index 899a9f84b..01882b9d2 100644
+--- a/installer/lib/mix/tasks/phx.new.ex
++++ b/installer/lib/mix/tasks/phx.new.ex
+@@ -266,8 +266,14 @@ defmodule Mix.Tasks.Phx.New do
+     Code.ensure_loaded?(Hex)
+   end
+ 
+-  defp rebar_available? do
+-    Mix.Rebar.rebar_cmd(:rebar3)
++  if Version.match?(System.version(), "~> 1.18") do
++    defp rebar_available? do
++      true
++    end
++  else
++    defp rebar_available? do
++      Mix.Rebar.rebar_cmd(:rebar3)
++    end
+   end
+ 
+   defp print_missing_steps(steps) do
+diff --git a/installer/templates/phx_single/mix.exs b/installer/templates/phx_single/mix.exs
+index 60fe5b267..828252311 100644
+--- a/installer/templates/phx_single/mix.exs
++++ b/installer/templates/phx_single/mix.exs
+@@ -13,7 +13,8 @@ defmodule <%= @app_module %>.MixProject do
+       elixirc_paths: elixirc_paths(Mix.env()),
+       start_permanent: Mix.env() == :prod,
+       aliases: aliases(),
+-      deps: deps()
++      deps: deps(),
++      listeners: [Phoenix.CodeReloader]
+     ]
+   end
+ 
+diff --git a/installer/templates/phx_umbrella/apps/app_name_web/mix.exs b/installer/templates/phx_umbrella/apps/app_name_web/mix.exs
+index 12f347b4d..620aa84ec 100644
+--- a/installer/templates/phx_umbrella/apps/app_name_web/mix.exs
++++ b/installer/templates/phx_umbrella/apps/app_name_web/mix.exs
+@@ -13,7 +13,8 @@ defmodule <%= @web_namespace %>.MixProject do
+       elixirc_paths: elixirc_paths(Mix.env()),
+       start_permanent: Mix.env() == :prod,
+       aliases: aliases(),
+-      deps: deps()
++      deps: deps(),
++      listeners: [Phoenix.CodeReloader]
+     ]
+   end
+ 
+diff --git a/installer/templates/phx_web/components/layouts/app.html.heex b/installer/templates/phx_web/components/layouts/app.html.heex
+index c50aa21d2..d16409073 100644
+--- a/installer/templates/phx_web/components/layouts/app.html.heex
++++ b/installer/templates/phx_web/components/layouts/app.html.heex
+@@ -26,7 +26,7 @@
+ </header>
+ <main class="px-4 py-20 sm:px-6 lg:px-8">
+   <div class="mx-auto max-w-2xl">
+-    <.flash_group flash={@flash} />
+     <%%= @inner_content %>
+   </div>
+ </main>
++<.flash_group flash={@flash} />
+diff --git a/lib/mix/tasks/phx.gen.auth/hashing_library.ex b/lib/mix/tasks/phx.gen.auth/hashing_library.ex
+index cd1d2b7c7..2d37afc26 100644
+--- a/lib/mix/tasks/phx.gen.auth/hashing_library.ex
++++ b/lib/mix/tasks/phx.gen.auth/hashing_library.ex
+@@ -40,7 +40,7 @@ defmodule Mix.Tasks.Phx.Gen.Auth.HashingLibrary do
+     lib = %__MODULE__{
+       name: :argon2,
+       module: Argon2,
+-      mix_dependency: ~s|{:argon2_elixir, "~> 3.0"}|,
++      mix_dependency: ~s|{:argon2_elixir, "~> 4.0"}|,
+       test_config: """
+       config :argon2_elixir, t_cost: 1, m_cost: 8
+       """
+diff --git a/lib/phoenix/code_reloader.ex b/lib/phoenix/code_reloader.ex
+index 809d55525..433cc7547 100644
+--- a/lib/phoenix/code_reloader.ex
++++ b/lib/phoenix/code_reloader.ex
+@@ -31,6 +31,19 @@ defmodule Phoenix.CodeReloader do
+ 
+   This function is a no-op and returns `:ok` if Mix is not available.
+ 
++  The reloader should also be configured as a Mix listener in project's
++  mix.exs file (since Elixir v1.18):
++
++      def project do
++        [
++          ...,
++          listeners: [Phoenix.CodeReloader]
++        ]
++      end
++
++  This way the reloader can notice whenever the project is compiled
++  concurrently.
++
+   ## Options
+ 
+     * `:reloadable_args` - additional CLI args to pass to the compiler tasks.
+@@ -57,6 +70,10 @@ defmodule Phoenix.CodeReloader do
+   @spec sync :: :ok
+   defdelegate sync, to: Phoenix.CodeReloader.Server
+ 
++  @doc false
++  @spec child_spec(keyword) :: Supervisor.child_spec()
++  defdelegate child_spec(opts), to: Phoenix.CodeReloader.MixListener
++
+   ## Plug
+ 
+   @behaviour Plug
+diff --git a/lib/phoenix/code_reloader/mix_listener.ex b/lib/phoenix/code_reloader/mix_listener.ex
+new file mode 100644
+index 000000000..f136314ee
+--- /dev/null
++++ b/lib/phoenix/code_reloader/mix_listener.ex
+@@ -0,0 +1,72 @@
++defmodule Phoenix.CodeReloader.MixListener do
++  @moduledoc false
++
++  use GenServer
++
++  @name __MODULE__
++
++  @spec start_link(keyword) :: GenServer.on_start()
++  def start_link(_opts) do
++    GenServer.start_link(__MODULE__, {}, name: @name)
++  end
++
++  @spec started? :: boolean()
++  def started? do
++    Process.whereis(Phoenix.CodeReloader.MixListener) != nil
++  end
++
++  @doc """
++  Unloads all modules invalidated by external compilations.
++
++  Only reloads modules from the given apps.
++  """
++  @spec purge([atom()]) :: :ok
++  def purge(apps) do
++    GenServer.call(@name, {:purge, apps}, :infinity)
++  end
++
++  @impl true
++  def init({}) do
++    {:ok, %{to_purge: %{}}}
++  end
++
++  @impl true
++  def handle_call({:purge, apps}, _from, state) do
++    for app <- apps, modules = state.to_purge[app] do
++      purge_modules(modules)
++    end
++
++    {:reply, :ok, %{state | to_purge: %{}}}
++  end
++
++  @impl true
++  def handle_info({:modules_compiled, info}, state) do
++    if info.os_pid == System.pid() do
++      # Ignore compilations from ourselves, because the modules are
++      # already updated in memory
++      {:noreply, state}
++    else
++      %{changed: changed, removed: removed} = info.modules_diff
++
++      state =
++        update_in(state.to_purge[info.app], fn to_purge ->
++          to_purge = to_purge || MapSet.new()
++          to_purge = Enum.into(changed, to_purge)
++          Enum.into(removed, to_purge)
++        end)
++
++      {:noreply, state}
++    end
++  end
++
++  def handle_info(_message, state) do
++    {:noreply, state}
++  end
++
++  defp purge_modules(modules) do
++    for module <- modules do
++      :code.purge(module)
++      :code.delete(module)
++    end
++  end
++end
+diff --git a/lib/phoenix/code_reloader/server.ex b/lib/phoenix/code_reloader/server.ex
+index 8f56f423c..16ff92bf1 100644
+--- a/lib/phoenix/code_reloader/server.ex
++++ b/lib/phoenix/code_reloader/server.ex
+@@ -63,23 +63,39 @@ defmodule Phoenix.CodeReloader.Server do
+     apps = endpoint.config(:reloadable_apps) || default_reloadable_apps()
+     args = Keyword.get(opts, :reloadable_args, ["--no-all-warnings"])
+ 
+-    # We do a backup of the endpoint in case compilation fails.
+-    # If so we can bring it back to finish the request handling.
+-    backup = load_backup(endpoint)
+     froms = all_waiting([from], endpoint)
+ 
+-    {res, out} =
+-      proxy_io(fn ->
+-        try do
+-          mix_compile(Code.ensure_loaded(Mix.Task), compilers, apps, args, state.timestamp)
+-        catch
+-          :exit, {:shutdown, 1} ->
+-            :error
+-
+-          kind, reason ->
+-            IO.puts(Exception.format(kind, reason, __STACKTRACE__))
+-            :error
+-        end
++    {backup, res, out} =
++      with_build_lock(fn ->
++        purge_fallback? =
++          if Phoenix.CodeReloader.MixListener.started?() do
++            Phoenix.CodeReloader.MixListener.purge(apps)
++            false
++          else
++            warn_missing_mix_listener()
++            true
++          end
++
++        # We do a backup of the endpoint in case compilation fails.
++        # If so we can bring it back to finish the request handling.
++        backup = load_backup(endpoint)
++
++        {res, out} =
++          proxy_io(fn ->
++            try do
++              task_loaded = Code.ensure_loaded(Mix.Task)
++              mix_compile(task_loaded, compilers, apps, args, state.timestamp, purge_fallback?)
++            catch
++              :exit, {:shutdown, 1} ->
++                :error
++
++              kind, reason ->
++                IO.puts(Exception.format(kind, reason, __STACKTRACE__))
++                :error
++            end
++          end)
++
++        {backup, res, out}
+       end)
+ 
+     reply =
+@@ -175,7 +191,34 @@ defmodule Phoenix.CodeReloader.Server do
+     defp purge_protocols(_path), do: :ok
+   end
+ 
+-  defp mix_compile({:module, Mix.Task}, compilers, apps_to_reload, compile_args, timestamp) do
++  defp warn_missing_mix_listener do
++    listeners_supported? = Version.match?(System.version(), ">= 1.18.0-dev")
++
++    if listeners_supported? do
++      IO.warn("""
++      a Mix listener expected by Phoenix.CodeReloader is missing.
++
++      Please add the listener to your mix.exs configuration, like so:
++
++          def project do
++            [
++              ...,
++              listeners: [Phoenix.CodeReloader]
++            ]
++          end
++
++      """)
++    end
++  end
++
++  defp mix_compile(
++         {:module, Mix.Task},
++         compilers,
++         apps_to_reload,
++         compile_args,
++         timestamp,
++         purge_fallback?
++       ) do
+     config = Mix.Project.config()
+     path = Mix.Project.consolidation_path(config)
+ 
+@@ -184,8 +227,25 @@ defmodule Phoenix.CodeReloader.Server do
+       purge_protocols(path)
+     end
+ 
+-    mix_compile_deps(Mix.Dep.cached(), apps_to_reload, compile_args, compilers, timestamp, path)
+-    mix_compile_project(config[:app], apps_to_reload, compile_args, compilers, timestamp, path)
++    mix_compile_deps(
++      Mix.Dep.cached(),
++      apps_to_reload,
++      compile_args,
++      compilers,
++      timestamp,
++      path,
++      purge_fallback?
++    )
++
++    mix_compile_project(
++      config[:app],
++      apps_to_reload,
++      compile_args,
++      compilers,
++      timestamp,
++      path,
++      purge_fallback?
++    )
+ 
+     if config[:consolidate_protocols] do
+       # If we are consolidating protocols, we need to purge all of its modules
+@@ -198,30 +258,46 @@ defmodule Phoenix.CodeReloader.Server do
+     :ok
+   end
+ 
+-  defp mix_compile({:error, _reason}, _, _, _, _) do
++  defp mix_compile({:error, _reason}, _, _, _, _, _) do
+     raise "the Code Reloader is enabled but Mix is not available. If you want to " <>
+             "use the Code Reloader in production or inside an escript, you must add " <>
+             ":mix to your applications list. Otherwise, you must disable code reloading " <>
+             "in such environments"
+   end
+ 
+-  defp mix_compile_deps(deps, apps_to_reload, compile_args, compilers, timestamp, path) do
++  defp mix_compile_deps(
++         deps,
++         apps_to_reload,
++         compile_args,
++         compilers,
++         timestamp,
++         path,
++         purge_fallback?
++       ) do
+     for dep <- deps, dep.app in apps_to_reload do
+       Mix.Dep.in_dependency(dep, fn _ ->
+-        mix_compile_unless_stale_config(compilers, compile_args, timestamp, path)
++        mix_compile_unless_stale_config(compilers, compile_args, timestamp, path, purge_fallback?)
+       end)
+     end
+   end
+ 
+-  defp mix_compile_project(nil, _, _, _, _, _), do: :ok
+-
+-  defp mix_compile_project(app, apps_to_reload, compile_args, compilers, timestamp, path) do
++  defp mix_compile_project(nil, _, _, _, _, _, _), do: :ok
++
++  defp mix_compile_project(
++         app,
++         apps_to_reload,
++         compile_args,
++         compilers,
++         timestamp,
++         path,
++         purge_fallback?
++       ) do
+     if app in apps_to_reload do
+-      mix_compile_unless_stale_config(compilers, compile_args, timestamp, path)
++      mix_compile_unless_stale_config(compilers, compile_args, timestamp, path, purge_fallback?)
+     end
+   end
+ 
+-  defp mix_compile_unless_stale_config(compilers, compile_args, timestamp, path) do
++  defp mix_compile_unless_stale_config(compilers, compile_args, timestamp, path, purge_fallback?) do
+     manifests = Mix.Tasks.Compile.Elixir.manifests()
+     configs = Mix.Project.config_files()
+     config = Mix.Project.config()
+@@ -230,7 +306,8 @@ defmodule Phoenix.CodeReloader.Server do
+       [] ->
+         # If the manifests are more recent than the timestamp,
+         # someone updated this app behind the scenes, so purge all beams.
+-        if Mix.Utils.stale?(manifests, [timestamp]) do
++        # TODO: remove once we depend on Elixir 1.18
++        if purge_fallback? and Mix.Utils.stale?(manifests, [timestamp]) do
+           purge_modules(Path.join(Mix.Project.app_path(config), "ebin"))
+         end
+ 
+@@ -351,4 +428,11 @@ defmodule Phoenix.CodeReloader.Server do
+       Logger.configure(compile_time_application: logger_config_app)
+     end
+   end
++
++  # TODO: remove once we depend on Elixir 1.18
++  if Code.ensure_loaded?(Mix.Project) and function_exported?(Mix.Project, :with_build_lock, 1) do
++    defp with_build_lock(fun), do: Mix.Project.with_build_lock(fun)
++  else
++    defp with_build_lock(fun), do: fun.()
++  end
+ end
+diff --git a/lib/phoenix/controller.ex b/lib/phoenix/controller.ex
+index 95cb139e5..74f1d5bd4 100644
+--- a/lib/phoenix/controller.ex
++++ b/lib/phoenix/controller.ex
+@@ -1274,7 +1274,7 @@ defmodule Phoenix.Controller do
+   end
+ 
+   defp encode_filename(filename, false), do: filename
+-  defp encode_filename(filename, true), do: URI.encode(filename)
++  defp encode_filename(filename, true), do: URI.encode(filename, &URI.char_unreserved?/1)
+ 
+   defp get_disposition_type(:attachment), do: "attachment"
+   defp get_disposition_type(:inline), do: "inline"
+diff --git a/lib/phoenix/param.ex b/lib/phoenix/param.ex
+index 7ccd2b767..34a5d70d5 100644
+--- a/lib/phoenix/param.ex
++++ b/lib/phoenix/param.ex
+@@ -1,25 +1,34 @@
+ defprotocol Phoenix.Param do
+-  @moduledoc """
++  @moduledoc ~S"""
+   A protocol that converts data structures into URL parameters.
+ 
+-  This protocol is used by URL helpers and other parts of the
++  This protocol is used by `Phoenix.VerifiedRoutes` and other parts of the
+   Phoenix stack. For example, when you write:
+ 
+-      user_path(conn, :edit, @user)
++      ~p"/user/#{@user}/edit"
+ 
+   Phoenix knows how to extract the `:id` from `@user` thanks
+   to this protocol.
+ 
++  (Deprecated URL helpers, e.g. `user_path(conn, :edit, @user)`, work the
++  same way.)
++
+   By default, Phoenix implements this protocol for integers, binaries, atoms,
+   and structs. For structs, a key `:id` is assumed, but you may provide a
+   specific implementation.
+ 
+-  Nil values cannot be converted to param.
++  The term `nil` cannot be converted to param.
+ 
+   ## Custom parameters
+ 
+   In order to customize the parameter for any struct,
+-  one can simply implement this protocol.
++  one can simply implement this protocol. For example for a `Date` struct:
++
++      defimpl Phoenix.Param, for: Date do
++        def to_param(date) do
++          Date.to_string(date)
++        end
++      end
+ 
+   However, for convenience, this protocol can also be
+   derivable. For example:
+@@ -50,7 +59,7 @@ defprotocol Phoenix.Param do
+ 
+   @fallback_to_any true
+ 
+-  @spec to_param(term) :: String.t
++  @spec to_param(term) :: String.t()
+   def to_param(term)
+ end
+ 
+@@ -79,7 +88,7 @@ end
+ defimpl Phoenix.Param, for: Map do
+   def to_param(map) do
+     raise ArgumentError,
+-      "maps cannot be converted to_param. A struct was expected, got: #{inspect map}"
++          "maps cannot be converted to_param. A struct was expected, got: #{inspect(map)}"
+   end
+ end
+ 
+@@ -88,16 +97,18 @@ defimpl Phoenix.Param, for: Any do
+     key = Keyword.get(options, :key, :id)
+ 
+     unless Map.has_key?(struct, key) do
+-      raise ArgumentError, "cannot derive Phoenix.Param for struct #{inspect module} " <>
+-                           "because it does not have key #{inspect key}. Please pass " <>
+-                           "the :key option when deriving"
++      raise ArgumentError,
++            "cannot derive Phoenix.Param for struct #{inspect(module)} " <>
++              "because it does not have key #{inspect(key)}. Please pass " <>
++              "the :key option when deriving"
+     end
+ 
+     quote do
+       defimpl Phoenix.Param, for: unquote(module) do
+         def to_param(%{unquote(key) => nil}) do
+-          raise ArgumentError, "cannot convert #{inspect unquote(module)} to param, " <>
+-                               "key #{inspect unquote(key)} contains a nil value"
++          raise ArgumentError,
++                "cannot convert #{inspect(unquote(module))} to param, " <>
++                  "key #{inspect(unquote(key))} contains a nil value"
+         end
+ 
+         def to_param(%{unquote(key) => key}) when is_integer(key), do: Integer.to_string(key)
+@@ -110,15 +121,16 @@ defimpl Phoenix.Param, for: Any do
+   def to_param(%{id: nil}) do
+     raise ArgumentError, "cannot convert struct to param, key :id contains a nil value"
+   end
++
+   def to_param(%{id: id}) when is_integer(id), do: Integer.to_string(id)
+   def to_param(%{id: id}) when is_binary(id), do: id
+   def to_param(%{id: id}), do: Phoenix.Param.to_param(id)
+ 
+   def to_param(map) when is_map(map) do
+     raise ArgumentError,
+-      "structs expect an :id key when converting to_param or a custom implementation " <>
+-      "of the Phoenix.Param protocol (read Phoenix.Param docs for more information), " <>
+-      "got: #{inspect map}"
++          "structs expect an :id key when converting to_param or a custom implementation " <>
++            "of the Phoenix.Param protocol (read Phoenix.Param docs for more information), " <>
++            "got: #{inspect(map)}"
+   end
+ 
+   def to_param(data) do
+diff --git a/lib/phoenix/router.ex b/lib/phoenix/router.ex
+index 9725b1a21..ad4683ddf 100644
+--- a/lib/phoenix/router.ex
++++ b/lib/phoenix/router.ex
+@@ -210,15 +210,15 @@ defmodule Phoenix.Router do
+ 
+   Scopes allow us to scope on any path or even on the helper name:
+ 
+-      scope "/v1", MyAppWeb, host: "api." do
++      scope "/api/v1", MyAppWeb, as: :api_v1 do
+         get "/pages/:id", PageController, :show
+       end
+ 
+   For example, the route above will match on the path `"/api/v1/pages/1"`
+-  and the named route will be `api_v1_page_path`, as expected from the
+-  values given to `scope/2` option.
++  and the named helper will be `api_v1_page_path`, as expected from the
++  values given to `scope/4` option.
+ 
+-  Like all paths you can define dynamic segments that will be applied as
++  Like all paths, you can define dynamic segments that will be applied as
+   parameters in the controller:
+ 
+       scope "/api/:version", MyAppWeb do
+diff --git a/lib/phoenix/socket.ex b/lib/phoenix/socket.ex
+index 77286a8db..ce7920c31 100644
+--- a/lib/phoenix/socket.ex
++++ b/lib/phoenix/socket.ex
+@@ -509,7 +509,7 @@ defmodule Phoenix.Socket do
+   defp result({:error, _}), do: :error
+ 
+   def __init__({state, %{id: id, endpoint: endpoint} = socket}) do
+-    _ = id && endpoint.subscribe(id, link: true)
++    _ = id && endpoint.subscribe(id)
+     {:ok, {state, %{socket | transport_pid: self()}}}
+   end
+ 
+diff --git a/lib/phoenix/transports/long_poll.ex b/lib/phoenix/transports/long_poll.ex
+index de3365cee..97cb107a1 100644
+--- a/lib/phoenix/transports/long_poll.ex
++++ b/lib/phoenix/transports/long_poll.ex
+@@ -226,7 +226,7 @@ defmodule Phoenix.Transports.LongPoll do
+   defp client_ref(pid) when is_pid(pid), do: self()
+ 
+   defp subscribe(endpoint, topic) when is_binary(topic),
+-    do: Phoenix.PubSub.subscribe(endpoint.config(:pubsub_server), topic, link: true)
++    do: Phoenix.PubSub.subscribe(endpoint.config(:pubsub_server), topic)
+ 
+   defp subscribe(_endpoint, pid) when is_pid(pid),
+     do: :ok
+diff --git a/lib/phoenix/transports/long_poll_server.ex b/lib/phoenix/transports/long_poll_server.ex
+index 37e8c90bd..e3a5f23d8 100644
+--- a/lib/phoenix/transports/long_poll_server.ex
++++ b/lib/phoenix/transports/long_poll_server.ex
+@@ -33,7 +33,7 @@ defmodule Phoenix.Transports.LongPoll.Server do
+           client_ref: nil
+         }
+ 
+-        :ok = PubSub.subscribe(state.pubsub_server, priv_topic, link: true)
++        :ok = PubSub.subscribe(state.pubsub_server, priv_topic)
+         schedule_inactive_shutdown(state.window_ms)
+         {:ok, state}
+ 

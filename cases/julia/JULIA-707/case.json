@@ -1,0 +1,266 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-707",
+  "bug_id": "JULIA-707",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/105"
+  ],
+  "issue_id": 105,
+  "buggy_revision": "3906436557880d85f06d1a9464f63a5a1d8764c8",
+  "fixed_revision": "e5c7603d6a618a2494d90028d5670b97ffcd7f34",
+  "candidate_sha": "e5c7603d6a618a2494d90028d5670b97ffcd7f34",
+  "source": "merged_pull_request",
+  "instance_id": "julialang__juliasyntax.jl-106",
+  "swe": {
+    "base_commit": "3906436557880d85f06d1a9464f63a5a1d8764c8",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/106",
+    "issue_url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/105",
+    "problem_statement": "Bug parsing exception spec in `catch`\nSpotted by @BenChung\r\n\r\n```julia\r\njulia> itest_parse(JuliaSyntax.parse_expr, \"try 3 catch e+3 end\")\r\n# Code:\r\ntry 3 catch e+3 end\r\n\r\n# Green tree:\r\n     1:19     │[try]\r\n     1:3      │  try                        \"try\"\r\n     4:5      │  [block]\r\n     4:4      │    Whitespace               \" \"\r\n     5:5      │    Integer              ✔   \"3\"\r\n     6:6      │  Whitespace                 \" \"\r\n     7:11     │  catch                      \"catch\"\r\n    12:12     │  Whitespace                 \" \"\r\n    13:13     │  Identifier             ✔   \"e\"\r\n    14:15     │  [block]\r\n    14:15     │    Integer              ✔   \"+3\"\r\n    16:16     │  Whitespace                 \" \"\r\n    17:16     │  false                  ✔   \"\"\r\n    17:16     │  false                  ✔   \"\"\r\n    17:19     │  end                        \"end\"\r\n```\r\n\r\nWhereas the reference parser provides the error `invalid syntax \"catch (e + 3)\"`",
+    "patch": "diff --git a/src/hooks.jl b/src/hooks.jl\nindex 41499061..8011f602 100644\n--- a/src/hooks.jl\n+++ b/src/hooks.jl\n@@ -157,7 +157,7 @@ function _core_parser_hook(code, filename, lineno, offset, options)\n                 return Core.svec(nothing, last_byte(stream))\n             end\n         end\n-        JuliaSyntax.parse(stream; rule=rule)\n+        parse(stream; rule=rule)\n         if rule === :statement\n             bump_trivia(stream)\n         end\ndiff --git a/src/parser.jl b/src/parser.jl\nindex 7e62fd80..b3b6d7f3 100644\n--- a/src/parser.jl\n+++ b/src/parser.jl\n@@ -2154,7 +2154,12 @@ function parse_catch(ps::ParseState)\n     else\n         # try x catch e y end   ==>  (try (block x) e (block y) false false)\n         # try x catch $e y end  ==>  (try (block x) ($ e) (block y) false false)\n-        parse_identifier_or_interpolate(ps)\n+        mark = position(ps)\n+        parse_eq_star(ps)\n+        if !(peek_behind(ps).kind in KSet\"Identifier $\")\n+            # try x catch e+3 y end  ==>  (try (block x) (error (call-i e + 3)) (block y) false false)\n+            emit(ps, mark, K\"error\", error=\"a variable name is expected after `catch`\")\n+        end\n     end\n     parse_block(ps)\n end\n",
+    "test_patch": "diff --git a/test/parser.jl b/test/parser.jl\nindex 407a57b7..87b39368 100644\n--- a/test/parser.jl\n+++ b/test/parser.jl\n@@ -475,6 +475,7 @@ tests = [\n         \"try x catch \\n y end\"  =>  \"(try (block x) false (block y) false false)\"\n         \"try x catch e y end\"   =>  \"(try (block x) e (block y) false false)\"\n         \"try x catch \\$e y end\" =>  \"(try (block x) (\\$ e) (block y) false false)\"\n+        \"try x catch e+3 y end\" =>  \"(try (block x) (error (call-i e + 3)) (block y) false false)\"\n         \"try x finally y end\"   =>  \"(try (block x) false false false (block y))\"\n         # v1.8 only\n         ((v=v\"1.8\",), \"try catch ; else end\") => \"(try (block) false (block) (block) false)\"\n",
+    "FAIL_TO_PASS": [
+      "Trivia attachment",
+      "Unicode normalization in tree conversion",
+      "Expr conversion",
+      "Parsing values from strings",
+      "Hooks for Core integration",
+      "Parse JuliaSyntax",
+      "Parse Base at /usr/local/julia/bin/../share/julia/base",
+      "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+    ],
+    "PASS_TO_PASS": [
+      "Tokenize",
+      "ParseStream"
+    ],
+    "instance_id": "julialang__juliasyntax.jl-106",
+    "repo": "JuliaLang/JuliaSyntax.jl",
+    "pr_description": "Fix #105",
+    "created_at": "2022-09-30 01:34:12",
+    "image_name": "docker.io/swerebenchv2/julialang-juliasyntax.jl:106-3906436",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "license": "custom-check-github",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.96,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports that parsing a catch clause with an expression like `e+3` should produce an error node, matching the reference parser's behavior. The added test asserts the exact expected tree representation, directly reflecting the described requirement. There are no signs of test suite coupling, implicit naming, external dependencies, ambiguous specs, irrelevant patch artifacts, or hidden domain knowledge. Therefore the task is well‑specified and solvable.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 3,
+      "num_modified_lines": null,
+      "pr_author": "c42f",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/106"
+    }
+  },
+  "parent_sha": "3906436557880d85f06d1a9464f63a5a1d8764c8",
+  "changed_production_files": [
+    "src/hooks.jl",
+    "src/parser.jl"
+  ],
+  "changed_test_files": [
+    "test/parser.jl"
+  ],
+  "trigger_tests": [
+    "Trivia attachment",
+    "Unicode normalization in tree conversion",
+    "Expr conversion",
+    "Parsing values from strings",
+    "Hooks for Core integration",
+    "Parse JuliaSyntax",
+    "Parse Base at /usr/local/julia/bin/../share/julia/base",
+    "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "e5c7603d6a618a2494d90028d5670b97ffcd7f34",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "3108856f6e346a772956161d8e50c4acecdb2614674f4db207dcea9e3802cb81",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-30T04:00:01Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.43489562238805973,
+      "input_tokens": 3720,
+      "output_tokens": 696
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.76, \"summary\": \"The PR fixes a parser defect where `try 3 catch e+3 end` was silently accepted, parsing `e` as the exception name and `+3` as the catch body, instead of producing the error the reference Julia parser gives (`invalid syntax \\\"catch (e + 3)\\\"`). The change tightens parsing of the exception-name slot in `catch` across src/parser.jl (plus a small companion change in src/hooks.jl) and adds coverage in test/parser.jl.\", \"evidence\": \"Issue #105 documents concrete divergence from the reference parser with a reproducible input and a green-tree dump showing the misparse; the PR body says `Fix #105`, giving direct issue-to-commit traceability. The diff touches only two production files with two hunks and includes changes to test/parser.jl, consistent with a targeted correctness fix rather than a feature or refactor. The fix changes actual parse output (an error/invalid-syntax result where a valid tree was previously produced), so it is a production behavior change, not diagnostics-only.\", \"missing_evidence\": \"The actual diff content is not provided, so the precise parsing rule introduced is unverified, as is the purpose of the src/hooks.jl hunk (it may be error-propagation plumbing or unrelated). No pre-fix failing-test output or post-fix passing run is included, and the specific added test cases in test/parser.jl are not visible. Runtime evidence and file details are empty.\", \"validation_risks\": \"The trigger test list is coarse-grained and includes whole-corpus suites (`Parse Base`, `Parse Julia stdlib`, `Parse JuliaSyntax`), which are environment- and Julia-version-dependent (paths reference v1.10) and may fail for reasons unrelated to this fix, making fault localization noisy. Stricter parsing can also regress previously accepted constructs elsewhere in the corpus, so a bug-revealing test must be isolated to the `catch` exception-name cases rather than relying on corpus-wide suites. The src/hooks.jl change may couple the fix to Core integration behavior, adding another surface for spurious failures.\", \"suggested_tests\": \"Assert that parsing `try 3 catch e+3 end` yields an error/invalid-syntax node (or throws a parse error) rather than a valid `try` tree. Add negative cases such as `try x catch e.f end`, `try x catch (e,f) end`, and `try x catch 1 end`. Add positive regression cases that must still parse: `try x catch end`, `try x catch e end`, `try x catch e; y end`, and `try x catch $(esc(e)) end` style interpolation if supported. Compare each against the reference parser output, and pin these assertions in test/parser.jl so the bug-revealing test is independent of the Base/stdlib corpus suites.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.76,
+    "summary": "The PR fixes a parser defect where `try 3 catch e+3 end` was silently accepted, parsing `e` as the exception name and `+3` as the catch body, instead of producing the error the reference Julia parser gives (`invalid syntax \"catch (e + 3)\"`). The change tightens parsing of the exception-name slot in `catch` across src/parser.jl (plus a small companion change in src/hooks.jl) and adds coverage in test/parser.jl.",
+    "evidence": "Issue #105 documents concrete divergence from the reference parser with a reproducible input and a green-tree dump showing the misparse; the PR body says `Fix #105`, giving direct issue-to-commit traceability. The diff touches only two production files with two hunks and includes changes to test/parser.jl, consistent with a targeted correctness fix rather than a feature or refactor. The fix changes actual parse output (an error/invalid-syntax result where a valid tree was previously produced), so it is a production behavior change, not diagnostics-only.",
+    "missing_evidence": "The actual diff content is not provided, so the precise parsing rule introduced is unverified, as is the purpose of the src/hooks.jl hunk (it may be error-propagation plumbing or unrelated). No pre-fix failing-test output or post-fix passing run is included, and the specific added test cases in test/parser.jl are not visible. Runtime evidence and file details are empty.",
+    "validation_risks": "The trigger test list is coarse-grained and includes whole-corpus suites (`Parse Base`, `Parse Julia stdlib`, `Parse JuliaSyntax`), which are environment- and Julia-version-dependent (paths reference v1.10) and may fail for reasons unrelated to this fix, making fault localization noisy. Stricter parsing can also regress previously accepted constructs elsewhere in the corpus, so a bug-revealing test must be isolated to the `catch` exception-name cases rather than relying on corpus-wide suites. The src/hooks.jl change may couple the fix to Core integration behavior, adding another surface for spurious failures.",
+    "suggested_tests": "Assert that parsing `try 3 catch e+3 end` yields an error/invalid-syntax node (or throws a parse error) rather than a valid `try` tree. Add negative cases such as `try x catch e.f end`, `try x catch (e,f) end`, and `try x catch 1 end`. Add positive regression cases that must still parse: `try x catch end`, `try x catch e end`, `try x catch e; y end`, and `try x catch $(esc(e)) end` style interpolation if supported. Compare each against the reference parser output, and pin these assertions in test/parser.jl so the bug-revealing test is independent of the Base/stdlib corpus suites."
+  },
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "sha256": "3b20bd665635c49a75fa75ed9862af8c1c0fdcf53690ecfa7023d5bb5ec9ab1d",
+    "timeout_seconds": 1800,
+    "origin": "manual_mwe_from_upstream_fix",
+    "oracle": {
+      "schema_version": 1,
+      "added_testsets": [
+        "invalid catch binding is rejected"
+      ],
+      "assertion_expression_sha256": [],
+      "f2p_tests": [
+        "invalid catch binding is rejected"
+      ],
+      "mwe_basis": {
+        "defect": "A catch clause with an expression in the exception-name position was silently accepted instead of rejected as invalid Julia syntax.",
+        "public_api": "JuliaSyntax.parseall(GreenNode, source)",
+        "source_evidence": {
+          "extraction": "The input is the issue #105 reproducer; PR #106 adds the corresponding parser regression coverage. The oracle requires the documented parser exception rather than inspecting source text.",
+          "upstream_tests_patch_sha256": "334764a21f8dafa33979d36f222f339fd8728bb355600cd495a5971743d5aff2"
+        },
+        "upstream_issue": 105,
+        "upstream_pull_request": 106,
+        "upstream_test_files": [
+          "test/parser.jl"
+        ]
+      }
+    }
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 8,
+    "tests": [
+      "Trivia attachment",
+      "Unicode normalization in tree conversion",
+      "Expr conversion",
+      "Parsing values from strings",
+      "Hooks for Core integration",
+      "Parse JuliaSyntax",
+      "Parse Base at /usr/local/julia/bin/../share/julia/base",
+      "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+    ],
+    "exception_types": [
+      "bf2736f922b6c66939e7f6003c04655b4c57669bc9fa146914894885e40f972f"
+    ],
+    "fingerprints": [
+      "bf2736f922b6c66939e7f6003c04655b4c57669bc9fa146914894885e40f972f"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "e5c7603d6a618a2494d90028d5670b97ffcd7f34",
+    "parent_sha": "3906436557880d85f06d1a9464f63a5a1d8764c8",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "6781b7fd0e49ff660eca92dd7978690da65d226d3ae440dd3a8c3953b5289ff0",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

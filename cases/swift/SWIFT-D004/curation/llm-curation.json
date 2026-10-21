@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-403",
+  "technical_evidence_sha256": "00724540fd7924cee382362e0f46c503b40e7b9422f31aa851c81a9a8f4ddf2e",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "57676ccf3798d76d2e37565079a12b558bc7f6418ada10d7d7320f20688139f3",
+  "reviewed_at": "2026-09-06T16:29:24.995435+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "swiftlang/swift-docc#1586",
+  "rationale": "Issue #1586 (labeled 'bug', closed by PR #1587) reports that a typealias annotated `@available(*, deprecated, renamed: \"Sendable\")` renders without the deprecated marker in the navigator/sidebar listing even though the detail page shows it. The minimized production patch is a single hunk in Sources/SwiftDocC/Indexing/Navigator/RenderNode+NavigatorIndex.swift that broadens `isPlatformDeprecated` from `$0.deprecated != nil` to also accept `$0.unconditionallyDeprecated == true` — exactly the missing condition for deprecation without an explicit version, and the property feeding the navigator index's deprecation flag. Commit message states 'resolves .../issues/1586'. The patch is production-only: no refactor of surrounding code, no config, no docs, no dependency changes; the two added comment lines are inline annotations of the two branches of the new condition, not a documentation change. The trigger is the unchanged upstream test from the same fixing commit (testRenderIndexGenerationWithPerPlatformUnconditionalDeprecation), which builds an in-memory catalog with availability items having deprecatedVersion nil and isUnconditionallyDeprecated true and asserts RenderIndex.Node.isDeprecated — the same defect condition described in the issue, asserted through pre-existing public/internal surface (SymbolKit AvailabilityItem, loadBundle/generatedRenderIndex/findNode helpers, RenderIndex.Node.isDeprecated). The fix introduces no new production API, and the strict build gate passing on the buggy revision confirms the test compiles without the fix. Machine strict evidence for both the original and post-minimization runs reports build.both_versions PASS, trigger.buggy_differential reproduced on the single declared selector, trigger.deterministic (3/3 fingerprint groups), trigger.fixed_clean PASS, full_suite.fixed_all_green PASS, and full_suite.buggy_reproduces_only_triggers PASS with no unrelated buggy-suite failures, so the broadened predicate does not disturb other navigator/index expectations. active_same_project_root_causes is empty, so swiftlang/swift-docc#1586 is not a duplicate of any active registry entry, and it matches the allowed verified issue key.\n\nIssue #1586 (labeled 'bug') reports that a typealias annotated `@available(*, deprecated, renamed: \"Sendable\")` renders the deprecated marker on its detail page but not in the navigator sidebar listing, i.e. a violation of existing intended behavior rather than a missing feature. The single production hunk in Sources/SwiftDocC/Indexing/Navigator/RenderNode+NavigatorIndex.swift changes `isPlatformDeprecated` from `metadata.platforms?.contains { $0.deprecated != nil }` to also accept `$0.unconditionallyDeprecated == true`, which is exactly the sidebar/navigator-index code path named in the issue and explained in the commit message ('Instead of just getting the deprecated string value, we also need to check if it was unconditionally deprecated. resolves .../issues/1586'). The minimized patch is that same one hunk (original_hunk_count=1, retained=1, removed=0, post_minimization_validation=PASS); it touches one production file, contains no rename, reformatting, config, docs, or test change, and only reads a property that already exists on the availability representation. The trigger is the unchanged upstream test from the same fixing commit (testRenderIndexGenerationWithPerPlatformUnconditionalDeprecation), which constructs an in-memory catalog with per-platform availability items having deprecatedVersion nil and isUnconditionallyDeprecated true and asserts the generated RenderIndex node `isDeprecated` is true — semantically the reported scenario, and it depends on no API introduced by the fix, confirmed by strict evidence showing the test compiles and fails on the buggy revision and passes on the fixed one. Strict gates pass in both the original and post-minimization matrices: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential with the declared selector reproduced, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no baseline exclusions; failed_checks is empty in both. active_same_project_root_causes is empty, so #1586 is not a duplicate, and it is the sole entry in allowed_root_cause_ids and the only verified_fix_issue_number with traceability path fix_commit_to_issue via PR #1587.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T16:28:55.932498+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "57676ccf3798d76d2e37565079a12b558bc7f6418ada10d7d7320f20688139f3",
+      "response_sha256": "7562d3467f646fdedce5d3bcb17283efa6508987e5479f31b9a3e5081ae775d0",
+      "response_id": "msg_56592a6154634b35b31ff26192c6f268",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6038615510779436,
+        "input_tokens": 19578,
+        "output_tokens": 739
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-docc#1586",
+      "rationale": "Issue #1586 (labeled 'bug', closed by PR #1587) reports that a typealias annotated `@available(*, deprecated, renamed: \"Sendable\")` renders without the deprecated marker in the navigator/sidebar listing even though the detail page shows it. The minimized production patch is a single hunk in Sources/SwiftDocC/Indexing/Navigator/RenderNode+NavigatorIndex.swift that broadens `isPlatformDeprecated` from `$0.deprecated != nil` to also accept `$0.unconditionallyDeprecated == true` — exactly the missing condition for deprecation without an explicit version, and the property feeding the navigator index's deprecation flag. Commit message states 'resolves .../issues/1586'. The patch is production-only: no refactor of surrounding code, no config, no docs, no dependency changes; the two added comment lines are inline annotations of the two branches of the new condition, not a documentation change. The trigger is the unchanged upstream test from the same fixing commit (testRenderIndexGenerationWithPerPlatformUnconditionalDeprecation), which builds an in-memory catalog with availability items having deprecatedVersion nil and isUnconditionallyDeprecated true and asserts RenderIndex.Node.isDeprecated — the same defect condition described in the issue, asserted through pre-existing public/internal surface (SymbolKit AvailabilityItem, loadBundle/generatedRenderIndex/findNode helpers, RenderIndex.Node.isDeprecated). The fix introduces no new production API, and the strict build gate passing on the buggy revision confirms the test compiles without the fix. Machine strict evidence for both the original and post-minimization runs reports build.both_versions PASS, trigger.buggy_differential reproduced on the single declared selector, trigger.deterministic (3/3 fingerprint groups), trigger.fixed_clean PASS, full_suite.fixed_all_green PASS, and full_suite.buggy_reproduces_only_triggers PASS with no unrelated buggy-suite failures, so the broadened predicate does not disturb other navigator/index expectations. active_same_project_root_causes is empty, so swiftlang/swift-docc#1586 is not a duplicate of any active registry entry, and it matches the allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.message",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:trigger_reduction.upstream_trigger_patch"
+      ],
+      "risks": [
+        "The trigger covers only the per-platform unconditional-deprecation path; it does not cover the swift-domain `obsoleted: 6.0` annotation also present in the issue reproduction snippet.",
+        "Verification is at the RenderIndex data-model level; the visual sidebar 'Deprecated' badge shown in the issue screenshots is rendered by swift-docc-render and is not exercised by the trigger.",
+        "The `contains`-based semantics mean a symbol deprecated on only one platform is flagged deprecated index-wide; this pre-existing behavior is preserved but untested by the trigger."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T16:29:24.995281+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "57676ccf3798d76d2e37565079a12b558bc7f6418ada10d7d7320f20688139f3",
+      "response_sha256": "9543fecd4c018d029eeed7d98fb79ed552a322b833a69053993cde128d18dba7",
+      "response_id": "msg_7a425db8d0e646309eb2d462a78d1cc6",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6439659475953566,
+        "input_tokens": 19743,
+        "output_tokens": 848
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-docc#1586",
+      "rationale": "Issue #1586 (labeled 'bug') reports that a typealias annotated `@available(*, deprecated, renamed: \"Sendable\")` renders the deprecated marker on its detail page but not in the navigator sidebar listing, i.e. a violation of existing intended behavior rather than a missing feature. The single production hunk in Sources/SwiftDocC/Indexing/Navigator/RenderNode+NavigatorIndex.swift changes `isPlatformDeprecated` from `metadata.platforms?.contains { $0.deprecated != nil }` to also accept `$0.unconditionallyDeprecated == true`, which is exactly the sidebar/navigator-index code path named in the issue and explained in the commit message ('Instead of just getting the deprecated string value, we also need to check if it was unconditionally deprecated. resolves .../issues/1586'). The minimized patch is that same one hunk (original_hunk_count=1, retained=1, removed=0, post_minimization_validation=PASS); it touches one production file, contains no rename, reformatting, config, docs, or test change, and only reads a property that already exists on the availability representation. The trigger is the unchanged upstream test from the same fixing commit (testRenderIndexGenerationWithPerPlatformUnconditionalDeprecation), which constructs an in-memory catalog with per-platform availability items having deprecatedVersion nil and isUnconditionallyDeprecated true and asserts the generated RenderIndex node `isDeprecated` is true — semantically the reported scenario, and it depends on no API introduced by the fix, confirmed by strict evidence showing the test compiles and fails on the buggy revision and passes on the fixed one. Strict gates pass in both the original and post-minimization matrices: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential with the declared selector reproduced, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no baseline exclusions; failed_checks is empty in both. active_same_project_root_causes is empty, so #1586 is not a duplicate, and it is the sole entry in allowed_root_cause_ids and the only verified_fix_issue_number with traceability path fix_commit_to_issue via PR #1587.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:minimized_patch_reference.post_minimization_validation",
+        "case.json:strict_original.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue title, 'bug' label, and body come from source_candidate.issue_check.linked_issues rather than an independently fetched record.",
+        "The fix hunk adds two explanatory comments (one containing an unbalanced quote, `deprecated: \"1.2.3)`); they are inside the edited expression and behaviorally inert, but they are non-functional text carried into the minimized patch.",
+        "The trigger asserts only the navigator/render-index deprecation flag; it does not cover the mixed case where a single platform is unconditionally deprecated while others are not, nor negative cases guarding against over-broad detection.",
+        "The trigger exercises full bundle loading and render-index generation, so it is heavier than a unit test and its runtime cost is tied to the larger SwiftDocCTests target."
+      ]
+    }
+  ]
+}

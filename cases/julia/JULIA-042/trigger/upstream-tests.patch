@@ -1,0 +1,45 @@
+diff --git a/test/Core/basictests.jl b/test/Core/basictests.jl
+index 4f94cf0f..4d81e3c2 100644
+--- a/test/Core/basictests.jl
++++ b/test/Core/basictests.jl
+@@ -187,6 +187,23 @@ end
+         @test X * solve!(cache) ≈ b1
+     end
+ 
++    @testset "KLU factor parts" begin
++        KLU = Base.get_extension(LinearSolve, :LinearSolveSparseArraysExt).KLU
++        # Block-triangular so the off-diagonal `F` part is non-empty
++        Abt = sparse([rand(3, 3) + 3I rand(3, 3); zeros(3, 3) rand(3, 3) + 3I])
++        for At in (sparse(A / 1), Abt)
++            K = KLU.klu(At)
++            @test (K.Rs .\ At)[K.p, K.q] ≈ K.L * K.U + K.F
++            @test sort(K.p) == 1:size(At, 1)
++            @test sort(K.q) == 1:size(At, 1)
++            @test length(K.R) == K.nblocks + 1
++            @test K.R[1] == 1
++            @test K.R[end] == size(At, 1) + 1
++        end
++        # unfactored handles still report what is missing
++        @test_throws ArgumentError KLU.KLUFactorization(sparse(A / 1)).lnz
++    end
++
+     @testset "PureKLU Factorization" begin
+         A1 = sparse(A / 1)
+         b1 = rand(n)
+diff --git a/test/Core/supernodal_lu.jl b/test/Core/supernodal_lu.jl
+index 9ac5a1d8..ee234504 100644
+--- a/test/Core/supernodal_lu.jl
++++ b/test/Core/supernodal_lu.jl
+@@ -97,6 +97,12 @@ end
+     Fp = SNLU.snlu(Ap; matching = false, check = false)
+     @test SNLU.nperturbed(Fp) > 0
+     @test SNLU._auto_refine(Fp) == 3
++    # `refine` resolves by dispatch, so an unknown symbol says what is accepted
++    # instead of reaching `Int(::Symbol)`
++    @test SNLU._refine_steps(Fp, 2) == 2
++    @test SNLU._refine_steps(Fp, :auto) == 3
++    bp = randn(size(Ap, 1))
++    @test_throws ArgumentError SNLU.solve!(similar(bp), Fp, bp; refine = :bogus)
+ end
+ 
+ @testset "residual check does not allocate a work vector" begin

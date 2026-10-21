@@ -1,0 +1,55 @@
+diff --git a/Sources/SwiftParserDiagnostics/ParseDiagnosticsGenerator.swift b/Sources/SwiftParserDiagnostics/ParseDiagnosticsGenerator.swift
+index 8a5acb47..6c84f9a0 100644
+--- a/Sources/SwiftParserDiagnostics/ParseDiagnosticsGenerator.swift
++++ b/Sources/SwiftParserDiagnostics/ParseDiagnosticsGenerator.swift
+@@ -778,7 +778,17 @@ public class ParseDiagnosticsGenerator: SyntaxAnyVisitor {
+       )
+     } else {  // If it's not a C-style for loop
+       if node.sequenceExpr.is(MissingExprSyntax.self) {
+-        addDiagnostic(node.sequenceExpr, .expectedSequenceExpressionInForEachLoop, handledNodes: [node.sequenceExpr.id])
++        addDiagnostic(
++          node.sequenceExpr,
++          .expectedSequenceExpressionInForEachLoop,
++          fixIts: [
++            FixIt(
++              message: InsertTokenFixIt(missingNodes: [Syntax(node.sequenceExpr)]),
++              changes: [.makePresent(node.sequenceExpr)]
++            )
++          ],
++          handledNodes: [node.sequenceExpr.id]
++        )
+       }
+     }
+ 
+diff --git a/Tests/SwiftParserTest/translated/RecoveryTests.swift b/Tests/SwiftParserTest/translated/RecoveryTests.swift
+index 05c747f4..c1bdcb68 100644
+--- a/Tests/SwiftParserTest/translated/RecoveryTests.swift
++++ b/Tests/SwiftParserTest/translated/RecoveryTests.swift
+@@ -604,10 +604,10 @@ final class RecoveryTests: XCTestCase {
+       """,
+       diagnostics: [
+         DiagnosticSpec(locationMarker: "1️⃣", message: "keyword 'for' cannot be used as an identifier here", fixIts: ["if this name is unavoidable, use backticks to escape it"]),
+-        DiagnosticSpec(locationMarker: "2️⃣", message: "expected Sequence expression for for-each loop"),
++        DiagnosticSpec(locationMarker: "2️⃣", message: "expected Sequence expression for for-each loop", fixIts: ["insert expression"]),
+       ],
+       fixedSource: """
+-        for `for` in {
++        for `for` in <#expression#> {
+         }
+         """
+     )
+@@ -620,8 +620,12 @@ final class RecoveryTests: XCTestCase {
+       }
+       """,
+       diagnostics: [
+-        DiagnosticSpec(message: "expected Sequence expression for for-each loop")
+-      ]
++        DiagnosticSpec(message: "expected Sequence expression for for-each loop", fixIts: ["insert expression"])
++      ],
++      fixedSource: """
++        for i in <#expression#> {
++        }
++        """
+     )
+   }
+ 

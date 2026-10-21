@@ -1,0 +1,59 @@
+{
+  "candidate_sha": "0a1fb3cfb431b00af9434dd5b056b509632001c2",
+  "project": "JuliaData/CSV.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1185,
+      "url": "https://github.com/JuliaData/CSV.jl/issues/1185",
+      "state": "closed",
+      "title": "Issue with automatic delimiter detection",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "We have 10 CSV files similar to [mwe.csv](https://gist.github.com/juliohm/fd2583dc6bf2d5ff39352bf34dd64dce) that load correctly, without manually setting `delim=';'`.\n\nIt is only this specific file that shows the issue. If we omit the `delim=';'` option, we get an error:\n\n```julia\ncsv = CSV.File(\"mwe.csv\", delim=';', decimal=',', missingstring=[\"-9999\", \"\"])\n```\n\nI wonder if the automatic detection could be improved somehow.\n\nAs a side note, Pandas also fails with this file unless we specify `delimiter=\";\"`."
+    },
+    {
+      "number": 1186,
+      "url": "https://github.com/JuliaData/CSV.jl/pull/1186",
+      "state": "closed",
+      "title": "Prefer header delimiters in auto detection",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "## Summary\n- Prefer delimiter candidates that also appear in the header before falling back to aggregate row consistency.\n- Add a regression test for semicolon-delimited data that uses comma decimals.\n- Update the comma-decimal docs note to reflect the improved header-aware autodetection behavior.\n\n## Root Cause\nDelimiter autodetection checked candidate delimiters in a comma-first order and only required aggregate consistency across sampled rows. In files with comma decimal markers, those commas could look like a consistent delimiter even when the header clearly used semicolons.\n\nFixes #1185.\n\n## Validation\n- `julia --project=. test/runtests.jl` -> 1477/1477 passing\n\nCo-authored by Codex"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "fix_commit_to_issue",
+      "issue_numbers": [
+        1185
+      ],
+      "fix_commit": "0a1fb3cfb431b00af9434dd5b056b509632001c2",
+      "evidence_source": "fix_commit_message"
+    }
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "fix(detection): prefer header delimiters (#1186)\n\nPrefer delimiter candidates that appear in the header before falling back to aggregate consistency across sampled rows. This avoids treating comma decimal markers as the delimiter when a semicolon-delimited file has a clear header.\n\nFixes #1185",
+    "commit_issue_refs": [
+      1185,
+      1186
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": null,
+    "pull_request_title": "",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    1185
+  ],
+  "cross_repository_issue_records": []
+}

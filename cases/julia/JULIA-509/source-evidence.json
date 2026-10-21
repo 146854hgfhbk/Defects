@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "41353d25b136126138a9bcdffa76c6ffddab4b53",
+  "project": "JuliaArrays/StaticArrays.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1310,
+      "url": "https://github.com/JuliaArrays/StaticArrays.jl/pull/1310",
+      "state": "closed",
+      "title": "fix: fix n-dimensional `view` into n-dimensional `SArray` with `Any` eltype",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "As of the latest release, trying to `view` into an `SArray` with an eltype of `Any` such that the view also returns an `SArray` would wrap the returned array in a scalar. `_maybewrapscalar` assumes that if the `eltype` of the array matches the type of the view, it must be a scalar view. This assumption breaks down when the `eltype` is `Any`. MWE:\r\n\r\n```julia\r\njulia> A = SVector{4, Any}(1,2,3,4)\r\n\r\njulia> I = SVector{2}(3, 1)\r\n\r\njulia> view(A, I)\r\nScalar{Any}((Any[3, 1],))\r\n\r\njulia> view(A, [3, 1])\r\n2-element view(::SVector{4, Any}, [3, 1]) with eltype Any:\r\n 3\r\n 1\r\n```\r\n\r\nI've verified that all the added tests fail on the latest release and pass with this PR."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 1310,
+      "pull_request_repository": "JuliaArrays/StaticArrays.jl",
+      "pull_request_url": "https://github.com/JuliaArrays/StaticArrays.jl/pull/1310",
+      "fix_commit": "41353d25b136126138a9bcdffa76c6ffddab4b53",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "fix: fix n-dimensional `view` into n-dimensional `SArray` with `Any` eltype (#1310)\n\nAs of the latest release, trying to `view` into an `SArray` with an\neltype of `Any` such that the view also returns an `SArray` would wrap\nthe returned array in a scalar. `_maybewrapscalar` assumes that if the\n`eltype` of the array matches the type of the view, it must be a scalar\nview. This assumption breaks down when the `eltype` is `Any`. MWE:\n\n```julia\njulia> A = SVector{4, Any}(1,2,3,4)\n\njulia> I = SVector{2}(3, 1)\n\njulia> view(A, I)\nScalar{Any}((Any[3, 1],))\n\njulia> view(A, [3, 1])\n2-element view(::SVector{4, Any}, [3, 1]) with eltype Any:\n 3\n 1\n```\n\nI've verified that all the added tests fail on the latest release and\npass with this PR.",
+    "commit_issue_refs": [
+      1310
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1310,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "fix: fix n-dimensional `view` into n-dimensional `SArray` with `Any` eltype",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [],
+  "pull_request_record": {
+    "number": 1310,
+    "repository": "JuliaArrays/StaticArrays.jl",
+    "url": "https://github.com/JuliaArrays/StaticArrays.jl/pull/1310",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2025-07-16T11:00:40Z",
+    "merge_commit_sha": "41353d25b136126138a9bcdffa76c6ffddab4b53",
+    "title": "fix: fix n-dimensional `view` into n-dimensional `SArray` with `Any` eltype",
+    "body_excerpt": "As of the latest release, trying to `view` into an `SArray` with an eltype of `Any` such that the view also returns an `SArray` would wrap the returned array in a scalar. `_maybewrapscalar` assumes that if the `eltype` of the array matches the type of the view, it must be a scalar view. This assumption breaks down when the `eltype` is `Any`. MWE:\r\n\r\n```julia\r\njulia> A = SVector{4, Any}(1,2,3,4)\r\n\r\njulia> I = SVector{2}(3, 1)\r\n\r\njulia> view(A, I)\r\nScalar{Any}((Any[3, 1],))\r\n\r\njulia> view(A, [3, 1])\r\n2-element view(::SVector{4, Any}, [3, 1]) with eltype Any:\r\n 3\r\n 1\r\n```\r\n\r\nI've verified that all the added tests fail on the latest release and pass with this PR.",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

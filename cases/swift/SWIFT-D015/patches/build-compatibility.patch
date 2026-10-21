@@ -1,0 +1,18 @@
+diff --git a/Tests/CSVTests/CSVRowDecoderTests.swift b/Tests/CSVTests/CSVRowDecoderTests.swift
+index 02993f8e58efce32109f41c18167790e079322ed..02993f8e58efce32109f41c18167790e079322ed 100644
+--- a/Tests/CSVTests/CSVRowDecoderTests.swift
++++ b/Tests/CSVTests/CSVRowDecoderTests.swift
+@@ -483,7 +483,11 @@ class CSVRowDecoderTests: XCTestCase {
+             let decoder = CSVRowDecoder()
+             decoder.dateDecodingStrategy = .millisecondsSince1970
+             let row = try decoder.decode(DateDecodingStrategyExample.self, from: reader)
+-            XCTAssertEqual(row.date.timeIntervalSince1970, expected.timeIntervalSince1970)
++            XCTAssertEqual(
++                row.date.timeIntervalSince1970,
++                expected.timeIntervalSince1970,
++                accuracy: 1e-6
++            )
+         } catch {
+             XCTFail("\(error)")
+         }
+

@@ -1,0 +1,204 @@
+{
+  "schema_version": 2,
+  "case_id": "ELIXIR-096",
+  "id": "ELIXIR-096",
+  "bug_id": "ELIXIR-096",
+  "language": "Elixir",
+  "project": "whitfin/cachex",
+  "repo": "whitfin/cachex",
+  "buggy_revision": "31c3fd0d1b243803ae7503a720c4d498902a6750",
+  "fixed_revision": "547c98a66615bbc699e87cc71c05cf5f1b6e0e5a",
+  "fixed_revision_kind": "upstream_pr_merge_commit",
+  "fixed_revision_parents": null,
+  "revision_mode": "base_plus_gold_patch",
+  "upstream_id": "whitfin__cachex-348",
+  "patch": {
+    "path": "patches/minimized-source.patch",
+    "upstream_path": "patches/upstream.patch",
+    "sha256": "b3516e3856afe5b82ddb19080caf496173ee116231b5990c295943d2bd05c32a",
+    "upstream_sha256": "564172cb1e90dc17ca24049c36258799eb83f24e5adf284655bd0fbe5d9a2989",
+    "changed_source_files": [
+      "lib/cachex/services/courier.ex"
+    ]
+  },
+  "patch_sha256": "b3516e3856afe5b82ddb19080caf496173ee116231b5990c295943d2bd05c32a",
+  "trigger_test_patch": "patches/trigger-tests.patch",
+  "trigger_test_patch_sha256": "f0b65cb86ed766fbd01bfe32abfbb7d67ffc2c609a5c6e6c7e4209eb2ea88575",
+  "trigger_tests": [
+    "fetching will only call fallback once per key"
+  ],
+  "triggering_tests": [
+    "fetching will only call fallback once per key"
+  ],
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "fetching will only call fallback once per key"
+    ],
+    "exception_types": [],
+    "fingerprints": [],
+    "source": "SWE-rebench-V2 FAIL_TO_PASS"
+  },
+  "trigger_test_filters": {},
+  "validation": {
+    "status": "PASS",
+    "report": "validation/phase-d.json",
+    "report_sha256": "2494fe8998bc9b8d95af843160005c2f1e1377c39b142dc96c2f4687311a6522",
+    "protocol": "v5-f2p",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "result": "PASS"
+  },
+  "environment_lock": "environment.lock.json",
+  "environment": {
+    "backend": "swe_rebench_v2_docker",
+    "image": "docker.io/swerebenchv2/whitfin-cachex:348-31c3fd0"
+  },
+  "commands": {
+    "test": "mix test --trace"
+  },
+  "minimization": {
+    "status": "HUMAN_REVIEWED_MINIMIZED_V1",
+    "policy": "execution-verified hunk removal; suite-repair post-pass",
+    "removed_hunks": 0,
+    "trials": 2,
+    "report": "patches/minimization.json",
+    "llm_review": "llm-hunk-review.json",
+    "review_status": "human_minimization_signoff_completed",
+    "reviewer_type": "human_dataset_curator",
+    "human_signoff": "completed",
+    "dynamic_revalidation": true,
+    "human_signoff_date": "2026-09-12",
+    "human_signoff_scope": "patch_minimization_only"
+  },
+  "artifacts": {
+    "curation_decision": "curation-decision.json",
+    "llm_hunk_review": "llm-hunk-review.json",
+    "llm_semantic_review": "llm-semantic-review.json",
+    "minimization_decisions": "minimization-decisions.json",
+    "manual_minimization_confirmation": "manual-minimization-confirmation.json",
+    "minimization_report": "patches/minimization.json"
+  },
+  "provenance": {
+    "source_dataset": "SWE-rebench-V2",
+    "source_dataset_id": "nebius/SWE-rebench-V2",
+    "source_revision": "475dd5e",
+    "instance_id": "whitfin__cachex-348",
+    "pr_url": "https://github.com/whitfin/cachex/pull/348",
+    "replacement": {
+      "replaces_case": "ELIXIR-096",
+      "replaced_repo": "woylie/flop_phoenix",
+      "replaced_reason": "QUARANTINED",
+      "candidate_work_id": "PR-128"
+    },
+    "issue_id": 347,
+    "issue_url": "https://github.com/whitfin/cachex/issues/347",
+    "issue_relation": "PR_BODY_CLOSES"
+  },
+  "status": "ACTIVE",
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "elixir",
+    "reason_code": null,
+    "reason": null,
+    "llm_semantic_decision": "BUG_FIX",
+    "human_confirmation": false
+  },
+  "release_integrity": "release-integrity.json",
+  "execution_validation": {
+    "status": "PASS",
+    "protocol": "v5-f2p",
+    "evidence": "validation/phase-d.json",
+    "evidence_sha256": "2494fe8998bc9b8d95af843160005c2f1e1377c39b142dc96c2f4687311a6522",
+    "validated_at": "2026-09-11T15:13:43Z",
+    "b_failures": [
+      1,
+      1,
+      1
+    ],
+    "f_failures": [
+      0,
+      0,
+      0
+    ],
+    "gold_failures": [
+      0
+    ],
+    "dyn_dropped": 0
+  },
+  "fixed_test_result": "pass",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "build_command": [
+    "export HOME=/workspace",
+    "mix deps.get",
+    "mix compile"
+  ],
+  "test_command": "mix test --trace",
+  "language_version": {
+    "elixir": "1.16.3",
+    "otp": "26"
+  },
+  "dependency_versions": {
+    "mix_lock_md5": "9a9f216ee8ed9f78edc287367f1878fa"
+  },
+  "operating_system_or_container": {
+    "container_image": "docker.io/swerebenchv2/whitfin-cachex:348-31c3fd0",
+    "image_id": "sha256:ba6e7fcbadaffb2f0e0ce3552b30c506b47259c2a07315d326ecd1c0ddcfc901",
+    "platform": "linux/amd64"
+  },
+  "traceability": {
+    "issue_id": 347,
+    "issue_url": "https://github.com/whitfin/cachex/issues/347",
+    "pr_url": "https://github.com/whitfin/cachex/pull/348",
+    "issue_closed": true,
+    "pr_merged": true,
+    "issue_referenced_in": "pull_request_body",
+    "fix_commit": "547c98a66615bbc699e87cc71c05cf5f1b6e0e5a",
+    "fix_commit_count": 1,
+    "single_parent_fix": true,
+    "audit": {
+      "method": "GitHub API commit-file superset check",
+      "verdict": "SINGLE_COMMIT_FIX"
+    },
+    "issue_title": "Fetch can allow multiple executions of `fallback` function ",
+    "upstream_fix_parents": [
+      "31c3fd0d1b243803ae7503a720c4d498902a6750"
+    ],
+    "upstream_fix_parent": "31c3fd0d1b243803ae7503a720c4d498902a6750",
+    "fix_commit_is_merge": false,
+    "provenance_strength": "PR_BODY_REFERENCE"
+  },
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "DONE",
+    "full_suite_validation": "PASS",
+    "protocol": "v5-f2p"
+  },
+  "upstream": {
+    "fix_commit": "547c98a66615bbc699e87cc71c05cf5f1b6e0e5a",
+    "fix_parent": "31c3fd0d1b243803ae7503a720c4d498902a6750",
+    "issue_url": "https://github.com/whitfin/cachex/issues/347",
+    "pr_url": "https://github.com/whitfin/cachex/pull/348"
+  },
+  "benchmark_revision": {
+    "mode": "base_plus_gold_patch",
+    "base_revision": "31c3fd0d1b243803ae7503a720c4d498902a6750",
+    "declared_fixed_revision": "547c98a66615bbc699e87cc71c05cf5f1b6e0e5a",
+    "fixed_construction": "base_plus_minimized_patch"
+  },
+  "upstream_revision": {
+    "fix_commit": "547c98a66615bbc699e87cc71c05cf5f1b6e0e5a",
+    "fix_parent": "31c3fd0d1b243803ae7503a720c4d498902a6750",
+    "issue_url": "https://github.com/whitfin/cachex/issues/347",
+    "pr_url": "https://github.com/whitfin/cachex/pull/348"
+  },
+  "excluded_tests_manifest": "validation/excluded-tests.json",
+  "canonical_test_policy": {
+    "raw_test_command": "mix test --trace",
+    "canonical_runner": "python3 tools/defects4x test --bug 96 --version <b|f> --workdir <checkout> --canonical --execute",
+    "fixed_acceptance": "PASS only after a normal, non-empty ExUnit completion with a valid summary and no infrastructure/process error; a non-zero raw exit may be normalized only when the summary failure count matches parsed failure identities and every identity is explicitly listed in validation/excluded-tests.json and reproduced in upstream GOLD."
+  },
+  "canonical_test_command": "python3 tools/defects4x test --bug 96 --version f --workdir <checkout> --canonical --execute"
+}

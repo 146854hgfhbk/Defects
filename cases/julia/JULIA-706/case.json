@@ -1,0 +1,304 @@
+{
+  "bug_id": "JULIA-706",
+  "buggy_revision": "99d214ba6b2a0cebdc25013c0c27f83da659ce2a",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.6.7",
+    "julia_version_origin": "explicit_candidate_or_environment",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test()'"
+  },
+  "candidate_sha": "9998d3fe7f6f7aaf0e74586750962bd1cbdddf8e",
+  "case_id": "JULIA-706",
+  "changed_production_files": [
+    "src/circular_buffer.jl"
+  ],
+  "changed_test_files": [
+    "test/test_circular_buffer.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "9998d3fe7f6f7aaf0e74586750962bd1cbdddf8e",
+  "instance_id": "juliacollections__datastructures.jl-780",
+  "issue_id": 754,
+  "issue_urls": [
+    "https://github.com/JuliaCollections/DataStructures.jl/issues/754"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.6.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "parent_sha": "99d214ba6b2a0cebdc25013c0c27f83da659ce2a",
+  "project": "JuliaCollections/DataStructures.jl",
+  "repository_url": "https://github.com/JuliaCollections/DataStructures.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "candidate_sha": "f90dd8ceb1808123136d96599fbf41407ef4fadc",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.82,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Issue #754 gives a concrete, minimal reproducer with version pinned (DataStructures v0.18.9): CircularBuffer{Int}(5) reports size (0,), push!(cb, 1.5) throws InexactError, and size(cb) then returns (1,). This is a violation of existing documented/expected container semantics (failed operation must not mutate length), not a new feature or API extension. The PR body explicitly closes #754 and the commit subject matches the issue's fault. Scope is minimal: one production file, one hunk, plus a test file, with trigger test group 'CircularBuffer' identified — consistent with an isolated behavioral fix that should be exposed by a single failing test on the parent commit.",
+    "input_sha256": "548761848efc6228dd15b74a06e915dd32fe2b6cf4f2239cb5a17e76bfb02b32",
+    "missing_evidence": "The actual production diff and test diff contents are not provided (file_details and runtime_evidence are empty), so the precise mechanism of the fix (e.g., converting before mutating length, or restoring length in a try/catch) is unverified. There is also no recorded pre-fix failing / post-fix passing test run.",
+    "project": "JuliaCollections/DataStructures.jl",
+    "provider": "claude",
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"PR 780 fixes a state-corruption bug in CircularBuffer push!: when the pushed value cannot be converted to the buffer's element type, the conversion error propagates but the buffer's length has already been incremented, leaving the container in an inconsistent state (size reports 1 after a failed push into an empty buffer). The fix is a single hunk in src/circular_buffer.jl with an accompanying change to test/test_circular_buffer.jl.\", \"evidence\": \"Issue #754 gives a concrete, minimal reproducer with version pinned (DataStructures v0.18.9): CircularBuffer{Int}(5) reports size (0,), push!(cb, 1.5) throws InexactError, and size(cb) then returns (1,). This is a violation of existing documented/expected container semantics (failed operation must not mutate length), not a new feature or API extension. The PR body explicitly closes #754 and the commit subject matches the issue's fault. Scope is minimal: one production file, one hunk, plus a test file, with trigger test group 'CircularBuffer' identified — consistent with an isolated behavioral fix that should be exposed by a single failing test on the parent commit.\", \"missing_evidence\": \"The actual production diff and test diff contents are not provided (file_details and runtime_evidence are empty), so the precise mechanism of the fix (e.g., converting before mutating length, or restoring length in a try/catch) is unverified. There is also no recorded pre-fix failing / post-fix passing test run.\", \"validation_risks\": \"If the fix was implemented via try/catch and length restoration rather than convert-before-mutate, other exception paths (e.g., element constructors with side effects) could behave differently and the reproducing test may be sensitive to Julia version error types (InexactError message/type stability across versions). Need to confirm the added test actually fails on parent_sha 2e74620 and that no other CircularBuffer tests were pre-existing failures, so the trigger is a single clean failure.\", \"suggested_tests\": \"1) cb = CircularBuffer{Int}(5); @test_throws InexactError push!(cb, 1.5); @test length(cb) == 0 && isempty(cb). 2) Same check on a partially filled buffer: push 1,2,3 then a failing push, assert length stays 3 and collect(cb) == [1,2,3]. 3) Failing push on a full/wrapped buffer to assert the first index and contents are unchanged (no silent overwrite of the oldest element). 4) Analogous checks for pushfirst! and append! to confirm the invariant holds on the other mutating entry points.\"}",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-30T04:00:01Z",
+    "revision_scope_recovery": {
+      "issue": 754,
+      "method": "first_upstream_fix_commit_with_direct_issue_test_and_bad_state_commit_message",
+      "old_buggy_revision": "2e74620d8d9666f486b1b9c6e88b89e06a910770",
+      "old_merge_commit": "f90dd8ceb1808123136d96599fbf41407ef4fadc",
+      "patch_sha256": "774ea37d408b0d2894aa66758b59dcf2f05693bb9510775db497f81a0ebafdef",
+      "project_toml_sha256": "53df73d99d41ff4e71542e1008442b7670bdefda57e751abe388fae327a4fe0d",
+      "recovered_buggy_parent": "99d214ba6b2a0cebdc25013c0c27f83da659ce2a",
+      "recovered_single_parent_fix_commit": "9998d3fe7f6f7aaf0e74586750962bd1cbdddf8e",
+      "status": "EXACT_SINGLE_PARENT_ISSUE_FIX"
+    },
+    "suggested_tests": "1) cb = CircularBuffer{Int}(5); @test_throws InexactError push!(cb, 1.5); @test length(cb) == 0 && isempty(cb). 2) Same check on a partially filled buffer: push 1,2,3 then a failing push, assert length stays 3 and collect(cb) == [1,2,3]. 3) Failing push on a full/wrapped buffer to assert the first index and contents are unchanged (no silent overwrite of the oldest element). 4) Analogous checks for pushfirst! and append! to confirm the invariant holds on the other mutating entry points.",
+    "summary": "PR 780 fixes a state-corruption bug in CircularBuffer push!: when the pushed value cannot be converted to the buffer's element type, the conversion error propagates but the buffer's length has already been incremented, leaving the container in an inconsistent state (size reports 1 after a failed push into an empty buffer). The fix is a single hunk in src/circular_buffer.jl with an accompanying change to test/test_circular_buffer.jl.",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.365093684543947,
+      "input_tokens": 3120,
+      "output_tokens": 672
+    },
+    "validation_risks": "If the fix was implemented via try/catch and length restoration rather than convert-before-mutate, other exception paths (e.g., element constructors with side effects) could behave differently and the reproducing test may be sensitive to Julia version error types (InexactError message/type stability across versions). Need to confirm the added test actually fails on parent_sha 2e74620 and that no other CircularBuffer tests were pre-existing failures, so the trigger is a single clean failure."
+  },
+  "revision_boundary_recovery": {
+    "issue": 754,
+    "method": "first_upstream_fix_commit_with_direct_issue_test_and_bad_state_commit_message",
+    "old_buggy_revision": "2e74620d8d9666f486b1b9c6e88b89e06a910770",
+    "old_merge_commit": "f90dd8ceb1808123136d96599fbf41407ef4fadc",
+    "patch_sha256": "774ea37d408b0d2894aa66758b59dcf2f05693bb9510775db497f81a0ebafdef",
+    "project_toml_sha256": "53df73d99d41ff4e71542e1008442b7670bdefda57e751abe388fae327a4fe0d",
+    "recovered_buggy_parent": "99d214ba6b2a0cebdc25013c0c27f83da659ce2a",
+    "recovered_single_parent_fix_commit": "9998d3fe7f6f7aaf0e74586750962bd1cbdddf8e",
+    "status": "EXACT_SINGLE_PARENT_ISSUE_FIX"
+  },
+  "revision_mode": "real_upstream_commit",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "CircularBuffer"
+    ],
+    "PASS_TO_PASS": [
+      "Trie: path iterator",
+      "top",
+      "reverse_iter",
+      "Queue enqueue! dequeue!",
+      "PriorityQueue enqueue! dequeue!",
+      "peek",
+      "IntSet",
+      "SparseIntSet",
+      "Deque",
+      "CircularDeque",
+      "SortedContainers",
+      "Stacks",
+      "Queue",
+      "Accumulators",
+      "DisjointSet",
+      "BinaryHeaps",
+      "MutableBinheap",
+      "Binary MinMax Heaps",
+      "DefaultDict",
+      "Trie",
+      "LinkedList",
+      "empty list",
+      "push back / pop back",
+      "push front / pop front",
+      "append / delete / copy / reverse",
+      "filter",
+      "show",
+      "random operations",
+      "MultiDict",
+      "DictionarySorting",
+      "PriorityQueue",
+      "Fenwick Tree",
+      "Constructors",
+      "RobinDict",
+      "RobinDict on pairs",
+      "KeyError",
+      "Filter function",
+      "typeof",
+      "type of RobinDict constructed from varargs of Pairs",
+      "equality",
+      "equality special cases",
+      "get!",
+      "push!",
+      "pop!",
+      "keys as a set",
+      "find",
+      "haskey",
+      "getkey",
+      "empty",
+      "ArgumentError",
+      "empty tuple",
+      "merge",
+      "merge with combine function",
+      "invariants",
+      "OrderedRobinDict",
+      "DiBitVectors",
+      "SwissDict",
+      "SwissDict on pairs",
+      "type of SwissDict constructed from varargs of Pairs",
+      "AVLTree",
+      "RBTree",
+      "SplayTree"
+    ],
+    "base_commit": "99d214ba6b2a0cebdc25013c0c27f83da659ce2a",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "created_at": "2021-12-17 22:53:15",
+    "image_name": "docker.io/swerebenchv2/juliacollections-datastructures.jl:780-2e74620",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()' 2>&1"
+    },
+    "instance_id": "juliacollections__datastructures.jl-780",
+    "interface": "Function: push!(cb::CircularBuffer{T}, data) where T\nLocation: src/circular_buffer.jl\nInputs: \n- **cb**: a `CircularBuffer{T}` instance (must have been created with a concrete element type `T`).\n- **data**: a value that will be converted to type `T` using `convert(T, data)`. The conversion must succeed; otherwise an `InexactError` (or other conversion error) is thrown.\nOutputs: \n- Returns the same `CircularBuffer{T}` (`cb`) after insertion. \n- If the buffer is full, the oldest element is overwritten; otherwise the buffer length is increased by one. \n- If the conversion fails, the insertion is aborted and the buffer size remains unchanged, propagating the conversion error (e.g., `InexactError`).\nDescription: Inserts `data` into the circular buffer, first converting it to the buffer’s element type `T`. The method now guarantees that the buffer size is only updated after a successful conversion, preventing size inflation on type‑mismatch errors. Use this method to add elements to a `CircularBuffer{T}` while safely handling type conversion.\n",
+    "issue_url": "https://github.com/JuliaCollections/DataStructures.jl/issues/754",
+    "language": "julia",
+    "license": "MIT",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.97,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "edge_case_bug",
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports that CircularBuffer.push! increments the length even when the inserted value cannot be converted to the buffer element type, and expects the size to remain unchanged after the error. The added test asserts that size stays (0,) after a failing push! and that subsequent successful push! behaves normally, which matches the described intended behavior. No external dependencies, naming constraints, or ambiguous specifications are present, and the test directly reflects the issue's requirement. Therefore the task is clearly specified and solvable, so it is classified as A (SOLVABLE).",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 2,
+      "num_modified_lines": null,
+      "pr_author": "robert-wright",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaCollections/DataStructures.jl/pull/780"
+    },
+    "original_base_commit": "2e74620d8d9666f486b1b9c6e88b89e06a910770",
+    "patch": "diff --git a/src/circular_buffer.jl b/src/circular_buffer.jl\nindex ab56dfa8f..e1a6a88d7 100644\n--- a/src/circular_buffer.jl\n+++ b/src/circular_buffer.jl\n@@ -101,14 +101,18 @@ end\n \n Add an element to the back and overwrite front if full.\n \"\"\"\n-@inline function Base.push!(cb::CircularBuffer, data)\n+@inline function Base.push!(cb::CircularBuffer{T}, data) where T\n+\n+    # As per the behaviour of Base.push!\n+    data_converted = convert(T, data)\n+\n     # if full, increment and overwrite, otherwise push\n     if cb.length == cb.capacity\n         cb.first = (cb.first == cb.capacity ? 1 : cb.first + 1)\n     else\n         cb.length += 1\n     end\n-    @inbounds cb.buffer[_buffer_index(cb, cb.length)] = data\n+    @inbounds cb.buffer[_buffer_index(cb, cb.length)] = data_converted\n     return cb\n end\n \n",
+    "pr_description": "closes #754",
+    "pr_url": "https://github.com/JuliaCollections/DataStructures.jl/pull/780",
+    "problem_statement": "CircularBuffer push! increases size even if value can't be converted\nReproducible with the following steps:\r\n```\r\njulia> using DataStructures\r\njulia> cb = CircularBuffer{Int}(5);\r\njulia> size(cb)\r\n(0,)\r\njulia> push!(cb, 1.5)\r\nERROR: InexactError: Int64(1.5)\r\n[...]\r\njulia> size(cb)\r\n(1,)\r\npkg> status\r\n[...]\r\n  [864edb3b] DataStructures v0.18.9\r\n[...]\r\n```\r\n\r\nThis seems strongly like unexpected behavior to me and should probably be fixed.",
+    "recovered_fix_commit": "9998d3fe7f6f7aaf0e74586750962bd1cbdddf8e",
+    "repo": "JuliaCollections/DataStructures.jl",
+    "test_patch": "diff --git a/test/test_circular_buffer.jl b/test/test_circular_buffer.jl\nindex 5c6af105d..24b90edd5 100644\n--- a/test/test_circular_buffer.jl\n+++ b/test/test_circular_buffer.jl\n@@ -165,6 +165,15 @@\n         end\n     end\n \n+    @testset \"Issue 754\" begin\n+        cb = CircularBuffer{Int}(5)\n+        @test size(cb) == (0,)\n+        @test_throws InexactError push!(cb, 1.5)\n+        @test size(cb) == (0,)\n+        push!(cb, 1.0)\n+        @test size(cb) == (1,)\n+    end\n+\n     @testset \"resize!\" begin\n         @testset \"resize an empty buffer\" begin\n             cb = CircularBuffer{Int}(3)\n"
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "cabb874a86dcf4cbe21ab971cd10c8e60e00a4d03a93e134b693be5485367130",
+    "oracle": {
+      "mwe_basis": "public DataStructures.CircularBuffer behavior",
+      "defect": "A failed element conversion incremented buffer length before throwing.",
+      "source_evidence": {
+        "upstream_issue": 754,
+        "upstream_test_file": "test/test_circular_buffer.jl",
+        "basis": "Issue 754 state-integrity assertion from the first upstream fix commit; the oracle deliberately accepts either exception type."
+      },
+      "upstream_test_patch_sha256": "3f7018cff0ace20b11c80e24c6789feaff8eca4d4cb5672d9a28f58b1f97c092"
+    }
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "failed conversion leaves CircularBuffer unchanged"
+  ],
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "failed conversion leaves CircularBuffer unchanged"
+    ],
+    "exception_types": [
+      "93e8d4f263e3e710b1286e61d81ad9cc04d5367029c80bc78676bdd508047840",
+      "e77874ad70ed324f168b491f975fe62a9fb641d9890999ce417a4dd083dff6e8"
+    ],
+    "fingerprints": [
+      "93e8d4f263e3e710b1286e61d81ad9cc04d5367029c80bc78676bdd508047840",
+      "e77874ad70ed324f168b491f975fe62a9fb641d9890999ce417a4dd083dff6e8"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

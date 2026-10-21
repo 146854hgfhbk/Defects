@@ -1,0 +1,22 @@
+diff --git a/Sources/MockServer/MockHTTPServer.swift b/Sources/MockServer/MockHTTPServer.swift
+--- a/Sources/MockServer/MockHTTPServer.swift
++++ b/Sources/MockServer/MockHTTPServer.swift
+@@ -42,7 +42,7 @@ struct MockHTTPServer {
+ 
+     static func main() async throws {
+         var log = Logger(label: "MockServer")
+-        log.logLevel = env("LOG_LEVEL").flatMap(Logger.Level.init) ?? .info
++        log.logLevel = env("LOG_LEVEL").flatMap { Logger.Level(rawValue: $0) } ?? .info
+ 
+         let server = HttpServer(
+             host: env("HOST") ?? "127.0.0.1",
+diff --git a/Sources/AWSLambdaRuntime/LambdaRuntime.swift b/Sources/AWSLambdaRuntime/LambdaRuntime.swift
+--- a/Sources/AWSLambdaRuntime/LambdaRuntime.swift
++++ b/Sources/AWSLambdaRuntime/LambdaRuntime.swift
+@@ -50,5 +50,5 @@ public final class LambdaRuntime<Handler: StreamingLambdaHandler>: Service {
+         // use the LOG_LEVEL environment variable to set the log level.
+         // if the environment variable is not set, use the default log level from the logger provided
+-        log.logLevel = Lambda.env("LOG_LEVEL").flatMap(Logger.Level.init) ?? logger.logLevel
++        log.logLevel = Lambda.env("LOG_LEVEL").flatMap { Logger.Level(rawValue: $0) } ?? logger.logLevel
+ 
+         self.logger = log

@@ -1,0 +1,135 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-007",
+  "bug_id": "JULIA-007",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "SciML/SciMLBase.jl",
+  "repository_url": "https://github.com/SciML/SciMLBase.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "831573d7b1c5943d34ce852cb0a88b8b32fe6dab",
+  "fixed_revision": "089609e7a2a63844dc19f0d0eef400eaba8992d6",
+  "candidate_sha": "089609e7a2a63844dc19f0d0eef400eaba8992d6",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "831573d7b1c5943d34ce852cb0a88b8b32fe6dab",
+  "changed_production_files": [
+    "src/solutions/save_idxs.jl"
+  ],
+  "changed_test_files": [
+    "test/downstream/solution_interface.jl",
+    "test/solution_interface.jl"
+  ],
+  "trigger_tests": [
+    "save_idxs rejects observed quantities"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "97eae8488d0f8143767e7f79808473b7071d0395ae48312771d2096e3918a103",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/solution_interface.jl",
+        "basis": "public behavior assertions isolated from upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "15df308046355659704fecddd3e041a5516b3c46ae7c3c1ade534118841630b3"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "089609e7a2a63844dc19f0d0eef400eaba8992d6",
+    "project": "SciML/SciMLBase.jl",
+    "input_sha256": "207c400327edb60c11b1f78750a1689808f824b9252bfec35bcbd88f99cb0a7a",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:51:47Z",
+    "usage": {
+      "prompt_tokens": 2757,
+      "completion_tokens": 679,
+      "total_tokens": 3436
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.78,\n  \"summary\": \"Fix for symbolic save_idxs skipping index translation when all state variables are selected, causing ArgumentError/TypeError at runtime. The commit modifies production code in src/solutions/save_idxs.jl and adds/updates tests.\",\n  \"evidence\": \"Issue #1460 clearly documents the bug: when save_idxs names all state variables, SavedSubsystem returns nothing, and the guard misinterprets that as 'no translation needed', leaking raw Symbol/Num into integer indexing paths. The fix translates symbolic save_idxs to integer state indexes in the saved_subsystem === nothing branch. The commit touches one production file (src/solutions/save_idxs.jl) and two test files, consistent with a targeted bug fix. The issue includes a clear reproduction scenario showing ArgumentError for all-variable symbolic save_idxs.\",\n  \"missing_evidence\": \"Cannot see the actual diff content to confirm the exact code change. The commit could potentially bundle multiple issues (#1460 and #1467 are closely related). Without seeing the diff, cannot confirm whether the observed-rejection error message (issue #1467) is also included, which would be a minor diagnostic enhancement alongside the bug fix.\",\n  \"validation_risks\": \"The fix may interact with ModelingToolkit's symbolic indexing system in ways that require downstream integration testing. The commit appears to address multiple related issues (#1460 and #1467), potentially making it less isolated than ideal. Without seeing the diff, there's uncertainty about whether error-message improvements are bundled with the core logic fix.\",\n  \"suggested_tests\": \"1. Test save_idxs with all state variables as symbols (e.g., [:x, :y, :z]) and verify integer indices are returned. 2. Test permuted all-variable save_idxs ([:z, :y, :x]) and verify correct reordering. 3. Test subset save_idxs still work correctly. 4. Test non-symbolic save_idxs (integers, Colon) pass through untouched. 5. Test that observed variables in save_idxs produce a clear error.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.78,
+    "summary": "Fix for symbolic save_idxs skipping index translation when all state variables are selected, causing ArgumentError/TypeError at runtime. The commit modifies production code in src/solutions/save_idxs.jl and adds/updates tests.",
+    "evidence": "Issue #1460 clearly documents the bug: when save_idxs names all state variables, SavedSubsystem returns nothing, and the guard misinterprets that as 'no translation needed', leaking raw Symbol/Num into integer indexing paths. The fix translates symbolic save_idxs to integer state indexes in the saved_subsystem === nothing branch. The commit touches one production file (src/solutions/save_idxs.jl) and two test files, consistent with a targeted bug fix. The issue includes a clear reproduction scenario showing ArgumentError for all-variable symbolic save_idxs.",
+    "missing_evidence": "Cannot see the actual diff content to confirm the exact code change. The commit could potentially bundle multiple issues (#1460 and #1467 are closely related). Without seeing the diff, cannot confirm whether the observed-rejection error message (issue #1467) is also included, which would be a minor diagnostic enhancement alongside the bug fix.",
+    "validation_risks": "The fix may interact with ModelingToolkit's symbolic indexing system in ways that require downstream integration testing. The commit appears to address multiple related issues (#1460 and #1467), potentially making it less isolated than ideal. Without seeing the diff, there's uncertainty about whether error-message improvements are bundled with the core logic fix.",
+    "suggested_tests": "1. Test save_idxs with all state variables as symbols (e.g., [:x, :y, :z]) and verify integer indices are returned. 2. Test permuted all-variable save_idxs ([:z, :y, :x]) and verify correct reordering. 3. Test subset save_idxs still work correctly. 4. Test non-symbolic save_idxs (integers, Colon) pass through untouched. 5. Test that observed variables in save_idxs produce a clear error."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "save_idxs rejects observed quantities"
+    ],
+    "exception_types": [
+      "11bd50779a5533a4cea579532d1b00936a67c4777829aca63510246482e69e26",
+      "1fd4e2998e1739ce6fdb48cbc6ed476325c6f8cfcbee7201d5f6fc4da67f052d",
+      "3a929b5d297cc5dcc6edc678f14e140e57efb92c1360ce5a91682c00225e6324"
+    ],
+    "fingerprints": [
+      "11bd50779a5533a4cea579532d1b00936a67c4777829aca63510246482e69e26",
+      "1fd4e2998e1739ce6fdb48cbc6ed476325c6f8cfcbee7201d5f6fc4da67f052d",
+      "3a929b5d297cc5dcc6edc678f14e140e57efb92c1360ce5a91682c00225e6324"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "089609e7a2a63844dc19f0d0eef400eaba8992d6",
+    "parent_sha": "831573d7b1c5943d34ce852cb0a88b8b32fe6dab",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "ade16f1631867b831f6c90d7b44c486e34393aa1531d1b4ab20665e6127cfdf2",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

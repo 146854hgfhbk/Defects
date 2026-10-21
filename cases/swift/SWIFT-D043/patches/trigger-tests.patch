@@ -1,0 +1,68 @@
+diff --git a/Tests/OpenAPIRuntimeTests/Base/Test_OpenAPIValue.swift b/Tests/OpenAPIRuntimeTests/Base/Test_OpenAPIValue.swift
+index 7146a26..9382d7c 100644
+--- a/Tests/OpenAPIRuntimeTests/Base/Test_OpenAPIValue.swift
++++ b/Tests/OpenAPIRuntimeTests/Base/Test_OpenAPIValue.swift
+@@ -216,6 +216,25 @@ final class Test_OpenAPIValue: Test_Runtime {
+         XCTAssertEqual(value["keyMore"] as? [Bool], [true])
+     }
+ 
++    func testEncoding_anyOfObjects_success() throws {
++        let values1: [String: (any Sendable)?] = ["key": "value"]
++        let values2: [String: (any Sendable)?] = ["keyMore": [true]]
++        let container = MyAnyOf2(
++            value1: try OpenAPIObjectContainer(unvalidatedValue: values1),
++            value2: try OpenAPIObjectContainer(unvalidatedValue: values2)
++        )
++        let expectedString = #"""
++            {
++              "key" : "value",
++              "keyMore" : [
++                true
++              ]
++            }
++            """#
++        try _testPrettyEncoded(container, expectedJSON: expectedString)
++    }
++
++
+     func testEncoding_array_success() throws {
+         let values: [(any Sendable)?] = ["one", ["two": 2]]
+         let container = try OpenAPIArrayContainer(unvalidatedValue: values)
+@@ -246,6 +265,7 @@ final class Test_OpenAPIValue: Test_Runtime {
+         XCTAssertEqual(value[1] as? [String: Int], ["two": 2])
+     }
+ 
++
+     func testEncoding_objectNested_success() throws {
+         struct Foo: Encodable {
+             var bar: String
+@@ -334,3 +354,29 @@ final class Test_OpenAPIValue: Test_Runtime {
+         )
+     }
+ }
++
++struct MyAnyOf2<Value1: Codable & Hashable & Sendable, Value2: Codable & Hashable & Sendable>: Codable, Hashable,
++    Sendable
++{
++    var value1: Value1?
++    var value2: Value2?
++    init(value1: Value1? = nil, value2: Value2? = nil) {
++        self.value1 = value1
++        self.value2 = value2
++    }
++    public init(from decoder: any Decoder) throws {
++        var errors: [any Error] = []
++        do { self.value1 = try .init(from: decoder) } catch { errors.append(error) }
++        do { self.value2 = try .init(from: decoder) } catch { errors.append(error) }
++        try Swift.DecodingError.verifyAtLeastOneSchemaIsNotNil(
++            [self.value1, self.value2],
++            type: Self.self,
++            codingPath: decoder.codingPath,
++            errors: errors
++        )
++    }
++    public func encode(to encoder: any Encoder) throws {
++        try self.value1?.encode(to: encoder)
++        try self.value2?.encode(to: encoder)
++    }
++}

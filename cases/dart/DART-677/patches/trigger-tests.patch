@@ -1,0 +1,28 @@
+diff --git a/test/extensions/matches_request_test.dart b/test/extensions/matches_request_test.dart
+index 8aac68e..56526a5 100644
+--- a/test/extensions/matches_request_test.dart
++++ b/test/extensions/matches_request_test.dart
+@@ -228,6 +228,23 @@ void main() {
+ 
+           expect({'message': 'Test!'}, response.data);
+         });
++
++        test('fails on unsatisfied header expectation', () async {
++          dioAdapter.onGet(
++            path,
++            (request) => request.reply(statusCode, data),
++            headers: {
++              Headers.contentLengthHeader: Matchers.integer,
++            },
++          );
++
++          expect(
++              () => dio.get(path),
++              throwsA(predicate((e) =>
++                  e is DioError &&
++                  e.type == DioErrorType.other &&
++                  e.error is AssertionError)));
++        });
+       });
+     });
+   });

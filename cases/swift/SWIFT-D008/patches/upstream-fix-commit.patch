@@ -1,0 +1,51 @@
+diff --git a/Sources/CharacterReader.swift b/Sources/CharacterReader.swift
+index b5b20a4..a233900 100644
+--- a/Sources/CharacterReader.swift
++++ b/Sources/CharacterReader.swift
+@@ -384,6 +384,9 @@ public final class CharacterReader {
+     }
+ 
+     public func matchesAny(_ seq: ParsingStrings) -> Bool {
++        guard input.count > pos
++        else { return false }
++        
+         var buffer = [UInt8](repeating: 0, count: 4) // Max UTF-8 sequence is 4 bytes
+         var length = 1
+         buffer[0] = input[pos]
+@@ -424,7 +427,9 @@ public final class CharacterReader {
+     }
+ 
+     public func matchesAny(_ seq: [[UInt8]]) -> Bool {
+-        guard pos < end else { return false }
++        guard pos < end,
++              input.count > pos
++        else { return false }
+         
+         var buffer = [UInt8](repeating: 0, count: 4) // Max UTF-8 sequence is 4 bytes
+         var length = 1
+@@ -479,7 +484,9 @@ public final class CharacterReader {
+     }
+     
+     public func matchesDigit() -> Bool {
+-        guard pos < end else { return false }
++        guard pos < end,
++              input.count > pos
++        else { return false }
+         
+         var buffer = [UInt8](repeating: 0, count: 4)
+         var length = 0
+diff --git a/Tests/SwiftSoupTests/HtmlParserTest.swift b/Tests/SwiftSoupTests/HtmlParserTest.swift
+index 7a0e7d9..4867b58 100644
+--- a/Tests/SwiftSoupTests/HtmlParserTest.swift
++++ b/Tests/SwiftSoupTests/HtmlParserTest.swift
+@@ -621,4 +621,10 @@ class HtmlParserTest: XCTestCase {
+ 		XCTAssertEqual(try doc.select("span").first()!.children().size(), 0) // the span gets closed
+ 		XCTAssertEqual(try doc.select("table").size(), 1) // only one table
+ 	}
++    
++    func testParse_DoesNotCrashOnUnterminatedHtmlEntity() throws {
++        let html = "<a href='&lt"
++        let doc = try SwiftSoup.parse(html)
++        XCTAssertEqual(try doc.body()?.text(), "")
++    }
+ }

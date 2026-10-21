@@ -1,0 +1,26 @@
+diff --git a/t/regression/757-reset_in_subtest.t b/t/regression/757-reset_in_subtest.t
+new file mode 100644
+index 000000000..846a34d83
+--- /dev/null
++++ b/t/regression/757-reset_in_subtest.t
+@@ -0,0 +1,20 @@
++use strict;
++use warnings;
++
++use Test::More;
++
++subtest 'subtest' => sub {
++    Test::Builder->new->reset;
++    ok 1;
++};
++
++subtest 'subtest' => sub {
++    Test::Builder->new->reset;
++    subtest 'subtest' => sub {
++        Test::Builder->new->reset;
++        ok 1;
++    };
++    ok 1;
++};
++
++done_testing;

@@ -1,0 +1,75 @@
+diff --git a/README.md b/README.md
+index f0289c79f20d32291769ac9088bf94246bed339c..9973653cf928741a744b61437ca749bd1e779fc2 100644
+--- a/README.md
++++ b/README.md
+@@ -3,27 +3,32 @@ binaryheap.lua
+ 
+ [Binary heap](http://en.wikipedia.org/wiki/Binary_heap) implementation
+ 
+-[Original code](http://lua-users.org/lists/lua-l/2015-04/msg00137.html) 
+-by Oliver Kroth, with 
++[Original code](http://lua-users.org/lists/lua-l/2015-04/msg00137.html)
++by Oliver Kroth, with
+ [extras](http://lua-users.org/lists/lua-l/2015-04/msg00133.html)
+ as proposed by Sean Conner.
+ 
+ Contributions
+ =============
+-This library was create by contributions from Oliver Kroth, 
++This library was create by contributions from Oliver Kroth,
+ Thijs Schreijer, Boris Nagaev
+ 
+ History
+ =======
++
++Version xxx
++
++ - bugfix `unique:pop` returning wrong order results (by Daurnimator)
++
+ Version 0.2, 21-Apr-2015
+ 
+  - bugfix `remove` function (by Boris Nagaev)
+  - configurable comparison function for the tree
+- 
++
+ Version 0.1, 20-Apr-2015
+ 
+  - Initial release
+- 
++
+ 
+ Copyright
+ =========
+diff --git a/spec/binaryheap_spec.lua b/spec/binaryheap_spec.lua
+index 5bbca88c6308e8cfc33a017289d7fe46e50219d4..b93b5b7221624392cf9cea7e5c929dab94894eb3 100644
+--- a/spec/binaryheap_spec.lua
++++ b/spec/binaryheap_spec.lua
+@@ -59,7 +59,14 @@ end
+ 
+ local function testheap(heap, sorted)
+   while sorted[1] do
+-    local value1, payload1 = heap:pop()
++    local value1, payload1
++    if heap.reverse then
++      -- it is a unique heap
++      payload1, value1 = heap:pop()
++    else
++      -- it is a plain heap
++      value1, payload1 = heap:pop()
++    end
+     local value2, payload2 = sorted[1].value, sorted[1].payload
+     table.remove(sorted, 1)
+     assert.are.equal(payload1, payload2)
+diff --git a/src/binaryheap.lua b/src/binaryheap.lua
+index 50c3990739614a28b9bdf5be4206392cef54ef9d..bfe33c3ca413038a3e36bc5b6331a8ef41b5f395 100644
+--- a/src/binaryheap.lua
++++ b/src/binaryheap.lua
+@@ -265,7 +265,7 @@ function popU(self)
+   if self.values[1] then
+     local payload = self.payloads[1]
+     local value = remove(self, 1)
+-    return value, payload
++    return payload, value
+   end
+ end
+ 

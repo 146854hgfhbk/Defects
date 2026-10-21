@@ -1,0 +1,199 @@
+diff --git a/cpanfile b/cpanfile
+index 840e67974ac6a3cc6eeb5bc37da5c1a24d517a3f..7c10d15c711fa736b027e0bcdf2a5bdee655b5f2 100644
+--- a/cpanfile
++++ b/cpanfile
+@@ -38,6 +38,7 @@ on 'runtime' => sub {
+     requires "strict" => "0";
+     requires "warnings" => "0";
+     requires "utf8" => '0';
++    suggests 'Regexp::IPv6' => "0.03";
+     suggests 'Business::ISBN' => "3.005";
+ };
+ 
+diff --git a/lib/URI.pm b/lib/URI.pm
+index eb02a728fcaf28d69c72907a7914eee917366af0..9370720ad64892e45e0d96bb3287b324c0124da1 100644
+--- a/lib/URI.pm
++++ b/lib/URI.pm
+@@ -5,16 +5,21 @@ use warnings;
+ 
+ our $VERSION = '5.11';
+ 
++# 1=version 5.10 and earlier; 0=version 5.11 and later
++use constant HAS_RESERVED_SQUARE_BRACKETS => $ENV{URI_HAS_RESERVED_SQUARE_BRACKETS} ? 1 : 0;
++
+ our ($ABS_REMOTE_LEADING_DOTS, $ABS_ALLOW_RELATIVE_SCHEME, $DEFAULT_QUERY_FORM_DELIMITER);
+ 
+ my %implements;  # mapping from scheme to implementor class
+ 
+ # Some "official" character classes
+ 
+-our $reserved   = q(;/?:@&=+$,[]);
++our $reserved   = HAS_RESERVED_SQUARE_BRACKETS ? q(;/?:@&=+$,[]) : q(;/?:@&=+$,);
+ our $mark       = q(-_.!~*'());                                    #'; emacs
+ our $unreserved = "A-Za-z0-9\Q$mark\E";
+ our $uric       = quotemeta($reserved) . $unreserved . "%";
++our $uric4host  = $uric . ( HAS_RESERVED_SQUARE_BRACKETS ? '' : quotemeta( q([]) ) );
++our $uric4user  = quotemeta( q{!$'()*,;:._~%-+=%&} ) . "A-Za-z0-9" . ( HAS_RESERVED_SQUARE_BRACKETS ? quotemeta( q([]) ) : '' ); # RFC-3987: iuserinfo w/o UTF
+ 
+ our $scheme_re  = '[a-zA-Z][a-zA-Z0-9.+\-]*';
+ 
+@@ -86,10 +91,34 @@ sub _init
+ }
+ 
+ 
++#-- Version: 5.11+
++#   Since the complete URI will be percent-encoded including '[' and ']',
++#   we selectively unescape square brackets from the authority/host part of the URI.
++#   Derived modules that implement _uric_escape() should take this into account
++#   if they do not rely on URI::_uric_escape().
++#   No unescaping is performed for the userinfo@ part of the authority part.
++sub _fix_uric_escape_for_host_part {
++  return if HAS_RESERVED_SQUARE_BRACKETS;
++  return if $_[0] !~ /%/;
++
++  if ($_[0] =~ m,^((?:$URI::scheme_re:)?)//([^/?\#]*)(.*)$,os) {
++    my $orig          = $2;
++    my ($user, $host) = $orig =~ /^(.*@)?([^@]*)$/;
++    $user  ||= '';
++    my $port = $host =~ s/(:\d+)$// ? $1 : '';
++    #MAINT: die() here if scheme indicates TCP/UDP and port is out of range [0..65535] ?
++    $host    =~ s/\%5B/[/gi;
++    $host    =~ s/\%5D/]/gi;
++    $_[0]    =~ s/\Q$orig\E/$user$host$port/;
++  }
++}
++
++
+ sub _uric_escape
+ {
+     my($class, $str) = @_;
+     $str =~ s*([^$uric\#])* URI::Escape::escape_char($1) *ego;
++    _fix_uric_escape_for_host_part( $str );
+     utf8::downgrade($str);
+     return $str;
+ }
+@@ -1087,6 +1116,34 @@ delimited by ";" instead of "&" which is the default.
+ 
+ =back
+ 
++=head1 ENVIRONMENT VARIABLES
++
++=over 4
++
++=item URI_HAS_RESERVED_SQUARE_BRACKETS
++
++Before version 5.11, URI treated square brackets as reserved characters
++throughout the whole URI string. However, these brackets are reserved
++only within the authority/host part of the URI and nowhere else (RFC 3986).
++
++Starting with version 5.11, URI takes this distinction into account.
++Setting the environment variable C<URI_HAS_RESERVED_SQUARE_BRACKETS>
++(programmatically or via the shell), restores the old behavior.
++
++  #-- restore 5.10 behavior programmatically
++  BEGIN {
++    $ENV{URI_HAS_RESERVED_SQUARE_BRACKETS} = 1;
++  }
++  use URI ();
++
++I<Note>: This environment variable is just used during initialization and has to be set
++      I<before> module URI is used/required. Changing it at run time has no effect.
++
++Its value can be checked programmatically by accessing the constant
++C<URI::HAS_RESERVED_SQUARE_BRACKETS>.
++
++=back
++
+ =head1 BUGS
+ 
+ There are some things that are not quite right:
+diff --git a/lib/URI/_generic.pm b/lib/URI/_generic.pm
+index d03377f7a0b222cbeafd1ce00808d1d92dd185ba..8389cd698579974790147da1236736f9c77d967d 100644
+--- a/lib/URI/_generic.pm
++++ b/lib/URI/_generic.pm
+@@ -10,11 +10,31 @@ use Carp ();
+ 
+ our $VERSION = '5.11';
+ 
+-my $ACHAR = $URI::uric;  $ACHAR =~ s,\\[/?],,g;
+-my $PCHAR = $URI::uric;  $PCHAR =~ s,\\[?],,g;
++my $ACHAR = URI::HAS_RESERVED_SQUARE_BRACKETS ? $URI::uric : $URI::uric4host;  $ACHAR =~ s,\\[/?],,g;
++my $PCHAR = $URI::uric;                                                        $PCHAR =~ s,\\[?],,g;
+ 
+ sub _no_scheme_ok { 1 }
+ 
++our $IPv6_re;
++
++sub _looks_like_raw_ip6_address {
++  my $addr = shift;
++
++  if ( !$IPv6_re ) { #-- lazy / runs once / use Regexp::IPv6 if installed
++    eval {
++      require Regexp::IPv6;
++      Regexp::IPv6->import( qw($IPv6_re) );
++      1;
++    }  ||  do { $IPv6_re = qr/[:0-9a-f]{3,}/; }; #-- fallback: unambitious guess
++  }
++
++  return 0 unless $addr;
++  return 0 if $addr =~ tr/:/:/ < 2;  #-- fallback must not create false positive for IPv4:Port = 0:0
++  return 1 if $addr =~ /^$IPv6_re$/i;
++  return 0;
++}
++
++
+ sub authority
+ {
+     my $self = shift;
+@@ -26,6 +46,13 @@ sub authority
+ 	my $rest = $3;
+ 	if (defined $auth) {
+ 	    $auth =~ s/([^$ACHAR])/ URI::Escape::escape_char($1)/ego;
++            if ( my ($user, $host) = $auth =~ /^(.*@)?([^@]+)$/ ) { #-- special escape userinfo part
++              $user ||= '';
++              $user =~ s/([^$URI::uric4user])/ URI::Escape::escape_char($1)/ego;
++              $user =~ s/%40$/\@/; # recover final '@'
++              $host = "[$host]" if _looks_like_raw_ip6_address( $host );
++              $auth = $user . $host;
++            }
+ 	    utf8::downgrade($auth);
+ 	    $$self .= "//$auth";
+ 	}
+diff --git a/lib/URI/_server.pm b/lib/URI/_server.pm
+index 16ff524a19218fe9f802e596b8e4564e6382346b..69207a80a1906113ff5ce8d9cfb2447c800b9fa8 100644
+--- a/lib/URI/_server.pm
++++ b/lib/URI/_server.pm
+@@ -23,7 +23,8 @@ sub _uric_escape {
+ }
+ 
+ sub _host_escape {
+-    return unless $_[0] =~ /[^$URI::uric]/;
++  return if  URI::HAS_RESERVED_SQUARE_BRACKETS  and  $_[0] !~ /[^$URI::uric]/;
++  return if !URI::HAS_RESERVED_SQUARE_BRACKETS  and  $_[0] !~ /[^$URI::uric4host]/;
+     eval {
+ 	require URI::_idna;
+ 	$_[0] = URI::_idna::encode($_[0]);
+@@ -59,8 +60,8 @@ sub userinfo
+ 	$new =~ s/.*@//;  # remove old stuff
+ 	my $ui = shift;
+ 	if (defined $ui) {
+-	    $ui =~ s/@/%40/g;   # protect @
+-	    $new = "$ui\@$new";
++          $ui =~ s/([^$URI::uric4user])/ URI::Escape::escape_char($1)/ego;
++          $new = "$ui\@$new";
+ 	}
+ 	$self->authority($new);
+     }
+diff --git a/uri-test b/uri-test
+index ca30ef8536e30458ea1ca4986c97bb97d694f817..542723acbe52c5e75e45b77ee514807a01752089 100755
+--- a/uri-test
++++ b/uri-test
+@@ -14,6 +14,8 @@ my $orig = $uri;
+ 
+ require URI;
+ 
++warn "Using: $INC{'URI.pm'}\n"  if  $INC{'URI.pm'} ne 'lib/URI.pm'  and  -t STDOUT  and  -t STDIN;
++
+ my @ctor_arg = ($uri);
+ push(@ctor_arg, shift) while @ARGV && $ARGV[0] =~ s/^\+//;
+ 

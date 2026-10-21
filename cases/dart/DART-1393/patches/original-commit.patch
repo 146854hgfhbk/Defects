@@ -1,0 +1,85 @@
+diff --git a/lib/src/back_end/solution.dart b/lib/src/back_end/solution.dart
+index 4a94f775a5de121462bff3eaddfd08e71f1d94e5..c2278b17bb62429867d3563b386699806a116f5e 100644
+--- a/lib/src/back_end/solution.dart
++++ b/lib/src/back_end/solution.dart
+@@ -168,8 +168,15 @@ class Solution implements Comparable<Solution> {
+   /// the resulting solution is being merged with this one.
+   void mergeSubtree(Solution subtreeSolution) {
+     _overflow += subtreeSolution._overflow;
+-    _cost += subtreeSolution.cost;
+-    _pieceStates.addAll(subtreeSolution._pieceStates);
++
++    // Add the subtree's bound pieces to this one. Make sure to not double
++    // count costs for pieces that are already bound in this one.
++    subtreeSolution._pieceStates.forEach((piece, state) {
++      _pieceStates.putIfAbsent(piece, () {
++        _cost += piece.stateCost(state);
++        return state;
++      });
++    });
+   }
+ 
+   /// Sets [selectionStart] to be [start] code units into the output.
+diff --git a/lib/src/piece/sequence.dart b/lib/src/piece/sequence.dart
+index 20748c114386396d30e9d2381a335cc0da4a2e20..515e48f61eae1bf41286570769446af813e6a476 100644
+--- a/lib/src/piece/sequence.dart
++++ b/lib/src/piece/sequence.dart
+@@ -40,9 +40,14 @@ class SequencePiece extends Piece {
+     for (var i = 0; i < _elements.length; i++) {
+       var element = _elements[i];
+ 
+-      // If the sequence is split, then every element is on its own line and
+-      // can be formatted separately.
+-      writer.format(element, separate: state == State.split);
++      // We can format an element separately if the element is on its own line.
++      // This happens when the sequence is split and there is something before
++      // and after the element, either brackets or other items.
++      var separate = state == State.split &&
++          (i > 0 || _leftBracket != null) &&
++          (i < _elements.length - 1 || _rightBracket != null);
++
++      writer.format(element, separate: separate);
+ 
+       if (i < _elements.length - 1) {
+         writer.newline(
+diff --git a/test/regression_tall/other/misc.unit b/test/regression_tall/other/misc.unit
+new file mode 100644
+index 0000000000000000000000000000000000000000..0b4f9d6b8bc538c937a430dcede3055f75c46554
+--- /dev/null
++++ b/test/regression_tall/other/misc.unit
+@@ -0,0 +1,22 @@
++>>> Incorrect cost calculation when merging subtrees led to wrong solution.
++SomeVeryLongReturnType
++someFunctionName(SomeType_parameter1 AnotherType_parameter2) {
++  {
++    deps.then(() {
++          ;
++        })
++        .then(________traverseDeps_depender__deps_);
++  }
++}
++<<<
++SomeVeryLongReturnType someFunctionName(
++  SomeType_parameter1 AnotherType_parameter2,
++) {
++  {
++    deps
++        .then(() {
++          ;
++        })
++        .then(________traverseDeps_depender__deps_);
++  }
++}
+\ No newline at end of file
+diff --git a/test/tall_format_test.dart b/test/tall_format_test.dart
+index 93f84d1d6d9d8d628dec2a3996036d52fc033d33..80a8344dcf19e8e9a41425856e6907894e0b06d9 100644
+--- a/test/tall_format_test.dart
++++ b/test/tall_format_test.dart
+@@ -21,6 +21,7 @@ void main() async {
+   await testDirectory('top_level', tall: true);
+   await testDirectory('type', tall: true);
+   await testDirectory('variable', tall: true);
++  await testDirectory('regression_tall', tall: true);
+ 
+   test('throws a FormatterException on failed parse', () {
+     var formatter = DartFormatter();

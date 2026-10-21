@@ -1,0 +1,658 @@
+{
+  "issue_urls": [
+    "https://github.com/orlandos-nl/swift-json/issues/69"
+  ],
+  "repository_evidence": {
+    "checked_at": "2026-09-04T02:09:20.830521+00:00",
+    "api_url": "https://api.github.com/repos/orlandos-nl/swift-json",
+    "html_url": "https://github.com/orlandos-nl/swift-json",
+    "private": false,
+    "visibility": "public",
+    "archived": false,
+    "public_verification_source": "github_api",
+    "license_spdx": "MIT",
+    "license_source": "github_api"
+  },
+  "patches": {
+    "original_commit": {
+      "path": "patches/original-commit.patch",
+      "sha256": "df10644bc1f9dd699a89fcffe11dacc0eb614e3fc39b418013e5a265c03f0f0e",
+      "bytes": 2117
+    },
+    "production_fix": {
+      "path": "patches/production-fix.patch",
+      "sha256": "979b31a5a5fca1a5c60a1ca2086d92a7bd2bbc0cf197ffa1ec433aa862b8ac74",
+      "bytes": 1009
+    },
+    "trigger_tests": {
+      "path": "patches/trigger-tests-compatible.patch",
+      "sha256": "98e6d4167dd80ba4b4d0964da22c640bb7e122947002953e017fb543b6821d77",
+      "bytes": 1146
+    }
+  },
+  "pull_request_url": "https://github.com/orlandos-nl/swift-json/pull/70",
+  "fix_boundary_evidence": {
+    "status": "PASS",
+    "selected_fix_commit": "2aa13a092f877bbcc6b1e7c481f5d0fc0de3c795",
+    "production_files": [
+      "Sources/_NIOJSON/Codable/JSONEncoder.swift"
+    ],
+    "reviewed_commits": [
+      {
+        "sha": "493e0d94b0c10eb1d69f52e380eb52d415c67e76",
+        "files": [
+          "Tests/IkigaJSONTests/JSONTests.swift"
+        ],
+        "classification": "no_production_overlap",
+        "same_production_files": []
+      }
+    ],
+    "review_method": "curator_diff_review"
+  },
+  "traceability": {
+    "requires_unique_fix_commit": true,
+    "verified_fix_issue_numbers": [
+      69
+    ],
+    "paths": [
+      {
+        "issue_number": 69,
+        "path": "fix_commit_to_merged_pr_to_issue"
+      }
+    ],
+    "pull_request_number": 70,
+    "selected_from_multi_commit_pull_request": true,
+    "reference_mode": "PR_MEDIATED",
+    "direct_commit_issue_reference": false,
+    "source": "authentic_local_git_commit_object",
+    "strict_direct_reference_satisfied": false,
+    "traceability_closed": true,
+    "publication_profile_satisfied": true,
+    "strict_direct_profile_satisfied": false,
+    "pr_mediated_chain_verified": true,
+    "policy_note": "Issue→PR→fixing commit chain is verified; commit message itself does not directly name the Issue."
+  },
+  "case_id": "SWIFT-476",
+  "buggy_tree": "1db5045a22f736f96f0f1fb171507fd709960e3a",
+  "commit_stats": {
+    "production_hunk_count": 1,
+    "maximum_exact_subset_candidates": 1,
+    "hunk_count_source": "materialize_git_diff"
+  },
+  "repository_bundle": {
+    "path": "sources/repository.bundle",
+    "sha256": "eb159b0ade1f852766faa736b99d88a967d0816dad263faa131ca78644eac5ba",
+    "bytes": 707974,
+    "refs": {
+      "buggy": "refs/heads/buggy",
+      "fixed": "refs/heads/fixed"
+    }
+  },
+  "trigger_tests": [
+    {
+      "path": "Tests/IkigaJSONTests/JSONTests.swift",
+      "name": "testEncodeWithMultipleContainer"
+    }
+  ],
+  "buggy_revision": "216e30b22ef3c4180e126f284a4c62d51a1c1049",
+  "project": "orlandos-nl/swift-json",
+  "claude_screen": {
+    "model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "prompt_decision": "ACCEPT_FOR_VALIDATION",
+    "confidence": 0.9,
+    "runtime_acceptance": false
+  },
+  "build": {
+    "directory": ".",
+    "dependency_command": [
+      "swift",
+      "package",
+      "resolve",
+      "--skip-update"
+    ],
+    "analyze_command": [
+      "swift",
+      "build",
+      "--build-tests"
+    ],
+    "test_command": [
+      "swift",
+      "test",
+      "--parallel",
+      "--num-workers",
+      "1"
+    ],
+    "timeout_seconds": 1200,
+    "require_analyze_clean": true
+  },
+  "repository_url": "https://github.com/orlandos-nl/swift-json.git",
+  "repository_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/materialization-expansion19-3-swiftjson/repositories/orlandos-nl__swift-json",
+  "fixed_revision": "2aa13a092f877bbcc6b1e7c481f5d0fc0de3c795",
+  "deprecation_reason": null,
+  "commit_url": "https://github.com/orlandos-nl/swift-json/commit/2aa13a092f877bbcc6b1e7c481f5d0fc0de3c795",
+  "materialized_at": "2026-09-04T02:09:45.972512+00:00",
+  "production_files": [
+    "Sources/_NIOJSON/Codable/JSONEncoder.swift"
+  ],
+  "fixed_tree": "dc319808cf99f6e22b4e93c1079544629ba4aa28",
+  "trigger_test_files": [
+    "Tests/IkigaJSONTests/JSONTests.swift"
+  ],
+  "language": "Swift",
+  "trigger_reduction": {
+    "status": "PASS",
+    "upstream_trigger_patch": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "364547fc34d8fdd11f33c8b7f74a435337dce5c664b8f404cbc143b4effb23fb",
+      "bytes": 1108
+    },
+    "removed_external_dependency": false,
+    "rationale": "The upstream-added test references an undefined local encoder. Initialize it with IkigaJSONEncoder(), following the existing test file's initializer pattern. Preserve the original custom Encodable implementation, both keyed containers and exact encoded JSON assertion. This fixes only test setup; strict differential and semantic equivalence review are required."
+  },
+  "commit_files": {
+    "all": [
+      "Sources/_NIOJSON/Codable/JSONEncoder.swift",
+      "Tests/IkigaJSONTests/JSONTests.swift"
+    ],
+    "production": [
+      "Sources/_NIOJSON/Codable/JSONEncoder.swift"
+    ],
+    "tests": [
+      "Tests/IkigaJSONTests/JSONTests.swift"
+    ],
+    "other": []
+  },
+  "schema_version": 3,
+  "source_evidence_sha256": "296781ebc9e7fa1886fb7832d7a3f01700679594480a40deb3f89e645d7378cc",
+  "status": "release_candidate",
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "PASS",
+    "full_suite_validation": "PASS",
+    "human_curation": "PASS",
+    "semantic_curation": "PASS",
+    "curation_method": "llm_api_consensus",
+    "release_eligible": false,
+    "llm_confirmed": true,
+    "current_protocol_validation": "PENDING"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-06T02:49:37.425486+00:00",
+    "report": "validation/validation.json",
+    "report_sha256": "6056bc1409007cdc4757182323a63c2de1db0cff59cb3c1b18d9e151f3ef8285",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/IkigaJSONTests/JSONTests.swift",
+        "name": "testEncodeWithMultipleContainer"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-476",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/IkigaJSONTests/JSONTests.swift', 'testEncodeWithMultipleContainer')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/IkigaJSONTests/JSONTests.swift::testEncodeWithMultipleContainer']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/original-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "8085ad1dfbdba5c2a5b4e6b693bf7c50e97d5182f273861c35b52abfeff4743c",
+        "package_config": "environment/original-fixed-workspace-state.json",
+        "package_config_sha256": "148ef77adc1f3497c519ca1d41f078d9a9ff268aab05bf909bd927b63e306498",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "swift-atomics": "1.3.1",
+          "swift-collections": "1.6.0",
+          "swift-nio": "2.102.0",
+          "swift-system": "1.8.1"
+        }
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/original-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "8085ad1dfbdba5c2a5b4e6b693bf7c50e97d5182f273861c35b52abfeff4743c",
+        "package_config": "environment/original-buggy-workspace-state.json",
+        "package_config_sha256": "148ef77adc1f3497c519ca1d41f078d9a9ff268aab05bf909bd927b63e306498",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "swift-atomics": "1.3.1",
+          "swift-collections": "1.6.0",
+          "swift-nio": "2.102.0",
+          "swift-system": "1.8.1"
+        }
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/original-swift-toolchain.lock.json",
+      "sha256": "840936ddd3f8b7640431a8f5e516102e58e929a8e02fad0941d43e9843fd45dd"
+    },
+    "validation_image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "validation_image_lock": {
+      "path": "environment/original-validation-image.lock.json",
+      "sha256": "afe67743141ac2790d9ec10c09dc570377e6a5c122e285d5f4826cd66c99e30d"
+    }
+  },
+  "bug_id": "SWIFT-476",
+  "issue_id": 69,
+  "issue_ids": [
+    69
+  ],
+  "issue_url": "https://github.com/orlandos-nl/swift-json/issues/69",
+  "buggy_commit": "216e30b22ef3c4180e126f284a4c62d51a1c1049",
+  "fixed_commit": "2aa13a092f877bbcc6b1e7c481f5d0fc0de3c795",
+  "patch": "patches/minimized-production.patch",
+  "changed_source_files": [
+    "Sources/_NIOJSON/Codable/JSONEncoder.swift"
+  ],
+  "triggering_test": [
+    "Tests/IkigaJSONTests/JSONTests.swift::testEncodeWithMultipleContainer"
+  ],
+  "expected_failure": {
+    "test_id": "Tests/IkigaJSONTests/JSONTests.swift::IkigaJSONTests/testEncodeWithMultipleContainer",
+    "error": "Tests/IkigaJSONTests/JSONTests.swift:1763: IkigaJSONTests.testEncodeWithMultipleContainer : XCTAssertEqual failed: (\"{,{\"a\":\"a\",\"b\":\"b\"}\") is not equal to (\"{\"a\":\"a\",\"b\":\"b\"}\")",
+    "failure_fingerprint": "c0d88885c211a89910e8bbbdfb44bc5f91a0d1b594aa949129d082509cf45700",
+    "all_trigger_failures": [
+      {
+        "test_id": "Tests/IkigaJSONTests/JSONTests.swift::IkigaJSONTests/testEncodeWithMultipleContainer",
+        "error": "Tests/IkigaJSONTests/JSONTests.swift:1763: IkigaJSONTests.testEncodeWithMultipleContainer : XCTAssertEqual failed: (\"{,{\"a\":\"a\",\"b\":\"b\"}\") is not equal to (\"{\"a\":\"a\",\"b\":\"b\"}\")",
+        "failure_fingerprint": "c0d88885c211a89910e8bbbdfb44bc5f91a0d1b594aa949129d082509cf45700",
+        "repetition_count": 3,
+        "deterministic": true
+      }
+    ]
+  },
+  "fixed_test_result": {
+    "status": "HISTORICAL_RESULTS_RETAINED",
+    "historical_full_suite_exit_codes": [
+      0,
+      0
+    ],
+    "current_suite_success_required": {
+      "exit_code": 0,
+      "failed_tests": 0,
+      "repetitions": 3
+    },
+    "current_protocol_rerun_performed": false
+  },
+  "build_command": [
+    "swift",
+    "build",
+    "--build-tests"
+  ],
+  "test_command": [
+    "swift",
+    "test",
+    "--parallel",
+    "--num-workers",
+    "1"
+  ],
+  "language_version": "6.2.3",
+  "dependency_versions": {
+    "swift-atomics": "1.3.1",
+    "swift-collections": "1.6.0",
+    "swift-nio": "2.102.0",
+    "swift-system": "1.8.1"
+  },
+  "operating_system_or_container": {
+    "platform": "ubuntu22.04-offline-overlay",
+    "host_system": "Linux",
+    "host_machine": "x86_64",
+    "validation_image": "swift-defects-validation:6.2.3-recovered-20260906-v2",
+    "validation_image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460"
+  },
+  "timezone": "UTC",
+  "reproducibility_status": "direct_parent_historical_execution_evidence_current_protocol_deferred",
+  "minimized_patch": {
+    "path": "patches/minimized-production.patch",
+    "sha256": "b034a70e631d6edc851dd628f128b7911c144e038b262f1e6449fc0f1f8f93cd",
+    "original_hunk_count": 1,
+    "retained_hunks": [
+      1
+    ],
+    "retained_hunk_count": 1,
+    "removed_hunk_count": 0,
+    "screening_only": false,
+    "post_minimization_validation": "PASS",
+    "evidence_grade": "portable_release_evidence",
+    "automatic_minimization": {
+      "minimal_hunks": [
+        1
+      ],
+      "chosen_subset": [
+        1
+      ]
+    }
+  },
+  "post_minimization_validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-06T02:52:51.381348+00:00",
+    "report": "validation/post-minimization.json",
+    "report_sha256": "751272c5d75c9336c3d34efbda2ebbb219922165a26d901b8d6e919286afedd3",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/IkigaJSONTests/JSONTests.swift",
+        "name": "testEncodeWithMultipleContainer"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-476",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/IkigaJSONTests/JSONTests.swift', 'testEncodeWithMultipleContainer')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/IkigaJSONTests/JSONTests.swift::testEncodeWithMultipleContainer']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/post-minimization-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "8085ad1dfbdba5c2a5b4e6b693bf7c50e97d5182f273861c35b52abfeff4743c",
+        "package_config": "environment/post-minimization-fixed-workspace-state.json",
+        "package_config_sha256": "148ef77adc1f3497c519ca1d41f078d9a9ff268aab05bf909bd927b63e306498",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "swift-atomics": "1.3.1",
+          "swift-collections": "1.6.0",
+          "swift-nio": "2.102.0",
+          "swift-system": "1.8.1"
+        }
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/post-minimization-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "8085ad1dfbdba5c2a5b4e6b693bf7c50e97d5182f273861c35b52abfeff4743c",
+        "package_config": "environment/post-minimization-buggy-workspace-state.json",
+        "package_config_sha256": "148ef77adc1f3497c519ca1d41f078d9a9ff268aab05bf909bd927b63e306498",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "swift-atomics": "1.3.1",
+          "swift-collections": "1.6.0",
+          "swift-nio": "2.102.0",
+          "swift-system": "1.8.1"
+        }
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/post-minimization-swift-toolchain.lock.json",
+      "sha256": "840936ddd3f8b7640431a8f5e516102e58e929a8e02fad0941d43e9843fd45dd"
+    },
+    "validation_image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "validation_image_lock": {
+      "path": "environment/post-minimization-validation-image.lock.json",
+      "sha256": "afe67743141ac2790d9ec10c09dc570377e6a5c122e285d5f4826cd66c99e30d"
+    }
+  },
+  "dependency_cache": {
+    "archive": "environment/dependency-cache.tar.gz",
+    "archive_sha256": "0684d83129216a0aff9a4f9c87c58cd9e8cc936139a034688e75738f240812a1",
+    "manifest": "environment/dependency-cache-manifest.json",
+    "manifest_sha256": "2b1effa9fdc1963116123284940074dd9f6f7735c77d19edd74b7e6dadcb2554",
+    "package_count": 4
+  },
+  "reproduction": {
+    "image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "network_mode": "none",
+    "runner": {
+      "path": "tools/reproduce_case.py",
+      "sha256": "2fbeb44814f8609d3cc6285ed764f7fb92fa96e7cd58e3366e60a2334dd6a0c3",
+      "bytes": 17123
+    },
+    "validation_engine": {
+      "path": "tools/validation_engine.py",
+      "sha256": "3d384f0a1be24e5e5a097b45182577c639b904d2680df657a2c39dc71ce9a619",
+      "bytes": 83296
+    },
+    "commands": {
+      "b": {
+        "path": "commands/SWIFT-476b",
+        "sha256": "c6d0abaebe7d14b5cd41ea2d991060a5ac763c7f0ef30186c27d2ef2d24e0046",
+        "bytes": 185
+      },
+      "f": {
+        "path": "commands/SWIFT-476f",
+        "sha256": "f1b0d7f14ab1199369606bfcb6277c73e36ce623a384de1bb4ac44ff5cdfffad",
+        "bytes": 185
+      }
+    }
+  },
+  "release_policy": {
+    "path": "environment/release-policy.json",
+    "sha256": "c0630d38fec5ddc7e0b23bc55edab956aed494143166c40ab92e119ababa9ff8"
+  },
+  "reproduction_verification": {
+    "path": "reproduction/verification.json",
+    "sha256": "3675e5d6834b6f9d0ab650a8c0ef79b4ea1df0e9b986f357389536150028a55c"
+  },
+  "network_isolation_attestation": {
+    "path": "environment/network-isolation.json",
+    "sha256": "45ba37e8665ae7a7427d835a645769a730820e995d397b497235e083c5a60b8e"
+  },
+  "dataset_id": "SWIFT-D019",
+  "patch_sha256": "b034a70e631d6edc851dd628f128b7911c144e038b262f1e6449fc0f1f8f93cd",
+  "revision_alias_semantics": "buggy_commit/fixed_commit identify upstream provenance; experimental b/f identities are in artifacts",
+  "upstream_fix": {
+    "commit": "2aa13a092f877bbcc6b1e7c481f5d0fc0de3c795",
+    "parents": [
+      "216e30b22ef3c4180e126f284a4c62d51a1c1049"
+    ],
+    "buggy_baseline_is_parent": true,
+    "single_parent_matches_baseline": true,
+    "commit_message": "fix Invalid json when Encodable type uses multiple containers",
+    "boundary_evidence": "repair/boundary-verification.json",
+    "boundary_evidence_sha256": "861cd4f3df3a9ccbe60ff8ff8672836a398b43040003efc80c2ef8b816a89043"
+  },
+  "fixed_revision_kind": "upstream_provenance_use_artifacts_for_experiment",
+  "artifacts": {
+    "buggy": {
+      "commit": "01477af8fbc76491b8309cd0faec78214bd02b48",
+      "tree": "7fbed10d29597a94d82fd1f75bfa52622192b759"
+    },
+    "fixed": {
+      "commit": "82952b153e98e5c216b604139ef11ec1d8ba5bfa",
+      "tree": "e29d0d16a850939d70b25d6e4074fca28f34e018",
+      "equals_upstream_tree": false
+    },
+    "construction": "base + compatibility(if present) + trigger; fixed adds production patch",
+    "synthetic_commit_identity_disclosed": true,
+    "upstream_history_not_rewritten": true
+  },
+  "cohort": "runtime_test",
+  "trigger_kind": "runtime_test_failure",
+  "language_metadata": {
+    "compiler_version": "6.2.3",
+    "package_tools_version": null,
+    "note": "Compiler version is distinct from Package.swift tools/language mode; recovered manifest records may fill package_tools_version"
+  },
+  "auto_baseline_full_suite": false,
+  "test_suite_policy": {
+    "name": "explicitly_filtered_regression_suite",
+    "excluded_selectors": [],
+    "exclusions": [],
+    "failed_process_may_be_waived": false,
+    "fresh_filtered_suite_validation_required": false,
+    "trigger_exclusion_forbidden": true
+  },
+  "current_validation": {
+    "protocol": "explicit-isolated-order-and-filtered-full-suite-v1",
+    "required_repetitions": 3,
+    "full_suite_repetitions": 3,
+    "historical_logs_preserved": true,
+    "historical_reverse_runs_are_order_evidence": false,
+    "same_process_permutation_claimed": false,
+    "new_full_validation_performed": false,
+    "status": "PENDING_CURRENT_PROTOCOL_RERUN",
+    "bound_delivery_reports": [],
+    "raw_log_recovery_waived_by_user": true,
+    "waiver_scope": "historical raw-log recovery only; no metadata upgrade to PASS"
+  },
+  "runtime_release": {
+    "asset_manifest": "../../../runtime-assets.manifest.json",
+    "entrypoint": "../../../benchmark.py",
+    "image_id": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "swift_executable": "/usr/bin/swift",
+    "external_assets_are_required": true,
+    "artifact_tree_verified": true,
+    "assets": [
+      {
+        "kind": "repository_bundle",
+        "case_relative_path": "sources/repository.bundle",
+        "sha256": "eb159b0ade1f852766faa736b99d88a967d0816dad263faa131ca78644eac5ba",
+        "bytes": 707974,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/eb159b0ade1f852766faa736b99d88a967d0816dad263faa131ca78644eac5ba"
+      },
+      {
+        "kind": "dependency_cache",
+        "case_relative_path": "environment/dependency-cache.tar.gz",
+        "sha256": "0684d83129216a0aff9a4f9c87c58cd9e8cc936139a034688e75738f240812a1",
+        "bytes": 189609036,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/0684d83129216a0aff9a4f9c87c58cd9e8cc936139a034688e75738f240812a1"
+      },
+      {
+        "kind": "experiment_bundle",
+        "case_relative_path": "sources/experiment.bundle",
+        "sha256": "9fc1617dd580d758ce92fc5fe810c641cfb07b13243c7f5c70950ca2b20ab8d3",
+        "bytes": 707165,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/9fc1617dd580d758ce92fc5fe810c641cfb07b13243c7f5c70950ca2b20ab8d3"
+      }
+    ],
+    "wrapper_evidence": []
+  },
+  "human_curation": {
+    "status": "APPROVED",
+    "approval_template": "repair/human-review.json",
+    "agent_cannot_sign_as_human": true,
+    "reviewer": "dataset_owner",
+    "reviewed_at": "2026-09-13T10:22:32+00:00"
+  },
+  "release": {
+    "state": "RC",
+    "strict_active": false,
+    "blockers": [
+      "strict_direct_issue_reference_not_satisfied"
+    ],
+    "deprecation_reason": null,
+    "deferred_gates": [
+      "current_protocol_validation_pending"
+    ],
+    "structural_boundary_status": "DIRECT",
+    "publication_profile_traceability": "PASS",
+    "strict_direct_traceability": "EXTENSION_PR_MEDIATED",
+    "execution_evidence_policy": "HISTORICAL_EVIDENCE_PRESERVED_CURRENT_PROTOCOL_DEFERRED",
+    "human_signoff_policy": "APPROVED",
+    "classic_runtime_profile": "RUNTIME_TEST",
+    "publication_profile_cohort": "RUNTIME_CORE",
+    "defects4j_core_validation": "PASS"
+  },
+  "repair": {
+    "date": "2026-09-10",
+    "base_archive_sha256": "21599edfd4c0c560677f781fdd84da40fa22fb14472aaaf7174b7dec81d9df21",
+    "previous_metadata": "repair-history/case.before-repair.json",
+    "code_history": "repair-history/tools",
+    "historical_reports_not_rewritten": true,
+    "raw_log_recovery_out_of_scope": true,
+    "stage1_metadata_hardening": {
+      "performed_at": "2026-09-12",
+      "authoritative_boundary": "repair/boundary-verification.json",
+      "historical_execution_evidence_preserved": true,
+      "no_execution_result_invented": true
+    }
+  },
+  "defects4j_core_validation": {
+    "status": "PASS",
+    "classification": "HISTORICAL_STRICT_RAW_PASS",
+    "report": "validation/defects4j-core-reacceptance.json",
+    "report_sha256": "bae599e8eee8d9543e2c65c7aa5faa42cdfe2a68463eed02642ff7c8f069367d",
+    "generated_at": "2026-09-12",
+    "does_not_claim_current_protocol_rerun": true
+  }
+}

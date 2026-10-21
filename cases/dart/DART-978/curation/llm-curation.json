@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-978",
+  "technical_evidence_sha256": "9018809a6464407d537cfa588a16ce66c0345cb1611d690683ea0b6dd1435ea7",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "fa92ce53a072cb14809313e786e46d6a53d687fbcac545f2dcbd006862a1aa99",
+  "reviewed_at": "2026-08-14T06:24:09.802338+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1213",
+  "rationale": "Issue #1213 reports that a split record literal used as a member-access target forces an unwanted split before `.` (`)\\n      .getter;`) while a list literal keeps `.getter` on the same line. The behavioral fix is in lib/src/call_chain_visitor.dart, where the split-suppression predicate previously covered only ListLiteral and SetOrMapLiteral and is replaced by the new isCollectionLiteral helper that also includes RecordLiteral, which is exactly the omitted case in the report. The trigger consists of the unchanged upstream project-native fixtures from the same fixing commit: test/regression/1200/1213.unit reproduces the issue body verbatim (record and list literal side by side with expected unsplit `.getter`), and the added `do not split on \".\" when target is record` case in test/splitting/invocations.stmt covers the same rule for a long method call. Both are data fixtures consumed by the pre-existing test/formatter_test.dart harness and depend on no production API introduced by the fix; isCollectionLiteral is internal to lib/src and never referenced by the tests. The minimized production patch is confined to the three lib/src files and drops the CHANGELOG.md entry and the pubspec.yaml version bump present in the original commit, so no documentation-only, configuration-only, or test-only change remains. Strict evidence for both the original and post-minimization gates passed: 2 unique declared selectors, both reproduced on the buggy revision, buggy full suite fails only on those triggers, fixed isolated/suite/reversed runs all green, 38 matrix runs across 3 repetitions, deterministic with 4 fingerprint groups. active_same_project_root_causes is empty, so dart-lang/dart_style#1213 is not a duplicate, and it matches the single allowed verified issue key.\n\nIssue #1213 ('Unneeded split on method call after split record literal') shows a record literal target forcing a split before `.getter` while a list literal keeps it on the same line. The production fix targets exactly that path: call_chain_visitor.dart previously suppressed the split only for ListLiteral and SetOrMapLiteral, and the change routes it through the new `isCollectionLiteral` predicate in ast_extensions.dart, which adds RecordLiteral. That is the single behavioral delta, and it matches the issue text and the commit/PR message ('Don't split before `.` following a record literal. Fix #1213'). The trigger is the unchanged upstream fixture portion of the same commit: test/regression/1200/1213.unit reproduces the issue's exact snippet verbatim (record literal plus the list-literal control case), and test/splitting/invocations.stmt adds 'do not split on \".\" when target is record'. Both are declarative formatter input/expected fixtures consumed by the pre-existing test/formatter_test.dart harness, so they invoke no API introduced by the fix. The minimized patch is production-only: CHANGELOG.md, pubspec.yaml version bump, and the fixture files present in the original commit were all dropped. Strict evidence confirms both revisions build, both selectors fail in isolation and in the buggy full suite with no extra failures, the fixed revision is fully green including reversed runs, and results are deterministic across 3 repetitions (38 matrix runs, 4 fingerprint groups). No active same-project root causes are registered, and dart-lang/dart_style#1213 is the supplied verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:23:37.894040+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "fa92ce53a072cb14809313e786e46d6a53d687fbcac545f2dcbd006862a1aa99",
+      "response_sha256": "d3eb4e1a606f33339d04ea728d612e2047756a77a358377f8e9e77b58e514104",
+      "response_id": "msg_59f87ad52c3741989a52e673cff20678",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6595804381094528,
+        "input_tokens": 16307,
+        "output_tokens": 730
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1213",
+      "rationale": "Issue #1213 reports that a split record literal used as a member-access target forces an unwanted split before `.` (`)\\n      .getter;`) while a list literal keeps `.getter` on the same line. The behavioral fix is in lib/src/call_chain_visitor.dart, where the split-suppression predicate previously covered only ListLiteral and SetOrMapLiteral and is replaced by the new isCollectionLiteral helper that also includes RecordLiteral, which is exactly the omitted case in the report. The trigger consists of the unchanged upstream project-native fixtures from the same fixing commit: test/regression/1200/1213.unit reproduces the issue body verbatim (record and list literal side by side with expected unsplit `.getter`), and the added `do not split on \".\" when target is record` case in test/splitting/invocations.stmt covers the same rule for a long method call. Both are data fixtures consumed by the pre-existing test/formatter_test.dart harness and depend on no production API introduced by the fix; isCollectionLiteral is internal to lib/src and never referenced by the tests. The minimized production patch is confined to the three lib/src files and drops the CHANGELOG.md entry and the pubspec.yaml version bump present in the original commit, so no documentation-only, configuration-only, or test-only change remains. Strict evidence for both the original and post-minimization gates passed: 2 unique declared selectors, both reproduced on the buggy revision, buggy full suite fails only on those triggers, fixed isolated/suite/reversed runs all green, 38 matrix runs across 3 repetitions, deterministic with 4 fingerprint groups. active_same_project_root_causes is empty, so dart-lang/dart_style#1213 is not a duplicate, and it matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/call_chain_visitor.dart",
+        "lib/src/ast_extensions.dart",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/1200/1213.unit",
+        "test/splitting/invocations.stmt",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "trigger_tests"
+      ],
+      "risks": [
+        "The lib/src/source_visitor.dart hunk is behavior-preserving: that predicate already listed RecordLiteral, so this hunk only consolidates it onto the new helper. It is same-concept cleanup tied to the fix rather than an unrelated refactor, but a stricter minimization could have excluded it, and it is not exercised differentially by either trigger.",
+        "The declared trigger `splitting invocations.stmt` is a whole-fixture selector, so a future unrelated edit to that file could change what the selector covers; the record-specific case inside it is what reproduces the defect.",
+        "Correctness of the expected output is defined by dart_style's own formatting conventions rather than an external specification, so the trigger asserts intended style, not a crash or wrong computation."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:24:09.801926+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "fa92ce53a072cb14809313e786e46d6a53d687fbcac545f2dcbd006862a1aa99",
+      "response_sha256": "592d05382d14bd8ef856355f8a310b33fedfa340cc7d17621cad062315d0d585",
+      "response_id": "msg_f15e945fea804280bfeece2cd62851cc",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7191293905140962,
+        "input_tokens": 16552,
+        "output_tokens": 697
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1213",
+      "rationale": "Issue #1213 ('Unneeded split on method call after split record literal') shows a record literal target forcing a split before `.getter` while a list literal keeps it on the same line. The production fix targets exactly that path: call_chain_visitor.dart previously suppressed the split only for ListLiteral and SetOrMapLiteral, and the change routes it through the new `isCollectionLiteral` predicate in ast_extensions.dart, which adds RecordLiteral. That is the single behavioral delta, and it matches the issue text and the commit/PR message ('Don't split before `.` following a record literal. Fix #1213'). The trigger is the unchanged upstream fixture portion of the same commit: test/regression/1200/1213.unit reproduces the issue's exact snippet verbatim (record literal plus the list-literal control case), and test/splitting/invocations.stmt adds 'do not split on \".\" when target is record'. Both are declarative formatter input/expected fixtures consumed by the pre-existing test/formatter_test.dart harness, so they invoke no API introduced by the fix. The minimized patch is production-only: CHANGELOG.md, pubspec.yaml version bump, and the fixture files present in the original commit were all dropped. Strict evidence confirms both revisions build, both selectors fail in isolation and in the buggy full suite with no extra failures, the fixed revision is fully green including reversed runs, and results are deterministic across 3 repetitions (38 matrix runs, 4 fingerprint groups). No active same-project root causes are registered, and dart-lang/dart_style#1213 is the supplied verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/call_chain_visitor.dart",
+        "lib/src/ast_extensions.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/1200/1213.unit",
+        "test/splitting/invocations.stmt",
+        "strict_post_minimization.checks",
+        "source_candidate.issue_check.linked_issues[0].body"
+      ],
+      "risks": [
+        "The source_visitor.dart hunk is behavior-neutral: that branch already listed RecordLiteral, so collapsing it to `target.isCollectionLiteral` is a same-concept readability change rather than part of the behavioral fix. It is topically tied to the introduced predicate and cannot alter reproduction, but a stricter minimization could have excluded it.",
+        "Trigger granularity is coarse for 'splitting invocations.stmt': that selector runs the whole fixture file, so a future unrelated regression in any case in that file would surface under the same selector name.",
+        "The regression fixture is stored without a trailing newline; harmless for the current harness but a formatting-sensitive fixture loader could be brittle.",
+        "Record-literal syntax requires a recent Dart SDK; the case is only reproducible on toolchains where the buggy revision still parses records (strict evidence confirms it does in the recorded environment, not in arbitrary ones)."
+      ]
+    }
+  ]
+}

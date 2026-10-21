@@ -1,0 +1,19 @@
+diff --git a/kotlinpoet/src/jvmMain/kotlin/com/squareup/kotlinpoet/FunSpec.kt b/kotlinpoet/src/jvmMain/kotlin/com/squareup/kotlinpoet/FunSpec.kt
+index eebe5337..5e7b79a2 100644
+--- a/kotlinpoet/src/jvmMain/kotlin/com/squareup/kotlinpoet/FunSpec.kt
++++ b/kotlinpoet/src/jvmMain/kotlin/com/squareup/kotlinpoet/FunSpec.kt
+@@ -163,7 +164,13 @@ private constructor(
+           codeWriter.emitCode("%T.", receiverType)
+         }
+       }
+-      codeWriter.emitCode("%N", this)
++      if (OPERATOR in modifiers && (name == "get" || name == "set")) {
++        // %N escapes get/set as soft keywords, but operator overloads must not be escaped.
++        // https://github.com/square/kotlinpoet/issues/1869
++        codeWriter.emitCode("%L", name)
++      } else {
++        codeWriter.emitCode("%N", this)
++      }
+     }
+ 
+     if (!isEmptySetter && !isExternalGetter) {

@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "case_id": "ARKTS-009",
+  "status": "VALIDATED_ACTIVE",
+  "source_dataset": "ArkEval",
+  "source_instance_id": "openharmony__applications_app_samples+3244ff98-4133",
+  "project": "openharmony/applications_app_samples",
+  "repo_url": "https://gitee.com/openharmony/applications_app_samples",
+  "title": "解决ArkTSClock中Canvas内存泄漏",
+  "pr_number": 4133,
+  "pr_url": "https://gitee.com/openharmony/applications_app_samples/pulls/4133",
+  "issue_urls": [
+    "https://gitee.com/openharmony/applications_app_samples/issues/I95T2O"
+  ],
+  "buggy_revision": "3244ff984abc82f9e6d1d2982a93fc590fd1edcf",
+  "fixed_revision": "360a8ccdca1ca352228b0f8139e89a60d87fdaa8",
+  "revision_mode": "strict_upstream_boundary",
+  "project_root": "code/Solutions/Tools/ArkTSClock",
+  "changed_production_files": [
+    "code/Solutions/Tools/ArkTSClock/entry/src/main/ets/pages/Index.ets"
+  ],
+  "trigger_test_files": [
+    "code/Solutions/Tools/ArkTSClock/entry/src/ohosTest/ets/test/Ability.test.ets",
+    "code/Solutions/Tools/ArkTSClock/entry/src/ohosTest/ets/test/CanvasMemory.test.ets",
+    "code/Solutions/Tools/ArkTSClock/entry/src/ohosTest/ets/test/List.test.ets",
+    "code/Solutions/Tools/ArkTSClock/entry/src/ohosTest/ets/testability/TestAbility.ets"
+  ],
+  "target": [
+    "ActsAbilityTest#Clock_StartAbility_001",
+    "ActsAbilityTest#Clock_CreateFunction_001",
+    "CanvasMemoryTest#Clock_CanvasSaveRestoreBalance_001"
+  ],
+  "runner": "/ets/TestRunner/OpenHarmonyTestRunner",
+  "bundle": "ohos.samples.etsclock",
+  "patches": {
+    "upstream": "patches/upstream.patch",
+    "source": "patches/source.patch",
+    "test": "patches/test.patch",
+    "harness": null
+  },
+  "source_patch_sha256": "4cb7004841d86be412cccaccfb510e577bc8538372945a3848b7c4280ace7ed0",
+  "source_diff_payload_sha256": "08a9ff99832a4c535ff751004e4ccc862f545efafab3330232a9855abdbce47e",
+  "test_patch_sha256": "2767f28c53a54b11edff4bdf396dd620cbfe2571a9c8f7a414a17a091eff5598",
+  "build_commands": {
+    "buggy": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/reserve-symbolic-wrapper-aware-retry-v1/work/S001/buggy/code/Solutions/Tools/ArkTSClock",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/reserve-symbolic-wrapper-aware-retry-v1/work/S001/buggy/code/Solutions/Tools/ArkTSClock",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    },
+    "fixed": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/reserve-symbolic-wrapper-aware-retry-v1/work/S001/fixed/code/Solutions/Tools/ArkTSClock",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/reserve-symbolic-wrapper-aware-retry-v1/work/S001/fixed/code/Solutions/Tools/ArkTSClock",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    }
+  },
+  "test_command_template": [
+    "hdc",
+    "-t",
+    "127.0.0.1:5555",
+    "shell",
+    "aa",
+    "test",
+    "-b",
+    "ohos.samples.etsclock",
+    "-m",
+    "entry_test",
+    "-s",
+    "unittest",
+    "/ets/TestRunner/OpenHarmonyTestRunner",
+    "-s",
+    "class",
+    [
+      "ActsAbilityTest#Clock_StartAbility_001",
+      "ActsAbilityTest#Clock_CreateFunction_001",
+      "CanvasMemoryTest#Clock_CanvasSaveRestoreBalance_001"
+    ]
+  ],
+  "environment_lock": "environment.lock.json",
+  "validation": "validation/validation.json",
+  "issue_id": "I95T2O",
+  "selection_status": "ACTIVE",
+  "release_eligibility": "ACTIVE",
+  "traceability_type": "ISSUE",
+  "bug_report_id": "I95T2O",
+  "bug_report_url": "https://gitee.com/openharmony/applications_app_samples/issues/I95T2O",
+  "fix_kind": "production_source",
+  "branch_specific_instance": true,
+  "shared_fix_pattern": true,
+  "duplicate": false,
+  "duplicate_of": null,
+  "minimization_method": "original_patch_already_minimal",
+  "traceability": {
+    "status": "PASS",
+    "type": "ISSUE",
+    "issue_id": "I95T2O",
+    "issue_url": "https://gitee.com/openharmony/applications_app_samples/issues/I95T2O",
+    "pr_url": "https://gitee.com/openharmony/applications_app_samples/pulls/4133",
+    "reason": "Gitee PR !4133 links Issue I95T2O (ArkTSClock Canvas memory leak); the previously used PR-mediated fallback is no longer necessary."
+  },
+  "branch_independence": {
+    "status": "PASS",
+    "peer_case_id": "ARKTS-033",
+    "relationship": "SAME_REPORTED_DEFECT_DIFFERENT_BRANCH_CONTEXT",
+    "shared_normalized_production_patch": false,
+    "distinct_buggy_revision": true,
+    "distinct_fixed_revision": true,
+    "independent_stable_differential": true,
+    "classification": "BRANCH_SPECIFIC_DEFECT_INSTANCE",
+    "note": "Both refer to Canvas memory leak Issue I95T2O. ARKTS-009 is the merged OpenHarmony-4.0-Release fix; ARKTS-033 is a distinct master revision boundary whose fixed SHA is publicly addressable in the canonical AtomGit mirror. Kept as a branch-specific instance with merge-state transparency."
+  }
+}

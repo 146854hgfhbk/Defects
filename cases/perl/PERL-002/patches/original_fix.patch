@@ -1,0 +1,76 @@
+diff --git a/lib/ExtUtils/Liblist.pm b/lib/ExtUtils/Liblist.pm
+index 8ddf119dab99ec19f033258d813fb1bc8590ae73..b245809e5502ec53ac99079e4d7c7b39a727c234 100644
+--- a/lib/ExtUtils/Liblist.pm
++++ b/lib/ExtUtils/Liblist.pm
+@@ -97,6 +97,28 @@ dynamically at run time on this platform.  SunOS/Solaris does not need
+ this because ld records the information (from LDLOADLIBS) into the
+ object file.  This list is used to create a .bs (bootstrap) file.
+ 
++=head1 ENVIRONMENT
++
++=over 4
++
++=item LIBRARY_PATH
++
++On Unix and OS/2, if the C<LIBRARY_PATH> environment variable is set, its
++colon-separated list of directories is prepended to the default library search
++path derived from C<$Config{libpth}>.  This allows users to point to a
++custom or updated version of a library without modifying Perl's configuration:
++
++    LIBRARY_PATH=/opt/mylibs/lib perl Makefile.PL
++
++Directories listed in C<LIBRARY_PATH> take priority over those in
++C<$Config{libpth}>, but C<-L> flags explicitly passed via C<LIBS> still take
++the highest priority.
++
++On Win32 the same variable is honoured when GCC is in use (as
++C<$Config{cc}> contains C<gcc>).
++
++=back
++
+ =head1 PORTABILITY
+ 
+ This module deals with a lot of system dependencies and has quite a
+diff --git a/lib/ExtUtils/Liblist/Kid.pm b/lib/ExtUtils/Liblist/Kid.pm
+index 2e7210fb1a0d410c60e95eebee4df3531e82ba9b..edb701af6de512556e32c5240d07b26ba121539a 100644
+--- a/lib/ExtUtils/Liblist/Kid.pm
++++ b/lib/ExtUtils/Liblist/Kid.pm
+@@ -73,6 +73,11 @@ sub _unix_os2_ext {
+ 
+     my @searchpath;    # from "-L/path" entries in $potential_libs
+     my @libpath = _space_dirs_split($Config{libpth} || '');
++    # Honor LIBRARY_PATH environment variable (colon-separated, used by GCC and
++    # other tools).  Prepend so user-specified paths take priority over libpth.
++    if ( defined $ENV{LIBRARY_PATH} ) {
++        unshift @libpath, grep { length } split /:/, $ENV{LIBRARY_PATH};
++    }
+     my ( @ldloadlibs, @bsloadlibs, @extralibs, @ld_run_path, %ld_run_path_seen );
+     my ( @libs,       %libs_seen );
+     my ( $fullname,   @fullname );
+diff --git a/t/Liblist_Kid.t b/t/Liblist_Kid.t
+index 49105fb0116c3295b68d1e4b6b8f34a6d2c9f4f3..c5f044911542b1c2baca65f8a0d4f31ba7f63e05 100644
+--- a/t/Liblist_Kid.t
++++ b/t/Liblist_Kid.t
+@@ -149,6 +149,22 @@ sub test_kid_unix_os2 {
+       my @got = _ext( '-ldir_test' );
+       is_deeply \@got, [ '-ldir_test', '', '-ldir_test', 'di r' ], 'Config.libpth directories with spaces work' or diag explain \@got;
+     }
++    {
++      my $abs = File::Spec->rel2abs('.');
++      local $ENV{LIBRARY_PATH} = $abs;
++      local $Config{libpth} = '';
++      my @got = _ext( '-lfoo' );
++      like $got[0], qr/-lfoo/, '$ENV{LIBRARY_PATH} adds search paths for extralibs' or diag explain \@got;
++      like $got[2], qr/-lfoo/, '$ENV{LIBRARY_PATH} adds search paths for ldloadlibs' or diag explain \@got;
++      ok $got[3], '$ENV{LIBRARY_PATH} results in non-empty LD_RUN_PATH' or diag explain \@got;
++    }
++    {
++      my $abs = File::Spec->rel2abs('.');
++      local $ENV{LIBRARY_PATH} = "/nonexistent:$abs";
++      local $Config{libpth} = '';
++      my @got = _ext( '-lfoo' );
++      like $got[0], qr/-lfoo/, '$ENV{LIBRARY_PATH} with multiple colon-separated entries finds lib in second path' or diag explain \@got;
++    }
+     my $mm = WriteMakefile(
+         NAME            => 'Big::Dummy',
+         VERSION    => '1.00',

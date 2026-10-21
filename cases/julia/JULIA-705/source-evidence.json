@@ -1,0 +1,73 @@
+{
+  "candidate_sha": "edbe5df7ad22dd2bce0832cd3d85668ec2978520",
+  "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+  "source": "merged_pull_request",
+  "instance_id": "julialinearalgebra__genericlinearalgebra.jl-122",
+  "swe_rebench": {
+    "base_commit": "8414b44b7ac3325c5e2233728e6b1cf64a416ecf",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "Singular value decomposition",
+      "LAPACK wrappers"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 121,
+      "url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/121",
+      "state": "closed",
+      "title": "Deflation breaks edge case",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "It seems https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/108 broke some edge cases.\r\nConsider for instance:\r\n```julia\r\njulia> rank(BigFloat[0 0; 1 -1])\r\nERROR: MethodError: reducing over an empty collection is not allowed; consider supplying `init` to the reducer\r\nStacktrace:\r\n  [1] mapreduce_empty(#unused#::typeof(identity), op::Function, T::Type)\r\n    @ Base ./reduce.jl:367\r\n  [2] reduce_empty(op::Base.MappingRF{typeof(identity), typeof(max)}, #unused#::Type{BigFloat})\r\n    @ Base ./reduce.jl:356\r\n  [3] reduce_empty_iter\r\n    @ ./reduce.jl:379 [inlined]\r\n  [4] mapreduce_empty_iter(f::Function, op::Function, itr::SubArray{BigFloat, 1, Vector{BigFloat}, Tuple{UnitRange{Int64}}, true}, ItrEltype::Base.HasEltype)\r\n    @ Base ./reduce.jl:375\r\n  [5] _mapreduce(f::typeof(identity), op::typeof(max), #unused#::IndexLinear, A::SubArray{BigFloat, 1, Vector{BigFloat}, Tuple{UnitRange{Int64}}, true})\r\n    @ Base ./reduce.jl:427\r\n  [6] _mapreduce_dim\r\n    @ ./reducedim.jl:365 [inlined]\r\n  [7] #mapreduce#765\r\n    @ ./reducedim.jl:357 [inlined]\r\n  [8] mapreduce\r\n    @ ./reducedim.jl:357 [inlined]\r\n  [9] #_maximum#783\r\n    @ ./reducedim.jl:999 [inlined]\r\n [10] _maximum\r\n    @ ./reducedim.jl:999 [inlined]\r\n [11] #_maximum#782\r\n    @ ./reducedim.jl:998 [inlined]\r\n [12] _maximum\r\n    @ ./reducedim.jl:998 [inlined]\r\n [13] #maximum#780\r\n    @ ./reducedim.jl:994 [inlined]\r\n [14] maximum\r\n    @ ./reducedim.jl:994 [inlined]\r\n [15] __svd!(B::Bidiagonal{BigFloat, Vector{BigFloat}}, U::Nothing, Vᴴ::Nothing; tol::BigFloat)\r\n    @ GenericLinearAlgebra ~/.julia/dev/GenericLinearAlgebra/src/svd.jl:224\r\n [16] _svdvals!(B::Bidiagonal{BigFloat, Vector{BigFloat}}; tol::BigFloat)\r\n    @ GenericLinearAlgebra ~/.julia/dev/GenericLinearAlgebra/src/svd.jl:252\r\n [17] #svdvals!#33\r\n    @ ~/.julia/dev/GenericLinearAlgebra/src/svd.jl:539 [inlined]\r\n [18] svdvals!(A::Matrix{BigFloat}; tol::BigFloat)\r\n    @ GenericLinearAlgebra ~/.julia/dev/GenericLinearAlgebra/src/svd.jl:567\r\n [19] svdvals!"
+    },
+    {
+      "number": 122,
+      "url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/122",
+      "state": "closed",
+      "title": "Refactor code to avoid out of bounds operation after deflation",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Closes #121 "
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        121
+      ],
+      "pull_request": 122,
+      "fix_commit": "edbe5df7ad22dd2bce0832cd3d85668ec2978520",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Refactor code to avoid out of bounds operation after deflation (#122)",
+    "commit_issue_refs": [
+      122
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 122,
+    "pull_request_title": "Refactor code to avoid out of bounds operation after deflation",
+    "pull_request_issue_refs": [
+      121
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    121
+  ],
+  "cross_repository_issue_records": []
+}

@@ -1,0 +1,74 @@
+{
+  "candidate_sha": "e78a2223fd6c300e82e22b36cd6bc7d03a6442a4",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 604,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/604",
+      "state": "closed",
+      "title": "Fix InexactError in peek_behind_pos when skipping nested trivia nodes",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Explanation of bug written below by Claude :robot. Fixes https://github.com/JuliaLang/julia/issues/60084\r\n\r\n------------------\r\n\r\nWhen parsing certain incomplete keywords like \"do\", the parser would crash\r\nwith `InexactError: trunc(UInt32, -1)` instead of returning a ParseError.\r\n\r\nRoot cause:\r\n-----------\r\nThe peek_behind_pos function walks backwards through the flat output array,\r\nsubtracting byte_spans to calculate byte positions. However, when a non-terminal\r\ntrivia node contains child nodes, both the parent and children exist in the\r\noutput array with overlapping byte_spans. The old code would subtract the\r\nbyte_span of both the parent and its children, causing byte_idx to go negative.\r\n\r\nExample with input \"do\":\r\n------------------------\r\nThe parser creates this output structure:\r\n  [1] TOMBSTONE (byte_span=0)\r\n  [2] \"do\" token (byte_span=2, is_trivia=true, covers bytes 1-2)\r\n  [3] error node (byte_span=2, is_trivia=true, node_span=1, covers bytes 1-2)\r\n      └── contains node [2] as a child\r\n\r\nWhen peek_behind_pos walks backwards from next_byte=3:\r\n  Old behavior:\r\n    - Start: byte_idx = 3, node_idx = 3\r\n    - Skip error node [3]: byte_idx = 3 - 2 = 1, node_idx = 2\r\n    - Skip \"do\" node [2]: byte_idx = 1 - 2 = -1 ❌ (tries to convert to UInt32)\r\n\r\n  The problem: Both nodes cover the same bytes (1-2), so subtracting both\r\n  spans double-counts the same 2 bytes.\r\n\r\nSolution:\r\n---------\r\nWhen skipping a non-terminal node, also skip all its children without\r\nsubtracting their byte_spans, since the parent's byte_span already includes\r\nthem:\r\n\r\n  if is_non_terminal(node)\r\n      node_idx -= (1 + node.node_span)  # Skip the node + all its children\r\n  else\r\n      node_idx -= 1\r\n  end\r\n\r\nNew behavior:\r\n  - Start: byte_idx = 3, node_idx = 3\r\n  - Skip error node [3]: byte_idx = 3 - 2 = 1, node_idx = 3 - (1 + 1) = 1\r\n  - Stop at TOMBSTONE [1] (not trivia)\r\n  - Return: byte_idx = 1, node_idx = 1 ✓\r\n\r\nWhy \"do\" was unique:\r\n--------------------\r\nThe \"do\" keyword is the only "
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "cross_repository_issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        60084
+      ],
+      "issue_repository": "JuliaLang/julia",
+      "pull_request": 604,
+      "pull_request_repository": "JuliaLang/JuliaSyntax.jl",
+      "fix_commit": "e78a2223fd6c300e82e22b36cd6bc7d03a6442a4",
+      "evidence_source": "qualified_issue_url_in_fix_commit_or_pull_request"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Fix InexactError in peek_behind_pos when skipping nested trivia nodes (#604)",
+    "commit_issue_refs": [
+      604
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 604,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Fix InexactError in peek_behind_pos when skipping nested trivia nodes",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [
+      [
+        "JuliaLang/julia",
+        60084,
+        "issues"
+      ]
+    ],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    60084
+  ],
+  "cross_repository_issue_records": [
+    {
+      "number": 60084,
+      "url": "https://github.com/JuliaLang/julia/issues/60084",
+      "state": "closed",
+      "title": "typing `do` in the repl causes `Error: Error in the keymap`",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "REPL",
+        "completions"
+      ],
+      "body_excerpt": "steps to reproduce\n\n* open REPL\n* type `do`\n\n```\njulia> d┌ Error: Error in the keymap\n│   exception =\n│    InexactError: trunc(UInt32, -1)\n│    Stacktrace:\n│       [1] throw_inexacterror(func::Symbol, to::Type, val::Int64)\n│         @ Core ./boot.jl:866\n│       [2] checked_trunc_uint\n│         @ ./boot.jl:888 [inlined]\n│       [3] toUInt32\n│         @ ./boot.jl:972 [inlined]\n│       [4] UInt32\n│         @ ./boot.jl:1012 [inlined]\n│       [5] convert\n│         @ ./number.jl:7 [inlined]\n│       [6] ParseStreamPosition\n│         @ ~/Documents/code/julia_pr/base/JuliaSyntax/src/core/parse_stream.jl:197 [inlined]\n│       [7] #peek_behind_pos#27\n│         @ ~/Documents/code/julia_pr/base/JuliaSyntax/src/core/parse_stream.jl:645 [inlined]\n│       [8] peek_behind_pos\n│         @ ~/Documents/code/julia_pr/base/JuliaSyntax/src/core/parse_stream.jl:616 [inlined]\n│       [9] peek_behind(stream::Base.JuliaSyntax.ParseStream; kws::@Kwargs{})\n│         @ Base.JuliaSyntax ~/Documents/code/julia_pr/base/JuliaSyntax/src/core/parse_stream.jl:649\n│      [10] peek_behind\n│         @ ~/Documents/code/julia_pr/base/JuliaSyntax/src/core/parse_stream.jl:648 [inlined]\n│      [11] #peek_behind#50\n│         @ ~/Documents/code/julia_pr/base/JuliaSyntax/src/julia/parser.jl:80 [inlined]\n│      [12] peek_behind\n│         @ ~/Documents/code/julia_pr/base/JuliaSyntax/src/julia/parser.jl:79 [inlined]\n│      [13] parse_juxtapose(ps::Base.JuliaSyntax.ParseState)\n│         @ Base.JuliaSyntax ~/Documents/code/julia_pr/base/JuliaSyntax/src/julia/parser.jl:1135\n│      [14] parse_where\n│         @ ~/Documents/code/julia_pr/base/JuliaSyntax/src/julia/parser.jl:1119 [inlined]\n│      [15] parse_unary_subtype(ps::Base.JuliaSyntax.ParseState)\n│         @ Base.JuliaSyntax ~/Documents/code/julia_pr/base/JuliaSyntax/src/julia/parser.jl:1082\n│      [16] parse_LtoR(ps::Base.JuliaSyntax.ParseState, down::typeof(Base.JuliaSyntax.parse_unary_subtype), is_op::typeof(Base.JuliaSyntax.is_prec_bitshift))\n│         @ Base.Ju",
+      "repository": "JuliaLang/julia",
+      "reference_kind": "issues"
+    }
+  ]
+}

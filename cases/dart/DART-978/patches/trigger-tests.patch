@@ -1,0 +1,53 @@
+diff --git a/test/regression/1200/1213.unit b/test/regression/1200/1213.unit
+new file mode 100644
+index 00000000..9c9aef01
+--- /dev/null
++++ b/test/regression/1200/1213.unit
+@@ -0,0 +1,25 @@
++>>>
++main() {
++  final a = (
++    element,
++    element,
++  )
++      .getter;
++
++  final b = [
++    element,
++    element,
++  ].getter;
++}
++<<<
++main() {
++  final a = (
++    element,
++    element,
++  ).getter;
++
++  final b = [
++    element,
++    element,
++  ].getter;
++}
+\ No newline at end of file
+diff --git a/test/splitting/invocations.stmt b/test/splitting/invocations.stmt
+index 8ce34f1a..0d8353f7 100644
+--- a/test/splitting/invocations.stmt
++++ b/test/splitting/invocations.stmt
+@@ -278,6 +278,16 @@ someVeryLongTargetFunction(
+   "key": "value",
+   "another": "another value"
+ }.someLongMethod();
++>>> do not split on "." when target is record
++(element, element, element, element, element).someLongMethod();
++<<<
++(
++  element,
++  element,
++  element,
++  element,
++  element
++).someLongMethod();
+ >>> do not split on "." when target is function literal passed to method
+ method(() {;}).someLongMethod();
+ <<<

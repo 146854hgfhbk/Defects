@@ -1,0 +1,37 @@
+diff --git a/test/diagnostics.jl b/test/diagnostics.jl
+index ff9e76a..1482a60 100644
+--- a/test/diagnostics.jl
++++ b/test/diagnostics.jl
+@@ -125,12 +125,15 @@ end
+         Diagnostic(9, 9, :warning, "space between dots in import path")
+ 	@test diagnostic("import A.:+") ==
+         Diagnostic(10, 10, :warning, "quoting with `:` is not required here")
+-    # No warning for import `:` symbol
++    # No warnings for imports of `:` and parenthesized `(..)`
+     @test diagnostic("import A.:, :", allow_multiple=true) == []
++    @test diagnostic("import A: (..)", allow_multiple=true) == []
+     @test diagnostic("import A.(:+)") ==
+         Diagnostic(10, 13, :warning, "parentheses are not required here")
+     @test diagnostic("export (x)") ==
+         Diagnostic(8, 10, :warning, "parentheses are not required here")
++    @test diagnostic("import :A") ==
++        Diagnostic(8, 9, :error, "expected identifier")
+     @test diagnostic("export :x") ==
+         Diagnostic(8, 9, :error, "expected identifier")
+     @test diagnostic("public = 4", version=v"1.11") ==
+diff --git a/test/parser.jl b/test/parser.jl
+index ef6c5df..b7b7839 100644
+--- a/test/parser.jl
++++ b/test/parser.jl
+@@ -676,6 +676,11 @@ tests = [
+         "import A.⋆.f"  =>  "(import (importpath A ⋆ f))"
+         "import A..."   =>  "(import (importpath A ..))"
+         "import A; B"   =>  "(import (importpath A))"
++        # Colons not allowed first in import paths
++        # but are allowed in trailing components (#473)
++        "using :A"         =>  "(using (importpath (error (quote-: A))))"
++        "using A: :b"      =>  "(using (: (importpath A) (importpath (error (quote-: b)))))"
++        "using A: b.:c"    =>  "(using (: (importpath A) (importpath b (quote-: c))))"
+     ],
+     JuliaSyntax.parse_iteration_specs => [
+         "i = rhs"        =>  "(iteration (in i rhs))"

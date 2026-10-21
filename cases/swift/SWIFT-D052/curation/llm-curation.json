@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1775",
+  "technical_evidence_sha256": "80580045746460fc120cd87b248d1932b7e5570f002c00d08d1f7fb70efd028c",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "ae7e1935965a65ada527b3c966e92dcd7923c1c216c256a3c4c011c63eebbb5f",
+  "reviewed_at": "2026-09-10T04:18:58.445813+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-nio-imap#772",
+  "rationale": "Issue #772 reports that IMAPClientHandler throws IMAPDecoderError/ParserError('none of the options match') when an inbound frame boundary falls between CR and LF, so the next buffer begins with an orphaned LF. The production patch addresses exactly that: ParserLibrary.parseNewline now returns and records the newline kind (.crlf/.cr/.lf) in ParseBuffer.lastParsedNewline, the previously merged CR/LF fast path is split so CR-only endings are distinguishable, and ResponseParser tracks lastResponseNewlineEnding and calls the new ParseBuffer.skipLF() to consume a single orphaned LF when the prior response ended CR-only. Every hunk serves that mechanism; the refactor of parseNewline into an inner _parseNewline is required to record the result on all exits, and ResponseAndNewline/parseResponseAndNewline is the plumbing that carries the newline kind back to the parser state. No unrelated files, no manifest, config, docs, or public-API additions (ParseBuffer.Newline and skipLF are internal). The only cosmetic drift is an apostrophe glyph inside a comment line that the patch already moves. Triggers are upstream project tests exercising the reported scenario: acceptsCRThenLFThenValidResponse (visible in trigger-tests.patch) feeds '* 1 EXISTS\\r', then a lone '\\n' frame, then '* 2 RECENT\\r\\n' through the existing Helper/EmbeddedChannel API that predates the fix; minimalSplitCRLF and handleResponsesSplitBetweenCRAndLF were added by the parent commit 11aa41a ('Add (failing) tests') and are therefore present on the buggy revision itself. Strict machine evidence (both original and post-minimization) reports build.both_versions PASS, trigger.buggy_differential PASS with all three selectors reproduced, trigger.fixed_clean PASS, trigger.deterministic PASS over 3 repetitions, and full_suite.buggy_reproduces_only_triggers plus full_suite.fixed_all_green PASS, so the buggy failure is a genuine runtime parse failure rather than an unavailable-symbol compile error. active_same_project_root_causes is empty and apple/swift-nio-imap#772 is the sole allowed root cause id.\n\nIssue #772 reports that IMAPClientHandler throws ParserError('none of the options match') when an inbound frame boundary falls between CR and LF, so the next buffer begins with an orphaned LF. The production patch addresses exactly that: ParserLibrary.parseNewline now returns and records a ParseBuffer.Newline kind (.crlf/.cr/.lf) instead of collapsing CR-only and LF-only into one anonymous fast path, and ResponseParser keeps lastResponseNewlineEnding so that when the previous response terminated with CR only, a single leading LF is consumed via the new ParseBuffer.skipLF() before parsing continues. Both changed files are on the newline-handling path; the split of the former combined `\\n || \\r` case into separate .lf and .cr cases is required to distinguish the CR-only ending and preserves the original reader-index advancement, so it is not an unrelated refactor. No config, docs, dependency, or public-API extension changes are present (patch touches only ParserLibrary.swift and ResponseParser.swift; the only cosmetic delta is an apostrophe in a comment inside an already-modified hunk). Minimization retained all 7 hunks because the automatic subset failed post-minimization validation, and post_minimization_validation is PASS. The visible trigger acceptsCRThenLFThenValidResponse encodes the reported scenario directly ('* 1 EXISTS\\r', then a lone '\\n' frame, then '* 2 RECENT\\r\\n') using only the pre-existing Helper/EmbeddedChannel test API, not any symbol introduced by the fix, so the same source compiles on both revisions; this is a behavioral FAIL_TO_PASS, not a fix-only-API compile error. Strict evidence (identical original and post-minimization runs, 44 matrix runs, 3 repetitions) shows both revisions build, the three declared selectors fail on the buggy revision and pass on the fixed revision, the buggy full suite fails only on those reproduced triggers, and the fixed full suite is green. The active same-project root-cause registry is empty and apple/swift-nio-imap#772 is the sole allowed key, so this is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-10T04:18:18.507221+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "ae7e1935965a65ada527b3c966e92dcd7923c1c216c256a3c4c011c63eebbb5f",
+      "response_sha256": "e5fdd5d997c85bdfba2653a8853ca5d9af1f699ea233bbf0dc806eff3cb505fe",
+      "response_id": "msg_8af513d43ccf469f99546f0e3c6ab32f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.0065110313764511,
+        "input_tokens": 43840,
+        "output_tokens": 842
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-nio-imap#772",
+      "rationale": "Issue #772 reports that IMAPClientHandler throws IMAPDecoderError/ParserError('none of the options match') when an inbound frame boundary falls between CR and LF, so the next buffer begins with an orphaned LF. The production patch addresses exactly that: ParserLibrary.parseNewline now returns and records the newline kind (.crlf/.cr/.lf) in ParseBuffer.lastParsedNewline, the previously merged CR/LF fast path is split so CR-only endings are distinguishable, and ResponseParser tracks lastResponseNewlineEnding and calls the new ParseBuffer.skipLF() to consume a single orphaned LF when the prior response ended CR-only. Every hunk serves that mechanism; the refactor of parseNewline into an inner _parseNewline is required to record the result on all exits, and ResponseAndNewline/parseResponseAndNewline is the plumbing that carries the newline kind back to the parser state. No unrelated files, no manifest, config, docs, or public-API additions (ParseBuffer.Newline and skipLF are internal). The only cosmetic drift is an apostrophe glyph inside a comment line that the patch already moves. Triggers are upstream project tests exercising the reported scenario: acceptsCRThenLFThenValidResponse (visible in trigger-tests.patch) feeds '* 1 EXISTS\\r', then a lone '\\n' frame, then '* 2 RECENT\\r\\n' through the existing Helper/EmbeddedChannel API that predates the fix; minimalSplitCRLF and handleResponsesSplitBetweenCRAndLF were added by the parent commit 11aa41a ('Add (failing) tests') and are therefore present on the buggy revision itself. Strict machine evidence (both original and post-minimization) reports build.both_versions PASS, trigger.buggy_differential PASS with all three selectors reproduced, trigger.fixed_clean PASS, trigger.deterministic PASS over 3 repetitions, and full_suite.buggy_reproduces_only_triggers plus full_suite.fixed_all_green PASS, so the buggy failure is a genuine runtime parse failure rather than an unavailable-symbol compile error. active_same_project_root_causes is empty and apple/swift-nio-imap#772 is the sole allowed root cause id.",
+      "evidence_paths": [
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.origin_pull_request.body",
+        "patches/minimized-production.patch",
+        "Sources/NIOIMAPCore/Parser/ParserLibrary.swift",
+        "Sources/NIOIMAPCore/Parser/ResponseParser.swift",
+        "patches/trigger-tests.patch",
+        "case.json:trigger_tests",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "Bodies of two of the three declared triggers (minimalSplitCRLF, handleResponsesSplitBetweenCRAndLF) are not in the supplied patches; they originate from parent commit 11aa41a and their equivalence rests on their names plus the strict differential evidence rather than on inspected source.",
+        "ParseBuffer gained a stored property included in synthesized Hashable conformance, so any equality/hash-sensitive parser logic could see a behavioral shift not covered by the trigger set.",
+        "The attributeBytes mode path does not update lastResponseNewlineEnding, so a CRLF split around literal/attribute-byte boundaries may remain unhandled; the accepted defect scope is limited to .response mode.",
+        "Minimization retained all 7 hunks because the automatic minimal subset failed post-minimization validation, so the patch is not a proven-minimal fix, only a validated complete one."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-10T04:18:58.444785+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "ae7e1935965a65ada527b3c966e92dcd7923c1c216c256a3c4c011c63eebbb5f",
+      "response_sha256": "7dff0da10c121354220fae9f1ae4d6147f9f94532d3fbe16af79c74a2605b3c0",
+      "response_id": "msg_a2390a21b99847249cf69bc2eee4eb43",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.9499642365505804,
+        "input_tokens": 44248,
+        "output_tokens": 996
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-nio-imap#772",
+      "rationale": "Issue #772 reports that IMAPClientHandler throws ParserError('none of the options match') when an inbound frame boundary falls between CR and LF, so the next buffer begins with an orphaned LF. The production patch addresses exactly that: ParserLibrary.parseNewline now returns and records a ParseBuffer.Newline kind (.crlf/.cr/.lf) instead of collapsing CR-only and LF-only into one anonymous fast path, and ResponseParser keeps lastResponseNewlineEnding so that when the previous response terminated with CR only, a single leading LF is consumed via the new ParseBuffer.skipLF() before parsing continues. Both changed files are on the newline-handling path; the split of the former combined `\\n || \\r` case into separate .lf and .cr cases is required to distinguish the CR-only ending and preserves the original reader-index advancement, so it is not an unrelated refactor. No config, docs, dependency, or public-API extension changes are present (patch touches only ParserLibrary.swift and ResponseParser.swift; the only cosmetic delta is an apostrophe in a comment inside an already-modified hunk). Minimization retained all 7 hunks because the automatic subset failed post-minimization validation, and post_minimization_validation is PASS. The visible trigger acceptsCRThenLFThenValidResponse encodes the reported scenario directly ('* 1 EXISTS\\r', then a lone '\\n' frame, then '* 2 RECENT\\r\\n') using only the pre-existing Helper/EmbeddedChannel test API, not any symbol introduced by the fix, so the same source compiles on both revisions; this is a behavioral FAIL_TO_PASS, not a fix-only-API compile error. Strict evidence (identical original and post-minimization runs, 44 matrix runs, 3 repetitions) shows both revisions build, the three declared selectors fail on the buggy revision and pass on the fixed revision, the buggy full suite fails only on those reproduced triggers, and the fixed full suite is green. The active same-project root-cause registry is empty and apple/swift-nio-imap#772 is the sole allowed key, so this is not a duplicate.",
+      "evidence_paths": [
+        "issue_urls[0] (apple/swift-nio-imap#772 body: split between \\r and \\n produces IMAPDecoderError/ParserError)",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body (skip the first LF on the next line if the line ends with CR)",
+        "patches/minimized-production.patch (Sources/NIOIMAPCore/Parser/ParserLibrary.swift: ParseBuffer.Newline, skipLF, parseNewline returning newline kind)",
+        "patches/minimized-production.patch (Sources/NIOIMAPCore/Parser/ResponseParser.swift: lastResponseNewlineEnding + skipLF on .cr)",
+        "patches/trigger-tests.patch (acceptsCRThenLFThenValidResponse, crOnlyResponseEndsBuffer)",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_original.checks.trigger.fixed_clean",
+        "strict_original.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_post_minimization.checks.build.both_versions",
+        "minimized_patch_reference.post_minimization_validation",
+        "traceability.paths[0] (fix_commit_to_merged_pr_to_issue, PR #812)"
+      ],
+      "risks": [
+        "Two of the three declared selectors (handleResponsesSplitBetweenCRAndLF, minimalSplitCRLF) are not present in patches/trigger-tests.patch; they pre-exist on the buggy revision 11aa41a (the 'Add (failing) tests' commit of PR #812), so their bodies were not inspectable here and their equivalence rests on the machine-generated differential evidence plus their names.",
+        "Minimization retained the full production patch, so the case bundles the parseNewline return-value restructure with the minimal split-CRLF state tracking; a finer-grained root-cause hunk was not isolated.",
+        "ParseBuffer gained a stored property included in synthesized Hashable conformance; no test in the supplied trigger set exercises ParseBuffer equality, so that side effect is unverified beyond the green full suite.",
+        "The fix updates lastResponseNewlineEnding only in .response mode; a split CRLF around literal/attributeBytes boundaries is not covered by the accepted triggers and may remain unhandled."
+      ]
+    }
+  ]
+}

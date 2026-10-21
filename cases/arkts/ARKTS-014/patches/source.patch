@@ -1,0 +1,104 @@
+diff --git a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/ets/pages/animations/TransitionAnimations/pageTransitionSample/PageTransitionSample.ets b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/ets/pages/animations/TransitionAnimations/pageTransitionSample/PageTransitionSample.ets
+index eaa8d322ce..66e68361c6 100644
+--- a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/ets/pages/animations/TransitionAnimations/pageTransitionSample/PageTransitionSample.ets
++++ b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/ets/pages/animations/TransitionAnimations/pageTransitionSample/PageTransitionSample.ets
+@@ -18,7 +18,8 @@ import { TitleBar } from '../../../../common/TitleBar'
+ 
+ const ANIMATION_URL: string = 'pages/animations/TransitionAnimations/pageTransitionSample/PageTransitionSampleTo'
+ 
+-@Extend(Text) function textStyle() {
++@Extend(Text)
++function textStyle() {
+   .height(60)
+   .fontSize(20)
+   .width('100%')
+@@ -47,7 +48,7 @@ struct PageTransitionSample {
+             .onClick(() => {
+               router.push({
+                 url: ANIMATION_URL,
+-                params: { type: SlideEffect.Top }
++                params: { type: SlideEffect.Top, animationType: 1 }
+               })
+             })
+           Text($r('app.string.page_transition_bottom'))
+@@ -55,7 +56,7 @@ struct PageTransitionSample {
+             .onClick(() => {
+               router.push({
+                 url: ANIMATION_URL,
+-                params: { type: SlideEffect.Bottom }
++                params: { type: SlideEffect.Bottom, animationType: 1 }
+               })
+             })
+           Text($r('app.string.page_transition_left'))
+@@ -63,7 +64,7 @@ struct PageTransitionSample {
+             .onClick(() => {
+               router.push({
+                 url: ANIMATION_URL,
+-                params: { type: SlideEffect.Left }
++                params: { type: SlideEffect.Left, animationType: 1 }
+               })
+             })
+           Text($r('app.string.page_transition_right'))
+@@ -71,7 +72,7 @@ struct PageTransitionSample {
+             .onClick(() => {
+               router.push({
+                 url: ANIMATION_URL,
+-                params: { type: SlideEffect.Right }
++                params: { type: SlideEffect.Right, animationType: 1 }
+               })
+             })
+           Text($r('app.string.page_transition_scale'))
+@@ -79,7 +80,7 @@ struct PageTransitionSample {
+             .onClick(() => {
+               router.push({
+                 url: ANIMATION_URL,
+-                params: { type: SlideEffect.Bottom, zoom: this.zoom }
++                params: { type: SlideEffect.Bottom, zoom: this.zoom, animationType: 2 }
+               })
+             })
+           Text($r('app.string.page_transition_rotate'))
+@@ -87,7 +88,7 @@ struct PageTransitionSample {
+             .onClick(() => {
+               router.push({
+                 url: ANIMATION_URL,
+-                params: { type: SlideEffect.Bottom, angle: this.angle }
++                params: { type: SlideEffect.Bottom, angle: this.angle, animationType: 3 }
+               })
+             })
+         }
+diff --git a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/ets/pages/animations/TransitionAnimations/pageTransitionSample/PageTransitionSampleTo.ets b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/ets/pages/animations/TransitionAnimations/pageTransitionSample/PageTransitionSampleTo.ets
+index 044aac3689..1c46326514 100644
+--- a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/ets/pages/animations/TransitionAnimations/pageTransitionSample/PageTransitionSampleTo.ets
++++ b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/ets/pages/animations/TransitionAnimations/pageTransitionSample/PageTransitionSampleTo.ets
+@@ -28,6 +28,7 @@ struct PageTransitionSampleTo {
+   @State rightX: number = 0
+   @State bottomY: number = 0
+   @State progress: number = 0
++  @State animationType: number = 0
+   @State transitionType: SlideEffect = SlideEffect.Left
+ 
+   build() {
+@@ -55,8 +56,13 @@ struct PageTransitionSampleTo {
+     .backgroundColor($r('app.color.background_shallow_grey'))
+     .justifyContent(FlexAlign.Center)
+     .alignItems(HorizontalAlign.Center)
+-    .rotate({ z: 1, angle: this.progress * this.angle })
+-    .scale({ x: this.progress * this.zoom / 2, y: this.progress * this.zoom / 2, centerY: '50%', centerX: '50%' })
++    .rotate(this.animationType === 3 ? { z: 1, angle: this.progress * this.angle } : { z: 1, angle: 0 })
++    .scale(this.animationType === 2 ? {
++      x: this.progress * this.zoom / 2,
++      y: this.progress * this.zoom / 2,
++      centerY: '50%',
++      centerX: '50%'
++    } : { x: 1, y: 1 })
+   }
+ 
+   aboutToAppear() {
+@@ -64,6 +70,7 @@ struct PageTransitionSampleTo {
+     this.transitionType = params.type as SlideEffect;
+     this.angle = params.angle as number;
+     this.zoom = params.zoom as number;
++    this.animationType = params.animationType as number;
+   }
+ 
+   pageTransition() {

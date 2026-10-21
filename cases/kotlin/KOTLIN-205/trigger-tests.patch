@@ -1,0 +1,20 @@
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/UnnecessaryParenthesesBeforeTrailingLambdaRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/UnnecessaryParenthesesBeforeTrailingLambdaRuleTest.kt
+index e389a78524..b349ab249b 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/UnnecessaryParenthesesBeforeTrailingLambdaRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/UnnecessaryParenthesesBeforeTrailingLambdaRuleTest.kt
+@@ -23,4 +23,15 @@ class UnnecessaryParenthesesBeforeTrailingLambdaRuleTest {
+             .hasLintViolation(2, 24, "Empty parentheses in function call followed by lambda are unnecessary")
+             .isFormattedAs(formattedCode)
+     }
++
++    @Test
++    fun `Issue 2884 - Given some a call expression ending with a lambda argument, followed by an empty argument list followed by another lambda argument then do not remove empty parameter list`() {
++        val code =
++            """
++            fun fooBar(foo: () -> String): (() -> String) -> String = { bar -> foo().plus("  ").plus(bar()) }
++
++            val foobar = fooBar { "Hello" }() { "world" }
++            """.trimIndent()
++        unnecessaryParenthesesBeforeTrailingLambdaRuleAssertThat(code).hasNoLintViolations()
++    }
+ }

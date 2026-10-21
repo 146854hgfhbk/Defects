@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-662",
+  "technical_evidence_sha256": "aa53ed8fa203cc6c7cb548b3ad0e417b3d731d8eb802d07cf78a2103283ba4a3",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "6c5c7b599c482a7e92f60f1ff5f9507a505568f6c7580e6db9be4c5e941db25c",
+  "reviewed_at": "2026-08-11T23:41:45.886272+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dsh0416/euc-jp#5",
+  "rationale": "Issue #5 reports concrete Shift-JIS decoding failure: bytes [142, 82, 250, 177, 32, 149, 113, 142, 247] decode to mojibake '山�ｱ 敏樹' instead of expected '山﨑 敏樹'. The failing byte 0xFA (250 decimal) falls in Windows-31J extension range (0xFA-0xFC) not handled by original decoder. Production fix adds: (1) 768 character mappings (0xED40-0xEEFC, 0xFA40-0xFC4B) covering Windows-31J-specific kanji, (2) conditional branch in jis.dart to decode 0xFA-0xFC range. Test 'issue #5' validates exact reported input/output; test 'Windows-31J Round Trip' exercises ~600 extension characters for encode/decode roundtrip. Patch is minimal decoder extension with no refactoring, formatting, or documentation changes. No duplicate in active_same_project_root_causes=[]. Strict validation confirms both tests reproduce on buggy revision and pass on fixed revision with deterministic fingerprints across 3 repetitions.\n\nThis is a legitimate character encoding defect in a Dart Shift-JIS/Windows-31J decoder. Issue #5 reports concrete failure: input bytes [142, 82, 250, 177, 32, 149, 113, 142, 247] decode incorrectly to '山�ｱ 敏樹' instead of expected '山﨑 敏樹'. The byte 0xFA (250 decimal) falls in the Windows-31J extension range (0xFA-0xFC) not covered by the original JIS X 0208 decoder. The production fix adds exactly two changes: (1) 768 character mappings for Windows-31J-specific codes 0xED40-0xFC4B in jis-table.dart, and (2) a 4-line conditional branch in jis.dart to decode the 0xFA-0xFC range. The trigger tests directly validate the reported bug with exact input bytes and add comprehensive roundtrip testing for ~600 Windows-31J characters. Runtime evidence confirms both triggers fail deterministically on buggy and pass on fixed. No unrelated formatting, documentation, or feature work is present. The active_same_project_root_causes list is empty, confirming no duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:41:17.486549+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "6c5c7b599c482a7e92f60f1ff5f9507a505568f6c7580e6db9be4c5e941db25c",
+      "response_sha256": "cd4bf46abf0a5f9e5151bf53c85f61662e263846dcc9d126c44bf2cead51b7bc",
+      "response_id": "msg_1c78b98a-9b45-4cfb-81",
+      "attempts": 2,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 17197
+        },
+        "cache_creation_input_tokens": 17197,
+        "cache_read_input_tokens": 41826,
+        "input_tokens": 58056,
+        "output_tokens": 926
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dsh0416/euc-jp#5",
+      "rationale": "Issue #5 reports concrete Shift-JIS decoding failure: bytes [142, 82, 250, 177, 32, 149, 113, 142, 247] decode to mojibake '山�ｱ 敏樹' instead of expected '山﨑 敏樹'. The failing byte 0xFA (250 decimal) falls in Windows-31J extension range (0xFA-0xFC) not handled by original decoder. Production fix adds: (1) 768 character mappings (0xED40-0xEEFC, 0xFA40-0xFC4B) covering Windows-31J-specific kanji, (2) conditional branch in jis.dart to decode 0xFA-0xFC range. Test 'issue #5' validates exact reported input/output; test 'Windows-31J Round Trip' exercises ~600 extension characters for encode/decode roundtrip. Patch is minimal decoder extension with no refactoring, formatting, or documentation changes. No duplicate in active_same_project_root_causes=[]. Strict validation confirms both tests reproduce on buggy revision and pass on fixed revision with deterministic fingerprints across 3 repetitions.",
+      "evidence_paths": [
+        "case.json::issue_urls[0]",
+        "case.json::patches/minimized-production.patch::lib/jis.dart@+25-28",
+        "case.json::patches/minimized-production.patch::lib/jis-table.dart@+7155-7919",
+        "case.json::patches/trigger-tests.patch::test/basic_test.dart@+56-58",
+        "case.json::patches/trigger-tests.patch::test/basic_test.dart@+60-82",
+        "case.json::strict_original.checks.trigger.buggy_differential",
+        "case.json::strict_original.checks.trigger.deterministic"
+      ],
+      "risks": [
+        "Large character table (768 mappings) requires spot-check against Windows-31J reference to detect transcription errors",
+        "Comprehensive test exercises ~600 characters but execution time/memory characteristics unverified at scale"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:41:45.885927+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "6c5c7b599c482a7e92f60f1ff5f9507a505568f6c7580e6db9be4c5e941db25c",
+      "response_sha256": "0f369ca4d6ecd662549d35b113de3d1f06d4e4d177450e9a9c91c99c68d50d17",
+      "response_id": "msg_9a085761-c74f-490d-8b",
+      "attempts": 2,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 17328
+        },
+        "cache_creation_input_tokens": 17328,
+        "cache_read_input_tokens": 41794,
+        "input_tokens": 58056,
+        "output_tokens": 826
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dsh0416/euc-jp#5",
+      "rationale": "This is a legitimate character encoding defect in a Dart Shift-JIS/Windows-31J decoder. Issue #5 reports concrete failure: input bytes [142, 82, 250, 177, 32, 149, 113, 142, 247] decode incorrectly to '山�ｱ 敏樹' instead of expected '山﨑 敏樹'. The byte 0xFA (250 decimal) falls in the Windows-31J extension range (0xFA-0xFC) not covered by the original JIS X 0208 decoder. The production fix adds exactly two changes: (1) 768 character mappings for Windows-31J-specific codes 0xED40-0xFC4B in jis-table.dart, and (2) a 4-line conditional branch in jis.dart to decode the 0xFA-0xFC range. The trigger tests directly validate the reported bug with exact input bytes and add comprehensive roundtrip testing for ~600 Windows-31J characters. Runtime evidence confirms both triggers fail deterministically on buggy and pass on fixed. No unrelated formatting, documentation, or feature work is present. The active_same_project_root_causes list is empty, confirming no duplicate.",
+      "evidence_paths": [
+        "case.json:issue_urls[0]",
+        "case.json:strict_original.checks.trigger.buggy_differential",
+        "case.json:strict_original.checks.trigger.fixed_clean",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch"
+      ],
+      "risks": [
+        "Large character table (768 mappings) not independently verified against Windows-31J reference",
+        "Roundtrip test exercises ~600 characters but execution time/determinism validated only at 3 repetitions"
+      ]
+    }
+  ]
+}

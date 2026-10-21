@@ -1,0 +1,120 @@
+diff --git a/README b/README
+index 3802a39..837b6a9 100644
+--- a/README
++++ b/README
+@@ -446,6 +446,12 @@ OBJECT-ORIENTED INTERFACE
+ 
+         This setting has no effect when decoding JSON texts.
+ 
++    $json = $json->indent_length([$number_of_spaces])
++    $length = $json->get_indent_length()
++        Set the indent length (default 3). This option is only useful when
++        you also enable indent or pretty. The acceptable range is from 0 (no
++        indentation) to 15
++
+     $json = $json->space_before ([$enable])
+     $enabled = $json->get_space_before
+         If $enable is true (or missing), then the "encode" method will add
+diff --git a/XS.pm b/XS.pm
+index be1d482..33f467f 100644
+--- a/XS.pm
++++ b/XS.pm
+@@ -530,6 +530,13 @@ resulting JSON text is guaranteed not to contain any C<newlines>.
+ 
+ This setting has no effect when decoding JSON texts.
+ 
++=item $json = $json->indent_length([$number_of_spaces])
++
++=item $length = $json->get_indent_length()
++
++Set the indent length (default C<3>).
++This option is only useful when you also enable indent or pretty.
++The acceptable range is from 0 (no indentation) to 15
+ 
+ =item $json = $json->space_before ([$enable])
+ 
+diff --git a/XS.xs b/XS.xs
+index 8a84293..7d4feed 100644
+--- a/XS.xs
++++ b/XS.xs
+@@ -332,6 +332,7 @@ enum {
+ typedef struct {
+   U32 flags;
+   U32 max_depth;
++  U32 indent_length;         /* how much padding to use when indenting */
+   STRLEN max_size;
+ 
+   SV *cb_object;
+@@ -350,7 +351,8 @@ INLINE void
+ json_init (JSON *json)
+ {
+   Zero (json, 1, JSON);
+-  json->max_depth = 512;
++  json->max_depth     = 512;
++  json->indent_length = INDENT_STEP;
+ }
+ 
+ /* dTHX/threads TODO*/
+@@ -923,7 +925,7 @@ encode_indent (pTHX_ enc_t *enc)
+ {
+   if (enc->json.flags & F_INDENT)
+     {
+-      int spaces = enc->indent * INDENT_STEP;
++      int spaces = enc->indent * enc->json.indent_length;
+ 
+       need (aTHX_ enc, spaces);
+       memset (enc->cur, ' ', spaces);
+@@ -4031,6 +4033,21 @@ void get_ascii (JSON *self)
+     PPCODE:
+         XPUSHs (boolSV (self->flags & ix));
+ 
++void indent_length (JSON *self, int val = INDENT_STEP)
++    PPCODE:
++        if (0 <= val && val <= 15) {
++            self->indent_length = val;
++        } else {
++            warn("The acceptable range of indent_length() is 0 to 15.");
++        }
++        XPUSHs (ST (0));
++
++U32 get_indent_length (JSON *self)
++    CODE:
++        RETVAL = self->indent_length;
++    OUTPUT:
++        RETVAL
++
+ void max_depth (JSON *self, U32 max_depth = 0x80000000UL)
+     PPCODE:
+         self->max_depth = max_depth;
+diff --git a/t/06_pc_pretty.t b/t/06_pc_pretty.t
+index 91ef319..446df39 100644
+--- a/t/06_pc_pretty.t
++++ b/t/06_pc_pretty.t
+@@ -4,7 +4,7 @@
+ 
+ use strict;
+ use Test::More;
+-BEGIN { plan tests => 9 };
++BEGIN { plan tests => 10 };
+ 
+ use Cpanel::JSON::XS;
+ 
+@@ -64,3 +64,18 @@ is($pc->encode($obj), qq|{\n   "foo" : "bar"\n}\n|, "both");
+ $pc->space_after(0);
+ is($pc->encode($obj), qq|{\n   "foo" :"bar"\n}\n|, "before");
+ 
++$obj = { foo => [ {a=>"b"}, 0, 1, 2 ] };
++$pc->pretty(1)->indent_length(1);
++$js = $pc->encode($obj);
++is($js,q|{
++ "foo" : [
++  {
++   "a" : "b"
++  },
++  0,
++  1,
++  2
++ ]
++}
++|);
++

@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-500",
+  "technical_evidence_sha256": "c8b8c093f9597367b34fab90a513ce0ad248bb491a9e8d1cb172aa72aeee7c77",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "8cca673efc826df08d04b3a264f57a7228eeba4a672e1c5de36d11427ad4bbbe",
+  "reviewed_at": "2026-08-11T12:07:58.712558+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "close2/csv#61",
+  "rationale": "Issue #61 (labeled 'bug', closed) reports that a CSV whose final character is a closing text-end delimiter with no trailing EOL throws 'The text end delimiter (\") for the last field is missing.' when allowInvalid is false, and correctly attributes it to _insideQuotedString remaining true at end of input. The minimized production patch touches only lib/src/csv_parser.dart and encodes exactly that: the end-of-string guard changes from `_insideQuotedString!` to `(_insideQuotedString && !_previousWasTextEndDelimiter)`, so a field already closed by a text-end delimiter is no longer reported as unterminated. This matches the commit/PR #63 rationale that no remaining character can 'unclose' the field. The two accompanying declaration hunks (`bool? _insideQuotedString` -> `bool _insideQuotedString = false`, same for _previousWasTextEndDelimiter) are the type support needed for the new non-null condition, are confined to the fields the fixed expression reads, and are the only residue: all of the commit's dartfmt reflows, blank-line insertions, cascade reformatting in lib/csv.dart, lib/csv_to_list_converter.dart, lib/list_to_csv_converter.dart, lib/src/csv_argument_errors.dart, plus CHANGELOG.md and the pubspec version bump, were excluded. The trigger is the unchanged upstream test from the same fixing commit ('Issue61 No EOL and quote as last character'), which calls only pre-existing API (CsvToListConverter(textDelimiter:, allowInvalid:).convert) available at the parent revision; the fix adds no API. Strict post-minimization evidence shows build passing on both revisions, buggy-side isolated and full-suite failure limited to that single reproduced selector across 3 repetitions with 3 deterministic fingerprint groups, and fixed-side isolated/suite/reversed runs all green. active_same_project_root_causes is empty and close2/csv#61 is the sole allowed verified issue key.\n\nIssue #61 (labeled 'bug', closed) reports that a CSV ending in a closing text-end delimiter with no trailing EOL wrongly raises 'The text end delimiter (\") for the last field is missing' and identifies stale _insideQuotedString state as the cause. The minimized production patch changes exactly that end-of-string guard in lib/src/csv_parser.dart from '_insideQuotedString!' to '(_insideQuotedString && !_previousWasTextEndDelimiter)', matching the commit and PR #63 rationale that no remaining character can 'unclose' the field. The two accompanying declaration changes (bool? -> bool with false initializers) are required for the new condition to type-check without null assertions and are behavior-preserving for the fields' existing non-null runtime usage; the CHANGELOG, pubspec version bump, dartfmt cascade/blank-line edits in lib/csv.dart, lib/list_to_csv_converter.dart, lib/csv_to_list_converter.dart, and lib/src/csv_argument_errors.dart present in the original commit were all excluded from the minimized patch. The reproduced trigger 'Issue61 No EOL and quote as last character' constructs the defect input '\"abc\",\"def\"' through the pre-existing CsvToListConverter(textDelimiter:, allowInvalid:) API with no dependency on any API introduced by the fix. Strict evidence passes on both the original and post-minimization matrices (38 runs, 3 repetitions, deterministic fingerprints, buggy differential limited to the single reproduced selector, fixed suite all green). active_same_project_root_causes is empty, so close2/csv#61 is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:07:17.754893+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8cca673efc826df08d04b3a264f57a7228eeba4a672e1c5de36d11427ad4bbbe",
+      "response_sha256": "1a9b5992afdddae8b489ecd574b3b11b48ffdd2a355520f44cf0bc710fe8aa19",
+      "response_id": "msg_1786450037551",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 14282,
+        "output_tokens": 1374,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "close2/csv#61",
+      "rationale": "Issue #61 (labeled 'bug', closed) reports that a CSV whose final character is a closing text-end delimiter with no trailing EOL throws 'The text end delimiter (\") for the last field is missing.' when allowInvalid is false, and correctly attributes it to _insideQuotedString remaining true at end of input. The minimized production patch touches only lib/src/csv_parser.dart and encodes exactly that: the end-of-string guard changes from `_insideQuotedString!` to `(_insideQuotedString && !_previousWasTextEndDelimiter)`, so a field already closed by a text-end delimiter is no longer reported as unterminated. This matches the commit/PR #63 rationale that no remaining character can 'unclose' the field. The two accompanying declaration hunks (`bool? _insideQuotedString` -> `bool _insideQuotedString = false`, same for _previousWasTextEndDelimiter) are the type support needed for the new non-null condition, are confined to the fields the fixed expression reads, and are the only residue: all of the commit's dartfmt reflows, blank-line insertions, cascade reformatting in lib/csv.dart, lib/csv_to_list_converter.dart, lib/list_to_csv_converter.dart, lib/src/csv_argument_errors.dart, plus CHANGELOG.md and the pubspec version bump, were excluded. The trigger is the unchanged upstream test from the same fixing commit ('Issue61 No EOL and quote as last character'), which calls only pre-existing API (CsvToListConverter(textDelimiter:, allowInvalid:).convert) available at the parent revision; the fix adds no API. Strict post-minimization evidence shows build passing on both revisions, buggy-side isolated and full-suite failure limited to that single reproduced selector across 3 repetitions with 3 deterministic fingerprint groups, and fixed-side isolated/suite/reversed runs all green. active_same_project_root_causes is empty and close2/csv#61 is the sole allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "issue_urls[0]",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The nullability change on the two flag fields is bundled with the behavioral fix; it is semantically neutral only if the parent constructor already initialized both flags. The constructor initializer list is truncated in the supplied patch context, so this rests on the passing build/full-suite gates rather than direct source inspection.",
+        "trigger_tests declares a second selector, the pre-existing 'Doesn't throw an exception if allowInvalid and eol is null' test, which is unrelated to issue #61 and only received a string-literal quoting change upstream; it serves as a non-reproducing selector and carries no defect semantics.",
+        "No supplied evidence covers negative cases beyond the suite, e.g. that a genuinely unterminated field ('\"abc\",\"def' with allowInvalid: false) still throws after the change; the fixed full-suite green run is the only regression signal."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:07:58.712256+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8cca673efc826df08d04b3a264f57a7228eeba4a672e1c5de36d11427ad4bbbe",
+      "response_sha256": "b3385302f5fb4e4b34ef50752d57011b13bbd678fcfefd05aa195c4492697f89",
+      "response_id": "msg_1786450078516",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 15222,
+        "output_tokens": 1333,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "close2/csv#61",
+      "rationale": "Issue #61 (labeled 'bug', closed) reports that a CSV ending in a closing text-end delimiter with no trailing EOL wrongly raises 'The text end delimiter (\") for the last field is missing' and identifies stale _insideQuotedString state as the cause. The minimized production patch changes exactly that end-of-string guard in lib/src/csv_parser.dart from '_insideQuotedString!' to '(_insideQuotedString && !_previousWasTextEndDelimiter)', matching the commit and PR #63 rationale that no remaining character can 'unclose' the field. The two accompanying declaration changes (bool? -> bool with false initializers) are required for the new condition to type-check without null assertions and are behavior-preserving for the fields' existing non-null runtime usage; the CHANGELOG, pubspec version bump, dartfmt cascade/blank-line edits in lib/csv.dart, lib/list_to_csv_converter.dart, lib/csv_to_list_converter.dart, and lib/src/csv_argument_errors.dart present in the original commit were all excluded from the minimized patch. The reproduced trigger 'Issue61 No EOL and quote as last character' constructs the defect input '\"abc\",\"def\"' through the pre-existing CsvToListConverter(textDelimiter:, allowInvalid:) API with no dependency on any API introduced by the fix. Strict evidence passes on both the original and post-minimization matrices (38 runs, 3 repetitions, deterministic fingerprints, buggy differential limited to the single reproduced selector, fixed suite all green). active_same_project_root_causes is empty, so close2/csv#61 is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The minimized patch's second hunk header (@@ -629,7 +628,7 @@) is offset-inconsistent with the line-neutral first hunk; it applied under the strict gate but may need fuzzy matching in other tooling.",
+        "Remaining '_insideQuotedString!' / '_previousWasTextEndDelimiter!' null assertions elsewhere in csv_parser.dart become unnecessary after the declaration change, producing analyzer warnings (require_analyze_clean=false, analyzer treated as diagnostic only).",
+        "The nullability declaration change is retained in the minimized patch rather than the throw-condition hunk alone; it is judged behavior-preserving but was not independently verified against the parent constructor initializer list, whose context is truncated in the diff.",
+        "trigger_tests declares a second selector, \"Doesn't throw an exception if allowInvalid and eol is null\", which is a pre-existing control test that passes on both revisions and only received a quote-style reformat; the defect-specific trigger is the Issue61 test alone."
+      ]
+    }
+  ]
+}

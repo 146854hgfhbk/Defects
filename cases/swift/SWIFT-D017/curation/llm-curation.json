@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-474",
+  "technical_evidence_sha256": "8003a7c9ccc02b90eeb9e7cd9a1c0bf191afe8130cb5bd08a87e02f13ad97fdf",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "e9a4b520f22ddc3ba4b06abddb5b8c6a728f6224a5f14e416168a0f0e4b0384d",
+  "reviewed_at": "2026-09-05T16:03:24.248655+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-nio-ssh#143",
+  "rationale": "Issue #143 ('Crash in SSHChildChannel') reports a fatal error 'Sent channel window adjust on channel in invalid state' from ChildChannelStateMachine.sendChannelWindowAdjust when inbound data forces a window adjustment after the channel was closed locally, and the reporter pins it to commit c56ababb0e22e0cdf5ec8b31698e07f943ea92e7, which is exactly the recorded buggy_revision. The minimized production patch is a single hunk in Sources/NIOSSH/Child Channels/SSHChildChannel.swift that tightens an already-existing guard from '!self.didClose' to '!self.didClose, !self.state.sentClose' before constructing and sending the channelWindowAdjust message; original_hunk_count=1, retained_hunks=[1], removed_hunk_count=0, and no formatting, doc, config, or API additions accompany it. Because the patch adds no new declarations, self.state.sentClose is pre-existing internal state, so the trigger does not rely on an API introduced by the fix. The trigger test testWeDontResizeTheWindowAfterLocalClosing is the unchanged upstream test from the same fixing commit and reproduces the reported scenario at the same abstraction level: it opens a child channel with autoRead disabled, closes it locally, delivers inbound data large enough to require a window adjustment, then calls read() and asserts no additional outbound message is flushed (count stays at 2), which is precisely the forbidden window-adjust-after-local-close path from the stack trace. Machine-generated strict evidence passes all gates both originally and post-minimization: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential reproducing exactly ChildChannelMultiplexerTests::testWeDontResizeTheWindowAfterLocalClosing, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no failed_checks. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and apple/swift-nio-ssh#143 is the sole allowed verified issue key with traceability path fix_commit_to_issue.\n\nIssue #143 reports a fatal error 'Sent channel window adjust on channel in invalid state' with a stack trace through ChildChannelStateMachine.sendChannelWindowAdjust, reported against commit c56ababb0e22e0cdf5ec8b31698e07f943ea92e7 — exactly the recorded buggy_revision. The minimized production patch is a single one-line change in Sources/NIOSSH/Child Channels/SSHChildChannel.swift that tightens an already-existing guard (!self.didClose) with !self.state.sentClose before emitting channelWindowAdjust, which directly prevents the state-machine precondition the issue trips. No refactor, formatting, feature, doc, or config change is present; original_hunk_count=1, retained=1, removed=0, and the production-fix patch is byte-identical to the minimized one. The trigger test testWeDontResizeTheWindowAfterLocalClosing is the unchanged upstream test from the same single-commit PR #144 and reproduces the reported scenario semantically: local close, then inbound data large enough to require a window adjustment, then read(), asserting no additional outbound messages. It references only pre-existing test-harness and public API surface (createChildChannel, autoRead option, close(promise:), receiveMessage, read(), assertChannelOpen, openConfirmation, data, ByteBuffer.bigBuffer) and does not touch the internal state.sentClose flag used by the fix, so it depends on no API introduced by the fix; build.both_versions passing confirms it compiles against the buggy revision. Strict evidence passes on both the original and post-minimization runs: single unique selector, buggy differential reproducing exactly the declared trigger, deterministic across 3 repetitions with 3 fingerprint groups, fixed isolated/suite/reversed runs clean, and fixed full suite all green with no baseline exclusions. active_same_project_root_causes is empty, so this window-adjust-after-local-close root cause is not a duplicate of any active registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T16:02:53.363019+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "e9a4b520f22ddc3ba4b06abddb5b8c6a728f6224a5f14e416168a0f0e4b0384d",
+      "response_sha256": "d1a3819057cce74d42b01322c622771ad36623c162f67c456c8bfe3fe78bb8f5",
+      "response_id": "msg_4a7810cdef3a434a8c5fc4493ca6f4c1",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5798662714759536,
+        "input_tokens": 17480,
+        "output_tokens": 800
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-nio-ssh#143",
+      "rationale": "Issue #143 ('Crash in SSHChildChannel') reports a fatal error 'Sent channel window adjust on channel in invalid state' from ChildChannelStateMachine.sendChannelWindowAdjust when inbound data forces a window adjustment after the channel was closed locally, and the reporter pins it to commit c56ababb0e22e0cdf5ec8b31698e07f943ea92e7, which is exactly the recorded buggy_revision. The minimized production patch is a single hunk in Sources/NIOSSH/Child Channels/SSHChildChannel.swift that tightens an already-existing guard from '!self.didClose' to '!self.didClose, !self.state.sentClose' before constructing and sending the channelWindowAdjust message; original_hunk_count=1, retained_hunks=[1], removed_hunk_count=0, and no formatting, doc, config, or API additions accompany it. Because the patch adds no new declarations, self.state.sentClose is pre-existing internal state, so the trigger does not rely on an API introduced by the fix. The trigger test testWeDontResizeTheWindowAfterLocalClosing is the unchanged upstream test from the same fixing commit and reproduces the reported scenario at the same abstraction level: it opens a child channel with autoRead disabled, closes it locally, delivers inbound data large enough to require a window adjustment, then calls read() and asserts no additional outbound message is flushed (count stays at 2), which is precisely the forbidden window-adjust-after-local-close path from the stack trace. Machine-generated strict evidence passes all gates both originally and post-minimization: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential reproducing exactly ChildChannelMultiplexerTests::testWeDontResizeTheWindowAfterLocalClosing, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no failed_checks. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and apple/swift-nio-ssh#143 is the sole allowed verified issue key with traceability path fix_commit_to_issue.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_original.checks.full_suite.fixed_all_green",
+        "case.json:minimized_patch_reference.post_minimization_validation",
+        "case.json:traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue body is only available via the embedded source_candidate record rather than an independently captured artifact.",
+        "The pre-fix failure mode is a Swift precondition trap, so the differential depends on the harness treating a crashed test process as the trigger signal; strict evidence reports it as reproduced but the crash-versus-assertion distinction is not itemized.",
+        "The test allocates a ~16 MiB buffer and a 1<<23 slice, so it is memory-heavier than typical unit triggers and could be sensitive to future changes in default window sizing or windowManager unbuffering thresholds.",
+        "Semantic equivalence is judged from the code path (window adjust suppressed after local close) rather than from an end-to-end reproduction of the reporter's NIOSSHClient/docker scenario."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T16:03:24.248461+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "e9a4b520f22ddc3ba4b06abddb5b8c6a728f6224a5f14e416168a0f0e4b0384d",
+      "response_sha256": "253c97da5a7f88c73bdeb18b726905b61303a06c892af10e0857bc89947930aa",
+      "response_id": "msg_de16cb58fd354089a88ab5b0cf6392aa",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.47766257747927027,
+        "input_tokens": 17357,
+        "output_tokens": 753
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-nio-ssh#143",
+      "rationale": "Issue #143 reports a fatal error 'Sent channel window adjust on channel in invalid state' with a stack trace through ChildChannelStateMachine.sendChannelWindowAdjust, reported against commit c56ababb0e22e0cdf5ec8b31698e07f943ea92e7 — exactly the recorded buggy_revision. The minimized production patch is a single one-line change in Sources/NIOSSH/Child Channels/SSHChildChannel.swift that tightens an already-existing guard (!self.didClose) with !self.state.sentClose before emitting channelWindowAdjust, which directly prevents the state-machine precondition the issue trips. No refactor, formatting, feature, doc, or config change is present; original_hunk_count=1, retained=1, removed=0, and the production-fix patch is byte-identical to the minimized one. The trigger test testWeDontResizeTheWindowAfterLocalClosing is the unchanged upstream test from the same single-commit PR #144 and reproduces the reported scenario semantically: local close, then inbound data large enough to require a window adjustment, then read(), asserting no additional outbound messages. It references only pre-existing test-harness and public API surface (createChildChannel, autoRead option, close(promise:), receiveMessage, read(), assertChannelOpen, openConfirmation, data, ByteBuffer.bigBuffer) and does not touch the internal state.sentClose flag used by the fix, so it depends on no API introduced by the fix; build.both_versions passing confirms it compiles against the buggy revision. Strict evidence passes on both the original and post-minimization runs: single unique selector, buggy differential reproducing exactly the declared trigger, deterministic across 3 repetitions with 3 fingerprint groups, fixed isolated/suite/reversed runs clean, and fixed full suite all green with no baseline exclusions. active_same_project_root_causes is empty, so this window-adjust-after-local-close root cause is not a duplicate of any active registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "minimized_patch_reference.post_minimization_validation",
+        "traceability.verified_fix_issue_numbers",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The pre-fix failure mode is a Swift fatal error rather than a clean XCTest assertion, so the differential signal on the buggy revision may be a process abort; the strict harness recorded it as a reproduced trigger but the crash-vs-failure distinction is not itemized in the evidence.",
+        "case.json issue_evidence is null; the issue text was read from the source_candidate issue_check snapshot rather than an independently captured issue evidence field.",
+        "The trigger allocates a large buffer (default window 1<<24, with a 1<<23 slice), so it is memory-heavy though deterministic across the 3 recorded repetitions.",
+        "The guard's effectiveness depends on internal windowManager unbuffering thresholds; future changes to window accounting could mask the differential without the test noticing."
+      ]
+    }
+  ]
+}

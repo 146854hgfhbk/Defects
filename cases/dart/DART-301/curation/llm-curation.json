@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-301",
+  "technical_evidence_sha256": "66dee6d8bcfb92efa82d18f8ada08efc01f735876179cf46f873ee0148271de6",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "9a4d060362feda885aec44b97d30d6fa082b25bbba28ca4499a08e64d2ad4b27",
+  "reviewed_at": "2026-08-11T12:14:44.486665+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1461",
+  "rationale": "Issue #1461 reports tall-style output where a parameter carrying multiple annotations plus a default value got its continued annotations and the parameter itself over-indented and split at the `:` separator. The fix commit states the mechanism and the diff matches it: visitDefaultFormalParameter no longer builds the AssignPiece (ast_node_visitor.dart), and the new writeDefaultValue helper builds it inside pieces.withMetadata(...) in writeParameter, so metadata wraps the whole parameter-plus-default instead of forming the AssignPiece left-hand side. The trigger fixture test/tall/regression/0300/0387.unit is the issue's reproducer verbatim; its expected output changes from the misindented form to the corrected form and the `### TODO(1461)` marker is deleted. 0247.unit shows the same annotation-plus-default indentation correction. The minimized production patch touches only the two front_end files; the writeFunctionType restructuring is required rather than unrelated, since the removal of the assignment from visitDefaultFormalParameter forces function-typed formals to pick up the default value from the parent node, and the NormalFormalParameter -> FormalParameter signature widening in writeFormalParameter is needed for the same parent lookup. No formatting-only, documentation-only, or configuration-only hunks appear. The triggers are .unit data fixtures consumed by the pre-existing test/tall_format_test.dart harness, so they introduce no dependency on a production API added by the fix. Strict evidence records both original and post-minimization gates passing, with reproduced triggers metadata.unit, 0247.unit, and 0387.unit failing on the buggy revision and all fixed runs green across 3 repetitions and 50 matrix runs. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and dart-lang/dart_style#1461 is the only allowed id.\n\nIssue #1461 reports concrete wrong tall-style output for parameters carrying both metadata and a default value: continuation annotations over-indented and a needless split at the ':' separator. The fix commit (referenced by 'Fix #1461' in both commit message and PR #1478 body, traceability path fix_commit_to_issue) addresses exactly that root cause: visitDefaultFormalParameter no longer builds the AssignPiece with the metadata-bearing parameter as its left side; instead writeDefaultValue constructs the AssignPiece inside pieces.withMetadata(...) in writeParameter/writeFunctionType so metadata wraps the whole parameter-plus-default rather than the assignment's left-hand side. The reproducing trigger tall/regression/0300/0387.unit is the verbatim 'greet(...)' reproducer from the issue, and its expectation drops the '### TODO(1461): The indentation is wrong here.' marker, confirming the exact reported symptom. The minimized production patch touches only lib/src/front_end/ast_node_visitor.dart and lib/src/front_end/piece_factory.dart; the writeFunctionType restructure and the NormalFormalParameter->FormalParameter signature widening are required consequences of relocating default-value handling into the parameter writer (function-typed formals can also carry defaults), and the doc-comment edits describe the new defaultValue parameter, so no unrelated refactor, feature, config, or docs-only change is present. Triggers are fixture data files (.unit) driven by the pre-existing test/tall_format_test.dart harness, so they depend on no production API introduced by the fix. Strict evidence for both the original and post-minimization runs passes every gate: build.both_versions, selectors.present_and_unique (4/4), trigger.buggy_differential with reproduced selectors tall/function/metadata.unit, tall/regression/0200/0247.unit, tall/regression/0300/0387.unit, trigger.fixed_clean, trigger.deterministic (5 fingerprint groups), matrix.repetitions >= 3, and full_suite.fixed_all_green. active_same_same_project_root_causes is empty, so #1461 is not a duplicate of any active registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:13:50.284902+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "9a4d060362feda885aec44b97d30d6fa082b25bbba28ca4499a08e64d2ad4b27",
+      "response_sha256": "b78675920a4d960f6b7b1acaf75e3d2bc9134a69a1618bd74ea7d609fb8215f1",
+      "response_id": "msg_1786450430095",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 23419,
+        "output_tokens": 1180,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1461",
+      "rationale": "Issue #1461 reports tall-style output where a parameter carrying multiple annotations plus a default value got its continued annotations and the parameter itself over-indented and split at the `:` separator. The fix commit states the mechanism and the diff matches it: visitDefaultFormalParameter no longer builds the AssignPiece (ast_node_visitor.dart), and the new writeDefaultValue helper builds it inside pieces.withMetadata(...) in writeParameter, so metadata wraps the whole parameter-plus-default instead of forming the AssignPiece left-hand side. The trigger fixture test/tall/regression/0300/0387.unit is the issue's reproducer verbatim; its expected output changes from the misindented form to the corrected form and the `### TODO(1461)` marker is deleted. 0247.unit shows the same annotation-plus-default indentation correction. The minimized production patch touches only the two front_end files; the writeFunctionType restructuring is required rather than unrelated, since the removal of the assignment from visitDefaultFormalParameter forces function-typed formals to pick up the default value from the parent node, and the NormalFormalParameter -> FormalParameter signature widening in writeFormalParameter is needed for the same parent lookup. No formatting-only, documentation-only, or configuration-only hunks appear. The triggers are .unit data fixtures consumed by the pre-existing test/tall_format_test.dart harness, so they introduce no dependency on a production API added by the fix. Strict evidence records both original and post-minimization gates passing, with reproduced triggers metadata.unit, 0247.unit, and 0387.unit failing on the buggy revision and all fixed runs green across 3 repetitions and 50 matrix runs. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and dart-lang/dart_style#1461 is the only allowed id.",
+      "evidence_paths": [
+        "issue_urls",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/trigger-tests.patch: test/tall/regression/0300/0387.unit",
+        "patches/trigger-tests.patch: test/tall/regression/0200/0247.unit",
+        "patches/minimized-production.patch: lib/src/front_end/ast_node_visitor.dart",
+        "patches/minimized-production.patch: lib/src/front_end/piece_factory.dart",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests"
+      ],
+      "risks": [
+        "The declared selector tall/function/default_value.unit is not in the reproduced trigger set, so its new function-typed-default-value cases are added coverage rather than defect reproduction; only metadata.unit, 0247.unit and 0387.unit provide the buggy-revision differential.",
+        "The piece_factory.dart writeFunctionType hunk is the largest part of the patch and its blast radius reaches function-typed formals, a case not mentioned in issue #1461; it is necessitated by the restructure but is broader than the reported symptom.",
+        "Expected output for tall style at this revision is defined by maintainer-authored fixtures rather than a published stable contract, and one fixture retains a TODO acknowledging non-ideal output for split function-typed formals."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:14:44.486306+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "9a4d060362feda885aec44b97d30d6fa082b25bbba28ca4499a08e64d2ad4b27",
+      "response_sha256": "15155a3cadf6eba0db841047db97833f6c4ede091fdcf1a5657f81d062c6c11f",
+      "response_id": "msg_1786450484290",
+      "attempts": 3,
+      "usage": {
+        "input_tokens": 23170,
+        "output_tokens": 1350,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1461",
+      "rationale": "Issue #1461 reports concrete wrong tall-style output for parameters carrying both metadata and a default value: continuation annotations over-indented and a needless split at the ':' separator. The fix commit (referenced by 'Fix #1461' in both commit message and PR #1478 body, traceability path fix_commit_to_issue) addresses exactly that root cause: visitDefaultFormalParameter no longer builds the AssignPiece with the metadata-bearing parameter as its left side; instead writeDefaultValue constructs the AssignPiece inside pieces.withMetadata(...) in writeParameter/writeFunctionType so metadata wraps the whole parameter-plus-default rather than the assignment's left-hand side. The reproducing trigger tall/regression/0300/0387.unit is the verbatim 'greet(...)' reproducer from the issue, and its expectation drops the '### TODO(1461): The indentation is wrong here.' marker, confirming the exact reported symptom. The minimized production patch touches only lib/src/front_end/ast_node_visitor.dart and lib/src/front_end/piece_factory.dart; the writeFunctionType restructure and the NormalFormalParameter->FormalParameter signature widening are required consequences of relocating default-value handling into the parameter writer (function-typed formals can also carry defaults), and the doc-comment edits describe the new defaultValue parameter, so no unrelated refactor, feature, config, or docs-only change is present. Triggers are fixture data files (.unit) driven by the pre-existing test/tall_format_test.dart harness, so they depend on no production API introduced by the fix. Strict evidence for both the original and post-minimization runs passes every gate: build.both_versions, selectors.present_and_unique (4/4), trigger.buggy_differential with reproduced selectors tall/function/metadata.unit, tall/regression/0200/0247.unit, tall/regression/0300/0387.unit, trigger.fixed_clean, trigger.deterministic (5 fingerprint groups), matrix.repetitions >= 3, and full_suite.fixed_all_green. active_same_same_project_root_causes is empty, so #1461 is not a duplicate of any active registry entry.",
+      "evidence_paths": [
+        "case.json issue_urls[0]",
+        "case.json source_candidate.candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch lib/src/front_end/ast_node_visitor.dart",
+        "patches/minimized-production.patch lib/src/front_end/piece_factory.dart",
+        "patches/trigger-tests.patch test/tall/regression/0300/0387.unit",
+        "patches/trigger-tests.patch test/tall/regression/0200/0247.unit",
+        "patches/trigger-tests.patch test/tall/function/metadata.unit",
+        "case.json strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json traceability.paths[0]"
+      ],
+      "risks": [
+        "One declared selector, tall/function/default_value.unit, is not in the reproduced set, so it adds expectation coverage for function-typed formals rather than differentiating buggy from fixed behavior.",
+        "The fix restructures writeFunctionType metadata handling, so formatting output shifts for function-typed formals with defaults beyond the exact issue example; correctness there rests on maintainer-authored fixture expectations from the same commit, not on an independent contract.",
+        "Triggers are fixture data files interpreted by test/tall_format_test.dart; equivalence to the reported defect is established by the expected-output text, not by an assertion written against the issue reproducer directly.",
+        "Trigger tests originate from the later squashed commit bdc8a8c (same PR content), so they are maintainer expectations rather than an independent curator reproducer."
+      ]
+    }
+  ]
+}

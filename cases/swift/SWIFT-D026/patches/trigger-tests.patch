@@ -1,0 +1,16 @@
+diff --git a/Tests/EntityGenTests/ASTDatabaseStructGenerationTests.swift b/Tests/EntityGenTests/ASTDatabaseStructGenerationTests.swift
+index 89c2557e3200bb6d9c7276febfd0d2e7bfffaf5f..040a71171ff7c05d3e6dbdc9f0ea720bd0eb912f 100644
+--- a/Tests/EntityGenTests/ASTDatabaseStructGenerationTests.swift
++++ b/Tests/EntityGenTests/ASTDatabaseStructGenerationTests.swift
+@@ -228,4 +228,11 @@ final class ASTDatabaseStructGenerationTests: XCTestCase {
+     XCTAssertTrue(source.contains(
+       "[ Person.self, Address.self, AFancyTestTable.self ]"))
+   }
++
++  func testResolveConflictedDatabaseName() throws {
++    let name   = try XCTUnwrap(Fixtures.addressSchema.tables.first?.name)
++    let dbInfo = DatabaseInfo(name: name, schema: Fixtures.addressSchema)
++
++    XCTAssertEqual(dbInfo.name, "\(name)DB")
++  }
+ }

@@ -1,0 +1,92 @@
+{
+  "candidate_sha": "ffc06db9799c4018f2e8c4a2c7c6545a7e03fe27",
+  "project": "JuliaSymbolics/SymbolicUtils.jl",
+  "source": "SWE-rebench-V2",
+  "instance_id": "juliasymbolics__symbolicutils.jl-715",
+  "swe_rebench": {
+    "base_commit": "81e0c485e1c49e2543672d484e303e29f77d5714",
+    "environment_setup_commit": null,
+    "image_name": "docker.io/swerebenchv2/juliasymbolics-symbolicutils.jl:715-81e0c48",
+    "license": "custom-check-github",
+    "fail_to_pass": [
+      "Hash Consing"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 715,
+      "url": "https://github.com/JuliaSymbolics/SymbolicUtils.jl/pull/715",
+      "state": "closed",
+      "title": "fix: ensure numbers have the same type in `isequal_with_metadata`",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Close https://github.com/JuliaSymbolics/Symbolics.jl/issues/1476"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "cross_repository_issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        1476
+      ],
+      "issue_repository": "JuliaSymbolics/Symbolics.jl",
+      "issue_url": "https://github.com/JuliaSymbolics/Symbolics.jl/issues/1476",
+      "pull_request": 715,
+      "pull_request_repository": "JuliaSymbolics/SymbolicUtils.jl",
+      "fix_commit": "ffc06db9799c4018f2e8c4a2c7c6545a7e03fe27",
+      "evidence": "PR #715 body: Close https://github.com/JuliaSymbolics/Symbolics.jl/issues/1476"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "fix: ensure numbers have the same type in `isequal_with_metadata`",
+    "commit_issue_refs": [
+      715
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 715,
+    "pull_request_title": "fix: ensure numbers have the same type in `isequal_with_metadata`",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [
+      [
+        "JuliaSymbolics/Symbolics.jl",
+        1476,
+        "issues"
+      ]
+    ],
+    "refreshed_from_live_github": true,
+    "original_merge_commit": "54c4689a5a5f3114daee4166d1dc3d78df1402cf"
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    1476
+  ],
+  "cross_repository_issue_records": [
+    {
+      "number": 1476,
+      "url": "https://github.com/JuliaSymbolics/Symbolics.jl/issues/1476",
+      "state": "closed",
+      "title": "Some change in `Rewriters.Postwalk` or `Rewriters.PassThrough` causes bug crashing Catalyst steady state solving",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "This is kind of weird, but something has happened. I was enabling a Catalyst test (which had been disabled due to other reasons). However, it now catches some new error which seems to originate in Symbolics.\n\nHere is a minimal example:\n```julia\nusing Symbolics\nimport Symbolics: unwrap, wrap\n\n# Parses and expression and return a version where any exponents that are Float64 (but an int, like 2.0) are turned into Int64s.\nfunction make_int_exps(expr)\n    wrap(Rewriters.Postwalk(Rewriters.PassThrough(___make_int_exps))(unwrap(expr))).val\nend\nfunction ___make_int_exps(expr)\n    !iscall(expr) && return expr\n    if (operation(expr) == ^)\n        if isinteger(sorted_arguments(expr)[2])\n            return sorted_arguments(expr)[1]^Int64(sorted_arguments(expr)[2])\n        else\n            error(\"An non integer ($(sorted_arguments(expr)[2])) was found as a variable exponent. Non-integer exponents are not supported for homotopy continuation based steady state finding.\")\n        end\n    end\nend\n\n@variables t X(t)\neq = 2.0*X^3.0\nmake_int_exps(eq) # returns `2.0(X(t)^3.0)`, should be `2.0(X(t)^3)`\n```\n\nPreviously this converted the exponential to an integer (`3`), but that behaviour does not work any more. I got some help with this code from Shashi, so not really sure exactly how `Rewriters.Postwalk` and `Rewriters.PassThrough` works, so not sure what exactly is going wrong. However, on previous versions, this did use to work.",
+      "repository": "JuliaSymbolics/Symbolics.jl",
+      "reference_kind": "issues"
+    }
+  ],
+  "revision_boundary_recovery": {
+    "status": "TREE_AND_PATCH_BYTE_IDENTICAL",
+    "old_merge_commit": "54c4689a5a5f3114daee4166d1dc3d78df1402cf",
+    "recovered_single_parent_fix_commit": "ffc06db9799c4018f2e8c4a2c7c6545a7e03fe27",
+    "buggy_parent": "81e0c485e1c49e2543672d484e303e29f77d5714",
+    "tree_sha": "a2e1480112477dff22b92b9cdcb8bab48ede162a",
+    "full_diff_sha256": "822a345f4d06ae427862770249a92991e4ec43a4994499d1cf2025620335362f",
+    "method": "merge_second_parent_with_exact_tree_and_git_diff_bytes"
+  }
+}

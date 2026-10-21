@@ -1,0 +1,75 @@
+diff --git a/lib/src/getter.dart b/lib/src/getter.dart
+index 52f55a3..25a9203 100644
+--- a/lib/src/getter.dart
++++ b/lib/src/getter.dart
+@@ -59,11 +59,11 @@ class Getter {
+   int month(DateTime dateTime) => dateTime.month;
+ 
+   int quarterOfYear(DateTime dateTime, Locale locale) {
+-    return int.parse(DateFormat('Q', locale.code).format(dateTime));
++    return _toInt(DateFormat('Q', locale.code).format(dateTime), locale);
+   }
+ 
+   int dayOfYear(DateTime dateTime, Locale locale) {
+-    return int.parse(DateFormat('D', locale.code).format(dateTime));
++    return _toInt(DateFormat('D', locale.code).format(dateTime), locale);
+   }
+ 
+   int year(DateTime dateTime) => dateTime.year;
+@@ -74,6 +74,10 @@ class Getter {
+     return result;
+   }
+ 
++  int _toInt(String localeNumber, Locale locale) {
++    return NumberFormat.decimalPattern(locale.code).parse(localeNumber).toInt();
++  }
++
+   static final List<int> daysInMonthArray = List.from(
+       [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+       growable: false);
+diff --git a/test/src/getter_test.dart b/test/src/getter_test.dart
+index 881c89b..ac92cb5 100644
+--- a/test/src/getter_test.dart
++++ b/test/src/getter_test.dart
+@@ -165,6 +165,20 @@ void main() {
+       });
+     }
+ 
++    test('Should successfully get day of year for non-standard number symbols',
++        () async {
++      // Setup
++      await Jiffy.setLocale('bn');
++      final newLocale = Jiffy.now().locale;
++
++      // Execute
++      final actualDayOfYear =
++          underTest.dayOfYear(DateTime(1997, 9, 23), newLocale);
++
++      // Verify
++      expect(actualDayOfYear, 266);
++    });
++
+     for (var testData in weekOfYearTestData()) {
+       test('Should successfully get week of year', () {
+         // Setup
+@@ -190,6 +204,20 @@ void main() {
+         expect(actualQuarterOfYear, testData['expectedQuarterOfYear']);
+       });
+     }
++
++    test('Should successfully get quarter for non-standard number symbols',
++        () async {
++      // Setup
++      await Jiffy.setLocale('bn');
++      final newLocale = Jiffy.now().locale;
++
++      // Execute
++      final actualDayOfYear =
++          underTest.quarterOfYear(DateTime(2022, 4, 1), newLocale);
++
++      // Verify
++      expect(actualDayOfYear, 2);
++    });
+   });
+ 
+   for (var testData in daysInMonthTestData()) {

@@ -1,0 +1,103 @@
+From 0f07534dd9096c0f21da14cd713d91094cf040ee Mon Sep 17 00:00:00 2001
+From: nathanrpage97 <33010515+nathanrpage97@users.noreply.github.com>
+Date: Thu, 21 Jul 2022 06:45:10 -0700
+Subject: [PATCH] fix(lapp) add file name to arg table when using the default
+ value (#427)
+
+Co-authored-by: nathanrpage97 <nathanrpage97@gmail.com>
+---
+ CHANGELOG.md        |  3 ++-
+ lua/pl/lapp.lua     |  6 ++++++
+ tests/test-lapp.lua | 13 ++++++++++---
+ 3 files changed, 18 insertions(+), 4 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b1faed0c..18709397 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -19,7 +19,8 @@ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) fo
+    [#413](https://github.com/lunarmodules/Penlight/pull/413)
+  - feat: `utils.kpairs` new iterator over all non-integer keys
+    [#413](https://github.com/lunarmodules/Penlight/pull/413)
+-
++ - fix: `lapp` provides the file name when using the default argument
++   [#427](https://github.com/lunarmodules/Penlight/pull/427)
+ 
+ ## 1.12.0 (2022-Jan-10)
+  - deprecate: module `pl.text` the contents have moved to `pl.stringx` (removal later)
+diff --git a/lua/pl/lapp.lua b/lua/pl/lapp.lua
+index 6c54592f..d7ad0627 100644
+--- a/lua/pl/lapp.lua
++++ b/lua/pl/lapp.lua
+@@ -246,6 +246,7 @@ function lapp.process_options_string(str,args)
+             line = res.rest
+             res = {}
+             local optional
++            local defval_str
+             -- do we have ([optional] [<type>] [default <val>])?
+             if match('$({def} $',line,res) or match('$({def}',line,res) then
+                 local typespec = strip(res.def)
+@@ -288,6 +289,7 @@ function lapp.process_options_string(str,args)
+                 -- optional 'default value' clause. Type is inferred as
+                 -- 'string' or 'number' if there's no explicit type
+                 if default or match('default $r{rest}',typespec,res) then
++                    defval_str = res.rest
+                     defval,vtype = process_default(res.rest,vtype)
+                 end
+             else -- must be a plain flag, no extra parameter required
+@@ -297,6 +299,7 @@ function lapp.process_options_string(str,args)
+             local ps = {
+                 type = vtype,
+                 defval = defval,
++                defval_str = defval_str,
+                 required = defval == nil and not optional,
+                 comment = res.rest or optparm,
+                 constraint = constraint,
+@@ -426,6 +429,9 @@ function lapp.process_options_string(str,args)
+         if not ps.used then
+             if ps.required then lapp.error("missing required parameter: "..parm) end
+             set_result(ps,parm,ps.defval)
++            if builtin_types[ps.type] == "file" then
++                set_result(ps, parm .. "_name", ps.defval_str)
++            end
+         end
+     end
+     return results
+diff --git a/tests/test-lapp.lua b/tests/test-lapp.lua
+index 8223de87..2794577b 100644
+--- a/tests/test-lapp.lua
++++ b/tests/test-lapp.lua
+@@ -47,16 +47,16 @@ Various flags and option types
+ 
+ check(simple,
+     {'-o','in'},
+-    {quiet=false,p=false,o='in',input='<file>'})
++    {quiet=false,p=false,o='in',input='<file>', input_name="stdin"})
+ 
+ ---- value of flag may be separated by '=' or ':'
+ check(simple,
+     {'-o=in'},
+-    {quiet=false,p=false,o='in',input='<file>'})
++    {quiet=false,p=false,o='in',input='<file>', input_name="stdin"})
+ 
+ check(simple,
+     {'-o:in'},
+-    {quiet=false,p=false,o='in',input='<file>'})
++    {quiet=false,p=false,o='in',input='<file>', input_name="stdin"})
+ 
+ -- Check lapp.callback.
+ local calls = {}
+@@ -156,6 +156,13 @@ check (false_flag,{'-g','-f'},{f=false,g=true})
+ check (false_flag,{'-g','--'},{f=true,g=true})
+ check (false_flag,{'-g','--','-a','frodo'},{f=true,g=true; '-a','frodo'})
+ 
++
++local default_file_flag = [[
++    -f (file-out default stdout)
++]]
++
++check (default_file_flag,{},{f="<file>", f_name = "stdout"})
++
+ local addtype = [[
+   -l (intlist) List of items
+ ]]

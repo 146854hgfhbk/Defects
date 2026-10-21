@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-965",
+  "technical_evidence_sha256": "379ed7d21fc9c30c614ba0b4f86ed5a6efc2e757ca40e588fa1d6d38f7336e1b",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "de00ffe8ad6765443b941a9f4ece3b8fa63a033cff5099a1702f1797783efecb",
+  "reviewed_at": "2026-08-14T06:19:18.105336+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#720",
+  "rationale": "Issue #720 (\"Drop `const` inside library annotations with --fix\") reports that the already-existing --fix-optional-const behavior did not apply to directive/library-level metadata. The commit message diagnoses exactly that mechanism: `_constNesting` was tracked in visitMetadata(), which only runs for member-level metadata, while visitAnnotation() is the path all annotations take. The minimized production patch is a single behavioral hunk in lib/src/source_visitor.dart that brackets `visit(node.arguments)` in visitAnnotation() with `_constNesting++/--`, so annotation arguments are treated as const contexts regardless of the annotation's position. This is a correctness gap in existing functionality (inconsistent handling of semantically equivalent constructs), not a new capability. Minimization dropped the CHANGELOG edit and the now-redundant increment/decrement removal in visitMetadata(); leaving that increment in place only double-counts a counter whose semantics are \"nesting > 0\", so behavior is unchanged, and both strict gates (original and post-minimization) confirm identical results with fixed_all_green and a clean fixed suite. The trigger is the unchanged upstream project-native fixture test/regression/0700/0720.unit driven by test/formatter_test.dart::regression 0720.unit; it uses the pre-existing `(fix optional-const)` harness directive and exercises exactly the reported constructs (`@meta(const Foo(const []))` on `library foo;` and `import 'foo.dart';`), depending on no API introduced by the fix. Strict evidence shows buggy_differential reproduction of that single selector, deterministic fingerprints over 3 repetitions, 32 matrix runs, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty and dart-lang/dart_style#720 is the sole allowed verified issue key, so no duplicate root cause.\n\nIssue #720 (\"Drop `const` inside library annotations with --fix\") reports that the already-existing `--fix-optional-const` transformation failed to apply to metadata annotations on library and directive declarations. The commit message states the mechanism precisely: const-context tracking lived in visitMetadata(), which is only reached for member-level metadata, while visitAnnotation() handles all annotations. The minimized production patch is exactly that behavioral correction: four added lines wrapping visit(node.arguments) in visitAnnotation() with _constNesting++/--. It drops the upstream removal of the now-redundant increment in visitMetadata(); since _constNesting is a counter checked for non-zero nesting, retaining it is behavior-preserving and the removal is pure cleanup, so its exclusion is a legitimate minimization rather than a semantic gap. No new production API, flag, or option is introduced. The trigger is the unchanged upstream project-native fixture test/regression/0700/0720.unit, which exercises the pre-existing `(fix optional-const)` harness directive on `@meta(const Foo(const []))` above `library foo;` and `import 'foo.dart';` - the exact scenario in the issue - through the existing test/formatter_test.dart regression runner, so it depends only on APIs present in the buggy revision. Strict evidence for both the original and post-minimization matrices passes every gate with no failed checks: build on both revisions, unique selector, buggy differential reproducing test/formatter_test.dart::regression 0720.unit in isolation and in-suite, fixed clean across isolated/suite/reversed runs, deterministic fingerprints over 3 repetitions, and fixed full suite green with buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty and dart-lang/dart_style#720 is the supplied allowed key, so no duplicate root cause exists. Excluded CHANGELOG.md is documentation-only and correctly absent from the minimized patch.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:18:42.801217+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "de00ffe8ad6765443b941a9f4ece3b8fa63a033cff5099a1702f1797783efecb",
+      "response_sha256": "de1a9cbcf71ef1eeeeb33e05b82c74ac879ef39b2177f6a8148e967c6b764715",
+      "response_id": "msg_dd359fb5c3734314a4c476536b17a0bd",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.737853787164179,
+        "input_tokens": 13225,
+        "output_tokens": 767
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#720",
+      "rationale": "Issue #720 (\"Drop `const` inside library annotations with --fix\") reports that the already-existing --fix-optional-const behavior did not apply to directive/library-level metadata. The commit message diagnoses exactly that mechanism: `_constNesting` was tracked in visitMetadata(), which only runs for member-level metadata, while visitAnnotation() is the path all annotations take. The minimized production patch is a single behavioral hunk in lib/src/source_visitor.dart that brackets `visit(node.arguments)` in visitAnnotation() with `_constNesting++/--`, so annotation arguments are treated as const contexts regardless of the annotation's position. This is a correctness gap in existing functionality (inconsistent handling of semantically equivalent constructs), not a new capability. Minimization dropped the CHANGELOG edit and the now-redundant increment/decrement removal in visitMetadata(); leaving that increment in place only double-counts a counter whose semantics are \"nesting > 0\", so behavior is unchanged, and both strict gates (original and post-minimization) confirm identical results with fixed_all_green and a clean fixed suite. The trigger is the unchanged upstream project-native fixture test/regression/0700/0720.unit driven by test/formatter_test.dart::regression 0720.unit; it uses the pre-existing `(fix optional-const)` harness directive and exercises exactly the reported constructs (`@meta(const Foo(const []))` on `library foo;` and `import 'foo.dart';`), depending on no API introduced by the fix. Strict evidence shows buggy_differential reproduction of that single selector, deterministic fingerprints over 3 repetitions, 32 matrix runs, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty and dart-lang/dart_style#720 is the sole allowed verified issue key, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/source_visitor.dart",
+        "test/regression/0700/0720.unit",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "source_candidate.issue_check.linked_issues[0]",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The minimized patch intentionally keeps the redundant _constNesting++/-- in visitMetadata(), so member annotations increment the counter twice; this is benign only because the flag is consumed as a nesting depth greater than zero, evidenced empirically by the green fixed suite rather than by a read of every consumer of _constNesting.",
+        "Issue #720's body is a single sentence about lint alignment, so the defect framing (incomplete existing --fix-optional-const behavior versus an enhancement request) rests mainly on the commit/PR diagnosis and the fixture, not on the issue text itself.",
+        "The trigger is a data-driven fixture rather than a named Dart test, so the selector 'test/formatter_test.dart::regression 0720.unit' depends on the harness's fixture-discovery naming remaining stable across revisions.",
+        "The same commit previously failed materialization as DART-926 for lacking conventional Dart trigger files; the fixture-based selector resolves this but is unconventional for Defects4J-style tooling."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:19:18.105085+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "de00ffe8ad6765443b941a9f4ece3b8fa63a033cff5099a1702f1797783efecb",
+      "response_sha256": "7b7b94a6c37958aba78eedf0b37aae7e32dafa122147ebfc39a8d5c228f4e5e6",
+      "response_id": "msg_d88bef105818472da9f190a1ae95e6db",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7166389905140961,
+        "input_tokens": 13367,
+        "output_tokens": 804
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#720",
+      "rationale": "Issue #720 (\"Drop `const` inside library annotations with --fix\") reports that the already-existing `--fix-optional-const` transformation failed to apply to metadata annotations on library and directive declarations. The commit message states the mechanism precisely: const-context tracking lived in visitMetadata(), which is only reached for member-level metadata, while visitAnnotation() handles all annotations. The minimized production patch is exactly that behavioral correction: four added lines wrapping visit(node.arguments) in visitAnnotation() with _constNesting++/--. It drops the upstream removal of the now-redundant increment in visitMetadata(); since _constNesting is a counter checked for non-zero nesting, retaining it is behavior-preserving and the removal is pure cleanup, so its exclusion is a legitimate minimization rather than a semantic gap. No new production API, flag, or option is introduced. The trigger is the unchanged upstream project-native fixture test/regression/0700/0720.unit, which exercises the pre-existing `(fix optional-const)` harness directive on `@meta(const Foo(const []))` above `library foo;` and `import 'foo.dart';` - the exact scenario in the issue - through the existing test/formatter_test.dart regression runner, so it depends only on APIs present in the buggy revision. Strict evidence for both the original and post-minimization matrices passes every gate with no failed checks: build on both revisions, unique selector, buggy differential reproducing test/formatter_test.dart::regression 0720.unit in isolation and in-suite, fixed clean across isolated/suite/reversed runs, deterministic fingerprints over 3 repetitions, and fixed full suite green with buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty and dart-lang/dart_style#720 is the supplied allowed key, so no duplicate root cause exists. Excluded CHANGELOG.md is documentation-only and correctly absent from the minimized patch.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/source_visitor.dart",
+        "test/regression/0700/0720.unit",
+        "case.json:strict_post_minimization.checks",
+        "case.json:strict_original.checks",
+        "case.json:trigger_tests",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:source_candidate.issue_check.linked_issues[0]"
+      ],
+      "risks": [
+        "The minimized patch intentionally omits the upstream removal of the redundant _constNesting++/-- pair in visitMetadata(), so member-level annotations are nested twice; this is harmless for a counter-based check but leaves the buggy-revision code structurally different from the upstream fixed state.",
+        "Issue #720 carries no defect label and its body frames the change as better alignment with the unnecessary_const lint, so it could be read as coverage extension of an existing flag rather than a regression; classification as a defect rests on the flag pre-existing and behaving inconsistently across annotation positions.",
+        "The trigger is a .unit fixture rather than a Dart test function, so the selector depends on the dart_style regression harness naming (\"regression 0720.unit\") remaining stable.",
+        "require_analyze_clean is false and analyzer output is diagnostic only, so static-analysis cleanliness on either revision is unverified.",
+        "Full-suite evidence has only 1 repetition, giving weaker flakiness coverage than the 3 repetitions used for the isolated trigger."
+      ]
+    }
+  ]
+}

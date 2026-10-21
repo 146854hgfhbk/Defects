@@ -1,0 +1,27 @@
+diff --git a/test/frontend/markdown.jl b/test/frontend/markdown.jl
+index e9d3f0c..6990616 100644
+--- a/test/frontend/markdown.jl
++++ b/test/frontend/markdown.jl
+@@ -234,6 +234,22 @@ end
+     @test options["registry"].hint == "registry name"
+ end
+ 
++module TestEmptyDocString
++using Test
++using Comonicon
++
++@cast test() = @test true
++
++"""
++"""
++@main
++
++end # TestEmptyDocString
++
++@testset "empty docstring" begin
++    TestEmptyDocString.command_main(["test"])
++end
++
+ end # TestMarkdown
+ 
+ module TestLazyLoad

@@ -1,0 +1,30 @@
+diff --git a/Sources/Tokenizer.swift b/Sources/Tokenizer.swift
+index 54e6891ba2f1f062932846fd8259a90a84d22901..99b0abd29f536cd70c8548a04f52a0dfe4c501ab 100644
+--- a/Sources/Tokenizer.swift
++++ b/Sources/Tokenizer.swift
+@@ -17,6 +17,12 @@ extension String {
+           components[components.count-1] += word
+         } else if specialCharacters.contains(word) {
+           components[components.count-1] += word
++        } else if word != "(" && word.hasPrefix("(") {
++          components.append("(")
++          appendWord(String(word.dropFirst()))
++        } else if word != ")" && word.hasSuffix(")") {
++          appendWord(String(word.dropLast()))
++          components.append(")")
+         } else {
+           components.append(word)
+         }
+diff --git a/Tests/StencilTests/IfNodeSpec.swift b/Tests/StencilTests/IfNodeSpec.swift
+index c9d6ae7956e09cf3b9ffeead6dfea2e3593b5a60..1dd6fc3d73df524709df242e16f549d430ddbf87 100644
+--- a/Tests/StencilTests/IfNodeSpec.swift
++++ b/Tests/StencilTests/IfNodeSpec.swift
+@@ -145,7 +145,7 @@ class IfNodeTests: XCTestCase {
+ 
+         $0.it("can parse an if with complex expression") {
+           let tokens: [Token] = [
+-            .block(value: "if value == \"test\" and not name", at: .unknown),
++            .block(value: "if value == \"test\" and (not name or not (name and surname))", at: .unknown),
+             .text(value: "true", at: .unknown),
+             .block(value: "endif", at: .unknown)
+           ]

@@ -1,0 +1,70 @@
+diff --git a/lib/src/widgets/table/builder.dart b/lib/src/widgets/table/builder.dart
+index ff10cb9..238ce50 100644
+--- a/lib/src/widgets/table/builder.dart
++++ b/lib/src/widgets/table/builder.dart
+@@ -1,3 +1,4 @@
++import 'package:ansix/src/core/escape_codes.dart';
+ import 'package:ansix/src/core/extensions/extensions.dart';
+ import 'package:ansix/src/theme/border/border.dart';
+ import 'package:ansix/src/widgets/table/theme.dart';
+@@ -14,6 +15,7 @@ class AnsiBorderBuilder {
+     required final List<AnsiText> data,
+     required final int index,
+     required final int total,
++    required final bool transparent,
+   }) {
+     final BorderBuilderTheme theme = BorderBuilderTheme.fromBorder(border);
+     final StringBuffer buffer = StringBuffer();
+@@ -25,6 +27,7 @@ class AnsiBorderBuilder {
+       final StringBuffer buffer = StringBuffer()
+         ..writeAll(
+           <String>[
++            if (!transparent) AnsiEscapeCodes.reset,
+             set.start,
+             for (int i = 0; i < data.length; i++) ...<String>[
+               set.line * (data[i].width),
+@@ -43,6 +46,10 @@ class AnsiBorderBuilder {
+         ..writeln();
+     }
+ 
++    if (!transparent) {
++      buffer.write(AnsiEscapeCodes.reset);
++    }
++
+     buffer
+       ..writeWithForegroundColor(theme.textLine.start, border.color)
+       ..write(data.join(theme.textLine.separator.colored(foreground: border.color)))
+diff --git a/lib/src/widgets/table/table.dart b/lib/src/widgets/table/table.dart
+index 5caf598..d78dc95 100644
+--- a/lib/src/widgets/table/table.dart
++++ b/lib/src/widgets/table/table.dart
+@@ -31,12 +31,12 @@ class AnsiTable {
+     formattedText = (StringBuffer()
+           ..writeAll(
+             <String>[
+-              if (!transparent) AnsiEscapeCodes.reset,
+               builder.print(
+                 border: border.type.hasHeader ? border.copyWith.type(AnsiBorderType.all) : border,
+                 data: rows[0].data,
+                 index: 0,
+                 total: border.type.hasHeader ? 1 : rows.length,
++                transparent: transparent,
+               ),
+               if (rows.length > 1) ...<String>[
+                 if (border.type.hasHeader) AnsiEscapeCodes.newLine,
+@@ -47,6 +47,7 @@ class AnsiTable {
+                         data: rows[i].data,
+                         index: i,
+                         total: border.type.hasFooter ? rows.length - 1 : rows.length,
++                        transparent: transparent,
+                       )
+                       .toString(),
+                 if (border.type.hasFooter) AnsiEscapeCodes.newLine,
+@@ -55,6 +56,7 @@ class AnsiTable {
+                   data: rows[rows.length - 1].data,
+                   index: border.type.hasFooter ? 0 : rows.length - 1,
+                   total: border.type.hasFooter ? 1 : rows.length,
++                  transparent: transparent,
+                 ),
+               ],
+             ],

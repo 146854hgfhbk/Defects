@@ -1,0 +1,106 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 634f39e..d6ee7fc 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 1.3.4
++
++* Correctly handle `var` in `--fix-function-typedefs` (#826).
++
+ # 1.3.3
+ 
+ * Support `package:analyzer` `0.39.0`.
+diff --git a/lib/src/source_visitor.dart b/lib/src/source_visitor.dart
+index b856b9a..417bf2f 100644
+--- a/lib/src/source_visitor.dart
++++ b/lib/src/source_visitor.dart
+@@ -2332,9 +2332,19 @@ class SourceVisitor extends ThrowingAstVisitor {
+     visitParameterMetadata(node.metadata, () {
+       _beginFormalParameter(node);
+ 
+-      modifier(node.keyword);
+       var hasType = node.type != null;
+       if (_insideNewTypedefFix && !hasType) {
++        // Parameters can use "var" instead of "dynamic". Since we are inserting
++        // "dynamic" in that case, remove the "var".
++        if (node.keyword != null) {
++          if (node.keyword.type != Keyword.VAR) {
++            modifier(node.keyword);
++          } else {
++            // Keep any comment attached to "var".
++            writePrecedingCommentsAndNewlines(node.keyword);
++          }
++        }
++
+         // In function declarations and the old typedef syntax, you can have a
+         // parameter name without a type. In the new syntax, you can have a type
+         // without a name. Add "dynamic" in that case.
+@@ -2345,6 +2355,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+           split();
+         });
+       } else {
++        modifier(node.keyword);
+         visit(node.type);
+ 
+         if (hasType && node.identifier != null) split();
+diff --git a/pubspec.yaml b/pubspec.yaml
+index f75c3f9..16c6dd0 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,6 +1,6 @@
+ name: dart_style
+ # Note: See tool/grind.dart for how to bump the version.
+-version: 1.3.3
++version: 1.3.4-dev
+ author: Dart Team <misc@dartlang.org>
+ description: >-
+   Opinionated, automatic Dart source code formatter.
+diff --git a/test/fixes/function_typedefs.unit b/test/fixes/function_typedefs.unit
+index c7d7473..0f6c336 100644
+--- a/test/fixes/function_typedefs.unit
++++ b/test/fixes/function_typedefs.unit
+@@ -168,7 +168,7 @@ typedef int Foo(@meta v1, final v2, var v3, /*c*/ v4);
+ typedef Foo = int Function(
+     @meta dynamic v1,
+     final dynamic v2,
+-    var dynamic v3,
++    dynamic v3,
+     /*c*/ dynamic v4);
+ >>> metadata and keywords optional positional
+ typedef int Foo([@meta v1, final v2, var v3, /*c*/ v4]);
+@@ -176,7 +176,7 @@ typedef int Foo([@meta v1, final v2, var v3, /*c*/ v4]);
+ typedef Foo = int Function(
+     [@meta dynamic v1,
+     final dynamic v2,
+-    var dynamic v3,
++    dynamic v3,
+     /*c*/ dynamic v4]);
+ >>> metadata and keywords named
+ typedef int Foo({@meta v1, final v2, var v3, /*c*/ v4});
+@@ -184,7 +184,7 @@ typedef int Foo({@meta v1, final v2, var v3, /*c*/ v4});
+ typedef Foo = int Function(
+     {@meta dynamic v1,
+     final dynamic v2,
+-    var dynamic v3,
++    dynamic v3,
+     /*c*/ dynamic v4});
+ >>> function argument
+ typedef int Foo(int callback(int x));
+@@ -258,4 +258,14 @@ typedef Foo({required a, required b()});
+ <<<
+ typedef Foo = Function(
+     {required dynamic a,
+-    required Function() b});
+\ No newline at end of file
++    required Function() b});
++>>> issue #826
++typedef void MyFunction(var parameter);
++<<<
++typedef MyFunction = void Function(
++    dynamic parameter);
++>>> issue #826 with comment
++typedef void MyFunction(/* comment */ var parameter);
++<<<
++typedef MyFunction = void Function(
++    /* comment */ dynamic parameter);
+\ No newline at end of file

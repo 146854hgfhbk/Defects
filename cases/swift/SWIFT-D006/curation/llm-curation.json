@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-405",
+  "technical_evidence_sha256": "efedf1a234db612e302fefd53762121e98b4d53b24f43fb7f5e8fa3e3089dfee",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "f9b0880f2ec80eaccbb72e7074932d4971d8954df5bce4669696eef77d145515",
+  "reviewed_at": "2026-09-07T06:37:41.810739+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "scinfu/swiftsoup#393",
+  "rationale": "Issue #393 (labeled bug, closed by this commit) reports an EXC_BAD_ACCESS stack overflow with ~10,722 recursive frames matching HTML nesting depth, attributed to the chain Node.deinit -> childNodes release -> child Node.deinit, hit on small-stack non-main threads during Document teardown or Element.empty(). The minimized production patch is a single hunk in Sources/Node.swift that adds a Node.deinit calling a new private tearDownChildNodesIteratively(), draining children onto a work stack and clearing childNodes on uniquely-referenced popped nodes so the release chain never nests. That addresses exactly the mechanism named in the issue and is pre-existing behavior (childNodes has always been a strong Array<Node>), not a feature gap. The hunk contains no unrelated edits: the only non-functional delta is the trailing-whitespace collapse on the blank line immediately adjacent to the insertion point; no formatting sweep, no API signature change, no config or docs files (commit_stats: 1 production Swift file, 1 hunk, 1 test file, 0 other files). The retained trigger, testDeepTeardownOnSmallStackSurvives, parses 12,000-level nested HTML on a Thread with an explicit 512 KiB stack and drops the Document; it uses only parent-revision public API (SwiftSoup.parse, Document) and touches no symbol introduced by the fix, since deinit is implicit and the helper is private, so it compiles and runs unchanged against the buggy revision. Strict machine evidence confirms the differential on both the original and post-minimization patches: build passes on both revisions, the declared selector fails alone on buggy and passes on fixed across 3 repetitions with 3 matching fingerprint groups, fixed full suite is green, and buggy full-suite failures contain only the reproduced trigger. active_same_project_root_causes is empty and scinfu/swiftsoup#393 is the sole allowed verified issue key, so this root cause is not a registry duplicate.\n\nIssue #393 (labels bug/help wanted, closed by this change) reports EXC_BAD_ACCESS during Document teardown / Element.empty() on deeply nested HTML, with a crash trace of ~10,722 recursive deinit frames matching nesting depth, and names the root cause as the strong-reference childNodes release chain (Node.deinit -> release childNodes -> child Node.deinit). The minimized production patch is exactly that: a single hunk in Sources/Node.swift adding Node.deinit plus a private tearDownChildNodesIteratively() helper that drains children onto a work stack and clears childNodes on uniquely-referenced popped nodes, bounding stack depth. The only non-functional content in the hunk is trailing-whitespace normalization on the blank line at the insertion point; there is no refactor, feature extension, doc-only, config-only, or test-only content, and no public API is added (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The retained trigger, testDeepTeardownOnSmallStackSurvives, exercises the reported scenario using only parent-revision APIs (SwiftSoup.parse, Document, release on a 512 KiB-stack Thread); the fix's helper is private and deinit is implicit, so the trigger depends on no API introduced by the fix. The trigger reduction dropped only the two controls and the Element.empty() variant, keeping the same defect semantics (subtree teardown of a uniquely-held deep tree on a small stack). Strict machine evidence for both the original and post-minimization states passes every gate: build on both revisions, unique selector, buggy differential reproducing exactly the declared trigger, deterministic across 3 repetitions (3 fingerprint groups), fixed isolated/suite/reversed clean, and fixed full suite all green. active_same_project_root_causes is empty and scinfu/swiftsoup#393 is the sole allowed verified issue key, so this is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T06:36:59.201172+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "f9b0880f2ec80eaccbb72e7074932d4971d8954df5bce4669696eef77d145515",
+      "response_sha256": "d057fc839fcf58b2cf2dc2b49d8c5f99a31dfd5fcf5dd35e37f3826154a86b12",
+      "response_id": "msg_5c13d59ebe3b4e3aa5b1aff50096b5cc",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7797065050746269,
+        "input_tokens": 24883,
+        "output_tokens": 860
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#393",
+      "rationale": "Issue #393 (labeled bug, closed by this commit) reports an EXC_BAD_ACCESS stack overflow with ~10,722 recursive frames matching HTML nesting depth, attributed to the chain Node.deinit -> childNodes release -> child Node.deinit, hit on small-stack non-main threads during Document teardown or Element.empty(). The minimized production patch is a single hunk in Sources/Node.swift that adds a Node.deinit calling a new private tearDownChildNodesIteratively(), draining children onto a work stack and clearing childNodes on uniquely-referenced popped nodes so the release chain never nests. That addresses exactly the mechanism named in the issue and is pre-existing behavior (childNodes has always been a strong Array<Node>), not a feature gap. The hunk contains no unrelated edits: the only non-functional delta is the trailing-whitespace collapse on the blank line immediately adjacent to the insertion point; no formatting sweep, no API signature change, no config or docs files (commit_stats: 1 production Swift file, 1 hunk, 1 test file, 0 other files). The retained trigger, testDeepTeardownOnSmallStackSurvives, parses 12,000-level nested HTML on a Thread with an explicit 512 KiB stack and drops the Document; it uses only parent-revision public API (SwiftSoup.parse, Document) and touches no symbol introduced by the fix, since deinit is implicit and the helper is private, so it compiles and runs unchanged against the buggy revision. Strict machine evidence confirms the differential on both the original and post-minimization patches: build passes on both revisions, the declared selector fails alone on buggy and passes on fixed across 3 repetitions with 3 matching fingerprint groups, fixed full suite is green, and buggy full-suite failures contain only the reproduced trigger. active_same_project_root_causes is empty and scinfu/swiftsoup#393 is the sole allowed verified issue key, so this root cause is not a registry duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "active_same_project_root_causes",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The failure mode is process termination (SIGBUS/EXC_BAD_ACCESS) rather than an XCTest assertion, so the differential signal depends on the harness continuing to classify a crashed buggy process as a trigger failure; strict evidence confirms it did here.",
+        "Stack-overflow reproduction is environment-sensitive: it relies on Thread.stackSize being honored and on per-frame size at the recorded toolchain, optimization level, and architecture. Portability outside the recorded portable_release_evidence environment is not established.",
+        "trigger_reduction dropped the Element.empty() regression case and both controls, so the retained trigger covers only the Document-teardown symptom of the issue, not the second reported entry point.",
+        "The fix's claimed behavioral equivalence for nodes still referenced elsewhere rests on the isKnownUniquelyReferenced guard; the supplied evidence shows only that the fixed full suite is green, with no dedicated assertion that externally retained mid-tree subtrees stay intact after the parent Document is released.",
+        "The trigger uses a 30-second semaphore timeout, introducing a wall-clock dependency that could produce a false failure on a heavily loaded host.",
+        "issue_evidence and semantic_justification are null in the case record; issue text was read from the embedded source_candidate payload rather than an independently fetched issue snapshot."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T06:37:41.809875+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "f9b0880f2ec80eaccbb72e7074932d4971d8954df5bce4669696eef77d145515",
+      "response_sha256": "234d68b75142e38922ad870b1ab30847518fda1806efacba40a3c29426b1311a",
+      "response_id": "msg_8362f4bef6414a6bbb9a9ec3fbf5204c",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7794619267330017,
+        "input_tokens": 25271,
+        "output_tokens": 828
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#393",
+      "rationale": "Issue #393 (labels bug/help wanted, closed by this change) reports EXC_BAD_ACCESS during Document teardown / Element.empty() on deeply nested HTML, with a crash trace of ~10,722 recursive deinit frames matching nesting depth, and names the root cause as the strong-reference childNodes release chain (Node.deinit -> release childNodes -> child Node.deinit). The minimized production patch is exactly that: a single hunk in Sources/Node.swift adding Node.deinit plus a private tearDownChildNodesIteratively() helper that drains children onto a work stack and clears childNodes on uniquely-referenced popped nodes, bounding stack depth. The only non-functional content in the hunk is trailing-whitespace normalization on the blank line at the insertion point; there is no refactor, feature extension, doc-only, config-only, or test-only content, and no public API is added (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The retained trigger, testDeepTeardownOnSmallStackSurvives, exercises the reported scenario using only parent-revision APIs (SwiftSoup.parse, Document, release on a 512 KiB-stack Thread); the fix's helper is private and deinit is implicit, so the trigger depends on no API introduced by the fix. The trigger reduction dropped only the two controls and the Element.empty() variant, keeping the same defect semantics (subtree teardown of a uniquely-held deep tree on a small stack). Strict machine evidence for both the original and post-minimization states passes every gate: build on both revisions, unique selector, buggy differential reproducing exactly the declared trigger, deterministic across 3 repetitions (3 fingerprint groups), fixed isolated/suite/reversed clean, and fixed full suite all green. active_same_project_root_causes is empty and scinfu/swiftsoup#393 is the sole allowed verified issue key, so this is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.production_files[0].patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.deterministic",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_tests[0]",
+        "trigger_reduction.rationale"
+      ],
+      "risks": [
+        "The pre-fix failure is a process-level stack overflow (SIGBUS/EXC_BAD_ACCESS) rather than an XCTest assertion failure, so reproduction depends on the harness continuing to treat thread/process termination as a trigger failure; strict evidence confirms it did here but this makes the case sensitive to harness changes.",
+        "Trigger sensitivity is environment-dependent: honoring of Thread.stackSize, per-frame size, optimization level, and architecture could mask the overflow on other hosts or toolchains, so portability beyond the recorded portable_release_evidence grade is not established.",
+        "The 30-second semaphore timeout plus 12k-deep HTML construction introduces a wall-clock component that could produce false failures on heavily loaded runners.",
+        "Behavioral equivalence for nodes shared elsewhere rests on the isKnownUniquelyReferenced guard and the green full suite; no dedicated test in the retained trigger asserts that externally retained subtrees survive Document release, and leak or double-teardown regressions would not surface as assertion failures.",
+        "The trigger-tests.patch index line contains a malformed (41-character) blob hash differing from the original-commit patch; cosmetic for a new-file diff, but the file content, not the header, is the authoritative evidence."
+      ]
+    }
+  ]
+}

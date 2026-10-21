@@ -1,0 +1,104 @@
+diff --git a/code/SuperFeature/Widget/FormGame/entry/src/ohosTest/ets/test/FormAbilityWordMove.test.ets b/code/SuperFeature/Widget/FormGame/entry/src/ohosTest/ets/test/FormAbilityWordMove.test.ets
+new file mode 100644
+index 000000000..20f7b3b9f
+--- /dev/null
++++ b/code/SuperFeature/Widget/FormGame/entry/src/ohosTest/ets/test/FormAbilityWordMove.test.ets
+@@ -0,0 +1,82 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * You may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++import FormAbility from '../../../main/ets/FormAbility/FormAbility';
++
++const BUNDLE = 'FormGame_FormAbility_';
++
++type FormAbilitySlots = Record<string, string | FakeStore | Function | undefined>;
++
++class FakeStore {
++  public sourceWord: string = '';
++  public targetWord: string = '';
++  public flushCount: number = 0;
++
++  putSync(key: string, value: string): void {
++    if (key === 'sourceWord') {
++      this.sourceWord = value;
++    }
++    if (key === 'targetWord') {
++      this.targetWord = value;
++    }
++  }
++
++  flushSync(): void {
++    this.flushCount++;
++  }
++}
++
++function slots(formAbility: FormAbility): FormAbilitySlots {
++  return formAbility as Object as FormAbilitySlots;
++}
++
++export default function formAbilityWordMoveTest() {
++  describe('formAbilityWordMoveTest', () => {
++    it(BUNDLE + 'SourceTapMovesLetterToTarget_001', 0, () => {
++      let formAbility = new FormAbility();
++      let store = new FakeStore();
++      let formSlots = slots(formAbility);
++      formSlots['storeDB'] = store;
++      formSlots['sourceWordStr'] = 'ABCD';
++      formSlots['targetWordStr'] = '    ';
++
++      formAbility.updateWordStr(0);
++
++      expect(formSlots['sourceWordStr']).assertEqual(' BCD');
++      expect(formSlots['targetWordStr']).assertEqual('A   ');
++      expect(store.sourceWord).assertEqual(' BCD');
++      expect(store.targetWord).assertEqual('A   ');
++      expect(store.flushCount).assertEqual(1);
++    });
++
++    it(BUNDLE + 'TargetTapMovesLetterBackToSource_002', 0, () => {
++      let formAbility = new FormAbility();
++      let store = new FakeStore();
++      let formSlots = slots(formAbility);
++      formSlots['storeDB'] = store;
++      formSlots['sourceWordStr'] = ' BCD';
++      formSlots['targetWordStr'] = 'A   ';
++
++      formAbility.updateWordStr(4);
++
++      expect(formSlots['sourceWordStr']).assertEqual('ABCD');
++      expect(formSlots['targetWordStr']).assertEqual('    ');
++      expect(store.sourceWord).assertEqual('ABCD');
++      expect(store.targetWord).assertEqual('    ');
++      expect(store.flushCount).assertEqual(1);
++    });
++  });
++}
+diff --git a/code/SuperFeature/Widget/FormGame/entry/src/ohosTest/ets/test/List.test.ets b/code/SuperFeature/Widget/FormGame/entry/src/ohosTest/ets/test/List.test.ets
+index 93ab0971c..81c7a449a 100644
+--- a/code/SuperFeature/Widget/FormGame/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/SuperFeature/Widget/FormGame/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Aibility.test'
++import formAbilityWordMoveTest from './FormAbilityWordMove.test'
+ 
+ export default function testsuite() {
+   abilityTest()
+-}
+\ No newline at end of file
++  formAbilityWordMoveTest()
++}

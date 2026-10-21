@@ -1,0 +1,66 @@
+diff --git a/Tests/SwiftParserTest/LexerTests.swift b/Tests/SwiftParserTest/LexerTests.swift
+index 8ea04a80..021e7d9f 100644
+--- a/Tests/SwiftParserTest/LexerTests.swift
++++ b/Tests/SwiftParserTest/LexerTests.swift
+@@ -562,9 +562,9 @@ public class LexerTests: XCTestCase {
+       ]
+     )
+     assertLexemes(
+-      "^/*/",
++      "^1️⃣/*/",
+       lexemes: [
+-        LexemeSpec(.binaryOperator, text: "^", trailing: "/*/")
++        LexemeSpec(.binaryOperator, text: "^", trailing: "/*/", diagnostic: "unterminated '/*' comment")
+       ]
+     )
+   }
+@@ -1461,4 +1461,22 @@ public class LexerTests: XCTestCase {
+       ]
+     )
+   }
++
++  func testUnterminatedBlockComment() {
++    assertLexemes(
++      "1️⃣/*",
++      lexemes: [
++        LexemeSpec(.eof, leading: "/*", text: "", diagnostic: "unterminated '/*' comment")
++      ]
++    )
++  }
++
++  func testSlashStartSlash() {
++    assertLexemes(
++      "1️⃣/*/",
++      lexemes: [
++        LexemeSpec(.eof, leading: "/*/", text: "", diagnostic: "unterminated '/*' comment")
++      ]
++    )
++  }
+ }
+diff --git a/Tests/SwiftParserTest/translated/GenericDisambiguationTests.swift b/Tests/SwiftParserTest/translated/GenericDisambiguationTests.swift
+index d93ea1b9..8e234dcb 100644
+--- a/Tests/SwiftParserTest/translated/GenericDisambiguationTests.swift
++++ b/Tests/SwiftParserTest/translated/GenericDisambiguationTests.swift
+@@ -195,9 +195,6 @@ final class GenericDisambiguationTests: XCTestCase {
+   func testGenericDisambiguation12() {
+     assertParse(
+       """
+-      // FIXME: Nested generic types. Need to be able to express $T0<A, B, C> in the
+-      // typechecker.
+-      /*
+       A<B>.C<D>.e()
+       """
+     )
+@@ -216,11 +213,7 @@ final class GenericDisambiguationTests: XCTestCase {
+       """
+       meta(A<B>.C<D>.self)
+       meta2(A<B>.C<D>.self, 0)
+-       1️⃣*/
+-      """,
+-      diagnostics: [
+-        DiagnosticSpec(message: "extraneous code '*/' at top level")
+-      ]
++      """
+     )
+   }
+ 

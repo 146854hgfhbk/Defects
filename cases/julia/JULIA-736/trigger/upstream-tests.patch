@@ -1,0 +1,104 @@
+diff --git a/test/arb/Complex-test.jl b/test/arb/Complex-test.jl
+index a7f4e953d..87c47a85b 100644
+--- a/test/arb/Complex-test.jl
++++ b/test/arb/Complex-test.jl
+@@ -221,6 +221,21 @@ end
+ 
+ @testset "ComplexFieldElem.constants" begin
+   @test overlaps(const_pi(CC), CC("3.141592653589793238462643 +/- 4.03e-25"))
++
++  @test overlaps(CC(MathConstants.pi), CC("3.141592653589793238462643 +/- 4.03e-25"))
++  @test overlaps(CC(MathConstants.e), CC("2.718281828459045235360287 +/- 4.96e-25"))
++  @test overlaps(CC(MathConstants.eulergamma), CC("0.5772156649015328606065121 +/- 3.42e-26"))
++  @test overlaps(CC(MathConstants.catalan), CC("0.9159655941772190150546035 +/- 1.86e-26"))
++
++  set_precision!(Balls, 400) do
++    x = sin(CC(MathConstants.pi))
++    @test contains(CC("0.0 +/- 8.40e-121"), x)
++    @test contains(x, CC("0.0 +/- 8.40e-122"))
++
++    x = log(CC(MathConstants.e))
++    @test contains(CC("1.0 +/- 1.76e-120"), x)
++    @test contains(x, CC("1.0 +/- 1.76e-121"))
++  end
+ end
+ 
+ @testset "ComplexFieldElem.functions" begin
+diff --git a/test/arb/Real-test.jl b/test/arb/Real-test.jl
+index 1d73be65a..efea3d9d2 100644
+--- a/test/arb/Real-test.jl
++++ b/test/arb/Real-test.jl
+@@ -344,6 +344,21 @@ end
+   @test overlaps(const_catalan(RR), RR("0.9159655941772190150546035 +/- 1.86e-26"))
+   @test overlaps(const_khinchin(RR), RR("2.685452001065306445309715 +/- 2.28e-25"))
+   @test overlaps(const_glaisher(RR), RR("1.282427129100622636875343 +/- 4.78e-25"))
++
++  @test overlaps(RR(MathConstants.pi), RR("3.141592653589793238462643 +/- 4.03e-25"))
++  @test overlaps(RR(MathConstants.e), RR("2.718281828459045235360287 +/- 4.96e-25"))
++  @test overlaps(RR(MathConstants.eulergamma), RR("0.5772156649015328606065121 +/- 3.42e-26"))
++  @test overlaps(RR(MathConstants.catalan), RR("0.9159655941772190150546035 +/- 1.86e-26"))
++
++  set_precision!(Balls, 400) do
++    x = sin(RR(MathConstants.pi))
++    @test contains(RR("0.0 +/- 8.40e-121"), x)
++    @test contains(x, RR("0.0 +/- 8.40e-122"))
++
++    x = log(RR(MathConstants.e))
++    @test contains(RR("1.0 +/- 1.76e-120"), x)
++    @test contains(x, RR("1.0 +/- 1.76e-121"))
++  end
+ end
+ 
+ @testset "RealFieldElem.functions" begin
+diff --git a/test/arb/acb-test.jl b/test/arb/acb-test.jl
+index 2d7183986..ea3abea26 100644
+--- a/test/arb/acb-test.jl
++++ b/test/arb/acb-test.jl
+@@ -214,6 +214,21 @@ end
+ 
+ @testset "AcbFieldElem.constants" begin
+   @test overlaps(const_pi(CC), CC("3.141592653589793238462643 +/- 4.03e-25"))
++
++  @test overlaps(CC(MathConstants.pi), CC("3.141592653589793238462643 +/- 4.03e-25"))
++  @test overlaps(CC(MathConstants.e), CC("2.718281828459045235360287 +/- 4.96e-25"))
++  @test overlaps(CC(MathConstants.eulergamma), CC("0.5772156649015328606065121 +/- 3.42e-26"))
++  @test overlaps(CC(MathConstants.catalan), CC("0.9159655941772190150546035 +/- 1.86e-26"))
++
++  let CC = AcbField(400)
++    x = sin(CC(MathConstants.pi))
++    @test contains(CC("0.0 +/- 8.40e-121"), x)
++    @test contains(x, CC("0.0 +/- 8.40e-122"))
++
++    x = log(CC(MathConstants.e))
++    @test contains(CC("1.0 +/- 1.76e-120"), x)
++    @test contains(x, CC("1.0 +/- 1.76e-121"))
++  end
+ end
+ 
+ @testset "AcbFieldElem.functions" begin
+diff --git a/test/arb/arb-test.jl b/test/arb/arb-test.jl
+index 5afba4dc3..69a2a35ac 100644
+--- a/test/arb/arb-test.jl
++++ b/test/arb/arb-test.jl
+@@ -312,6 +312,21 @@ end
+   @test overlaps(const_catalan(RR), RR("0.9159655941772190150546035 +/- 1.86e-26"))
+   @test overlaps(const_khinchin(RR), RR("2.685452001065306445309715 +/- 2.28e-25"))
+   @test overlaps(const_glaisher(RR), RR("1.282427129100622636875343 +/- 4.78e-25"))
++
++  @test overlaps(RR(MathConstants.pi), RR("3.141592653589793238462643 +/- 4.03e-25"))
++  @test overlaps(RR(MathConstants.e), RR("2.718281828459045235360287 +/- 4.96e-25"))
++  @test overlaps(RR(MathConstants.eulergamma), RR("0.5772156649015328606065121 +/- 3.42e-26"))
++  @test overlaps(RR(MathConstants.catalan), RR("0.9159655941772190150546035 +/- 1.86e-26"))
++
++  let RR = ArbField(400)
++    x = sin(RR(MathConstants.pi))
++    @test contains(RR("0.0 +/- 8.40e-121"), x)
++    @test contains(x, RR("0.0 +/- 8.40e-122"))
++
++    x = log(RR(MathConstants.e))
++    @test contains(RR("1.0 +/- 1.76e-120"), x)
++    @test contains(x, RR("1.0 +/- 1.76e-121"))
++  end
+ end
+ 
+ @testset "ArbFieldElem.functions" begin

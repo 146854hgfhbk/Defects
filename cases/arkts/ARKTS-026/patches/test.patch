@@ -1,0 +1,227 @@
+diff --git a/entry/src/ohosTest/ets/test/List.test.ets b/entry/src/ohosTest/ets/test/List.test.ets
+index 7cde7cf..68527c4 100644
+--- a/entry/src/ohosTest/ets/test/List.test.ets
++++ b/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,8 +13,8 @@
+  * limitations under the License.
+  */
+ 
+-import abilityTest from './Ability.test'
++import myPhoneCreateSameNameTest from './MyPhoneCreateSameName.test'
+ 
+ export default function testsuite() {
+-  abilityTest()
+-}
+\ No newline at end of file
++  myPhoneCreateSameNameTest()
++}
+diff --git a/entry/src/ohosTest/ets/test/MyPhoneCreateSameName.test.ets b/entry/src/ohosTest/ets/test/MyPhoneCreateSameName.test.ets
+new file mode 100644
+index 0000000..b710c38
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/MyPhoneCreateSameName.test.ets
+@@ -0,0 +1,116 @@
++/*
++ * Copyright (c) 2023-2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, expect, it } from '@ohos/hypium';
++import { Driver, ON } from '@ohos.UiTest';
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import fs from '@ohos.file.fs';
++
++const BUNDLE_NAME = 'com.samples.filemanager';
++const ROOT_SANDBOX = '/data/storage/el2/base/haps/';
++const TEST_NAME_PREFIX = 'sameNameRuntime';
++const UI_DELAY_MS = 600;
++const PAGE_READY_RETRY = 10;
++
++async function createItemByUi(driver: Driver, buttonId: string, name: string): Promise<void> {
++  const createButton = await driver.findComponent(ON.id(buttonId));
++  await createButton.click();
++  await driver.delayMs(UI_DELAY_MS);
++  await driver.assertComponentExist(ON.id('input'));
++  const input = await driver.findComponent(ON.id('input'));
++  await input.inputText(name);
++  await driver.delayMs(UI_DELAY_MS);
++  await driver.assertComponentExist(ON.id('promise'));
++  const confirm = await driver.findComponent(ON.id('promise'));
++  await confirm.click();
++  await driver.delayMs(UI_DELAY_MS);
++}
++
++function removePathIfExists(path: string): void {
++  try {
++    if (fs.accessSync(path)) {
++      const stat = fs.statSync(path);
++      if (stat.isDirectory()) {
++        fs.rmdirSync(path);
++      } else {
++        fs.unlinkSync(path);
++      }
++    }
++  } catch (err) {
++  }
++}
++
++async function startMainAbility(driver: Driver): Promise<void> {
++  await AbilityDelegatorRegistry.getAbilityDelegator().startAbility({
++    bundleName: BUNDLE_NAME,
++    abilityName: 'MainAbility'
++  });
++  await driver.delayMs(UI_DELAY_MS);
++}
++
++async function tapPermissionIfPresent(driver: Driver): Promise<void> {
++  const allowButton = await driver.findComponent(ON.text('允许'));
++  if (allowButton != null) {
++    await allowButton.click();
++    await driver.delayMs(UI_DELAY_MS);
++  }
++  const permitButton = await driver.findComponent(ON.text('permit'));
++  if (permitButton != null) {
++    await permitButton.click();
++    await driver.delayMs(UI_DELAY_MS);
++  }
++}
++
++async function openMyPhonePage(driver: Driver): Promise<void> {
++  for (let i = 0; i < PAGE_READY_RETRY; i++) {
++    await tapPermissionIfPresent(driver);
++    if (await driver.findComponent(ON.id('ListItem5')) != null) {
++      break;
++    }
++    await driver.delayMs(UI_DELAY_MS);
++  }
++  await driver.assertComponentExist(ON.id('ListItem5'));
++  const myPhone = await driver.findComponent(ON.id('ListItem5'));
++  await myPhone.click();
++  await driver.delayMs(UI_DELAY_MS);
++  await driver.assertComponentExist(ON.id('makeDirectory'));
++  await driver.assertComponentExist(ON.id('makeFile'));
++}
++
++export default function myPhoneCreateSameNameTest() {
++  describe('MyPhoneCreateSameNameTest', () => {
++    it('creates_file_with_txt_suffix_when_directory_has_same_name', 0, async () => {
++      const uniqueName = `${TEST_NAME_PREFIX}${Date.now()}`;
++      const directoryPath = `${ROOT_SANDBOX}${uniqueName}`;
++      const filePath = `${ROOT_SANDBOX}${uniqueName}.txt`;
++      removePathIfExists(filePath);
++      removePathIfExists(directoryPath);
++
++      const driver = Driver.create();
++      await startMainAbility(driver);
++      await openMyPhonePage(driver);
++      await createItemByUi(driver, 'makeDirectory', uniqueName);
++      await driver.assertComponentExist(ON.text(uniqueName));
++      await createItemByUi(driver, 'makeFile', uniqueName);
++
++      expect(fs.accessSync(directoryPath)).assertTrue();
++      expect(fs.accessSync(filePath)).assertTrue();
++      await driver.assertComponentExist(ON.text(`${uniqueName}.txt`));
++
++      removePathIfExists(filePath);
++      removePathIfExists(directoryPath);
++    });
++  });
++}
+diff --git a/entry/src/ohosTest/ets/testability/TestAbility.ets b/entry/src/ohosTest/ets/testability/TestAbility.ets
+index 8c1a2d9..5bbde38 100644
+--- a/entry/src/ohosTest/ets/testability/TestAbility.ets
++++ b/entry/src/ohosTest/ets/testability/TestAbility.ets
+@@ -23,12 +23,13 @@ import Want from '@ohos.app.ability.Want';
+ import AbilityConstant from '@ohos.app.ability.AbilityConstant';
+ 
+ export default class TestAbility extends UIAbility {
++  private abilityDelegator: AbilityDelegatorRegistry.AbilityDelegator | undefined = undefined;
++  private abilityDelegatorArguments: AbilityDelegatorRegistry.AbilityDelegatorArgs | undefined = undefined;
++
+   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam) {
+     console.log('TestAbility onCreate');
+-    let abilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator();
+-    let abilityDelegatorArguments = AbilityDelegatorRegistry.getArguments();
+-    console.info('start run testcase!!!');
+-    Hypium.hypiumTest(abilityDelegator, abilityDelegatorArguments, testsuite);
++    this.abilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator();
++    this.abilityDelegatorArguments = AbilityDelegatorRegistry.getArguments();
+   }
+ 
+   onDestroy() {
+@@ -43,6 +44,8 @@ export default class TestAbility extends UIAbility {
+         return;
+       }
+       console.info('Succeeded in loading the content. Data: ' + JSON.stringify(data));
++      console.info('start run testcase!!!');
++      Hypium.hypiumTest(this.abilityDelegator, this.abilityDelegatorArguments, testsuite);
+     });
+   }
+ 
+@@ -57,4 +60,4 @@ export default class TestAbility extends UIAbility {
+   onBackground() {
+     console.log('TestAbility onBackground');
+   }
+-};
+\ No newline at end of file
++};
+diff --git a/entry/src/ohosTest/ets/testability/pages/Index.ets b/entry/src/ohosTest/ets/testability/pages/Index.ets
+index 3e4da88..e845970 100644
+--- a/entry/src/ohosTest/ets/testability/pages/Index.ets
++++ b/entry/src/ohosTest/ets/testability/pages/Index.ets
+@@ -13,8 +13,6 @@
+  * limitations under the License.
+  */
+ 
+-import router from '@ohos.router';
+-
+ @Entry
+ @Component
+ struct Index {
+@@ -22,31 +20,13 @@ struct Index {
+     console.info('TestAbility index aboutToAppear')
+   }
+ 
+-  @State message: string = 'Hello World'
+-
+   build() {
+-    Row() {
+-      Column() {
+-        Text(this.message)
+-          .fontSize(50)
+-          .fontWeight(FontWeight.Bold)
+-        Button() {
+-          Text('next page')
+-            .fontSize(20)
+-            .fontWeight(FontWeight.Bold)
+-        }
+-        .type(ButtonType.Capsule)
+-        .margin({
+-          top: 20
+-        })
+-        .backgroundColor('#0D9FFB')
+-        .width('35%')
+-        .height('5%')
+-        .onClick(() => {
+-        })
+-      }
+-      .width('100%')
++    Column() {
++      Text('FileManager Test')
++        .fontSize(24)
+     }
++    .width('100%')
+     .height('100%')
++    .justifyContent(FlexAlign.Center)
+   }
+ }

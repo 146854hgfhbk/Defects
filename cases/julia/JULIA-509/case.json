@@ -1,0 +1,129 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-509",
+  "bug_id": "JULIA-509",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaArrays/StaticArrays.jl",
+  "repository_url": "https://github.com/JuliaArrays/StaticArrays.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "563adebc264a23d38da97bf5d9e5d3c6333bdf26",
+  "fixed_revision": "41353d25b136126138a9bcdffa76c6ffddab4b53",
+  "candidate_sha": "41353d25b136126138a9bcdffa76c6ffddab4b53",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "563adebc264a23d38da97bf5d9e5d3c6333bdf26",
+  "changed_production_files": [
+    "src/abstractarray.jl"
+  ],
+  "changed_test_files": [
+    "test/indexing.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-509 Any StaticArray view dimensions"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "3bc2d9d0d0e248350501dc0f8193b1289ad05bc3c9c0be0a818d635802566158",
+    "oracle": {
+      "mwe_basis": {
+        "upstream_test_file": "test/indexing.jl",
+        "public_api": "Base.view on StaticArrays.SArray",
+        "defect": "view wrapping used element type instead of resulting index dimensions"
+      },
+      "source_evidence": "minimal public-API MWE derived from the fixed commit test hunk"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "41353d25b136126138a9bcdffa76c6ffddab4b53",
+    "project": "JuliaArrays/StaticArrays.jl",
+    "input_sha256": "2f1f2d427f3f7ce7188f6592b2d3401e0b600afe3a5b1a13e6ef1888a2247808",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:36:54Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.9206157053399668,
+      "input_tokens": 5561,
+      "output_tokens": 731
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"The patch fixes an incorrect dispatch condition in `Base.view` for `SArray`. The old code decided whether to wrap a view result in `Scalar` by comparing the result type against the array's element type (`_maybewrapscalar(S::SArray{<:Any,T}, r::T)`), which is only a proxy for 'the result is 0-dimensional'. That proxy misfires whenever the eltype is abstract (e.g. `Any`, `Number`), because then any result type matches `T` and non-scalar views get wrongly wrapped in `Scalar`. The fix keys the decision on `Base.index_dimsum(I...) === Tuple{}`, which is the actual criterion for a 0-dimensional (scalar) view. This is a behavior fix in production code, not a feature or refactor.\", \"evidence\": \"Single-hunk production change in src/abstractarray.jl replacing eltype-based dispatch with `Base.index_dimsum(I...)`-based dispatch; accompanying test change in test/indexing.jl; minimization reports the hunk is globally minimal and necessary; runtime evidence reports a stable differential over 3 repetitions with the full suite passing on the fixed revision. The pre-existing comment referencing issue #892 confirms the `Scalar` wrapping behavior was already intended for 0D views, so returning `Scalar` for a non-0D view violates existing intended behavior.\", \"missing_evidence\": \"No PR title/body, no linked issue, and no named trigger tests (trigger_mode is a dedicated script). The actual test diff and the concrete failing input (e.g. `view(SMatrix{2,2,Any}(...), :, 1)`) are not shown, so the exact reproduction case is inferred from the type-dispatch logic rather than observed.\", \"validation_risks\": \"Traceability is UNVERIFIED, so the trigger test may not correspond to a named suite test; validation must rely on the dedicated differential script. Behavior depends on `Base.index_dimsum`, an internal Base function, so results can vary across Julia versions. Also, some previously-wrapped results (abstract-eltype arrays) change type, which could surface as failures elsewhere if other tests relied on the old wrapping.\", \"suggested_tests\": \"In test/indexing.jl: assert `view(SMatrix{2,2,Any}([1 2; 3 4]), :, 1) isa SVector` (not `Scalar`), and similarly for `Number`/`Real` eltypes; assert 0D views still wrap, e.g. `view(SMatrix{2,2,Int}(...), 1, 1) isa Scalar` and `view(SVector{3,Int}(...), 2) isa Scalar`; check mixed index kinds (`Colon`, `SOneTo`, `SVector{N,Int}`, `CartesianIndex`) produce results whose dimensionality matches `Base.index_dimsum`; compare against `parent`/values equality with the non-static `view` result.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "The patch fixes an incorrect dispatch condition in `Base.view` for `SArray`. The old code decided whether to wrap a view result in `Scalar` by comparing the result type against the array's element type (`_maybewrapscalar(S::SArray{<:Any,T}, r::T)`), which is only a proxy for 'the result is 0-dimensional'. That proxy misfires whenever the eltype is abstract (e.g. `Any`, `Number`), because then any result type matches `T` and non-scalar views get wrongly wrapped in `Scalar`. The fix keys the decision on `Base.index_dimsum(I...) === Tuple{}`, which is the actual criterion for a 0-dimensional (scalar) view. This is a behavior fix in production code, not a feature or refactor.",
+    "evidence": "Single-hunk production change in src/abstractarray.jl replacing eltype-based dispatch with `Base.index_dimsum(I...)`-based dispatch; accompanying test change in test/indexing.jl; minimization reports the hunk is globally minimal and necessary; runtime evidence reports a stable differential over 3 repetitions with the full suite passing on the fixed revision. The pre-existing comment referencing issue #892 confirms the `Scalar` wrapping behavior was already intended for 0D views, so returning `Scalar` for a non-0D view violates existing intended behavior.",
+    "missing_evidence": "No PR title/body, no linked issue, and no named trigger tests (trigger_mode is a dedicated script). The actual test diff and the concrete failing input (e.g. `view(SMatrix{2,2,Any}(...), :, 1)`) are not shown, so the exact reproduction case is inferred from the type-dispatch logic rather than observed.",
+    "validation_risks": "Traceability is UNVERIFIED, so the trigger test may not correspond to a named suite test; validation must rely on the dedicated differential script. Behavior depends on `Base.index_dimsum`, an internal Base function, so results can vary across Julia versions. Also, some previously-wrapped results (abstract-eltype arrays) change type, which could surface as failures elsewhere if other tests relied on the old wrapping.",
+    "suggested_tests": "In test/indexing.jl: assert `view(SMatrix{2,2,Any}([1 2; 3 4]), :, 1) isa SVector` (not `Scalar`), and similarly for `Number`/`Real` eltypes; assert 0D views still wrap, e.g. `view(SMatrix{2,2,Int}(...), 1, 1) isa Scalar` and `view(SVector{3,Int}(...), 2) isa Scalar`; check mixed index kinds (`Colon`, `SOneTo`, `SVector{N,Int}`, `CartesianIndex`) produce results whose dimensionality matches `Base.index_dimsum`; compare against `parent`/values equality with the non-static `view` result."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-509 Any StaticArray view dimensions"
+    ],
+    "exception_types": [
+      "2ecfdecac37961545fdb54b3754cddee7d0c384d4b0898a59c5870d342f6441f",
+      "7bb26a697ebd9d36beac574f57675fcc8fffb1de225cd6821986858ec6f118c8",
+      "926b3150fe99588728406feab81c8f89f5f1ae369576616868fab934f5b4aa76"
+    ],
+    "fingerprints": [
+      "2ecfdecac37961545fdb54b3754cddee7d0c384d4b0898a59c5870d342f6441f",
+      "7bb26a697ebd9d36beac574f57675fcc8fffb1de225cd6821986858ec6f118c8",
+      "926b3150fe99588728406feab81c8f89f5f1ae369576616868fab934f5b4aa76"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

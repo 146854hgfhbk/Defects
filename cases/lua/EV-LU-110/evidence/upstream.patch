@@ -1,0 +1,75 @@
+diff --git a/spec/cli_spec.lua b/spec/cli_spec.lua
+index 863ead8027e0ab535d87a2a50ee3e9b6b79d36e0..9fee98746e15589845afb4fc1f88bfad450659e1 100644
+--- a/spec/cli_spec.lua
++++ b/spec/cli_spec.lua
+@@ -864,22 +864,22 @@ not ok 7 spec/samples/python_code.lua:1:6: (E011) expected '=' near '__future__'
+ <testsuite name="Luacheck report" tests="7">
+     <testcase name="spec/samples/good_code.lua" classname="spec/samples/good_code.lua"/>
+     <testcase name="spec/samples/bad_code.lua:1" classname="spec/samples/bad_code.lua">
+-        <failure type="W211" message="spec/samples/bad_code.lua:3:16: unused function 'helper'"/>
++        <failure type="W211" message="spec/samples/bad_code.lua:3:16: unused function &apos;helper&apos;"/>
+     </testcase>
+     <testcase name="spec/samples/bad_code.lua:2" classname="spec/samples/bad_code.lua">
+         <failure type="W212" message="spec/samples/bad_code.lua:3:23: unused variable length argument"/>
+     </testcase>
+     <testcase name="spec/samples/bad_code.lua:3" classname="spec/samples/bad_code.lua">
+-        <failure type="W111" message="spec/samples/bad_code.lua:7:10: setting non-standard global variable 'embrace'"/>
++        <failure type="W111" message="spec/samples/bad_code.lua:7:10: setting non-standard global variable &apos;embrace&apos;"/>
+     </testcase>
+     <testcase name="spec/samples/bad_code.lua:4" classname="spec/samples/bad_code.lua">
+-        <failure type="W412" message="spec/samples/bad_code.lua:8:10: variable 'opt' was previously defined as an argument on line 7"/>
++        <failure type="W412" message="spec/samples/bad_code.lua:8:10: variable &apos;opt&apos; was previously defined as an argument on line 7"/>
+     </testcase>
+     <testcase name="spec/samples/bad_code.lua:5" classname="spec/samples/bad_code.lua">
+-        <failure type="W113" message="spec/samples/bad_code.lua:9:11: accessing undefined variable 'hepler'"/>
++        <failure type="W113" message="spec/samples/bad_code.lua:9:11: accessing undefined variable &apos;hepler&apos;"/>
+     </testcase>
+     <testcase name="spec/samples/python_code.lua:1" classname="spec/samples/python_code.lua">
+-        <failure type="E011" message="spec/samples/python_code.lua:1:6: expected '=' near '__future__'"/>
++        <failure type="E011" message="spec/samples/python_code.lua:1:6: expected &apos;=&apos; near &apos;__future__&apos;"/>
+     </testcase>
+ </testsuite>
+ ]], get_output "spec/samples/good_code.lua spec/samples/bad_code.lua spec/samples/python_code.lua --std=lua52 --formatter JUnit --no-config")
+diff --git a/src/luacheck/format.lua b/src/luacheck/format.lua
+index 202c8e6695938e77cf809ab13478654ff3353225..7f4ed071ce481cc2ba9110dd4365c3e8002ff04d 100644
+--- a/src/luacheck/format.lua
++++ b/src/luacheck/format.lua
+@@ -217,6 +217,15 @@ local function format_file_report(report, file_name, opts)
+    return table.concat(buf, "\n")
+ end
+ 
++local function escape_xml(str)
++   str = str:gsub("&", "&amp;")
++   str = str:gsub('"', "&quot;")
++   str = str:gsub("'", "&apos;")
++   str = str:gsub("<", "&lt;")
++   str = str:gsub(">", "&gt;")
++   return str
++end
++
+ local formatters = {}
+ 
+ function formatters.default(report, file_names, opts)
+@@ -287,16 +296,17 @@ function formatters.JUnit(report, file_names)
+ 
+    for file_i, file_report in ipairs(report) do
+       if file_report.fatal then
+-         table.insert(buf, ([[    <testcase name="%s" classname="%s">]]):format(file_names[file_i], file_names[file_i]))
+-         table.insert(buf, ([[        <error type="%s"/>]]):format(fatal_type(file_report)))
++         table.insert(buf, ([[    <testcase name="%s" classname="%s">]]):format(escape_xml(file_names[file_i]), escape_xml(file_names[file_i])))
++         table.insert(buf, ([[        <error type="%s"/>]]):format(escape_xml(fatal_type(file_report))))
+          table.insert(buf, [[    </testcase>]])
+       elseif #file_report == 0 then
+-         table.insert(buf, ([[    <testcase name="%s" classname="%s"/>]]):format(file_names[file_i], file_names[file_i]))
++         table.insert(buf, ([[    <testcase name="%s" classname="%s"/>]]):format(escape_xml(file_names[file_i]), escape_xml(file_names[file_i])))
+       else
+          for event_i, event in ipairs(file_report) do
+-            table.insert(buf, ([[    <testcase name="%s:%d" classname="%s">]]):format(file_names[file_i], event_i, file_names[file_i]))
++            table.insert(buf, ([[    <testcase name="%s:%d" classname="%s">]]):format(
++               escape_xml(file_names[file_i]), event_i, escape_xml(file_names[file_i])))
+             table.insert(buf, ([[        <failure type="%s" message="%s"/>]]):format(
+-               event_code(event), format_event(file_names[file_i], event, opts)))
++               escape_xml(event_code(event)), escape_xml(format_event(file_names[file_i], event, opts))))
+             table.insert(buf, [[    </testcase>]])
+          end
+       end

@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-207",
+  "technical_evidence_sha256": "27eeec11a10c05ab0f2f7072eaec5bcc14819f8edd9f49d1f1b7b4d1c365a83d",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "535beec0d39eaed83420504356aea8c784d85f80804fed3a6035493ec66b656a",
+  "reviewed_at": "2026-09-09T06:36:03.044655+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "swiftlang/swift-format#1237",
+  "rationale": "Issue #1237 reports a concrete pre-existing behavioral defect: `swift format lint` on `/// 何かする関数。` emits no finding on macOS (NaturalLanguage path) but emits `terminate this sentence with a period` on Linux, because the non-linguistic fallback in BeginDocumentationCommentWithOneLineSummary only recognized the ASCII period. The minimized production patch touches exactly one production file and only the fallback `sentences(in:)` helper plus the adjacent new `private static let fullStops` set covering U+002E, U+3002, U+FF0E, U+FF61 — precisely the code region the issue itself identifies as the root cause. The rewrite from `components(separatedBy: \". \")` to a character scan is the mechanism of the fix, not an unrelated refactor: it preserves the prior ASCII rule (a period terminates only before a space or end of text) so decimal points and abbreviations are unchanged, and there is no feature extension, public API addition, config, or docs-only change. The two trigger tests assert exactly the issue's scenario (the three CJK full-stop variants accepted, a two-sentence line producing the blank-line finding, and an unterminated summary still flagged), so they are semantically equivalent to the reported symptom. The fallback-mode selector uses `_forcesFallbackModeForTesting`, which is not introduced by this diff, and strict evidence records `build.both_versions` PASS with the same trigger source on both revisions, so the buggy failure is a genuine assertion differential rather than a fix-only-API compile error. The curator's only trigger modification is a `defer` restoring the testing-only fallback flag, which does not change what is asserted. Strict evidence for both the original and post-minimization matrices shows all gates green: `trigger.buggy_differential` with both selectors reproduced, `trigger.fixed_clean`, `trigger.deterministic` (4/4 outcome groups over 3 repetitions, 38 runs), and `full_suite.buggy_reproduces_only_triggers` plus `full_suite.fixed_all_green`, with no failed checks. `active_same_project_root_causes` is empty and the proposed root cause equals the sole allowed verified key.\n\nIssue #1237 reports a concrete pre-existing behavioral defect: `swift format lint` on `/// 何かする関数。` is clean on macOS but emits `[BeginDocumentationCommentWithOneLineSummary] terminate this sentence with a period` on Linux, because the non-NaturalLanguage fallback only recognized the ASCII period. The minimized production patch touches exactly that fallback helper in Sources/SwiftFormat/Rules/BeginDocumentationCommentWithOneLineSummary.swift: it adds a private `fullStops` set containing U+002E, U+3002, U+FF0E, U+FF61 and rewrites `sentences(in:)` to end a sentence at each full stop, keeping the prior ASCII rule (period must be followed by a space or end of text) so decimals and abbreviations are unaffected. Both hunks are in one production file and both are load-bearing for the fix; the only doc-comment edits are the doc for the newly introduced constant and the one-line description of the now-changed splitting behavior, so there is no unrelated refactor, feature extension, config-only, or test-only content. No production API is added: the trigger uses `_forcesFallbackModeForTesting`, which is not introduced by this diff, and the strict matrix confirms both declared selectors compiled and failed as genuine assertion failures on the buggy revision (trigger.buggy_differential and full_suite.buggy_reproduces_only_triggers passed, with non-reproducing selectors passing and no broader suite breakage), so this is not a fix-only-API compile error. The trigger inputs are the exact characters from the issue (。 ．｡ plus a two-sentence line and an unterminated summary), and the curator change is only an added `defer` restoring the testing-only fallback flag, which preserves semantics while preventing state leakage. Strict gates pass on both original and post-minimization runs: build on both revisions, deterministic outcomes over 3 repetitions across 38 runs, and fixed-revision full suite green. active_same_project_root_causes is empty, and swiftlang/swift-format#1237 is the sole allowed root cause key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T06:35:33.207778+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "535beec0d39eaed83420504356aea8c784d85f80804fed3a6035493ec66b656a",
+      "response_sha256": "94d8d56cd7255e374768af4007a29b2ccdc41794c7987fdc98adc4dd8b74e666",
+      "response_id": "msg_5ca943da6eb4474a8f08f5384c0e7383",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7577204121393035,
+        "input_tokens": 25322,
+        "output_tokens": 926
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#1237",
+      "rationale": "Issue #1237 reports a concrete pre-existing behavioral defect: `swift format lint` on `/// 何かする関数。` emits no finding on macOS (NaturalLanguage path) but emits `terminate this sentence with a period` on Linux, because the non-linguistic fallback in BeginDocumentationCommentWithOneLineSummary only recognized the ASCII period. The minimized production patch touches exactly one production file and only the fallback `sentences(in:)` helper plus the adjacent new `private static let fullStops` set covering U+002E, U+3002, U+FF0E, U+FF61 — precisely the code region the issue itself identifies as the root cause. The rewrite from `components(separatedBy: \". \")` to a character scan is the mechanism of the fix, not an unrelated refactor: it preserves the prior ASCII rule (a period terminates only before a space or end of text) so decimal points and abbreviations are unchanged, and there is no feature extension, public API addition, config, or docs-only change. The two trigger tests assert exactly the issue's scenario (the three CJK full-stop variants accepted, a two-sentence line producing the blank-line finding, and an unterminated summary still flagged), so they are semantically equivalent to the reported symptom. The fallback-mode selector uses `_forcesFallbackModeForTesting`, which is not introduced by this diff, and strict evidence records `build.both_versions` PASS with the same trigger source on both revisions, so the buggy failure is a genuine assertion differential rather than a fix-only-API compile error. The curator's only trigger modification is a `defer` restoring the testing-only fallback flag, which does not change what is asserted. Strict evidence for both the original and post-minimization matrices shows all gates green: `trigger.buggy_differential` with both selectors reproduced, `trigger.fixed_clean`, `trigger.deterministic` (4/4 outcome groups over 3 repetitions, 38 runs), and `full_suite.buggy_reproduces_only_triggers` plus `full_suite.fixed_all_green`, with no failed checks. `active_same_project_root_causes` is empty and the proposed root cause equals the sole allowed verified key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_post_minimization.checks.build.both_versions",
+        "minimized_patch_reference.post_minimization_validation",
+        "active_same_project_root_causes",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The helper rewrite also changes whitespace handling (per-sentence `trimmingCharacters(in: .whitespaces)` and dropping leading spaces from trailing text) beyond the CJK terminator change; this is only indirectly cleared by `full_suite.fixed_all_green` at one repetition, so subtle shifts in untested fallback inputs (abbreviations, quoted sentences) are not exhaustively excluded.",
+        "The defect is platform-conditional. The non-forced selector `testCJKFullStopsTerminateSentences` reproduces only where NaturalLanguage is unavailable; on a Darwin runner it would likely pass on the buggy revision, so this case's differential is tied to the recorded Linux-style environment rather than being portable to all platforms.",
+        "No standalone issue_evidence blob was supplied; issue text is read from the embedded source_candidate payload, which is untrusted repository/issue data and was treated as data only.",
+        "Full-suite gates ran at a single repetition (full_suite_repetitions=1) while trigger gates ran three times, so flakiness in unrelated suite tests is less thoroughly bounded.",
+        "The fix intentionally omits `!` and `?`, so the macOS/Linux divergence described in the issue is narrowed rather than fully eliminated; residual platform disagreement remains outside the tested scope."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T06:36:03.043694+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "535beec0d39eaed83420504356aea8c784d85f80804fed3a6035493ec66b656a",
+      "response_sha256": "abb6ece04ce100a7b99fc60c443ddf954927426781f0736db8bfe9978f46825f",
+      "response_id": "msg_30158628b9094eeea49d6ee36c55d330",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6487412241791045,
+        "input_tokens": 25271,
+        "output_tokens": 763
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#1237",
+      "rationale": "Issue #1237 reports a concrete pre-existing behavioral defect: `swift format lint` on `/// 何かする関数。` is clean on macOS but emits `[BeginDocumentationCommentWithOneLineSummary] terminate this sentence with a period` on Linux, because the non-NaturalLanguage fallback only recognized the ASCII period. The minimized production patch touches exactly that fallback helper in Sources/SwiftFormat/Rules/BeginDocumentationCommentWithOneLineSummary.swift: it adds a private `fullStops` set containing U+002E, U+3002, U+FF0E, U+FF61 and rewrites `sentences(in:)` to end a sentence at each full stop, keeping the prior ASCII rule (period must be followed by a space or end of text) so decimals and abbreviations are unaffected. Both hunks are in one production file and both are load-bearing for the fix; the only doc-comment edits are the doc for the newly introduced constant and the one-line description of the now-changed splitting behavior, so there is no unrelated refactor, feature extension, config-only, or test-only content. No production API is added: the trigger uses `_forcesFallbackModeForTesting`, which is not introduced by this diff, and the strict matrix confirms both declared selectors compiled and failed as genuine assertion failures on the buggy revision (trigger.buggy_differential and full_suite.buggy_reproduces_only_triggers passed, with non-reproducing selectors passing and no broader suite breakage), so this is not a fix-only-API compile error. The trigger inputs are the exact characters from the issue (。 ．｡ plus a two-sentence line and an unterminated summary), and the curator change is only an added `defer` restoring the testing-only fallback flag, which preserves semantics while preventing state leakage. Strict gates pass on both original and post-minimization runs: build on both revisions, deterministic outcomes over 3 repetitions across 38 runs, and fixed-revision full suite green. active_same_project_root_causes is empty, and swiftlang/swift-format#1237 is the sole allowed root cause key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_reduction.rationale",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The helper rewrite also changes whitespace handling generally (sentences are trimmed, trailing text has leading spaces dropped), which is broader than the CJK symptom; only the fixed-revision full-suite green run argues that no existing case regressed.",
+        "issue_evidence is null; the issue body is available only through source_candidate.issue_check, so the issue text was not independently re-fetched at curation time.",
+        "The differential depends on the fallback path being exercised (Linux, or the forced-fallback flag). On a Darwin runner without the flag, testCJKFullStopsTerminateSentences would not reproduce the defect.",
+        "The fallback trigger mutates a static testing-only flag; isolation now relies on the curator-added defer rather than harness-level state isolation."
+      ]
+    }
+  ]
+}

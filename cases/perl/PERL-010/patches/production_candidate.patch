@@ -1,0 +1,38 @@
+diff --git a/lib/Test2/API/Context.pm b/lib/Test2/API/Context.pm
+index c556c184302466ac1ef974fc9305f0ee0f9e9d09..f2e85a151f5145ce089c96a87254183abda1ab03 100644
+--- a/lib/Test2/API/Context.pm
++++ b/lib/Test2/API/Context.pm
+@@ -74,7 +74,7 @@ sub DESTROY {
+         # Sometimes $@ is uninitialized, not a problem in this case so do not
+         # show the warning about using eq.
+         no warnings 'uninitialized';
+-        if($self->{+EVAL_ERROR} eq $@ && $hub->is_local) {
++        if($self->{+EVAL_ERROR} eq $@ && $hub->is_local && !$hub->surpress_release_error) {
+             require Carp;
+             my $mess = Carp::longmess("Context destroyed");
+             my $frame = $self->{+_IS_SPAWN} || $self->{+TRACE}->frame;
+diff --git a/lib/Test2/Hub.pm b/lib/Test2/Hub.pm
+index 8652534717ad48549534f63cb3858914a3d44fce..0da104331da7f886f8db899a3590a108d1c2b147 100644
+--- a/lib/Test2/Hub.pm
++++ b/lib/Test2/Hub.pm
+@@ -25,6 +25,8 @@ use Test2::Util::HashBase qw{
+     _context_init
+     _context_release
+ 
++    surpress_release_error
++
+     uuid
+     active
+     count
+@@ -448,8 +450,10 @@ sub finalize {
+         my (undef, $ffile, $fline) = @{$self->{+ENDED}};
+         my (undef, $sfile, $sline) = @$frame;
+ 
++        $self->{+SURPRESS_RELEASE_ERROR} = 1;
++
+         die <<"        EOT"
+-Test already ended!
++Test already ended! (Did you call done_testing twice?)
+ First End:  $ffile line $fline
+ Second End: $sfile line $sline
+         EOT

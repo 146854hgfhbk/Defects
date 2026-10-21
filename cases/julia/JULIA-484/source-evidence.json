@@ -1,0 +1,61 @@
+{
+  "candidate_sha": "b386d5c3064f04a23f2fc656c9aabe3a50233bdc",
+  "project": "JuliaStats/StatsFuns.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 162,
+      "url": "https://github.com/JuliaStats/StatsFuns.jl/issues/162",
+      "state": "closed",
+      "title": "Gamma PDF throwing NaN for very small scale parameter",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "Not sure if this is better suited for Distributions.jl, but I think it fits here better. Here is a reproducible example:\r\n```julia\r\nusing Distributions\r\npdf(Gamma(3,1e-310),1)\r\n```\r\nreturns `NaN` when it should either return `0.0` or throw the `condition θ > zero(θ) is not satisfied` error.\r\n\r\nTo add a little more detail, `pdf(Gamma(3,1e-308),1)` correctly returns `0.0`, while `pdf(Gamma(3,1e-309),1)` returns `NaN` as do even smaller scale parameters until you get to `pdf(Gamma(3,1e-324),1)` when the zero-argument error is thrown. I think the source of the problem is in the `gammalogpdf` function from StatsFuns.jl, which is included below for reference:\r\n```julia\r\ngammalogpdf(k::Real, θ::Real, x::Real) = gammalogpdf(promote(k, θ, x)...)\r\nfunction gammalogpdf(k::T, θ::T, x::T) where {T<:Real}\r\n    # we ensure that `log(x)` does not error if `x < 0`\r\n    xθ = max(x, 0) / θ\r\n    val = -loggamma(k) + xlogy(k - 1, xθ) - log(θ) - xθ\r\n    return x < 0 ? oftype(val, -Inf) : val\r\nend\r\n```\r\nI think the source of the problem is in computing `xθ = max(x, 0) / θ`. For values of `θ <= 1e-309`, this quantity is `Inf`, but Julia doesn't acknowledge `θ approx 0` until `θ <= 1e-324`, so we have this window of admittedly absurdly small values where the the parameter is valid (not zero) but the calculation effectively overflows to `Inf` through division. The result is that `xlogy(k - 1, xθ)` and `xθ` both evaluate to infinity and taking their difference leads to returning `NaN`. \r\n\r\nActually, I think I found the exact values: `eps(0.0)` returns `5.0e-324` while `floatmin()` returns around `2.2e-308`.\r\nAs a possible fix, `xθ = max(x, floatmin()) / θ` seems to work instead of `xθ = max(x, 0) / θ`. Otherwise it would be nice if the interface error would show up at `floatmin()` instead of `eps(0.0)`.\r\n\r\nSpecs: Julia v1.9.3, Distributions v0.25.102, StatsFuns v1.3.0, Apple Silicon M2"
+    },
+    {
+      "number": 163,
+      "url": "https://github.com/JuliaStats/StatsFuns.jl/pull/163",
+      "state": "closed",
+      "title": "Handle tiny θ in gammalogpdf",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fixes #162 "
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        162
+      ],
+      "pull_request": 163,
+      "fix_commit": "b386d5c3064f04a23f2fc656c9aabe3a50233bdc",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Handle tiny θ in gammalogpdf (#163)",
+    "commit_issue_refs": [
+      163
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 163,
+    "pull_request_title": "Handle tiny θ in gammalogpdf",
+    "pull_request_issue_refs": [
+      162
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    162
+  ],
+  "cross_repository_issue_records": []
+}

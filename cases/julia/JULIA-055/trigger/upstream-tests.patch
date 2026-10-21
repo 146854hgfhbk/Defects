@@ -1,0 +1,81 @@
+diff --git a/test/ensemble_tests.jl b/test/ensemble_tests.jl
+index 33c5cc7f..2d8787b2 100644
+--- a/test/ensemble_tests.jl
++++ b/test/ensemble_tests.jl
+@@ -55,3 +55,32 @@ mx, my,
+         )
+     )
+ end
++
++# https://github.com/SciML/DifferentialEquations.jl/issues/632
++@testset "EnsembleSummary rejects complex-valued trajectories" begin
++    prob = ODEProblem((u, p, t) -> u, 1.0 + 0.0im, (0.0, 1.0))
++    ts = [0.0, 0.5, 1.0]
++    vals = [
++        [1.0 + 0.0im, 1.5 + 0.2im, 2.0 + 0.4im],
++        [0.5 + 0.1im, 1.0 + 0.3im, 1.5 + 0.5im],
++        [1.2 - 0.1im, 1.4 + 0.0im, 1.8 + 0.2im],
++    ]
++    sols = [
++        SciMLBase.build_solution(
++                prob, :NoAlgorithm, ts, u; retcode = SciMLBase.ReturnCode.Success
++            )
++            for u in vals
++    ]
++    sim = EnsembleSolution(sols, 0.0, true)
++    err = try
++        EnsembleSummary(sim, ts)
++        nothing
++    catch e
++        e
++    end
++    @test err isa SciMLBase.ComplexEnsembleSummaryError
++    @test occursin("Complex-valued ensemble", sprint(showerror, err))
++    # mean/var path remains available without ordering
++    m, v = EA.timeseries_point_meanvar(sim, ts)
++    @test length(m.u) == length(ts)
++end
+diff --git a/test/problem_building_test.jl b/test/problem_building_test.jl
+index 18be4b3f..0d0e360f 100644
+--- a/test/problem_building_test.jl
++++ b/test/problem_building_test.jl
+@@ -38,6 +38,39 @@ prob_bvp = BVProblem(simplependulum!, bc!, [pi / 2, pi / 2], (0, 1.0))
+     @test SciMLBase.specialization(specialized_incrementing_f) === SciMLBase.NoSpecialize
+ end
+ 
++# Bare ODEProblem(SplitFunction, u0, tspan) must allocate `_func_cache` for iip,
++# matching SplitODEProblem (otherwise f(du,u,p,t) hits ndims(::Type{Nothing})).
++@testset "ODEProblem(SplitFunction) allocates _func_cache" begin
++    f1! = (du, u, p, t) -> (du .= u)
++    f2! = (du, u, p, t) -> (du .= -u)
++    u0 = [1.0, 2.0]
++    sf = SplitFunction(f1!, f2!)
++    @test sf._func_cache === nothing
++    @test_throws ArgumentError sf(similar(u0), u0, nothing, 0.0)
++
++    prob = ODEProblem(sf, u0, (0.0, 1.0))
++    @test prob.f._func_cache !== nothing
++    du = zeros(2)
++    # combined rhs is f1 + f2 = u + (-u) = 0
++    prob.f(du, u0, nothing, 0.0)
++    @test du ≈ zeros(2)
++
++    # SplitODEProblem path still works and keeps a cache
++    prob_split = SplitODEProblem(f1!, f2!, u0, (0.0, 1.0))
++    @test prob_split.f._func_cache !== nothing
++    du2 = zeros(2)
++    prob_split.f(du2, u0, nothing, 0.0)
++    @test du2 ≈ zeros(2)
++
++    # out-of-place SplitFunction needs no cache
++    f1 = (u, p, t) -> u
++    f2 = (u, p, t) -> -u
++    sf_oop = SplitFunction(f1, f2)
++    @test sf_oop._func_cache === nothing
++    prob_oop = ODEProblem(sf_oop, 1.0, (0.0, 1.0))
++    @test prob_oop.f(1.0, nothing, 0.0) == 0.0
++end
++
+ @testset "`constructorof` tests" begin
+     probs = []
+ 

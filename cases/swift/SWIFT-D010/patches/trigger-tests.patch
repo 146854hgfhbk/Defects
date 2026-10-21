@@ -1,0 +1,45 @@
+diff --git a/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift b/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift
+index 5333027f781771bd41e90936a7c931df815fbf11..86e5f92a036991feca1b18f9a3ada7d3ef11a723 100644
+--- a/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift
++++ b/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift
+@@ -796,4 +796,40 @@ final class DependencyEndpointMacroTests: BaseTestCase {
+     """
+     }
+   }
++
++  func testAutoclosure() {
++    assertMacro {
++      """
++      struct Foo {
++        @DependencyEndpoint
++        var bar: (_ a: @autoclosure () -> Int, _ b: () -> Int, _ c: @autoclosure () -> Int) -> Void
++      }
++      """
++    } expansion: {
++      """
++      struct Foo {
++        var bar: (_ a: @autoclosure () -> Int, _ b: () -> Int, _ c: @autoclosure () -> Int) -> Void {
++          @storageRestrictions(initializes: _bar)
++          init(initialValue) {
++            _bar = initialValue
++          }
++          get {
++            _bar
++          }
++          set {
++            _bar = newValue
++          }
++        }
++
++        func bar(a p0: @autoclosure () -> Int, b p1: () -> Int, c p2: @autoclosure () -> Int) -> Void {
++          self.bar(p0(), p1, p2())
++        }
++
++        private var _bar: (_ a: @autoclosure () -> Int, _ b: () -> Int, _ c: @autoclosure () -> Int) -> Void = { _, _, _ in
++          XCTestDynamicOverlay.XCTFail("Unimplemented: 'bar'")
++        }
++      }
++      """
++    }
++  }
+ }

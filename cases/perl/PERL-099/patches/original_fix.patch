@@ -1,0 +1,160 @@
+diff --git a/Changes b/Changes
+index 2fadc425bd1f48ce3079a0dd2325f9e76d03d7f9..ff4294e0a3ea448e0f802bb6a7d8fa05eb1ec4ad 100644
+--- a/Changes
++++ b/Changes
+@@ -1,5 +1,14 @@
+ Revision history for Test::Most
+ 
++0.42    [pending]
++
++        - Bugfix: restore support for `use Test::Most import => [...]` to
++          select which symbols to export. The 0.39 export rework caused
++          this idiom to fall through to plan(), which died with
++          "plan() doesn't understand import ARRAY(...)". `import => []`
++          falls through to the default exports, matching Test::Builder::Module
++          and pre-0.39 behaviour. (GH#18)
++
+ 0.41    2026-04-30
+ 
+         - No functional changes
+diff --git a/MANIFEST b/MANIFEST
+index deca0ee65ecda78c4fbdd577e154d99262a04f65..c9f7b29c5c5656cb7c16b8b30a0f13ab56d74be0 100644
+--- a/MANIFEST
++++ b/MANIFEST
+@@ -21,6 +21,7 @@ t/function_bail.t
+ t/function_die.t
+ t/import_bail.t
+ t/import_die.t
++t/import_list.t
+ t/import_strict_and_warnings.t
+ t/lib/DuplicatePlanRegression.pm
+ t/lib/OurTester.pm
+diff --git a/lib/Test/Most.pm b/lib/Test/Most.pm
+index 0a9b2304a35d4e4e3e34a049bc60b36405434a6b..b27736db77b3631b255d864371b97b7bb699f10c 100644
+--- a/lib/Test/Most.pm
++++ b/lib/Test/Most.pm
+@@ -102,9 +102,31 @@ sub import {
+     my %exclude_symbol;
+     my $i = 0;
+ 
++    # Pull out `import => [...]` so it doesn't fall through to plan(), which
++    # doesn't understand it. The list drives export_to_level below.
++    #
++    # The while-with-index loop is intentional: we mutate @_ via splice as
++    # we go, and this matches the existing parser further down the sub.
++    my @explicit;
++    while ( $i < @_ ) {
++        if ( $_[$i] eq 'import' && ref $_[ $i + 1 ] eq 'ARRAY' ) {
++            @explicit = @{ ( splice @_, $i, 2 )[1] };
++            last;
++        }
++        $i++;
++    }
++    $i = 0;
++
+     foreach my $do_not_import_by_default (qw/blessed reftype/) {
+-        if ( grep { $_ eq $do_not_import_by_default } @_ ) {
++        if ( grep { $_ eq $do_not_import_by_default } @_, @explicit ) {
+             @_ = grep { $_ ne $do_not_import_by_default } @_;
++            # If the user opted in positionally AND used import => [...],
++            # the explicit list is the export source — make sure the symbol
++            # is in it, or it would be silently dropped.
++            if ( @explicit
++                && !grep { $_ eq $do_not_import_by_default } @explicit ) {
++                push @explicit, $do_not_import_by_default;
++            }
+         }
+         else {
+             $exclude_symbol{$do_not_import_by_default} = 1;
+@@ -172,7 +194,14 @@ END
+     $test->exported_to($caller);
+     $test->plan(@_);
+ 
+-    $class->export_to_level(1, $class, @EXPORT);
++    # Empty @explicit covers two cases that should both fall through to the
++    # default exports: no `import =>` was given, or `import => []` was given
++    # (which matches Test::Builder::Module / Exporter, where an empty import
++    # list means "use defaults"). When @explicit has items but `!sym`
++    # exclusions empty it out, @to_export is empty and we export nothing.
++    my @to_export
++        = @explicit ? grep { !$exclude_symbol{$_} } @explicit : @EXPORT;
++    $class->export_to_level( 1, $class, @to_export ) if @to_export;
+ }
+ 
+ sub explain {
+diff --git a/t/import_list.t b/t/import_list.t
+new file mode 100644
+index 0000000000000000000000000000000000000000..6103e8eb0f0a70c826b317ccba24d03eb5ff0a5a
+--- /dev/null
++++ b/t/import_list.t
+@@ -0,0 +1,70 @@
++#!/usr/bin/perl
++
++use strict;
++use warnings;
++
++use lib 'lib';
++
++# Regression test for GH#18: `use Test::Most import => [...]` died with
++# "plan() doesn't understand import ARRAY(...)" because the pair fell
++# through to plan() instead of being consumed as an export filter.
++#
++# `import => [...]` must be supplied as the first arg to actually exercise
++# the regression — it's what gets handed to plan() and what plan() chokes on.
++use Test::Most import => [qw( ok done_testing is blessed subtest )];
++
++ok 1, 'ok was imported via the explicit list';
++is 2, 2, 'is was imported via the explicit list';
++ok defined( &main::blessed ),
++    'symbols normally excluded by default may be imported when listed explicitly';
++ok !defined( &main::eq_or_diff ),
++    'symbols not in the import list are not exported';
++ok !defined( &main::dies_ok ),
++    'Test::Exception symbols not in the import list are not exported';
++ok !defined( &main::cmp_deeply ),
++    'Test::Deep symbols not in the import list are not exported';
++ok !defined( &main::warning_is ),
++    'Test::Warn symbols not in the import list are not exported';
++
++subtest 'empty import list falls through to default exports' => sub {
++    # This matches Test::Builder::Module and Exporter, both of which treat
++    # an empty import list as "use defaults". Pre-0.39 Test::Most inherited
++    # the same behaviour via `goto &Test::Builder::Module::import`, so we
++    # preserve it here.
++    package EmptyList;
++    Test::Most->import( import => [] );
++    main::ok( defined( &EmptyList::ok ),         'ok exported (default)' );
++    main::ok( defined( &EmptyList::cmp_deeply ), 'cmp_deeply exported (default)' );
++};
++
++subtest 'fully excluded import list exports nothing' => sub {
++    package AllExcluded;
++    Test::Most->import( import => [qw( is )], '!is' );
++    main::ok( !defined( &AllExcluded::is ), 'excluded symbol not exported' );
++    main::ok( !defined( &AllExcluded::ok ), 'unrelated default not exported' );
++};
++
++subtest 'import list combined with plan args' => sub {
++    package WithPlan;
++    Test::Most->import( 'no_plan', import => [qw( ok )] );
++    main::ok( defined( &WithPlan::ok ),         'ok was imported' );
++    main::ok( !defined( &WithPlan::cmp_deeply ), 'cmp_deeply not exported' );
++};
++
++subtest 'positional blessed alongside import list is honored' => sub {
++    package WithBlessed;
++    Test::Most->import( 'blessed', import => [qw( ok )] );
++    main::ok( defined( &WithBlessed::blessed ),
++        'blessed listed positionally still gets exported' );
++    main::ok( defined( &WithBlessed::ok ), 'ok from import list exported' );
++};
++
++subtest 'module exclusion still applies' => sub {
++    package WithoutDeep;
++    Test::Most->import( '-Test::Deep', import => [qw( ok )] );
++    main::ok( defined( &WithoutDeep::ok ), 'ok exported' );
++    main::ok( !defined( &WithoutDeep::cmp_deeply ),
++        'Test::Deep symbols not exported even if Test::Deep stayed loaded' );
++};
++
++done_testing;

@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1141",
+  "technical_evidence_sha256": "7f60ff9919eb38f41fc59984da09c26487f0e5f0fcb63e8358ff1a36daa80fe9",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "96335d84d22ab4c43b59dbd76a17538df8dc38d9967d9aec49a2d1adff16856d",
+  "reviewed_at": "2026-08-14T16:17:17.505796+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1415",
+  "rationale": "Issue #1415 reports that tall style discards the blank line between a leading line comment (e.g. the copyright header) and the following code, giving the two concrete examples '// Comment.\\n\\nmain() {}' and a copyright block followed by an import. The fixing commit 0c3e4fc states preservation was already working generally and only the blank after the *first* top-level comment was dropped, so at buggy revision bdc8a8c the formatter behaved inconsistently with its own already-shipped blank-line handling; that is a pre-existing behavioral defect, not a new capability. The minimized production patch keeps exactly one behavioral hunk in lib/src/front_end/sequence_builder.dart, setting _allowBlank when the preceding comments are non-empty before calling addBlank(); the doc-comment-only hunk from the original commit was dropped during minimization, and the only other file is benchmark/case/large.expect, whose single added blank line is the mechanical expectation update caused by the same output change. No refactor, feature extension, config-only, or unrelated edit is present, and _allowBlank/addBlank already existed at the parent revision, so no new production API is introduced. The triggers are unmodified upstream fixtures from the same commit: tall/regression/1400/1415.unit reproduces the issue's two examples verbatim, and tall/top_level/comment.unit adds leading-comment/declaration and directive cases for the same behavior; both are declared reproduced by the strict gates. Strict evidence (original and post-minimization) reports build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic, full_suite.buggy_reproduces_only_triggers and full_suite.fixed_all_green all passing with 3 repetitions and no failed checks. active_same_project_root_causes is empty and dart-lang/dart_style#1415 is the single allowed verified issue key, so the root cause is not a registry duplicate.\n\nIssue #1415 reports that tall style discards the blank line between a leading line comment (e.g. a copyright header) and the following declaration, showing exactly the '// Comment.\\n\\nmain() {}' and copyright-then-import examples. The minimized production change is a single behavioral edit in SequenceBuilder.addCommentsBefore: when a blank is required before the next token and comments were just emitted, it sets _allowBlank = true before addBlank(), which restores blank-line preservation after a leading comment. The commit/PR text scopes this to an edge case in already-shipped blank-preservation behavior (only the first top-level comment lost its blank), i.e. inconsistent existing behavior rather than a new capability; the buggy revision's passing of the newly added block_comment.stmt case corroborates that general preservation already worked. The upstream fixture trigger test/tall/regression/1400/1415.unit reproduces the issue's two examples verbatim and is data-driven through the pre-existing test/tall_format_test.dart harness, so it uses no API introduced by the fix. Strict evidence (both original and post-minimization) shows build passing on both revisions, isolated buggy differential failure on tall/regression/1400/1415.unit and tall/top_level/comment.unit, fixed-clean and reversed runs green, deterministic fingerprints across 3 repetitions, and buggy full-suite failures limited to the reproduced triggers. The minimized patch drops the doc-comment-only hunk from the original commit and retains only the behavioral hunk plus the benchmark/case/large.expect expectation line that is a direct consequence of the same output change; no refactor, feature flag, option, or config edit is present. active_same_project_root_causes is empty and dart-lang/dart_style#1415 is the sole allowed verified issue key, so no duplicate root cause.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T16:16:27.053410+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "96335d84d22ab4c43b59dbd76a17538df8dc38d9967d9aec49a2d1adff16856d",
+      "response_sha256": "b1b2e7612fe925b596c8914f5c5646233d801fe51b6f542c6bf74c9f2f815e35",
+      "response_id": "msg_efca12a1b46541b6a62d4179e1058c5d",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8914337320066336,
+        "input_tokens": 17973,
+        "output_tokens": 781
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1415",
+      "rationale": "Issue #1415 reports that tall style discards the blank line between a leading line comment (e.g. the copyright header) and the following code, giving the two concrete examples '// Comment.\\n\\nmain() {}' and a copyright block followed by an import. The fixing commit 0c3e4fc states preservation was already working generally and only the blank after the *first* top-level comment was dropped, so at buggy revision bdc8a8c the formatter behaved inconsistently with its own already-shipped blank-line handling; that is a pre-existing behavioral defect, not a new capability. The minimized production patch keeps exactly one behavioral hunk in lib/src/front_end/sequence_builder.dart, setting _allowBlank when the preceding comments are non-empty before calling addBlank(); the doc-comment-only hunk from the original commit was dropped during minimization, and the only other file is benchmark/case/large.expect, whose single added blank line is the mechanical expectation update caused by the same output change. No refactor, feature extension, config-only, or unrelated edit is present, and _allowBlank/addBlank already existed at the parent revision, so no new production API is introduced. The triggers are unmodified upstream fixtures from the same commit: tall/regression/1400/1415.unit reproduces the issue's two examples verbatim, and tall/top_level/comment.unit adds leading-comment/declaration and directive cases for the same behavior; both are declared reproduced by the strict gates. Strict evidence (original and post-minimization) reports build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic, full_suite.buggy_reproduces_only_triggers and full_suite.fixed_all_green all passing with 3 repetitions and no failed checks. active_same_project_root_causes is empty and dart-lang/dart_style#1415 is the single allowed verified issue key, so the root cause is not a registry duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/front_end/sequence_builder.dart",
+        "patches/trigger-tests.patch",
+        "test/tall/regression/1400/1415.unit",
+        "test/tall/top_level/comment.unit",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "Issue #1415 is phrased as an open style question ('Should the new style do that? I suspect the answer is yes'), so the defect classification rests on the commit message and on the buggy revision already preserving blanks in the non-leading cases rather than on explicit bug wording in the issue.",
+        "The declared selector tall/statement/block_comment.stmt does not reproduce (passes on both revisions); it adds coverage for the same behavior but contributes nothing differential and could be dropped from the trigger set.",
+        "The minimized production patch carries a stale hunk header offset (@@ -152,7 +155,13 @@) inherited from the removed doc-comment hunk; it applied successfully per the strict gates but relies on fuzzy application.",
+        "benchmark/case/large.expect is a benchmark expectation file rather than production source; it is retained in the production patch as a consequence of the output change, which slightly blurs the production/test boundary."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T16:17:17.505596+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "96335d84d22ab4c43b59dbd76a17538df8dc38d9967d9aec49a2d1adff16856d",
+      "response_sha256": "6686326f33a7cbcdeb8cb462e8172046472218b8a252017aaa93fb8280e67729",
+      "response_id": "msg_41188c81534c4ca7b5727d50343b7cb3",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8796365815257049,
+        "input_tokens": 18212,
+        "output_tokens": 768
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1415",
+      "rationale": "Issue #1415 reports that tall style discards the blank line between a leading line comment (e.g. a copyright header) and the following declaration, showing exactly the '// Comment.\\n\\nmain() {}' and copyright-then-import examples. The minimized production change is a single behavioral edit in SequenceBuilder.addCommentsBefore: when a blank is required before the next token and comments were just emitted, it sets _allowBlank = true before addBlank(), which restores blank-line preservation after a leading comment. The commit/PR text scopes this to an edge case in already-shipped blank-preservation behavior (only the first top-level comment lost its blank), i.e. inconsistent existing behavior rather than a new capability; the buggy revision's passing of the newly added block_comment.stmt case corroborates that general preservation already worked. The upstream fixture trigger test/tall/regression/1400/1415.unit reproduces the issue's two examples verbatim and is data-driven through the pre-existing test/tall_format_test.dart harness, so it uses no API introduced by the fix. Strict evidence (both original and post-minimization) shows build passing on both revisions, isolated buggy differential failure on tall/regression/1400/1415.unit and tall/top_level/comment.unit, fixed-clean and reversed runs green, deterministic fingerprints across 3 repetitions, and buggy full-suite failures limited to the reproduced triggers. The minimized patch drops the doc-comment-only hunk from the original commit and retains only the behavioral hunk plus the benchmark/case/large.expect expectation line that is a direct consequence of the same output change; no refactor, feature flag, option, or config edit is present. active_same_project_root_causes is empty and dart-lang/dart_style#1415 is the sole allowed verified issue key, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/front_end/sequence_builder.dart",
+        "patches/trigger-tests.patch",
+        "test/tall/regression/1400/1415.unit",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The minimized production patch includes benchmark/case/large.expect, a non-production expectation file; it is a direct consequence of the same output change but is not production source.",
+        "Declared selector tall/statement/block_comment.stmt does not reproduce on the buggy revision, so it contributes no differential signal and only guards against regressions.",
+        "Issue #1415 is phrased as a design question ('Should the new style do that?'); its classification as a pre-existing defect rests on the commit/PR statement that preservation already worked except for the first top-level comment, plus the buggy revision passing the other new fixtures.",
+        "The minimized patch's single hunk carries the original commit's line offsets (-152,+155) without the removed doc hunk, so it relies on offset-tolerant application; strict post-minimization gates indicate it applied and built cleanly."
+      ]
+    }
+  ]
+}

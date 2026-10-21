@@ -1,0 +1,97 @@
+diff --git a/Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift b/Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift
+index a964b54cca5823ab9525e02b31540e038ae19bad..acaa8acdf12b4c2ce56d58b0ca298fc2bfd5d95d 100644
+--- a/Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift
++++ b/Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift
+@@ -162,14 +162,14 @@ public enum DependencyEndpointMacro: AccessorMacro, PeerMacro {
+       }
+       let appliedParameters =
+         parameters
++        .enumerated()
+         .map {
+-          guard let typed = $0.type.as(AttributedTypeSyntax.self),
+-            typed.specifier?.tokenKind == .keyword(.inout)
+-          else { return false }
+-          return true
++          $1.isInout
++          ? "&p\($0)"
++          : $1.isAutoclosure
++          ? "p\($0)()"
++          : "p\($0)"
+         }
+-        .enumerated()
+-        .map { $1 ? "&p\($0)" : "p\($0)" }
+         .joined(separator: ", ")
+       decls.append(
+         """
+@@ -256,3 +256,26 @@ extension String {
+     return String(result)
+   }
+ }
++
++extension TupleTypeElementSyntax {
++  fileprivate var isAutoclosure: Bool {
++    self.type
++      .as(AttributedTypeSyntax.self)?
++      .attributes
++      .contains {
++        $0
++          .as(AttributeSyntax.self)?
++          .attributeName
++          .as(IdentifierTypeSyntax.self)?
++          .name
++          .tokenKind == .identifier("autoclosure")
++      } ?? false
++  }
++
++  fileprivate var isInout: Bool {
++    self.type
++      .as(AttributedTypeSyntax.self)?
++      .specifier?
++      .tokenKind == .keyword(.inout)
++  }
++}
+diff --git a/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift b/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift
+index 5333027f781771bd41e90936a7c931df815fbf11..86e5f92a036991feca1b18f9a3ada7d3ef11a723 100644
+--- a/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift
++++ b/Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift
+@@ -796,4 +796,40 @@ final class DependencyEndpointMacroTests: BaseTestCase {
+     """
+     }
+   }
++
++  func testAutoclosure() {
++    assertMacro {
++      """
++      struct Foo {
++        @DependencyEndpoint
++        var bar: (_ a: @autoclosure () -> Int, _ b: () -> Int, _ c: @autoclosure () -> Int) -> Void
++      }
++      """
++    } expansion: {
++      """
++      struct Foo {
++        var bar: (_ a: @autoclosure () -> Int, _ b: () -> Int, _ c: @autoclosure () -> Int) -> Void {
++          @storageRestrictions(initializes: _bar)
++          init(initialValue) {
++            _bar = initialValue
++          }
++          get {
++            _bar
++          }
++          set {
++            _bar = newValue
++          }
++        }
++
++        func bar(a p0: @autoclosure () -> Int, b p1: () -> Int, c p2: @autoclosure () -> Int) -> Void {
++          self.bar(p0(), p1, p2())
++        }
++
++        private var _bar: (_ a: @autoclosure () -> Int, _ b: () -> Int, _ c: @autoclosure () -> Int) -> Void = { _, _, _ in
++          XCTestDynamicOverlay.XCTFail("Unimplemented: 'bar'")
++        }
++      }
++      """
++    }
++  }
+ }

@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1413",
+  "technical_evidence_sha256": "c1583c6f80c5539abbdbb589744f68c0f93a1879a84e8d409a56d8f0caa1db60",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "6338a84a734298e6c5d81d119a133e1b0edf7a494a04534d5d83550469ecea1c",
+  "reviewed_at": "2026-08-16T03:27:53.766476+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/http#511",
+  "rationale": "Issue #511 reports that BaseRequest forwards the caller-supplied method verb to the request stream unvalidated, enabling CRLF/header injection, and states the expected behavior explicitly ('an exception should be thrown for methods outside the known set'). The pre-existing defect is visible in the buggy constructor `BaseRequest(this.method, this.url)`, which performs no token check. The production fix in lib/src/base_request.dart adds `_tokenRE`/`_validateMethod` and routes the constructor parameter through it, throwing ArgumentError for non-token verbs; the only other constructor edit (`this.method` -> `String method` plus `method = _validateMethod(method)`) is mechanically required to insert the check, not a refactor. The minimized production patch touches exactly one production file and excludes the CHANGELOG entry and test files present in patches/original-commit.patch, so it carries no documentation-only, configuration-only, or test-only content and no feature extension beyond the validation the issue asked for. The triggers are the unchanged upstream tests from the same fixing commit (PR #512, single commit) and exercise only the pre-existing public constructors http.Request('LLAMA[0]', ...) and http.StreamedRequest('SUPER LLAMA', ...); `_validateMethod` and `_tokenRE` are private, so no new production API is required to drive them. Both rejected verbs contain characters outside the HTTP token set ('[', ']', space) and are precisely the injection-capable inputs the reporter described. Strict evidence (original and post-minimization) reports all gates passed: build on both revisions, unique selectors, buggy differential reproduction of both triggers, deterministic fingerprints across 3 repetitions in a 38-run matrix, fixed isolated/suite/reversed runs clean, and fixed full suite green with no baseline exclusions. active_same_project_root_causes is empty and dart-lang/http#511 is the only allowed root cause key, so the root cause is not a duplicate. Traceability is fix_commit_to_issue with verified_fix_issue_numbers=[511].\n\nIssue #511 reports that BaseRequest forwards the method verb to the request stream unvalidated, enabling CRLF/header injection, and states the expected behavior as an exception for invalid methods. The minimized production patch in lib/src/base_request.dart adds _tokenRE plus _validateMethod, which throws ArgumentError.value for any method containing characters outside the HTTP token set, so the defect (missing method validation), the fix, and the reported expectation line up. Traceability is direct: fix_commit_to_issue with verified_fix_issue_numbers=[511] via PR 512, a single-commit change. The minimized patch touches only lib/src/base_request.dart; the CHANGELOG entry and the two test additions present in patches/original-commit.patch are excluded, and there is no formatting or refactor noise beyond the mechanical change of `this.method` to a validated initializer. The triggers exercise pre-existing public constructors http.Request('LLAMA[0]', dummyUrl) and http.StreamedRequest('SUPER LLAMA', dummyUrl) and assert throwsArgumentError; they introduce no API added by the fix, and the space in 'SUPER LLAMA' plus the brackets in 'LLAMA[0]' are exactly the injection-capable inputs described in the issue. Strict evidence for both original and post-minimization runs reports passed=true with no failed checks: buggy differential reproduces both selectors, fixed isolated/suite/reversed runs are clean, fixed full suite is green, 38 matrix runs over 3 repetitions, deterministic fingerprints (4 groups). active_same_project_root_causes is empty, so dart-lang/http#511 is not a duplicate, and it matches allowed_root_cause_ids.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T03:27:29.390406+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "6338a84a734298e6c5d81d119a133e1b0edf7a494a04534d5d83550469ecea1c",
+      "response_sha256": "3c89772b65a3acdccbad391876fe586900d79ea86bcfd4c9c87ea7512b1b3115",
+      "response_id": "msg_297333114d7740808168db0149c253d4",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5375635692868987,
+        "input_tokens": 8413,
+        "output_tokens": 788
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/http#511",
+      "rationale": "Issue #511 reports that BaseRequest forwards the caller-supplied method verb to the request stream unvalidated, enabling CRLF/header injection, and states the expected behavior explicitly ('an exception should be thrown for methods outside the known set'). The pre-existing defect is visible in the buggy constructor `BaseRequest(this.method, this.url)`, which performs no token check. The production fix in lib/src/base_request.dart adds `_tokenRE`/`_validateMethod` and routes the constructor parameter through it, throwing ArgumentError for non-token verbs; the only other constructor edit (`this.method` -> `String method` plus `method = _validateMethod(method)`) is mechanically required to insert the check, not a refactor. The minimized production patch touches exactly one production file and excludes the CHANGELOG entry and test files present in patches/original-commit.patch, so it carries no documentation-only, configuration-only, or test-only content and no feature extension beyond the validation the issue asked for. The triggers are the unchanged upstream tests from the same fixing commit (PR #512, single commit) and exercise only the pre-existing public constructors http.Request('LLAMA[0]', ...) and http.StreamedRequest('SUPER LLAMA', ...); `_validateMethod` and `_tokenRE` are private, so no new production API is required to drive them. Both rejected verbs contain characters outside the HTTP token set ('[', ']', space) and are precisely the injection-capable inputs the reporter described. Strict evidence (original and post-minimization) reports all gates passed: build on both revisions, unique selectors, buggy differential reproduction of both triggers, deterministic fingerprints across 3 repetitions in a 38-run matrix, fixed isolated/suite/reversed runs clean, and fixed full suite green with no baseline exclusions. active_same_project_root_causes is empty and dart-lang/http#511 is the only allowed root cause key, so the root cause is not a duplicate. Traceability is fix_commit_to_issue with verified_fix_issue_numbers=[511].",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "lib/src/base_request.dart",
+        "issue_evidence.body_excerpt",
+        "issue_evidence.expected",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "traceability.verified_fix_issue_numbers",
+        "trigger_tests"
+      ],
+      "risks": [
+        "The trigger asserts the specific exception type ArgumentError, while the issue only demanded 'an exception'; an independent fix that threw a different exception type would not satisfy this trigger.",
+        "The fix validates against the RFC 7230 token grammar rather than the 'known set of verbs (GET/PUT/HEAD/...)' the reporter literally requested, so non-standard but token-valid verbs are still accepted; the injection vector named in the issue (CRLF/space/bracket characters) is nonetheless closed.",
+        "The `this.method` -> `String method` parameter change alters the constructor's field-initialization form; harmless here but a purely behavioral patch would not require it.",
+        "Traceability is inferred from the commit-to-issue reference and PR #512; no explicit maintainer comment closing #511 is included in the supplied evidence.",
+        "full_suite repetitions is 1, so flakiness in the wider suite is less thoroughly sampled than the 3-repetition trigger matrix."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T03:27:53.766225+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "6338a84a734298e6c5d81d119a133e1b0edf7a494a04534d5d83550469ecea1c",
+      "response_sha256": "8cfe1e519309c95de21ed3dea4e8e570b74de166d0fb58d591083fa9f1d2f3be",
+      "response_id": "msg_15850b70a5f04127b29df8437240828e",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4831576594029851,
+        "input_tokens": 8364,
+        "output_tokens": 653
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/http#511",
+      "rationale": "Issue #511 reports that BaseRequest forwards the method verb to the request stream unvalidated, enabling CRLF/header injection, and states the expected behavior as an exception for invalid methods. The minimized production patch in lib/src/base_request.dart adds _tokenRE plus _validateMethod, which throws ArgumentError.value for any method containing characters outside the HTTP token set, so the defect (missing method validation), the fix, and the reported expectation line up. Traceability is direct: fix_commit_to_issue with verified_fix_issue_numbers=[511] via PR 512, a single-commit change. The minimized patch touches only lib/src/base_request.dart; the CHANGELOG entry and the two test additions present in patches/original-commit.patch are excluded, and there is no formatting or refactor noise beyond the mechanical change of `this.method` to a validated initializer. The triggers exercise pre-existing public constructors http.Request('LLAMA[0]', dummyUrl) and http.StreamedRequest('SUPER LLAMA', dummyUrl) and assert throwsArgumentError; they introduce no API added by the fix, and the space in 'SUPER LLAMA' plus the brackets in 'LLAMA[0]' are exactly the injection-capable inputs described in the issue. Strict evidence for both original and post-minimization runs reports passed=true with no failed checks: buggy differential reproduces both selectors, fixed isolated/suite/reversed runs are clean, fixed full suite is green, 38 matrix runs over 3 repetitions, deterministic fingerprints (4 groups). active_same_project_root_causes is empty, so dart-lang/http#511 is not a duplicate, and it matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "issue_evidence.body_excerpt",
+        "issue_evidence.expected",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.fixed_all_green"
+      ],
+      "risks": [
+        "The fix is an added input-validation guard rather than a correction of existing computation, so it sits close to the hardening/feature boundary; acceptance rests on the security issue explicitly specifying the missing exception as the defect.",
+        "The regex accepts any RFC token, so it does not restrict methods to the known verb set the reporter literally asked for; only the injection-capable characters are blocked.",
+        "Both triggers assert only that ArgumentError is thrown at construction; no test confirms the downstream stream/proxy behavior described in the issue, so the exploit path itself is not directly covered.",
+        "Runtime conclusions come entirely from the supplied strict gates; no independent execution was performed here."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-748",
+  "technical_evidence_sha256": "3f6a5abcb95c30679c973346b7dc4f58aec3527ce4acbc1bc613a6d7b6ab4c03",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "8c3b2bbf18f5e6a1f1cec153b72ca618e397496e1a6032a096df1e5504832997",
+  "reviewed_at": "2026-09-05T23:01:07.551176+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "jamesrochabrun/swiftopenai#187",
+  "rationale": "Issue #187 quotes the exact pre-fix failure string, dataCorrupted at codingPath 'instructions' with debugDescription \"Expected String or [String] for instructions\", and includes the real server payload where instructions is an array of message objects with roles developer/assistant. The minimized production patch touches only InstructionsType in ResponseModel.swift: it adds the .messages([InputMessage]) case, one additional `try? container.decode([InputMessage].self)` branch after the existing string/array branches, and updates the enum doc comment plus the debugDescription text that the new branch makes stale. Both retained hunks are on the failing decode path; there is no reformatting, unrelated refactor, config change, or standalone doc/test-only edit, and InputMessage is referenced but not declared, so it pre-exists at the buggy revision. The compatible trigger keeps the same fixture from the issue and the same decode call, replacing only the `case .messages` pattern match (which would not compile at the parent) with Mirror label inspection plus an `as? [InputMessage]` cast, and wraps the decode in do/catch to surface the original error at the test source location; assertions on message count, roles, type, and first-message input_text are unchanged, so no production API introduced by the fix is required to compile or fail the test at the buggy revision. Strict machine evidence for both the original and post-minimization runs reports passed=true with no failed checks: builds on both revisions, one unique selector, buggy differential reproducing Tests/OpenAITests/ResponseModelValidationTests.swift::testInstructionsTypeMessagesDecoding, deterministic fingerprints across 3 repetitions, fixed isolated/suite/reversed runs clean, and buggy full-suite failures limited to that trigger. active_same_project_root_causes is empty and the proposed key matches the single allowed verified issue key.\n\nIssue #187 reports the exact runtime failure string emitted by the buggy revision: dataCorrupted at codingPath 'instructions' with debugDescription \"Expected String or [String] for instructions\", triggered when the Responses API returns instructions as an array of message objects for reusable prompts. The minimized production patch touches only ResponseModel.swift's InstructionsType.init(from:), adding a third decode branch for [InputMessage], the corresponding enum case, and the matching doc/debugDescription text; the pre-existing .string and .array branches are attempted first and unchanged, so prior behavior is preserved. No refactor, config, or unrelated code is present, and the test-side changes are excluded from the minimized production patch. InputMessage is referenced but not defined in the diff and build.both_versions passed, confirming the type pre-exists and the defect is decoder coverage rather than a missing model. The curator-adjusted trigger reproduces the same defect without depending on the new .messages case at compile time: it decodes the payload copied from the issue body, reports XCTFail carrying the original decode error, and identifies the resulting case via Mirror label plus an [InputMessage] cast, so it compiles on the buggy revision. Strict evidence (original and post-minimization) shows a unique declared selector failing alone on buggy, deterministic fingerprints across 3 repetitions, buggy full-suite failures limited to the reproduced trigger, and an all-green fixed suite. active_same_project_root_causes is empty and the root cause matches the single allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T23:00:38.195995+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "8c3b2bbf18f5e6a1f1cec153b72ca618e397496e1a6032a096df1e5504832997",
+      "response_sha256": "c7e38481e3f4bc6df36977bf5dc2bccbf99d3ac18f6ca00f2f8a10b3f7676e04",
+      "response_id": "msg_48eff52f03e94ecdbfcd0358dba25aa7",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.687369147429519,
+        "input_tokens": 28559,
+        "output_tokens": 706
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "jamesrochabrun/swiftopenai#187",
+      "rationale": "Issue #187 quotes the exact pre-fix failure string, dataCorrupted at codingPath 'instructions' with debugDescription \"Expected String or [String] for instructions\", and includes the real server payload where instructions is an array of message objects with roles developer/assistant. The minimized production patch touches only InstructionsType in ResponseModel.swift: it adds the .messages([InputMessage]) case, one additional `try? container.decode([InputMessage].self)` branch after the existing string/array branches, and updates the enum doc comment plus the debugDescription text that the new branch makes stale. Both retained hunks are on the failing decode path; there is no reformatting, unrelated refactor, config change, or standalone doc/test-only edit, and InputMessage is referenced but not declared, so it pre-exists at the buggy revision. The compatible trigger keeps the same fixture from the issue and the same decode call, replacing only the `case .messages` pattern match (which would not compile at the parent) with Mirror label inspection plus an `as? [InputMessage]` cast, and wraps the decode in do/catch to surface the original error at the test source location; assertions on message count, roles, type, and first-message input_text are unchanged, so no production API introduced by the fix is required to compile or fail the test at the buggy revision. Strict machine evidence for both the original and post-minimization runs reports passed=true with no failed checks: builds on both revisions, one unique selector, buggy differential reproducing Tests/OpenAITests/ResponseModelValidationTests.swift::testInstructionsTypeMessagesDecoding, deterministic fingerprints across 3 repetitions, fixed isolated/suite/reversed runs clean, and buggy full-suite failures limited to that trigger. active_same_project_root_causes is empty and the proposed key matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests-compatible.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "minimized_patch_reference.post_minimization_validation",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The compatible trigger identifies the fixed behavior through Mirror child label \"messages\" rather than a direct pattern match, so a future rename of the enum case payload label would break the trigger without changing the underlying defect.",
+        "Adding a public enum case is source-breaking for any exhaustive switch over InstructionsType; the passing builds on both revisions indicate no in-repo switch is affected, but downstream consumers could be.",
+        "The `try?` chain means an overly permissive InputMessage decoder could absorb payloads that previously reached the error branch; this is only observable behaviorally, not from the diff.",
+        "case.json issue_evidence is null; issue text was read from the embedded source_candidate rather than an independently fetched issue record."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T23:01:07.550326+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "8c3b2bbf18f5e6a1f1cec153b72ca618e397496e1a6032a096df1e5504832997",
+      "response_sha256": "77fc07febce0397f0003c5f348b115b7354a646e26476bd3b98d8c870f6a4874",
+      "response_id": "msg_f85a353a94db4f53b5484fd30c4e25d8",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6058424985737977,
+        "input_tokens": 28671,
+        "output_tokens": 604
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "jamesrochabrun/swiftopenai#187",
+      "rationale": "Issue #187 reports the exact runtime failure string emitted by the buggy revision: dataCorrupted at codingPath 'instructions' with debugDescription \"Expected String or [String] for instructions\", triggered when the Responses API returns instructions as an array of message objects for reusable prompts. The minimized production patch touches only ResponseModel.swift's InstructionsType.init(from:), adding a third decode branch for [InputMessage], the corresponding enum case, and the matching doc/debugDescription text; the pre-existing .string and .array branches are attempted first and unchanged, so prior behavior is preserved. No refactor, config, or unrelated code is present, and the test-side changes are excluded from the minimized production patch. InputMessage is referenced but not defined in the diff and build.both_versions passed, confirming the type pre-exists and the defect is decoder coverage rather than a missing model. The curator-adjusted trigger reproduces the same defect without depending on the new .messages case at compile time: it decodes the payload copied from the issue body, reports XCTFail carrying the original decode error, and identifies the resulting case via Mirror label plus an [InputMessage] cast, so it compiles on the buggy revision. Strict evidence (original and post-minimization) shows a unique declared selector failing alone on buggy, deterministic fingerprints across 3 repetitions, buggy full-suite failures limited to the reproduced trigger, and an all-green fixed suite. active_same_project_root_causes is empty and the root cause matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests-compatible.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_reduction.rationale"
+      ],
+      "risks": [
+        "Adding a public enum case to InstructionsType is source-breaking for any exhaustive switch in downstream code; only the in-repo build was verified.",
+        "The compatible trigger identifies the decoded case by the reflected label string \"messages\" rather than a type-checked pattern match, so a future rename of the case would silently weaken the assertion.",
+        "The try? decode chain means an overly permissive InputMessage decoder could absorb payloads that previously reached the error branch; that behavior is not directly asserted.",
+        "The case.json issue_evidence field is null; issue text was read from the embedded source_candidate payload rather than an independently captured issue record."
+      ]
+    }
+  ]
+}

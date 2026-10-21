@@ -1,0 +1,13 @@
+diff --git a/Sources/OrderedCollections/OrderedSet/OrderedSet+ReserveCapacity.swift b/Sources/OrderedCollections/OrderedSet/OrderedSet+ReserveCapacity.swift
+index b7bf0123c29529c571548bb397f0c62f2e548a51..373a88a4bcabc843ccaaaf05728e9f1118592636 100644
+--- a/Sources/OrderedCollections/OrderedSet/OrderedSet+ReserveCapacity.swift
++++ b/Sources/OrderedCollections/OrderedSet/OrderedSet+ReserveCapacity.swift
+@@ -96,7 +96,7 @@ extension OrderedSet {
+     _ minimumCapacity: Int,
+     persistent: Bool
+   ) {
+-    precondition(minimumCapacity >= 0, "Minimum capacity cannot be negative")
++    let minimumCapacity = Swift.max(minimumCapacity, 0)
+     defer { _checkInvariants() }
+ 
+     _elements.reserveCapacity(minimumCapacity)

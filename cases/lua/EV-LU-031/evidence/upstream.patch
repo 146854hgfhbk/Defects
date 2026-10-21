@@ -1,0 +1,181 @@
+diff --git a/spec/analyze_spec.lua b/spec/analyze_spec.lua
+index 02f818a8c32e24057513ccfb2e4c67a38170a2c4..adf4735d745421ac0889a8171a64cb551f430a6b 100644
+--- a/spec/analyze_spec.lua
++++ b/spec/analyze_spec.lua
+@@ -5,10 +5,6 @@ local utils = require "luacheck.utils"
+ 
+ local ChState = utils.class()
+ 
+-function ChState.syntax_error()
+-   error({})
+-end
+-
+ function ChState.__init() end
+ function ChState.warn_redefined() end
+ function ChState.warn_global() end
+diff --git a/spec/linearize_spec.lua b/spec/linearize_spec.lua
+index 3cd9b1c11d1087e0fb88322b03ff1b4638f9c925..d5665d92284767d311c96e15778d35cfb6a6eb0a 100644
+--- a/spec/linearize_spec.lua
++++ b/spec/linearize_spec.lua
+@@ -4,10 +4,6 @@ local utils = require "luacheck.utils"
+ 
+ local ChState = utils.class()
+ 
+-function ChState.syntax_error()
+-   error({})
+-end
+-
+ function ChState.__init() end
+ function ChState.warn_redefined() end
+ function ChState.warn_global() end
+@@ -24,10 +20,8 @@ end
+ local function get_line(src)
+    local ok, res = pcall(get_line_, src)
+ 
+-   if ok then
++   if ok or type(res) == "table" then
+       return res
+-   elseif type(res) == "table" then
+-      return nil
+    else
+       error(res, 0)
+    end
+@@ -92,6 +86,32 @@ local function get_value_info_as_string(src)
+ end
+ 
+ describe("linearize", function()
++   describe("when handling post-parse syntax errors", function()
++      it("detects gotos without labels", function()
++         assert.same({line = 1, column = 1, offset = 1, msg = "no visible label 'fail'"},
++            get_line("goto fail"))
++      end)
++
++      it("detects break outside loops", function()
++         assert.same({line = 1, column = 1, offset = 1, msg = "'break' is not inside a loop"},
++            get_line("break"))
++         assert.same({line = 1, column = 28, offset = 28, msg = "'break' is not inside a loop"},
++            get_line("while true do function f() break end end"))
++      end)
++
++      it("detects duplicate labels", function()
++         assert.same({line = 2, column = 1, offset = 10, msg = "label 'fail' already defined on line 1"},
++            get_line("::fail::\n::fail::"))
++      end)
++
++      it("detects varargs outside vararg functions", function()
++         assert.same({line = 1, column = 21, offset = 21, msg = "cannot use '...' outside a vararg function"},
++            get_line("function f() return ... end"))
++         assert.same({line = 1, column = 42, offset = 42, msg = "cannot use '...' outside a vararg function"},
++            get_line("function f(...) return function() return ... end end"))
++      end)
++   end)
++
+    describe("when linearizing flow", function()
+       it("linearizes empty source correctly", function()
+          assert.equal("1: Local ... (2..1)", get_line_as_string(""))
+diff --git a/src/luacheck/check.lua b/src/luacheck/check.lua
+index efdc1a3eaaa2f370f712a2e839736eaf6de2b874..6800338537e1641d75d335ea6baccfdd7ca17fbf 100644
+--- a/src/luacheck/check.lua
++++ b/src/luacheck/check.lua
+@@ -16,10 +16,6 @@ function ChState:__init()
+    self.warnings = {}
+ end
+ 
+-function ChState.syntax_error()
+-   error({})
+-end
+-
+ function ChState:warn(warning)
+    table.insert(self.warnings, warning)
+ end
+@@ -160,7 +156,7 @@ end
+ 
+ --- Checks source.
+ -- Returns an array of warnings.
+--- Raises {} on syntax errors.
++-- Raises {line = line, column = column, offset = offset, msg = msg} on syntax errors.
+ local function check(src)
+    local ast, comments, code_lines = parse(src)
+    local chstate = ChState()
+diff --git a/src/luacheck/linearize.lua b/src/luacheck/linearize.lua
+index 6d6127b5129f706c0ad11eb5249072273fb7b21e..46e4f03959b12bfa73663b8f2b74431d100e1862 100644
+--- a/src/luacheck/linearize.lua
++++ b/src/luacheck/linearize.lua
+@@ -1,3 +1,4 @@
++local lexer = require "luacheck.lexer"
+ local utils = require "luacheck.utils"
+ 
+ local pseudo_labels = utils.array_to_set({"do", "else", "break", "end", "return"})
+@@ -50,10 +51,11 @@ local function new_label(line, name, location)
+    }
+ end
+ 
+-local function new_goto(name, jump)
++local function new_goto(name, jump, location)
+    return {
+       name = name,
+-      jump = jump
++      jump = jump,
++      location = location
+    }
+ end
+ 
+@@ -134,7 +136,9 @@ function LinState:leave_scope()
+          label.used = true
+       else
+          if not prev_scope or prev_scope.line ~= self.lines.top then
+-            self.chstate:syntax_error()
++            local err_msg = (goto_.name == "break" and "'break' is not inside a loop" or
++               "no visible label '%s'"):format(goto_.name)
++            lexer.syntax_error(goto_.location.line, goto_.location.column, goto_.location.offset, err_msg)
+          end
+ 
+          table.insert(prev_scope.gotos, goto_)
+@@ -201,7 +205,8 @@ end
+ function LinState:register_label(name, location)
+    if self.scopes.top.labels[name] then
+       assert(not pseudo_labels[name])
+-      self.chstate:syntax_error()
++      lexer.syntax_error(location.line, location.column, location.offset,
++         ("label '%s' already defined on line %d"):format(name, self.scopes.top.labels[name].location.line))
+    end
+ 
+    self.scopes.top.labels[name] = new_label(self.lines.top, name, location)
+@@ -228,10 +233,10 @@ function LinState:emit(item)
+    self.lines.top.items:push(item)
+ end
+ 
+-function LinState:emit_goto(name, is_conditional)
++function LinState:emit_goto(name, is_conditional, location)
+    local jump = new_jump_item(is_conditional)
+    self:emit(jump)
+-   table.insert(self.scopes.top.gotos, new_goto(name, jump))
++   table.insert(self.scopes.top.gotos, new_goto(name, jump, location))
+ end
+ 
+ function LinState:emit_noop(location, loop_end)
+@@ -356,11 +361,11 @@ end
+ 
+ function LinState:emit_stmt_Goto(node)
+    self:emit_noop(node.location)
+-   self:emit_goto(node[1])
++   self:emit_goto(node[1], false, node.location)
+ end
+ 
+-function LinState:emit_stmt_Break(_)
+-   self:emit_goto("break")
++function LinState:emit_stmt_Break(node)
++   self:emit_goto("break", false, node.location)
+ end
+ 
+ function LinState:emit_stmt_Return(node)
+@@ -484,7 +489,8 @@ function LinState:scan_expr_Dots(item, node)
+    local dots = self:check_var(node, "access")
+ 
+    if not dots or dots.line ~= self.lines.top then
+-      self.chstate:syntax_error()
++      lexer.syntax_error(node.location.line, node.location.column, node.location.offset,
++         "cannot use '...' outside a vararg function")
+    end
+ 
+    self:mark_access(item, node)

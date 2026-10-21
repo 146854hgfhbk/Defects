@@ -1,0 +1,102 @@
+{
+  "candidate_sha": "339ca2465268c8ece7858cd5a40d9b82e2edc752",
+  "project": "SciML/LinearSolve.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1083,
+      "url": "https://github.com/SciML/LinearSolve.jl/pull/1083",
+      "state": "closed",
+      "title": "LinearSolve 5.0: lightweight solutions — stop populating LinearSolution.cache in solve! returns",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "**Note: This PR should be ignored until reviewed by @ChrisRackauckas.**\n\n**Do not merge/release before the OrdinaryDiffEq migration PR (SciML/OrdinaryDiffEq.jl#3875)** that moves OrdinaryDiffEq off the `linres.cache` pattern (link to be added once that PR is open — as of this writing no open PR on SciML/OrdinaryDiffEq.jl matches; searched open PRs by ChrisRackauckas-Claude and full-text `linres.cache`).\n\n## What this PR does\n\nLinearSolve 5.0: `solve!(cache)` (and `solve(prob, ...)`) now return a **lightweight `LinearSolution`** whose `cache` field is always `nothing`. The `LinearCache` is no longer captured in the returned solution object.\n\nThe `LinearSolution` type itself lives in SciMLBase and keeps its `cache::C` field; this PR simply stops populating it (`C === Nothing` everywhere). All 118 `SciMLBase.build_linear_solution(alg, u, resid, cache; ...)` call sites across `src/`, `ext/`, and `lib/` now pass `nothing` in the cache slot, plus the one direct `SciMLBase.LinearSolution{...}` construction in the HYPRE extension.\n\nSemantics: **anyone who needs the cache after `solve!(cache)` already holds it** — that is the object they called `solve!` on.\n\n## Why\n\nThe solution wrapper returned from the warm (`init` once, `solve!` repeatedly) path should be free. Carrying the `LinearCache` in the wrapper makes the returned object heavier and keeps a reference chain from every returned solution to all solver internals (factorizations, Krylov workspaces, verbosity state), pinning them for GC as long as any solution object is alive.\n\n## Measured allocation numbers (warm path)\n\nHarness: 51×51 dense `Matrix{Float64}`, matrix RHS (51×51), `LUFactorization`, `alias = LinearAliasSpecifier(alias_A = true, alias_b = true)`, warm refactorize+solve loop (`copyto!(Awork, A); cache.A = Awork; solve!(cache)`), measured with `@allocated` over 100–1000 iterations and attributed with `Profile.Allocs` at `sample_rate = 1`.\n\n| Scenario (Julia 1.11.9 / 1.12.6) | main (`c4ebafea`, v4.3.0) | this"
+    },
+    {
+      "number": 1102,
+      "url": "https://github.com/SciML/LinearSolve.jl/pull/1102",
+      "state": "closed",
+      "title": "Add SupernodalLUFactorization (pure-Julia Schenk–Gärtner supernodal LU via PurePardiso.jl)",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "⚠️ Draft — please ignore until reviewed by @ChrisRackauckas.\n\n**Prerequisite: the backing package is not yet registered** (and pending a possible rename away from `PurePardiso` — the algorithm struct name here is already trademark-free). CI will fail on dependency resolution until registration; everything below was verified locally with the package `dev`'d.\n\n## What\n\nNew sparse LU algorithm `SupernodalLUFactorization`, backed by [PurePardiso.jl](https://github.com/SciML/PurePardiso.jl) as a hard dependency (same pattern as PureKLU): the supernodal left–right-looking LU method of **O. Schenk & K. Gärtner (FGCS 20(3) 2004; ETNA 23 2006)** — supernodal BLAS-3 LU on the symmetrized pattern, restricted-block static pivoting with iterative-refinement recovery, MC64-style matching + scaling. Pure Julia, no binary dependencies, generic over element types (BigFloat verified to 1e-78 residual through the LinearSolve interface).\n\n## Why\n\nIt is the strongest solver for \"more structured\" (PDE-mesh-like) sparse systems: fastest single-threaded full factorization on every mesh-like problem in PurePardiso's benchmark suite — ahead of UMFPACK (0.5–0.8×) and KLU (up to 50× on 3D Poisson), and ahead of MKL PARDISO at 1 thread. The cache-reuse path here maps to PurePardiso's allocation-free numeric refactorization (measured 176 bytes per refactor+solve through the full LinearSolve interface).\n\n## Semantics\n\n- `reuse_symbolic`/`check_pattern` mirror the KLU/UMFPACK algs; pattern change re-analyzes.\n- Static pivoting never aborts, so numerically singular systems would otherwise return finite garbage with `Success` — a residual check on the (rare) perturbed-pivot path surfaces them as `ReturnCode.Infeasible`.\n- `using RecursiveFactorization` (e.g. for `RFLUFactorization`) automatically activates PurePardiso's speed extension (RecursiveFactorization + TriangularSolve panel kernels, −8–18 % refactorization) — no wiring needed here, the extension triggers on package presence.\n- `threaded=tru"
+    },
+    {
+      "number": 1114,
+      "url": "https://github.com/SciML/LinearSolve.jl/pull/1114",
+      "state": "closed",
+      "title": "SupernodalLU: sparse block-cache storage, AllocCheck/JET coverage, threaded race fix",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Please ignore until reviewed by @ChrisRackauckas.\n\nFour changes to the vendored `SupernodalLU` solver, found by auditing it against PureKLU's optimization notes and by writing the QA coverage.\n\n### 1. Block caches are stored sparsely\n\nOnly blocks at or above `dense_threshold` get a LinearSolve cache; everything narrower uses the built-in kernel. That is nearly everything — measured on this branch:\n\n| matrix | supernodes | cached | median supernode width |\n|---|---|---|---|\n| poisson2d_256 | 5614 | 32 (0.57 %) | 5 |\n| poisson3d_28 | 2532 | 33 (1.3 %) | 1 |\n\n`bcaches` now holds only the blocks that have one, with `bcacheidx[s]` indexing into it (`0` = built-in kernel), instead of a 99 %-empty full-length vector with a nullability check on every lookup.\n\nCaching *every* supernode was considered and rejected on the numbers: a cache costs 1476 B even for a 4×4 block (measured), so poisson2d_256 alone would spend ~8 MB to make small blocks slower than the built-in kernel — the same size effect that motivates `PANEL_BLAS_CUTOFF`.\n\n**The element type stays `Any`, deliberately.** A `LinearCache` carries 13 type parameters, and putting it in `SupernodalLUFactor`'s parameters pushes the *sparse default solver's* cacheval — which holds a `SupernodalLUFactor` in one of its 30 slots — past Julia's type-complexity limit. Inference then widens it and `@inferred init(prob, nothing)` fails for sparse matrices (`test/Core/default_algs.jl`), which is the property #1109 depends on. I tried a concrete narrow cache type too; it does not help, because the parameter count is the problem. Keeping caches out of the type leaves `SupernodalLUFactor{Tv,Ti}` fully concrete, at the cost of one runtime dispatch per *cached* supernode per factorization — tens of calls against hundreds of ms of GEMM. The solve path never touches the field.\n\n### 2. A threaded data race (found by the new JET test)\n\nThe per-worker perturbation accumulator shared one variable with the serial phase, so Julia boxed it *and"
+    },
+    {
+      "number": 1134,
+      "url": "https://github.com/SciML/LinearSolve.jl/pull/1134",
+      "state": "closed",
+      "title": "Fix two JET runtime dispatches that only show up on Julia LTS",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "**Ignore this PR until it has been reviewed by @ChrisRackauckas.**\n\n`GROUP=QA` fails on Julia LTS (1.10.11) while passing on 1.12.4. Two of the JET\nassertions in `test/qa/jet.jl` report runtime dispatch on 1.10 only. Both are\nreal inference problems in main-package code that 1.12 optimizes away.\n\n## Reproduction (pristine `main`, b6d3f824)\n\n```\nGROUP=QA ~/.juliaup/bin/julia +1.10 --project=. -e 'using Pkg; Pkg.test()'\n```\n\n```\nJET Tests for Sparse Factorizations: JET-test failed at test/qa/jet.jl:136\n  Expression: JET.@test_opt solve(prob_sparse, KLUFactorization())\n  ... kwcall(::NamedTuple{…}, ::typeof(KLU._extract!), klu::...) @ src/KLU/klu.jl:246\n  ... pairs(nt::NamedTuple) -> eltype -> _compute_eltype -> promote_typejoin -> typejoin\n      runtime dispatch detected: Base.UnionAll(%403::Any, %405::Any)::Any\n\nJET Tests for SupernodalLU: JET-test failed at test/qa/jet.jl:277\n  Expression: JET.@test_opt target_modules = (SNLU_MOD,) SNLU_MOD.solve!(x_snlu, F_snlu, b_snlu)\n  ... solve!(...; refine::Symbol) @ src/SupernodalLU/solve.jl:280\n      runtime dispatch detected: LinearSolve.SupernodalLU.Int(refine::Symbol)\n\nTest Summary: | Pass  Fail  Broken  Total   Time\nJET Tests     |   19     2      21     42  48.9s\n```\n\n## Bisect\n\n* SupernodalLU: the `Int(refine::Symbol)` dispatch has been present since\n  https://github.com/SciML/LinearSolve.jl/commit/6df384dc (#1102, the commit that\n  added `src/SupernodalLU/`) — verified by running the current assertion against\n  each of 6df384dc / 9e211947 / cbfd6b7c / ae3cf086 on 1.10, all report it. The\n  *test* that exposes it was added by\n  https://github.com/SciML/LinearSolve.jl/commit/ae3cf086 (#1114), which was\n  verified on 1.12 only.\n* KLU: `git bisect` over `36c29c1c..b6d3f824` on 1.10 (running each commit's own\n  `test/qa/jet.jl`) → first bad commit\n  https://github.com/SciML/LinearSolve.jl/commit/45944595 (#1083), which dropped\n  the `broken = true` flag from `JET.@test_opt solve(prob_sparse, KLUFactorization())`\n  (\"The KL"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 1134,
+      "pull_request_repository": "SciML/LinearSolve.jl",
+      "pull_request_url": "https://github.com/SciML/LinearSolve.jl/pull/1134",
+      "fix_commit": "339ca2465268c8ece7858cd5a40d9b82e2edc752",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix two JET runtime dispatches that only show up on Julia LTS (#1134)\n\nBoth are real inference problems in main-package code that Julia 1.12\noptimizes away and 1.10 does not, so `GROUP=QA` fails only on LTS.\n\nSupernodalLU `solve!` resolved `refine` by value (`refine === :auto ?\n_auto_refine(F) : Int(refine)`), which leaves `Int(::Symbol)` reachable:\na runtime dispatch on 1.10, and a `MethodError` rather than a usable\nmessage for any symbol other than `:auto`. `_refine_steps` dispatches on\nthe argument type instead and reports what `refine` accepts.\n\nKLU `getproperty` built the `_extract!` keyword call from a non-constant\nsymbol (`_extract!(klu; NamedTuple{(s,)}((out,))...)`), and took the\nextraction sizes back through the same `getproperty` (`klu.lnz`,\n`klu.n`), a self-recursive call inference abandons. The resulting\nkeyword `NamedTuple` is non-concrete, so `pairs(::NamedTuple)` computes\nits eltype through `typejoin` at runtime. Each branch now names its\nkeyword literally and reads the sizes from the new `_numeric_struct` /\n`_symbolic_struct` helpers, which also drop the duplicated null checks.\n\nCo-authored-by: ChrisRackauckas-Claude <accounts@chrisrackauckas.com>",
+    "commit_issue_refs": [
+      1134
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1134,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Fix two JET runtime dispatches that only show up on Julia LTS",
+    "pull_request_issue_refs": [
+      1083,
+      1102,
+      1114
+    ],
+    "pull_request_cross_repository_refs": [],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [],
+  "pull_request_record": {
+    "number": 1134,
+    "repository": "SciML/LinearSolve.jl",
+    "url": "https://github.com/SciML/LinearSolve.jl/pull/1134",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-08-01T20:23:31Z",
+    "merge_commit_sha": "339ca2465268c8ece7858cd5a40d9b82e2edc752",
+    "title": "Fix two JET runtime dispatches that only show up on Julia LTS",
+    "body_excerpt": "**Ignore this PR until it has been reviewed by @ChrisRackauckas.**\n\n`GROUP=QA` fails on Julia LTS (1.10.11) while passing on 1.12.4. Two of the JET\nassertions in `test/qa/jet.jl` report runtime dispatch on 1.10 only. Both are\nreal inference problems in main-package code that 1.12 optimizes away.\n\n## Reproduction (pristine `main`, b6d3f824)\n\n```\nGROUP=QA ~/.juliaup/bin/julia +1.10 --project=. -e 'using Pkg; Pkg.test()'\n```\n\n```\nJET Tests for Sparse Factorizations: JET-test failed at test/qa/jet.jl:136\n  Expression: JET.@test_opt solve(prob_sparse, KLUFactorization())\n  ... kwcall(::NamedTuple{…}, ::typeof(KLU._extract!), klu::...) @ src/KLU/klu.jl:246\n  ... pairs(nt::NamedTuple) -> eltype -> _compute_eltype -> promote_typejoin -> typejoin\n      runtime dispatch detected: Base.UnionAll(%403::Any, %405::Any)::Any\n\nJET Tests for SupernodalLU: JET-test failed at test/qa/jet.jl:277\n  Expression: JET.@test_opt target_modules = (SNLU_MOD,) SNLU_MOD.solve!(x_snlu, F_snlu, b_snlu)\n  ... solve!(...; refine::Symbol) @ src/SupernodalLU/solve.jl:280\n      runtime dispatch detected: LinearSolve.SupernodalLU.Int(refine::Symbol)\n\nTest Summary: | Pass  Fail  Broken  Total   Time\nJET Tests     |   19     2      21     42  48.9s\n```\n\n## Bisect\n\n* SupernodalLU: the `Int(refine::Symbol)` dispatch has been present since\n  https://github.com/SciML/LinearSolve.jl/commit/6df384dc (#1102, the commit that\n  added `src/SupernodalLU/`) — verified by running the current assertion against\n  each of 6df384dc / 9e211947 / cbfd6b7c / ae3cf086 on 1.10, all report it. The\n  *test* that exposes it was added by\n  https://github.com/SciML/LinearSolve.jl/commit/ae3cf086 (#1114), which was\n  verified on 1.12 only.\n* KLU: `git bisect` over `36c29c1c..b6d3f824` on 1.10 (running each commit's own\n  `test/qa/jet.jl`) → first bad commit\n  https://github.com/SciML/LinearSolve.jl/commit/45944595 (#1083), which dropped\n  the `broken = true` flag from `JET.@test_opt solve(prob_sparse, KLUFactorization())`\n  (\"The KL",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

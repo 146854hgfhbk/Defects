@@ -1,0 +1,58 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 6d9f0e50d1a1d06505e6a8d9a2951f919ce37c1c..4a1e2d80fc402c8eedc6013d3f773683b9648ec7 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -5,6 +5,7 @@
+     - `copy`: copies an instance without recalculating the canonical values of the keys.
+     - `toMap`: creates a `Map<K,V>` (with the original key values).
+     - `toMapOfCanonicalKeys`: creates a `Map<C,V>` (with the canonicalized keys).
++- Fixes bugs in `ListSlice.slice` and `ListExtensions.slice`.
+ - lints: ^2.0.1
+ 
+ ## 1.17.2
+diff --git a/lib/src/list_extensions.dart b/lib/src/list_extensions.dart
+index 5ab2c8bca71e691ff28c4f266eebb1355cee9376..40fa8af6ca4972d601b2c696332c316d6e1d9441 100644
+--- a/lib/src/list_extensions.dart
++++ b/lib/src/list_extensions.dart
+@@ -241,7 +241,7 @@ extension ListExtensions<E> on List<E> {
+   ListSlice<E> slice(int start, [int? end]) {
+     end = RangeError.checkValidRange(start, end, length);
+     var self = this;
+-    if (self is ListSlice) return self.slice(start, end);
++    if (self is ListSlice<E>) return self.slice(start, end);
+     return ListSlice<E>(this, start, end);
+   }
+ 
+@@ -404,7 +404,7 @@ class ListSlice<E> extends ListBase<E> {
+   /// ```
+   ListSlice<E> slice(int start, [int? end]) {
+     end = RangeError.checkValidRange(start, end, length);
+-    return ListSlice._(_initialSize, source, start + start, end - start);
++    return ListSlice._(_initialSize, source, this.start + start, end - start);
+   }
+ 
+   @override
+diff --git a/test/extensions_test.dart b/test/extensions_test.dart
+index 31bb458cae1a8cb90185e4c4cd55059b3a8de198..23bc321161128303217e73bdba1390f486b4c735 100644
+--- a/test/extensions_test.dart
++++ b/test/extensions_test.dart
+@@ -1207,6 +1207,19 @@ void main() {
+       test('refuses length 0', () {
+         expect(() => iterable([1]).slices(0), throwsRangeError);
+       });
++      test('regression #286, bug in slice', () {
++        var l1 = <int>[1, 2, 3, 4, 5, 6];
++        List<int> l2 = l1.slice(1, 5); // (2..5)
++        // This call would stack-overflow due to a lacking type promotion
++        // which caused the extension method to keep calling itself,
++        // instead of switching to the instance method on `ListSlice`.
++        //
++        // If successful, it would use the `2` argument as offset, instead
++        // of the `1` offset from the `slice` call above.
++        var l3 = l2.slice(2, 4); // (4..5)
++        expect(l3, [4, 5]);
++        expect(l3.toList(), [4, 5]);
++      });
+     });
+   });
+ 

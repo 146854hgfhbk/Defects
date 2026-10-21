@@ -1,0 +1,13 @@
+diff --git a/lib/src/cancelable_operation.dart b/lib/src/cancelable_operation.dart
+index c321078..6e6ef17 100644
+--- a/lib/src/cancelable_operation.dart
++++ b/lib/src/cancelable_operation.dart
+@@ -101,7 +101,7 @@ class CancelableOperation<T> {
+ 
+     valueOrCancellation().then((T? result) {
+       if (!completer.isCanceled) {
+-        if (isCompleted) {
++        if (isCompleted && !isCanceled) {
+           assert(result is T);
+           completer.complete(Future.sync(() => onValue(result as T)));
+         } else if (onCancel != null) {

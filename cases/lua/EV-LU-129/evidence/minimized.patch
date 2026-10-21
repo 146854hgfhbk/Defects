@@ -1,0 +1,19 @@
+diff --git a/lua/pl/pretty.lua b/lua/pl/pretty.lua
+index 09add30e2452935d9d42bcc15c989aedbb51bf2b..9f3fb9d074c8e32aa34b404d42dfa423de2062de 100644
+--- a/lua/pl/pretty.lua
++++ b/lua/pl/pretty.lua
+@@ -284,10 +284,11 @@ function pretty.write (tbl,space,not_clever)
+                end
+             end
+             table.sort(ordered_keys, function (a, b)
+-                if type(a) == type(b)  and type(a) == 'string' then
+-                    return a < b
++                if type(a) == type(b) then
++                    return tostring(a) < tostring(b)
++                else
++                    return type(a) < type(b)
+                 end
+-                return type(a) == 'boolean' or (type(b) ~= 'boolean' and type(a) == 'table')
+             end)
+             local function write_entry (key, val)
+                 local tkey = type(key)

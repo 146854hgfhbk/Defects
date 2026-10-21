@@ -1,0 +1,18 @@
+diff --git a/Sources/ArgumentParser/Parsing/CommandParser.swift b/Sources/ArgumentParser/Parsing/CommandParser.swift
+index b3296d675301b2b3a1adc7c70b914f9fb972806f..96a4592c25b49d004a99f0bcf6432c14b6591a53 100644
+--- a/Sources/ArgumentParser/Parsing/CommandParser.swift
++++ b/Sources/ArgumentParser/Parsing/CommandParser.swift
+@@ -38,7 +38,12 @@ struct CommandParser {
+   }
+ 
+   var commandStack: [ParsableCommand.Type] {
+-    let result = decodedArguments.compactMap { $0.commandType }
++    // Filter to only include types that exist in the command tree.
++    // This prevents @OptionGroup types that happen to conform to
++    // ParsableCommand from being included in the command stack (#578).
++    let result = decodedArguments
++      .compactMap { $0.commandType }
++      .filter { !commandTree.path(to: $0).isEmpty }
+     if currentNode.element == result.last {
+       return result
+     } else {

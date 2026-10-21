@@ -1,0 +1,741 @@
+diff --git a/example/treeview/empty.dart b/example/treeview/empty.dart
+index eadf44040f863057dcb9dee4f33107528dca72ef..cd2256a34e3a482c738bf9b5a462c7299862b09a 100644
+--- a/example/treeview/empty.dart
++++ b/example/treeview/empty.dart
+@@ -12,7 +12,12 @@ void main() {
+       'empty_list': <String>[],
+     },
+     theme: const AnsiTreeViewTheme(
++      alignment: AnsiTextAlignment.center,
++      showListItemIndex: true,
+       headerTheme: AnsiTreeHeaderTheme(showHash: false),
++      valueTheme: AnsiTreeNodeValueTheme(
++        alignment: AnsiTextAlignment.left,
++      ),
+     ),
+   );
+ }
+diff --git a/lib/src/widgets/tree_view/theme.dart b/lib/src/widgets/tree_view/theme.dart
+index cad2a3635bdac095a75e3272c1e6e589c35de161..ed34272a68ba9b712d328e9a64458f13eb5c2fb5 100644
+--- a/lib/src/widgets/tree_view/theme.dart
++++ b/lib/src/widgets/tree_view/theme.dart
+@@ -73,10 +73,10 @@ abstract class AnsiTreeViewTheme {
+       ),
+       valueTheme: const AnsiTreeNodeValueTheme(
+         textStyle: AnsiTextStyle(italic: true),
+-        alignment: AnsiTextAlignment.center,
++        alignment: AnsiTextAlignment.left,
+         color: AnsiColor.grey69,
+         wrapText: true,
+-        wrapOptions: WrapOptions(lineLength: 120),
++        wrapOptions: WrapOptions(lineLength: 100),
+       ),
+       headerTheme: AnsiTreeHeaderTheme(
+         textTheme: AnsiTextTheme(
+diff --git a/lib/src/widgets/tree_view/tree_view.dart b/lib/src/widgets/tree_view/tree_view.dart
+index 345997153c45974b165e3d39c68fef76950bc5b2..6414f39237ec56df6a9299d76178b36cb7f0723d 100644
+--- a/lib/src/widgets/tree_view/tree_view.dart
++++ b/lib/src/widgets/tree_view/tree_view.dart
+@@ -247,8 +247,8 @@ class AnsiTreeView extends AnsiWidget {
+       final bool isLastValue = i == keys.length - 1;
+       final bool isLast = isLastNode ?? isLastValue;
+       final int tabSize = switch (theme.valueTheme.alignment ?? theme.alignment) {
+-        AnsiTextAlignment.left => 1 + _lineLength,
+-        AnsiTextAlignment.center => 1 + _lineLength + key.length ~/ 2,
++        AnsiTextAlignment.left => _lineLength + 1,
++        AnsiTextAlignment.center => _lineLength + 1 + key.length ~/ 2,
+         AnsiTextAlignment.right => _lineLength + key.length
+       };
+ 
+@@ -261,6 +261,8 @@ class AnsiTreeView extends AnsiWidget {
+ 
+       switch (TreeNodeType.getType(value)) {
+         case TreeNodeType.iterable:
++          final String extraTab =
++              (theme.valueTheme.alignment ?? theme.alignment) != AnsiTextAlignment.center ? ' ' : '';
+           buffer
+             ..write(prefix)
+             ..write(anchor)
+@@ -270,7 +272,7 @@ class AnsiTreeView extends AnsiWidget {
+             ..write(_parseTreeList(
+               value.toList(growable: false),
+               key,
+-              isLast ? '$prefix$tab' : '$prefix$_verticalLine$tab',
++              isLast ? '$prefix$tab$extraTab' : '$prefix$_verticalLine$tab',
+             ));
+           break;
+ 
+diff --git a/test/widgets/tree_view/alignment_test.dart b/test/widgets/tree_view/alignment_test.dart
+index f7075e465045209f47303bab3efedeecdbb30acf..c87b42b8e0d3bcb9f3b735f3d881c0c05be84391 100644
+--- a/test/widgets/tree_view/alignment_test.dart
++++ b/test/widgets/tree_view/alignment_test.dart
+@@ -18,17 +18,19 @@ void main() {
+         for (final AnsiTextAlignment? valueNodeAlignment in <AnsiTextAlignment?>[null, ...AnsiTextAlignment.values]) {
+           group('valueNodeAlignment: ${valueNodeAlignment?.name}', () {
+             test('${treeAlignment.name}-${valueNodeAlignment?.name}', () {
+-              expect(
+-                AnsiTreeView(
+-                  data,
+-                  theme: AnsiTreeViewTheme(
+-                    alignment: treeAlignment,
+-                    headerTheme: const AnsiTreeHeaderTheme(showHash: false),
+-                    valueTheme: AnsiTreeNodeValueTheme(
+-                      alignment: valueNodeAlignment,
+-                    ),
++              final AnsiTreeView tree = AnsiTreeView(
++                data,
++                theme: AnsiTreeViewTheme(
++                  alignment: treeAlignment,
++                  headerTheme: const AnsiTreeHeaderTheme(showHash: false),
++                  keyTheme: const AnsiTreeNodeKeyTheme(),
++                  valueTheme: AnsiTreeNodeValueTheme(
++                    alignment: valueNodeAlignment,
+                   ),
+-                ).formattedText,
++                ),
++              );
++              expect(
++                tree.formattedText,
+                 _mocks[treeAlignment]?[valueNodeAlignment],
+               );
+             });
+@@ -61,194 +63,206 @@ const Map<AnsiTextAlignment, Map<AnsiTextAlignment?, String>> _mocks =
+   },
+ };
+ 
+-const String _leftTreeLeftValueMock = '''┌─────────────────────┐
++const String _leftTreeLeftValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ ├─────────────────────┘
+-├── [1mmap[22m
+-│   ├── [1mid[22m: 123
+-│   └── [1musername[22m: AnsiX
+-├── [1mempty_map[22m
++├── map
++│   ├── id: 123
++│   └── username: AnsiX
++├── empty_map
+ │   └── (empty)
+-├── [1mlist[22m
++├── list
+ │   ├── This
+ │   ├── is
+ │   └── AnsiX
+-└── [1mempty_list[22m
+-   └── (empty)
++└── empty_list
++    └── (empty)
+ ''';
+ 
+-const String _leftTreeCenterValueMock = '''┌─────────────────────┐
++const String _leftTreeCenterValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ ├─────────────────────┘
+-├── [1mmap[22m
+-│    ├── [1mid[22m: 123
+-│    └── [1musername[22m: AnsiX
+-├── [1mempty_map[22m
++├── map
++│    ├── id: 123
++│    └── username: AnsiX
++├── empty_map
+ │       └── (empty)
+-├── [1mlist[22m
++├── list
+ │     ├── This
+ │     ├── is
+ │     └── AnsiX
+-└── [1mempty_list[22m
++└── empty_list
+         └── (empty)
+ ''';
+ 
+-const String _leftTreeRightValueMock = '''┌─────────────────────┐
++const String _leftTreeRightValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ ├─────────────────────┘
+-├── [1mmap[22m
+-│     ├── [1mid[22m: 123
+-│     └── [1musername[22m: AnsiX
+-├── [1mempty_map[22m
++├── map
++│     ├── id: 123
++│     └── username: AnsiX
++├── empty_map
+ │           └── (empty)
+-├── [1mlist[22m
++├── list
+ │      ├── This
+ │      ├── is
+ │      └── AnsiX
+-└── [1mempty_list[22m
+-            └── (empty)
++└── empty_list
++             └── (empty)
+ ''';
+ 
+-const String _leftTreeNullValueMock = '''┌─────────────────────┐
++const String _leftTreeNullValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ ├─────────────────────┘
+-├── [1mmap[22m
+-│   ├── [1mid[22m: 123
+-│   └── [1musername[22m: AnsiX
+-├── [1mempty_map[22m
++├── map
++│   ├── id: 123
++│   └── username: AnsiX
++├── empty_map
+ │   └── (empty)
+-├── [1mlist[22m
++├── list
+ │   ├── This
+ │   ├── is
+ │   └── AnsiX
+-└── [1mempty_list[22m
+-   └── (empty)
++└── empty_list
++    └── (empty)
+ ''';
+ 
+-const String _centerTreeLeftValueMock = '''┌─────────────────────┐
++const String _centerTreeLeftValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ └──────────┬──────────┘
+-           ├── [1mmap[22m
+-           │   ├── [1mid[22m: 123
+-           │   └── [1musername[22m: AnsiX
+-           ├── [1mempty_map[22m
++           ├── map
++           │   ├── id: 123
++           │   └── username: AnsiX
++           ├── empty_map
+            │   └── (empty)
+-           ├── [1mlist[22m
++           ├── list
+            │   ├── This
+            │   ├── is
+            │   └── AnsiX
+-           └── [1mempty_list[22m
+-              └── (empty)
++           └── empty_list
++               └── (empty)
+ ''';
+ 
+-const String _centerTreeCenterValueMock = '''┌─────────────────────┐
++const String _centerTreeCenterValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ └──────────┬──────────┘
+-           ├── [1mmap[22m
+-           │    ├── [1mid[22m: 123
+-           │    └── [1musername[22m: AnsiX
+-           ├── [1mempty_map[22m
++           ├── map
++           │    ├── id: 123
++           │    └── username: AnsiX
++           ├── empty_map
+            │       └── (empty)
+-           ├── [1mlist[22m
++           ├── list
+            │     ├── This
+            │     ├── is
+            │     └── AnsiX
+-           └── [1mempty_list[22m
++           └── empty_list
+                    └── (empty)
+ ''';
+ 
+-const String _centerTreeRightValueMock = '''┌─────────────────────┐
++const String _centerTreeRightValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ └──────────┬──────────┘
+-           ├── [1mmap[22m
+-           │     ├── [1mid[22m: 123
+-           │     └── [1musername[22m: AnsiX
+-           ├── [1mempty_map[22m
++           ├── map
++           │     ├── id: 123
++           │     └── username: AnsiX
++           ├── empty_map
+            │           └── (empty)
+-           ├── [1mlist[22m
++           ├── list
+            │      ├── This
+            │      ├── is
+            │      └── AnsiX
+-           └── [1mempty_list[22m
+-                       └── (empty)
++           └── empty_list
++                        └── (empty)
+ ''';
+ 
+-const String _centerTreeNullValueMock = '''┌─────────────────────┐
++const String _centerTreeNullValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ └──────────┬──────────┘
+-           ├── [1mmap[22m
+-           │    ├── [1mid[22m: 123
+-           │    └── [1musername[22m: AnsiX
+-           ├── [1mempty_map[22m
++           ├── map
++           │    ├── id: 123
++           │    └── username: AnsiX
++           ├── empty_map
+            │       └── (empty)
+-           ├── [1mlist[22m
++           ├── list
+            │     ├── This
+            │     ├── is
+            │     └── AnsiX
+-           └── [1mempty_list[22m
++           └── empty_list
+                    └── (empty)
+ ''';
+ 
+-const String _rightTreeLeftValueMock = '''┌─────────────────────┐
++const String _rightTreeLeftValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ └─────────────────────┤
+-                      ├── [1mmap[22m
+-                      │   ├── [1mid[22m: 123
+-                      │   └── [1musername[22m: AnsiX
+-                      ├── [1mempty_map[22m
++                      ├── map
++                      │   ├── id: 123
++                      │   └── username: AnsiX
++                      ├── empty_map
+                       │   └── (empty)
+-                      ├── [1mlist[22m
++                      ├── list
+                       │   ├── This
+                       │   ├── is
+                       │   └── AnsiX
+-                      └── [1mempty_list[22m
+-                         └── (empty)
++                      └── empty_list
++                          └── (empty)
+ ''';
+ 
+-const String _rightTreeCenterValueMock = '''┌─────────────────────┐
++const String _rightTreeCenterValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ └─────────────────────┤
+-                      ├── [1mmap[22m
+-                      │    ├── [1mid[22m: 123
+-                      │    └── [1musername[22m: AnsiX
+-                      ├── [1mempty_map[22m
++                      ├── map
++                      │    ├── id: 123
++                      │    └── username: AnsiX
++                      ├── empty_map
+                       │       └── (empty)
+-                      ├── [1mlist[22m
++                      ├── list
+                       │     ├── This
+                       │     ├── is
+                       │     └── AnsiX
+-                      └── [1mempty_list[22m
++                      └── empty_list
+                               └── (empty)
+ ''';
+ 
+-const String _rightTreeRightValueMock = '''┌─────────────────────┐
++const String _rightTreeRightValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ └─────────────────────┤
+-                      ├── [1mmap[22m
+-                      │     ├── [1mid[22m: 123
+-                      │     └── [1musername[22m: AnsiX
+-                      ├── [1mempty_map[22m
++                      ├── map
++                      │     ├── id: 123
++                      │     └── username: AnsiX
++                      ├── empty_map
+                       │           └── (empty)
+-                      ├── [1mlist[22m
++                      ├── list
+                       │      ├── This
+                       │      ├── is
+                       │      └── AnsiX
+-                      └── [1mempty_list[22m
+-                                  └── (empty)
++                      └── empty_list
++                                   └── (empty)
+ ''';
+ 
+-const String _rightTreeNullValueMock = '''┌─────────────────────┐
++const String _rightTreeNullValueMock = '''
++┌─────────────────────┐
+ │_Map<String, dynamic>│
+ └─────────────────────┤
+-                      ├── [1mmap[22m
+-                      │     ├── [1mid[22m: 123
+-                      │     └── [1musername[22m: AnsiX
+-                      ├── [1mempty_map[22m
++                      ├── map
++                      │     ├── id: 123
++                      │     └── username: AnsiX
++                      ├── empty_map
+                       │           └── (empty)
+-                      ├── [1mlist[22m
++                      ├── list
+                       │      ├── This
+                       │      ├── is
+                       │      └── AnsiX
+-                      └── [1mempty_list[22m
+-                                  └── (empty)
++                      └── empty_list
++                                   └── (empty)
+ ''';
+diff --git a/test/widgets/tree_view/mocks.dart b/test/widgets/tree_view/mocks.dart
+index ce76998d39043a6ed7f0f5afc558b24c4d0cc889..23d9fe0f63976c7c3aedae34d39fd980ce9daba5 100644
+--- a/test/widgets/tree_view/mocks.dart
++++ b/test/widgets/tree_view/mocks.dart
+@@ -100,20 +100,20 @@ const String treeviewNestedMock = '''
+      ├── id: 7845445335
+      ├── child: null
+      └── nodes
+-          ├── 0
+-          │   ├── id: 1231231231
+-          │   ├── child: null
+-          │   └── nodes
+-          │        └── 0
+-          │            ├── id: 34454354453
+-          │            ├── child: null
+-          │            └── nodes
+-          │                 └── (empty)
+-          └── 1
+-              ├── id: 5463456343
+-              ├── child: null
+-              └── nodes
+-                   └── (empty)
++         ├── 0
++         │   ├── id: 1231231231
++         │   ├── child: null
++         │   └── nodes
++         │       └── 0
++         │           ├── id: 34454354453
++         │           ├── child: null
++         │           └── nodes
++         │               └── (empty)
++         └── 1
++             ├── id: 5463456343
++             ├── child: null
++             └── nodes
++                 └── (empty)
+ ''';
+ 
+ const String treeviewWithVerticalPaddedHeaderMock = '''[38;5;31m┌───────┐[0m
+@@ -124,20 +124,20 @@ const String treeviewWithVerticalPaddedHeaderMock = '''[38;5;31m┌────
+    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m7845445335[23m[0m
+    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
+    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
+-        [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
+-        [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m1231231231[23m[0m
+-        [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
+-        [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
+-        [38;5;31m│[0m        [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
+-        [38;5;31m│[0m            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m34454354453[23m[0m
+-        [38;5;31m│[0m            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
+-        [38;5;31m│[0m            [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
+-        [38;5;31m│[0m                 [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(empty)[23m[0m
+-        [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m
+-            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m5463456343[23m[0m
+-            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
+-            [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
+-                 [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(empty)[23m[0m
++       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
++       [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m1231231231[23m[0m
++       [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++       [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++       [38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
++       [38;5;31m│[0m           [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m34454354453[23m[0m
++       [38;5;31m│[0m           [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++       [38;5;31m│[0m           [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++       [38;5;31m│[0m               [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(empty)[23m[0m
++       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m
++           [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m5463456343[23m[0m
++           [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++           [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++               [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(empty)[23m[0m
+ ''';
+ 
+ const String treeviewEmptyMock = '''
+@@ -450,44 +450,44 @@ const String treeviewMixedMockLeft = '''[38;5;31m┌─────────
+              [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3m2[23m[0m
+              [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
+              [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mlist[22m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m: [38;5;145m[3mtrue[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m: [38;5;145m[3mfalse[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3mnull[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m12[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m232.2[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m5[22m[0m: [38;5;145m[3mtext message[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m6[22m[0m
+-                [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(1, 2)[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m7[22m[0m
+-                [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToString[22m[0m
+-                [38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockClassWithToString(3, MockClassWithToString)[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m8[22m[0m
+-                [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToJson[22m[0m
+-                [38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m3[23m[0m
+-                [38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToJson[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m9[22m[0m
+-                [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToMap[22m[0m
+-                [38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m3[23m[0m
+-                [38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m10[22m[0m
+-                [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m44[23m[0m
+-                [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1memail[22m[0m: [38;5;145m[3mtest@email.com[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m11[22m[0m
+-                [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m: [38;5;145m[3m1[23m[0m
+-                [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m: [38;5;145m[3m2[23m[0m
+-                [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3m3[23m[0m
+-                [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m4[23m[0m
+-                [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m5[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m12[22m[0m
+-                [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockClassWithToString(4, MockClassWithToString)[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m13[22m[0m
+-                [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m4[23m[0m
+-                [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToJson[23m[0m
+-                [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m14[22m[0m
+-                [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m4[23m[0m
+-                [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
+-                [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m15[22m[0m
+-                    [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockEnum.value3[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m: [38;5;145m[3mtrue[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m: [38;5;145m[3mfalse[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3mnull[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m12[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m232.2[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m5[22m[0m: [38;5;145m[3mtext message[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m6[22m[0m
++                 [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(1, 2)[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m7[22m[0m
++                 [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToString[22m[0m
++                 [38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockClassWithToString(3, MockClassWithToString)[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m8[22m[0m
++                 [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToJson[22m[0m
++                 [38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m3[23m[0m
++                 [38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToJson[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m9[22m[0m
++                 [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToMap[22m[0m
++                 [38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m3[23m[0m
++                 [38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m10[22m[0m
++                 [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m44[23m[0m
++                 [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1memail[22m[0m: [38;5;145m[3mtest@email.com[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m11[22m[0m
++                 [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m: [38;5;145m[3m1[23m[0m
++                 [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m: [38;5;145m[3m2[23m[0m
++                 [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3m3[23m[0m
++                 [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m4[23m[0m
++                 [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m5[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m12[22m[0m
++                 [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockClassWithToString(4, MockClassWithToString)[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m13[22m[0m
++                 [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m4[23m[0m
++                 [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToJson[23m[0m
++                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m14[22m[0m
++                 [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m4[23m[0m
++                 [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
++                 [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m15[22m[0m
++                     [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockEnum.value3[23m[0m
+ ''';
+ 
+ const String treeviewMixedMockRight = '''[38;5;31m┌──────────────────────────┐[0m
+@@ -538,44 +538,44 @@ const String treeviewMixedMockRight = '''[38;5;31m┌────────
+              [38;5;31m│[0m                 [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3m2[23m[0m
+              [38;5;31m│[0m                 [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
+              [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mlist[22m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m: [38;5;145m[3mtrue[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m: [38;5;145m[3mfalse[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3mnull[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m12[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m232.2[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m5[22m[0m: [38;5;145m[3mtext message[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m6[22m[0m
+-                   [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(1, 2)[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m7[22m[0m
+-                   [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToString[22m[0m
+-                   [38;5;31m│[0m                        [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockClassWithToString(3, MockClassWithToString)[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m8[22m[0m
+-                   [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToJson[22m[0m
+-                   [38;5;31m│[0m                      [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m3[23m[0m
+-                   [38;5;31m│[0m                      [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToJson[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m9[22m[0m
+-                   [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToMap[22m[0m
+-                   [38;5;31m│[0m                     [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m3[23m[0m
+-                   [38;5;31m│[0m                     [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m10[22m[0m
+-                   [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m44[23m[0m
+-                   [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1memail[22m[0m: [38;5;145m[3mtest@email.com[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m11[22m[0m
+-                   [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m: [38;5;145m[3m1[23m[0m
+-                   [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m: [38;5;145m[3m2[23m[0m
+-                   [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3m3[23m[0m
+-                   [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m4[23m[0m
+-                   [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m5[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m12[22m[0m
+-                   [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockClassWithToString(4, MockClassWithToString)[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m13[22m[0m
+-                   [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m4[23m[0m
+-                   [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToJson[23m[0m
+-                   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m14[22m[0m
+-                   [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m4[23m[0m
+-                   [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
+-                   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m15[22m[0m
+-                        [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockEnum.value3[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m: [38;5;145m[3mtrue[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m: [38;5;145m[3mfalse[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3mnull[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m12[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m232.2[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m5[22m[0m: [38;5;145m[3mtext message[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m6[22m[0m
++                    [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(1, 2)[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m7[22m[0m
++                    [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToString[22m[0m
++                    [38;5;31m│[0m                        [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockClassWithToString(3, MockClassWithToString)[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m8[22m[0m
++                    [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToJson[22m[0m
++                    [38;5;31m│[0m                      [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m3[23m[0m
++                    [38;5;31m│[0m                      [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToJson[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m9[22m[0m
++                    [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mobjectWithToMap[22m[0m
++                    [38;5;31m│[0m                     [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m3[23m[0m
++                    [38;5;31m│[0m                     [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m10[22m[0m
++                    [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m44[23m[0m
++                    [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1memail[22m[0m: [38;5;145m[3mtest@email.com[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m11[22m[0m
++                    [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m: [38;5;145m[3m1[23m[0m
++                    [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m: [38;5;145m[3m2[23m[0m
++                    [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m2[22m[0m: [38;5;145m[3m3[23m[0m
++                    [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m3[22m[0m: [38;5;145m[3m4[23m[0m
++                    [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m5[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m12[22m[0m
++                    [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockClassWithToString(4, MockClassWithToString)[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m13[22m[0m
++                    [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m4[23m[0m
++                    [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToJson[23m[0m
++                    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m14[22m[0m
++                    [38;5;31m│[0m    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m4[22m[0m: [38;5;145m[3m4[23m[0m
++                    [38;5;31m│[0m    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mtext[22m[0m: [38;5;145m[3mMockClassWithToMap[23m[0m
++                    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m15[22m[0m
++                         [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mMockEnum.value3[23m[0m
+ ''';
+ 
+ enum MockEnum { value1, value2, value3 }
+@@ -625,49 +625,49 @@ const String noHeaderList = '''[38;5;31m┌[0m[38;5;31m──[0m [38;5;145m
+ 
+ const String noHeaderMap = '''[38;5;31m┌[0m[38;5;31m──[0m [38;5;15m[1mUUID[22m[0m: [38;5;145m[3m1[23m[0m
+ [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1muser[22m[0m
+-      [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m#123456789[23m[0m
+-      [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mname[22m[0m: [38;5;145m[3mJohn Doe[23m[0m
+-      [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1memail[22m[0m
+-      [38;5;31m│[0m     [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mprimary[22m[0m: [38;5;145m[3mjohn.doe@email.com[23m[0m
+-      [38;5;31m│[0m     [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1msecondary[22m[0m: [38;5;145m[3mnull[23m[0m
+-      [38;5;31m│[0m     [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mpersonal[22m[0m: [38;5;145m[3mjd30@email.com[23m[0m
+-      [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mage[22m[0m: [38;5;145m[3m30[23m[0m
+-      [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mphone[22m[0m: [38;5;145m[3m555-1234[23m[0m
+-      [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1maddresses[22m[0m
+-      [38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
+-      [38;5;31m│[0m       [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mstreet[22m[0m: [38;5;145m[3m123 Main St[23m[0m
+-      [38;5;31m│[0m       [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mcity[22m[0m: [38;5;145m[3mNew York[23m[0m
+-      [38;5;31m│[0m       [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mstate[22m[0m: [38;5;145m[3mNY[23m[0m
+-      [38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m
+-      [38;5;31m│[0m           [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mstreet[22m[0m: [38;5;145m[3m56 Flutter Avenue[23m[0m
+-      [38;5;31m│[0m           [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mcity[22m[0m: [38;5;145m[3mLas Vegas[23m[0m
+-      [38;5;31m│[0m           [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mstate[22m[0m: [38;5;145m[3mNV[23m[0m
+-      [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mgroups[22m[0m
+-            [38;5;31m├[0m[38;5;31m──[0m [38;5;145m[3mmoderator[23m[0m
+-            [38;5;31m├[0m[38;5;31m──[0m [38;5;145m[3mauthor[23m[0m
+-            [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mtester[23m[0m
++    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m#123456789[23m[0m
++    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mname[22m[0m: [38;5;145m[3mJohn Doe[23m[0m
++    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1memail[22m[0m
++    [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mprimary[22m[0m: [38;5;145m[3mjohn.doe@email.com[23m[0m
++    [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1msecondary[22m[0m: [38;5;145m[3mnull[23m[0m
++    [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mpersonal[22m[0m: [38;5;145m[3mjd30@email.com[23m[0m
++    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mage[22m[0m: [38;5;145m[3m30[23m[0m
++    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mphone[22m[0m: [38;5;145m[3m555-1234[23m[0m
++    [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1maddresses[22m[0m
++    [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
++    [38;5;31m│[0m   [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mstreet[22m[0m: [38;5;145m[3m123 Main St[23m[0m
++    [38;5;31m│[0m   [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mcity[22m[0m: [38;5;145m[3mNew York[23m[0m
++    [38;5;31m│[0m   [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mstate[22m[0m: [38;5;145m[3mNY[23m[0m
++    [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m
++    [38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mstreet[22m[0m: [38;5;145m[3m56 Flutter Avenue[23m[0m
++    [38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mcity[22m[0m: [38;5;145m[3mLas Vegas[23m[0m
++    [38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mstate[22m[0m: [38;5;145m[3mNV[23m[0m
++    [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mgroups[22m[0m
++        [38;5;31m├[0m[38;5;31m──[0m [38;5;145m[3mmoderator[23m[0m
++        [38;5;31m├[0m[38;5;31m──[0m [38;5;145m[3mauthor[23m[0m
++        [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mtester[23m[0m
+ ''';
+ 
+ const String noHeaderMapSingleEntry =
+     '''[38;5;31m┌[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m#123456789[23m[0m
+ [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mname[22m[0m: [38;5;145m[3mJohn Doe[23m[0m
+ [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1memail[22m[0m
+-[38;5;31m│[0m     [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mprimary[22m[0m: [38;5;145m[3mjohn.doe@email.com[23m[0m
+-[38;5;31m│[0m     [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1msecondary[22m[0m: [38;5;145m[3mnull[23m[0m
+-[38;5;31m│[0m     [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mpersonal[22m[0m: [38;5;145m[3mjd30@email.com[23m[0m
++[38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mprimary[22m[0m: [38;5;145m[3mjohn.doe@email.com[23m[0m
++[38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1msecondary[22m[0m: [38;5;145m[3mnull[23m[0m
++[38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mpersonal[22m[0m: [38;5;145m[3mjd30@email.com[23m[0m
+ [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mage[22m[0m: [38;5;145m[3m30[23m[0m
+ [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mphone[22m[0m: [38;5;145m[3m555-1234[23m[0m
+ [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1maddresses[22m[0m
+-[38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
+-[38;5;31m│[0m       [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mstreet[22m[0m: [38;5;145m[3m123 Main St[23m[0m
+-[38;5;31m│[0m       [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mcity[22m[0m: [38;5;145m[3mNew York[23m[0m
+-[38;5;31m│[0m       [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mstate[22m[0m: [38;5;145m[3mNY[23m[0m
+-[38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m
+-[38;5;31m│[0m           [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mstreet[22m[0m: [38;5;145m[3m56 Flutter Avenue[23m[0m
+-[38;5;31m│[0m           [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mcity[22m[0m: [38;5;145m[3mLas Vegas[23m[0m
+-[38;5;31m│[0m           [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mstate[22m[0m: [38;5;145m[3mNV[23m[0m
++[38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
++[38;5;31m│[0m   [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mstreet[22m[0m: [38;5;145m[3m123 Main St[23m[0m
++[38;5;31m│[0m   [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mcity[22m[0m: [38;5;145m[3mNew York[23m[0m
++[38;5;31m│[0m   [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mstate[22m[0m: [38;5;145m[3mNY[23m[0m
++[38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m
++[38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mstreet[22m[0m: [38;5;145m[3m56 Flutter Avenue[23m[0m
++[38;5;31m│[0m       [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mcity[22m[0m: [38;5;145m[3mLas Vegas[23m[0m
++[38;5;31m│[0m       [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mstate[22m[0m: [38;5;145m[3mNV[23m[0m
+ [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mgroups[22m[0m
+-      [38;5;31m├[0m[38;5;31m──[0m [38;5;145m[3mmoderator[23m[0m
+-      [38;5;31m├[0m[38;5;31m──[0m [38;5;145m[3mauthor[23m[0m
+-      [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mtester[23m[0m
++    [38;5;31m├[0m[38;5;31m──[0m [38;5;145m[3mmoderator[23m[0m
++    [38;5;31m├[0m[38;5;31m──[0m [38;5;145m[3mauthor[23m[0m
++    [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3mtester[23m[0m
+ ''';
+diff --git a/test/widgets/tree_view/tree_view_test.dart b/test/widgets/tree_view/tree_view_test.dart
+index 2781040519c049c1de0f4bba7489e0f877018fe6..a1ba38285e25504295ac91ae087ef0293fd7dc49 100644
+--- a/test/widgets/tree_view/tree_view_test.dart
++++ b/test/widgets/tree_view/tree_view_test.dart
+@@ -460,7 +460,10 @@ Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+         test(alignment, () {
+           final String actual = AnsiTreeView(
+             map,
+-            theme: theme.copyWith.valueTheme.alignment(alignment),
++            theme: theme.copyWith.valueTheme(
++              alignment: alignment,
++              wrapOptions: const WrapOptions(lineLength: 120),
++            ),
+           ).toString();
+           expect(actual, testCases[alignment]);
+         });

@@ -1,0 +1,16 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ClassSignatureRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ClassSignatureRule.kt
+index 9f3a32e8..526a31c1 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ClassSignatureRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ClassSignatureRule.kt
+@@ -259,7 +261,10 @@ public class ClassSignatureRule :
+         var whiteSpaceCorrection = 0
+ 
+         node
+-            .getPrimaryConstructorParameterListOrNull()
++            .takeUnless {
++                // https://kotlinlang.org/docs/multiplatform-expect-actual.html#rules-for-expected-and-actual-declarations
++                it.hasModifier(EXPECT_KEYWORD)
++            }?.getPrimaryConstructorParameterListOrNull()
+             ?.takeUnless { it.containsComment() }
+             ?.takeUnless {
+                 // Allow:

@@ -1,0 +1,30 @@
+diff --git a/test/request_test.dart b/test/request_test.dart
+index 5b74bff593c86fd4f3f7525eb3a445f31141a21a..59cb0988c58dc18fb8af074efe730ab9364b3ff1 100644
+--- a/test/request_test.dart
++++ b/test/request_test.dart
+@@ -334,4 +334,10 @@ void main() {
+       expect(request.toString(), 'POST $dummyUrl');
+     });
+   });
++
++  group('#method', () {
++    test('must be a token', () {
++      expect(() => http.Request('LLAMA[0]', dummyUrl), throwsArgumentError);
++    });
++  });
+ }
+diff --git a/test/streamed_request_test.dart b/test/streamed_request_test.dart
+index c8c801d866f89664cbb4fab59270789af1a4e934..4baa3e603ef5eb1b369d4e709e5abe009b14b81b 100644
+--- a/test/streamed_request_test.dart
++++ b/test/streamed_request_test.dart
+@@ -24,4 +24,10 @@ void main() {
+       expect(() => request.contentLength = 10, throwsStateError);
+     });
+   });
++  group('#method', () {
++    test('must be a token', () {
++      expect(() => http.StreamedRequest('SUPER LLAMA', dummyUrl),
++          throwsArgumentError);
++    });
++  });
+ }

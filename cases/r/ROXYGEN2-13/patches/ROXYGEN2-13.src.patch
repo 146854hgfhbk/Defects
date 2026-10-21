@@ -1,0 +1,18 @@
+diff --git a/R/object-package.R b/R/object-package.R
+index febc8a0d..7e79bb3d 100644
+--- a/R/object-package.R
++++ b/R/object-package.R
+@@ -406,12 +406,9 @@ itemize <- function(header, x) {
+ 
+ package_url_parse <- function(x) {
+   # <doi:XX.XXX> -> \doi{XX.XXX} to avoid CRAN Notes, etc.
+-  # URL-decode %XX sequences because \doi{} is fully verbatim:
+-  # raw % starts an Rd comment and \% is not supported (#1321)
+   x <- str_replace_all(x, "<(doi|DOI):(.*?)>", function(match) {
+     match <- str_remove_all(match, "^<(doi|DOI):|>$")
+-    match <- utils::URLdecode(match)
+-    paste0("\\doi{", match, "}")
++    paste0("\\doi{", escape(match), "}")
+   })
+ 
+   # <http:XX.XXX> -> \url{http:XX.XXX}

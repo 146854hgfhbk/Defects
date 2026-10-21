@@ -1,0 +1,24 @@
+diff --git a/projects/core/koin-core/src/jvmMain/kotlin/org/koin/core/registry/PropertyRegistryExt.kt b/projects/core/koin-core/src/jvmMain/kotlin/org/koin/core/registry/PropertyRegistryExt.kt
+index 16c3c997a..145b48756 100644
+--- a/projects/core/koin-core/src/jvmMain/kotlin/org/koin/core/registry/PropertyRegistryExt.kt
++++ b/projects/core/koin-core/src/jvmMain/kotlin/org/koin/core/registry/PropertyRegistryExt.kt
+@@ -10,13 +10,15 @@ import java.util.*
+ /**
+  *Save properties values into PropertyRegister
+  */
+-@Suppress("UNCHECKED_CAST")
+ fun PropertyRegistry.saveProperties(properties: Properties) {
+     _koin.logger.debug("load ${properties.size} properties")
+ 
+-    val propertiesMapValues = properties.toMap() as Map<String, String>
+-    propertiesMapValues.forEach { (k: String, v: String) ->
+-        saveProperty(k, v)
++    properties.forEach { (k, v) ->
++        if (k is String && v != null) {
++            saveProperty(k, v)
++        } else {
++            _koin.logger.debug("ignore property with non-string key '$k'")
++        }
+     }
+ }
+ 

@@ -1,0 +1,54 @@
+diff --git a/code/BasicFeature/Media/Camera_js/entry/src/main/ets/model/CameraService.ts b/code/BasicFeature/Media/Camera_js/entry/src/main/ets/model/CameraService.ts
+index d1135d5491..01cbc42914 100644
+--- a/code/BasicFeature/Media/Camera_js/entry/src/main/ets/model/CameraService.ts
++++ b/code/BasicFeature/Media/Camera_js/entry/src/main/ets/model/CameraService.ts
+@@ -341,6 +341,17 @@ class CameraService {
+             }
+           }
+         }
++        for (let index = profiles.videoProfiles.length - 1; index >= 0; index--){
++          let videoProfile = profiles.videoProfiles[index];
++          if (this.withinErrorMargin(defaultAspectRatio, videoProfile.size.width / videoProfile.size.height)) {
++            if (videoProfile.size.width <= Constants.PHOTO_MAX_WIDTH &&
++              videoProfile.size.height <= Constants.PHOTO_MAX_WIDTH) {
++              this.videoProfileObj = videoProfile;
++              Logger.debug(TAG, `videoProfileObj: ${JSON.stringify(this.videoProfileObj)}`);
++              break;
++            }
++          }
++        }
+         for (let index = profiles.photoProfiles.length - 1; index >= 0; index--) {
+           const photoProfile = profiles.photoProfiles[index];
+           if (this.withinErrorMargin(defaultAspectRatio, photoProfile.size.width / photoProfile.size.height)) {
+diff --git a/code/BasicFeature/Media/Camera_js/entry/src/main/ets/views/ModeSwitchPage.ets b/code/BasicFeature/Media/Camera_js/entry/src/main/ets/views/ModeSwitchPage.ets
+index 80b9bc80ec..3f86b1a579 100644
+--- a/code/BasicFeature/Media/Camera_js/entry/src/main/ets/views/ModeSwitchPage.ets
++++ b/code/BasicFeature/Media/Camera_js/entry/src/main/ets/views/ModeSwitchPage.ets
+@@ -352,12 +352,21 @@ export struct ModeSwitchPage {
+                   } else {
+                     uri = this.imgThumbnail;
+                   }
+-                  GlobalContext.get().getCameraSettingContext().startAbility({
+-                    parameters: { uri: uri },
+-                    action: 'ohos.want.action.viewData',
+-                    bundleName: 'com.ohos.photos',
+-                    abilityName: 'com.ohos.photos.MainAbility'
+-                  });
++                  if (this.deviceType === Constants.DEFAULT) {
++                    GlobalContext.get().getCameraSettingContext().startAbility({
++                      parameters: { uri: uri },
++                      action: 'ohos.want.action.viewData',
++                      bundleName: 'com.ohos.photos',
++                      abilityName: 'com.ohos.photos.MainAbility'
++                    });
++                  } else if (this.deviceType === Constants.PHONE) {
++                    GlobalContext.get().getCameraSettingContext().startAbility({
++                      parameters: { uri: uri },
++                      action: 'ohos.want.action.viewData',
++                      bundleName: 'com.huawei.hmos.photos',
++                      abilityName: 'com.huawei.hmos.photos.MainAbility'
++                    });
++                  }
+                 })
+               }
+ 

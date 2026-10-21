@@ -1,0 +1,17 @@
+diff --git a/lib/cachex/query.ex b/lib/cachex/query.ex
+--- a/lib/cachex/query.ex
++++ b/lib/cachex/query.ex
+@@ -65,6 +58,13 @@ defmodule Cachex.Query do
+   def unexpired_clause,
+     do: {:orelse, {:==, :"$3", nil}, {:>, {:+, :"$2", :"$3"}, now()}}
+ 
++  @doc """
++  Creates an expiration-aware query.
++  """
++  @spec where(any, any) :: [{tuple, [tuple], [any]}]
++  def where(condition, output \\ :"$_"),
++    do: raw({:andalso, unexpired_clause(), condition}, output)
++
+   ###############
+   # Private API #
+   ###############

@@ -1,0 +1,118 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-255",
+  "bug_id": "JULIA-255",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "meggart/DiskArrays.jl",
+  "repository_url": "https://github.com/meggart/DiskArrays.jl.git",
+  "issue_urls": [
+    "https://github.com/meggart/DiskArrays.jl/issues/168"
+  ],
+  "issue_id": 168,
+  "buggy_revision": "309f613b69c9ab116cffe6b5363f70a521a93c5f",
+  "fixed_revision": "e211986fd446d98f772d6abb66bdfd589fa73c22",
+  "candidate_sha": "e211986fd446d98f772d6abb66bdfd589fa73c22",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "309f613b69c9ab116cffe6b5363f70a521a93c5f",
+  "changed_production_files": [
+    "src/array.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-255 zero-length copyto!"
+  ],
+  "trigger_test_origin": "issue_mwe",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "issue_mwe",
+    "timeout_seconds": 1800,
+    "sha256": "84ec5eeb53e5e24afa745d47b1d0e11c97ff7f2f52de825d494b250bc7186061",
+    "oracle": {
+      "mwe_basis": "upstream defect issue MWE and regression assertions",
+      "source_evidence": "Executable form of DiskArrays issue #168 and the assertions added by PR #169: zero-length copyto! must be a no-op, while mismatched source and destination shapes must throw ArgumentError.",
+      "upstream_test_patch_sha256": "7fdae6827c23584e9de3fbead3a92e01a4847e59db7f62f52c66919e068c82dd"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "e211986fd446d98f772d6abb66bdfd589fa73c22",
+    "project": "meggart/DiskArrays.jl",
+    "input_sha256": "bebf551fcef958e6efed06f2f140a5f59d30c2f879e47dd68feeccbeca05ec83",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:52:13Z",
+    "usage": {
+      "prompt_tokens": 1965,
+      "completion_tokens": 594,
+      "total_tokens": 2559
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"Fix for a real defect (#168) where `copyto!` with zero-length indices would fail or produce incorrect behavior, and where mismatched source/destination sizes were not validated. The commit adds an early return for empty indices and an explicit size check with an ArgumentError.\",\n  \"evidence\": \"The commit message references issue #168 explicitly. The code change adds a guard for zero-length indices (preventing a crash/error when `isempty(Rdest)`) and adds a size mismatch check that throws an ArgumentError. The test file adds a regression test for zero-length index `copyto!` and a test confirming that mismatched sizes now throw an ArgumentError. This is a clear bug fix in production code (`src/array.jl`).\",\n  \"missing_evidence\": \"The original issue #168 body is not available in the provided data, so we cannot see the exact error report. However, the commit message and code comment both reference the issue, and the fix is clearly addressing erroneous behavior (crash on zero-length indices, silent acceptance of mismatched sizes).\",\n  \"validation_risks\": \"The fix changes behavior for the case where source and destination sizes differ (now throws instead of silently proceeding or erroring obscurely). This could affect downstream code that accidentally relied on the old behavior, but this is the correct fix pattern.\",\n  \"suggested_tests\": \"1. Test `copyto!` with zero-length CartesianIndices to ensure it returns without error. 2. Test `copyto!` with mismatched source/destination CartesianIndices sizes to confirm ArgumentError is thrown. 3. Test normal `copyto!` operations still work correctly after the fix.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for a real defect (#168) where `copyto!` with zero-length indices would fail or produce incorrect behavior, and where mismatched source/destination sizes were not validated. The commit adds an early return for empty indices and an explicit size check with an ArgumentError.",
+    "evidence": "The commit message references issue #168 explicitly. The code change adds a guard for zero-length indices (preventing a crash/error when `isempty(Rdest)`) and adds a size mismatch check that throws an ArgumentError. The test file adds a regression test for zero-length index `copyto!` and a test confirming that mismatched sizes now throw an ArgumentError. This is a clear bug fix in production code (`src/array.jl`).",
+    "missing_evidence": "The original issue #168 body is not available in the provided data, so we cannot see the exact error report. However, the commit message and code comment both reference the issue, and the fix is clearly addressing erroneous behavior (crash on zero-length indices, silent acceptance of mismatched sizes).",
+    "validation_risks": "The fix changes behavior for the case where source and destination sizes differ (now throws instead of silently proceeding or erroring obscurely). This could affect downstream code that accidentally relied on the old behavior, but this is the correct fix pattern.",
+    "suggested_tests": "1. Test `copyto!` with zero-length CartesianIndices to ensure it returns without error. 2. Test `copyto!` with mismatched source/destination CartesianIndices sizes to confirm ArgumentError is thrown. 3. Test normal `copyto!` operations still work correctly after the fix."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-255 zero-length copyto!"
+    ],
+    "exception_types": [
+      "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+    ],
+    "fingerprints": [
+      "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

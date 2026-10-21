@@ -1,0 +1,99 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7eac77dd7f7b4a9cdbab7661b7946c97b464007c..b2f4c3edb876e4a6ae4704487b5a71ac6a46c1e8 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,6 +1,8 @@
+ ## 1.5.3
+ 
+-* Improve performance for large numbers of args.
++* Improve arg parsing performance for large numbers of args.
++* No longer automatically add a 'help' option to commands that don't validate
++  their arguments (fix #123).
+ 
+ ## 1.5.2
+ 
+diff --git a/lib/command_runner.dart b/lib/command_runner.dart
+index c314abed42a20eda6d1669a9645e93b025f1be07..0fbf6972033165b522a6010190ae0d5d110cd3df 100644
+--- a/lib/command_runner.dart
++++ b/lib/command_runner.dart
+@@ -177,7 +177,7 @@ class CommandRunner<T> {
+       commands = command._subcommands;
+       commandString += ' ${argResults.name}';
+ 
+-      if (argResults['help']) {
++      if (argResults.options.contains('help') && argResults['help']) {
+         command.printUsage();
+         return null;
+       }
+@@ -364,8 +364,10 @@ abstract class Command<T> {
+   List<String> get aliases => const [];
+ 
+   Command() {
+-    argParser.addFlag('help',
+-        abbr: 'h', negatable: false, help: 'Print this usage information.');
++    if (!argParser.allowsAnything) {
++      argParser.addFlag('help',
++          abbr: 'h', negatable: false, help: 'Print this usage information.');
++    }
+   }
+ 
+   /// Runs this command.
+diff --git a/test/allow_anything_test.dart b/test/allow_anything_test.dart
+index efaf0935834b53a315087e1a4380430ffa0714af..29038a793412e4121215279b21e6893bff558e72 100644
+--- a/test/allow_anything_test.dart
++++ b/test/allow_anything_test.dart
+@@ -3,8 +3,11 @@
+ // BSD-style license that can be found in the LICENSE file.
+ 
+ import 'package:args/args.dart';
++import 'package:args/command_runner.dart';
+ import 'package:test/test.dart';
+ 
++import 'test_utils.dart';
++
+ void main() {
+   group('new ArgParser.allowAnything()', () {
+     ArgParser parser;
+@@ -51,5 +54,13 @@ void main() {
+       expect(results.command.arguments, equals(['--foo', '-abc', '--', 'bar']));
+       expect(results.command.name, equals('command'));
+     });
++
++    test('works as a subcommand in a CommandRunner', () async {
++      var commandRunner = CommandRunner('command', 'Description of command');
++      var command = AllowAnythingCommand();
++      commandRunner..addCommand(command);
++
++      await commandRunner.run([command.name, '--foo', '--bar', '-b', 'qux']);
++    });
+   });
+ }
+diff --git a/test/test_utils.dart b/test/test_utils.dart
+index 0aa566ff54b0184ab79d1f30a2112ab87026271c..8c6373fabf732bf8fa5d32d840724f0803a1b527 100644
+--- a/test/test_utils.dart
++++ b/test/test_utils.dart
+@@ -207,6 +207,24 @@ class AsyncCommand extends Command {
+   Future run() => Future.value().then((_) => hasRun = true);
+ }
+ 
++class AllowAnythingCommand extends Command {
++  var hasRun = false;
++
++  @override
++  final name = 'allowAnything';
++
++  @override
++  final description = 'A command using allowAnything.';
++
++  @override
++  final argParser = ArgParser.allowAnything();
++
++  @override
++  void run() {
++    hasRun = true;
++  }
++}
++
+ void throwsIllegalArg(function, {String reason}) {
+   expect(function, throwsArgumentError, reason: reason);
+ }

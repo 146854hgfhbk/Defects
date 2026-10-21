@@ -1,0 +1,101 @@
+diff --git a/CSV_XS.xs b/CSV_XS.xs
+index 93b5d889628f561bdfac6b8801fc38786eb4a508..9b4f2f6fa07ba164628dc4c8af2c3ef7bb4f3b0d 100644
+--- a/CSV_XS.xs
++++ b/CSV_XS.xs
+@@ -2403,7 +2403,7 @@ static int cx_c_xsParse (pTHX_ csv_t csv, HV *hv, AV *av, AV *avf, SV *src, bool
+     (void)hv_store (hv, "_EOF",   4, &PL_sv_no,             0);
+ 
+     if (csv.strict) {
+-	STRLEN nf = csv.is_bound ? csv.fld_idx : av_len (av);
++	STRLEN nf = csv.is_bound ? csv.fld_idx ? csv.fld_idx - 1 : 0 : av_len (av);
+ #if MAINT_DEBUG > 6
+ 	(void)fprintf (stderr, "# %04d Strict nf = %2d, n = %2d, idx = %2d, recno = %2d, res = %d\n",
+ 	    __LINE__, nf, csv.strict_n, csv.fld_idx, csv.recno, result);
+diff --git a/ChangeLog b/ChangeLog
+index 53d90811dad23159391d82aff331fb6b288cbbd5..5335e9587040ade7d94895a129363c54b6bbec51 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,6 +1,7 @@
+-1.60	- 2025-01-20, H.Merijn Brand
++1.60	- 2025-01-29, H.Merijn Brand
+     * Add SECURITY.md
+     * CR/NL/CRNL inside quoted fields not affected by strict_eol
++    * Fix incorrect error 2014 (issue 62)
+ 
+ 1.59	- 2025-01-05, H.Merijn Brand
+     * Fixed EOL test for Windows with crnl layer
+diff --git a/sandbox/issue-62.csv b/sandbox/issue-62.csv
+new file mode 100644
+index 0000000000000000000000000000000000000000..a3672abe351aacb6438eea543e3aefd41654f98e
+--- /dev/null
++++ b/sandbox/issue-62.csv
+@@ -0,0 +1,2 @@
++A,B
++1,2
+diff --git a/sandbox/issue-62.pl b/sandbox/issue-62.pl
+new file mode 100644
+index 0000000000000000000000000000000000000000..253f534ee744d5a12c6f83c8c8630e6d1726c6f9
+--- /dev/null
++++ b/sandbox/issue-62.pl
+@@ -0,0 +1,25 @@
++#!/pro/bin/perl
++
++use 5.026002;
++use warnings;
++
++use Data::Peek;
++use Text::CSV_XS;
++
++my $csv_file = "issue-62.csv";
++-d "sandbox" and substr $csv_file, 0, 0, "sandbox/";
++
++my $csv = Text::CSV_XS->new ({ strict => 1, auto_diag => 1 });
++open my $fh, "<:encoding(utf8)", $csv_file or die "$csv_file: $!";
++
++my @input_colnames = @{$csv->getline ($fh)};
++say "CSV Header : (@input_colnames)";
++my $col_val_of_    = {};
++
++DDumper $csv->{_BOUND_COLUMNS};
++$csv->bind_columns (\@{$col_val_of_}{@input_colnames});
++
++DDumper $csv->{_BOUND_COLUMNS};
++$csv->getline ($fh);
++
++DDumper $csv->{_BOUND_COLUMNS};
+diff --git a/t/71_strict.t b/t/71_strict.t
+index a9bcdae9ce5c0c4349ebafdfc8381f6d8c9c5e59..469b096f53bc0adb02683ac6f6592ae53b9286d7 100644
+--- a/t/71_strict.t
++++ b/t/71_strict.t
+@@ -3,7 +3,7 @@
+ use strict;
+ use warnings;
+ 
+- use Test::More tests => 69;
++ use Test::More tests => 75;
+ #use Test::More "no_plan";
+ 
+ my %err;
+@@ -209,5 +209,22 @@ foreach my $test (
+     is ($err[0], 2014, "Error 2014");
+     is ($err[4], 2,    "Just got 2");
+     }
++{   ok (my $csv = Text::CSV_XS->new ({ strict => 1 }), "Issue#62 no data first");
++    my $tf = "issue-62-$$.csv";
++    END { -e $tf and unlink $tf }
++    open my $fh, ">", $tf;
++    print   $fh "A,B\n1,2\n";
++    close   $fh;
++    open my $fh, "<", $tf;
++    ok (my @col = @{$csv->getline ($fh)}, "Get header");
++    my $val = {};
++    ok ($csv->bind_columns (\@{$val}{@col}), "Bind columns");
++    ok ($csv->getline ($fh), "Values into bound hash entries");
++    my @err = $csv->error_diag; # error-code, str, pos, rec, fld
++    is ($err[0], 0, "No error 2014");
++    is_deeply ($val, { A => 1, B => 2 }, "Content");
++    close   $fh;
++    unlink  $tf;
++    }
+ __END__
+ 1,2,42

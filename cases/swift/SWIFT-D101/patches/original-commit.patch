@@ -1,0 +1,33 @@
+diff --git a/Sources/Vapor/Validation/Validators/Email.swift b/Sources/Vapor/Validation/Validators/Email.swift
+index ac26632de3c4b96110eaca7ca780c044ffb50f8b..ead6b27d3dfaa12c3fb59e754503a6ec51eefc21 100644
+--- a/Sources/Vapor/Validation/Validators/Email.swift
++++ b/Sources/Vapor/Validation/Validators/Email.swift
+@@ -53,12 +53,11 @@ extension ValidatorResults.Email: ValidatorResult {
+     }
+ }
+ 
+-// FIXME: this regex is too strict with capitalization of the domain part
+ private let regex: String = """
+ (?:[a-zA-Z0-9!#$%\\&‘*+/=?\\^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%\\&'*+/=?\\^_`{|}\
+ ~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\\
+-x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-\
+-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5\
++x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-zA-Z0-9](?:[a-\
++zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5\
+ ]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-\
+ 9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\
+ -\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])
+diff --git a/Tests/VaporTests/ValidationTests.swift b/Tests/VaporTests/ValidationTests.swift
+index c12d31c81d175a563b2c2d3cc447e42dc475b4b7..8f0e05a506abfd5aae89bb3c6103bad88d25dd77 100644
+--- a/Tests/VaporTests/ValidationTests.swift
++++ b/Tests/VaporTests/ValidationTests.swift
+@@ -467,7 +467,9 @@ class ValidationTests: XCTestCase {
+ 
+     func testEmail() {
+         assert("tanner@vapor.codes", passes: .email)
++        assert("tanner@VAPOR.codes", passes: .email)
+         assert("tanner@vapor.codes", fails: !.email, "is a valid email address")
++        assert("tanner@VAPOR.codes", fails: !.email, "is a valid email address")
+         assert("tanner@vapor.codestanner@vapor.codes", fails: .email, "is not a valid email address")
+         assert("tanner@vapor.codes.", fails: .email, "is not a valid email address")
+         assert("tanner@@vapor.codes", fails: .email, "is not a valid email address")

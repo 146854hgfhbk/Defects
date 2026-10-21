@@ -1,0 +1,54 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-683",
+  "status": "trigger_ready",
+  "mode": "dedicated_script",
+  "origin": "manual_mwe_from_upstream_fix",
+  "trigger_sha256": "98e0c9edb0e96dd8642664b3d8795e64b4989ff2f44114dff09c81d03f63b839",
+  "trigger_name": "mixed interval muladd regression",
+  "oracle": {
+    "mwe_basis": "public Base.muladd behavior for IntervalArithmetic operands",
+    "defect": "Mixed interval/scalar multiplication used Base.muladd internally and regressed from a valid interval result to a promotion error.",
+    "source_evidence": {
+      "issue": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/issues/573",
+      "upstream_test_file": "test/interval_tests/numeric.jl",
+      "basis": "Public muladd assertions copied from the upstream fix tests and directly exercising the mixed Interval/Number regression reported in Issue 573."
+    },
+    "upstream_test_patch_sha256": "cdc51ac22aa141d6c0240130435c0cd7937d5904938208f6c5b9b386f562c354"
+  },
+  "superseded_acquisition": {
+    "schema_version": 1,
+    "case_id": "JULIA-683",
+    "status": "trigger_ready",
+    "mode": "test_patch_suite",
+    "origin": "swe_rebench_test_patch",
+    "patch_sha256": "cdc51ac22aa141d6c0240130435c0cd7937d5904938208f6c5b9b386f562c354",
+    "test_files": [
+      "test/interval_tests/numeric.jl"
+    ],
+    "test_files_sha256": {
+      "test/interval_tests/numeric.jl": "379160de283207b1996131798e05ccc306f014af77b51ad6ebd2e3824ed11db0"
+    },
+    "added_testsets": [],
+    "inferred_testset_context": [
+      "Numeric tests"
+    ],
+    "assertion_expression_sha256": [
+      "9e1b8e9afac9090195294db338b6aa7ade06741a938163b14157931f2e0cb364",
+      "5b8205dd38037397bbcf07513a433658999b89f5be0a2d3b20cb02e28aae5b95",
+      "80f9f46a9e088be23fec0a610e194c567d1402e805c48c46b0a22575517354e5",
+      "149b81af5d471a6e870a32f65ec03a476e9dfa9bf17b456dd98358adc5650fd7",
+      "3937fecae3778fee0e3096a24a37176a883826fb62e7d020d7e0ae60213e8a0a",
+      "9e111123be793f93203ea363c562091621073904cc989ddef61f4caba4bd6648",
+      "0b00d3446a9afd38df6f7aa7af8447303cdcf8ad93b4ed42bbacaec7c3ff7fc9",
+      "9ea4f10d7057c8940b9ea6d1dc19d4c7f02265cb3744b2c074dd343430288bb7"
+    ],
+    "f2p_tests": [
+      "decoration_tests/decoration_tests.jl",
+      "rand.jl",
+      "display_tests/display.jl",
+      "multidim_tests/multidim.jl"
+    ],
+    "manual_review_required": false
+  }
+}

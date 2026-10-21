@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1620",
+  "technical_evidence_sha256": "b610a5638e9495a1c367981919ce1c31eaba1401c97b1bcfd6c47217259334d4",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "05adc301288d391c8dd4b4b27e2147d8396875a2ba2bebf8df0e64a1743c590a",
+  "reviewed_at": "2026-09-09T13:08:03.335993+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "scinfu/swiftsoup#312",
+  "rationale": "Issue #312 (labeled bug) reports that class selection with multi-byte characters silently returns zero matches on 2.8.1+ (`select(\"div.test-\\u3042\")` -> 0 elements). The minimized production patch is a single line in Element.hasClass(_:String) changing `className.count` (grapheme-cluster count) to `className.utf8.count`, which fixes the exact mismatch: the stored class attribute is a [UInt8] UTF-8 byte array whose `count` was compared against a grapheme count, so any non-ASCII class name hit the `len < wantLen` early `return false`. Cause, symptom, and fix line up. The trigger is the unchanged upstream test hunk from the same fixing commit (testHasClassDomMethods), which puts a supplementary-plane scalar (135361 = U+21001, 4 UTF-8 bytes) as the class and asserts hasClass returns true; it exercises the same byte-length-vs-character-length defect as the reported Japanese-character case and uses only pre-existing public API (hasClass, Attributes.put), so it compiles and runs on both revisions with no fix-only symbols. Strict machine evidence confirms build.both_versions PASS, trigger.buggy_differential reproducing exactly the one declared selector, trigger.fixed_clean PASS, deterministic across 3 repetitions, and full_suite.fixed_all_green; post-minimization strict gates match the original (1 of 1 production hunk retained, validation PASS). The patch contains no refactor, formatting, feature, doc, or config change, and the test edit is isolated to the separate trigger patch. active_same_project_root_causes is empty, so scinfu/swiftsoup#312 is not a duplicate and is the allowed root cause key.\n\nIssue #312 (labeled bug) reports that class selection against non-ASCII class names regressed: `select(\"div.test-あ\")` returns 0 matches on 2.8.1+. The minimized production patch is a single one-line correction in `Element.hasClass(_ className: String)` replacing `className.count` (grapheme-cluster count) with `className.utf8.count`, so the wanted length is measured in the same UTF-8 byte units as `classAtt: [UInt8]` — exactly the length-unit mismatch that makes multi-byte class names fail the `len < wantLen` and subsequent byte comparisons. `hasClass` is the mechanism behind the class selector reported in the issue, so issue, fix, and trigger describe one pre-existing defect. Traceability is fix_commit -> merged PR #320 (\"closes #312\") -> issue #312. The patch touches only Sources/Element.swift with one changed line: no refactor, formatting, feature, doc, or config change (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger is the unchanged upstream test portion of the same commit, appended to `testHasClassDomMethods`: it stores a supplementary-plane scalar (U+21001) as the class attribute and asserts `hasClass(s)` is true. It uses only APIs present on the buggy revision (`Attributes.put`, `Element.hasClass(String)`), so it compiles and runs on both revisions and is not a fix-only-API compile artifact; it exercises the same multi-byte-length bug class as the reported Japanese characters. Strict machine evidence reports build.both_versions PASS, trigger.buggy_differential reproduced on Tests/SwiftSoupTests/ElementTest.swift::testHasClassDomMethods, trigger.fixed_clean PASS, deterministic across 3 repetitions and 32 matrix runs, full_suite.fixed_all_green PASS, both pre- and post-minimization with no failed checks. active_same_project_root_causes is empty, so #312 is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T13:07:34.638252+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "05adc301288d391c8dd4b4b27e2147d8396875a2ba2bebf8df0e64a1743c590a",
+      "response_sha256": "41d01b27cc9e8d8fd2337ea9eae9be40fd6bd21bddbca8c675a73109e015f8b0",
+      "response_id": "msg_4a32a25d10a84818b4492c7bc98506ce",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5418173604975124,
+        "input_tokens": 11923,
+        "output_tokens": 656
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#312",
+      "rationale": "Issue #312 (labeled bug) reports that class selection with multi-byte characters silently returns zero matches on 2.8.1+ (`select(\"div.test-\\u3042\")` -> 0 elements). The minimized production patch is a single line in Element.hasClass(_:String) changing `className.count` (grapheme-cluster count) to `className.utf8.count`, which fixes the exact mismatch: the stored class attribute is a [UInt8] UTF-8 byte array whose `count` was compared against a grapheme count, so any non-ASCII class name hit the `len < wantLen` early `return false`. Cause, symptom, and fix line up. The trigger is the unchanged upstream test hunk from the same fixing commit (testHasClassDomMethods), which puts a supplementary-plane scalar (135361 = U+21001, 4 UTF-8 bytes) as the class and asserts hasClass returns true; it exercises the same byte-length-vs-character-length defect as the reported Japanese-character case and uses only pre-existing public API (hasClass, Attributes.put), so it compiles and runs on both revisions with no fix-only symbols. Strict machine evidence confirms build.both_versions PASS, trigger.buggy_differential reproducing exactly the one declared selector, trigger.fixed_clean PASS, deterministic across 3 repetitions, and full_suite.fixed_all_green; post-minimization strict gates match the original (1 of 1 production hunk retained, validation PASS). The patch contains no refactor, formatting, feature, doc, or config change, and the test edit is isolated to the separate trigger patch. active_same_project_root_causes is empty, so scinfu/swiftsoup#312 is not a duplicate and is the allowed root cause key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "traceability.paths[0]"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue body is only available via the embedded source_candidate.issue_check payload rather than an independently fetched record.",
+        "The trigger asserts on hasClass directly with a 4-byte scalar, not on the reported select(\"div.test-\\u3042\") selector path with a 3-byte scalar, so the CSS-selector code path is covered only transitively.",
+        "Two pre-existing charset failures (testMetaCharsetUpdateIsoLatin2, testMetaCharsetUpdateXmlIso2022JP) are baseline full-suite exclusions; they are unrelated to hasClass but mean the fixed revision is not fully green without exclusions."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T13:08:03.335207+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "05adc301288d391c8dd4b4b27e2147d8396875a2ba2bebf8df0e64a1743c590a",
+      "response_sha256": "58dbee01824eec60cd85a46e73b96f4549060cdd8ed3bed7ae939f4598e20e48",
+      "response_id": "msg_912b87598db4426a83528726333455d2",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5866872820895522,
+        "input_tokens": 12330,
+        "output_tokens": 768
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#312",
+      "rationale": "Issue #312 (labeled bug) reports that class selection against non-ASCII class names regressed: `select(\"div.test-あ\")` returns 0 matches on 2.8.1+. The minimized production patch is a single one-line correction in `Element.hasClass(_ className: String)` replacing `className.count` (grapheme-cluster count) with `className.utf8.count`, so the wanted length is measured in the same UTF-8 byte units as `classAtt: [UInt8]` — exactly the length-unit mismatch that makes multi-byte class names fail the `len < wantLen` and subsequent byte comparisons. `hasClass` is the mechanism behind the class selector reported in the issue, so issue, fix, and trigger describe one pre-existing defect. Traceability is fix_commit -> merged PR #320 (\"closes #312\") -> issue #312. The patch touches only Sources/Element.swift with one changed line: no refactor, formatting, feature, doc, or config change (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger is the unchanged upstream test portion of the same commit, appended to `testHasClassDomMethods`: it stores a supplementary-plane scalar (U+21001) as the class attribute and asserts `hasClass(s)` is true. It uses only APIs present on the buggy revision (`Attributes.put`, `Element.hasClass(String)`), so it compiles and runs on both revisions and is not a fix-only-API compile artifact; it exercises the same multi-byte-length bug class as the reported Japanese characters. Strict machine evidence reports build.both_versions PASS, trigger.buggy_differential reproduced on Tests/SwiftSoupTests/ElementTest.swift::testHasClassDomMethods, trigger.fixed_clean PASS, deterministic across 3 repetitions and 32 matrix runs, full_suite.fixed_all_green PASS, both pre- and post-minimization with no failed checks. active_same_project_root_causes is empty, so #312 is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "traceability.paths[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "The trigger asserts on `hasClass` directly rather than the `select(\"div.test-あ\")` path quoted in the issue; equivalence rests on hasClass backing the class selector rather than on an executed selector-level reproduction.",
+        "The trigger scalar is U+21001 (supplementary plane) rather than a Japanese character from the issue; same UTF-8 length-unit defect but a different code point than reported.",
+        "Two pre-existing charset tests (DocumentTest testMetaCharsetUpdateIsoLatin2, testMetaCharsetUpdateXmlIso2022JP) are baseline full-suite exclusions on both revisions, so the suite is not fully green independent of this defect.",
+        "The byte-array `hasClass` overload flagged in PR #320 is untouched, so related non-ASCII paths outside this single line remain unverified by this case."
+      ]
+    }
+  ]
+}

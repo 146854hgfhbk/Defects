@@ -1,0 +1,260 @@
+diff --git a/test/subscription_test.exs b/test/subscription_test.exs
+index fdae16e..09f60ca 100644
+--- a/test/subscription_test.exs
++++ b/test/subscription_test.exs
+@@ -2,6 +2,8 @@ defmodule AshGraphql.SubscriptionTest do
+   use ExUnit.Case
+ 
+   alias AshGraphql.Test.PubSub
++  alias AshGraphql.Test.RelaySchema
++  alias AshGraphql.Test.RelaySubscribable
+   alias AshGraphql.Test.Schema
+   alias AshGraphql.Test.Subscribable
+ 
+@@ -137,6 +139,106 @@ defmodule AshGraphql.SubscriptionTest do
+     assert subscription_data["subscribableEvents"]["destroyed"] == subscribable_id
+   end
+ 
++  test "subscription to relay schema returns relay id on destroy action for multiple notifications" do
++    assert {:ok, %{"subscribed" => topic}} =
++             Absinthe.run(
++               """
++               subscription {
++                 subscribableEventsRelay {
++                   created {
++                     id
++                     text
++                   }
++                   destroyed
++                 }
++               }
++               """,
++               RelaySchema,
++               context: %{actor: @admin, pubsub: PubSub}
++             )
++
++    subscribable_relay_id =
++      RelaySubscribable
++      |> Ash.Changeset.for_create(:create, %{text: "foo", actor_id: 1}, actor: @admin)
++      |> Ash.create!()
++      |> AshGraphql.Resource.encode_relay_id()
++
++    assert_receive({^topic, %{data: subscription_data}})
++
++    assert subscribable_relay_id == subscription_data["subscribableEventsRelay"]["created"]["id"]
++
++    destroy_mutation = """
++    mutation DeleteSubscribable($id: ID!) {
++        destroySubscribableRelay(id: $id) {
++          result{
++            id
++          }
++          errors{
++            message
++          }
++        }
++      }
++    """
++
++    assert {:ok, %{data: mutation_result}} =
++             Absinthe.run(destroy_mutation, RelaySchema,
++               variables: %{"id" => subscribable_relay_id},
++               context: %{actor: @admin}
++             )
++
++    assert Enum.empty?(mutation_result["destroySubscribableRelay"]["errors"])
++
++    assert_receive({^topic, %{data: subscription_data}})
++
++    assert subscription_data["subscribableEventsRelay"]["destroyed"] == subscribable_relay_id
++  end
++
++  test "subscription to relay schema returns relay id on destroy action for single notification" do
++    subscribable_relay_id =
++      RelaySubscribable
++      |> Ash.Changeset.for_create(:create, %{text: "foo", actor_id: 1}, actor: @admin)
++      |> Ash.create!()
++      |> AshGraphql.Resource.encode_relay_id()
++
++    assert {:ok, %{"subscribed" => topic}} =
++             Absinthe.run(
++               """
++               subscription {
++                 subscribableDeletedRelay {
++                   destroyed
++                 }
++               }
++               """,
++               RelaySchema,
++               context: %{actor: @admin, pubsub: PubSub}
++             )
++
++    destroy_mutation = """
++    mutation DeleteSubscribable($id: ID!) {
++        destroySubscribableRelay(id: $id) {
++          result {
++            id
++          }
++          errors {
++            message
++          }
++        }
++      }
++    """
++
++    assert {:ok, %{data: mutation_result}} =
++             Absinthe.run(destroy_mutation, RelaySchema,
++               variables: %{"id" => subscribable_relay_id},
++               context: %{actor: @admin}
++             )
++
++    assert Enum.empty?(mutation_result["destroySubscribableRelay"]["errors"])
++
++    assert_receive({^topic, %{data: subscription_data}})
++
++    assert subscription_data["subscribableDeletedRelay"]["destroyed"] == subscribable_relay_id
++  end
++
+   test "policies are applied to subscriptions" do
+     actor1 = %{
+       id: 1,
+diff --git a/test/support/relay_domain.ex b/test/support/relay_domain.ex
+new file mode 100644
+index 0000000..1588924
+--- /dev/null
++++ b/test/support/relay_domain.ex
+@@ -0,0 +1,16 @@
++defmodule AshGraphql.Test.RelayDomain do
++  @moduledoc false
++
++  use Ash.Domain,
++    extensions: [
++      AshGraphql.Domain
++    ],
++    otp_app: :ash_grapqhl
++
++  graphql do
++  end
++
++  resources do
++    resource(AshGraphql.Test.RelaySubscribable)
++  end
++end
+diff --git a/test/support/relay_schema.ex b/test/support/relay_schema.ex
+new file mode 100644
+index 0000000..fb8c119
+--- /dev/null
++++ b/test/support/relay_schema.ex
+@@ -0,0 +1,21 @@
++defmodule AshGraphql.Test.RelaySchema do
++  @moduledoc false
++
++  use Absinthe.Schema
++
++  @domains [AshGraphql.Test.RelayDomain]
++
++  use AshGraphql,
++    domains: @domains,
++    relay_ids?: true,
++    generate_sdl_file: "priv/schema-relay.graphql"
++
++  query do
++  end
++
++  mutation do
++  end
++
++  subscription do
++  end
++end
+diff --git a/test/support/resources/relay_subscribable.ex b/test/support/resources/relay_subscribable.ex
+new file mode 100644
+index 0000000..53ba3ee
+--- /dev/null
++++ b/test/support/resources/relay_subscribable.ex
+@@ -0,0 +1,85 @@
++defmodule AshGraphql.Test.RelaySubscribable do
++  @moduledoc false
++  use Ash.Resource,
++    domain: AshGraphql.Test.RelayDomain,
++    data_layer: Ash.DataLayer.Ets,
++    authorizers: [Ash.Policy.Authorizer],
++    extensions: [AshGraphql.Resource]
++
++  require Ash.Query
++
++  graphql do
++    type :relay_subscribable
++
++    mutations do
++      destroy :destroy_subscribable_relay, :destroy
++    end
++
++    subscriptions do
++      pubsub(AshGraphql.Test.PubSub)
++
++      subscribe(:subscribable_events_relay) do
++        action_types([:create, :update, :destroy])
++      end
++
++      subscribe(:subscribable_deleted_relay) do
++        action_types(:destroy)
++      end
++    end
++  end
++
++  policies do
++    bypass actor_attribute_equals(:role, :admin) do
++      authorize_if(always())
++    end
++
++    policy action(:read) do
++      authorize_if(expr(actor_id == ^actor(:id)))
++    end
++
++    policy action([:open_read, :read_with_arg]) do
++      authorize_if(always())
++    end
++  end
++
++  field_policies do
++    field_policy :hidden_field do
++      authorize_if(actor_attribute_equals(:role, :admin))
++    end
++
++    field_policy :* do
++      authorize_if(always())
++    end
++  end
++
++  actions do
++    default_accept(:*)
++    defaults([:create, :read, :update, :destroy])
++
++    read(:open_read)
++
++    read :read_with_arg do
++      argument(:topic, :string) do
++        allow_nil? false
++      end
++
++      filter(expr(topic == ^arg(:topic)))
++    end
++  end
++
++  attributes do
++    uuid_primary_key(:id)
++
++    attribute(:hidden_field, :string) do
++      public?(true)
++      default("hidden")
++      allow_nil?(false)
++    end
++
++    attribute(:text, :string, public?: true)
++    attribute(:topic, :string, public?: true)
++    attribute(:actor_id, :integer, public?: true)
++    create_timestamp(:created_at)
++    update_timestamp(:updated_at)
++  end
++end

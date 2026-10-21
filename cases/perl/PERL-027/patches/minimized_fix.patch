@@ -1,0 +1,46 @@
+diff --git a/CSV_XS.pm b/CSV_XS.pm
+index 60e9069f67501fddf2c6e0861929698d65c53913..e94ab167b8e88f74e75b6186c2d45e5241893c62 100644
+--- a/CSV_XS.pm
++++ b/CSV_XS.pm
+@@ -3133,7 +3133,8 @@ Takes a list of scalar references to be used for output with  L</print>  or
+ to store in the fields fetched by L</getline>.  When you do not pass enough
+ references to store the fetched fields in, L</getline> will fail with error
+ C<3006>.  If you pass more than there are fields to return,  the content of
+-the remaining references is left untouched.
++the remaining references is left untouched.  Under C<strict> the two should
++match, otherwise L</getline> will fail with error C<2014>.
+ 
+  $csv->bind_columns (\$code, \$name, \$price, \$description);
+  while ($csv->getline ($fh)) {
+@@ -3406,6 +3407,18 @@ the diagnostics message in string context.
+ When called as a class method or a  direct function call,  the  diagnostics
+ are that of the last L</new> call.
+ 
++=head3 _cache_diag
++
++Note: This is an internal function, and output cannot be reliead upon.  Use
++at own risk.
++
++If debugging beyond what L</error_diag> is able to show, the internal cache
++can be shown with this function.
++
++ # Something failed ..
++ $csv->error_diag;
++ $csv->_cache_diag ();
++
+ =head2 record_number
+ X<record_number>
+ 
+diff --git a/CSV_XS.xs b/CSV_XS.xs
+index 5fc0e6f612c8135f491c9bf41b069903df7058e0..64f0bd9baf95f8bdfb6fe21715682f7966cfb234 100644
+--- a/CSV_XS.xs
++++ b/CSV_XS.xs
+@@ -2186,7 +2186,7 @@ static int cx_c_xsParse (pTHX_ csv_t csv, HV *hv, AV *av, AV *avf, SV *src, bool
+     (void)hv_store (hv, "_EOF",   4, &PL_sv_no,             0);
+ 
+     if (csv.strict) {
+-	STRLEN nf = av_len (av);
++	STRLEN nf = csv.is_bound ? csv.fld_idx : av_len (av);
+ #if MAINT_DEBUG > 6
+ 	(void)fprintf (stderr, "# %04d Strict nf = %2d, n = %2d, idx = %2d, recno = %2d, res = %d\n",
+ 	    __LINE__, nf, csv.strict_n, csv.fld_idx, csv.recno, result);

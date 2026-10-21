@@ -1,0 +1,12 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt
+index d9a7ef01..8514b8a2 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt
+@@ -109,6 +111,7 @@ public class FunctionExpressionBodyRule :
+         require(block.elementType == BLOCK)
+         block
+             .takeIf { it.containingOnly(RETURN) }
++            ?.takeUnless { it.containsMultipleReturns() }
+             ?.findChildByType(RETURN)
+             ?.findChildByType(RETURN_KEYWORD)
+             ?.nextSibling { !it.isWhiteSpace() }

@@ -1,0 +1,153 @@
+{
+  "schema_version": 2,
+  "case_id": "KOTLIN-167",
+  "status": "candidate_validated",
+  "candidate_source": "Kotlin/kotlin-swe-bench",
+  "source_task_id": "oss-review-toolkit_ort-5706",
+  "revision_mode": "base_plus_gold_patch",
+  "project": "oss-review-toolkit/ort",
+  "license": "Apache-2.0",
+  "pull_request_number": 5706,
+  "pr_url": "https://github.com/oss-review-toolkit/ort/pull/5706",
+  "issue_urls": [
+    "https://github.com/oss-review-toolkit/ort/issues/4357"
+  ],
+  "buggy_revision": "dd3441eaa10729a7be4792d187c25756a2409c0d",
+  "fixed_revision": "20ec25f318c753ae5e52c168ede8a85c2d483b64",
+  "upstream_head_revision": "5dc43b1cee713e08421898e4921fdbc2d497329e",
+  "patch": "patches/minimized-source.patch",
+  "patch_sha256": "eab5b909e52673d94f761fcf6294c09e6077a71dcaff2fd265c1bf2441b2c59b",
+  "changed_production_files": [
+    "helper-cli/src/main/kotlin/commands/ListLicensesCommand.kt",
+    "model/src/main/kotlin/config/PathExclude.kt",
+    "model/src/main/kotlin/utils/FindingCurationMatcher.kt"
+  ],
+  "trigger_tests": [
+    "org.ossreviewtoolkit.model.config.PathExcludeTest",
+    "org.ossreviewtoolkit.model.config.ExcludesTest"
+  ],
+  "trigger_test_filters": {},
+  "trigger_test_patch": "trigger-tests.patch",
+  "environment_lock": "environment.lock.json",
+  "build": {
+    "system": "Gradle Wrapper",
+    "gradle_version": "7.5.1",
+    "java_version": 11,
+    "android_sdk_required": false,
+    "compile_task": ":model:testClasses",
+    "test_task": ":model:test",
+    "test_results_glob": "model/build/test-results/**/TEST-*.xml",
+    "build_command": ".\\gradlew.bat testClasses",
+    "test_command": ".\\gradlew.bat test"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "generated_by": "validation_engine.py",
+    "validated_at": "2026-08-08T01:57:21.138474+00:00",
+    "repetitions": 3,
+    "fresh_worktree_per_repetition": true,
+    "individual_trigger_processes": true,
+    "compile_valid": true,
+    "full_suite_valid": true,
+    "failure_fingerprints": [
+      "da75e1ac0e6f50f496a9913d4a2e86f48a3caa4b07e2acfef152c068041d8ade"
+    ],
+    "buggy_failed_tests": [
+      "org.ossreviewtoolkit.model.config.ExcludesTest.find the correct path excludes for a path",
+      "org.ossreviewtoolkit.model.config.ExcludesTest.findPathExcludes should -- find the correct path excludes for a path",
+      "org.ossreviewtoolkit.model.config.PathExcludeTest.isPathExcluded should -- match zero up to multiple segments for a leading double asterisk",
+      "org.ossreviewtoolkit.model.config.PathExcludeTest.match zero up to multiple segments for a leading double asterisk"
+    ],
+    "fixed_failed_tests": [],
+    "non_reproducing_trigger_tests": [],
+    "broken_tests": [],
+    "flaky_tests": [],
+    "order_dependent_tests": [],
+    "report": "validation/validation.json",
+    "report_sha256": "7f475e1b11b2aa1aadbdd8019bc422bbda5f93f365a6c5fac581f43dce895379"
+  },
+  "provenance": {
+    "swe_bench_gold_patch_sha256": "511fc4d82cb17260756ececd09806d836c1d8b73fc5dc95bdb5d3b4b233e728e",
+    "swe_bench_trigger_patch_sha256": "f96acf31bff22ae7078267ebf13930f0f3960d506782bb389201b592e929770d",
+    "gold_patch_sha256": "d027c0d28a079f1e461b683eeda7ea29f02ed4ac6bd854bfb77e6a896a36e010",
+    "trigger_patch_sha256": "7d3245c55d38d68d50dc855f5022ab5daf3284357dfe040e43a88a4439465b13",
+    "line_endings_normalized_for_git": true,
+    "release_remediation": {
+      "remediated_at": "2026-08-15T11:41:43Z",
+      "canonical_tree": "cases",
+      "previous_status": "swe_bench_staging_unvalidated",
+      "previous_patch_path": "patches/original-source.patch",
+      "previous_patch_sha256": "d027c0d28a079f1e461b683eeda7ea29f02ed4ac6bd854bfb77e6a896a36e010",
+      "legacy_provenance_trigger_patch_sha256": "7d3245c55d38d68d50dc855f5022ab5daf3284357dfe040e43a88a4439465b13",
+      "release_trigger_patch_sha256": "54212d13d0706baeaf549fae1d5439a8fc52a19f6f7d9c35c3daae3d24089dd6",
+      "trigger_historical_binding": "legacy_mismatch",
+      "source_patch_evidence": "minimization_evidence",
+      "source_patch_evidence_file": "patches/minimization.json",
+      "package_dynamic_replayed": false,
+      "raw_run_artifacts_bundled": false,
+      "historical_snapshot": true,
+      "superseded_by_final_dynamic_acceptance": true,
+      "note_on_package_dynamic_replayed": "false records the 2026-08-15 remediation snapshot; final_dynamic_acceptance is authoritative for the 2026-08-17 replay."
+    }
+  },
+  "reproducibility_status": "stable_differential",
+  "issue_id": 4357,
+  "expected_failure": {
+    "test_count": 4,
+    "tests": [
+      "org.ossreviewtoolkit.model.config.ExcludesTest.find the correct path excludes for a path",
+      "org.ossreviewtoolkit.model.config.ExcludesTest.findPathExcludes should -- find the correct path excludes for a path",
+      "org.ossreviewtoolkit.model.config.PathExcludeTest.isPathExcluded should -- match zero up to multiple segments for a leading double asterisk",
+      "org.ossreviewtoolkit.model.config.PathExcludeTest.match zero up to multiple segments for a leading double asterisk"
+    ],
+    "exception_types": [
+      "io.kotest.assertions.AssertionFailedError"
+    ],
+    "fingerprints": [
+      "da75e1ac0e6f50f496a9913d4a2e86f48a3caa4b07e2acfef152c068041d8ade"
+    ],
+    "source": "validation/validation.json:derived"
+  },
+  "original_source_patch": "patches/original-source.patch",
+  "original_source_patch_sha256": "eab5b909e52673d94f761fcf6294c09e6077a71dcaff2fd265c1bf2441b2c59b",
+  "trigger_test_patch_sha256": "54212d13d0706baeaf549fae1d5439a8fc52a19f6f7d9c35c3daae3d24089dd6",
+  "test_identity": {
+    "scheme": "base-revision-plus-trigger-overlay-sha256-v1",
+    "trigger_overlay_sha256": "54212d13d0706baeaf549fae1d5439a8fc52a19f6f7d9c35c3daae3d24089dd6",
+    "buggy_base_revision": "dd3441eaa10729a7be4792d187c25756a2409c0d",
+    "fixed_base_revision": "20ec25f318c753ae5e52c168ede8a85c2d483b64",
+    "note": "Final release identity: trigger overlay bytes are bound by SHA-256 and base revisions are the final published buggy/fixed identities."
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "jvm",
+    "reason_code": null,
+    "reason": "Final fresh replay passed under the required JDK 11/--add-opens profile; strict differential eligibility confirmed."
+  },
+  "release_integrity": "release-integrity.json",
+  "final_dynamic_acceptance": {
+    "status": "PASS_STRICT",
+    "fresh_replay_completed": true,
+    "accepted_at": "2026-08-17T00:44:00Z",
+    "fixed_result": "PASS",
+    "buggy_trigger_result": "FAIL_AS_EXPECTED",
+    "raw_run_artifacts_bundled": false,
+    "evidence_location": "external validation server (not included in supplied archive)",
+    "repair_note": "JDK 11 plus required --add-opens environment repaired; fresh replay upgraded the case from curated to strict."
+  },
+  "patch_direction": "buggy_to_fixed",
+  "patch_semantics": {
+    "canonical_direction": "buggy_to_fixed",
+    "official_defects4j_reference_convention": "reverse_patch_applied_to_fixed_to_reintroduce_bug",
+    "note": "Direction is explicitly declared because this Defects4J-style Kotlin release is not byte-format-identical to the Defects4J internal patch store."
+  },
+  "defects4j_style_alignment": {
+    "dynamic_reproduction": "PASS_STRICT",
+    "patch_direction_declared": true,
+    "manual_review_adaptation": "LLM-assisted curation may replace the original Defects4J human-review stage for this dataset task"
+  },
+  "language": "Kotlin",
+  "benchmark_tier": "constructed-fixed",
+  "upstream_boundary_strict_eligible": false
+}

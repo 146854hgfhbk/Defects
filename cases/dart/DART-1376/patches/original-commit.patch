@@ -1,0 +1,36 @@
+diff --git a/lib/src/frame.dart b/lib/src/frame.dart
+index fd7f8ebb8827488fa18bd9588ca368fcd1a328d9..3225efd261930ac09cb143ee2ed90ef515620ad2 100644
+--- a/lib/src/frame.dart
++++ b/lib/src/frame.dart
+@@ -21,8 +21,8 @@ final _v8Frame =
+     RegExp(r'^\s*at (?:(\S.*?)(?: \[as [^\]]+\])? \((.*)\)|(.*))$');
+ 
+ // https://example.com/stuff.dart.js:560:28
+-// http://pub.dartlang.org/stuff.dart.js:560
+-final _v8UrlLocation = RegExp(r'^(.*?):(\d+)(?::(\d+))?|native$');
++// https://example.com/stuff.dart.js:560
++final _v8UrlLocation = RegExp(r'^(.*?):(\d+)(?::(\d+))?$|native$');
+ 
+ // eval as function (https://example.com/stuff.dart.js:560:28), efn:3:28
+ // eval as function (https://example.com/stuff.dart.js:560:28)
+diff --git a/test/frame_test.dart b/test/frame_test.dart
+index ce7b7caffb03ab00c3bc4c223a3420024f01cf8b..1aa012d5707cc040e1cdc0026398a9b77d7402d9 100644
+--- a/test/frame_test.dart
++++ b/test/frame_test.dart
+@@ -89,6 +89,16 @@ void main() {
+       expect(frame.member, equals('VW.call\$0'));
+     });
+ 
++    test('parses a stack frame with a : in the authority', () {
++      var frame = Frame.parseV8('    at VW.call\$0 '
++          '(http://localhost:8080/stuff.dart.js:560:28)');
++      expect(
++          frame.uri, equals(Uri.parse('http://localhost:8080/stuff.dart.js')));
++      expect(frame.line, equals(560));
++      expect(frame.column, equals(28));
++      expect(frame.member, equals('VW.call\$0'));
++    });
++
+     test('parses a stack frame with an absolute POSIX path correctly', () {
+       var frame = Frame.parseV8('    at VW.call\$0 '
+           '(/path/to/stuff.dart.js:560:28)');

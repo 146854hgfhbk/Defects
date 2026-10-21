@@ -1,0 +1,34 @@
+diff --git a/R/parse.R b/R/parse.R
+index 46751fa..d374301 100644
+--- a/R/parse.R
++++ b/R/parse.R
+@@ -14,7 +14,7 @@
+ #' parse_hms("12:34:56")
+ #' parse_hms("12:34:56.789")
+ parse_hms <- function(x) {
+-  parse_time(x, format = "%H:%M:%OS")
++  as_hms(parse_time(x, format = "%H:%M:%OS"))
+ }
+ 
+ #' @rdname parse_hms
+@@ -24,14 +24,14 @@ parse_hms <- function(x) {
+ #' @examples
+ #' parse_hm("12:34")
+ parse_hm <- function(x) {
+-  parse_time(x, format = "%H:%M")
++  as_hms(parse_time(x, format = "%H:%M"))
+ }
+ 
+ parse_time <- function(x, format) {
+-  parsed <- strptime(as.character(x), format = format, tz = "UTC")
+-  hms(
+-    seconds = parsed$sec,
+-    minutes = parsed$min,
+-    hours = parsed$hour
++  difftime(
++    strptime(as.character(x), format = format),
++    strptime("0:0:0", format = "%X"),
++    units = "secs",
++    tz = "UTC"
+   )
+ }

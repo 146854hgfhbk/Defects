@@ -1,0 +1,266 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-708",
+  "bug_id": "JULIA-708",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+  "repository_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/67"
+  ],
+  "issue_id": 67,
+  "buggy_revision": "a3140d3a206d95dd631b33422ead93c3b24cf9ce",
+  "fixed_revision": "d98bba3597245c4ceaa8a2accd1278b0d0b310f2",
+  "candidate_sha": "d98bba3597245c4ceaa8a2accd1278b0d0b310f2",
+  "source": "merged_pull_request",
+  "instance_id": "julialinearalgebra__genericlinearalgebra.jl-69",
+  "swe": {
+    "base_commit": "a3140d3a206d95dd631b33422ead93c3b24cf9ce",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/69",
+    "issue_url": null,
+    "problem_statement": "Convergence problems of some matrices\nHi,\r\n\r\nI'm encountering some matrices that fail to converge when computing eigenvalues. Consider the following:\r\n\r\n```julia\r\njulia> t = [1 -2 1 -1 -1 0; 0 1 0 1 0 1; 1 -1 2 0 -1 0; 0 1 0 2 1 1; 1 0 1 0 0 0; 0 -1 1 -1 -2 0]\r\n6×6 Array{Int64,2}:\r\n 1  -2  1  -1  -1  0\r\n 0   1  0   1   0  1\r\n 1  -1  2   0  -1  0\r\n 0   1  0   2   1  1\r\n 1   0  1   0   0  0\r\n 0  -1  1  -1  -2  0\r\n\r\njulia> using LinearAlgebra\r\n\r\njulia> using GenericLinearAlgebra\r\n\r\njulia> eigvals(t)\r\n6-element Array{Complex{Float64},1}:\r\n -7.294730590901527e-9 + 0.0im\r\n 7.2947305672186945e-9 + 0.0im\r\n    1.4999999999999996 - 0.8660254037844369im\r\n    1.4999999999999996 + 0.8660254037844369im\r\n    1.5000000000000018 - 0.8660254037844406im\r\n    1.5000000000000018 + 0.8660254037844406im\r\n\r\njulia> eigvals(big.(t))\r\nERROR: ArgumentError: iteration limit 600 reached\r\nStacktrace:\r\n [1] _schur!(::GenericLinearAlgebra.HessenbergFactorization{BigFloat,Array{BigFloat,2},GenericLinearAlgebra.Householder{BigFloat,S} where S<:(Union{DenseArray{T,1}, Base.ReinterpretArray{T,1,S,A} where S where A<:Union{SubArray{T,N,A,I,true} where I<:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A<:DenseArray where N where T, DenseArray}, Base.ReshapedArray{T,1,A,MI} where MI<:Tuple{Vararg{Base.MultiplicativeInverses.SignedMultiplicativeInverse{Int64},N} where N} where A<:Union{Base.ReinterpretArray{T,N,S,A} where S where A<:Union{SubArray{T,N,A,I,true} where I<:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A<:DenseArray where N where T, DenseArray} where N where T, SubArray{T,N,A,I,true} where I<:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A<:DenseArray where N where T, DenseArray}, SubArray{T,1,A,I,L} where L where I<:Tuple{Vararg{Union{Int64, AbstractRange{Int64}, Base.AbstractCartesianIndex},N} where N} where\r\nA<:Union{Base.ReinterpretArray{T,N,S,A} where S where A<:Union{SubArray{T,N,A,I,true} where I<:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A<:DenseArray where N where T, DenseArray} where N where T, Base.ReshapedArray{T,N,A,MI} where MI<:Tuple{Vararg{Base.MultiplicativeInverses.SignedMultiplicativeInverse{Int64},N} where N} where A<:Union{Base.ReinterpretArray{T,N,S,A} where S where A<:Union{SubArray{T,N,A,I,true} where I<:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A<:DenseArray where N where T, DenseArray} where N where T, SubArray{T,N,A,I,true} where I<:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A<:DenseArray where N where T, DenseArray} where N where T, DenseArray}} where T)}; tol::BigFloat, debug::Bool, shiftmethod::Symbol, maxiter::Int64, kwargs::Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}) at /home/user/.julia/packages/GenericLinearAlgebra/sJLhE/src/eigenGeneral.jl:103\r\n [2] _schur! at /home/user/.julia/packages/GenericLinearAlgebra/sJLhE/src/eigenGeneral.jl:91 [inlined]\r\n [3] #_schur!#21 at /home/user/.julia/packages/GenericLinearAlgebra/sJLhE/src/eigenGeneral.jl:183 [inlined]\r\n [4] _schur! at /home/user/.julia/packages/GenericLinearAlgebra/sJLhE/src/eigenGeneral.jl:183 [inlined]\r\n [5] _eigvals!(::Array{BigFloat,2}; kwargs::Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}) at /home/user/.julia/packages/GenericLinearAlgebra/sJLhE/src/eigenGeneral.jl:260\r\n [6] _eigvals! at /home/user/.julia/packages/GenericLinearAlgebra/sJLhE/src/eigenGeneral.jl:260 [inlined]\r\n [7] eigvals!(::Array{BigFloat,2}; sortby::typeof(LinearAlgebra.eigsortby), kwargs::Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}) at /home/user/.julia/packages/GenericLinearAlgebra/sJLhE/src/eigenGeneral.jl:274\r\n [8] eigvals! at /home/user/.julia/packages/GenericLinearAlgebra/sJLhE/src/eigenGeneral.jl:271 [inlined]\r\n [9] #eigvals#81 at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/LinearAlgebra/src/eigen.jl:326 [inlined]\r\n [10] eigvals(::Array{BigInt,2}) at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/LinearAlgebra/src/eigen.jl:326\r\n [11] top-level scope at REPL[33]:1\r\n\r\n\r\njulia> GenericLinearAlgebra._eigvals!(GenericLinearAlgebra._schur!(copy(BigFloat.(t)); maxiter=10000))\r\nERROR: ArgumentError: iteration limit 10000 reached\r\n[stacktrace]\r\n\r\njulia> GenericLinearAlgebra._eigvals!(GenericLinearAlgebra._schur!(copy(BigFloat.(t)); debug=true))\r\nSplit! Subdiagonal element is:  3.144e-77 and istart now      4\r\nblock start is:      4, block end is:      6, d:  8.096e-02, t:  1.663e+00\r\nFrancis double shift! Subdiagonal is:  1.144e+00, last subdiagonal is:  8.664e-01\r\nSplit! Subdiagonal element is:  0.000e+00 and istart now      4\r\nblock start is:      4, block end is:      6, d:  1.835e-02, t:  1.380e+00\r\nFrancis double shift! Subdiagonal is: -7.721e-02, last subdiagonal is:  7.052e-01\r\nSplit! Subdiagonal element is:  0.000e+00 and istart now      4\r\nblock start is:      4, block end is:      6, d:  5.610e-06, t:  1.509e+00\r\nFrancis double shift! Subdiagonal is: -7.490e-04, last subdiagonal is:  1.118e+00\r\nSplit! Subdiagonal element is:  0.000e+00 and istart now      4\r\nblock start is:      4, block end is:      6, d: -7.790e-10, t:  1.665e+00\r\nFrancis double shift! Subdiagonal is: -3.435e-09, last subdiagonal is:  7.440e-01\r\nSplit! Subdiagonal element is:  0.000e+00 and istart now      4\r\nblock start is:      4, block end is:      6, d: -4.071e-19, t:  1.386e+00\r\nFrancis double shift! Subdiagonal is: -1.804e-18, last subdiagonal is:  7.020e-01\r\nSplit! Subdiagonal element is:  0.000e+00 and istart now      4\r\nblock start is:      4, block end is:      6, d: -9.812e-39, t:  1.469e+00\r\nFrancis double shift! Subdiagonal is:  3.850e-37, last subdiagonal is:  1.116e+00\r\nSplit! Subdiagonal element is:  0.000e+00 and istart now      4\r\nblock start is:      4, block end is:      6, d:  7.081e-76, t:  1.671e+00\r\nFrancis double shift! Subdiagonal is: -3.069e-75, last subdiagonal is:  7.506e-01\r\nSplit! Subdiagonal element is: 1.628e-150 and istart now      6\r\nBottom deflation! Block size is one. New iend is      5\r\nSplit! Subdiagonal element is:  0.000e+00 and istart now      4\r\nBottom deflation! Block size is two. New iend is      3\r\nblock start is:      1, block end is:      3, d:  1.000e+00, t:  2.000e+00\r\nWilkinson-like shift! Subdiagonal is: -1.000e+00, last subdiagonal is: -1.414e+00\r\nblock start is:      1, block end is:      3, d:  1.000e+00, t:  2.000e+00\r\nFrancis double shift! Subdiagonal is: -7.071e-01, last subdiagonal is: -1.000e+00\r\nblock start is:      1, block end is:      3, d:  1.000e+00, t:  2.000e+00\r\nFrancis double shift! Subdiagonal is: -1.000e+00, last subdiagonal is:  1.414e+00\r\nblock start is:      1, block end is:      3, d:  1.000e+00, t:  2.000e+00\r\nFrancis double shift! Subdiagonal is:  1.414e+00, last subdiagonal is: -7.071e-01\r\nblock start is:      1, block end is:      3, d:  1.000e+00, t:  2.000e+00\r\nFrancis double shift! Subdiagonal is: -7.071e-01, last subdiagonal is: -1.000e+00\r\nblock start is:      1, block end is:      3, d:  1.000e+00, t:  2.000e+00\r\nFrancis double shift! Subdiagonal is: -1.000e+00, last subdiagonal is:  1.414e+00\r\n[more of the same type of debug messages]\r\nFrancis double shift! Subdiagonal is: -1.414e+00, last subdiagonal is: -7.071e-01\r\nblock start is:      1, block end is:      3, d:  1.000e+00, t:  2.000e+00\r\nFrancis double shift! Subdiagonal is: -7.071e-01, last subdiagonal is:  1.000e+00\r\nblock start is:      1, block end is:      3, d:  1.000e+00, t:  2.000e+00\r\nFrancis double shift! Subdiagonal is:  1.000e+00, last subdiagonal is: -1.414e+00\r\nblock start is:      1, block end is:      3, d:  1.000e+00, t:  2.000e+00\r\nWilkinson-like shift! Subdiagonal is: -1.414e+00, last subdiagonal is: -7.071e-01\r\nERROR: ArgumentError: iteration limit 600 reached\r\n[stacktrace]\r\n```\r\n\r\nThe above seems to show that indeed it is stuck in some infinite loop.\r\n\r\nThe analytical eigenvalues are `[0,0,1/2*(3-√3im),1/2*(3+√3im),1/2*(3-√3im),1/2*(3+√3im)]`, and this only seems to happen with non-diagonalizable matrices.\r\n\r\nThese are other matrices I have so far found that displays a similar behaviour:\r\n\r\n```\r\n[1 -2 1 -1 -1 0; 0 1 0 1 0 1; 1 -1 2 0 -1 0; 0 1 0 2 1 1; 1 0 1 0 0 0; 0 -1 1 -1 -2 0]\r\n[1 0 -1 0 0 0; 0 1 1 1 -1 0; 1 0 -1 0 0 0; 1 -1 0 -1 1 1; 0 0 1 0 0 0; -1 0 1 0 0 0]\r\n[1 -2 -1 1 -1 0; 0 1 0 -1 0 1; -1 1 2 0 1 0; 0 -1 -2 2 -1 -1; 1 0 -1 0 0 0; 0 -1 -1 1 0 0]\r\n[2 0 -1 0 0 1; 0 2 0 -1 -1 0; -1 0 1 0 0 -1; 0 -1 0 1 1 0; 0 1 0 -1 0 0; -1 0 1 0 0 0]\r\n[1 0 1 0 -1 0; -2 1 2 -1 1 1; -1 0 -1 0 1 0; 2 1 2 -1 -2 1; 1 0 1 0 -1 0; 1 -1 -2 1 0 -1]\r\n```",
+    "patch": "diff --git a/.travis.yml b/.travis.yml\nindex 67b441a..998992d 100644\n--- a/.travis.yml\n+++ b/.travis.yml\n@@ -4,7 +4,6 @@ os:\n   - linux\n \n julia:\n-  - 1.0\n   - 1\n   - nightly\n \ndiff --git a/Project.toml b/Project.toml\nindex d283ee0..cbf80cb 100644\n--- a/Project.toml\n+++ b/Project.toml\n@@ -15,4 +15,4 @@ Test = \"8dfed614-e22c-5e08-85e1-65c5234f0b40\"\n test = [\"Quaternions\", \"Test\"]\n \n [compat]\n-julia = \"1\"\n+julia = \"1.3\"\ndiff --git a/azure-pipelines.yml b/azure-pipelines.yml\ndeleted file mode 100644\nindex 8ca143a..0000000\n--- a/azure-pipelines.yml\n+++ /dev/null\n@@ -1,70 +0,0 @@\n-# Starter pipeline\n-# Start with a minimal pipeline that you can customize to build and deploy your code.\n-# Add steps that build, run tests, deploy, and more:\n-# https://aka.ms/yaml\n-\n-jobs:\n-- job: Linux\n-\n-  pool:\n-    vmImage: 'Ubuntu 16.04'\n-\n-  strategy:\n-    matrix:\n-      Julia 1.0:\n-        JULIA_VERSION: '1.0.1'\n-\n-  steps:\n-  - script: |\n-      wget -nv https://julialang-s3.julialang.org/bin/linux/x64/1.0/julia-$(JULIA_VERSION)-linux-x86_64.tar.gz\n-      tar zxf julia-$(JULIA_VERSION)-linux-x86_64.tar.gz\n-    displayName: 'Download and extract Julia 1.0'\n-\n-  - script: |\n-      ./julia-$(JULIA_VERSION)/bin/julia --project=@. -e 'using Pkg; Pkg.instantiate()'\n-      ./julia-$(JULIA_VERSION)/bin/julia --project=@. -e 'using Pkg; Pkg.test(\"GenericLinearAlgebra\")'\n-    displayName: 'Run the tests'\n-\n-- job: macOS\n-\n-  pool:\n-    vmImage: 'macOS-10.13'\n-\n-  strategy:\n-    matrix:\n-      Julia 1.0:\n-        JULIA_VERSION: '1.0.1'\n-        JULIA_VERSION_SHORT: '1.0'\n-\n-  steps:\n-  - script: |\n-      wget -nv https://julialang-s3.julialang.org/bin/mac/x64/1.0/julia-$(JULIA_VERSION)-mac64.dmg\n-      hdiutil attach julia-$(JULIA_VERSION)-mac64.dmg\n-      ln -s /Volumes/Julia-$(JULIA_VERSION)/Julia-$(JULIA_VERSION_SHORT).app/Contents/Resources/julia/bin/julia\n-    displayName: 'Download and extract Julia 1.0'\n-\n-  - script: |\n-      ./julia --project=@. -e 'using Pkg; Pkg.instantiate()'\n-      ./julia --project=@. -e 'using Pkg; Pkg.test(\"GenericLinearAlgebra\")'\n-    displayName: 'Run the tests'\n-\n-- job: Windows\n-\n-  pool:\n-    vmImage: 'VS2017-Win2016'\n-\n-  strategy:\n-    matrix:\n-      Julia 1.0:\n-        JULIA_VERSION: '1.0.1'\n-\n-  steps:\n-  - powershell: |\n-      wget https://julialang-s3.julialang.org/bin/winnt/x64/1.0/julia-$(JULIA_VERSION)-win64.exe -OutFile julia-$(JULIA_VERSION)-win64.exe\n-      Start-Process -FilePath .\\julia-$(JULIA_VERSION)-win64.exe -ArgumentList \"/S /D=C:\\julia\" -NoNewWindow -Wait\n-    displayName: 'Download and extract Julia 1.0'\n-\n-  - powershell: |\n-      C:\\julia\\bin\\julia --project=@. -e 'using Pkg; Pkg.instantiate()'\n-      C:\\julia\\bin\\julia --project=@. -e 'using Pkg; Pkg.test(\\\"GenericLinearAlgebra\\\")'\n-    displayName: 'Run the tests'\ndiff --git a/src/eigenGeneral.jl b/src/eigenGeneral.jl\nindex 061b5b2..f1f7018 100644\n--- a/src/eigenGeneral.jl\n+++ b/src/eigenGeneral.jl\n@@ -85,7 +85,7 @@ function _schur!(\n     tol = eps(real(T)),\n     debug = false,\n     shiftmethod = :Francis,\n-    maxiter = 100*size(H, 1),\n+    maxiter = 30*size(H, 1),\n     kwargs...) where T\n \n     n = size(H, 1)\n@@ -99,6 +99,7 @@ function _schur!(\n \n     @inbounds while true\n         i += 1\n+        debug && println(\"iteration: $i\")\n         if i > maxiter\n             throw(ArgumentError(\"iteration limit $maxiter reached\"))\n         end\n@@ -137,35 +138,20 @@ function _schur!(\n         else\n             Hmm = HH[iend, iend]\n             Hm1m1 = HH[iend - 1, iend - 1]\n-            d = Hm1m1*Hmm - HH[iend, iend - 1]*HH[iend - 1, iend]\n-            t = Hm1m1 + Hmm\n-            t = iszero(t) ? eps(real(one(t))) : t # introduce a small pertubation for zero shifts\n+            if iszero(i % 10)\n+                # Use Eispack exceptional shift\n+                β = abs(HH[iend, iend - 1]) + abs(HH[iend - 1, iend - 2])\n+                d = (Hmm + β)^2 - Hmm*β/2\n+                t = 2*Hmm + 3*β/2\n+            else\n+                d = Hm1m1*Hmm - HH[iend, iend - 1]*HH[iend - 1, iend]\n+                t = Hm1m1 + Hmm\n+            end\n             debug && @printf(\"block start is: %6d, block end is: %6d, d: %10.3e, t: %10.3e\\n\", istart, iend, d, t)\n \n             if shiftmethod == :Francis\n-                # Run a bulge chase\n-                if iszero(i % 10)\n-                    # Vary the shift strategy to avoid dead locks\n-                    # We use a Wilkinson-like shift as suggested in \"Sandia technical report 96-0913J: How the QR algorithm fails to converge and how fix it\".\n-\n-                    debug && @printf(\"Wilkinson-like shift! Subdiagonal is: %10.3e, last subdiagonal is: %10.3e\\n\", HH[iend, iend - 1], HH[iend - 1, iend - 2])\n-                    _d = t*t - 4d\n-                    if _d isa Real && _d >= 0\n-                        # real eigenvalues\n-                        a = t/2\n-                        b = sqrt(_d)/2\n-                        s = a > Hmm ? a - b : a + b\n-                    else\n-                        # complex case\n-                        s = t/2\n-                    end\n-                    singleShiftQR!(HH, τ, s, istart, iend)\n-                else\n-                    # most of the time use Francis double shifts\n-\n-                    debug && @printf(\"Francis double shift! Subdiagonal is: %10.3e, last subdiagonal is: %10.3e\\n\", HH[iend, iend - 1], HH[iend - 1, iend - 2])\n-                    doubleShiftQR!(HH, τ, t, d, istart, iend)\n-                end\n+                debug && @printf(\"Francis double shift! Subdiagonal is: %10.3e, last subdiagonal is: %10.3e\\n\", HH[iend, iend - 1], HH[iend - 1, iend - 2])\n+                doubleShiftQR!(HH, τ, t, d, istart, iend)\n             elseif shiftmethod == :Rayleigh\n                 debug && @printf(\"Single shift with Rayleigh shift! Subdiagonal is: %10.3e\\n\", HH[iend, iend - 1])\n \n",
+    "test_patch": "diff --git a/test/eigengeneral.jl b/test/eigengeneral.jl\nindex 7df846d..91ae90b 100644\n--- a/test/eigengeneral.jl\n+++ b/test/eigengeneral.jl\n@@ -93,4 +93,61 @@ end\n     end\n end\n \n+Demmel(η) = [0  1 0 0\n+             1  0 η 0\n+             0 -η 0 1\n+             0  0 1 0]\n+\n+@testset \"Demmel matrix\" for t in (1e-10, 1e-9, 1e-8)\n+    # See \"Sandia technical report 96-0913J: How the QR algorithm fails to converge and how fix it\"\n+    A = Demmel(t)\n+    vals = GenericLinearAlgebra._eigvals!(GenericLinearAlgebra._schur!(A, maxiter=35))\n+    @test abs.(vals) ≈ ones(4)\n end\n+\n+function Hevil2(θ, κ, α, γ)\n+    # Eq (13) and (14)\n+    β = ω = 0.0\n+    ν = cos(θ)*cos(2γ) + cos(α + β + ω)*sin(2γ)*κ/2\n+    σ = 1 + κ*sin(2γ)*cos(α + β + ω - θ) + κ^2*sin(γ)^2\n+    μ = -sin(θ)*cos(2γ) - sin(α + β + ω)*sin(2γ)*κ/2\n+    ρ = sqrt(σ - ν^2)\n+\n+    return [ν    (cos(2θ) - ν^2)/ρ              μ/ρ*(cos(2θ) - ν^2 + ρ^2)/sqrt(ρ^2 - μ^2)      (-2*μ*ν - sin(2*θ))/sqrt(ρ^2 - μ^2)\n+            ρ   -ν - sin(2*θ)*μ/ρ^2            -μ/ρ^2*(μ*sin(2*θ) + 2*ν*ρ^2)/sqrt(ρ^2 - μ^2)    -μ/ρ*(cos(2*θ) - ν^2 + ρ^2)/sqrt(ρ^2 - μ^2)\n+            0    sin(2*θ)*sqrt(ρ^2 - μ^2)/ρ^2   ν + sin(2*θ)*μ/ρ^2                              (cos(2*θ) - ν^2)/ρ\n+            0    0                              ρ                                               -ν]\n+end\n+\n+@testset \"Complicate matrix from Sandia technical report\" begin\n+    H = Hevil2(0.111866322512629152, 1.08867072154101741, 0.338146383137297168, -0.313987810419091240)\n+\n+    @test Float64.(abs.(eigvals(big.(H)))) ≈ ones(4)\n+end\n+\n+@testset \"Issue 67\" for (A, λs) in (\n+    ([1 -2 1 -1 -1 0; 0 1 0 1 0 1; 1 -1 2 0 -1 0; 0 1 0 2 1 1; 1 0 1 0 0 0; 0 -1 1 -1 -2 0]    ,\n+        [0.0, 0.0, (3 - √big(3)*im)/2, (3 + √big(3)*im)/2, (3 - √big(3)im)/2, (3 + √big(3)im)/2]),\n+    ([1 0 -1 0 0 0; 0 1 1 1 -1 0; 1 0 -1 0 0 0; 1 -1 0 -1 1 1; 0 0 1 0 0 0; -1 0 1 0 0 0]      ,\n+        zeros(6)),\n+    ([1 -2 -1 1 -1 0; 0 1 0 -1 0 1; -1 1 2 0 1 0; 0 -1 -2 2 -1 -1; 1 0 -1 0 0 0; 0 -1 -1 1 0 0],\n+        [(1 - √big(3)*im)/2, (1 + √big(3)*im)/2, (1 - √big(3)im)/2, (1 + √big(3)im)/2, 2, 2]),\n+    ([2 0 -1 0 0 1; 0 2 0 -1 -1 0; -1 0 1 0 0 -1; 0 -1 0 1 1 0; 0 1 0 -1 0 0; -1 0 1 0 0 0]    ,\n+        ones(6)),\n+    ([1 0 1 0 -1 0; -2 1 2 -1 1 1; -1 0 -1 0 1 0; 2 1 2 -1 -2 1; 1 0 1 0 -1 0; 1 -1 -2 1 0 -1] ,\n+        [-1, -1, 0, 0, 0, 0]))\n+\n+    @testset \"shouldn't need excessive iterations (30*n) in the Float64 case\" begin\n+        GenericLinearAlgebra._schur!(float(A))\n+    end\n+\n+    # For BigFloats, many iterations are required for convergence\n+    # Improving this is probably a hard problem\n+    vals = eigvals(big.(A), maxiter=1500)\n+\n+    # It's hard to compare complex conjugate pairs so we compare the real and imaginary parts separately\n+    @test sort(real(vals)) ≈ sort(real(λs)) atol=1e-25\n+    @test sort(imag(vals)) ≈ sort(imag(λs)) atol=1e-25\n+end\n+\n+end\n\\ No newline at end of file\n",
+    "FAIL_TO_PASS": [
+      "The General eigenvalue problem",
+      "Test sign of eigenvalues",
+      "Problem dimension (5,6)",
+      "Problem dimension (50,60)",
+      "Problem dimension (150,200)",
+      "The Ivan Slapničar Challenge",
+      "Compare to Base methods. Problem dimension (9,10)"
+    ],
+    "PASS_TO_PASS": [
+      "Cholesky",
+      "The QR decomposition"
+    ],
+    "instance_id": "julialinearalgebra__genericlinearalgebra.jl-69",
+    "repo": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+    "pr_description": "Also reduce the default number of iterations. Add complicated\r\ntest matrices.\r\n\r\nFixes https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/67",
+    "created_at": "2020-08-04 14:36:18",
+    "image_name": "docker.io/swerebenchv2/julialinearalgebra-genericlinearalgebra.jl:69-a3140d3",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "license": "MIT",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()' 2>&1"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.92,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "regression_bug"
+        ],
+        "reasoning": "The issue clearly requests fixing non‑convergence for certain matrices by adjusting iteration limits and shift strategies in the QR algorithm. The added tests directly verify that Float64 matrices converge within a reasonable number of iterations and that BigFloat results match analytical eigenvalues, aligning with the stated goals. No signals of test‑suite coupling, implicit naming, external dependencies, ambiguous specifications, unrelated patch artifacts, or hidden domain knowledge are present. Therefore the task is well‑specified and solvable.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 4,
+      "num_modified_lines": null,
+      "pr_author": "andreasnoack",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/69"
+    }
+  },
+  "parent_sha": "a3140d3a206d95dd631b33422ead93c3b24cf9ce",
+  "changed_production_files": [
+    "src/eigenGeneral.jl"
+  ],
+  "changed_test_files": [
+    "test/eigengeneral.jl"
+  ],
+  "trigger_tests": [
+    "The General eigenvalue problem",
+    "Test sign of eigenvalues",
+    "Problem dimension (5,6)",
+    "Problem dimension (50,60)",
+    "Problem dimension (150,200)",
+    "The Ivan Slapničar Challenge",
+    "Compare to Base methods. Problem dimension (9,10)"
+  ],
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "The General eigenvalue problem",
+        "Test sign of eigenvalues",
+        "Problem dimension (5,6)",
+        "Problem dimension (50,60)",
+        "Problem dimension (150,200)",
+        "The Ivan Slapničar Challenge",
+        "Compare to Base methods. Problem dimension (9,10)"
+      ],
+      "added_testsets": [
+        "Demmel matrix",
+        "Complicate matrix from Sandia technical report",
+        "Issue 67",
+        "shouldn't need excessive iterations (30*n) in the Float64 case"
+      ],
+      "inferred_testset_context": [
+        "Issue 63"
+      ],
+      "assertion_expression_sha256": [
+        "71203310c249ea8b8b18147ee0a28820311ea5c83a0b75214126884bbf142ffa",
+        "a87b7c6d9893fbe17275037c8f1ed6ce5b3c48a8afd956cbc7ed632e34d05f96",
+        "be6d5cf68a4d3dfc2f79c1cbc4f14379793f07e0037becb04efca16a029b8baf",
+        "3c28036307556c2d0ff0b52f85487fca2f597af5c765619ba5fe9f671a717f04"
+      ]
+    },
+    "sha256": "060464fd47f90adc3a6e2a0789dffeb14f06a2847f2525d450f3b2851abdc752"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.6.7",
+    "julia_version_origin": "fixed_revision_era_pre_2022",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test()'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.6.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "d98bba3597245c4ceaa8a2accd1278b0d0b310f2",
+    "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+    "input_sha256": "6383c61590f977813516856c57fa229dbf421701b755db705b9511e00608f9c3",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-30T04:00:19Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.45109676169154234,
+      "input_tokens": 4353,
+      "output_tokens": 741
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.78, \"summary\": \"The PR fixes a genuine convergence defect in the generic Schur/eigenvalue iteration: for certain integer-derived matrices the exceptional shift logic fails, producing either inaccurate eigenvalues in Float64 or an outright `ArgumentError: iteration limit 600 reached` for BigFloat. The change touches one production file (src/eigenGeneral.jl, 6 hunks) and adds regression matrices to test/eigengeneral.jl, so it fits a single-file behavioral bug-fix pattern.\", \"evidence\": \"Issue #67 documents `eigvals(big.(t))` throwing an iteration-limit error for a 6x6 matrix, with the Float64 path also returning eigenvalues that are visibly wrong (spurious ~1e-9 pair, duplicated conjugate pairs). PR #69 title and body state it fixes the exceptional shift and explicitly closes #67. Production change is confined to src/eigenGeneral.jl; a matching test file test/eigengeneral.jl is modified, and trigger tests include a new-looking 'The Ivan Slapnicar Challenge' testset alongside existing dimension-parameterized eigenvalue tests. This is corrected computation of an existing documented API (eigvals/schur), not a new feature, refactor, docs, or diagnostic change.\", \"missing_evidence\": \"The actual diff hunks are not shown, so the specific shift formula change and the reduced default iteration count are unverified. No runtime_evidence or file_details were provided, so I cannot confirm the pre-fix test failure or post-fix pass from logs. The split between newly added tests and pre-existing tests in the trigger list is inferred from names only.\", \"validation_risks\": \"The fix reportedly also reduces the default maximum iteration count, which changes a tuning parameter and could alter behavior for matrices unrelated to the reported bug; a validation harness must confirm the fail-to-pass test genuinely fails on the parent commit for the algorithmic reason rather than the iteration cap. Numerical eigenvalue tests are sensitive to tolerance and RNG-seeded random matrices, so the dimension-parameterized testsets (5,6), (50,60), (150,200) carry flakiness risk. BigFloat tests on 150x200 problems may be slow enough to hit timeouts. Some listed trigger tests are likely broad parent testsets that already passed, so per-testset granularity should be checked.\", \"suggested_tests\": \"Pin the exact 6x6 matrix from issue #67 and assert `eigvals(big.(t))` returns without throwing and that the eigenvalues match the known spectrum (three-ish exact values plus the 1.5 +/- sqrt(3)/2 i conjugate pair) to high precision. Assert the spurious near-zero pair from the buggy output is absent by comparing sorted eigenvalues to the characteristic-polynomial roots. Add a deterministic-seed test comparing GenericLinearAlgebra eigvals against LinearAlgebra/LAPACK for the (9,10) case with an explicit tolerance, and keep the Slapnicar challenge matrix as a hard-coded literal rather than a randomly generated one to avoid flakiness.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.78,
+    "summary": "The PR fixes a genuine convergence defect in the generic Schur/eigenvalue iteration: for certain integer-derived matrices the exceptional shift logic fails, producing either inaccurate eigenvalues in Float64 or an outright `ArgumentError: iteration limit 600 reached` for BigFloat. The change touches one production file (src/eigenGeneral.jl, 6 hunks) and adds regression matrices to test/eigengeneral.jl, so it fits a single-file behavioral bug-fix pattern.",
+    "evidence": "Issue #67 documents `eigvals(big.(t))` throwing an iteration-limit error for a 6x6 matrix, with the Float64 path also returning eigenvalues that are visibly wrong (spurious ~1e-9 pair, duplicated conjugate pairs). PR #69 title and body state it fixes the exceptional shift and explicitly closes #67. Production change is confined to src/eigenGeneral.jl; a matching test file test/eigengeneral.jl is modified, and trigger tests include a new-looking 'The Ivan Slapnicar Challenge' testset alongside existing dimension-parameterized eigenvalue tests. This is corrected computation of an existing documented API (eigvals/schur), not a new feature, refactor, docs, or diagnostic change.",
+    "missing_evidence": "The actual diff hunks are not shown, so the specific shift formula change and the reduced default iteration count are unverified. No runtime_evidence or file_details were provided, so I cannot confirm the pre-fix test failure or post-fix pass from logs. The split between newly added tests and pre-existing tests in the trigger list is inferred from names only.",
+    "validation_risks": "The fix reportedly also reduces the default maximum iteration count, which changes a tuning parameter and could alter behavior for matrices unrelated to the reported bug; a validation harness must confirm the fail-to-pass test genuinely fails on the parent commit for the algorithmic reason rather than the iteration cap. Numerical eigenvalue tests are sensitive to tolerance and RNG-seeded random matrices, so the dimension-parameterized testsets (5,6), (50,60), (150,200) carry flakiness risk. BigFloat tests on 150x200 problems may be slow enough to hit timeouts. Some listed trigger tests are likely broad parent testsets that already passed, so per-testset granularity should be checked.",
+    "suggested_tests": "Pin the exact 6x6 matrix from issue #67 and assert `eigvals(big.(t))` returns without throwing and that the eigenvalues match the known spectrum (three-ish exact values plus the 1.5 +/- sqrt(3)/2 i conjugate pair) to high precision. Assert the spurious near-zero pair from the buggy output is absent by comparing sorted eigenvalues to the characteristic-polynomial roots. Add a deterministic-seed test comparing GenericLinearAlgebra eigvals against LinearAlgebra/LAPACK for the (9,10) case with an explicit tolerance, and keep the Slapnicar challenge matrix as a hard-coded literal rather than a randomly generated one to avoid flakiness."
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 7,
+    "tests": [
+      "The General eigenvalue problem",
+      "Test sign of eigenvalues",
+      "Problem dimension (5,6)",
+      "Problem dimension (50,60)",
+      "Problem dimension (150,200)",
+      "The Ivan Slapničar Challenge",
+      "Compare to Base methods. Problem dimension (9,10)"
+    ],
+    "exception_types": [
+      "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+    ],
+    "fingerprints": [
+      "879cc6fa3cc7a053d17d0983729456a3e0971ab4792aa61898db126e98af997e"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "d98bba3597245c4ceaa8a2accd1278b0d0b310f2",
+    "parent_sha": "a3140d3a206d95dd631b33422ead93c3b24cf9ce",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "4f37fd937d0a505158d2e42121172cf80de149d363ce368b6bcc58e2dc00ab7b",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

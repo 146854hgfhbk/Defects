@@ -1,0 +1,124 @@
+diff --git a/spec/fs_spec.lua b/spec/fs_spec.lua
+index 0e34c90c8b24b437e328a434996259cb51775967..d1524553bab68c0e83c21dc2e66266ac0e4c2825 100644
+--- a/spec/fs_spec.lua
++++ b/spec/fs_spec.lua
+@@ -1,4 +1,7 @@
++local lfs = require "lfs"
++
+ local fs = require "luacheck.fs"
++local utils = require "luacheck.utils"
+ local P = fs.normalize
+ 
+ describe("fs", function()
+@@ -51,9 +54,10 @@ describe("fs", function()
+    end)
+ 
+    describe("get_current_dir", function()
+-      it("returns absolute path to current directory", function()
++      it("returns absolute path to current directory with trailing directory separator", function()
+          local current_dir = fs.get_current_dir()
+          assert.string(current_dir)
++         assert.matches(utils.dir_sep .. "$", current_dir)
+          assert.not_equal("", (fs.split_base(current_dir)))
+          assert.is_true(fs.is_file(current_dir .. "spec/folder/foo"))
+       end)
+@@ -76,3 +80,46 @@ describe("fs", function()
+       end)
+    end)
+ end)
++
++for _, fs_name in ipairs({"lua_fs", "lfs_fs"}) do
++   local base_fs = require("luacheck." .. fs_name)
++
++   describe(fs_name, function()
++      describe("get_current_dir", function()
++         it("returns absolute path to current directory", function()
++            local current_dir = base_fs.get_current_dir()
++            assert.string(current_dir)
++            assert.not_equal("", (fs.split_base(current_dir)))
++            assert.is_true(fs.is_file(fs.join(current_dir, "spec/folder/foo")))
++         end)
++      end)
++
++      describe("get_mode", function()
++         local tricky_path = "spec/'"
++
++         it("returns 'file' for a file", function()
++            assert(io.open(tricky_path, "w"))
++            finally(function() assert(os.remove(tricky_path)) end)
++            assert.equal("file", base_fs.get_mode(tricky_path))
++         end)
++
++         it("returns 'directory' for a directory", function()
++            assert(lfs.mkdir(tricky_path))
++            finally(function() assert(lfs.rmdir(tricky_path)) end)
++            assert.equal("directory", base_fs.get_mode(tricky_path))
++         end)
++
++         it("returns not 'file' or 'directory' if path doesn't point to a file or a directory", function()
++            local mode = base_fs.get_mode(tricky_path)
++            assert.not_equal("file", mode)
++            assert.not_equal("directory", mode)
++         end)
++
++         it("returns not 'file' or 'directory' if path is bad", function()
++            local mode = base_fs.get_mode('"^<>!|&%')
++            assert.not_equal("file", mode)
++            assert.not_equal("directory", mode)
++         end)
++      end)
++   end)
++end
+diff --git a/src/luacheck/lua_fs.lua b/src/luacheck/lua_fs.lua
+index f28e825810a393e8ad80704a8f271b6e600010ad..04134ce2a7d9e9cb4ee832af3ac10c8c1eb79c35 100644
+--- a/src/luacheck/lua_fs.lua
++++ b/src/luacheck/lua_fs.lua
+@@ -2,16 +2,45 @@ local utils = require "luacheck.utils"
+ 
+ local lua_fs = {}
+ 
++-- Quotes an argument for a command for os.execute or io.popen.
++-- Same code has been contributed to pl.
++local function quote_arg(argument)
++   if utils.is_windows then
++      if argument == "" or argument:find('[ \f\t\v]') then
++         -- Need to quote the argument.
++         -- Quotes need to be escaped with backslashes;
++         -- additionally, backslashes before a quote, escaped or not,
++         -- need to be doubled.
++         -- See documentation for CommandLineToArgvW Windows function.
++         argument = '"' .. argument:gsub([[(\*)"]], [[%1%1\"]]):gsub([[\+$]], "%0%0") .. '"'
++      end
++
++      -- os.execute() uses system() C function, which on Windows passes command
++      -- to cmd.exe. Escape its special characters.
++      return (argument:gsub('["^<>!|&%%]', "^%0"))
++   else
++      if argument == "" or argument:find('[^a-zA-Z0-9_@%+=:,./-]') then
++         -- To quote arguments on posix-like systems use single quotes.
++         -- To represent an embedded single quote close quoted string ('),
++         -- add escaped quote (\'), open quoted string again (').
++         argument = "'" .. argument:gsub("'", [['\'']]) .. "'"
++      end
++
++      return argument
++   end
++end
++
+ local mode_cmd_template
+ 
+ if utils.is_windows then
+-   mode_cmd_template = [[if exist "%s\*" (echo directory) else (if exist "%s" echo "file")]]
++   mode_cmd_template = [[if exist %s\* (echo directory) else (if exist %s echo file)]]
+ else
+-   mode_cmd_template = [[if [ -d '%s' ]; then echo directory; elif [ -f '%s' ]; then echo file; fi]]
++   mode_cmd_template = [[if [ -d %s ]; then echo directory; elif [ -f %s ]; then echo file; fi]]
+ end
+ 
+ function lua_fs.get_mode(path)
+-   local fh = assert(io.popen(mode_cmd_template:format(path, path)))
++   local quoted_path = quote_arg(path)
++   local fh = assert(io.popen(mode_cmd_template:format(quoted_path, quoted_path)))
+    local mode = fh:read("*a"):match("^(%S*)")
+    fh:close()
+    return mode

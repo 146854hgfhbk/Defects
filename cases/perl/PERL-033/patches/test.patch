@@ -1,0 +1,51 @@
+diff --git a/t/layer.t b/t/layer.t
+new file mode 100644
+index 0000000..9a5f185
+--- /dev/null
++++ b/t/layer.t
+@@ -0,0 +1,45 @@
++#!/usr/local/bin/perl -w
++# Test for File::Temp - LAYER option (IO layer / binmode)
++
++use strict;
++use Test::More tests => 7;
++use File::Temp qw/ tempfile /;
++
++# Test 1: LAYER option is accepted without error
++my ($fh, $tempfile) = tempfile( UNLINK => 1, LAYER => ':raw' );
++ok( defined $fh, "tempfile() with LAYER => ':raw' returns filehandle" );
++ok( -f $tempfile, "tempfile() with LAYER => ':raw' creates file" );
++close $fh;
++
++# Test 2: Writing UTF-8 content via LAYER => ':encoding(UTF-8)'
++my ($fh2, $tempfile2) = tempfile( UNLINK => 1, LAYER => ':encoding(UTF-8)' );
++ok( defined $fh2, "tempfile() with LAYER => ':encoding(UTF-8)' returns filehandle" );
++my $utf8_string = "caf\x{e9}\n"; # "café"
++print $fh2 $utf8_string;
++close $fh2;
++
++# Read back with explicit encoding and verify content
++open my $check_fh, '<:encoding(UTF-8)', $tempfile2
++  or die "Cannot open $tempfile2: $!";
++my $read_back = <$check_fh>;
++close $check_fh;
++is( $read_back, $utf8_string, "UTF-8 content round-trips correctly via LAYER option" );
++
++# Test 3: OO interface (new()) also supports LAYER
++my $obj = File::Temp->new( UNLINK => 1, LAYER => ':encoding(UTF-8)' );
++ok( defined $obj, "File::Temp->new() with LAYER returns object" );
++my $obj_string = "t\x{e9}st\n"; # "tést"
++print $obj $obj_string;
++my $obj_path = $obj->filename;
++close $obj;
++
++open my $check_fh2, '<:encoding(UTF-8)', $obj_path
++  or die "Cannot open $obj_path: $!";
++my $read_back2 = <$check_fh2>;
++close $check_fh2;
++is( $read_back2, $obj_string, "UTF-8 content round-trips via LAYER in OO interface" );
++
++# Test 4: No LAYER (default behaviour unchanged)
++my ($fh3, $tempfile3) = tempfile( UNLINK => 1 );
++ok( defined $fh3, "tempfile() without LAYER still works" );
++close $fh3;

@@ -1,0 +1,76 @@
+{
+  "candidate_sha": "ac96481f1f44b5ee52a44d5f8054acf4c31666e5",
+  "project": "JuliaFolds2/OhMyThreads.jl",
+  "source": "merged_pull_request",
+  "instance_id": "juliafolds2__ohmythreads.jl-101",
+  "swe_rebench": {
+    "base_commit": "13db5995f6bf4a9c7c097764aed96f9991dc9cc2",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "regions",
+      "@barrier"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 100,
+      "url": "https://github.com/JuliaFolds2/OhMyThreads.jl/issues/100",
+      "state": "closed",
+      "title": "`@only_one` block is executed by a single iteration (not a single task)",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "From my understanding of the docstring\r\n```\r\n  @only_one begin ... end\r\n\r\n  This can be used inside a @tasks for ... end block to mark a region of code to be executed by only one\r\n  of the parallel tasks (all other tasks skip over this region).\r\n```\r\nI was expecting\r\n```julia\r\n@tasks for i in 1:8\r\n    @set ntasks = 2\r\n\r\n    println(i, \": before\")\r\n    @only_one begin\r\n        println(i, \": after\")\r\n    end\r\nend\r\n```\r\nto print after 4 times (since a single task has to run 4 iterations of the loop).  Instead, I get the output\r\n```\r\n5: before\r\n1: before\r\n5: after\r\n6: before\r\n2: before\r\n7: before\r\n8: before\r\n3: before\r\n4: before\r\n```\r\nIs this expected? Should the docstring be changed or I just got it wrong? It seems to me that this macro should be called `@only_once` instead."
+    },
+    {
+      "number": 101,
+      "url": "https://github.com/JuliaFolds2/OhMyThreads.jl/pull/101",
+      "state": "closed",
+      "title": "Fix #100",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [
+        "Skip-Changelog",
+        "bugfix"
+      ],
+      "body_excerpt": "Closes #100"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "fix_commit_to_issue",
+      "issue_numbers": [
+        100
+      ],
+      "fix_commit": "ac96481f1f44b5ee52a44d5f8054acf4c31666e5",
+      "evidence_source": "fix_commit_message"
+    }
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix #100 (#101)",
+    "commit_issue_refs": [
+      100,
+      101
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 101,
+    "pull_request_title": "Fix #100",
+    "pull_request_issue_refs": [
+      100
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    100
+  ],
+  "cross_repository_issue_records": []
+}

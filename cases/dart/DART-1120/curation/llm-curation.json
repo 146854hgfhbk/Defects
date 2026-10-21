@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1120",
+  "technical_evidence_sha256": "b0560e0cf70588e42c2dacbd31615da39e217c6af94ef77e23fde15c7e015811",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "7c549d09c5f945e7a896c37891024b0654640dd0797ad8a58711c9f499b123d4",
+  "reviewed_at": "2026-08-14T17:39:38.166335+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "nikosportolos/ansix#208",
+  "rationale": "Issue #208 states the prefix of the last node is miscalculated when its value is a List and must be increased to start at the parent node column, and its body shows the exact defective rendering ('└── empty_list' followed by a 3-space '└── (empty)'). The minimized production patch touches only the TreeNodeType.iterable branch of AnsiTreeView._parseTreeNode, introducing extraTab and appending it to the last-node prefix ('$prefix$tab$extraTab'), which is precisely the one-column increase the issue requests, suppressed for center alignment where the existing tabSize already compensates. The minimization correctly drops the two unrelated parts of the upstream commit: the theme.dart default change (valueTheme alignment center→left and wrapOptions lineLength 120→100, a default-configuration/behavior change independent of the prefix bug) and the cosmetic reordering of '1 + _lineLength' to '_lineLength + 1' in the tabSize switch; the example/treeview/empty.dart edit is also excluded. What remains is a single behavioral hunk with no refactor, formatting, feature, doc, config, or test content. The trigger patch is test-only and consists solely of upstream expected-output corrections: one additional leading space before the last-node '└── (empty)' in the left/right/null value-alignment mocks of alignment_test.dart (center mocks intentionally unchanged, matching the fix's center exclusion) and a uniform one-column shift of the trailing 'list' subtree in treeviewMixedMockLeft/Right of mocks.dart, which is the same last-iterable-node prefix behavior. It uses only the pre-existing AnsiTreeView/AnsiTreeViewTheme API and introduces no API added by the fix. Strict machine evidence reports both gates passed: builds on both revisions, 10 declared selectors valid and unique, buggy differential reproduced on all 10 (8 alignment_test cases plus the two mixed-alignment tree_view_test cases), fixed isolated/suite/reversed runs clean, full suite green on fixed with buggy failures confined to the reproduced triggers, deterministic across 3 repetitions with 12 fingerprint groups. active_same_project_root_causes is empty and nikosportolos/ansix#208 is the supplied verified issue key, so no duplicate root cause.\n\nIssue #208 (label 'bug', body in source_candidate.issue_check.linked_issues) states the prefix of the last node is miscalculated when its type is a List, and shows a rendering where the final 'empty_list' child is indented one column short of alignment with its parent. The minimized production patch touches exactly that path: in AnsiTreeView._parseTree the TreeNodeType.iterable branch now appends a one-space extraTab to the last-node prefix ('$prefix$tab$extraTab') for non-center alignment, which is the increase the issue asks for. The trigger patch changes only expected mock strings, adding exactly one space before the '└── (empty)' line of the last list node in alignment_test.dart and shifting the last-node 'list' subtree by one column in the treeviewMixedMockLeft/Right fixtures of mocks.dart; no new production API is used, and both files exist at the buggy revision, so the trigger is the pre-existing upstream assertion corrected to the reported behavior. The curator correctly excluded the unrelated parts of the original commit: the theme.dart default changes (valueTheme alignment center→left, wrapOptions lineLength 120→100), the cosmetic reordering of the tabSize switch arms (1 + _lineLength → _lineLength + 1), the example/treeview/empty.dart demo edit, the test restructuring plus added keyTheme/wrapOptions arguments, and the mock blocks (treeviewNestedMock, noHeaderMap, noHeaderMapSingleEntry, padded-header mock) whose deltas were driven by those theme defaults rather than by the prefix defect. Strict evidence for both the original and post-minimization matrices passes all gates: 10 unique selectors, buggy differential reproducing all 10 (8 alignment_test cases plus the two mixed-alignment tree_view_test cases), fixed isolated/suite/reversed runs clean, fixed full suite green, buggy full-suite failures confined to the reproduced triggers, deterministic across 3 repetitions. Root cause is nikosportolos/ansix#208, which is the only allowed id and active_same_project_root_causes is empty, so there is no duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T17:38:59.456686+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "7c549d09c5f945e7a896c37891024b0654640dd0797ad8a58711c9f499b123d4",
+      "response_sha256": "d25bfb17d2dd23f4969ac4fe1cc00f212b2e70a0addba6718d7f8c8f4c95060b",
+      "response_id": "msg_22d441cf9e49459cbce8bfae1c5db7f6",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.168845511376451,
+        "input_tokens": 76932,
+        "output_tokens": 851
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nikosportolos/ansix#208",
+      "rationale": "Issue #208 states the prefix of the last node is miscalculated when its value is a List and must be increased to start at the parent node column, and its body shows the exact defective rendering ('└── empty_list' followed by a 3-space '└── (empty)'). The minimized production patch touches only the TreeNodeType.iterable branch of AnsiTreeView._parseTreeNode, introducing extraTab and appending it to the last-node prefix ('$prefix$tab$extraTab'), which is precisely the one-column increase the issue requests, suppressed for center alignment where the existing tabSize already compensates. The minimization correctly drops the two unrelated parts of the upstream commit: the theme.dart default change (valueTheme alignment center→left and wrapOptions lineLength 120→100, a default-configuration/behavior change independent of the prefix bug) and the cosmetic reordering of '1 + _lineLength' to '_lineLength + 1' in the tabSize switch; the example/treeview/empty.dart edit is also excluded. What remains is a single behavioral hunk with no refactor, formatting, feature, doc, config, or test content. The trigger patch is test-only and consists solely of upstream expected-output corrections: one additional leading space before the last-node '└── (empty)' in the left/right/null value-alignment mocks of alignment_test.dart (center mocks intentionally unchanged, matching the fix's center exclusion) and a uniform one-column shift of the trailing 'list' subtree in treeviewMixedMockLeft/Right of mocks.dart, which is the same last-iterable-node prefix behavior. It uses only the pre-existing AnsiTreeView/AnsiTreeViewTheme API and introduces no API added by the fix. Strict machine evidence reports both gates passed: builds on both revisions, 10 declared selectors valid and unique, buggy differential reproduced on all 10 (8 alignment_test cases plus the two mixed-alignment tree_view_test cases), fixed isolated/suite/reversed runs clean, full suite green on fixed with buggy failures confined to the reproduced triggers, deterministic across 3 repetitions with 12 fingerprint groups. active_same_project_root_causes is empty and nikosportolos/ansix#208 is the supplied verified issue key, so no duplicate root cause.",
+      "evidence_paths": [
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "lib/src/widgets/tree_view/tree_view.dart",
+        "patches/trigger-tests.patch",
+        "test/widgets/tree_view/alignment_test.dart",
+        "test/widgets/tree_view/mocks.dart",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:trigger_reduction.upstream_trigger_patch",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The defect and all triggers are whitespace-exact golden-string comparisons of rendered ANSI/box-drawing output, so any future formatter or terminal-width change could shift assertions for reasons unrelated to this root cause.",
+        "The benchmark fixed state (minimized patch only) intentionally differs from the upstream fixed revision, which also changed the default valueTheme alignment and wrap line length; results are not comparable to upstream default rendering.",
+        "The fix deliberately exempts center alignment, so the accepted behavior is alignment-conditional rather than a uniform prefix rule; a later upstream change to center handling would not be covered by these triggers.",
+        "Issue #208 carries both 'bug' and 'enhancement' labels; acceptance rests on the issue body describing a miscalculation of existing output, not on the label set."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T17:39:38.165939+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "7c549d09c5f945e7a896c37891024b0654640dd0797ad8a58711c9f499b123d4",
+      "response_sha256": "28ae31981785019f22e1c71fb5f37e9b940440a835e91dd50379981099d21a74",
+      "response_id": "msg_c00e175091d74208917f971fb50c56d4",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.1722483086567164,
+        "input_tokens": 76946,
+        "output_tokens": 811
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nikosportolos/ansix#208",
+      "rationale": "Issue #208 (label 'bug', body in source_candidate.issue_check.linked_issues) states the prefix of the last node is miscalculated when its type is a List, and shows a rendering where the final 'empty_list' child is indented one column short of alignment with its parent. The minimized production patch touches exactly that path: in AnsiTreeView._parseTree the TreeNodeType.iterable branch now appends a one-space extraTab to the last-node prefix ('$prefix$tab$extraTab') for non-center alignment, which is the increase the issue asks for. The trigger patch changes only expected mock strings, adding exactly one space before the '└── (empty)' line of the last list node in alignment_test.dart and shifting the last-node 'list' subtree by one column in the treeviewMixedMockLeft/Right fixtures of mocks.dart; no new production API is used, and both files exist at the buggy revision, so the trigger is the pre-existing upstream assertion corrected to the reported behavior. The curator correctly excluded the unrelated parts of the original commit: the theme.dart default changes (valueTheme alignment center→left, wrapOptions lineLength 120→100), the cosmetic reordering of the tabSize switch arms (1 + _lineLength → _lineLength + 1), the example/treeview/empty.dart demo edit, the test restructuring plus added keyTheme/wrapOptions arguments, and the mock blocks (treeviewNestedMock, noHeaderMap, noHeaderMapSingleEntry, padded-header mock) whose deltas were driven by those theme defaults rather than by the prefix defect. Strict evidence for both the original and post-minimization matrices passes all gates: 10 unique selectors, buggy differential reproducing all 10 (8 alignment_test cases plus the two mixed-alignment tree_view_test cases), fixed isolated/suite/reversed runs clean, fixed full suite green, buggy full-suite failures confined to the reproduced triggers, deterministic across 3 repetitions. Root cause is nikosportolos/ansix#208, which is the only allowed id and active_same_project_root_causes is empty, so there is no duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "lib/src/widgets/tree_view/tree_view.dart",
+        "test/widgets/tree_view/alignment_test.dart",
+        "test/widgets/tree_view/mocks.dart",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_reduction.upstream_trigger_patch"
+      ],
+      "risks": [
+        "Issue #208 carries both 'bug' and 'enhancement' labels; acceptance rests on the body text describing a miscalculated prefix rather than on the label set.",
+        "The triggers are golden-string comparisons of full rendered output including ANSI escapes and box-drawing characters, so they assert exact formatting rather than an alignment invariant and could be brittle to any unrelated rendering change.",
+        "Because the theme default changes from the same commit were excluded, the accepted fixed revision differs from upstream HEAD defaults (valueTheme alignment center, lineLength 120); the extraTab condition excludes center alignment, so center-center and center-null cases are unaffected and untriggered.",
+        "The one-space extraTab is applied only on the isLast branch; whether this fully generalizes to deeper nesting or right alignment beyond the covered cases is not established by the supplied evidence."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+diff --git a/Sources/Element.swift b/Sources/Element.swift
+index a611a04..9c439d4 100644
+--- a/Sources/Element.swift
++++ b/Sources/Element.swift
+@@ -1733,7 +1733,7 @@ internal extension Element {
+             if let element = node as? Element {
+                 if let classNames = try? element.unorderedClassNamesUTF8() {
+                     for className in classNames {
+-                        newIndex[Array(className), default: []].append(Weak(element))
++                        newIndex[Array(className.lowercased()), default: []].append(Weak(element))
+                     }
+                 }
+             }
+diff --git a/Tests/SwiftSoupTests/ElementTest.swift b/Tests/SwiftSoupTests/ElementTest.swift
+index dd59b4a..aa55e92 100644
+--- a/Tests/SwiftSoupTests/ElementTest.swift
++++ b/Tests/SwiftSoupTests/ElementTest.swift
+@@ -997,6 +997,13 @@ class ElementTest: XCTestCase {
+         XCTAssertEqual(1, els.size())
+     }
+ 
++    func testGetElementsByClassNormalizationRegression() throws {
++        let document = try SwiftSoup.parse(#"<div class="ClassWithUppercase">Text</div>"#)
++        let elements = try document.getElementsByClass("ClassWithUppercase")
++        XCTAssertEqual(elements.count, 1)
++        XCTAssertEqual(elements.get(0).tagName(), "div")
++    }
++
+ 
+ 	static var allTests = {
+ 		return [
+@@ -1073,7 +1080,8 @@ class ElementTest: XCTestCase {
+             ("testChainedRemoveAttributes", testChainedRemoveAttributes),
+             ("testIs", testIs),
+             ("testGetElementsByTagIndexDuplicatesRegression", testGetElementsByTagIndexDuplicatesRegression),
+-            ("testGetElementsByTagIndexRegression", testGetElementsByTagIndexRegression)
++            ("testGetElementsByTagIndexRegression", testGetElementsByTagIndexRegression),
++            ("testGetElementsByClassNormalizationRegression", testGetElementsByClassNormalizationRegression)
+         ]
+ 	}()
+ }

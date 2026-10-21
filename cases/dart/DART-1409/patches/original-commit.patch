@@ -1,0 +1,44 @@
+diff --git a/lib/src/collection/treeset.dart b/lib/src/collection/treeset.dart
+index 081394834c1a13dffce870c2e524923bece7039e..d22787d4c879ea04086f2fc9ede7e756b44e7d78 100644
+--- a/lib/src/collection/treeset.dart
++++ b/lib/src/collection/treeset.dart
+@@ -655,7 +655,7 @@ class AvlTreeSet<V> extends TreeSet<V> {
+   /// See [IterableBase.last]
+   @override
+   V get last {
+-    _TreeNode<V>? max = _root?.minimumNode;
++    _TreeNode<V>? max = _root?.maximumNode;
+     if (max != null) {
+       return max.object;
+     }
+diff --git a/test/collection/treeset_test.dart b/test/collection/treeset_test.dart
+index 640c8ca3e5fa8dbf058e8798acd301e872cfedb8..e80ddff292025c1a2bcf3830849ad68337df4438 100644
+--- a/test/collection/treeset_test.dart
++++ b/test/collection/treeset_test.dart
+@@ -70,6 +70,26 @@ void main() {
+       });
+     });
+ 
++    group('First & Last', () {
++      test('for num tree', () {
++        var tree = TreeSet<num>();
++        tree.add(1);
++        tree.add(2);
++        tree.add(3);
++        expect(tree.first, 1);
++        expect(tree.last, 3);
++      });
++
++      test('for String tree', () {
++        var tree = TreeSet<String>();
++        tree.add('abc');
++        tree.add('aaa');
++        tree.add('zzz');
++        expect(tree.first, 'aaa');
++        expect(tree.last, 'zzz');
++      });
++    });
++
+     group('with repeated elements', () {
+       late TreeSet<num> tree;
+       setUp(() {

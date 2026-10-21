@@ -1,0 +1,81 @@
+From a40491a3ccb26d81f8ebf3da54fa6618c3154f07 Mon Sep 17 00:00:00 2001
+From: Thijs Schreijer <thijs@thijsschreijer.nl>
+Date: Fri, 29 Jan 2021 12:25:13 +0100
+Subject: [PATCH] fix(app) parse values that contain = or :
+
+replaces #370
+---
+ CHANGELOG.md       |  5 ++++-
+ lua/pl/app.lua     |  2 +-
+ tests/test-app.lua | 18 ++++++++++++++++++
+ 3 files changed, 23 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c3a2f86a..f787953b 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -22,11 +22,14 @@ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) fo
+    [#366](https://github.com/lunarmodules/Penlight/pull/366)
+  - feat: deprecation functionality `utils.raise_deprecation`
+    [#361](https://github.com/lunarmodules/Penlight/pull/361)
++ - feat: `utils.splitv` now takes same args as `split`
++   [#373](https://github.com/lunarmodules/Penlight/pull/373)
+  - fix: `dir.rmtree` failed to remove symlinks to directories
+    [#365](https://github.com/lunarmodules/Penlight/pull/365)
+  - fix: `pretty.write` could error out on failing metamethods (Lua 5.3+)
+    [#368](https://github.com/lunarmodules/Penlight/pull/368)
+-
++ - fix: `app.parse` now correctly parses values containing '=' or ':'
++   [#373](https://github.com/lunarmodules/Penlight/pull/373)
+ 
+ ## 1.9.2 (2020-09-27)
+ 
+diff --git a/lua/pl/app.lua b/lua/pl/app.lua
+index 780a5557..a06305da 100644
+--- a/lua/pl/app.lua
++++ b/lua/pl/app.lua
+@@ -255,7 +255,7 @@ function app.parse_args (args,flags_with_values, flags_valid)
+                 i = i + 1
+             else
+                 -- a value can also be indicated with = or :
+-                local var,val =  utils.splitv (v,'[=:]')
++                local var,val =  utils.splitv (v,'[=:]', false, 2)
+                 var = var or v
+                 val = val or true
+                 if not is_long then
+diff --git a/tests/test-app.lua b/tests/test-app.lua
+index f5066cc2..980cb16c 100644
+--- a/tests/test-app.lua
++++ b/tests/test-app.lua
+@@ -178,6 +178,13 @@ do -- app.parse_args
+     asserteq(s, {})
+ 
+ 
++    -- flag_with_values missing value at end
++    local args = utils.split("-a -b")
++    local t,s = app.parse_args(args, { "b" })
++    asserteq(t, nil)
++    asserteq(s, "no value for 'b'")
++
++
+     -- error on an unknown flag
+     local args = utils.split("-a -b value -c")
+     local t,s = app.parse_args(args, { b = true }, { "b", "c" })
+@@ -195,6 +202,17 @@ do -- app.parse_args
+     asserteq(s, {})
+ 
+ 
++    -- correctly parsed values, spaces, :, =, and multiple : or =
++    local args = utils.split("-a value -b value:one=two -c=value2:2")
++    local t,s = app.parse_args(args, { "a", "b", "c" })
++    asserteq(t, {
++       ["a"] = "value",
++       ["b"] = "value:one=two",
++       ["c"] = "value2:2",
++    })
++    asserteq(s, {})
++
++
+     -- many values, duplicates, and parameters mixed
+     local args = utils.split(
+       "-a -b -cde --long1 --ff:ffvalue --gg=ggvalue -h:hvalue -i=ivalue " ..

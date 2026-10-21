@@ -1,0 +1,135 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-283",
+  "bug_id": "JULIA-283",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "fredrikekre/Runic.jl",
+  "repository_url": "https://github.com/fredrikekre/Runic.jl.git",
+  "issue_urls": [
+    "https://github.com/fredrikekre/Runic.jl/issues/58"
+  ],
+  "issue_id": 58,
+  "buggy_revision": "150ced92abc487b3ce47a0ce5d80aec501b6baab",
+  "fixed_revision": "be162ee1345b332be50f53ec74267fc38ad66655",
+  "candidate_sha": "be162ee1345b332be50f53ec74267fc38ad66655",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "150ced92abc487b3ce47a0ce5d80aec501b6baab",
+  "changed_production_files": [
+    "src/runestone.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-283 tuple destructuring trailing comma"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_issue",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_issue",
+    "timeout_seconds": 1800,
+    "sha256": "2dd609d0dce6a12f002038bb1cc3a336fa5c3a6810874c1ef30db0d5f0aaa6f4",
+    "oracle": {
+      "public_api": "Runic.format_string",
+      "upstream_issue": 58,
+      "upstream_pull_request": 59,
+      "upstream_test_file": "test/runtests.jl",
+      "source_evidence": "Public Runic.format_string reproducer from issue #58, closed directly by the fixing commit and covered by PR #59 tests.",
+      "upstream_test_patch_sha256": "121dc359dca703efeba2cc64716c26268e8344b790113cea8aa2c5e1ae5d2621"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "be162ee1345b332be50f53ec74267fc38ad66655",
+    "project": "fredrikekre/Runic.jl",
+    "input_sha256": "b10ca26ef89c29cbb40a82018afb5cbfe371e3f1621725baf1b129418c7cf62e",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:52:01Z",
+    "usage": {
+      "prompt_tokens": 2163,
+      "completion_tokens": 629,
+      "total_tokens": 2792
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"unknown\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"Fix for incorrect handling of trailing commas in implicit tuples used in destructuring assignments (e.g., `a, = z`). Previously the formatter would unconditionally set `require_trailing_comma = false` for all implicit tuples, which incorrectly removed or failed to preserve trailing commas needed for single-item tuple destructuring on the LHS of assignments.\",\n  \"evidence\": \"The commit message explicitly says 'Fix trailing comma in implicit tuples in destructuring (#59)', indicating a bug fix. The code change replaces a blanket `require_trailing_comma = false` for implicit tuples with logic that correctly requires a trailing comma for single-item tuples on the LHS of an assignment and allows it for multi-item tuples. Tests demonstrate the expected formatting behavior: `format_string(\\\"a, = z\\\")` should preserve the trailing comma, which the old code would not do correctly.\",\n  \"missing_evidence\": \"No linked issue body is available (issue #59 is referenced but not provided). We don't have explicit before/after failure evidence showing the old code producing wrong output, though the test additions strongly imply this.\",\n  \"validation_risks\": \"The assertion `@assert kind(node) === K\\\"tuple\\\"` added in the production code could cause runtime crashes if the assumption is violated in edge cases not covered by tests. The fix relies on `ctx.lineage_kinds[end]` being `K\\\"=\\\"` to detect LHS context, which may have edge cases in nested expressions.\",\n  \"suggested_tests\": \"Test implicit single-item tuple destructuring like `x, = foo()`, nested destructuring `(a, b), = z`, and ensure RHS implicit tuples (if possible) are not affected. Also test that multi-element implicit tuples without trailing comma on non-assignment contexts remain unchanged.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for incorrect handling of trailing commas in implicit tuples used in destructuring assignments (e.g., `a, = z`). Previously the formatter would unconditionally set `require_trailing_comma = false` for all implicit tuples, which incorrectly removed or failed to preserve trailing commas needed for single-item tuple destructuring on the LHS of assignments.",
+    "evidence": "The commit message explicitly says 'Fix trailing comma in implicit tuples in destructuring (#59)', indicating a bug fix. The code change replaces a blanket `require_trailing_comma = false` for implicit tuples with logic that correctly requires a trailing comma for single-item tuples on the LHS of an assignment and allows it for multi-item tuples. Tests demonstrate the expected formatting behavior: `format_string(\"a, = z\")` should preserve the trailing comma, which the old code would not do correctly.",
+    "missing_evidence": "No linked issue body is available (issue #59 is referenced but not provided). We don't have explicit before/after failure evidence showing the old code producing wrong output, though the test additions strongly imply this.",
+    "validation_risks": "The assertion `@assert kind(node) === K\"tuple\"` added in the production code could cause runtime crashes if the assumption is violated in edge cases not covered by tests. The fix relies on `ctx.lineage_kinds[end]` being `K\"=\"` to detect LHS context, which may have edge cases in nested expressions.",
+    "suggested_tests": "Test implicit single-item tuple destructuring like `x, = foo()`, nested destructuring `(a, b), = z`, and ensure RHS implicit tuples (if possible) are not affected. Also test that multi-element implicit tuples without trailing comma on non-assignment contexts remain unchanged."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-283 tuple destructuring trailing comma"
+    ],
+    "exception_types": [
+      "c9bb39170931fa199c657acfaf9c0448cb12f50d9b2b48d1eff60447ba31afd3"
+    ],
+    "fingerprints": [
+      "c9bb39170931fa199c657acfaf9c0448cb12f50d9b2b48d1eff60447ba31afd3"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "be162ee1345b332be50f53ec74267fc38ad66655",
+    "parent_sha": "150ced92abc487b3ce47a0ce5d80aec501b6baab",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "13da4598fa92bf2a944cf4a3bc2754488eec13fb3ee89353341311ba6fb5bd5b",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

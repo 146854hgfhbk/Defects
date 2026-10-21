@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-562",
+  "technical_evidence_sha256": "b40f24ed5dff2b8b4021544cc9de71e6b8f2b98fbd39eefd4f7e37ade34651a3",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "4c2f18eeace46257ba13ee6679f8e15df2544ecac2d1483559f58eecaab6d957",
+  "reviewed_at": "2026-08-11T22:35:43.606171+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/shelf#521",
+  "rationale": "Issue #521 describes Cookie header values being incorrectly joined with commas instead of semicolons per RFC 6265. The production fix adds an optional 'name' parameter to joinHeaderValues() and uses '; ' separator when the header name is 'cookie' (case-insensitive), correctly addressing the defect. The minimized patch is identical to production-fix.patch and contains only the necessary changes to headers.dart and util.dart without CHANGELOG or test modifications. The trigger test validates that multiple cookie values ['session=123', 'theme=dark'] are joined as 'session=123; theme=dark' in the headers map while preserving the array in headersAll—this directly tests the reported defect and was added in the same fixing commit. Runtime evidence shows all strict checks passed: buggy version reproduces only the trigger test, fixed version passes all tests, trigger is deterministic and differential. No active same-project root causes exist to conflict.\n\nIssue #521 reports that multiple Cookie header values are incorrectly joined with commas instead of '; ' per RFC 6265. The trigger test verifies this exact behavior: it creates a message with Cookie headers ['session=123', 'theme=dark'] and expects the single-value map to contain 'session=123; theme=dark'. The minimized production patch modifies joinHeaderValues to accept an optional name parameter and use '; ' separator when name is 'cookie' (case-insensitive), with all three call sites (Headers.singleValues and two findHeader locations) updated to pass the header name. No CHANGELOG, documentation-only, or unrelated changes are present in the minimized patch. The trigger test was added in the fixing commit itself (later_trigger_score: 100, later_trigger_commit matches fixed_revision). Runtime evidence shows all strict checks passed: buggy version reproduces only the declared trigger, fixed version is clean, trigger is deterministic across 3 repetitions, and the build passes on both versions. No active same-project root causes exist to conflict with this defect.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T22:35:30.520050+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "4c2f18eeace46257ba13ee6679f8e15df2544ecac2d1483559f58eecaab6d957",
+      "response_sha256": "e535e732e44784b7568675a44ca3d08d9fbce14af1de527cc148f2791d261541",
+      "response_id": "msg_08b234b4-e864-4934-b9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2143
+        },
+        "cache_creation_input_tokens": 2143,
+        "cache_read_input_tokens": 4381,
+        "input_tokens": 5546,
+        "output_tokens": 795
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/shelf#521",
+      "rationale": "Issue #521 describes Cookie header values being incorrectly joined with commas instead of semicolons per RFC 6265. The production fix adds an optional 'name' parameter to joinHeaderValues() and uses '; ' separator when the header name is 'cookie' (case-insensitive), correctly addressing the defect. The minimized patch is identical to production-fix.patch and contains only the necessary changes to headers.dart and util.dart without CHANGELOG or test modifications. The trigger test validates that multiple cookie values ['session=123', 'theme=dark'] are joined as 'session=123; theme=dark' in the headers map while preserving the array in headersAll—this directly tests the reported defect and was added in the same fixing commit. Runtime evidence shows all strict checks passed: buggy version reproduces only the trigger test, fixed version passes all tests, trigger is deterministic and differential. No active same-project root causes exist to conflict.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.passed",
+        "trigger_reduction.status"
+      ],
+      "risks": [
+        "Trigger test depends on framework behavior where multiple header values in the input map become a list, which is implementation-specific but well-established in shelf"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T22:35:43.605926+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "4c2f18eeace46257ba13ee6679f8e15df2544ecac2d1483559f58eecaab6d957",
+      "response_sha256": "e9f53639426eb6633e467e5b8f1ad4fb4f89e7fba5fddfff825beaed19e4a6fa",
+      "response_id": "msg_c3f3afab-5a26-494d-af",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 1606
+        },
+        "cache_creation_input_tokens": 1606,
+        "cache_read_input_tokens": 4513,
+        "input_tokens": 5546,
+        "output_tokens": 918
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/shelf#521",
+      "rationale": "Issue #521 reports that multiple Cookie header values are incorrectly joined with commas instead of '; ' per RFC 6265. The trigger test verifies this exact behavior: it creates a message with Cookie headers ['session=123', 'theme=dark'] and expects the single-value map to contain 'session=123; theme=dark'. The minimized production patch modifies joinHeaderValues to accept an optional name parameter and use '; ' separator when name is 'cookie' (case-insensitive), with all three call sites (Headers.singleValues and two findHeader locations) updated to pass the header name. No CHANGELOG, documentation-only, or unrelated changes are present in the minimized patch. The trigger test was added in the fixing commit itself (later_trigger_score: 100, later_trigger_commit matches fixed_revision). Runtime evidence shows all strict checks passed: buggy version reproduces only the declared trigger, fixed version is clean, trigger is deterministic across 3 repetitions, and the build passes on both versions. No active same-project root causes exist to conflict with this defect.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.passed",
+        "strict_post_minimization.checks.trigger.buggy_differential.detail",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed",
+        "trigger_reduction.status",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "Trigger test added in fix commit rather than pre-existing in issue; however, it directly tests the reported RFC 6265 violation with no new production API dependencies."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+diff --git a/Tests/OpenAITests/AsyncParsingOptionsRegressionTests.swift b/Tests/OpenAITests/AsyncParsingOptionsRegressionTests.swift
+new file mode 100644
+--- /dev/null
++++ b/Tests/OpenAITests/AsyncParsingOptionsRegressionTests.swift
+@@ -0,0 +1,21 @@
++import XCTest
++@testable import OpenAI
++
++final class AsyncParsingOptionsRegressionTests: XCTestCase {
++    func testAsyncChatsHonorsRelaxedParsing() async throws {
++        let session = URLSessionMock()
++        let payload = Data("""
++        {"object":"chat.completion","created":1677652288,"model":"gpt-4","choices":[],"system_fingerprint":null}
++        """.utf8)
++        session.dataTask = .successful(with: payload)
++        let client = OpenAI(
++            configuration: .init(token: "offline-test", parsingOptions: .relaxed),
++            session: session,
++            streamingSessionFactory: MockStreamingSessionFactory()
++        )
++        let result = try await client.chats(query: .init(messages: [], model: .gpt3_5Turbo))
++        XCTAssertEqual(result.id, "")
++        XCTAssertEqual(result.model, "gpt-4")
++        XCTAssertEqual(result.created, 1677652288)
++    }
++}

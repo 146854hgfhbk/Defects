@@ -1,0 +1,69 @@
+diff --git a/t/all_any_noclobber_dollar_at.t b/t/all_any_noclobber_dollar_at.t
+new file mode 100644
+index 0000000000000000000000000000000000000000..96009335f3bc818243a58467c3b4956a71903fe9
+--- /dev/null
++++ b/t/all_any_noclobber_dollar_at.t
+@@ -0,0 +1,17 @@
++use strict;
++use warnings;
++use lib 't/lib';
++
++use Std;
++
++{
++    $@ = 'hello';
++    all(123);
++    is( $@, 'hello', 'all() doesn’t overwrite $@' );
++}
++
++{
++    $@ = 'hello';
++    any(123);
++    is( $@, 'hello', 'any() doesn’t overwrite $@' );
++}
+diff --git a/t/all_any_noclobber_dollar_bang.t b/t/all_any_noclobber_dollar_bang.t
+new file mode 100644
+index 0000000000000000000000000000000000000000..a7d46d9680b0e176087262a05ca4c58090fd2a6f
+--- /dev/null
++++ b/t/all_any_noclobber_dollar_bang.t
+@@ -0,0 +1,17 @@
++use strict;
++use warnings;
++use lib 't/lib';
++
++use Std;
++
++{
++    $! = 11;
++    all(123);
++    is( 0 + $!, 11, 'all() doesn’t overwrite $!' );
++}
++
++{
++    $! = 11;
++    any(123);
++    is( 0 + $!, 11, 'any() doesn’t overwrite $!' );
++}
+diff --git a/t/all_any_noclobber_dollar_e.t b/t/all_any_noclobber_dollar_e.t
+new file mode 100644
+index 0000000000000000000000000000000000000000..72fe665c53f7ecd326d1ccce68831f778456ac43
+--- /dev/null
++++ b/t/all_any_noclobber_dollar_e.t
+@@ -0,0 +1,17 @@
++use strict;
++use warnings;
++use lib 't/lib';
++
++use Std;
++
++{
++    $^E = 11;
++    all(123);
++    is( 0 + $^E, 11, 'all() doesn’t overwrite $^E' );
++}
++
++{
++    $^E = 11;
++    any(123);
++    is( 0 + $^E, 11, 'any() doesn’t overwrite $^E' );
++}

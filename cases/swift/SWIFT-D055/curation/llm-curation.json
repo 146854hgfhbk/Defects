@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1003",
+  "technical_evidence_sha256": "e62527a60aa5dfe2f8a2089ed6016b5ac5500f8b24e041e8f223da9fc6919b30",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "a61c508c57e3fb2f3761330612709fd1deffe1a54f535ca324579a3255bbb4b9",
+  "reviewed_at": "2026-09-08T13:27:49.883651+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "scinfu/swiftsoup#222",
+  "rationale": "Issue #222 reports that cssSelector() emits unescaped class identifiers, so the returned selector (div.Fz(xs).Fw(b)) cannot be re-parsed ('unexpected token at (xs).Fw(b)'). The minimized production patch addresses exactly that round-trip failure across three cooperating sites: Element.cssSelector() now escapes id and class identifiers via the new private cssEscapeIdentifier; TokenQueue.consumeCssIdentifier() accumulates characters and unescapes TokenQueue.ESC sequences so the escaped identifier is consumed instead of terminating at '('; QueryParser.consumeSubQuery() passes an escaped character pair through instead of treating '(' as a balanced group. None of the four hunks is refactor-only, doc-only, config-only, or feature extension — each is required for the escaped selector to be produced and re-parsed, which is why automatic minimization retained all 4 of 4 hunks with post_minimization_validation PASS. Traceability is fix_commit_to_merged_pr_to_issue (PR #377, single commit 9408387, parent 6eb21a9) with verified_fix_issue_numbers=[222]. The triggers are the unchanged upstream tests from the fixing commit: testCssPathEscapesSpecialCharactersInClassNames replicates the issue's exact HTML and getElementsContainingOwnText(\"149.64\").cssSelector() call, and testCssPathEscapesSpecialCharactersInId exercises the same unescaped-identifier root cause on the id branch of the same function. Both use only pre-existing public API (parse, getElementsContainingOwnText, select, cssSelector, ==); cssEscapeIdentifier is private and not referenced by the tests, so no new production API is required. Strict evidence gates pass in both the original and post-minimization runs: build.both_versions, trigger.buggy_differential with both trigger selectors reproduced, trigger.fixed_clean, trigger.deterministic (4/4 outcome groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, and matrix.complete at 44 runs with 3 repetitions. active_same_project_root_causes is empty, so scinfu/swiftsoup#222 (the sole allowed_root_cause_ids entry) is not a duplicate.\n\nIssue #222 reports that Element.cssSelector() emits unescaped class names containing non-alphanumeric characters, so the returned selector cannot be re-parsed (\"Could not parse query div.Fz(xs).Fw(b)\"). The minimized production patch addresses exactly that: Element.cssSelector() now escapes id and class identifiers via the new private cssEscapeIdentifier, TokenQueue.consumeCssIdentifier learns to consume backslash escapes so the emitted selector round-trips, and QueryParser.consumeSubQuery passes escaped pairs through instead of treating '(' as a balanced-group start. All three edits are on the single emit/parse path of the reported defect; there is no formatting-only, documentation, configuration, feature-extension, or test-only content in patches/minimized-production.patch (4 of 4 original hunks retained, post_minimization_validation PASS, sha256 recorded). The trigger is the unchanged upstream test hunk from the same fixing commit: testCssPathEscapesSpecialCharactersInClassNames reproduces the issue body's exact sample (class=\"Fz(xs) Fw(b)\", getElementsContainingOwnText(\"149.64\"), cssSelector()), and testCssPathEscapesSpecialCharactersInId exercises the same unescaped-identifier root cause on the id branch of the same function. Both use only pre-existing public APIs (parse, getElementsContainingOwnText, select, text, cssSelector); cssEscapeIdentifier is private and not referenced by the tests, so the trigger does not depend on any new production API. Machine-generated strict evidence passes with no failed checks on both the original and post-minimization runs: build.both_versions PASS, trigger.buggy_differential reproduces both triggers, trigger.fixed_clean PASS, trigger.deterministic 4/4 outcome groups over 3 repetitions, full_suite.buggy_reproduces_only_triggers PASS, full_suite.fixed_all_green PASS. Traceability is fix_commit_to_merged_pr_to_issue (PR #377, single commit 9408387, parent 6eb21a9) with verified_fix_issue_numbers [222]. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and it matches the sole allowed_root_cause_ids value.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-08T13:27:24.072796+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "a61c508c57e3fb2f3761330612709fd1deffe1a54f535ca324579a3255bbb4b9",
+      "response_sha256": "96eef78780fa9439f3047e9ac6b46a192f6cf9b51d64e26ebce28143c5d46018",
+      "response_id": "msg_042c14c1b7ae439ab268707c04974b2f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6375765507131013,
+        "input_tokens": 17050,
+        "output_tokens": 821
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#222",
+      "rationale": "Issue #222 reports that cssSelector() emits unescaped class identifiers, so the returned selector (div.Fz(xs).Fw(b)) cannot be re-parsed ('unexpected token at (xs).Fw(b)'). The minimized production patch addresses exactly that round-trip failure across three cooperating sites: Element.cssSelector() now escapes id and class identifiers via the new private cssEscapeIdentifier; TokenQueue.consumeCssIdentifier() accumulates characters and unescapes TokenQueue.ESC sequences so the escaped identifier is consumed instead of terminating at '('; QueryParser.consumeSubQuery() passes an escaped character pair through instead of treating '(' as a balanced group. None of the four hunks is refactor-only, doc-only, config-only, or feature extension — each is required for the escaped selector to be produced and re-parsed, which is why automatic minimization retained all 4 of 4 hunks with post_minimization_validation PASS. Traceability is fix_commit_to_merged_pr_to_issue (PR #377, single commit 9408387, parent 6eb21a9) with verified_fix_issue_numbers=[222]. The triggers are the unchanged upstream tests from the fixing commit: testCssPathEscapesSpecialCharactersInClassNames replicates the issue's exact HTML and getElementsContainingOwnText(\"149.64\").cssSelector() call, and testCssPathEscapesSpecialCharactersInId exercises the same unescaped-identifier root cause on the id branch of the same function. Both use only pre-existing public API (parse, getElementsContainingOwnText, select, cssSelector, ==); cssEscapeIdentifier is private and not referenced by the tests, so no new production API is required. Strict evidence gates pass in both the original and post-minimization runs: build.both_versions, trigger.buggy_differential with both trigger selectors reproduced, trigger.fixed_clean, trigger.deterministic (4/4 outcome groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, and matrix.complete at 44 runs with 3 repetitions. active_same_project_root_causes is empty, so scinfu/swiftsoup#222 (the sole allowed_root_cause_ids entry) is not a duplicate.",
+      "evidence_paths": [
+        "issue_evidence.body",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "Sources/Element.swift",
+        "Sources/TokenQueue.swift",
+        "Sources/QueryParser.swift",
+        "minimized_patch_reference.post_minimization_validation",
+        "strict_post_minimization.checks",
+        "traceability.verified_fix_issue_numbers",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "testCssPathEscapesSpecialCharactersInId covers the id branch, which is not literally in the issue report; it shares the same root cause but is slightly broader than the filed reproduction.",
+        "The TokenQueue and QueryParser changes alter general selector tokenization for all queries containing backslashes, so behavioral impact extends beyond the cssSelector() round trip even though it is required by the fix.",
+        "The escaping is a simple backslash-prefix scheme rather than full CSS identifier serialization (no hex escapes, no leading-digit handling), so some identifiers may still round-trip incorrectly; evidence does not cover those inputs.",
+        "trigger_reduction.status remains EXECUTABLY_VALIDATED_PENDING_LLM_EQUIVALENCE and testCssPath is listed as a third trigger selector without a per-test reproduction record; it is reported as passing on the buggy revision (non-reproducing selector) rather than as a defect witness."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-08T13:27:49.882840+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "a61c508c57e3fb2f3761330612709fd1deffe1a54f535ca324579a3255bbb4b9",
+      "response_sha256": "f53e826997ef33c8e94c6df063fabdd6070940cabaf9ea3d8a36ef8e7c19b5ac",
+      "response_id": "msg_24fd1acbe8fb4ba699d93af707f7b3d5",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5629033166832504,
+        "input_tokens": 17032,
+        "output_tokens": 803
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#222",
+      "rationale": "Issue #222 reports that Element.cssSelector() emits unescaped class names containing non-alphanumeric characters, so the returned selector cannot be re-parsed (\"Could not parse query div.Fz(xs).Fw(b)\"). The minimized production patch addresses exactly that: Element.cssSelector() now escapes id and class identifiers via the new private cssEscapeIdentifier, TokenQueue.consumeCssIdentifier learns to consume backslash escapes so the emitted selector round-trips, and QueryParser.consumeSubQuery passes escaped pairs through instead of treating '(' as a balanced-group start. All three edits are on the single emit/parse path of the reported defect; there is no formatting-only, documentation, configuration, feature-extension, or test-only content in patches/minimized-production.patch (4 of 4 original hunks retained, post_minimization_validation PASS, sha256 recorded). The trigger is the unchanged upstream test hunk from the same fixing commit: testCssPathEscapesSpecialCharactersInClassNames reproduces the issue body's exact sample (class=\"Fz(xs) Fw(b)\", getElementsContainingOwnText(\"149.64\"), cssSelector()), and testCssPathEscapesSpecialCharactersInId exercises the same unescaped-identifier root cause on the id branch of the same function. Both use only pre-existing public APIs (parse, getElementsContainingOwnText, select, text, cssSelector); cssEscapeIdentifier is private and not referenced by the tests, so the trigger does not depend on any new production API. Machine-generated strict evidence passes with no failed checks on both the original and post-minimization runs: build.both_versions PASS, trigger.buggy_differential reproduces both triggers, trigger.fixed_clean PASS, trigger.deterministic 4/4 outcome groups over 3 repetitions, full_suite.buggy_reproduces_only_triggers PASS, full_suite.fixed_all_green PASS. Traceability is fix_commit_to_merged_pr_to_issue (PR #377, single commit 9408387, parent 6eb21a9) with verified_fix_issue_numbers [222]. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and it matches the sole allowed_root_cause_ids value.",
+      "evidence_paths": [
+        "issue_evidence.body",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "minimized_patch_reference.post_minimization_validation",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "traceability.verified_fix_issue_numbers",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "testCssPathEscapesSpecialCharactersInId generalizes beyond the class-name case actually described in issue #222; it is the same root cause in the same function but is not directly reproduced from the issue text.",
+        "The escaping rule is character-blind (escapes every character that is not letter/digit/-/_), so non-ASCII identifiers are escaped rather than emitted per the CSS spec; the tests do not cover that behavior.",
+        "The QueryParser.consumeSubQuery and TokenQueue.consumeCssIdentifier changes alter general selector parsing beyond cssSelector() round-tripping; regression coverage rests on the full-suite green gate rather than on targeted parser tests in this case.",
+        "Runtime claims come solely from the supplied strict evidence; no independent execution was performed here, and the patch file contents were not re-hashed against the recorded sha256 values."
+      ]
+    }
+  ]
+}

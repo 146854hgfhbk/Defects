@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1408",
+  "technical_evidence_sha256": "04eca24ee418213c0d1e52911dc9e6f4cf1cc2cdd534b48b4d9dfb48ece666e3",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "4cb8722af2aa51574433425c90a78730a341ad53ed746f16e862943329965080",
+  "reviewed_at": "2026-08-16T02:53:33.902287+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/convert#47",
+  "rationale": "The production fix is a single-token correction in lib/src/codepage.dart's _createDecoder: `result[i] = char;` becomes `result[i++] = char;`. Without the increment, the loop writes every decoded character into slot 0 and leaves i at 0, so any custom CodePage decoder table is never populated and the subsequent `if (i < 256)` guard misfires. The commit subject ('Add missing increment to custom code-page decoder.') and traceability (verified_fix_issue_numbers=[47], path fix_commit_to_issue) tie this to dart-archive/convert#47, which is the sole allowed root-cause key and is not present in active_same_project_root_causes (empty). The minimized production patch equals production-fix.patch and touches only that one line: no formatting, refactor, doc, or config edits, and the test file is split out into trigger-tests.patch. The trigger is the unmodified upstream test 'Custom code page' from the same fixing commit; it exercises pre-existing public API only (CodePage constructor, encode with invalidCharacter, decode with allowInvalid), none of which the fix introduces or changes signatures for, and its decode expectations are exactly what the missing increment breaks. Strict evidence for both original and post-minimization runs passes every gate: build on both revisions, isolated buggy differential failure on test/codepage_test.dart::Custom code page, deterministic fingerprints across 3 repetitions, fixed-revision isolated/suite/reversed runs green, and buggy full-suite failures limited to the declared trigger.\n\nThe production fix is a single-character correction in lib/src/codepage.dart's _createDecoder: `result[i] = char;` becomes `result[i++] = char;`. Without the increment, the decoder table is written only at index 0 and the trailing `if (i < 256)` length validation never advances, so any custom CodePage decoder is built incorrectly. This matches the commit subject 'Add missing increment to custom code-page decoder.' and traceability resolves the fix commit to verified issue 47 (traceability.verified_fix_issue_numbers=[47], which equals the sole allowed root-cause id). The minimized production patch equals the production-fix patch exactly: one line, one hunk, one file, no formatting, refactor, config, docs, or feature change. The trigger is the unchanged upstream test 'Custom code page' from the same fixing commit; it exercises only pre-existing public API (CodePage constructor, encode with invalidCharacter, decode with allowInvalid), all of which are untouched by the one-line fix, so it depends on no API introduced by the fix. Strict evidence for both original and post-minimization runs passed all gates with the single declared selector test/codepage_test.dart::Custom code page failing in isolation and in the buggy full suite, passing on the fixed revision across 3 repetitions and 32 matrix runs. active_same_project_root_causes is empty, so there is no duplicate root cause in the active registry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T02:53:06.401208+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "4cb8722af2aa51574433425c90a78730a341ad53ed746f16e862943329965080",
+      "response_sha256": "b0b553275a50862145c8e92f27f59c768776e4107bce288aae2ec72db24bb58f",
+      "response_id": "msg_b787a1f63ee74722be939726238ae7d2",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5118988753233831,
+        "input_tokens": 7061,
+        "output_tokens": 632
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/convert#47",
+      "rationale": "The production fix is a single-token correction in lib/src/codepage.dart's _createDecoder: `result[i] = char;` becomes `result[i++] = char;`. Without the increment, the loop writes every decoded character into slot 0 and leaves i at 0, so any custom CodePage decoder table is never populated and the subsequent `if (i < 256)` guard misfires. The commit subject ('Add missing increment to custom code-page decoder.') and traceability (verified_fix_issue_numbers=[47], path fix_commit_to_issue) tie this to dart-archive/convert#47, which is the sole allowed root-cause key and is not present in active_same_project_root_causes (empty). The minimized production patch equals production-fix.patch and touches only that one line: no formatting, refactor, doc, or config edits, and the test file is split out into trigger-tests.patch. The trigger is the unmodified upstream test 'Custom code page' from the same fixing commit; it exercises pre-existing public API only (CodePage constructor, encode with invalidCharacter, decode with allowInvalid), none of which the fix introduces or changes signatures for, and its decode expectations are exactly what the missing increment breaks. Strict evidence for both original and post-minimization runs passes every gate: build on both revisions, isolated buggy differential failure on test/codepage_test.dart::Custom code page, deterministic fingerprints across 3 repetitions, fixed-revision isolated/suite/reversed runs green, and buggy full-suite failures limited to the declared trigger.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/codepage.dart",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.trigger.fixed_clean",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The body text of dart-archive/convert#47 was not supplied; defect identity rests on the verified commit-to-issue link plus the commit subject rather than on read issue prose.",
+        "No pull request URL or commit URL is provided, so the linkage cannot be cross-checked against review discussion.",
+        "The trigger asserts encode behavior as well as decode; only the decode assertions are strictly tied to the changed line, though the encode assertions pass on both revisions per the fixed_clean and differential gates.",
+        "Full-suite verification ran only one repetition (full_suite_repetitions=1), and analyzer cleanliness was diagnostic only (require_analyze_clean=false)."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T02:53:33.902061+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "4cb8722af2aa51574433425c90a78730a341ad53ed746f16e862943329965080",
+      "response_sha256": "f256b273845f3e6d588de756d662019697424779e324ef2939155b61ccd81a0a",
+      "response_id": "msg_cebdcaffdcf44f2eb0b98059405a5fdb",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5562549542620232,
+        "input_tokens": 7401,
+        "output_tokens": 596
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/convert#47",
+      "rationale": "The production fix is a single-character correction in lib/src/codepage.dart's _createDecoder: `result[i] = char;` becomes `result[i++] = char;`. Without the increment, the decoder table is written only at index 0 and the trailing `if (i < 256)` length validation never advances, so any custom CodePage decoder is built incorrectly. This matches the commit subject 'Add missing increment to custom code-page decoder.' and traceability resolves the fix commit to verified issue 47 (traceability.verified_fix_issue_numbers=[47], which equals the sole allowed root-cause id). The minimized production patch equals the production-fix patch exactly: one line, one hunk, one file, no formatting, refactor, config, docs, or feature change. The trigger is the unchanged upstream test 'Custom code page' from the same fixing commit; it exercises only pre-existing public API (CodePage constructor, encode with invalidCharacter, decode with allowInvalid), all of which are untouched by the one-line fix, so it depends on no API introduced by the fix. Strict evidence for both original and post-minimization runs passed all gates with the single declared selector test/codepage_test.dart::Custom code page failing in isolation and in the buggy full suite, passing on the fixed revision across 3 repetitions and 32 matrix runs. active_same_project_root_causes is empty, so there is no duplicate root cause in the active registry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.trigger.fixed_clean",
+        "case.json:source_candidate.message",
+        "lib/src/codepage.dart"
+      ],
+      "risks": [
+        "The body of dart-archive/convert issue 47 is not included in the supplied evidence; the issue-to-defect link rests on the machine-verified fix_commit_to_issue traceability path and the commit subject rather than on quoted issue text.",
+        "The upstream trigger test also asserts encode behavior that the one-line fix does not touch, so it is slightly broader than the minimal defect scope, though the differential gate confirms it fails only because of the decoder defect.",
+        "Analyzer cleanliness was diagnostic only (require_analyze_clean=false), so static-analysis regressions are not covered by the gates."
+      ]
+    }
+  ]
+}

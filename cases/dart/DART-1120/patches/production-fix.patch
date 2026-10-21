@@ -1,0 +1,22 @@
+diff --git a/lib/src/widgets/tree_view/tree_view.dart b/lib/src/widgets/tree_view/tree_view.dart
+index 3459971..14ee086 100644
+--- a/lib/src/widgets/tree_view/tree_view.dart
++++ b/lib/src/widgets/tree_view/tree_view.dart
+@@ -261,6 +261,8 @@ class AnsiTreeView extends AnsiWidget {
+ 
+       switch (TreeNodeType.getType(value)) {
+         case TreeNodeType.iterable:
++          final String extraTab =
++              (theme.valueTheme.alignment ?? theme.alignment) != AnsiTextAlignment.center ? ' ' : '';
+           buffer
+             ..write(prefix)
+             ..write(anchor)
+@@ -270,7 +272,7 @@ class AnsiTreeView extends AnsiWidget {
+             ..write(_parseTreeList(
+               value.toList(growable: false),
+               key,
+-              isLast ? '$prefix$tab' : '$prefix$_verticalLine$tab',
++              isLast ? '$prefix$tab$extraTab' : '$prefix$_verticalLine$tab',
+             ));
+           break;
+ 

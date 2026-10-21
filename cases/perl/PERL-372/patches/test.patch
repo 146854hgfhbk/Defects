@@ -1,0 +1,110 @@
+diff --git a/t/01_utf8.t b/t/01_utf8.t
+index 9acd5f3..72eef49 100644
+--- a/t/01_utf8.t
++++ b/t/01_utf8.t
+@@ -1,4 +1,4 @@
+-use Test::More tests => 13;
++use Test::More tests => 23;
+ use utf8;
+ use Cpanel::JSON::XS;
+ 
+@@ -41,3 +41,42 @@ is(Cpanel::JSON::XS->new->binary->encode ([$love]), '["I \xe2\x9d\xa4 perl"]', '
+ 
+ # TODO: test utf8 hash keys,
+ # test utf8 strings without any char > 0x80.
++
++# warn on the 66 non-characters as in core
++{
++  my $w;
++  require warnings;
++  warnings->unimport($] < 5.014 ? 'utf8' : 'nonchar');
++  $SIG{__WARN__} = sub { $w = shift };
++  my $d = Cpanel::JSON::XS->new->allow_nonref->decode('"\ufdd0"');
++  my $warn = $w;
++  is ($d, "\x{fdd0}", substr($warn,0,31)."...");
++  like ($warn, qr/^Unicode non-character U\+FDD0 is/);
++  $w = '';
++  # higher planes
++  $d = Cpanel::JSON::XS->new->allow_nonref->decode('"\ud83f\udfff"');
++  $warn = $w;
++  is ($d, "\x{1ffff}", substr($warn,0,31)."...");
++  like ($w, qr/^Unicode non-character U\+1FFFF is/);
++  $w = '';
++  $d = Cpanel::JSON::XS->new->allow_nonref->decode('"\ud87f\udffe"');
++  $warn = $w;
++  is ($d, "\x{2fffe}", substr($warn,0,31)."...");
++  like ($w, qr/^Unicode non-character U\+2FFFE is/);
++
++  $w = '';
++  $d = Cpanel::JSON::XS->new->allow_nonref->decode('"\ud8a4\uddd1"');
++  $warn = $w;
++  is ($d, "\x{391d1}", substr($warn,0,31)."...");
++  is ($w, '');
++}
++{
++  my $w;
++  warnings->unimport($] < 5.014 ? 'utf8' : 'nonchar');
++  $SIG{__WARN__} = sub { $w = shift };
++  # no warning with relaxed
++  my $d = Cpanel::JSON::XS->new->allow_nonref->relaxed->decode('"\ufdd0"');
++  my $warn = $w;
++  is ($d, "\x{fdd0}", "no warning with relaxed");
++  is($w, undef);
++}
+diff --git a/t/30_jsonspec.t b/t/30_jsonspec.t
+index d913c0e..e645276 100644
+--- a/t/30_jsonspec.t
++++ b/t/30_jsonspec.t
+@@ -1,6 +1,6 @@
+ # regressions and differences from the JSON Specs and JSON::PP
+ # detected by http://seriot.ch/json/parsing.html
+-use Test::More tests => 678;
++use Test::More tests => 686;
+ use Cpanel::JSON::XS;
+ my $json    = Cpanel::JSON::XS->new->utf8->allow_nonref;
+ my $relaxed = Cpanel::JSON::XS->new->utf8->allow_nonref->relaxed;
+@@ -111,16 +111,32 @@ sub i_undefined {
+ sub i_pass {
+   my ($str, $name) = @_;
+   $@ = '';
++  my $w;
++  if ($name =~ /nonchar/) { # check the warning
++    require warnings;
++    warnings->import($] < 5.014 ? 'utf8' : 'nonchar');
++    $SIG{__WARN__} = sub { $w = shift };
++  }
+   my $result = $todo{$name} ? eval { $json->decode($str) } : $json->decode($str);
++  my $warn = $w;
+   TODO: {
+     local $TODO = "$name" if exists $todo{$name};
+     is($@, '', "no parsing error with undefined $name ".substr($@,0,40));
+     isnt($result, undef, "valid result with undefined $name");
++    if ($name =~ /nonchar/) {
++      like ($warn, qr/^Unicode non-character U\+[10DFE]+ is/);
++      $w = '';
++    }
+     $@ = '';
+     #diag "$name $str";
+     $result    = eval { $relaxed->decode($str) };
++    $warn = $w;
+     is($@, '', "no parsing error with undefined $name relaxed ".substr($@,0,40));
+     isnt($result, undef, "valid result with undefined $name relaxed");
++    if ($name =~ /nonchar/) {
++      is($warn, '');
++      $w = '';
++    }
+   }
+ }
+ # result undefined, parsing failed
+diff --git a/t/z_pod-spelling.t b/t/z_pod-spelling.t
+index f797b0f..c48dd1e 100644
+--- a/t/z_pod-spelling.t
++++ b/t/z_pod-spelling.t
+@@ -18,6 +18,7 @@ cbor
+ syck
+ interop
+ nonref
++noncharacters
+ Lehmann
+ bencode
+ clzf

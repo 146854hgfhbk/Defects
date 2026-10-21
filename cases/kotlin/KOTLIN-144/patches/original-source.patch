@@ -1,0 +1,22 @@
+diff --git a/detekt-rules-naming/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/naming/TopLevelPropertyNaming.kt b/detekt-rules-naming/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/naming/TopLevelPropertyNaming.kt
+index 63f1bfabca..fe2322353e 100644
+--- a/detekt-rules-naming/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/naming/TopLevelPropertyNaming.kt
++++ b/detekt-rules-naming/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/naming/TopLevelPropertyNaming.kt
+@@ -10,6 +10,7 @@ import io.gitlab.arturbosch.detekt.api.config
+ import io.gitlab.arturbosch.detekt.rules.identifierName
+ import io.gitlab.arturbosch.detekt.rules.isConstant
+ import org.jetbrains.kotlin.psi.KtProperty
++import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
+ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+ 
+ /**
+@@ -32,7 +33,8 @@ class TopLevelPropertyNaming(config: Config) : Rule(
+ 
+     override fun visitProperty(property: KtProperty) {
+         super.visitProperty(property)
+-        if (!property.isTopLevel) return
++        if (!property.isTopLevel || property.psiOrParent.isExtensionDeclaration()) return
++
+         if (property.isConstant()) {
+             handleConstant(property)
+         } else {

@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-304",
+  "technical_evidence_sha256": "727cae160e7aca787447820b240ca1aae8c30e05c75f3b74fa732592c2a5f447",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "0a6b02fc568330522f2fd6acc616ee767387abe3446c2d3ea7274e9a07f1fe8b",
+  "reviewed_at": "2026-08-11T23:25:10.457363+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1721",
+  "rationale": "Issue #1721 reports that the existing `trailing_commas: preserve` option fails to preserve user-written trailing commas in record type annotations (e.g., `typedef RawPhoto = ({DateTime addedAt, String name, String url,})`). The minimized production patch adds 13 lines and removes 3 lines in a single file (`lib/src/front_end/ast_node_visitor.dart`), introducing a `forceSplit` parameter to `builder.build()` that respects preserved trailing commas in record types via `hasPreservedTrailingComma()`. The patch contains no formatting changes, refactoring, documentation-only changes, or test-only changes—it purely fixes the record type visitor logic. Two .unit fixture tests (`record_type.unit` and `1721.unit`) were added in the fixing commit itself and are byte-exact matches to the trigger-tests.patch. The strict runtime evidence confirms deterministic, differential behavior: both triggers fail on buggy (7278eff), pass on fixed (56e2406), and the full suite passes on fixed with only these two triggers failing on buggy. The triggers encode the exact defect from issue #1721 (preserve trailing commas in record types) and do not depend on any new production API—`hasPreservedTrailingComma` and `forceSplit` already existed in the parent revision. No active same-project root causes were supplied, so no duplicate exists.\n\nIssue #1721 reports that the `trailing_commas: preserve` option incorrectly removes trailing commas from record type annotations (e.g., `typedef RawPhoto = ({DateTime addedAt, String name, String url,});`). The minimized production patch adds logic to `visitRecordTypeAnnotation` that passes `forceSplit: hasPreservedTrailingComma(...)` to preserve trailing commas in record types, matching the existing behavior for other language constructs. The fix contains only behavioral changes to record type formatting—no refactoring, documentation-only, or test-only changes. Two .unit formatter fixtures (`record_type.unit` and `1721.unit`) added by the fixing commit encode the exact defect: record types with trailing commas under `trailing_commas: preserve` mode. These fixtures are byte-exact matches to the commit's test additions and require no new production API (the fix reuses existing `hasPreservedTrailingComma` helper and `forceSplit` parameter). Strict runtime validation passed all gates: both triggers reproduce deterministically on buggy (7278eff) and pass on fixed (56e2406), full suite green on fixed, no spurious failures. No active duplicates in the same project registry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:24:57.309684+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "0a6b02fc568330522f2fd6acc616ee767387abe3446c2d3ea7274e9a07f1fe8b",
+      "response_sha256": "ec239ede1b9ec1803023e869b0367b6853a393f0ecbff984f3c15ea3d395b867",
+      "response_id": "msg_84498d0f-0620-4bd3-9a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3368
+        },
+        "cache_creation_input_tokens": 3368,
+        "cache_read_input_tokens": 8618,
+        "input_tokens": 11338,
+        "output_tokens": 1067
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1721",
+      "rationale": "Issue #1721 reports that the existing `trailing_commas: preserve` option fails to preserve user-written trailing commas in record type annotations (e.g., `typedef RawPhoto = ({DateTime addedAt, String name, String url,})`). The minimized production patch adds 13 lines and removes 3 lines in a single file (`lib/src/front_end/ast_node_visitor.dart`), introducing a `forceSplit` parameter to `builder.build()` that respects preserved trailing commas in record types via `hasPreservedTrailingComma()`. The patch contains no formatting changes, refactoring, documentation-only changes, or test-only changes—it purely fixes the record type visitor logic. Two .unit fixture tests (`record_type.unit` and `1721.unit`) were added in the fixing commit itself and are byte-exact matches to the trigger-tests.patch. The strict runtime evidence confirms deterministic, differential behavior: both triggers fail on buggy (7278eff), pass on fixed (56e2406), and the full suite passes on fixed with only these two triggers failing on buggy. The triggers encode the exact defect from issue #1721 (preserve trailing commas in record types) and do not depend on any new production API—`hasPreservedTrailingComma` and `forceSplit` already existed in the parent revision. No active same-project root causes were supplied, so no duplicate exists.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "issue_urls[0]: https://github.com/dart-lang/dart_style/issues/1721",
+        "strict_post_minimization.checks.trigger.buggy_differential.detail",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed",
+        "strict_post_minimization.checks.trigger.deterministic.passed",
+        "trigger_reduction.trigger_origin.primary: selected_fixed_commit"
+      ],
+      "risks": [
+        "Triggers are .unit fixture files consumed by a data-driven test harness rather than standalone Dart test functions; isolation depends on harness filtering by file path."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:25:10.457179+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "0a6b02fc568330522f2fd6acc616ee767387abe3446c2d3ea7274e9a07f1fe8b",
+      "response_sha256": "34e9c7bdaf91d5e318eb87307de80ac4c5fc1516fd4a8c2181b5a3dfa99b4512",
+      "response_id": "msg_7246979f-1ba7-4011-a2",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3381
+        },
+        "cache_creation_input_tokens": 3381,
+        "cache_read_input_tokens": 8615,
+        "input_tokens": 11338,
+        "output_tokens": 966
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1721",
+      "rationale": "Issue #1721 reports that the `trailing_commas: preserve` option incorrectly removes trailing commas from record type annotations (e.g., `typedef RawPhoto = ({DateTime addedAt, String name, String url,});`). The minimized production patch adds logic to `visitRecordTypeAnnotation` that passes `forceSplit: hasPreservedTrailingComma(...)` to preserve trailing commas in record types, matching the existing behavior for other language constructs. The fix contains only behavioral changes to record type formatting—no refactoring, documentation-only, or test-only changes. Two .unit formatter fixtures (`record_type.unit` and `1721.unit`) added by the fixing commit encode the exact defect: record types with trailing commas under `trailing_commas: preserve` mode. These fixtures are byte-exact matches to the commit's test additions and require no new production API (the fix reuses existing `hasPreservedTrailingComma` helper and `forceSplit` parameter). Strict runtime validation passed all gates: both triggers reproduce deterministically on buggy (7278eff) and pass on fixed (56e2406), full suite green on fixed, no spurious failures. No active duplicates in the same project registry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "issue_urls[0]",
+        "traceability.paths[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.trigger.deterministic",
+        "trigger_reduction.trigger_origin"
+      ],
+      "risks": [
+        "Triggers are .unit data fixtures consumed by a test harness rather than standalone Dart test methods; reproducibility depends on the tall_format_test.dart fixture loader."
+      ]
+    }
+  ]
+}

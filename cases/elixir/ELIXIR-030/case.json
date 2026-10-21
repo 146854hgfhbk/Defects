@@ -1,0 +1,211 @@
+{
+  "schema_version": 2,
+  "case_id": "ELIXIR-030",
+  "id": "ELIXIR-030",
+  "upstream_id": "elixir-ecto__ecto-4290",
+  "language": "Elixir",
+  "project": "elixir-ecto/ecto",
+  "repo": "elixir-ecto/ecto",
+  "provenance": {
+    "source_dataset": "SWE-rebench-V2",
+    "source_dataset_id": "nebius/SWE-rebench-V2",
+    "source_revision": "475dd5e",
+    "pr_url": "https://github.com/elixir-ecto/ecto/pull/4290",
+    "issue_id": 4289,
+    "issue_url": "https://github.com/elixir-ecto/ecto/issues/4289",
+    "issue_relation": "PR_DESCRIPTION_ISSUE_REFERENCE",
+    "pr_merge_commit": "859a34fec3e688ef17d0537546b5dfde03ac8642",
+    "pr_merged": true,
+    "pr_base_sha": "f7256f188444359b5cf1a5c97e1bdfa74e0595d9",
+    "pr_head_sha": "6e1a4efe325ec1b2645592c0d05d00a57f67e4cd",
+    "pr_commit_count": 1,
+    "fix_commit_relation": "single_commit_pr"
+  },
+  "buggy_revision": "f7256f188444359b5cf1a5c97e1bdfa74e0595d9",
+  "fixed_revision": "859a34fec3e688ef17d0537546b5dfde03ac8642",
+  "revision_mode": "base_plus_gold_patch",
+  "revisions": {
+    "revision_mode": "base_plus_gold_patch",
+    "buggy": "f7256f188444359b5cf1a5c97e1bdfa74e0595d9",
+    "fixed": {
+      "declared_commit": "859a34fec3e688ef17d0537546b5dfde03ac8642",
+      "base_commit": "f7256f188444359b5cf1a5c97e1bdfa74e0595d9",
+      "patch": "patches/minimized-source.patch",
+      "note": "replay is base + canonical patch; the merge commit is the declared upstream reference"
+    }
+  },
+  "patch": {
+    "path": "patches/minimized-source.patch",
+    "upstream_path": "patches/upstream.patch",
+    "sha256": "4d8f263b5f76a2426c132bce2825172d18b93b6eb9298ded10f05b5db687311c",
+    "upstream_sha256": "e4813beb1bce178e925f7fc4ddb4f3da092a446a34e2ebf62056ec4de6a48fe4",
+    "changed_source_files": [
+      "lib/ecto/query/planner.ex"
+    ]
+  },
+  "patch_sha256": "4d8f263b5f76a2426c132bce2825172d18b93b6eb9298ded10f05b5db687311c",
+  "trigger_test_patch": "patches/trigger-tests.patch",
+  "trigger_test_patch_sha256": "a86b6e207eda41a6eaf5a5f47cb516cc4074cbf4b7432a764fc4596e6d34e36c",
+  "triggering_tests": [
+    "test/ecto/query/planner_test.exs:905"
+  ],
+  "trigger_tests": [
+    "normalize: raises on literal non-base binary/uuids in query"
+  ],
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "normalize: raises on literal non-base binary/uuids in query"
+    ],
+    "exception_types": [],
+    "fingerprints": []
+  },
+  "minimization": {
+    "status": "HUMAN_REVIEWED_MINIMIZED_V1",
+    "policy": "drop non-production files; production only documentation/comment/format; same-file dangling guard",
+    "removed_hunks": 1,
+    "removed_files": [],
+    "forced_kept": [],
+    "upstream_equals_minimized": false,
+    "report": "patches/minimization.json",
+    "llm_review": "llm-hunk-review.json",
+    "review_status": "human_minimization_signoff_completed",
+    "reviewer_type": "human_dataset_curator",
+    "human_signoff": "completed",
+    "dynamic_revalidation": false,
+    "human_signoff_date": "2026-09-12",
+    "human_signoff_scope": "patch_minimization_only"
+  },
+  "environment": {
+    "backend": "swe_rebench_v2_docker",
+    "image": "docker.io/swerebenchv2/elixir-ecto-ecto:4290-f7256f1"
+  },
+  "environment_lock": "environment.lock.json",
+  "commands": {
+    "test": "MIX_ENV=test mix test --trace --max-cases 1"
+  },
+  "validation": {
+    "status": "PASS",
+    "report": "validation/phase-d.json",
+    "report_sha256": "76b4cad9aeee04b284e7d847c12ce4018b4e4928897133e0ac1cb0b4fd9ae863",
+    "protocol": "v4-goldsuite",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "result": "PASS"
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "elixir",
+    "reason_code": null,
+    "reason": null,
+    "llm_semantic_decision": "BUG_FIX",
+    "human_confirmation": false
+  },
+  "release_integrity": "release-integrity.json",
+  "status": "ACTIVE",
+  "fixed_revision_kind": "upstream_pr_merge_commit",
+  "fixed_revision_parents": [
+    "31b7e2e5ea035974f1a23adc83d203b3656582ea"
+  ],
+  "artifacts": {
+    "curation_decision": "curation-decision.json",
+    "llm_hunk_review": "llm-hunk-review.json",
+    "llm_semantic_review": "llm-semantic-review.json",
+    "minimization_decisions": "minimization-decisions.json",
+    "manual_minimization_confirmation": "manual-minimization-confirmation.json",
+    "minimization_report": "patches/minimization.json"
+  },
+  "execution_validation": {
+    "status": "PASS",
+    "protocol": "v4-goldsuite",
+    "evidence": "validation/phase-d.json",
+    "evidence_sha256": "76b4cad9aeee04b284e7d847c12ce4018b4e4928897133e0ac1cb0b4fd9ae863",
+    "validated_at": "2026-09-11T14:26:22Z",
+    "b_failures": [
+      1,
+      1,
+      1
+    ],
+    "f_failures": [
+      0,
+      0,
+      0
+    ],
+    "gold_failures": [
+      0
+    ],
+    "dyn_dropped": 9
+  },
+  "bug_id": "ELIXIR-030",
+  "fixed_test_result": "pass",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "build_command": [
+    "export HOME=/workspace",
+    "mix deps.get",
+    "mix deps.compile",
+    "mix compile"
+  ],
+  "test_command": "MIX_ENV=test mix test --trace --max-cases 1",
+  "language_version": {
+    "elixir": "1.16.3",
+    "otp": "26"
+  },
+  "dependency_versions": {
+    "mix_lock_md5": "e978f63dbd0239d8df30feccc066e1e4"
+  },
+  "operating_system_or_container": {
+    "container_image": "docker.io/swerebenchv2/elixir-ecto-ecto:4290-f7256f1",
+    "image_id": "sha256:aa681d9836101a6e916480e96aa39c7a54996d05113ded731fb2134bb06b9eb1",
+    "platform": "linux/amd64"
+  },
+  "traceability": {
+    "issue_id": 4289,
+    "issue_url": "https://github.com/elixir-ecto/ecto/issues/4289",
+    "pr_url": "https://github.com/elixir-ecto/ecto/pull/4290",
+    "issue_closed": true,
+    "pr_merged": true,
+    "issue_referenced_in": "pull_request_body",
+    "fix_commit": "859a34fec3e688ef17d0537546b5dfde03ac8642",
+    "fix_commit_count": 1,
+    "single_parent_fix": true,
+    "upstream_fix_parents": [
+      "31b7e2e5ea035974f1a23adc83d203b3656582ea"
+    ],
+    "upstream_fix_parent": "31b7e2e5ea035974f1a23adc83d203b3656582ea",
+    "fix_commit_is_merge": false,
+    "provenance_strength": "PR_BODY_REFERENCE"
+  },
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "DONE",
+    "full_suite_validation": "PASS",
+    "protocol": "v4-goldsuite"
+  },
+  "upstream": {
+    "fix_commit": "859a34fec3e688ef17d0537546b5dfde03ac8642",
+    "fix_parent": "31b7e2e5ea035974f1a23adc83d203b3656582ea",
+    "issue_url": "https://github.com/elixir-ecto/ecto/issues/4289",
+    "pr_url": "https://github.com/elixir-ecto/ecto/pull/4290"
+  },
+  "benchmark_revision": {
+    "mode": "base_plus_gold_patch",
+    "base_revision": "f7256f188444359b5cf1a5c97e1bdfa74e0595d9",
+    "declared_fixed_revision": "859a34fec3e688ef17d0537546b5dfde03ac8642",
+    "fixed_construction": "base_plus_minimized_patch"
+  },
+  "upstream_revision": {
+    "fix_commit": "859a34fec3e688ef17d0537546b5dfde03ac8642",
+    "fix_parent": "31b7e2e5ea035974f1a23adc83d203b3656582ea",
+    "issue_url": "https://github.com/elixir-ecto/ecto/issues/4289",
+    "pr_url": "https://github.com/elixir-ecto/ecto/pull/4290"
+  },
+  "excluded_tests_manifest": "validation/excluded-tests.json",
+  "canonical_test_policy": {
+    "raw_test_command": "MIX_ENV=test mix test --trace --max-cases 1",
+    "canonical_runner": "python3 tools/defects4x test --bug 30 --version <b|f> --workdir <checkout> --canonical --execute",
+    "fixed_acceptance": "PASS only after a normal, non-empty ExUnit completion with a valid summary and no infrastructure/process error; a non-zero raw exit may be normalized only when the summary failure count matches parsed failure identities and every identity is explicitly listed in validation/excluded-tests.json and reproduced in upstream GOLD."
+  },
+  "canonical_test_command": "python3 tools/defects4x test --bug 30 --version f --workdir <checkout> --canonical --execute"
+}

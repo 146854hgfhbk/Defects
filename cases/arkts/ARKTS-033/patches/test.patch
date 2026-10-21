@@ -1,0 +1,127 @@
+diff --git a/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/AdaptiveTitleOcclusion.test.ets b/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/AdaptiveTitleOcclusion.test.ets
+new file mode 100644
+index 0000000000..5b13920431
+--- /dev/null
++++ b/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/AdaptiveTitleOcclusion.test.ets
+@@ -0,0 +1,106 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import { Driver, ON, Component } from '@ohos.UiTest';
++
++const BUNDLE_NAME: string = 'ohos.samples.AdaptiveCapabilities';
++const WAIT_START: number = 2000;
++const WAIT_PAGE: number = 1200;
++const TITLE_TOP_LIMIT: number = 150;
++const SUBTITLE_BOTTOM_LIMIT: number = 210;
++
++let delegator: AbilityDelegatorRegistry.AbilityDelegator =
++  AbilityDelegatorRegistry.getAbilityDelegator();
++
++function startMainAbility(): Promise<void> {
++  return new Promise<void>((resolve: () => void) => {
++    delegator.executeShellCommand(
++      'aa start -d 0 -a MainAbility -b ohos.samples.AdaptiveCapabilities -m entry',
++      () => {
++        resolve();
++      }
++    );
++  });
++}
++
++async function findById(driver: Driver, id: string): Promise<Component | null> {
++  try {
++    let component = await driver.findComponent(ON.id(id));
++    if (component !== undefined && component !== null) {
++      return component;
++    }
++  } catch (error) {
++  }
++  return null;
++}
++
++async function findText(driver: Driver, text: string): Promise<Component | null> {
++  try {
++    let component = await driver.findComponent(ON.text(text));
++    if (component !== undefined && component !== null) {
++      return component;
++    }
++  } catch (error) {
++  }
++  return null;
++}
++
++export default function adaptiveTitleOcclusionTest() {
++  describe('AdaptiveTitleOcclusionTestSuite', () => {
++    it('AdaptiveTitle_HeaderStaysInTopBand', 0, async () => {
++      const driver: Driver = Driver.create();
++      await startMainAbility();
++      await driver.delayMs(WAIT_START);
++
++      let manager = delegator.getAppContext().resourceManager;
++      let titleText: string = await manager.getStringByName('multiScene_header_title');
++      let subtitleText: string = await manager.getStringByName('multiScene_header_subtitle');
++
++      let entry = await findById(driver, 'TypicalSceneIndex');
++      if (entry !== null) {
++        await entry.click();
++      }
++      await driver.delayMs(WAIT_PAGE);
++      let scene = await findById(driver, 'multiScene');
++      if (scene !== null) {
++        await scene.click();
++      }
++      await driver.delayMs(WAIT_PAGE * 2);
++
++      let title = await findText(driver, titleText);
++      let subtitle = await findText(driver, subtitleText);
++      let titleTop: number = -1;
++      let subtitleBottom: number = -1;
++      if (title !== null) {
++        titleTop = (await title.getBounds()).top;
++      }
++      if (subtitle !== null) {
++        subtitleBottom = (await subtitle.getBounds()).bottom;
++      }
++
++      let display = await driver.getDisplaySize();
++      let probe: string = 'titleTop=' + titleTop + ';subtitleBottom=' + subtitleBottom +
++        ';display=' + display.x + 'x' + display.y;
++      console.info('AdaptiveTitleProbe ' + probe);
++      let headerInTopBand: boolean = title !== null && subtitle !== null &&
++        titleTop >= 0 && titleTop <= TITLE_TOP_LIMIT &&
++        subtitleBottom > 0 && subtitleBottom <= SUBTITLE_BOTTOM_LIMIT;
++      expect(headerInTopBand ? 'HEADER_INSET' : ('HEADER_DISPLACED:' + probe))
++        .assertEqual('HEADER_INSET');
++    });
++  });
++}
+diff --git a/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/List.test.ets b/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/List.test.ets
+index 27c07a1a17..ea9a5eb4eb 100644
+--- a/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Ability.test'
++import adaptiveTitleOcclusionTest from './AdaptiveTitleOcclusion.test'
+ 
+ export default function testsuite() {
+   abilityTest()
++  adaptiveTitleOcclusionTest()
+ }
+\ No newline at end of file

@@ -1,0 +1,124 @@
+diff --git a/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/List.test.ets b/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/List.test.ets
+index 589f8fbf0..1691ffa34 100644
+--- a/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,8 +13,8 @@
+  * limitations under the License.
+  */
+ 
+-import abilityTest from './Ability.test';
++import playerModelSeekProgressTest from './PlayerModelSeekProgress.test';
+ 
+ export default function testsuite() {
+-  abilityTest();
++  playerModelSeekProgressTest();
+ }
+diff --git a/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/PlayerModelSeekProgress.test.ets b/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/PlayerModelSeekProgress.test.ets
+new file mode 100644
+index 000000000..684f2f2a1
+--- /dev/null
++++ b/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/PlayerModelSeekProgress.test.ets
+@@ -0,0 +1,103 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++
++const BUNDLE = 'DistributedMusicPlayer_PlayerModelSeek_';
++
++type PlayerModelSlots = Record<string, Object | Function | number | boolean | undefined>;
++
++interface PlayerModelApi {
++  notifyPlayingStatus(isPlaying: boolean): void;
++  cancelTimer(): void;
++}
++
++class FakePlayer {
++  public currentTime: number;
++
++  constructor(currentTime: number) {
++    this.currentTime = currentTime;
++  }
++}
++
++async function loadPlayerModel(): Promise<PlayerModelApi> {
++  let module: ESObject = await import('../../../main/ets/model/PlayerModel');
++  return module.default as PlayerModelApi;
++}
++
++function slots(playerModel: PlayerModelApi): PlayerModelSlots {
++  return playerModel as Object as PlayerModelSlots;
++}
++
++function installProgressProbe(playerModel: PlayerModelApi, currentTime: number, progressEvents: Array<number>): Object | undefined {
++  let model = slots(playerModel);
++  let originalPlayer = model['player'] as Object | undefined;
++  model['player'] = new FakePlayer(currentTime);
++  model['intervalID'] = undefined;
++  model['statusChangedListener'] = ((isPlaying: boolean) => {
++    console.info(BUNDLE + 'status changed: ' + isPlaying);
++  }) as Function;
++  model['playingProgressListener'] = ((timeMs: number) => {
++    progressEvents.push(timeMs);
++  }) as Function;
++  return originalPlayer;
++}
++
++function restoreModel(playerModel: PlayerModelApi, originalPlayer: Object | undefined): void {
++  playerModel.cancelTimer();
++  let model = slots(playerModel);
++  model['player'] = originalPlayer;
++  model['isPlaying'] = false;
++  model['intervalID'] = undefined;
++}
++
++async function waitForProgressTick(): Promise<void> {
++  await new Promise<void>((resolve) => {
++    setTimeout(() => {
++      resolve();
++    }, 650);
++  });
++}
++
++export default function playerModelSeekProgressTest() {
++  describe('playerModelSeekProgressTest', () => {
++    it(BUNDLE + 'IgnoreMinusOneCurrentTime_001', 0, async () => {
++      let playerModel = await loadPlayerModel();
++      let progressEvents: Array<number> = [];
++      let originalPlayer = installProgressProbe(playerModel, -1, progressEvents);
++      try {
++        playerModel.notifyPlayingStatus(true);
++        await waitForProgressTick();
++        expect(progressEvents.length).assertEqual(0);
++      } finally {
++        restoreModel(playerModel, originalPlayer);
++      }
++    });
++
++    it(BUNDLE + 'ReportValidCurrentTime_002', 0, async () => {
++      let playerModel = await loadPlayerModel();
++      let progressEvents: Array<number> = [];
++      let originalPlayer = installProgressProbe(playerModel, 42, progressEvents);
++      try {
++        playerModel.notifyPlayingStatus(true);
++        await waitForProgressTick();
++        expect(progressEvents.length).assertLarger(0);
++        expect(progressEvents[0]).assertEqual(42);
++      } finally {
++        restoreModel(playerModel, originalPlayer);
++      }
++    });
++  });
++}

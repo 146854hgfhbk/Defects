@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "case_id": "ELIXIR-035",
+  "reviewer": "rc3_audit_hardening",
+  "removed": [
+    {
+      "file": "lib/grpc/client/adapters/gun.ex",
+      "hunk_id": "F001-H001",
+      "category": "documentation",
+      "reason": "This hunk only changes the @moduledoc wording for the Gun adapter (removing the `b:GRPC.Client.Adapter` reference and rephrasing), which is documentation-only and does not affect executable behavior related to the insecure connect/2 defect."
+    },
+    {
+      "file": "lib/grpc/credential.ex",
+      "hunk_id": "F002-H001",
+      "category": "documentation",
+      "reason": "This hunk only modifies the @moduledoc text in lib/grpc/credential.ex, reformatting the sentence and adding an explanatory paragraph. It contains no executable code and does not affect the behavior of connect/2 insecurely, so it cannot contribute to fixing the defect covered by the triggering tests."
+    },
+    {
+      "file": "mix.exs",
+      "hunk_id": "F004-H001",
+      "category": "unrelated",
+      "reason": "Dependency requirement-string tightening for ex_doc/dialyxir is unrelated to the insecure connect/2 production defect. Removed during rc3 audit hardening.",
+      "evidence_note": "The fourth archived minimization trial shows both declared insecure-connect triggers pass with only known secure-connect residual failures. Trial patch bytes/hunk mapping were not archived, so this is supporting—not cryptographic—evidence for the fourth retained-hunk removal.",
+      "existing_trigger_trial_candidate": "validation/logs/min_trial_004.log"
+    }
+  ],
+  "retained": [
+    {
+      "file": "lib/grpc/client/adapters/gun.ex",
+      "hunk_id": "F001-H002",
+      "category": "semantic"
+    },
+    {
+      "file": "lib/grpc/client/adapters/gun.ex",
+      "hunk_id": "F001-H003",
+      "category": "semantic"
+    },
+    {
+      "file": "lib/grpc/stub.ex",
+      "hunk_id": "F003-H001",
+      "category": "semantic"
+    }
+  ],
+  "forced_kept": [],
+  "rc3_updated_at": "2026-09-11T23:54:24Z"
+}

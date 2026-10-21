@@ -1,0 +1,12 @@
+diff --git a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryAbstractClass.kt b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryAbstractClass.kt
+index 20f4b9f2de..84487eb392 100644
+--- a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryAbstractClass.kt
++++ b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnnecessaryAbstractClass.kt
+@@ -86,6 +88,7 @@ class UnnecessaryAbstractClass(config: Config = Config.empty) : Rule(config) {
+         val members = members()
+         when {
+             members.isNotEmpty() -> checkMembers(members, nameIdentifier)
++            hasInheritedMember(true) && isAnyParentAbstract() -> return
+             !hasConstructorParameter() ->
+                 report(CodeSmell(issue, Entity.from(nameIdentifier), noConcreteMember))
+             else ->

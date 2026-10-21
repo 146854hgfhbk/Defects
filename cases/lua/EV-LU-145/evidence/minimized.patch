@@ -1,0 +1,14 @@
+diff --git a/lua/pl/stringx.lua b/lua/pl/stringx.lua
+index 7fce4620f4a9627a5fd609dad5f966aabc6805ba..82aedd6ac699d7c1057bba8296828c517bae4985 100644
+--- a/lua/pl/stringx.lua
++++ b/lua/pl/stringx.lua
+@@ -488,7 +488,8 @@ function stringx.quote_string(s)
+     assert_string(1,s)
+     -- Find out if there are any embedded long-quote sequences that may cause issues.
+     -- This is important when strings are embedded within strings, like when serializing.
+-    local equal_signs = has_lquote(s)
++    -- Append a closing bracket to catch unfinished long-quote sequences at the end of the string.
++    local equal_signs = has_lquote(s .. "]")
+ 
+     -- Note that strings containing "\r" can't be quoted using long brackets
+     -- as Lua lexer converts all newlines to "\n" within long strings.

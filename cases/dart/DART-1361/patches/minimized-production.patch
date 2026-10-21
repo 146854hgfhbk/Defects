@@ -1,0 +1,18 @@
+diff --git a/lib/src/jwt.dart b/lib/src/jwt.dart
+index 77ff3761c038e9687c3f53dfa3776b9754981957..2c14a8bced1641c7d97a9c8adb0fc7f0041596dc 100644
+--- a/lib/src/jwt.dart
++++ b/lib/src/jwt.dart
+@@ -88,8 +93,11 @@ class JWT {
+           final iat = DateTime.fromMillisecondsSinceEpoch(
+             (payload['iat'] * 1000).toInt(),
+           );
+-          if (!iat.isAtSameMomentAs(clock.now())) {
+-            throw JWTInvalidException('invalid issue at');
++          final issueAtTime =
++              DateTime.fromMillisecondsSinceEpoch(issueAt.inMilliseconds);
++          // Verify that the token isn't expired
++          if (iat.isBefore(issueAtTime)) {
++            throw JWTInvalidException('expired issue at');
+           }
+         }
+ 

@@ -1,0 +1,108 @@
+diff --git a/Changes b/Changes
+index 039aaaf4..ac3b9a20 100644
+--- a/Changes
++++ b/Changes
+@@ -1,6 +1,8 @@
+ Revision history for HTTP-Message
+ 
+ {{$NEXT}}
++    - Allow `can` method to respond to delegated methods (GH#159) (nanto_vi,
++      TOYAMA Nao)
+ 
+ 6.32      2021-05-18 18:54:27Z
+     - Use File::Spec for MSWin32 on Content-Disposition filename (GH#157)
+diff --git a/lib/HTTP/Message.pm b/lib/HTTP/Message.pm
+index 8e03d487..e61b09c9 100644
+--- a/lib/HTTP/Message.pm
++++ b/lib/HTTP/Message.pm
+@@ -640,23 +640,42 @@ sub _stale_content {
+     }
+ }
+ 
+-
+ # delegate all other method calls to the headers object.
+ our $AUTOLOAD;
+-sub AUTOLOAD
+-{
+-    my $method = substr($AUTOLOAD, rindex($AUTOLOAD, '::')+2);
+ 
+-    # We create the function here so that it will not need to be
+-    # autoloaded the next time.
+-    no strict 'refs';
+-    *$method = sub { local $Carp::Internal{+__PACKAGE__} = 1; shift->headers->$method(@_) };
+-    goto &$method;
++sub AUTOLOAD {
++    my ( $package, $method ) = $AUTOLOAD =~ m/\A(.+)::([^:]*)\z/;
++    my $code = $_[0]->can($method);
++    Carp::croak(
++        qq(Can't locate object method "$method" via package "$package"))
++        unless $code;
++    goto &$code;
+ }
+ 
++sub can {
++    my ( $self, $method ) = @_;
++
++    if ( my $own_method = $self->SUPER::can($method) ) {
++        return $own_method;
++    }
++
++    my $headers = ref($self) ? $self->headers : 'HTTP::Headers';
++    if ( $headers->can($method) ) {
++
++        # We create the function here so that it will not need to be
++        # autoloaded or recreated the next time.
++        no strict 'refs';
++        *$method = sub {
++            local $Carp::Internal{ +__PACKAGE__ } = 1;
++            shift->headers->$method(@_);
++        };
++        return \&$method;
++    }
+ 
+-sub DESTROY {}  # avoid AUTOLOADing it
++    return undef;
++}
+ 
++sub DESTROY { }    # avoid AUTOLOADing it
+ 
+ # Private method to access members in %$self
+ sub _elem
+diff --git a/t/message.t b/t/message.t
+index 307b732d..ef044a73 100644
+--- a/t/message.t
++++ b/t/message.t
+@@ -5,7 +5,7 @@ use warnings;
+ 
+ use Test::More;
+ 
+-plan tests => 195;
++plan tests => 208;
+ 
+ require HTTP::Message;
+ use Config qw(%Config);
+@@ -604,3 +604,24 @@ is($m->content_charset, "UTF-16BE");
+   is($@, 'pre-existing error', 'decodable() does not overwrite $@');
+ }
+ 
++$m = HTTP::Message->new(["User-Agent" => "Mozilla/5.0", "Referer" => "https://example.com/"]);
++ok($m->can('content'));
++my $method = $m->can('user_agent');
++is(ref($method), 'CODE');
++is(HTTP::Message->can('user_agent'), $method);
++is($m->$method, "Mozilla/5.0");
++
++ok(HTTP::Message->can('content'));
++$method = HTTP::Message->can('referrer');
++is(ref($method), 'CODE');
++is($m->can('referrer'), $method);
++is($m->$method, "https://example.com/");
++
++eval { $m->unknown_method; };
++like $@, qr/Can't locate object method "unknown_method" via package "HTTP::Message"/;
++is($m->can('unknown_method'), undef);
++eval { HTTP::Message->unknown_method; };
++like $@, qr/Can't locate object method "unknown_method" via package "HTTP::Message"/;
++is(HTTP::Message->can('unknown_method'), undef);
++eval { my $empty = ""; $m->$empty; };
++like $@, qr/Can't locate object method "" via package "HTTP::Message"/;

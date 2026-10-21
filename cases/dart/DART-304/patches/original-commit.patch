@@ -1,0 +1,121 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index c6e4392..08e8e76 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -3,6 +3,11 @@
+ * Support dot shorthand syntax.
+ * Enable language version 3.10.
+ 
++### Bug fixes
++
++* Preserved trailing commas (`trailing_commas: preserve`) applies to record
++  type annotations too (#1721).
++
+ ### Style changes
+ 
+ This change only applies to code whose language version is 3.10 or higher:
+diff --git a/lib/src/front_end/ast_node_visitor.dart b/lib/src/front_end/ast_node_visitor.dart
+index 80e33ce..5e3f451 100644
+--- a/lib/src/front_end/ast_node_visitor.dart
++++ b/lib/src/front_end/ast_node_visitor.dart
+@@ -1814,9 +1814,13 @@ final class AstNodeVisitor extends ThrowingAstVisitor<void> with PieceFactory {
+     var namedFields = node.namedFields;
+     var positionalFields = node.positionalFields;
+ 
+-    // Single positional record types always have a trailing comma.
++    // Single positional record types always have a trailing comma and are not
++    // forced to split.
++    var isSinglePositional =
++        positionalFields.length == 1 && namedFields == null;
++
+     var listStyle =
+-        positionalFields.length == 1 && namedFields == null
++        isSinglePositional
+             ? const ListStyle(commas: Commas.alwaysTrailing)
+             : const ListStyle(commas: Commas.trailing);
+     var builder = DelimitedListBuilder(this, listStyle);
+@@ -1849,7 +1853,13 @@ final class AstNodeVisitor extends ThrowingAstVisitor<void> with PieceFactory {
+     }
+ 
+     builder.rightBracket(node.rightParenthesis, delimiter: rightDelimiter);
+-    pieces.add(builder.build());
++    pieces.add(
++      builder.build(
++        forceSplit:
++            !isSinglePositional &&
++            hasPreservedTrailingComma(rightDelimiter ?? node.rightParenthesis),
++      ),
++    );
+     pieces.token(node.question);
+   }
+ 
+diff --git a/test/tall/preserve_trailing_commas/record_type.unit b/test/tall/preserve_trailing_commas/record_type.unit
+new file mode 100644
+index 0000000..8b6a5f4
+--- /dev/null
++++ b/test/tall/preserve_trailing_commas/record_type.unit
+@@ -0,0 +1,49 @@
++40 columns                              |
++(trailing_commas preserve)
++>>> Forces split with multiple positional fields and trailing comma.
++typedef R = (int,int,);
++<<< 3.7
++typedef R =
++    (
++      int,
++      int,
++    );
++<<< 3.8
++typedef R = (
++  int,
++  int,
++);
++>>> Doesn't force split with one positional field.
++typedef R = (int,);
++<<<
++typedef R = (int,);
++>>> Doesn't force split without trailing comma.
++typedef R = (int,int,int);
++<<<
++typedef R = (int, int, int);
++>>> Forces split with named fields and trailing comma.
++typedef R = ({int name,});
++<<< 3.7
++typedef R =
++    ({
++      int name,
++    });
++<<< 3.8
++typedef R = ({
++  int name,
++});
++>>> May still split without trailing comma if doesn't fit.
++typedef R = (int element1, int element2, int element3);
++<<< 3.7
++typedef R =
++    (
++      int element1,
++      int element2,
++      int element3,
++    );
++<<< 3.8
++typedef R = (
++  int element1,
++  int element2,
++  int element3,
++);
+diff --git a/test/tall/regression/1700/1721.unit b/test/tall/regression/1700/1721.unit
+new file mode 100644
+index 0000000..1ce4c30
+--- /dev/null
++++ b/test/tall/regression/1700/1721.unit
+@@ -0,0 +1,9 @@
++(trailing_commas preserve)
++>>>
++typedef RawPhoto = ({DateTime addedAt, String name, String url,});
++<<< 3.8
++typedef RawPhoto = ({
++  DateTime addedAt,
++  String name,
++  String url,
++});

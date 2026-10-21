@@ -1,0 +1,17 @@
+diff --git a/Tests/AWSLambdaRuntimeTests/LambdaClockTests.swift b/Tests/AWSLambdaRuntimeTests/LambdaClockTests.swift
+index 413a3aa25a9d7179a27e9bb0032212ac80f6fa24..31e4d190c2a142874a360b0a72d8797047a146c7 100644
+--- a/Tests/AWSLambdaRuntimeTests/LambdaClockTests.swift
++++ b/Tests/AWSLambdaRuntimeTests/LambdaClockTests.swift
+@@ -136,4 +136,12 @@ struct LambdaClockTests {
+             "LambdaClock and Foundation Date should be within 10ms of each other, difference was \(difference)ms"
+         )
+     }
++    @Test("Instant renders as string with an epoch number")
++    func instantRendersAsStringWithEpochNumber() {
++        let clock = LambdaClock()
++        let instant = clock.now
++
++        let expectedString = "\(instant)"
++        #expect(expectedString.allSatisfy { $0.isNumber }, "String should only contain numbers")
++    }
+ }

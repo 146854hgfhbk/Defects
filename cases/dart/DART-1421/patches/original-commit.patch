@@ -1,0 +1,497 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a4c17b6bd9f909470417cab690e82ab4b6cb6f45..ee75f7338643157a82afed3d7564c0b8bc71914e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,11 @@
++## 1.4.0
++
++* Fix `LineScanner`'s handling of `\r\n`'s to preventing errors scanning
++  zero-length matches when between CR and LF. CR is treated as a new line only
++  if not immediately followed by a LF.
++* Fix `LineScanner`'s updating of `column` when setting `position` if the
++  current position is not `0`.
++
+ ## 1.3.0
+ 
+ * Require Dart 3.1.0
+diff --git a/lib/src/line_scanner.dart b/lib/src/line_scanner.dart
+index 2903c403920635c559b83192eff287a846cd90db..b18d610574f3f5054a772c2ce5a8fc8f6b356382 100644
+--- a/lib/src/line_scanner.dart
++++ b/lib/src/line_scanner.dart
+@@ -8,8 +8,9 @@ import 'utils.dart';
+ 
+ // Note that much of this code is duplicated in eager_span_scanner.dart.
+ 
+-/// A regular expression matching newlines across platforms.
+-final _newlineRegExp = RegExp(r'\r\n?|\n');
++/// A regular expression matching newlines. A newline is either a `\n`, a `\r\n`
++/// or a `\r` that is not immediately followed by a `\n`.
++final _newlineRegExp = RegExp(r'\n|\r\n|\r(?!\n)');
+ 
+ /// A subclass of [StringScanner] that tracks line and column information.
+ class LineScanner extends StringScanner {
+@@ -48,27 +49,57 @@ class LineScanner extends StringScanner {
+ 
+   @override
+   set position(int newPosition) {
++    if (newPosition == position) {
++      return;
++    }
++
+     final oldPosition = position;
+     super.position = newPosition;
+ 
+-    if (newPosition > oldPosition) {
+-      final newlines = _newlinesIn(string.substring(oldPosition, newPosition));
++    if (newPosition == 0) {
++      _line = 0;
++      _column = 0;
++    } else if (newPosition > oldPosition) {
++      final newlines = _newlinesIn(string.substring(oldPosition, newPosition),
++          endPosition: newPosition);
+       _line += newlines.length;
+       if (newlines.isEmpty) {
+         _column += newPosition - oldPosition;
+       } else {
+-        _column = newPosition - newlines.last.end;
++        // The regex got a substring, so we need to account for where it started
++        // in the string.
++        final offsetOfLastNewline = oldPosition + newlines.last.end;
++        _column = newPosition - offsetOfLastNewline;
+       }
+-    } else {
+-      final newlines = _newlinesIn(string.substring(newPosition, oldPosition));
+-      if (_betweenCRLF) newlines.removeLast();
++    } else if (newPosition < oldPosition) {
++      final newlines = _newlinesIn(string.substring(newPosition, oldPosition),
++          endPosition: oldPosition);
+ 
+       _line -= newlines.length;
+       if (newlines.isEmpty) {
+         _column -= oldPosition - newPosition;
+       } else {
+-        _column =
+-            newPosition - string.lastIndexOf(_newlineRegExp, newPosition) - 1;
++        // To compute the new column, we need to locate the last newline before
++        // the new position. When searching, we must exclude the CR if we're
++        // between a CRLF because it's not considered a newline.
++        final crOffset = _betweenCRLF ? -1 : 0;
++        // Additionally, if we use newPosition as the end of the search and the
++        // character at that position itself (the next character) is a newline
++        // we should not use it, so also offset to account for that.
++        const currentCharOffset = -1;
++        final lastNewline = string.lastIndexOf(
++            _newlineRegExp, newPosition + currentCharOffset + crOffset);
++
++        // Now we need to know the offset after the newline. This is the index
++        // above plus the length of the newline (eg. if we found `\r\n`) we need
++        // to add two. However if no newline was found, that index is 0.
++        final offsetAfterLastNewline = lastNewline == -1
++            ? 0
++            : string[lastNewline] == '\r' && string[lastNewline + 1] == '\n'
++                ? lastNewline + 2
++                : lastNewline + 1;
++
++        _column = newPosition - offsetAfterLastNewline;
+       }
+     }
+   }
+@@ -103,7 +134,7 @@ class LineScanner extends StringScanner {
+   bool scan(Pattern pattern) {
+     if (!super.scan(pattern)) return false;
+ 
+-    final newlines = _newlinesIn(lastMatch![0]!);
++    final newlines = _newlinesIn(lastMatch![0]!, endPosition: position);
+     _line += newlines.length;
+     if (newlines.isEmpty) {
+       _column += lastMatch![0]!.length;
+@@ -115,10 +146,21 @@ class LineScanner extends StringScanner {
+   }
+ 
+   /// Returns a list of [Match]es describing all the newlines in [text], which
+-  /// is assumed to end at [position].
+-  List<Match> _newlinesIn(String text) {
++  /// ends at [endPosition].
++  ///
++  /// If [text] ends with `\r`, it will only be treated as a newline if the next
++  /// character at [position] is not a `\n`.
++  List<Match> _newlinesIn(String text, {required int endPosition}) {
+     final newlines = _newlineRegExp.allMatches(text).toList();
+-    if (_betweenCRLF) newlines.removeLast();
++    // If the last character is a `\r` it will have been treated as a newline,
++    // but this is only valid if the next character is not a `\n`.
++    if (endPosition < string.length &&
++        text.endsWith('\r') &&
++        string[endPosition] == '\n') {
++      // newlines should never be empty here, because if `text` ends with `\r`
++      // it would have matched `\r(?!\n)` in the newline regex.
++      newlines.removeLast();
++    }
+     return newlines;
+   }
+ }
+diff --git a/pubspec.yaml b/pubspec.yaml
+index b8585385ca5e2171913d0a1a8f5dd9a914b873c6..a8295e9c21f8b9155ea2bb335738996370d3ce62 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,5 +1,5 @@
+ name: string_scanner
+-version: 1.3.0
++version: 1.4.0
+ description: A class for parsing strings using a sequence of patterns.
+ repository: https://github.com/dart-lang/string_scanner
+ 
+diff --git a/test/line_scanner_test.dart b/test/line_scanner_test.dart
+index d31d313a3276c3b28e2fc90af6480a433390baf5..1af5c366650fbc472772b5e882ca33ad616e55d8 100644
+--- a/test/line_scanner_test.dart
++++ b/test/line_scanner_test.dart
+@@ -19,25 +19,24 @@ void main() {
+ 
+   group('scan()', () {
+     test('consuming no newlines increases the column but not the line', () {
+-      scanner.scan('foo');
++      scanner.expect('foo');
+       expect(scanner.line, equals(0));
+       expect(scanner.column, equals(3));
+     });
+ 
+-    test('consuming a newline resets the column and increases the line', () {
++    test('consuming a LF resets the column and increases the line', () {
+       scanner.expect('foo\nba');
+       expect(scanner.line, equals(1));
+       expect(scanner.column, equals(2));
+     });
+ 
+-    test('consuming multiple newlines resets the column and increases the line',
+-        () {
++    test('consuming multiple LFs resets the column and increases the line', () {
+       scanner.expect('foo\nbar\r\nb');
+       expect(scanner.line, equals(2));
+       expect(scanner.column, equals(1));
+     });
+ 
+-    test("consuming halfway through a CR LF doesn't count as a line", () {
++    test('consuming a CR LF increases the line only after the LF', () {
+       scanner.expect('foo\nbar\r');
+       expect(scanner.line, equals(1));
+       expect(scanner.column, equals(4));
+@@ -46,6 +45,41 @@ void main() {
+       expect(scanner.line, equals(2));
+       expect(scanner.column, equals(1));
+     });
++
++    test('consuming a CR not followed by LF increases the line', () {
++      scanner = LineScanner('foo\nbar\rbaz');
++      scanner.expect('foo\nbar\r');
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(0));
++
++      scanner.expect('b');
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(1));
++    });
++
++    test('consuming a CR at the end increases the line', () {
++      scanner = LineScanner('foo\nbar\r');
++      scanner.expect('foo\nbar\r');
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(0));
++      expect(scanner.isDone, isTrue);
++    });
++
++    test('consuming a mix of CR, LF, CR+LF increases the line', () {
++      scanner = LineScanner('0\n1\r2\r\n3');
++      scanner.expect('0\n1\r2\r\n3');
++      expect(scanner.line, equals(3));
++      expect(scanner.column, equals(1));
++    });
++
++    test('scanning a zero length match between CR LF does not fail', () {
++      scanner.expect('foo\nbar\r');
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(4));
++      scanner.expect(RegExp('(?!x)'));
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(4));
++    });
+   });
+ 
+   group('readChar()', () {
+@@ -56,7 +90,7 @@ void main() {
+       expect(scanner.column, equals(1));
+     });
+ 
+-    test('consuming a newline resets the column and increases the line', () {
++    test('consuming a LF resets the column and increases the line', () {
+       scanner.expect('foo');
+       expect(scanner.line, equals(0));
+       expect(scanner.column, equals(3));
+@@ -66,19 +100,52 @@ void main() {
+       expect(scanner.column, equals(0));
+     });
+ 
+-    test("consuming halfway through a CR LF doesn't count as a line", () {
++    test('consuming a CR LF increases the line only after the LF', () {
++      scanner = LineScanner('foo\r\nbar');
++      scanner.expect('foo');
++      expect(scanner.line, equals(0));
++      expect(scanner.column, equals(3));
++
++      scanner.readChar();
++      expect(scanner.line, equals(0));
++      expect(scanner.column, equals(4));
++
++      scanner.readChar();
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(0));
++    });
++
++    test('consuming a CR not followed by a LF increases the line', () {
++      scanner = LineScanner('foo\nbar\rbaz');
+       scanner.expect('foo\nbar');
+       expect(scanner.line, equals(1));
+       expect(scanner.column, equals(3));
+ 
+       scanner.readChar();
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(0));
++    });
++
++    test('consuming a CR at the end increases the line', () {
++      scanner = LineScanner('foo\nbar\r');
++      scanner.expect('foo\nbar');
+       expect(scanner.line, equals(1));
+-      expect(scanner.column, equals(4));
++      expect(scanner.column, equals(3));
+ 
+       scanner.readChar();
+       expect(scanner.line, equals(2));
+       expect(scanner.column, equals(0));
+     });
++
++    test('consuming a mix of CR, LF, CR+LF increases the line', () {
++      scanner = LineScanner('0\n1\r2\r\n3');
++      for (var i = 0; i < scanner.string.length; i++) {
++        scanner.readChar();
++      }
++
++      expect(scanner.line, equals(3));
++      expect(scanner.column, equals(1));
++    });
+   });
+ 
+   group('readCodePoint()', () {
+@@ -122,7 +189,7 @@ void main() {
+       expect(scanner.column, equals(1));
+     });
+ 
+-    test('consuming a newline resets the column and increases the line', () {
++    test('consuming a LF resets the column and increases the line', () {
+       scanner.expect('foo');
+       expect(scanner.line, equals(0));
+       expect(scanner.column, equals(3));
+@@ -132,7 +199,7 @@ void main() {
+       expect(scanner.column, equals(0));
+     });
+ 
+-    test("consuming halfway through a CR LF doesn't count as a line", () {
++    test('consuming a CR LF increases the line only after the LF', () {
+       scanner.expect('foo\nbar');
+       expect(scanner.line, equals(1));
+       expect(scanner.column, equals(3));
+@@ -145,6 +212,38 @@ void main() {
+       expect(scanner.line, equals(2));
+       expect(scanner.column, equals(0));
+     });
++
++    test('consuming a CR not followed by LF increases the line', () {
++      scanner = LineScanner('foo\rbar');
++      scanner.expect('foo');
++      expect(scanner.line, equals(0));
++      expect(scanner.column, equals(3));
++
++      scanner.scanChar($cr);
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(0));
++    });
++
++    test('consuming a CR at the end increases the line', () {
++      scanner = LineScanner('foo\r');
++      scanner.expect('foo');
++      expect(scanner.line, equals(0));
++      expect(scanner.column, equals(3));
++
++      scanner.scanChar($cr);
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(0));
++    });
++
++    test('consuming a mix of CR, LF, CR+LF increases the line', () {
++      scanner = LineScanner('0\n1\r2\r\n3');
++      for (var i = 0; i < scanner.string.length; i++) {
++        scanner.scanChar(scanner.string[i].codeUnits.single);
++      }
++
++      expect(scanner.line, equals(3));
++      expect(scanner.column, equals(1));
++    });
+   });
+ 
+   group('before a surrogate pair', () {
+@@ -201,27 +300,102 @@ void main() {
+   });
+ 
+   group('position=', () {
+-    test('forward through newlines sets the line and column', () {
+-      scanner.position = 10; // "foo\nbar\r\nb"
++    test('forward through LFs sets the line and column', () {
++      scanner = LineScanner('foo\nbar\nbaz');
++      scanner.position = 9; // "foo\nbar\nb"
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(1));
++    });
++
++    test('forward from non-zero character through LFs sets the line and column',
++        () {
++      scanner = LineScanner('foo\nbar\nbaz');
++      scanner.expect('fo');
++      scanner.position = 9; // "foo\nbar\nb"
+       expect(scanner.line, equals(2));
+       expect(scanner.column, equals(1));
+     });
+ 
++    test('forward through CR LFs sets the line and column', () {
++      scanner = LineScanner('foo\r\nbar\r\nbaz');
++      scanner.position = 11; // "foo\r\nbar\r\nb"
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(1));
++    });
++
++    test('forward through CR not followed by LFs sets the line and column', () {
++      scanner = LineScanner('foo\rbar\rbaz');
++      scanner.position = 9; // "foo\rbar\rb"
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(1));
++    });
++
++    test('forward through CR at end sets the line and column', () {
++      scanner = LineScanner('foo\rbar\r');
++      scanner.position = 8; // "foo\rbar\r"
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(0));
++    });
++
++    test('forward through a mix of CR, LF, CR+LF sets the line and column', () {
++      scanner = LineScanner('0\n1\r2\r\n3');
++      scanner.position = scanner.string.length;
++
++      expect(scanner.line, equals(3));
++      expect(scanner.column, equals(1));
++    });
++
+     test('forward through no newlines sets the column', () {
+       scanner.position = 2; // "fo"
+       expect(scanner.line, equals(0));
+       expect(scanner.column, equals(2));
+     });
+ 
+-    test('backward through newlines sets the line and column', () {
+-      scanner.scan('foo\nbar\r\nbaz');
++    test('backward through LFs sets the line and column', () {
++      scanner = LineScanner('foo\nbar\nbaz');
++      scanner.expect('foo\nbar\nbaz');
++      scanner.position = 2; // "fo"
++      expect(scanner.line, equals(0));
++      expect(scanner.column, equals(2));
++    });
++
++    test('backward through CR LFs sets the line and column', () {
++      scanner = LineScanner('foo\r\nbar\r\nbaz');
++      scanner.expect('foo\r\nbar\r\nbaz');
+       scanner.position = 2; // "fo"
+       expect(scanner.line, equals(0));
+       expect(scanner.column, equals(2));
+     });
+ 
++    test('backward through CR not followed by LFs sets the line and column',
++        () {
++      scanner = LineScanner('foo\rbar\rbaz');
++      scanner.expect('foo\rbar\rbaz');
++      scanner.position = 2; // "fo"
++      expect(scanner.line, equals(0));
++      expect(scanner.column, equals(2));
++    });
++
++    test('backward through CR at end sets the line and column', () {
++      scanner = LineScanner('foo\rbar\r');
++      scanner.expect('foo\rbar\r');
++      scanner.position = 2; // "fo"
++      expect(scanner.line, equals(0));
++      expect(scanner.column, equals(2));
++    });
++
++    test('backward through a mix of CR, LF, CR+LF sets the line and column',
++        () {
++      scanner = LineScanner('0\n1\r2\r\n3');
++      scanner.expect(scanner.string);
++
++      scanner.position = 1;
++      expect(scanner.line, equals(0));
++      expect(scanner.column, equals(1));
++    });
++
+     test('backward through no newlines sets the column', () {
+-      scanner.scan('foo\nbar\r\nbaz');
++      scanner.expect('foo\nbar\r\nbaz');
+       scanner.position = 10; // "foo\nbar\r\nb"
+       expect(scanner.line, equals(2));
+       expect(scanner.column, equals(1));
+@@ -232,10 +406,47 @@ void main() {
+       expect(scanner.line, equals(1));
+       expect(scanner.column, equals(4));
+     });
++
++    test('forward from halfway through a CR LF counts as a line', () {
++      scanner.expect('foo\nbar\r');
++      scanner.position = 11; // "foo\nbar\r\nba"
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(2));
++    });
++
++    test('backward to between CR LF', () {
++      scanner.expect('foo\nbar\r\nbaz');
++      scanner.position = 8; // "foo\nbar\r"
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(4));
++    });
++
++    test('backward from between CR LF', () {
++      scanner.expect('foo\nbar\r');
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(4));
++      scanner.position = 5; // "foo\nb"
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(1));
++    });
++
++    test('backward to after CR LF', () {
++      scanner.expect('foo\nbar\r\nbaz');
++      scanner.position = 9; // "foo\nbar\r\n"
++      expect(scanner.line, equals(2));
++      expect(scanner.column, equals(0));
++    });
++
++    test('backward to before CR LF', () {
++      scanner.expect('foo\nbar\r\nbaz');
++      scanner.position = 7; // "foo\nbar"
++      expect(scanner.line, equals(1));
++      expect(scanner.column, equals(3));
++    });
+   });
+ 
+   test('state= restores the line, column, and position', () {
+-    scanner.scan('foo\nb');
++    scanner.expect('foo\nb');
+     final state = scanner.state;
+ 
+     scanner.scan('ar\nba');

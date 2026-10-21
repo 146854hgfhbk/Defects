@@ -1,0 +1,690 @@
+{
+  "schema_version": 3,
+  "case_id": "SWIFT-748",
+  "language": "Swift",
+  "status": "release_candidate",
+  "project": "jamesrochabrun/SwiftOpenAI",
+  "repository_url": "https://github.com/jamesrochabrun/SwiftOpenAI.git",
+  "repository_evidence": {
+    "checked_at": "2026-09-05T04:34:08.362787+00:00",
+    "api_url": "https://api.github.com/repos/jamesrochabrun/SwiftOpenAI",
+    "html_url": "https://github.com/jamesrochabrun/SwiftOpenAI",
+    "private": false,
+    "visibility": "public",
+    "archived": false,
+    "public_verification_source": "github_api",
+    "license_spdx": "MIT",
+    "license_source": "github_api"
+  },
+  "commit_url": "https://github.com/jamesrochabrun/SwiftOpenAI/commit/781153222c32c55170c57a18b3fec23bf7c02329",
+  "pull_request_url": "https://github.com/jamesrochabrun/SwiftOpenAI/pull/190",
+  "issue_urls": [
+    "https://github.com/jamesrochabrun/SwiftOpenAI/issues/187"
+  ],
+  "traceability": {
+    "requires_unique_fix_commit": true,
+    "verified_fix_issue_numbers": [
+      187
+    ],
+    "paths": [
+      {
+        "issue_number": 187,
+        "path": "fix_commit_to_issue"
+      }
+    ],
+    "pull_request_number": 190,
+    "selected_from_multi_commit_pull_request": false,
+    "reference_mode": "DIRECT_COMMIT_ISSUE_REF",
+    "direct_commit_issue_reference": true,
+    "source": "authentic_local_git_commit_object",
+    "strict_direct_reference_satisfied": true,
+    "traceability_closed": true,
+    "publication_profile_satisfied": true,
+    "strict_direct_profile_satisfied": true,
+    "pr_mediated_chain_verified": false
+  },
+  "fixed_revision": "781153222c32c55170c57a18b3fec23bf7c02329",
+  "buggy_revision": "7e43ce065a03a73f1b2ad66a10997cb745f8fa9c",
+  "fixed_tree": "aa1bfd136a70b7cd9dc28069464c5f5131e17f94",
+  "buggy_tree": "71e97ee951fc47f390b3ca904e16733f4648abc5",
+  "repository_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/batch100-lower-materialized/repositories/jamesrochabrun__SwiftOpenAI",
+  "repository_bundle": {
+    "path": "sources/repository.bundle",
+    "sha256": "e7d83dc0da5dd64dd5ed4d93f94bbb4e5f0c7f50662249ba6e25ee34e0414bc0",
+    "bytes": 1876297,
+    "refs": {
+      "buggy": "refs/heads/buggy",
+      "fixed": "refs/heads/fixed"
+    }
+  },
+  "production_files": [
+    "Sources/OpenAI/Public/ResponseModels/Response/ResponseModel.swift"
+  ],
+  "trigger_test_files": [
+    "Tests/OpenAITests/ResponseModelValidationTests.swift"
+  ],
+  "trigger_tests": [
+    {
+      "path": "Tests/OpenAITests/ResponseModelValidationTests.swift",
+      "name": "testInstructionsTypeMessagesDecoding"
+    }
+  ],
+  "commit_files": {
+    "all": [
+      "Sources/OpenAI/Public/ResponseModels/Response/ResponseModel.swift",
+      "Tests/OpenAITests/ResponseModelValidationTests.swift"
+    ],
+    "production": [
+      "Sources/OpenAI/Public/ResponseModels/Response/ResponseModel.swift"
+    ],
+    "tests": [
+      "Tests/OpenAITests/ResponseModelValidationTests.swift"
+    ],
+    "other": []
+  },
+  "commit_stats": {
+    "production_hunk_count": 2,
+    "maximum_exact_subset_candidates": 3,
+    "hunk_count_source": "materialize_git_diff"
+  },
+  "patches": {
+    "original_commit": {
+      "path": "patches/original-commit.patch",
+      "sha256": "f2ec292689e89f25cbda7a8d76d734ab06264644cfa1b59468eef0342aaf9d66",
+      "bytes": 7389
+    },
+    "production_fix": {
+      "path": "patches/production-fix.patch",
+      "sha256": "bb4ef6fa6957dc8065eaf343e13f16948e05e841e58af5560b843780ba9db3cb",
+      "bytes": 1492
+    },
+    "trigger_tests": {
+      "path": "patches/trigger-tests-compatible.patch",
+      "sha256": "0ce8130e8f8399ab384133358b1076675c2a5d42e1c5ef7800bf21861db44e8a",
+      "bytes": 6182
+    }
+  },
+  "trigger_reduction": {
+    "status": "PASS",
+    "upstream_trigger_patch": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "3404c90bc305be90fb300a465e5c12c1b2497e2ef91f9d9682514ad30bb598cd",
+      "bytes": 5897
+    },
+    "removed_external_dependency": false,
+    "rationale": "The upstream regression references the newly added .messages enum case, preventing buggy compilation. The compatible patch uses Mirror label verification and an InputMessage array cast. It also catches the original decode error and reports XCTFail at the test source location, retaining the original error text; this preserves failing behavior while avoiding XCTest's unlocated <EXPR>:0 diagnostic. The decoding operation, fixtures and assertions remain. Only testInstructionsTypeMessagesDecoding is designated as the regression selector; string/array tests remain in the full suite. Runtime and semantic equivalence require validation and LLM review."
+  },
+  "build": {
+    "directory": ".",
+    "dependency_command": [
+      "swift",
+      "package",
+      "resolve",
+      "--skip-update"
+    ],
+    "analyze_command": [
+      "swift",
+      "build",
+      "--build-tests"
+    ],
+    "test_command": [
+      "swift",
+      "test",
+      "--parallel",
+      "--num-workers",
+      "1"
+    ],
+    "timeout_seconds": 1200,
+    "require_analyze_clean": true
+  },
+  "source_evidence_sha256": "6a3a8dfb182b57aeb9a37c2429a0998f20248b202353eb83eaa261e97afa0ec8",
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "PASS",
+    "full_suite_validation": "PASS",
+    "human_curation": "PASS",
+    "release_eligible": false,
+    "semantic_curation": "PASS",
+    "curation_method": "llm_api_consensus",
+    "llm_confirmed": true,
+    "current_protocol_validation": "PENDING"
+  },
+  "materialized_at": "2026-09-05T04:36:32.086630+00:00",
+  "claude_screen": {
+    "model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "prompt_decision": "ACCEPT_FOR_VALIDATION",
+    "confidence": 0.72,
+    "runtime_acceptance": false
+  },
+  "validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-05T22:49:00.478199+00:00",
+    "report": "validation/validation.json",
+    "report_sha256": "53232999d93fffe762039ad2af144d6d5871e5f3a8475131ce0418b6ba8494d7",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/OpenAITests/ResponseModelValidationTests.swift",
+        "name": "testInstructionsTypeMessagesDecoding"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-748",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/OpenAITests/ResponseModelValidationTests.swift', 'testInstructionsTypeMessagesDecoding')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/OpenAITests/ResponseModelValidationTests.swift::testInstructionsTypeMessagesDecoding']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/original-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "e37dd00e5741ffc195a348f4fa2578af5e34ec179011abf812f659d219666546",
+        "package_config": "environment/original-fixed-workspace-state.json",
+        "package_config_sha256": "59f9b44825aa0b90432bf94b3056884030d085654e0173410aa62232941009ac",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "async-http-client": "1.25.2",
+          "swift-algorithms": "1.2.1",
+          "swift-atomics": "1.2.0",
+          "swift-collections": "1.1.4",
+          "swift-http-structured-headers": "1.2.2",
+          "swift-http-types": "1.4.0",
+          "swift-log": "1.6.3",
+          "swift-nio": "2.82.1",
+          "swift-nio-extras": "1.26.0",
+          "swift-nio-http2": "1.36.0",
+          "swift-nio-ssl": "2.30.0",
+          "swift-nio-transport-services": "1.24.0",
+          "swift-numerics": "1.0.3",
+          "swift-system": "1.4.2"
+        }
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/original-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "e37dd00e5741ffc195a348f4fa2578af5e34ec179011abf812f659d219666546",
+        "package_config": "environment/original-buggy-workspace-state.json",
+        "package_config_sha256": "59f9b44825aa0b90432bf94b3056884030d085654e0173410aa62232941009ac",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "async-http-client": "1.25.2",
+          "swift-algorithms": "1.2.1",
+          "swift-atomics": "1.2.0",
+          "swift-collections": "1.1.4",
+          "swift-http-structured-headers": "1.2.2",
+          "swift-http-types": "1.4.0",
+          "swift-log": "1.6.3",
+          "swift-nio": "2.82.1",
+          "swift-nio-extras": "1.26.0",
+          "swift-nio-http2": "1.36.0",
+          "swift-nio-ssl": "2.30.0",
+          "swift-nio-transport-services": "1.24.0",
+          "swift-numerics": "1.0.3",
+          "swift-system": "1.4.2"
+        }
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/original-swift-toolchain.lock.json",
+      "sha256": "8f640c14794906e7ece27a9ac78ffa0fb254286a85845a1f556b673d8cd0bd0d"
+    },
+    "validation_image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "validation_image_lock": {
+      "path": "environment/original-validation-image.lock.json",
+      "sha256": "44bd3a6729806593348ce03c797d46dc0aee33429f26f5a6773e1643da961383"
+    }
+  },
+  "bug_id": "SWIFT-748",
+  "issue_id": 187,
+  "issue_ids": [
+    187
+  ],
+  "issue_url": "https://github.com/jamesrochabrun/SwiftOpenAI/issues/187",
+  "buggy_commit": "7e43ce065a03a73f1b2ad66a10997cb745f8fa9c",
+  "fixed_commit": "781153222c32c55170c57a18b3fec23bf7c02329",
+  "patch": "patches/minimized-production.patch",
+  "changed_source_files": [
+    "Sources/OpenAI/Public/ResponseModels/Response/ResponseModel.swift"
+  ],
+  "triggering_test": [
+    "Tests/OpenAITests/ResponseModelValidationTests.swift::testInstructionsTypeMessagesDecoding"
+  ],
+  "expected_failure": {
+    "test_id": "Tests/OpenAITests/ResponseModelValidationTests.swift::ResponseModelValidationTests/testInstructionsTypeMessagesDecoding",
+    "error": "Tests/OpenAITests/ResponseModelValidationTests.swift:232: ResponseModelValidationTests.testInstructionsTypeMessagesDecoding : failed - Message instructions decoding failed: dataCorrupted(Swift.DecodingError.Context(codingPath: [CodingKeys(stringValue: \"instructions\", intValue: nil)], debugDescription: \"Expected String or [String] for instructions\", underlyingError: nil))",
+    "failure_fingerprint": "2efb36efa6b8539edf2c166058d895c01d1f4e8ba355e82f7e1e94ef481b462e",
+    "all_trigger_failures": [
+      {
+        "test_id": "Tests/OpenAITests/ResponseModelValidationTests.swift::ResponseModelValidationTests/testInstructionsTypeMessagesDecoding",
+        "error": "Tests/OpenAITests/ResponseModelValidationTests.swift:232: ResponseModelValidationTests.testInstructionsTypeMessagesDecoding : failed - Message instructions decoding failed: dataCorrupted(Swift.DecodingError.Context(codingPath: [CodingKeys(stringValue: \"instructions\", intValue: nil)], debugDescription: \"Expected String or [String] for instructions\", underlyingError: nil))",
+        "failure_fingerprint": "2efb36efa6b8539edf2c166058d895c01d1f4e8ba355e82f7e1e94ef481b462e",
+        "repetition_count": 3,
+        "deterministic": true
+      }
+    ]
+  },
+  "fixed_test_result": {
+    "status": "HISTORICAL_RESULTS_RETAINED",
+    "historical_full_suite_exit_codes": [
+      0,
+      0
+    ],
+    "current_suite_success_required": {
+      "exit_code": 0,
+      "failed_tests": 0,
+      "repetitions": 3
+    },
+    "current_protocol_rerun_performed": false
+  },
+  "build_command": [
+    "swift",
+    "build",
+    "--build-tests"
+  ],
+  "test_command": [
+    "swift",
+    "test",
+    "--parallel",
+    "--num-workers",
+    "1"
+  ],
+  "language_version": "6.1",
+  "dependency_versions": {
+    "async-http-client": "1.25.2",
+    "swift-algorithms": "1.2.1",
+    "swift-atomics": "1.2.0",
+    "swift-collections": "1.1.4",
+    "swift-http-structured-headers": "1.2.2",
+    "swift-http-types": "1.4.0",
+    "swift-log": "1.6.3",
+    "swift-nio": "2.82.1",
+    "swift-nio-extras": "1.26.0",
+    "swift-nio-http2": "1.36.0",
+    "swift-nio-ssl": "2.30.0",
+    "swift-nio-transport-services": "1.24.0",
+    "swift-numerics": "1.0.3",
+    "swift-system": "1.4.2"
+  },
+  "operating_system_or_container": {
+    "platform": "jammy",
+    "host_system": "Linux",
+    "host_machine": "x86_64",
+    "validation_image": "swift-defects-validation:6.1-recovered-20260905",
+    "validation_image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad"
+  },
+  "timezone": "UTC",
+  "reproducibility_status": "direct_parent_historical_execution_evidence_current_protocol_deferred",
+  "deprecation_reason": null,
+  "minimized_patch": {
+    "path": "patches/minimized-production.patch",
+    "sha256": "0847c7ee6ddc411b96b6b87d479baede71b4fd547fc371f37839e4bc7026feed",
+    "original_hunk_count": 2,
+    "retained_hunks": [
+      1,
+      2
+    ],
+    "retained_hunk_count": 2,
+    "removed_hunk_count": 0,
+    "screening_only": false,
+    "post_minimization_validation": "PASS",
+    "evidence_grade": "portable_release_evidence",
+    "automatic_minimization": {
+      "minimal_hunks": [
+        1,
+        2
+      ],
+      "chosen_subset": [
+        1,
+        2
+      ]
+    }
+  },
+  "post_minimization_validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-05T22:58:53.962515+00:00",
+    "report": "validation/post-minimization.json",
+    "report_sha256": "b14bdd113940983aaa3f6d31f31d8d771994b14a2c237eb862fd96628c568b21",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/OpenAITests/ResponseModelValidationTests.swift",
+        "name": "testInstructionsTypeMessagesDecoding"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-748",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/OpenAITests/ResponseModelValidationTests.swift', 'testInstructionsTypeMessagesDecoding')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/OpenAITests/ResponseModelValidationTests.swift::testInstructionsTypeMessagesDecoding']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/post-minimization-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "e37dd00e5741ffc195a348f4fa2578af5e34ec179011abf812f659d219666546",
+        "package_config": "environment/post-minimization-fixed-workspace-state.json",
+        "package_config_sha256": "59f9b44825aa0b90432bf94b3056884030d085654e0173410aa62232941009ac",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "async-http-client": "1.25.2",
+          "swift-algorithms": "1.2.1",
+          "swift-atomics": "1.2.0",
+          "swift-collections": "1.1.4",
+          "swift-http-structured-headers": "1.2.2",
+          "swift-http-types": "1.4.0",
+          "swift-log": "1.6.3",
+          "swift-nio": "2.82.1",
+          "swift-nio-extras": "1.26.0",
+          "swift-nio-http2": "1.36.0",
+          "swift-nio-ssl": "2.30.0",
+          "swift-nio-transport-services": "1.24.0",
+          "swift-numerics": "1.0.3",
+          "swift-system": "1.4.2"
+        }
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/post-minimization-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "e37dd00e5741ffc195a348f4fa2578af5e34ec179011abf812f659d219666546",
+        "package_config": "environment/post-minimization-buggy-workspace-state.json",
+        "package_config_sha256": "59f9b44825aa0b90432bf94b3056884030d085654e0173410aa62232941009ac",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {
+          "async-http-client": "1.25.2",
+          "swift-algorithms": "1.2.1",
+          "swift-atomics": "1.2.0",
+          "swift-collections": "1.1.4",
+          "swift-http-structured-headers": "1.2.2",
+          "swift-http-types": "1.4.0",
+          "swift-log": "1.6.3",
+          "swift-nio": "2.82.1",
+          "swift-nio-extras": "1.26.0",
+          "swift-nio-http2": "1.36.0",
+          "swift-nio-ssl": "2.30.0",
+          "swift-nio-transport-services": "1.24.0",
+          "swift-numerics": "1.0.3",
+          "swift-system": "1.4.2"
+        }
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/post-minimization-swift-toolchain.lock.json",
+      "sha256": "8f640c14794906e7ece27a9ac78ffa0fb254286a85845a1f556b673d8cd0bd0d"
+    },
+    "validation_image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "validation_image_lock": {
+      "path": "environment/post-minimization-validation-image.lock.json",
+      "sha256": "44bd3a6729806593348ce03c797d46dc0aee33429f26f5a6773e1643da961383"
+    }
+  },
+  "dependency_cache": {
+    "archive": "environment/dependency-cache.tar.gz",
+    "archive_sha256": "d2405f272d744293b715da5333784d31af4a64239a417fd1fc8749fd6b05f42d",
+    "manifest": "environment/dependency-cache-manifest.json",
+    "manifest_sha256": "e67949978fbbbf2e5fe5f9ff34605c1530088358512aed7cd5658b90bd961eff",
+    "package_count": 14
+  },
+  "reproduction": {
+    "image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "network_mode": "none",
+    "runner": {
+      "path": "tools/reproduce_case.py",
+      "sha256": "2fbeb44814f8609d3cc6285ed764f7fb92fa96e7cd58e3366e60a2334dd6a0c3",
+      "bytes": 17123
+    },
+    "validation_engine": {
+      "path": "tools/validation_engine.py",
+      "sha256": "3d384f0a1be24e5e5a097b45182577c639b904d2680df657a2c39dc71ce9a619",
+      "bytes": 83296
+    },
+    "commands": {
+      "b": {
+        "path": "commands/SWIFT-748b",
+        "sha256": "3635f4ff72e3aae39cd7c2abfb75186c356309cb5fde1039627ff356318cb0c5",
+        "bytes": 185
+      },
+      "f": {
+        "path": "commands/SWIFT-748f",
+        "sha256": "799f12dbf3a9e6a7e45a0cef53cfe348f40f1aca3b27c20c5c9da188b1bb1458",
+        "bytes": 185
+      }
+    }
+  },
+  "release_policy": {
+    "path": "environment/release-policy.json",
+    "sha256": "c0630d38fec5ddc7e0b23bc55edab956aed494143166c40ab92e119ababa9ff8"
+  },
+  "reproduction_verification": {
+    "path": "reproduction/verification.json",
+    "sha256": "462274ae1b7b6e1c2c69dc3199d6d290a24ccf96fff418ff10b1be105a262ac0"
+  },
+  "network_isolation_attestation": {
+    "path": "environment/network-isolation.json",
+    "sha256": "dee4af8d403dfbba2a47009d92d9695649863e893eb1f89788c8d868bdf46de2"
+  },
+  "dataset_id": "SWIFT-D021",
+  "patch_sha256": "0847c7ee6ddc411b96b6b87d479baede71b4fd547fc371f37839e4bc7026feed",
+  "revision_alias_semantics": "buggy_commit/fixed_commit identify upstream provenance; experimental b/f identities are in artifacts",
+  "upstream_fix": {
+    "commit": "781153222c32c55170c57a18b3fec23bf7c02329",
+    "parents": [
+      "7e43ce065a03a73f1b2ad66a10997cb745f8fa9c"
+    ],
+    "buggy_baseline_is_parent": true,
+    "single_parent_matches_baseline": true,
+    "commit_message": "Fix InstructionsType decoding for reusable prompts (issue #187)\n\nWhen using OpenAI's reusable prompts with variables, the `instructions`\nfield returns as an array of message objects instead of String or [String].\nThis adds support for decoding [InputMessage] in InstructionsType.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>",
+    "boundary_evidence": "repair/boundary-verification.json",
+    "boundary_evidence_sha256": "89540aaf2092d04a8f5eaf3c77ae341b3aa160ad7d99d2a96f357908292ab4af"
+  },
+  "fixed_revision_kind": "upstream_provenance_use_artifacts_for_experiment",
+  "artifacts": {
+    "buggy": {
+      "commit": "3db6c7236af6f3525c110435fc4c7eb5854fcd9b",
+      "tree": "2293f2f78d3fb9d495743ac1df42118cff6250d6"
+    },
+    "fixed": {
+      "commit": "78edc198b89c74b8b791d17de86b7038b5ce29b1",
+      "tree": "107a200510473c0476e47a1daa82f65afe5ee1d3",
+      "equals_upstream_tree": false
+    },
+    "construction": "base + compatibility(if present) + trigger; fixed adds production patch",
+    "synthetic_commit_identity_disclosed": true,
+    "upstream_history_not_rewritten": true
+  },
+  "cohort": "runtime_test",
+  "trigger_kind": "runtime_test_failure",
+  "language_metadata": {
+    "compiler_version": "6.1",
+    "package_tools_version": null,
+    "note": "Compiler version is distinct from Package.swift tools/language mode; recovered manifest records may fill package_tools_version"
+  },
+  "auto_baseline_full_suite": false,
+  "test_suite_policy": {
+    "name": "explicitly_filtered_regression_suite",
+    "excluded_selectors": [],
+    "exclusions": [],
+    "failed_process_may_be_waived": false,
+    "fresh_filtered_suite_validation_required": false,
+    "trigger_exclusion_forbidden": true
+  },
+  "current_validation": {
+    "protocol": "explicit-isolated-order-and-filtered-full-suite-v1",
+    "required_repetitions": 3,
+    "full_suite_repetitions": 3,
+    "historical_logs_preserved": true,
+    "historical_reverse_runs_are_order_evidence": false,
+    "same_process_permutation_claimed": false,
+    "new_full_validation_performed": false,
+    "status": "PENDING_CURRENT_PROTOCOL_RERUN",
+    "bound_delivery_reports": [],
+    "raw_log_recovery_waived_by_user": true,
+    "waiver_scope": "historical raw-log recovery only; no metadata upgrade to PASS"
+  },
+  "runtime_release": {
+    "asset_manifest": "../../../runtime-assets.manifest.json",
+    "entrypoint": "../../../benchmark.py",
+    "image_id": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "swift_executable": "/usr/bin/swift",
+    "external_assets_are_required": true,
+    "artifact_tree_verified": true,
+    "assets": [
+      {
+        "kind": "repository_bundle",
+        "case_relative_path": "sources/repository.bundle",
+        "sha256": "e7d83dc0da5dd64dd5ed4d93f94bbb4e5f0c7f50662249ba6e25ee34e0414bc0",
+        "bytes": 1876297,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/e7d83dc0da5dd64dd5ed4d93f94bbb4e5f0c7f50662249ba6e25ee34e0414bc0"
+      },
+      {
+        "kind": "dependency_cache",
+        "case_relative_path": "environment/dependency-cache.tar.gz",
+        "sha256": "d2405f272d744293b715da5333784d31af4a64239a417fd1fc8749fd6b05f42d",
+        "bytes": 277973752,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/d2405f272d744293b715da5333784d31af4a64239a417fd1fc8749fd6b05f42d"
+      },
+      {
+        "kind": "experiment_bundle",
+        "case_relative_path": "sources/experiment.bundle",
+        "sha256": "6b90b02612cd419446eb9f9941663d79aace1e4971842c32e82fbf1bd89f83d2",
+        "bytes": 1873320,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/6b90b02612cd419446eb9f9941663d79aace1e4971842c32e82fbf1bd89f83d2"
+      }
+    ],
+    "wrapper_evidence": []
+  },
+  "human_curation": {
+    "status": "APPROVED",
+    "approval_template": "repair/human-review.json",
+    "agent_cannot_sign_as_human": true,
+    "reviewer": "dataset_owner",
+    "reviewed_at": "2026-09-13T10:22:32+00:00"
+  },
+  "release": {
+    "state": "RC",
+    "strict_active": false,
+    "blockers": [],
+    "deprecation_reason": null,
+    "deferred_gates": [
+      "current_protocol_validation_pending"
+    ],
+    "structural_boundary_status": "DIRECT",
+    "publication_profile_traceability": "PASS",
+    "strict_direct_traceability": "PASS",
+    "execution_evidence_policy": "HISTORICAL_EVIDENCE_PRESERVED_CURRENT_PROTOCOL_DEFERRED",
+    "human_signoff_policy": "APPROVED",
+    "classic_runtime_profile": "RUNTIME_TEST",
+    "publication_profile_cohort": "RUNTIME_CORE",
+    "defects4j_core_validation": "PASS"
+  },
+  "repair": {
+    "date": "2026-09-10",
+    "base_archive_sha256": "21599edfd4c0c560677f781fdd84da40fa22fb14472aaaf7174b7dec81d9df21",
+    "previous_metadata": "repair-history/case.before-repair.json",
+    "code_history": "repair-history/tools",
+    "historical_reports_not_rewritten": true,
+    "raw_log_recovery_out_of_scope": true,
+    "stage1_metadata_hardening": {
+      "performed_at": "2026-09-12",
+      "authoritative_boundary": "repair/boundary-verification.json",
+      "historical_execution_evidence_preserved": true,
+      "no_execution_result_invented": true
+    }
+  },
+  "defects4j_core_validation": {
+    "status": "PASS",
+    "classification": "HISTORICAL_STRICT_RAW_PASS",
+    "report": "validation/defects4j-core-reacceptance.json",
+    "report_sha256": "b97a216eacdf17ac7a4c52e6edb884c6c529abaa043ba59a0ca2c96c4b83c492",
+    "generated_at": "2026-09-12",
+    "does_not_claim_current_protocol_rerun": true
+  }
+}

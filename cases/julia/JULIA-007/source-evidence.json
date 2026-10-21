@@ -1,0 +1,113 @@
+{
+  "candidate_sha": "089609e7a2a63844dc19f0d0eef400eaba8992d6",
+  "project": "SciML/SciMLBase.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1036,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/1036",
+      "state": "closed",
+      "title": "Accumulation for ODEProblem",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "## Checklist\r\n\r\n- [ ] Appropriate tests were added\r\n- [ ] Any code changes were done in a way that does not break public API\r\n- [ ] All documentation related to code changes were updated\r\n- [ ] The new code follows the\r\n  [contributor guidelines](https://github.com/SciML/.github/blob/master/CONTRIBUTING.md), in particular the [SciML Style Guide](https://github.com/SciML/SciMLStyle) and\r\n  [COLPRAC](https://github.com/SciML/COLPRAC).\r\n- [ ] Any new documentation only uses public API\r\n  \r\n## Additional context\r\n\r\nSister PR for https://github.com/FluxML/Zygote.jl/pull/1574 which would have much narrower dispatch for `getfield`. \r\n"
+    },
+    {
+      "number": 1460,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/1460",
+      "state": "closed",
+      "title": "Fix symbolic save_idxs skipping translation when selecting all state variables",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "**This PR should be ignored until reviewed by @ChrisRackauckas.**\n\nFixes #1454.\n\n## Problem\n\nSymbolic `save_idxs` silently skipped index translation when the selection named **all** state variables, leaking raw `Symbol`/`Num` into the integer indexing path.\n\nWith a 3-variable MTK Lotka-Volterra system:\n\n| `save_idxs` | before |\n| --- | --- |\n| `[:x, :z]` (subset) | OK → `[1, 3]` |\n| `[:x, :y, :z]` (ALL) | **FAIL** `ArgumentError: unable to check bounds for indices of type Symbol` |\n| `[:z, :y, :x]` (ALL, permuted) | **FAIL** (same) |\n\nReproduced with `Vector{Symbol}` and `Vector{Num}` (the latter: `TypeError: non-boolean (Num) used in boolean context`).\n\n## Root cause\n\n`SavedSubsystem` deliberately returns `nothing` for a save-everything request (its docstring: \"returns `nothing` when no metadata is needed, including ... requests that save all state variables\"). The `get_save_idxs_and_saved_subsystem` generic method's `if saved_subsystem !== nothing` guard misread that `nothing` as \"no translation needed\" and returned the raw symbolic `save_idxs` unchanged.\n\n## Fix\n\nIn the `saved_subsystem === nothing` branch, translate symbolic `save_idxs` to integer state indexes via `variable_index`, **preserving the requested order** (so permutations like `[:z, :y, :x]` reorder correctly rather than collapsing to a sorted/identity shortcut) and scalarizing symbolic arrays. Non-symbolic `save_idxs` (integers, `Colon`) pass through untouched; observed / non-state expressions are still rejected by `SavedSubsystem` as before.\n\n## Verification (run locally, Julia 1.11)\n\n`save_idxs = [:x, :y, :z]` and `[:z, :y, :x]` (and their `Num` equivalents) now succeed, and the saved solution matches a full solve in the requested order:\n\n```\n[:x,:y,:z] order/value matches full [x,y,z]: true\n[:z,:y,:x] order/value matches full [z,y,x]: true\n[:x,:z]    order/value matches full [x,z]:   true\n:x scalar  matches full x:                   true\n```\n\nSubset, single-symbol, integer, permuted-integer, and "
+    },
+    {
+      "number": 1467,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/1467",
+      "state": "closed",
+      "title": "Clarify observed save_idxs rejection (DE #1036)",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "**This PR should be ignored until reviewed by @ChrisRackauckas.**\n\nRelated: SciML/DifferentialEquations.jl#1036 (observed variables in `save_idxs`).\n\n## What this is (and is not)\n\nThis is the **smallest correct slice** for DE #1036: a dedicated error + docs when observed symbols appear in `save_idxs`. It does **not** implement observed save columns.\n\nFull support is intentionally out of scope for this PR. Solver save paths (e.g. OrdinaryDiffEqCore) hard-code `u[save_idxs]` integer indexing. Eval-at-save observed storage needs a multi-package design (`SavedSubsystem` observed map + save-path evaluation + interpolation policy). Silently expanding observed to full-state save would look like support but would not meet the memory goal and would be a wrong answer.\n\n## Change\n\nWhen `is_observed(indp, var)` holds for a rejected `save_idxs` entry, throw:\n\n```\nArgumentError: Saving observed variables via `save_idxs` is not yet supported (got …).\n… workarounds: full sol[obs]; DiffEqCallbacks.SavingCallback; save dependent states.\nSee SciML/DifferentialEquations.jl#1036.\n```\n\nGeneric non-state / non-timeseries-parameter rejection is unchanged.\n\nDocs updated:\n- `docs/src/interfaces/Symbolic_SaveIdxs.md` — explicit observed limitation\n- `docs/src/interfaces/Common_Keywords.md` — `save_idxs` keyword note\n\n## Tests (run locally)\n\nUnit (`SymbolCache` Expr as observed):\n\n```\nsave_idxs rejects observed quantities | 13 passed\nPOST_RUNIC_OK\n```\n\nDownstream MTK + regression:\n\n```\nSaved subsystem subset incl observed rejection | 19 passed\nREGRESSION_OK\n```\n\nIncluding: observed-only and mixed `[x, obs]` rejection, full-solve `sol[obs]` still works, symbolic state `save_idxs` still works, all-states symbolic translation regression from #1460 still works.\n\n## Follow-up design (not in this PR)\n\n1. Extend `SavedSubsystem` with `observed_map` (saved column → observed symbolic + callable).\n2. Change integrator save path to evaluate observed at save points when requested.\n3. v1 policy: require `s"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 1467,
+      "pull_request_repository": "SciML/SciMLBase.jl",
+      "pull_request_url": "https://github.com/SciML/SciMLBase.jl/pull/1467",
+      "fix_commit": "089609e7a2a63844dc19f0d0eef400eaba8992d6",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Clarify observed save_idxs rejection (DE #1036) (#1467)\n\nObserved symbols in save_idxs were already rejected, but with a generic\n\"variables and timeseries parameters\" message that did not distinguish\nobserved quantities from other invalid symbols. Detect is_observed and\nraise a dedicated ArgumentError with workarounds and a pointer to\nDifferentialEquations.jl#1036. Document the limitation on the symbolic\nsave_idxs and common-keywords pages. Add unit and MTK downstream tests.\n\nFull observed save_idxs support is intentionally not implemented: solver\nsave paths are integer u[idxs] indexing, and eval-at-save observed columns\nneed SavedSubsystem + OrdinaryDiffEqCore design work beyond a small PR.\n\nCo-authored-by: ChrisRackauckas-Claude <accounts@chrisrackauckas.com>",
+    "commit_issue_refs": [
+      1036,
+      1467
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1467,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Clarify observed save_idxs rejection (DE #1036)",
+    "pull_request_issue_refs": [
+      1036,
+      1460
+    ],
+    "pull_request_cross_repository_refs": [
+      [
+        "SciML/DifferentialEquations.jl",
+        1036,
+        "issues"
+      ]
+    ],
+    "pull_request_commit_issue_refs": [
+      1036
+    ],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [
+    {
+      "number": 1036,
+      "url": "https://github.com/SciML/DifferentialEquations.jl/issues/1036",
+      "state": "open",
+      "title": "Allow symbolic indices to be passed to the `save_idxs` kwarg of `solve`",
+      "closed": false,
+      "defect_evidence": false,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "## Can't use symbolic indices to parameterize `solve(;save_idxs = ...)`\r\n\r\n- Often I want to just save an **observed** variable when solving an `ODEProblem`, to save on memory during large batch solves.\r\n- Currently that isn't possible because the observed variable is rightfully not included within `u`, but computed lazily via the solution.\r\n  - Resorted to defining my own tedious `save_func(u, t, integrator)` callback, forcing me to redefine my observable equations in terms of `u[idx]`.\r\n- If I still want to symbolically index the `ODESolution` for my observed variable, I have to save all of the variables during `solve`, which is a lot of waste for larger systems.\r\n\r\n### Would be nice to be able to pass in symbols to `solve` to be saved, like `solve(odeprob, alg; save_idxs = [:obs, ...]`\r\n\r\nBasically, I'd like `solve` to handle symbolic indices from an `ODESystem` just like `remake` and solution indexing already do. ",
+      "repository": "SciML/DifferentialEquations.jl",
+      "reference_kind": "issues"
+    }
+  ],
+  "pull_request_record": {
+    "number": 1467,
+    "repository": "SciML/SciMLBase.jl",
+    "url": "https://github.com/SciML/SciMLBase.jl/pull/1467",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-07-24T06:18:33Z",
+    "merge_commit_sha": "089609e7a2a63844dc19f0d0eef400eaba8992d6",
+    "title": "Clarify observed save_idxs rejection (DE #1036)",
+    "body_excerpt": "**This PR should be ignored until reviewed by @ChrisRackauckas.**\n\nRelated: SciML/DifferentialEquations.jl#1036 (observed variables in `save_idxs`).\n\n## What this is (and is not)\n\nThis is the **smallest correct slice** for DE #1036: a dedicated error + docs when observed symbols appear in `save_idxs`. It does **not** implement observed save columns.\n\nFull support is intentionally out of scope for this PR. Solver save paths (e.g. OrdinaryDiffEqCore) hard-code `u[save_idxs]` integer indexing. Eval-at-save observed storage needs a multi-package design (`SavedSubsystem` observed map + save-path evaluation + interpolation policy). Silently expanding observed to full-state save would look like support but would not meet the memory goal and would be a wrong answer.\n\n## Change\n\nWhen `is_observed(indp, var)` holds for a rejected `save_idxs` entry, throw:\n\n```\nArgumentError: Saving observed variables via `save_idxs` is not yet supported (got …).\n… workarounds: full sol[obs]; DiffEqCallbacks.SavingCallback; save dependent states.\nSee SciML/DifferentialEquations.jl#1036.\n```\n\nGeneric non-state / non-timeseries-parameter rejection is unchanged.\n\nDocs updated:\n- `docs/src/interfaces/Symbolic_SaveIdxs.md` — explicit observed limitation\n- `docs/src/interfaces/Common_Keywords.md` — `save_idxs` keyword note\n\n## Tests (run locally)\n\nUnit (`SymbolCache` Expr as observed):\n\n```\nsave_idxs rejects observed quantities | 13 passed\nPOST_RUNIC_OK\n```\n\nDownstream MTK + regression:\n\n```\nSaved subsystem subset incl observed rejection | 19 passed\nREGRESSION_OK\n```\n\nIncluding: observed-only and mixed `[x, obs]` rejection, full-solve `sol[obs]` still works, symbolic state `save_idxs` still works, all-states symbolic translation regression from #1460 still works.\n\n## Follow-up design (not in this PR)\n\n1. Extend `SavedSubsystem` with `observed_map` (saved column → observed symbolic + callable).\n2. Change integrator save path to evaluate observed at save points when requested.\n3. v1 policy: require `s",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "candidate_sha": "4b175929f30f58386cb0343310b7a6abc1bbbcfe",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 522,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/522",
+      "state": "closed",
+      "title": "Make left hand side of `->` parse as a tuple of arguments",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This makes argument lists on the left hand side of `->` parse as tuples. In particular, this fixes a very inconsistent case where the left hand side previously parsed as a `K\"block\"`; we now have:\r\n\r\n* `(a;x=1)->b` ==> `(-> (tuple-p a (parameters (= x 1))) b`\r\n\r\nrather than `(block a (= x 1))` on the left hand side.\r\n\r\nIn addition, the following forms are treated consistently\r\n\r\n* `a->b`       ==> `(-> (tuple a) b)`\r\n* `(a)->b`     ==> `(-> (tuple-p a) b)`\r\n* `(a,)->b`    ==> `(-> (tuple-p-, a) b)`\r\n\r\nThe upside of this is that expression processing of `->` syntax should be much easier.\r\n\r\nThere's one aberrant case involving `where` which is particularly difficult and still not dealt with:\r\n\r\n`(x where T) -> b` does not parse as `(where (tuple x) T)` on the left hand side. However, `where` precedence involving `::` and `->` is already horribly broken and this syntax will always be awful to write unless we make breaking changes. So I'm too tempted to call this a lost cause for now 😬.\r\n\r\nCompatibility shims for converting the `SyntaxNode` form back to `Expr` in order to keep `Expr` stable are included. (At some point we should consider fixing this and deleting these shims because the new form is so much more consistent and would be reflected neatly into `Expr` form.)"
+    },
+    {
+      "number": 534,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/534",
+      "state": "closed",
+      "title": "Avoid adding tuple in parsing of `$(x) -> rhs`",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Quick fix for https://github.com/JuliaLang/julia/issues/57223\r\n\r\nThis bug was brought on by the parsing change in #522.  Basically, we can't reliably look ahead at the `K\"->\"` token when parsing parentheses in `parse_paren()` if any construct with higher precedence is currently being parsed on the left hand side of the `$`.  Luckily there's very few such constructs, but `$` is one of these.\r\n\r\nThe others appear to be unary `&` and unary `::` which are also entangled in `where` parsing so are a bit more difficult to fix. Thus the obscure and probably useless syntaxes `::(x) -> y` and `&(x) -> y` are currently broken.\r\n\r\nIn principle, a way to fix this at the correct precedence level would be to rewrite the left hand side of `->` when bumping the `K\"->\"` token itself, and when the left hand side was a `K\"parens\"` node.  This almost works, but gets quite ugly for keyword parameters as in `(x; a=1) -> body` where we need to rewrite the left hand side from a block to a tuple with contained parameters node."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "cross_repository_issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        57223
+      ],
+      "issue_repository": "JuliaLang/julia",
+      "pull_request": 534,
+      "pull_request_repository": "JuliaLang/JuliaSyntax.jl",
+      "fix_commit": "4b175929f30f58386cb0343310b7a6abc1bbbcfe",
+      "evidence_source": "qualified_issue_url_in_fix_commit_or_pull_request"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Avoid adding tuple in parsing of `$(x) -> rhs` (#534)",
+    "commit_issue_refs": [
+      534
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 534,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Avoid adding tuple in parsing of `$(x) -> rhs`",
+    "pull_request_issue_refs": [
+      522
+    ],
+    "pull_request_cross_repository_refs": [
+      [
+        "JuliaLang/julia",
+        57223,
+        "issues"
+      ]
+    ],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    57223
+  ],
+  "cross_repository_issue_records": [
+    {
+      "number": 57223,
+      "url": "https://github.com/JuliaLang/julia/issues/57223",
+      "state": "closed",
+      "title": "Syntax errors in julia nightly",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "regression",
+        "parser",
+        "macros"
+      ],
+      "body_excerpt": "hello,\n\nin our routine testset run, suddently all nightly tests stopped working with a loading error:\n```\nFailed to precompile ClapeyronMultiComponentFlashExt [b5da60bd-4eec-5f7e-9c86-09fe8b672af4] to \"/home/runner/.julia/compiled/v1.12/ClapeyronMultiComponentFlashExt/jl_Ey1fLn\".\nERROR: LoadError: syntax: \"(Expr(:escape, :var\"##collection#274\"),)\" is not a valid function argument name around /home/runner/.julia/packages/Roots/E1WQf/src/Derivative/lith.jl:268\n```\n\nmaybe it is related to #57188 ?",
+      "repository": "JuliaLang/julia",
+      "reference_kind": "issues"
+    }
+  ]
+}

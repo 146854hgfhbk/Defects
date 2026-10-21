@@ -1,0 +1,84 @@
+{
+  "schema_version": "defects4x-manifest-v2",
+  "bug_id": "EV-LU-011",
+  "repository": "mpeterv/luacheck",
+  "language": "lua",
+  "buggy_sha": "ef65082eb1973e6b0278de88911f0b65db071262",
+  "fixed_sha": "d85df510176e0e99ce205f371f4d5b32b88b3c26",
+  "source_file": "src/luacheck/analyze.lua;src/luacheck/check.lua;src/luacheck/filter.lua",
+  "regression_test_file": "spec/check_spec.lua;spec/filter_spec.lua",
+  "bug_summary": "Unused local _ with empty initial value was incorrectly ignored (missing useless flag)",
+  "provenance_grade": "ISSUE_PR_LINKED",
+  "p3_state": "SUPERSEDED_BY_STRICT_GATE",
+  "runtime_image": "defects4x/luacheck-p3:lua54-v1",
+  "container_digest_kind": "historical_local_image_id_not_a_gate",
+  "test_command": "busted spec/check_spec.lua spec/filter_spec.lua",
+  "buggy_exit_code": 1,
+  "fixed_exit_code": 0,
+  "reproduction_mode": "fixed-test-overlay-on-buggy",
+  "triggering_cases": [
+    "useless local _ with empty init",
+    "filter keeps useless _ warning"
+  ],
+  "oracle_scope": "upstream_regression_targeted",
+  "active_status": "active",
+  "deprecation_reason": null,
+  "provenance": {
+    "commit_url": "https://github.com/mpeterv/luacheck/commit/d85df510176e0e99ce205f371f4d5b32b88b3c26",
+    "evidence_type": "ISSUE",
+    "issue_urls": [
+      "https://github.com/mpeterv/luacheck/issues/66"
+    ],
+    "pr_urls": [],
+    "gate_status": "RESOLVED",
+    "release_tier": "ISSUE_PR_LINKED"
+  },
+  "patch_policy": "manually_hunk_minimized_patch",
+  "minimized_patch": "evidence/minimized.patch",
+  "trigger_selector": {
+    "schema_version": "lua-d4x-trigger-v1",
+    "bug_id": "EV-LU-011",
+    "selector_kind": "busted_filter",
+    "test_file": "spec/check_spec.lua",
+    "filter": "detects useless local _ variable",
+    "command": [
+      "busted",
+      "--filter",
+      "detects useless local _ variable",
+      "spec/check_spec.lua"
+    ],
+    "precision": "single_named_test_case"
+  },
+  "stability_repeats": 3,
+  "full_suite_command": [
+    "busted",
+    "spec"
+  ],
+  "runtime_identity_policy": "portable_fingerprint",
+  "timezone": "UTC",
+  "locale": "C.UTF-8",
+  "strict_qualification_status": "QUALIFIED",
+  "historical_runtime_image_id": "sha256:91160f8b414b513ae011c10998d9fbde91b66d9e7a76756c71fa7cbcaefd75b2",
+  "artifact_format": "Defects4X-Golden-v2-core100-restored",
+  "reproduction_status": "QUALIFIED",
+  "release_profile": "core100_targeted_defects4j_style",
+  "targeted_qualification_status": "QUALIFIED_TARGETED_3X",
+  "stability_evidence": [
+    "golden/logs",
+    "validation/fresh-docker-20260903",
+    "validation/fresh-docker-20260904-rc2"
+  ],
+  "semantic_defect_status": "ACCEPT",
+  "semantic_review_profile": "semantic_v3_final_20260920",
+  "d4j_traceability_status": "PASS",
+  "d4j_traceability_audit_date": "2026-09-21",
+  "d4j_traceability_rerun_required": false,
+  "human_minimization_signoff": {
+    "status": "CONFIRMED",
+    "review_type": "HUMAN_MANUAL_MINIMIZATION_REVIEW",
+    "reviewer": "dataset_curator_user_confirmed",
+    "review_date": "2026-09-21",
+    "signature": null,
+    "evidence": "audit/HUMAN_MINIMIZATION_SIGNOFF_20260921.json"
+  }
+}

@@ -1,0 +1,191 @@
+diff --git a/Changes b/Changes
+index 4a61ce5..c6632dd 100644
+--- a/Changes
++++ b/Changes
+@@ -2,6 +2,12 @@ Revision history for Path-Tiny
+ 
+ {{$NEXT}}
+ 
++    [Changes]
++
++    - The `tempdir` and `tempfile` methods may be called on a Path::Tiny object
++      representing a directory, in which case the directory will be used as the
++      container for the temporary object (as if the `DIR` argument were used).
++
+ 0.118     2021-02-04 19:09:58-05:00 America/New_York
+ 
+     - No changes from 0.117-TRIAL.
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index 5a45c81..d9e8442 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -323,6 +323,8 @@ sub rootdir { path( File::Spec->rootdir ) }
+ 
+     $temp = Path::Tiny->tempfile( @options );
+     $temp = Path::Tiny->tempdir( @options );
++    $temp = $dirpath->tempfile( @options );
++    $temp = $dirpath->tempdir( @options );
+     $temp = tempfile( @options ); # optional export
+     $temp = tempdir( @options );  # optional export
+ 
+@@ -352,6 +354,17 @@ C<< File::Temp->newdir >> instead.
+ Both C<tempfile> and C<tempdir> may be exported on request and used as
+ functions instead of as methods.
+ 
++The methods can be called on an instances representing a
++directory. In this case, the directory is used as the base to create the
++temporary file/directory, setting the C<DIR> option in File::Temp.
++
++    my $target_dir = path('/to/destination');
++    my $tempfile = $target_dir->tempfile('foobarXXXXXX');
++    $tempfile->spew('A lot of data...');  # not atomic
++    $tempfile->rename($target_dir->child('foobar')); # hopefully atomic
++
++In this case, any value set for option C<DIR> is ignored.
++
+ B<Note>: for tempfiles, the filehandles from File::Temp are closed and not
+ reused.  This is not as secure as using File::Temp handles directly, but is
+ less prone to deadlocks or access problems on some platforms.  Think of what
+@@ -372,16 +385,14 @@ B<Note 4>: The cached object may be accessed with the L</cached_temp> method.
+ Keeping a reference to, or modifying the cached object may break the
+ behavior documented above and is not supported.  Use at your own risk.
+ 
+-Current API available since 0.097.
++Current API available since 0.119.
+ 
+ =cut
+ 
+ sub tempfile {
+-    shift if @_ && $_[0] eq 'Path::Tiny'; # called as method
+-    my $opts = ( @_ && ref $_[0] eq 'HASH' ) ? shift @_ : {};
+-    $opts = _get_args( $opts, qw/realpath/ );
++    my ( $opts, $maybe_template, $args )
++        = _parse_file_temp_args(tempfile => @_);
+ 
+-    my ( $maybe_template, $args ) = _parse_file_temp_args(@_);
+     # File::Temp->new demands TEMPLATE
+     $args->{TEMPLATE} = $maybe_template->[0] if @$maybe_template;
+ 
+@@ -394,13 +405,9 @@ sub tempfile {
+ }
+ 
+ sub tempdir {
+-    shift if @_ && $_[0] eq 'Path::Tiny'; # called as method
+-    my $opts = ( @_ && ref $_[0] eq 'HASH' ) ? shift @_ : {};
+-    $opts = _get_args( $opts, qw/realpath/ );
++    my ( $opts, $maybe_template, $args )
++        = _parse_file_temp_args(tempdir => @_);
+ 
+-    my ( $maybe_template, $args ) = _parse_file_temp_args(@_);
+-
+-    # File::Temp->newdir demands leading template
+     require File::Temp;
+     my $temp = File::Temp->newdir( @$maybe_template, TMPDIR => 1, %$args );
+     my $self = $opts->{realpath} ? path($temp)->realpath : path($temp)->absolute;
+@@ -414,6 +421,18 @@ sub tempdir {
+ 
+ # normalize the various ways File::Temp does templates
+ sub _parse_file_temp_args {
++    my $called_as = shift;
++    if ( @_ && $_[0] eq 'Path::Tiny' ) { shift } # class method
++    elsif ( @_ && eval{$_[0]->isa('Path::Tiny')} ) {
++        my $dir = shift;
++        if (! $dir->is_dir) {
++            $dir->_throw( $called_as, $dir, "is not a directory object" );
++        }
++        push @_, DIR => $dir->stringify; # no overriding
++    }
++    my $opts = ( @_ && ref $_[0] eq 'HASH' ) ? shift @_ : {};
++    $opts = _get_args( $opts, qw/realpath/ );
++
+     my $leading_template = ( scalar(@_) % 2 == 1 ? shift(@_) : '' );
+     my %args = @_;
+     %args = map { uc($_), $args{$_} } keys %args;
+@@ -422,7 +441,8 @@ sub _parse_file_temp_args {
+         : $leading_template      ? $leading_template
+         :                          ()
+     );
+-    return ( \@template, \%args );
++
++    return ( $opts, \@template, \%args );
+ }
+ 
+ #--------------------------------------------------------------------------#
+diff --git a/t/temp.t b/t/temp.t
+index 1046d32..d482138 100644
+--- a/t/temp.t
++++ b/t/temp.t
+@@ -77,5 +77,73 @@ subtest "cached_temp on non tempfile" => sub {
+     like( $@, qr/has no cached File::Temp object/, "cached_temp error message" );
+ };
+ 
++subtest "tempdir w/ leading template as instance method" => sub {
++    my $wd = tempd;
++
++    my $basedir = Path::Tiny->cwd;
++    my $repodir = $basedir->child('whatever');
++    $repodir->remove_tree if $repodir->exists;
++    $repodir->mkpath;
++    my $tempdir = $repodir->tempdir("helloXXXXX");
++    like( $tempdir, qr/hello/, "found template" );
++    ok( scalar($repodir->children) > 0, 'something was created' );
++    my $basename = $tempdir->basename;
++    ok( -d $repodir->child($basename), "right directory exists" );
++};
++
++subtest "tempdir w/ leading template as instance method" => sub {
++    my $wd = tempd;
++
++    my $basedir = Path::Tiny->cwd;
++    my $repodir = $basedir->child('whatever');
++    $repodir->remove_tree if $repodir->exists;
++    $repodir->mkpath;
++    my $tempdir = $repodir->tempdir("helloXXXXX");
++    like( $tempdir, qr/hello/, "found template" );
++    ok( scalar($repodir->children) > 0, 'something was created' );
++    my $basename = $tempdir->basename;
++    ok( -d $repodir->child($basename), "right directory exists" );
++};
++
++subtest "tempfile w/out leading template as instance method" => sub {
++    my $wd = tempd;
++
++    my $basedir = Path::Tiny->cwd;
++    my $repodir = $basedir->child('whatever');
++    $repodir->remove_tree if $repodir->exists;
++    $repodir->mkpath;
++    my $tempfile = $repodir->tempfile( TEMPLATE => "helloXXXXX" );
++    like( $tempfile, qr/hello/, "found template" );
++    ok( scalar($repodir->children) > 0, 'something was created' );
++    my $basename = $tempfile->basename;
++    ok( -e $repodir->child($basename), "right file exists" );
++};
++
++subtest "tempfile w/out leading template as instance method" => sub {
++    my $wd = tempd;
++
++    my $basedir = Path::Tiny->cwd;
++    my $repodir = $basedir->child('whatever');
++    $repodir->remove_tree if $repodir->exists;
++    $repodir->mkpath;
++    my $tempfile = $repodir->tempfile( TEMPLATE => "helloXXXXX");
++    like( $tempfile, qr/hello/, "found template" );
++    ok( scalar($repodir->children) > 0, 'something was created' );
++    my $basename = $tempfile->basename;
++    ok( -e $repodir->child($basename), "right file exists" );
++};
++
++subtest "tempfile, instance method, overridden DIR" => sub {
++    my $wd = tempd;
++
++    my $basedir = Path::Tiny->cwd;
++    my $repodir = $basedir->child('whatever');
++    $repodir->remove_tree if $repodir->exists;
++    $repodir->mkpath;
++    my $bd = $basedir->stringify;
++    my $tempfile = $repodir->tempfile("helloXXXXX", DIR => $bd);
++    ok( $tempfile->parent ne $bd ), "DIR is overridden";
++};
++
+ done_testing;
+ # COPYRIGHT

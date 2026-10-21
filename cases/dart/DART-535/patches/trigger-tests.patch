@@ -1,0 +1,73 @@
+diff --git a/test/widgets/tree_view/mocks.dart b/test/widgets/tree_view/mocks.dart
+index af374e5..ce76998 100644
+--- a/test/widgets/tree_view/mocks.dart
++++ b/test/widgets/tree_view/mocks.dart
+@@ -116,6 +116,30 @@ const String treeviewNestedMock = '''
+                    └── (empty)
+ ''';
+ 
++const String treeviewWithVerticalPaddedHeaderMock = '''[38;5;31m┌───────┐[0m
++[38;5;31m│[0m       [38;5;31m│[0m
++[38;5;31m│[0mNode<1>[38;5;31m│[0m
++[38;5;31m│[0m       [38;5;31m│[0m
++[38;5;31m└──┬────┘[0m
++   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m7845445335[23m[0m
++   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++        [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
++        [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m1231231231[23m[0m
++        [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++        [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++        [38;5;31m│[0m        [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
++        [38;5;31m│[0m            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m34454354453[23m[0m
++        [38;5;31m│[0m            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++        [38;5;31m│[0m            [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++        [38;5;31m│[0m                 [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(empty)[23m[0m
++        [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m
++            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m5463456343[23m[0m
++            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++            [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++                 [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(empty)[23m[0m
++''';
++
+ const String treeviewEmptyMock = '''
+ _Map<String, dynamic>
+          ├── map
+diff --git a/test/widgets/tree_view/tree_view_test.dart b/test/widgets/tree_view/tree_view_test.dart
+index e7b41e4..2781040 100644
+--- a/test/widgets/tree_view/tree_view_test.dart
++++ b/test/widgets/tree_view/tree_view_test.dart
+@@ -122,6 +122,33 @@ void main() {
+       expect(actual.unformatted, treeviewNestedMock);
+     });
+ 
++    test('header with vertical padding', () {
++      final Node node1 = Node(
++        id: '1231231231',
++        nodes: <Node>[
++          Node(id: '34454354453'),
++        ],
++      );
++      final Node node2 = Node(id: '5463456343');
++      final Node node3 = Node(
++        id: '7845445335',
++        nodes: <Node>[
++          node1,
++          node2,
++        ],
++      );
++
++      final String actual = AnsiTreeView(
++        node3,
++        theme: AnsiTreeViewTheme.$default().copyWith.headerTheme.textTheme(
++              AnsiTextTheme(
++                padding: AnsiPadding.vertical(1),
++              ),
++            ),
++      ).toString();
++      expect(actual.toString(), treeviewWithVerticalPaddedHeaderMock);
++    });
++
+     test('empty', () {
+       final Map<String, dynamic> map = <String, dynamic>{
+         'map': <String, dynamic>{

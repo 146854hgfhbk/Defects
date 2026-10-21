@@ -1,0 +1,36 @@
+diff --git a/lua/pl/pretty.lua b/lua/pl/pretty.lua
+index d57bff572f78f17510072de485b6ec9f76edd67b..953b4cb117a07249a61a45439a68dd39f5d9bf7a 100644
+--- a/lua/pl/pretty.lua
++++ b/lua/pl/pretty.lua
+@@ -66,7 +66,7 @@ function pretty.read(s)
+     if s:find '[^\'"%w_]function[^\'"%w_]' then
+         local tok = lexer.lua(s)
+         for t,v in tok do
+-            if t == 'keyword' then
++            if t == 'keyword' and v == 'function' then
+                 return nil,"cannot have functions in table definition"
+             end
+         end
+diff --git a/tests/test-pretty.lua b/tests/test-pretty.lua
+index 0516d2f6f5ff6bd2e8c26dd336a6bc22cabca71f..5ddf220fc428c958a4631c04a80c839924bf3d3f 100644
+--- a/tests/test-pretty.lua
++++ b/tests/test-pretty.lua
+@@ -28,8 +28,16 @@ assert(res)
+ 
+ res,err = pretty.read [[
+   {
+-	['function'] = true,
+-	['do'] = function() return end
++    ['function'] = true,
++    ['do'] = "no function here...",
++  }
++]]
++assert(res)
++
++res,err = pretty.read [[
++  {
++    ['function'] = true,
++    ['do'] = function() return end
+   }
+ ]]
+ assertmatch(err,'cannot have functions in table definition')

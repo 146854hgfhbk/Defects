@@ -1,0 +1,875 @@
+{
+ "patches": {
+  "original_commit": {
+   "path": "patches/original-commit.patch",
+   "sha256": "53528675373986596197b1a95a6c449dc4c91aeedf3e1a6a13100b51b8accb6b",
+   "bytes": 485
+  },
+  "production_fix": {
+   "path": "patches/production-fix.patch",
+   "sha256": "53528675373986596197b1a95a6c449dc4c91aeedf3e1a6a13100b51b8accb6b",
+   "bytes": 485
+  },
+  "trigger_tests": {
+   "path": "patches/trigger-tests.patch",
+   "sha256": "954cbb93691f995917b7d52f6d803df137b8b2a0b11742113c2c7529f685dfe5",
+   "bytes": 902
+  }
+ },
+ "production_files": [
+  "lib/src/jwt.dart"
+ ],
+ "buggy_revision": "fe401edafa9c17afec841ad4a7b8e3c0a1ca5f03",
+ "source_evidence_sha256": "f86d535d59808387aa35dfaca73d7767e5eee950cea72b7aa2fb8b3472b3d29b",
+ "deprecation_reason": "",
+ "commit_stats": {
+  "production_hunk_count": 1,
+  "maximum_exact_subset_candidates": 1,
+  "hunk_count_source": "materialize_git_diff"
+ },
+ "tier": "extended",
+ "case_id": "DART-564",
+ "buggy_tree": "0bd3b67a2d484054dbcd89ab8e096fcf43b15812",
+ "language": "Dart",
+ "trigger_tests": [
+  {
+   "path": "test/subject_int_test.dart",
+   "name": "int subject claim is parsed as string"
+  }
+ ],
+ "materialized_at": "2026-08-08T19:13:30.023960+00:00",
+ "strict_exclusion_reason": "fix continued across multiple commits in upstream PR: the subject conversion fix was revised in cc731a8 after the first commit 67ff1ec, so 67ff1ec is the first behavioral fix but not the final accepted implementation; no single commit defines the complete defect boundary.",
+ "fix_boundary_status": "multi_commit_pr_first_behavioral_fix",
+ "fixed_tree": "76ff747b1c79a3ae4c47a3a0597e5da779c67499",
+ "repository_path": "__REFERENCE_USER_HOME__/dart-defects-miner-review/workspaces/trigger-acquisition/repositories/jonasroussel__dart_jsonwebtoken",
+ "trigger_test_files": [
+  "test/subject_int_test.dart"
+ ],
+ "pull_request_url": "https://github.com/jonasroussel/dart_jsonwebtoken/pull/62",
+ "trigger_reduction": {
+  "status": "PASS",
+  "upstream_trigger_patch": {
+   "path": "patches/trigger-tests.patch",
+   "sha256": "954cbb93691f995917b7d52f6d803df137b8b2a0b11742113c2c7529f685dfe5",
+   "bytes": 902
+  },
+  "later_trigger_commit": "67ff1ecf90643cd70f37bbff2cb555530d1331b0",
+  "removed_external_dependency": false,
+  "rationale": "dataset curator wrote the regression test (extended tier); must still pass AB/BA/AB validation."
+ },
+ "traceability": {
+  "requires_unique_fix_commit": true,
+  "verified_fix_issue_numbers": [
+   61
+  ],
+  "paths": [
+   {
+    "issue_number": 61,
+    "path": "fix_commit_message_mentions_issue_id"
+   }
+  ],
+  "pull_request_number": 62,
+  "selected_from_multi_commit_pull_request": true,
+  "later_trigger_commit": "67ff1ecf90643cd70f37bbff2cb555530d1331b0",
+  "later_trigger_score": 100,
+  "commit_message_issue_literal": {
+   "status": "PASS",
+   "verified_issue_numbers": [
+    61
+   ],
+   "literal_issue_numbers_found": [
+    61
+   ],
+   "fixing_commit_message": "Fixed Issue #61\n\nEnsure sub is string if int",
+   "accepted_path": "fix_commit_message_mentions_issue_id",
+   "strict_defects4j_literal_rule": true
+  },
+  "historical_paths_before_publication_repair": [
+   {
+    "issue_number": 61,
+    "path": "fix_commit_to_issue"
+   }
+  ],
+  "unique_fix_boundary_verified": true,
+  "class": "STRICT_DIRECT",
+  "strict_defects4j_tracker_rule": true
+ },
+ "schema_version": 1,
+ "commit_files": {
+  "all": [
+   "lib/src/jwt.dart"
+  ],
+  "production": [
+   "lib/src/jwt.dart"
+  ],
+  "tests": [
+   "test/subject_int_test.dart"
+  ],
+  "other": []
+ },
+ "fixed_revision": "67ff1ecf90643cd70f37bbff2cb555530d1331b0",
+ "build": {
+  "directory": ".",
+  "dependency_command": [
+   "dart",
+   "pub",
+   "get"
+  ],
+  "analyze_command": [
+   "dart",
+   "analyze"
+  ],
+  "test_command": [
+   "dart",
+   "test",
+   "--reporter=json"
+  ],
+  "timeout_seconds": 3600
+ },
+ "repository_url": "https://github.com/jonasroussel/dart_jsonwebtoken.git",
+ "commit_url": "https://github.com/jonasroussel/dart_jsonwebtoken/commit/67ff1ecf90643cd70f37bbff2cb555530d1331b0",
+ "issue_urls": [
+  "https://github.com/jonasroussel/dart_jsonwebtoken/issues/61"
+ ],
+ "repository_evidence": {
+  "checked_at": "2026-08-08T19:13:30.019383+00:00",
+  "api_url": "https://api.github.com/repos/jonasroussel/dart_jsonwebtoken",
+  "html_url": "https://github.com/jonasroussel/dart_jsonwebtoken",
+  "private": false,
+  "visibility": "public",
+  "archived": false,
+  "license_spdx": "MIT"
+ },
+ "project": "jonasroussel/dart_jsonwebtoken",
+ "status": "active",
+ "acceptance": {
+  "differential_validation": "PASS",
+  "patch_minimization": "PASS",
+  "full_suite_validation": "PASS",
+  "human_curation": "NOT_REQUIRED_BY_DATASET_POLICY",
+  "semantic_curation": "PASS",
+  "curation_method": "llm_api_consensus",
+  "release_eligible": true,
+  "llm_confirmed": true,
+  "publication_gate": "PASS",
+  "human_minimization_review": "PASS"
+ },
+ "validation": {
+  "status": "stable_differential",
+  "generated_at": "2026-08-11T22:19:20.935019+00:00",
+  "report": "validation/validation.json",
+  "report_sha256": "ba4c308f8d6e492e8e558e46c916c142d89823e256e45f7d1b8308d5a35e5c5b",
+  "engine": "validation_engine.py",
+  "fresh_worktree_per_repetition": true,
+  "repetitions": 3,
+  "infrastructure_error_count": 0,
+  "exact_trigger_test_selectors": [
+   {
+    "path": "test/subject_int_test.dart",
+    "name": "int subject claim is parsed as string"
+   }
+  ],
+  "test_network_policy": "os_enforced",
+  "strict_raw_evidence": {
+   "schema_version": 1,
+   "case_id": "DART-564",
+   "repetitions": 3,
+   "full_suite_repetitions": 1,
+   "require_analyze_clean": false,
+   "passed": true,
+   "checks": {
+    "selectors.present_and_unique": {
+     "passed": true,
+     "detail": "declared=1 valid=1 unique=1"
+    },
+    "matrix.repetitions": {
+     "passed": true,
+     "detail": "observed=[1, 2, 3] minimum_count=3"
+    },
+    "matrix.complete": {
+     "passed": true,
+     "detail": "runs=32"
+    },
+    "build.both_versions": {
+     "passed": true,
+     "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+    },
+    "trigger.fixed_clean": {
+     "passed": true,
+     "detail": "all fixed isolated/suite/reversed runs must pass"
+    },
+    "trigger.buggy_differential": {
+     "passed": true,
+     "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('test/subject_int_test.dart', 'int subject claim is parsed as string')]"
+    },
+    "trigger.deterministic": {
+     "passed": true,
+     "detail": "fingerprint_groups=3 expected=3"
+    },
+    "full_suite.fixed_all_green": {
+     "passed": true,
+     "detail": "runs=1 bad=0"
+    },
+    "full_suite.buggy_reproduces_only_triggers": {
+     "passed": true,
+     "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['test/subject_int_test.dart::int subject claim is parsed as string']"
+    }
+   },
+   "failed_checks": []
+  },
+  "dependency_snapshots": {
+   "fixed": {
+    "pubspec_lock": "environment/original-fixed-pubspec.lock",
+    "pubspec_lock_sha256": "b505437691c0018866e4a34751d5d58dbd13b5509d5e8b431f553e569544accc",
+    "package_config": "environment/original-fixed-package_config.json",
+    "package_config_sha256": "ccb469b6a6bc39eb28c5c030e5f4583c4aa6f4cc187db2f9b1d082922284457a",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "85.0.0",
+     "adaptive_number": "1.0.0",
+     "analyzer": "7.7.1",
+     "args": "2.7.0",
+     "async": "2.13.1",
+     "boolean_selector": "2.1.2",
+     "cli_config": "0.2.0",
+     "clock": "1.1.2",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.1",
+     "crypto": "3.0.7",
+     "ed25519_edwards": "0.3.1",
+     "fake_async": "1.3.3",
+     "file": "7.0.1",
+     "fixnum": "1.1.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.1",
+     "lints": "2.1.1",
+     "logging": "1.3.0",
+     "matcher": "0.12.17",
+     "meta": "1.19.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pointycastle": "3.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.2",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "typed_data": "1.4.0",
+     "vm_service": "15.2.0",
+     "watcher": "1.2.1",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   },
+   "buggy": {
+    "pubspec_lock": "environment/original-buggy-pubspec.lock",
+    "pubspec_lock_sha256": "b505437691c0018866e4a34751d5d58dbd13b5509d5e8b431f553e569544accc",
+    "package_config": "environment/original-buggy-package_config.json",
+    "package_config_sha256": "04df3d7f7ca0904673ef2969ef5fe7655e15840c2a63dcbff54bef6a32657ae0",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "85.0.0",
+     "adaptive_number": "1.0.0",
+     "analyzer": "7.7.1",
+     "args": "2.7.0",
+     "async": "2.13.1",
+     "boolean_selector": "2.1.2",
+     "cli_config": "0.2.0",
+     "clock": "1.1.2",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.1",
+     "crypto": "3.0.7",
+     "ed25519_edwards": "0.3.1",
+     "fake_async": "1.3.3",
+     "file": "7.0.1",
+     "fixnum": "1.1.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.1",
+     "lints": "2.1.1",
+     "logging": "1.3.0",
+     "matcher": "0.12.17",
+     "meta": "1.19.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pointycastle": "3.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.2",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "typed_data": "1.4.0",
+     "vm_service": "15.2.0",
+     "watcher": "1.2.1",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   }
+  },
+  "dart_sdk_lock": {
+   "path": "environment/original-dart-sdk.lock.json",
+   "sha256": "e33e243b73de28a9e7dd79428743593086fc920af86e29ea43d5ff0f1233945d"
+  },
+  "validation_image_digest": "sha256:4236d04fca8fbf2e08f3e86f45109c0aa9dc7a00ab0280e9538ee42ced699871",
+  "validation_image_lock": {
+   "path": "environment/original-validation-image.lock.json",
+   "sha256": "ff029b7bb4060de90aec9a1e489ed2cb7e3040e480557c874557f00d3968d03d"
+  }
+ },
+ "bug_id": "DART-564",
+ "issue_id": 61,
+ "issue_ids": [
+  61
+ ],
+ "issue_url": "https://github.com/jonasroussel/dart_jsonwebtoken/issues/61",
+ "buggy_commit": "fe401edafa9c17afec841ad4a7b8e3c0a1ca5f03",
+ "fixed_commit": "67ff1ecf90643cd70f37bbff2cb555530d1331b0",
+ "patch": "patches/minimized-production.patch",
+ "changed_source_files": [
+  "lib/src/jwt.dart"
+ ],
+ "triggering_test": [
+  "test/subject_int_test.dart::int subject claim is parsed as string"
+ ],
+ "expected_failure": {
+  "test_id": "test/subject_int_test.dart::int subject claim is parsed as string",
+  "error": "Expected: not null Actual: <null>",
+  "failure_fingerprint": "7d4b1db78645e598210837aa5707d9b0cf2663dde5e2fb76f2d419237aac876f",
+  "all_trigger_failures": [
+   {
+    "test_id": "test/subject_int_test.dart::int subject claim is parsed as string",
+    "error": "Expected: not null Actual: <null>",
+    "failure_fingerprint": "7d4b1db78645e598210837aa5707d9b0cf2663dde5e2fb76f2d419237aac876f",
+    "repetition_count": 3,
+    "deterministic": true
+   }
+  ]
+ },
+ "fixed_test_result": {
+  "status": "PASS",
+  "exit_code": 0,
+  "counts": {
+   "started": 35,
+   "passed": 35,
+   "failed": 0,
+   "skipped": 0
+  },
+  "full_suite_run_count": 1,
+  "all_full_suite_runs_passed": true,
+  "strict_report_passed": true
+ },
+ "build_command": [
+  "dart",
+  "analyze"
+ ],
+ "test_command": [
+  "dart",
+  "test",
+  "--reporter=json"
+ ],
+ "language_version": "3.5.4",
+ "dependency_versions": {
+  "_fe_analyzer_shared": "85.0.0",
+  "adaptive_number": "1.0.0",
+  "analyzer": "7.7.1",
+  "args": "2.7.0",
+  "async": "2.13.1",
+  "boolean_selector": "2.1.2",
+  "cli_config": "0.2.0",
+  "clock": "1.1.2",
+  "collection": "1.19.1",
+  "convert": "3.1.2",
+  "coverage": "1.15.1",
+  "crypto": "3.0.7",
+  "ed25519_edwards": "0.3.1",
+  "fake_async": "1.3.3",
+  "file": "7.0.1",
+  "fixnum": "1.1.1",
+  "frontend_server_client": "4.0.0",
+  "glob": "2.1.3",
+  "http_multi_server": "3.2.2",
+  "http_parser": "4.1.2",
+  "io": "1.0.5",
+  "js": "0.7.1",
+  "lints": "2.1.1",
+  "logging": "1.3.0",
+  "matcher": "0.12.17",
+  "meta": "1.19.0",
+  "mime": "2.0.0",
+  "node_preamble": "2.0.2",
+  "package_config": "2.2.0",
+  "path": "1.9.1",
+  "pointycastle": "3.9.1",
+  "pool": "1.5.2",
+  "pub_semver": "2.2.0",
+  "shelf": "1.4.2",
+  "shelf_packages_handler": "3.0.2",
+  "shelf_static": "1.1.3",
+  "shelf_web_socket": "3.0.0",
+  "source_map_stack_trace": "2.1.2",
+  "source_maps": "0.10.13",
+  "source_span": "1.10.2",
+  "stack_trace": "1.12.1",
+  "stream_channel": "2.1.4",
+  "string_scanner": "1.4.1",
+  "term_glyph": "1.2.2",
+  "test": "1.26.3",
+  "test_api": "0.7.7",
+  "test_core": "0.6.12",
+  "typed_data": "1.4.0",
+  "vm_service": "15.2.0",
+  "watcher": "1.2.1",
+  "web": "1.1.1",
+  "web_socket": "1.0.1",
+  "web_socket_channel": "3.0.3",
+  "webkit_inspection_protocol": "1.2.1",
+  "yaml": "3.1.3"
+ },
+ "operating_system_or_container": {
+  "platform": "linux_x64",
+  "host_system": "Linux",
+  "host_machine": "x86_64",
+  "validation_image": "dart-defects-validation:3.5.4-v3",
+  "validation_image_digest": "sha256:4236d04fca8fbf2e08f3e86f45109c0aa9dc7a00ab0280e9538ee42ced699871"
+ },
+ "timezone": "UTC",
+ "reproducibility_status": "validated_historical_evidence; verified_online_bootstrap_plus_os_enforced_offline_execution",
+ "minimized_patch": {
+  "path": "patches/minimized-production.patch",
+  "sha256": "53528675373986596197b1a95a6c449dc4c91aeedf3e1a6a13100b51b8accb6b",
+  "original_hunk_count": 1,
+  "retained_hunks": [
+   1
+  ],
+  "retained_hunk_count": 1,
+  "removed_hunk_count": 0,
+  "screening_only": false,
+  "post_minimization_validation": "PASS",
+  "evidence_grade": "portable_release_evidence",
+  "automatic_minimization": {
+   "minimal_hunks": [
+    1
+   ],
+   "chosen_subset": [
+    1
+   ]
+  }
+ },
+ "post_minimization_validation": {
+  "status": "stable_differential",
+  "generated_at": "2026-08-11T22:20:02.802171+00:00",
+  "report": "validation/post-minimization.json",
+  "report_sha256": "753f868c00ab1747e8004fe313cb8515d48ae8ca44de346e8d6231309b6b11b9",
+  "engine": "validation_engine.py",
+  "fresh_worktree_per_repetition": true,
+  "repetitions": 3,
+  "infrastructure_error_count": 0,
+  "exact_trigger_test_selectors": [
+   {
+    "path": "test/subject_int_test.dart",
+    "name": "int subject claim is parsed as string"
+   }
+  ],
+  "test_network_policy": "os_enforced",
+  "strict_raw_evidence": {
+   "schema_version": 1,
+   "case_id": "DART-564",
+   "repetitions": 3,
+   "full_suite_repetitions": 1,
+   "require_analyze_clean": false,
+   "passed": true,
+   "checks": {
+    "selectors.present_and_unique": {
+     "passed": true,
+     "detail": "declared=1 valid=1 unique=1"
+    },
+    "matrix.repetitions": {
+     "passed": true,
+     "detail": "observed=[1, 2, 3] minimum_count=3"
+    },
+    "matrix.complete": {
+     "passed": true,
+     "detail": "runs=32"
+    },
+    "build.both_versions": {
+     "passed": true,
+     "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+    },
+    "trigger.fixed_clean": {
+     "passed": true,
+     "detail": "all fixed isolated/suite/reversed runs must pass"
+    },
+    "trigger.buggy_differential": {
+     "passed": true,
+     "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('test/subject_int_test.dart', 'int subject claim is parsed as string')]"
+    },
+    "trigger.deterministic": {
+     "passed": true,
+     "detail": "fingerprint_groups=3 expected=3"
+    },
+    "full_suite.fixed_all_green": {
+     "passed": true,
+     "detail": "runs=1 bad=0"
+    },
+    "full_suite.buggy_reproduces_only_triggers": {
+     "passed": true,
+     "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['test/subject_int_test.dart::int subject claim is parsed as string']"
+    }
+   },
+   "failed_checks": []
+  },
+  "dependency_snapshots": {
+   "fixed": {
+    "pubspec_lock": "environment/post-minimization-fixed-pubspec.lock",
+    "pubspec_lock_sha256": "b505437691c0018866e4a34751d5d58dbd13b5509d5e8b431f553e569544accc",
+    "package_config": "environment/post-minimization-fixed-package_config.json",
+    "package_config_sha256": "8c35db98b4fb9c4103ac5b60d285d893ade411f260e696270fd0071963b2a058",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "85.0.0",
+     "adaptive_number": "1.0.0",
+     "analyzer": "7.7.1",
+     "args": "2.7.0",
+     "async": "2.13.1",
+     "boolean_selector": "2.1.2",
+     "cli_config": "0.2.0",
+     "clock": "1.1.2",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.1",
+     "crypto": "3.0.7",
+     "ed25519_edwards": "0.3.1",
+     "fake_async": "1.3.3",
+     "file": "7.0.1",
+     "fixnum": "1.1.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.1",
+     "lints": "2.1.1",
+     "logging": "1.3.0",
+     "matcher": "0.12.17",
+     "meta": "1.19.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pointycastle": "3.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.2",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "typed_data": "1.4.0",
+     "vm_service": "15.2.0",
+     "watcher": "1.2.1",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   },
+   "buggy": {
+    "pubspec_lock": "environment/post-minimization-buggy-pubspec.lock",
+    "pubspec_lock_sha256": "b505437691c0018866e4a34751d5d58dbd13b5509d5e8b431f553e569544accc",
+    "package_config": "environment/post-minimization-buggy-package_config.json",
+    "package_config_sha256": "a5a4f1cbc6ea2eb1db2825c6c182529d53b0323f3d1d39380bc2ba56a976323b",
+    "package_config_format": "package_config_v2",
+    "locked_dependency_versions": {
+     "_fe_analyzer_shared": "85.0.0",
+     "adaptive_number": "1.0.0",
+     "analyzer": "7.7.1",
+     "args": "2.7.0",
+     "async": "2.13.1",
+     "boolean_selector": "2.1.2",
+     "cli_config": "0.2.0",
+     "clock": "1.1.2",
+     "collection": "1.19.1",
+     "convert": "3.1.2",
+     "coverage": "1.15.1",
+     "crypto": "3.0.7",
+     "ed25519_edwards": "0.3.1",
+     "fake_async": "1.3.3",
+     "file": "7.0.1",
+     "fixnum": "1.1.1",
+     "frontend_server_client": "4.0.0",
+     "glob": "2.1.3",
+     "http_multi_server": "3.2.2",
+     "http_parser": "4.1.2",
+     "io": "1.0.5",
+     "js": "0.7.1",
+     "lints": "2.1.1",
+     "logging": "1.3.0",
+     "matcher": "0.12.17",
+     "meta": "1.19.0",
+     "mime": "2.0.0",
+     "node_preamble": "2.0.2",
+     "package_config": "2.2.0",
+     "path": "1.9.1",
+     "pointycastle": "3.9.1",
+     "pool": "1.5.2",
+     "pub_semver": "2.2.0",
+     "shelf": "1.4.2",
+     "shelf_packages_handler": "3.0.2",
+     "shelf_static": "1.1.3",
+     "shelf_web_socket": "3.0.0",
+     "source_map_stack_trace": "2.1.2",
+     "source_maps": "0.10.13",
+     "source_span": "1.10.2",
+     "stack_trace": "1.12.1",
+     "stream_channel": "2.1.4",
+     "string_scanner": "1.4.1",
+     "term_glyph": "1.2.2",
+     "test": "1.26.3",
+     "test_api": "0.7.7",
+     "test_core": "0.6.12",
+     "typed_data": "1.4.0",
+     "vm_service": "15.2.0",
+     "watcher": "1.2.1",
+     "web": "1.1.1",
+     "web_socket": "1.0.1",
+     "web_socket_channel": "3.0.3",
+     "webkit_inspection_protocol": "1.2.1",
+     "yaml": "3.1.3"
+    }
+   }
+  },
+  "dart_sdk_lock": {
+   "path": "environment/post-minimization-dart-sdk.lock.json",
+   "sha256": "e33e243b73de28a9e7dd79428743593086fc920af86e29ea43d5ff0f1233945d"
+  },
+  "validation_image_digest": "sha256:4236d04fca8fbf2e08f3e86f45109c0aa9dc7a00ab0280e9538ee42ced699871",
+  "validation_image_lock": {
+   "path": "environment/post-minimization-validation-image.lock.json",
+   "sha256": "ff029b7bb4060de90aec9a1e489ed2cb7e3040e480557c874557f00d3968d03d"
+  }
+ },
+ "reproduction": {
+  "network_mode": "two_stage_online_materialization_then_offline_execution",
+  "runner": {
+   "path": "tools/reproduce_case.py",
+   "sha256": "78adb9a64b99141c7ac69e9e61ab31bfc598b632a3173ec35eada6e271324ad0",
+   "bytes": 14262
+  },
+  "validation_engine": {
+   "path": "tools/validation_engine.py",
+   "sha256": "c8fa6a8ecf8ed3526637cdb1c76dec2eba7506280e6e6f815ad2193e1c86a353",
+   "bytes": 69063
+  },
+  "commands": {
+   "prepare": {
+    "path": "commands/DART-564-prepare",
+    "sha256": "4890164d26f035f4e5125f82b1ea0b85d14770cbcb111118b380f095c3140f60",
+    "bytes": 1085
+   },
+   "b": {
+    "path": "commands/DART-564b",
+    "sha256": "0a3e4d35b92565acee66cf100747ae415308851e428dadb4a2bc349279d0b95b",
+    "bytes": 1322
+   },
+   "f": {
+    "path": "commands/DART-564f",
+    "sha256": "733517d9db34a1a065d9cb12ad2b8d0645f0657ae2c2ecfccbabe6de002868ca",
+    "bytes": 1322
+   }
+  },
+  "historical_validation_image_digest": "sha256:4236d04fca8fbf2e08f3e86f45109c0aa9dc7a00ab0280e9538ee42ced699871",
+  "materialization_stage": {
+   "network": "online",
+   "command": {
+    "path": "commands/DART-564-prepare",
+    "sha256": "4890164d26f035f4e5125f82b1ea0b85d14770cbcb111118b380f095c3140f60",
+    "bytes": 1085
+   },
+   "verification": [
+    "fixed/buggy commit SHA",
+    "fixed/buggy Git tree",
+    "post-minimization dependency lock SHA-256",
+    "dependency package tree hashes"
+   ]
+  },
+  "execution_stage": {
+   "network": "os_enforced_none",
+   "buggy_command": {
+    "path": "commands/DART-564b",
+    "sha256": "0a3e4d35b92565acee66cf100747ae415308851e428dadb4a2bc349279d0b95b",
+    "bytes": 1322
+   },
+   "fixed_command": {
+    "path": "commands/DART-564f",
+    "sha256": "733517d9db34a1a065d9cb12ad2b8d0645f0657ae2c2ecfccbabe6de002868ca",
+    "bytes": 1322
+   }
+  },
+  "prepare_runner": {
+   "path": "tools/prepare_case.py",
+   "sha256": "dd2ed2dbe01d75e24477cfd2c284a51551d2cbcb8937ec5c76556f81ce0b8c7b",
+   "bytes": 7632
+  },
+  "publication_updated_at": "2026-08-15T17:09:29.368750+00:00"
+ },
+ "release_policy": {
+  "path": "environment/release-policy.json",
+  "sha256": "7a077bd1bd6b994976dfc5929e1b547979e64944b36e8b9783843ac67abb5c4e"
+ },
+ "reproduction_verification": {
+  "path": "reproduction/verification.json",
+  "sha256": "85af322cdc3ccf6692cb9c8efee662f92cd7bfee376ce717ac5f345a93948ce1"
+ },
+ "network_isolation_attestation": {
+  "path": "environment/network-isolation.json",
+  "sha256": "fe73f04f4d56c44fb4243284e34ff166f2c0c3dea852c8c1198fbeb8b2b4fae2"
+ },
+ "fix_boundary_evidence": {
+  "status": "PASS",
+  "selected_fix_commit": "67ff1ecf90643cd70f37bbff2cb555530d1331b0",
+  "production_files": [
+   "lib/src/jwt.dart"
+  ],
+  "review_method": "manual_commit_diff_and_trigger_scope_review",
+  "reviewed_at": "2026-08-12T10:43:20.750658+00:00",
+  "rationale": "The selected commit fixes integer subject coercion; later subject syntax is equivalent and issuer/JWT-ID coercions are separate claim fields.",
+  "reviewed_commits": [
+   {
+    "sha": "cc731a88d168c61fdbf0739d6c51c2d851fb18fa",
+    "files": [
+     "lib/src/jwt.dart"
+    ],
+    "same_production_files": [
+     "lib/src/jwt.dart"
+    ],
+    "classification": "semantic_equivalent_refactor"
+   },
+   {
+    "sha": "4aba7ccfb06be7cef27b50f48c35100502c869bb",
+    "files": [
+     "lib/src/jwt.dart"
+    ],
+    "same_production_files": [
+     "lib/src/jwt.dart"
+    ],
+    "classification": "unrelated_hunks"
+   },
+   {
+    "sha": "9ab5e9fe1b931e4f23cb8d3c622ffaef023baf78",
+    "files": [
+     "lib/src/jwt.dart"
+    ],
+    "same_production_files": [
+     "lib/src/jwt.dart"
+    ],
+    "classification": "unrelated_hunks"
+   }
+  ]
+ },
+ "auxiliary_changed_files": [],
+ "final_patch_file_manifest_source": "patches/minimized-production.patch",
+ "publication": {
+  "schema_version": 1,
+  "generated_at": "2026-08-15T17:06:52.631943+00:00",
+  "active": true,
+  "case_count_preservation_policy": "no_case_removed",
+  "reproduction_mode": "verified_online_bootstrap_offline_test_execution",
+  "raw_historical_logs_in_distribution": false,
+  "structured_validation_and_failure_fingerprints_retained": true,
+  "traceability_path": "fix_commit_message_mentions_issue_id",
+  "strict_commit_message_issue_literal": true,
+  "active_missing_file_references_removed": true
+ },
+ "reproduction_environment": {
+  "dockerfile": "environment/Dockerfile.reproduction",
+  "dockerfile_sha256": "7c6fcfdf5ad2d60afc7f068a1d09358fc3ecbd35dc10f955010424e8a07de969",
+  "requirements": "environment/requirements-reproduction.txt",
+  "requirements_sha256": "01e08410080741c1f164e3b7459ea15db5966cef6629bfeb2691175f269efd00",
+  "dart_sdk_lock": "environment/original-dart-sdk.lock.json",
+  "historical_validation_image_lock": "environment/original-validation-image.lock.json",
+  "relationship_to_historical_image": "SDK archive is bitwise pinned; reproduction image is rebuildable and is not claimed to equal the historical image ID."
+ },
+ "historical_prepack_artifacts": {
+  "repository_bundle": {
+   "path": "sources/repository.bundle",
+   "sha256": "bb878c214c6f9168a829e535f2ddd7807c206a621bc7c685f36a288f5a5d69d5",
+   "bytes": 165624,
+   "refs": {
+    "buggy": "refs/heads/buggy",
+    "fixed": "refs/heads/fixed"
+   },
+   "included_in_distribution": false,
+   "role": "historical_prepack_audit_reference"
+  },
+  "dependency_cache": {
+   "archive": "environment/dependency-cache.tar.gz",
+   "archive_sha256": "eab47507e285f9ae8732dbcb2e6a7308a628db9a37b7ffb0a21eedf028695466",
+   "manifest": "environment/dependency-cache-manifest.json",
+   "manifest_sha256": "d43fbdfb0a34dfc65ca24818db65febd1edaf8c6dc3ba884a52cb9c13942517a",
+   "package_count": 55,
+   "included_in_distribution": false,
+   "role": "historical_prepack_audit_reference"
+  }
+ },
+ "dataset_tier": "active",
+ "human_minimization_review": {
+  "decision": "APPROVE_AS_IS",
+  "reviewer_role": "dataset_owner",
+  "reviewed_at": "2026-09-13T10:43:23Z",
+  "record": "curation/human-minimization-review.json",
+  "record_sha256": "44db3014a1e1a1830440090badc6bc93d552a1aac7589a60dee4c28b2b54ef23",
+  "minimized_patch_sha256": "53528675373986596197b1a95a6c449dc4c91aeedf3e1a6a13100b51b8accb6b",
+  "rerun_required": false
+ }
+}

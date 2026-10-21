@@ -1,0 +1,21 @@
+diff --git a/test/collection/lru_map_test.dart b/test/collection/lru_map_test.dart
+index 803597bae1e9d00b92801db9e2fb038fccb8db0f..25e827ccde3fff4a35ff87200193eda8cdfe8355 100644
+--- a/test/collection/lru_map_test.dart
++++ b/test/collection/lru_map_test.dart
+@@ -173,6 +173,16 @@ void main() {
+         expect(lruMap.remove('D'), isNull);
+       });
+ 
++      test('can remove the last item (head and tail)', () {
++        // See: https://github.com/google/quiver-dart/issues/385
++        lruMap = new LruMap(maximumSize: 1)
++          ..addAll({'A': 'Alpha'})
++          ..remove('A');
++        lruMap['B'] = 'Beta';
++        lruMap['C'] = 'Charlie';
++        expect(lruMap.keys.toList(), ['C']);
++      });
++
+       test('can remove the head', () {
+         lruMap.remove('C');
+         expect(lruMap.keys.toList(), ['B', 'A']);

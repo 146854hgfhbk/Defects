@@ -1,0 +1,23 @@
+diff --git a/injectable_generator/test/code_builder/builder_utils_test.dart b/injectable_generator/test/code_builder/builder_utils_test.dart
+index 39a0a12742a18578ef32742aca48d8a7f69bd0d0..3e1968b7bb6d4da449e5823b210b9f75568bcd22 100644
+--- a/injectable_generator/test/code_builder/builder_utils_test.dart
++++ b/injectable_generator/test/code_builder/builder_utils_test.dart
+@@ -34,6 +34,18 @@ void main() {
+       ];
+       expect(sortDependencies(deps).toList(), expectedResult);
+     });
++
++    test('should sort as [A,B]', () {
++      final deps = [
++        DependencyConfig.factory('AppServiceUser', deps: ['Service']),
++        DependencyConfig.factory('Service', envs: ['dev']),
++      ];
++      final expectedResult = [
++        DependencyConfig.factory('Service', envs: ['dev']),
++        DependencyConfig.factory('AppServiceUser', deps: ['Service']),
++      ];
++      expect(sortDependencies(deps).toList(), expectedResult);
++    });
+   });
+ 
+   group('hasAsyncDependency', () {

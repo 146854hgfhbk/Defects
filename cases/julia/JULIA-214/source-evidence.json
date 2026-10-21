@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "d44f607639e6bf313bd1f73fe788c240d832750d",
+  "project": "JuliaIntervals/IntervalArithmetic.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 618,
+      "url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/issues/618",
+      "state": "closed",
+      "title": "Avoid `convert` to `Interval` in `^`",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "In current master:\r\n```julia\r\njulia> using IntervalArithmetic\r\n\r\njulia> a = interval(1,2)\r\n[1.0, 2.0]_com\r\n\r\njulia> a^4\r\n[1.0, 16.0]_com_NG\r\n```\r\nThe *non-guaranteed* flag is disturbing. The problem arises from [these lines](https://github.com/JuliaIntervals/IntervalArithmetic.jl/blob/946493a03a1c4535334956302ec7a2c9807e0d59/src/intervals/arithmetic/power.jl#L63C1-L66C74), which use `convert`. This, incidentally, does not respects the `PowerMode` in use.",
+      "defect_evidence_basis": {
+        "source": "upstream_issue_body",
+        "assessment": "Issue supplies a public-API reproducer whose literal power incorrectly loses the guaranteed flag; PR explicitly fixes the issue."
+      }
+    },
+    {
+      "number": 619,
+      "url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/pull/619",
+      "state": "closed",
+      "title": "Avoid `convert` in `^` for literal powers",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fix #618 "
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        618
+      ],
+      "pull_request": 619,
+      "fix_commit": "d44f607639e6bf313bd1f73fe788c240d832750d",
+      "evidence": "Fix #618"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Avoid `convert` in `^` for literal powers (#619)\n\n* Fix `literal_pow` as suggested\r\n\r\n* Add tests for literal powers\r\n\r\nCo-autored by:  Olivier Hénot\r\n<38465572+OlivierHnt@users.noreply.github.com>",
+    "commit_issue_refs": [
+      619
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 619,
+    "pull_request_title": "Avoid `convert` in `^` for literal powers",
+    "pull_request_issue_refs": [
+      618
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    618
+  ],
+  "cross_repository_issue_records": []
+}

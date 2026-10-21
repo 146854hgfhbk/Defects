@@ -1,0 +1,81 @@
+diff --git a/R/rd-r6-external.R b/R/rd-r6-external.R
+index 123a7e5b..87ecea9a 100644
+--- a/R/rd-r6-external.R
++++ b/R/rd-r6-external.R
+@@ -5,7 +5,9 @@ roxy_tag_parse.roxy_tag_R6method <- function(x) {
+     warn_roxy_tag(x, "requires a value like {.code Class$method}")
+     return(NULL)
+   }
+-  warn_if_multiline(x, raw, multiline = FALSE)
++  if (warn_if_multiline(x, raw)) {
++    return(NULL)
++  }
+ 
+   pieces <- strsplit(raw, "\\$")[[1]]
+   if (length(pieces) != 2 || pieces[1] == "" || pieces[2] == "") {
+diff --git a/R/tag-parser.R b/R/tag-parser.R
+index 32877c96..0ee91f71 100644
+--- a/R/tag-parser.R
++++ b/R/tag-parser.R
+@@ -27,7 +27,9 @@ tag_value <- function(x, multiline = FALSE) {
+     return(NULL)
+   }
+ 
+-  warn_if_multiline(x, x$val, multiline)
++  if (!multiline && warn_if_multiline(x, x$val)) {
++    return(NULL)
++  }
+ 
+   if (!rdComplete(x$raw, is_code = FALSE)) {
+     warn_roxy_tag(x, "has mismatched braces or quotes")
+@@ -132,11 +134,12 @@ tag_two_part <- function(
+       warn_roxy_tag(x, "requires two parts: {first} and {second}")
+     }
+     NULL
++  } else if (!multiline && warn_if_multiline(x, trimws(x$raw))) {
++    NULL
+   } else if (!rdComplete(x$raw, is_code = FALSE)) {
+     warn_roxy_tag(x, "has mismatched braces or quotes")
+     NULL
+   } else {
+-    warn_if_multiline(x, trimws(x$raw), multiline)
+     pieces <- split_two_part(trimws(x$raw))
+ 
+     if (required && pieces[[2]] == "") {
+@@ -189,7 +192,9 @@ tag_name_description <- function(x) {
+ tag_words <- function(x, min = 0, max = Inf, multiline = FALSE) {
+   val <- trimws(x$raw)
+ 
+-  warn_if_multiline(x, val, multiline)
++  if (!multiline && warn_if_multiline(x, val)) {
++    return(NULL)
++  }
+ 
+   if (!rdComplete(x$raw, is_code = FALSE)) {
+     warn_roxy_tag(x, "has mismatched braces or quotes")
+@@ -216,11 +221,8 @@ tag_words_line <- function(x) {
+   tag_words(x)
+ }
+ 
+-# Warns if multiline is FALSE and val contains multiple lines.
+-warn_if_multiline <- function(x, val, multiline) {
+-  if (multiline) {
+-    return(invisible())
+-  }
++# Returns TRUE (and warns) if val contains multiple lines, FALSE otherwise.
++warn_if_multiline <- function(x, val) {
+   n_lines <- re_count(val, "\n")
+   if (n_lines >= 1) {
+     first_line <- re_split_half(val, "\n")[[1]]
+@@ -231,8 +233,10 @@ warn_if_multiline <- function(x, val, multiline) {
+         i = "The first line is {.str {first_line}}"
+       )
+     )
++    TRUE
++  } else {
++    FALSE
+   }
+-  invisible()
+ }
+ 
+ #' @export

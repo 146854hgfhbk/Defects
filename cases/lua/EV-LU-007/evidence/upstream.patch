@@ -1,0 +1,67 @@
+diff --git a/spec/lexer_spec.lua b/spec/lexer_spec.lua
+index f0f167b4f483e26a9683b912968b7da73a45d4dd..3e462c8ff40e74557d70ca7a7d6f963d86c42cd2 100644
+--- a/spec/lexer_spec.lua
++++ b/spec/lexer_spec.lua
+@@ -79,6 +79,7 @@ describe("lexer", function()
+       assert.same({token = "/"}, get_token("/ /"))
+       assert.same({token = "//"}, get_token("//"))
+       assert.same({token = "."}, get_token(".?."))
++      assert.same({token = "."}, get_token("."))
+       assert.same({token = ".."}, get_token("..%"))
+       assert.same({token = "...", token_value = "..."}, get_token("..."))
+       assert.same({token = ":"}, get_token(":.:"))
+@@ -135,6 +136,7 @@ bar"]]))
+          assert.same({token = "string", token_value = "foo bar"}, get_token([["foo b\97r"]]))
+          assert.same({token = "string", token_value = "\1234"}, get_token([["\1234"]]))
+          assert.same({line = 1, column = 2, end_column = 5, msg = "invalid decimal escape sequence '\\300'"}, get_error([["\300"]]))
++         assert.same({line = 1, column = 2, end_column = 2, msg = "invalid escape sequence '\\'"}, get_error([["\]]))
+       end)
+ 
+       it("parses hexadecimal escape sequences correctly", function()
+@@ -165,6 +167,7 @@ bar"]]))
+          assert.same({line = 1, column = 2, end_column = 7, msg = "invalid UTF-8 escape sequence '\\u{11u'"}, get_error([["\u{11unrelated"]]))
+          assert.same({line = 1, column = 2, end_column = 6, msg = "invalid UTF-8 escape sequence '\\u{11'"}, get_error([["\u{11]]))
+          assert.same({line = 1, column = 2, end_column = 5, msg = "invalid UTF-8 escape sequence '\\u{u'"}, get_error([["\u{unrelated}"]]))
++         assert.same({line = 1, column = 2, end_column = 4, msg = "invalid UTF-8 escape sequence '\\u{'"}, get_error([["\u{]]))
+       end)
+ 
+       it("detects unknown escape sequences", function()
+diff --git a/src/luacheck/lexer.lua b/src/luacheck/lexer.lua
+index a50211f0a47cae3f00b7d66d1c96ff61897d1d64..625ac00c6e70e74e737494edcf87f78b2f1ff69f 100644
+--- a/src/luacheck/lexer.lua
++++ b/src/luacheck/lexer.lua
+@@ -257,7 +257,11 @@ local function lex_short_string(state, quote)
+ 
+             b = next_byte(state)  -- Skip "{".
+ 
+-            local codepoint = to_hex(b)  -- There should be at least one digit.
++            local codepoint  -- There should be at least one digit.
++
++            if b then
++               codepoint = to_hex(b)
++            end
+ 
+             if not codepoint then
+                return nil, "invalid UTF-8 escape sequence", -3
+@@ -297,7 +301,11 @@ local function lex_short_string(state, quote)
+             b = skip_space(state, next_byte(state))
+          else
+             -- Must be a decimal escape.
+-            local cb = to_dec(b)
++            local cb
++
++            if b then
++               cb = to_dec(b)
++            end
+ 
+             if not cb then
+                return nil, "invalid escape sequence", -1
+@@ -606,7 +614,7 @@ local function lex_dot(state)
+       else
+          return ".."
+       end
+-   elseif to_dec(b) then
++   elseif b and to_dec(b) then
+       -- Backtrack to dot.
+       return lex_number(state, next_byte(state, -1))
+    else

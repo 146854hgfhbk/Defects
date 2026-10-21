@@ -1,0 +1,115 @@
+diff --git a/entry/src/ohosTest/ets/test/List.test.ets b/entry/src/ohosTest/ets/test/List.test.ets
+index 27c07a1..6e6f460 100644
+--- a/entry/src/ohosTest/ets/test/List.test.ets
++++ b/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Ability.test'
++import TabContentSwitcherEnabledTest from './TabContentSwitcherEnabled.test'
+ 
+ export default function testsuite() {
+   abilityTest()
+-}
+\ No newline at end of file
++  TabContentSwitcherEnabledTest()
++}
+diff --git a/entry/src/ohosTest/ets/test/TabContentSwitcherEnabled.test.ets b/entry/src/ohosTest/ets/test/TabContentSwitcherEnabled.test.ets
+new file mode 100644
+index 0000000..340d82c
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/TabContentSwitcherEnabled.test.ets
+@@ -0,0 +1,93 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, expect, it } from '@ohos/hypium';
++import { Driver, ON } from '@ohos.UiTest';
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import resourceManager from '@ohos.resourceManager';
++import router from '@ohos.router';
++
++const DELAY_TIME = 1000;
++let manager: resourceManager.ResourceManager;
++
++async function startApp(driver: Driver): Promise<void> {
++  let abilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator();
++  await abilityDelegator.startAbility({
++    bundleName: 'ohos.samples.componentcollection',
++    moduleName: 'entry',
++    abilityName: 'MainAbility'
++  });
++  let context = await abilityDelegator.getAppContext();
++  manager = context.resourceManager;
++  await driver.delayMs(DELAY_TIME * 2);
++}
++
++async function clickId(driver: Driver, id: string): Promise<void> {
++  await driver.assertComponentExist(ON.id(id));
++  let component = await driver.findComponent(ON.id(id));
++  await component.click();
++  await driver.delayMs(DELAY_TIME);
++}
++
++async function revealId(driver: Driver, id: string): Promise<void> {
++  for (let i = 0; i < 5; i++) {
++    if (await driver.findComponent(ON.id(id))) {
++      return;
++    }
++    await driver.drag(500, 900, 500, 300, 500);
++    await driver.delayMs(DELAY_TIME);
++  }
++  await driver.assertComponentExist(ON.id(id));
++}
++
++async function waitForId(driver: Driver, id: string): Promise<void> {
++  for (let i = 0; i < 10; i++) {
++    if (await driver.findComponent(ON.id(id))) {
++      return;
++    }
++    await driver.delayMs(500);
++  }
++  await driver.assertComponentExist(ON.id(id));
++}
++
++async function openTabContentPage(driver: Driver): Promise<void> {
++  router.pushUrl({ url: 'pages/components/navigation/tabContentSample/TabContentSample' });
++  await driver.delayMs(DELAY_TIME);
++  await revealId(driver, 'tabcontent_001');
++}
++
++export default function TabContentSwitcherEnabledTest() {
++  describe('TabContentSwitcherEnabledTest', () => {
++    it('BottomTabSwitcherStillEnabledInSideMode_001', 0, async () => {
++      let driver = Driver.create();
++      await startApp(driver);
++      await openTabContentPage(driver);
++
++      await clickId(driver, 'tabcontent_001');
++      let sideButton = await driver.findComponent(ON.id('tabcontent_002'));
++      expect(await sideButton.isEnabled()).assertTrue();
++
++      await clickId(driver, 'tabcontent_002');
++      await revealId(driver, 'tabcontent_001');
++      let bottomSwitcher = await driver.findComponent(ON.id('tabcontent_001'));
++      expect(await bottomSwitcher.isEnabled()).assertTrue();
++
++      await bottomSwitcher.click();
++      await driver.delayMs(DELAY_TIME);
++      let sideButtonAfterClose = await driver.findComponent(ON.id('tabcontent_002'));
++      expect(await sideButtonAfterClose.isEnabled()).assertFalse();
++    });
++  });
++}

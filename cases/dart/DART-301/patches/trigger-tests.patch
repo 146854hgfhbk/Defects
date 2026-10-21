@@ -1,0 +1,99 @@
+diff --git a/test/tall/function/default_value.unit b/test/tall/function/default_value.unit
+index dfc1502..de91d45 100644
+--- a/test/tall/function/default_value.unit
++++ b/test/tall/function/default_value.unit
+@@ -45,4 +45,30 @@ function([
+   ],
+ ]) {
+   body;
+-}
+\ No newline at end of file
++}
++>>> Function typed parameter with default value.
++f([callback() = constantFunction]) {}
++<<<
++f([callback() = constantFunction]) {}
++>>> Split in function typed parameter parameter list with default value.
++f([callback(SomeLongType longParameter, AnotherType anotherParameter) = constantFunction]) {}
++<<<
++### TODO(rnystrom): The output isn't ideal here, but code like this is very
++### rare. See the comment in PieceFactory.writeFunctionType().
++f([
++  callback(
++        SomeLongType longParameter,
++        AnotherType anotherParameter,
++      ) =
++      constantFunction,
++]) {}
++>>> Split in function typed parameter default value.
++f([callback(SomeType parameter) = const CallableClass(someLongConstantArgument, anotherConstantArgument)]) {}
++<<<
++f([
++  callback(SomeType parameter) =
++      const CallableClass(
++        someLongConstantArgument,
++        anotherConstantArgument,
++      ),
++]) {}
+\ No newline at end of file
+diff --git a/test/tall/function/metadata.unit b/test/tall/function/metadata.unit
+index 249113e..8c4ded9 100644
+--- a/test/tall/function/metadata.unit
++++ b/test/tall/function/metadata.unit
+@@ -87,4 +87,12 @@ class Foo {
+     @bar super.field, [
+     @foo() @baz super.another,
+   ]);
+-}
+\ No newline at end of file
++}
++>>> Function typed parameter with default value.
++f([@metadata @another(argument, argument) callback() = constantFunction]) {}
++<<<
++f([
++  @metadata
++  @another(argument, argument)
++  callback() = constantFunction,
++]) {}
+\ No newline at end of file
+diff --git a/test/tall/regression/0200/0247.unit b/test/tall/regression/0200/0247.unit
+index f468a2c..08d7b9c 100644
+--- a/test/tall/regression/0200/0247.unit
++++ b/test/tall/regression/0200/0247.unit
+@@ -12,9 +12,7 @@
+     @Option(help: 'The git Uri containing the jefe.yaml.', abbr: 'g')
+     String gitUri,
+     @Option(help: 'The directory to install into', abbr: 'd')
+-        String installDirectory:
+-        '.',
++    String installDirectory: '.',
+     @Flag(help: 'Skips the checkout of the develop branch', abbr: 's')
+-        bool skipCheckout:
+-        false,
++    bool skipCheckout: false,
+   }) async {}
+\ No newline at end of file
+diff --git a/test/tall/regression/0300/0387.unit b/test/tall/regression/0300/0387.unit
+index 566e727..1289905 100644
+--- a/test/tall/regression/0300/0387.unit
++++ b/test/tall/regression/0300/0387.unit
+@@ -7,15 +7,12 @@ greet(@Rest(valueHelp: 'who', help: 'Name(s) to greet.') List<String> who,
+     @Option(name: 'greeting', help: 'Alternate word to greet with e.g. "Hi".')
+     String salutation: 'Hello'}) {}
+ <<<
+-### TODO(1461): The indentation is wrong here.
+ greet(
+   @Rest(valueHelp: 'who', help: 'Name(s) to greet.') List<String> who, {
+   @Group.start(title: 'Output')
+-      @Option(help: 'How many !\'s to append.')
+-      int enthusiasm:
+-      0,
++  @Option(help: 'How many !\'s to append.')
++  int enthusiasm: 0,
+   @Flag(abbr: 'l', help: 'Put names on separate lines.') bool lineMode: false,
+   @Option(name: 'greeting', help: 'Alternate word to greet with e.g. "Hi".')
+-      String salutation:
+-      'Hello',
++  String salutation: 'Hello',
+ }) {}
+\ No newline at end of file

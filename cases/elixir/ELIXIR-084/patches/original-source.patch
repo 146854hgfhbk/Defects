@@ -1,0 +1,26 @@
+diff --git a/lib/lua.ex b/lib/lua.ex
+index 3cbe5cb..c31d2b0 100644
+--- a/lib/lua.ex
++++ b/lib/lua.ex
+@@ -392,7 +392,7 @@ defmodule Lua do
+ 
+     if with_state? do
+       fn args, state ->
+-        execute_function(module, function_name, args ++ [wrap(state)])
++        execute_function(module, function_name, [args, wrap(state)])
+       end
+     else
+       fn args ->
+diff --git a/mix.exs b/mix.exs
+index 611ac0c..0fe819d 100644
+--- a/mix.exs
++++ b/mix.exs
+@@ -2,7 +2,7 @@ defmodule Lua.MixProject do
+   use Mix.Project
+ 
+   @url "https://github.com/tv-labs/lua"
+-  @version "0.0.13"
++  @version "0.0.14"
+ 
+   def project do
+     [

@@ -1,0 +1,189 @@
+diff --git a/lib/cachex/hook.ex b/lib/cachex/hook.ex
+--- a/lib/cachex/hook.ex
++++ b/lib/cachex/hook.ex
+@@ -10,6 +10,9 @@ defmodule Cachex.Hook do
+   """
+   import Cachex.Spec
+ 
++  # types of accepted hooks
++  @hook_types [:service, :post, :pre]
++
+   #############
+   # Behaviour #
+   #############
+@@ -158,30 +166,57 @@ defmodule Cachex.Hook do
+   ##############
+ 
+   @doc """
+-  Locates a hook for a cache.
++  Concatenates all hooks in a cache.
++  """
++  @spec concat(Cachex.t() | Cachex.Spec.hooks()) :: [Cachex.Spec.hook()]
++  def concat(hooks() = hooks) do
++    @hook_types
++    |> Enum.map(&for_type(hooks, &1))
++    |> Enum.concat()
++  end
++
++  def concat(cache(hooks: hooks)),
++    do: concat(hooks)
++
++  @doc """
++  Locates a hook module for a cache.
+   """
+-  @spec locate(Cachex.t(), module :: atom(), type :: :all | :pre | :post) ::
++  @spec locate(Cachex.t() | Cachex.Spec.hooks(), atom(), atom()) ::
+           Cachex.Spec.hook() | nil
+-  def locate(cache, module, type \\ :all)
++  def locate(hooks, module, type \\ :all)
+ 
+-  def locate(cache, module, :all) do
+-    case locate(cache, module, :post) do
+-      nil -> locate(cache, module, :pre)
+-      val -> val
+-    end
++  def locate(hooks() = hooks, module, type) do
++    hooks
++    |> concat()
++    |> Enum.find(&match_hook(&1, module, type))
+   end
+ 
+-  def locate(cache(hooks: hooks(pre: hooks)), module, :pre),
+-    do: locate_hook(hooks, module)
++  def locate(cache(hooks: hooks), module, type),
++    do: locate(hooks, module, type)
+ 
+-  def locate(cache(hooks: hooks(post: hooks)), module, :post),
+-    do: locate_hook(hooks, module)
++  @doc """
++  Retrieve all known types of hook.
++  """
++  def types(),
++    do: @hook_types
+ 
+   ###############
+   # Private API #
+   ###############
+ 
+-  # Find a hook based on module name.
+-  defp locate_hook(hooks, module),
+-    do: Enum.find(hooks, &match?(hook(module: ^module), &1))
++  # Hook lookup at runtime, instead of `hooks/2`.
++  for type <- @hook_types do
++    defp for_type(hooks() = hooks, unquote(type)),
++      do: hooks(hooks, unquote(type))
++  end
++
++  # Find a hook based on module name and module type.
++  defp match_hook(hook(module: module), module, :all),
++    do: true
++
++  defp match_hook(hook(module: module), module, type),
++    do: module.type() == type
++
++  defp match_hook(_hook, _module, _type),
++    do: false
+ end
+diff --git a/lib/cachex/options.ex b/lib/cachex/options.ex
+--- a/lib/cachex/options.ex
++++ b/lib/cachex/options.ex
+@@ -209,10 +209,14 @@ defmodule Cachex.Options do
+       true ->
+         type = Enum.group_by(hooks, &hook(&1, :module).type())
+ 
+-        pre = Map.get(type, :pre, [])
+-        post = Map.get(type, :post, [])
+-
+-        cache(cache, hooks: hooks(pre: pre, post: post))
++        hooks =
++          hooks(
++            pre: Map.get(type, :pre, []),
++            post: Map.get(type, :post, []),
++            service: Map.get(type, :service, [])
++          )
++
++        cache(cache, hooks: hooks)
+     end
+   end
+ 
+diff --git a/lib/cachex/router.ex b/lib/cachex/router.ex
+--- a/lib/cachex/router.ex
++++ b/lib/cachex/router.ex
+@@ -319,10 +319,25 @@ defmodule Cachex.Router do
+   defp route_cluster(cache, module, {:transaction, [_keys | _]} = call),
+     do: route_batch(cache, module, call, & &1)
+ 
+-  # Any other actions are explicitly disabled in distributed environments.
++  # Any other actions are only available with local: true in the call
++  defp route_cluster(cache, module, {_action, arguments} = call) do
++    # all calls have options we can use
++    options = List.last(arguments)
++
++    # can force local node setting local: true
++    case Keyword.get(options, :local) do
++      true -> route_local(cache, module, call)
++      _any -> error(:non_distributed)
++    end
++  end
++
++  # coveralls-ignore-start
++  # Catch-all just in case we missed something...
+   defp route_cluster(_cache, _module, _call),
+     do: error(:non_distributed)
+ 
++  # coveralls-ignore-stop
++
+   # Calls a slot for the provided cache action if all keys slot to the same node.
+   #
+   # This is a delegate handler for `route_node/4`, but ensures that all keys slot to the
+diff --git a/lib/cachex/services.ex b/lib/cachex/services.ex
+--- a/lib/cachex/services.ex
++++ b/lib/cachex/services.ex
+@@ -69,10 +69,9 @@ defmodule Cachex.Services do
+   the Supervisor children and place them in a modified cache record.
+   """
+   @spec link(Cachex.t()) :: {:ok, Cachex.t()}
+-  def link(cache(hooks: hooks(pre: [], post: []), warmers: []) = cache),
+-    do: {:ok, cache}
++  def link(cache(hooks: hooks, warmers: warmers) = cache) do
++    hooks(pre: pre, post: post, service: service) = hooks
+ 
+-  def link(cache(hooks: hooks(pre: pre, post: post), warmers: warmers) = cache) do
+     hook_children = find_children(cache, Services.Informant)
+     warmer_children = find_children(cache, Services.Incubator)
+ 
+@@ -81,7 +80,8 @@ defmodule Cachex.Services do
+         hooks:
+           hooks(
+             pre: attach_child(pre, hook_children),
+-            post: attach_child(post, hook_children)
++            post: attach_child(post, hook_children),
++            service: attach_child(service, hook_children)
+           ),
+         warmers: attach_child(warmers, warmer_children)
+       )
+diff --git a/lib/cachex/spec.ex b/lib/cachex/spec.ex
+--- a/lib/cachex/spec.ex
++++ b/lib/cachex/spec.ex
+@@ -213,7 +214,8 @@ defmodule Cachex.Spec do
+   """
+   defrecord :hooks,
+     pre: [],
+-    post: []
++    post: [],
++    service: []
+ 
+   @doc """
+   Creates a router record from the provided values.
+diff --git a/lib/cachex/spec/validator.ex b/lib/cachex/spec/validator.ex
+--- a/lib/cachex/spec/validator.ex
++++ b/lib/cachex/spec/validator.ex
+@@ -87,7 +87,7 @@ defmodule Cachex.Spec.Validator do
+     check5 = check4 and (enum?(action, &is_atom/1) or action == :all)
+ 
+     check6 = check5 and enum?(module.provisions(), &is_atom/1)
+-    check7 = check6 and module.type() in [:post, :pre]
++    check7 = check6 and module.type() in Cachex.Hook.types()
+ 
+     check7
+   end

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1143",
+  "technical_evidence_sha256": "28d056d46124b8bc08f8dbe3ec74c91f71715249616fbe732856ebf0a9b6fb8e",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "c0d99ab8fd0ff90f72314d7df1add33a3b65efb58affe02888dbab2b8a54cf2c",
+  "reviewed_at": "2026-08-14T15:29:06.848995+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "milad-akarie/injectable#244",
+  "rationale": "Issue #244 ('Wrong registration order when environment specified') reports that a dependent with no environment (AppServiceUser) is registered before its dependency (Service annotated with an environment), breaking initialization; renaming the class changed the order, confirming the sort failed to see the dependency edge. The production fix is a single condition added to the predicate in lookupDependencyWithNoEnvOrHasAny: with the buggy code, when the dependent's envs list is empty and the candidate dep declares environments, neither d.environments.isEmpty nor d.environments.any((e) => envs.contains(e)) holds, so the dependency is not found and sortDependencies emits the dependent first. Adding 'envs.isEmpty ||' restores the edge, which is exactly the reported symptom's mechanism. The minimized production patch is identical to production-fix.patch and contains only that one line; the CHANGELOG entry, pubspec version/constraint and pubspec.lock changes, and the stray blank lines in injectable/example/bin/main.dart present in original-commit.patch are all excluded from the minimized patch. The trigger 'should sort as [A,B]' is the unchanged upstream test from the same fixing commit and exercises sortDependencies with DependencyConfig.factory('Service', envs: ['dev']) as the dependency of an env-less dependent, mirroring the issue scenario at the generator level; both sortDependencies and DependencyConfig.factory are pre-existing APIs also used by the adjacent pre-existing sort test, so the trigger introduces no dependency on new production API. Strict evidence for both the original and post-minimization runs passes all gates, including trigger.buggy_differential and trigger.fixed_clean with 3 repetitions across a 32-run matrix, and full_suite.buggy_reproduces_only_triggers with the single declared selector. active_same_project_root_causes is empty and milad-akarie/injectable#244 is the verified allowed key, so this root cause is not a duplicate.\n\nIssue #244 ('Wrong registration order when environment specified') reports that a dependent with no environment (AppServiceUser) is registered before the environment-scoped dependency it consumes (Service annotated with an env), so ordering falls back to name order and initialization fails. The production fix is a single condition added to the dependency-lookup predicate in lookupDependencyWithNoEnvOrHasAny: `envs.isEmpty ||`, which makes the lookup succeed when the consuming side carries no environment set, so sortDependencies can place the env-scoped dependency first. That is exactly the reported failure mode, not a behavior extension. The minimized production patch contains only that one hunk in injectable_generator/lib/code_builder/builder_utils.dart; the CHANGELOG entry, pubspec version/constraint bumps, pubspec.lock path switch, and the stray blank lines in injectable/example/bin/main.dart present in the original commit are excluded. The trigger 'should sort as [A,B]' is the unchanged upstream test from the same fixing commit and uses only pre-existing APIs (DependencyConfig.factory, sortDependencies, both already exercised by neighboring tests in the same file); the fix introduces no new production API. It encodes the issue's shape directly: a consumer with no envs depending on a type registered with envs ['dev'], asserting the dependency sorts first. Strict machine evidence reports all gates passed on both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (1/1), trigger.buggy_differential reproducing test/code_builder/builder_utils_test.dart::should sort as [A,B], trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete (32 runs, 3 repetitions). No failed checks. active_same_project_root_causes is empty, so this root cause is not a duplicate, and milad-akarie/injectable#244 is the supplied verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T15:28:39.067784+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "c0d99ab8fd0ff90f72314d7df1add33a3b65efb58affe02888dbab2b8a54cf2c",
+      "response_sha256": "dd803a2613012d9bddffce9d3ed26a90c7282d7f2227be27d6c61a24edfb1884",
+      "response_id": "msg_ba8a3caf78ce47deab8bebac6c60b85d",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6184853122719735,
+        "input_tokens": 14876,
+        "output_tokens": 696
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "milad-akarie/injectable#244",
+      "rationale": "Issue #244 ('Wrong registration order when environment specified') reports that a dependent with no environment (AppServiceUser) is registered before its dependency (Service annotated with an environment), breaking initialization; renaming the class changed the order, confirming the sort failed to see the dependency edge. The production fix is a single condition added to the predicate in lookupDependencyWithNoEnvOrHasAny: with the buggy code, when the dependent's envs list is empty and the candidate dep declares environments, neither d.environments.isEmpty nor d.environments.any((e) => envs.contains(e)) holds, so the dependency is not found and sortDependencies emits the dependent first. Adding 'envs.isEmpty ||' restores the edge, which is exactly the reported symptom's mechanism. The minimized production patch is identical to production-fix.patch and contains only that one line; the CHANGELOG entry, pubspec version/constraint and pubspec.lock changes, and the stray blank lines in injectable/example/bin/main.dart present in original-commit.patch are all excluded from the minimized patch. The trigger 'should sort as [A,B]' is the unchanged upstream test from the same fixing commit and exercises sortDependencies with DependencyConfig.factory('Service', envs: ['dev']) as the dependency of an env-less dependent, mirroring the issue scenario at the generator level; both sortDependencies and DependencyConfig.factory are pre-existing APIs also used by the adjacent pre-existing sort test, so the trigger introduces no dependency on new production API. Strict evidence for both the original and post-minimization runs passes all gates, including trigger.buggy_differential and trigger.fixed_clean with 3 repetitions across a 32-run matrix, and full_suite.buggy_reproduces_only_triggers with the single declared selector. active_same_project_root_causes is empty and milad-akarie/injectable#244 is the verified allowed key, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "injectable_generator/lib/code_builder/builder_utils.dart",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger is a generator-level unit test on sortDependencies using factories with envs: ['dev'], not an end-to-end check of the generated $initGetIt registration order with @Singleton and mobileOrDesktopEnv as shown in the issue; equivalence rests on the shared lookupDependencyWithNoEnvOrHasAny path rather than on reproducing the generated output.",
+        "The fix broadens matching whenever the dependent's envs list is empty; the supplied evidence does not show whether other env-filtering call sites relied on the stricter behavior, only that the full fixed suite is green."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T15:29:06.848694+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "c0d99ab8fd0ff90f72314d7df1add33a3b65efb58affe02888dbab2b8a54cf2c",
+      "response_sha256": "ede4c604af54b5131e2d99207b27ce3900621b9097bf33dccc0592e3c8097c9c",
+      "response_id": "msg_c879044177284286afdd5558bf7c1344",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6046310662023218,
+        "input_tokens": 14818,
+        "output_tokens": 773
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "milad-akarie/injectable#244",
+      "rationale": "Issue #244 ('Wrong registration order when environment specified') reports that a dependent with no environment (AppServiceUser) is registered before the environment-scoped dependency it consumes (Service annotated with an env), so ordering falls back to name order and initialization fails. The production fix is a single condition added to the dependency-lookup predicate in lookupDependencyWithNoEnvOrHasAny: `envs.isEmpty ||`, which makes the lookup succeed when the consuming side carries no environment set, so sortDependencies can place the env-scoped dependency first. That is exactly the reported failure mode, not a behavior extension. The minimized production patch contains only that one hunk in injectable_generator/lib/code_builder/builder_utils.dart; the CHANGELOG entry, pubspec version/constraint bumps, pubspec.lock path switch, and the stray blank lines in injectable/example/bin/main.dart present in the original commit are excluded. The trigger 'should sort as [A,B]' is the unchanged upstream test from the same fixing commit and uses only pre-existing APIs (DependencyConfig.factory, sortDependencies, both already exercised by neighboring tests in the same file); the fix introduces no new production API. It encodes the issue's shape directly: a consumer with no envs depending on a type registered with envs ['dev'], asserting the dependency sorts first. Strict machine evidence reports all gates passed on both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (1/1), trigger.buggy_differential reproducing test/code_builder/builder_utils_test.dart::should sort as [A,B], trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete (32 runs, 3 repetitions). No failed checks. active_same_project_root_causes is empty, so this root cause is not a duplicate, and milad-akarie/injectable#244 is the supplied verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks",
+        "case.json:strict_original.checks",
+        "case.json:trigger_tests",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The trigger validates the defect at the sortDependencies unit level rather than end-to-end generated $initGetIt output, so the exact generated registration order from the issue reproducer is verified only indirectly.",
+        "The issue reproducer uses @Singleton with a multi-env annotation while the trigger uses DependencyConfig.factory with envs ['dev']; the ordering code path is shared, but the singleton/multi-env variant is not separately covered.",
+        "The added `envs.isEmpty` disjunct broadens env matching whenever no environment filter is supplied; whether that is desirable for every consumer of lookupDependencyWithNoEnvOrHasAny is not established by the supplied evidence beyond the passing full suite.",
+        "candidate metadata carries risk tags (selector_derivation_required, local_repository_missing, sdk_constraint_unresolved) from screening; these were not re-verified here beyond the strict gate results."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-435",
+  "technical_evidence_sha256": "4dfe2e058822089dfd30b12210cf4ed76d11c6d111df1454852fdda974475563",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "39ad3eee07c34c9a6c39441535d6cb787f6390e1d18fc8857efeefa6deb32e35",
+  "reviewed_at": "2026-09-07T18:00:41.690399+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "joshuawright11/papyrus#47",
+  "rationale": "Issue #47 (\"Error when trying to set path parameter in front of static query\") reports that `RequestBuilder(path: \"bar/:baz?query=1\")` throws `PapyrusError(\"Tried to set path parameter `baz` but did not find `:baz` ...\")` because the static query is glued to the final path component, so the `:baz` token never matches. The commit subject is `fix: path parameters in front of query #47`, and traceability is established by fix_commit_to_issue with verified_fix_issue_numbers=[47]. The minimized production patch is a single hunk in the private helper `RequestBuilder.parameterizedPath()` that splits a trailing `?...` off the last component before parameter substitution and re-appends it after joining; that is exactly the reported failure mode and nothing else. No public API, signature, formatting, config, or docs change is present, and the stray `print(newPath, component)` diagnostic line that appears in the original commit hunk is absent from the minimized/production-fix patch, so no diagnostic noise is carried in either. The trigger `PapyrusCore/Tests/ParameterTests.swift::testPathWithStaticQuery` is the unchanged upstream test from the same commit and uses only pre-existing APIs (`RequestBuilder(baseURL:method:path:)`, `addParameter`, `fullURL()`), none of which the fix introduces; it asserts the two path shapes from the issue. Machine-generated strict gates pass both pre- and post-minimization: build.both_versions, trigger.buggy_differential with reproduced selector testPathWithStaticQuery, trigger.deterministic (3 fingerprint groups), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with matrix.complete at 32 runs. active_same_project_root_causes is empty, so #47 is not a duplicate, and it is the sole allowed root cause id.\n\nIssue #47 ('Error when trying to set path parameter in front of static query') reports that path `bar/:baz?query=1` throws PapyrusError(\"Tried to set path parameter `baz` but did not find `:baz`...\") because the `?query=1` suffix stays glued to the final path component, so `firstIndex(of: \":baz\")` never matches. The single production hunk in RequestBuilder.parameterizedPath() splits the static query off the last component before parameter substitution and re-appends it after joining, which is exactly the reported failure mode; commit subject 'fix: path parameters in front of query #47' and traceability path fix_commit_to_issue tie the two together. The minimized production patch is one hunk confined to the private helper parameterizedPath(); it contains no formatting, refactor, docs, config, or test content, and it notably excludes the stray `print(newPath, component)` diagnostic line present in the original commit, so nothing unrelated to the behavior fix remains (production-fix and minimized-production share sha256 1f0d4092..., post_minimization_validation PASS). The trigger `testPathWithStaticQuery` is the unchanged upstream test from the same fixing commit and exercises only pre-existing API surface (RequestBuilder(baseURL:method:path:), addParameter, fullURL()); the fix adds no public API, so the trigger does not depend on new production API. Strict evidence, both original and post-minimization, shows build passing on both revisions, buggy differential isolating PapyrusCore/Tests/ParameterTests.swift::testPathWithStaticQuery, deterministic fingerprints across 3 repetitions, and a fully green fixed suite with no failed checks. Root cause joshuawright11/papyrus#47 is in allowed_root_cause_ids and active_same_project_root_causes is empty, so it is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T18:00:18.798332+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "39ad3eee07c34c9a6c39441535d6cb787f6390e1d18fc8857efeefa6deb32e35",
+      "response_sha256": "26b4e9320e45a86b053d72155865920694377a201463a9d032a71b67b8773db6",
+      "response_id": "msg_9085c0eff76444faa2e05dd9b1aeac6a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7005571722056385,
+        "input_tokens": 18846,
+        "output_tokens": 835
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "joshuawright11/papyrus#47",
+      "rationale": "Issue #47 (\"Error when trying to set path parameter in front of static query\") reports that `RequestBuilder(path: \"bar/:baz?query=1\")` throws `PapyrusError(\"Tried to set path parameter `baz` but did not find `:baz` ...\")` because the static query is glued to the final path component, so the `:baz` token never matches. The commit subject is `fix: path parameters in front of query #47`, and traceability is established by fix_commit_to_issue with verified_fix_issue_numbers=[47]. The minimized production patch is a single hunk in the private helper `RequestBuilder.parameterizedPath()` that splits a trailing `?...` off the last component before parameter substitution and re-appends it after joining; that is exactly the reported failure mode and nothing else. No public API, signature, formatting, config, or docs change is present, and the stray `print(newPath, component)` diagnostic line that appears in the original commit hunk is absent from the minimized/production-fix patch, so no diagnostic noise is carried in either. The trigger `PapyrusCore/Tests/ParameterTests.swift::testPathWithStaticQuery` is the unchanged upstream test from the same commit and uses only pre-existing APIs (`RequestBuilder(baseURL:method:path:)`, `addParameter`, `fullURL()`), none of which the fix introduces; it asserts the two path shapes from the issue. Machine-generated strict gates pass both pre- and post-minimization: build.both_versions, trigger.buggy_differential with reproduced selector testPathWithStaticQuery, trigger.deterministic (3 fingerprint groups), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with matrix.complete at 32 runs. active_same_project_root_causes is empty, so #47 is not a duplicate, and it is the sole allowed root cause id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[1] (issue 47 body and title)",
+        "source_candidate.commit_stats (1 production hunk, 1 production Swift file)",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The issue reporter's own reproducer asserts \"foo/bar/value/?query=1\" for input \"bar/:baz?query=1\" while the committed trigger asserts \"foo/bar/value?query=1\"; the shared defect is the thrown PapyrusError, but the exact output oracle comes from the committed test, not the issue text.",
+        "The minimized patch drops the debug `print(newPath, component)` line present in the original commit hunk. This is behavior-neutral, but the buggy/fixed pair therefore differs textually from upstream at that line.",
+        "The fix only handles a `?` in the final path component via lastIndex(of:); behavior for `?` in a non-final component or multiple `?` characters is unspecified and untested.",
+        "The fix commit was selected out of multi-commit PR #49 (a cURL feature PR for issue #43); the revision pair must stay pinned to 7bda5d3^..92d50ff so unrelated branch commits are not pulled in.",
+        "Regression coverage for the query-splitting change is limited to the existing ParameterTests cases in the full-suite run."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T18:00:41.689655+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "39ad3eee07c34c9a6c39441535d6cb787f6390e1d18fc8857efeefa6deb32e35",
+      "response_sha256": "b7ff28e8f67d2ee113bba12e79e9a3e1fdcb018466c4062834e013907664c9d7",
+      "response_id": "msg_411ade8244f9486c992c63b6c4769ae6",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5069386593698176,
+        "input_tokens": 18361,
+        "output_tokens": 724
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "joshuawright11/papyrus#47",
+      "rationale": "Issue #47 ('Error when trying to set path parameter in front of static query') reports that path `bar/:baz?query=1` throws PapyrusError(\"Tried to set path parameter `baz` but did not find `:baz`...\") because the `?query=1` suffix stays glued to the final path component, so `firstIndex(of: \":baz\")` never matches. The single production hunk in RequestBuilder.parameterizedPath() splits the static query off the last component before parameter substitution and re-appends it after joining, which is exactly the reported failure mode; commit subject 'fix: path parameters in front of query #47' and traceability path fix_commit_to_issue tie the two together. The minimized production patch is one hunk confined to the private helper parameterizedPath(); it contains no formatting, refactor, docs, config, or test content, and it notably excludes the stray `print(newPath, component)` diagnostic line present in the original commit, so nothing unrelated to the behavior fix remains (production-fix and minimized-production share sha256 1f0d4092..., post_minimization_validation PASS). The trigger `testPathWithStaticQuery` is the unchanged upstream test from the same fixing commit and exercises only pre-existing API surface (RequestBuilder(baseURL:method:path:), addParameter, fullURL()); the fix adds no public API, so the trigger does not depend on new production API. Strict evidence, both original and post-minimization, shows build passing on both revisions, buggy differential isolating PapyrusCore/Tests/ParameterTests.swift::testPathWithStaticQuery, deterministic fingerprints across 3 repetitions, and a fully green fixed suite with no failed checks. Root cause joshuawright11/papyrus#47 is in allowed_root_cause_ids and active_same_project_root_causes is empty, so it is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[1].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_original.checks.full_suite.fixed_all_green",
+        "minimized_patch_reference.semantic_selection.reason",
+        "traceability.paths[0]"
+      ],
+      "risks": [
+        "The committed trigger asserts `foo/bar/value?query=1` while the issue reporter's own snippet expected `foo/bar/value/?query=1`; the committed test is the oracle, so the difference is cosmetic but means the issue text and trigger expectation are not literally identical.",
+        "The trigger also covers the trailing-slash form `bar/:baz/?query=1`, slightly broader than the single case in the issue, though it is the same defect class.",
+        "The fix uses lastIndex(of: \"?\") on the final component only; behavior for `?` in a non-final component or multiple `?` characters is unspecified and untested.",
+        "issue_evidence is null; issue text was read from source_candidate.issue_check metadata rather than a separately archived issue record."
+      ]
+    }
+  ]
+}

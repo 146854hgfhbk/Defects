@@ -1,0 +1,33 @@
+{
+ "schema_version": 1,
+ "case_id": "JULIA-658",
+ "status": "trigger_ready",
+ "mode": "dedicated_script",
+ "origin": "manual_mwe_from_upstream_fix",
+ "script_sha256": "ef809f6ba057ee43cbbfb6b42f2c2e706bcc6df5e48ecebcd9e07846c72d8cc0",
+ "oracle": {
+  "schema_version": 1,
+  "f2p_tests": [
+   "JULIA-658 NaN-safe mode differential MWE"
+  ],
+  "added_testsets": [
+   "NaN-safe mode",
+   "exponential function at base zero",
+   "gradient for exponential with NaNMath"
+  ],
+  "assertion_expression_sha256": [],
+  "mwe_basis": {
+   "upstream_pull_request": 777,
+   "upstream_test_files": [
+    "test/DerivativeTest.jl",
+    "test/GradientTest.jl"
+   ],
+   "defect": "NaN-safe mode does not sanitize derivative/gradient results; issue #774: ForwardDiff.derivative(log .- zero, 1.0) returns NaN instead of 0 when nansafe mode is enabled",
+   "public_api": "ForwardDiff.derivative, ForwardDiff.gradient",
+   "source_evidence": {
+    "upstream_tests_patch_sha256": "78a48dc0cdc4562f1f586ab6f0d791c6c44506fc5d01ad058b6b565b7b0fcdba",
+    "extraction": "testset blocks extracted verbatim from upstream test files at fixed revision"
+   }
+  }
+ }
+}

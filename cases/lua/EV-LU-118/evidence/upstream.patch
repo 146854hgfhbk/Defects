@@ -1,0 +1,66 @@
+diff --git a/spec/cli_spec.lua b/spec/cli_spec.lua
+index e324e6cc28b1d5f7e9bf053d99ee3ee8e26ad22f..b7ba1573a8cb112efaa428d1053bef6f7df43ba5 100644
+--- a/spec/cli_spec.lua
++++ b/spec/cli_spec.lua
+@@ -917,6 +917,14 @@ Total: 0 warnings / 0 errors in 1 file
+ ]], get_output "spec/samples/compat.lua --config=spec/configs/global_config.luacheckrc")
+          end)
+ 
++         it("uses config when checking stdin", function()
++            assert.equal([[
++Checking stdin                                    OK
++
++Total: 0 warnings / 0 errors in 1 file
++]], get_output "- --config=spec/configs/global_config.luacheckrc < spec/samples/compat.lua")
++         end)
++
+          it("uses per-file overrides", function()
+             assert.equal([[
+ Checking spec/samples/bad_code.lua                Failure
+diff --git a/src/luacheck/config.lua b/src/luacheck/config.lua
+index 18c3c4907a9bef8b82079d5da97661cb09c0a6ec..45e42ba97aa3a5ab22eb839ffd3e6088fe2b6000 100644
+--- a/src/luacheck/config.lua
++++ b/src/luacheck/config.lua
+@@ -253,15 +253,20 @@ function config.get_top_options(conf)
+    return conf.empty and {} or conf.options
+ end
+ 
+--- Returns array of options for a path.
+-function config.get_options(conf, path)
++-- Returns array of options for a file.
++function config.get_options(conf, file)
+    if conf.empty then
+       return {}
+    end
+ 
+-   path = fs.normalize(fs.join(conf.cur_dir, path))
+    local res = {conf.options}
+ 
++   if type(file) ~= "string" then
++      return res
++   end
++
++   local path = fs.normalize(fs.join(conf.cur_dir, file))
++
+    for _, override_path in ipairs(conf.overrides.paths) do
+       if fs.is_subpath(override_path, path) then
+          table.insert(res, conf.overrides.options[override_path])
+diff --git a/src/luacheck/main.lua b/src/luacheck/main.lua
+index f3b5fdd3a8a552d152646c5da3c0d66c3425adc3..9bdc54b670640dc3389a414611b2acb0f52b0ea5 100644
+--- a/src/luacheck/main.lua
++++ b/src/luacheck/main.lua
+@@ -416,12 +416,8 @@ Otherwise, the pattern matches warning code.]])
+       local res = {}
+ 
+       for i, file in ipairs(files) do
+-         if type(file) == "string" then
+-            res[i] = config.get_options(conf, file)
+-            table.insert(res[i], cli_opts)
+-         else
+-            res[i] = cli_opts
+-         end
++         res[i] = config.get_options(conf, file)
++         table.insert(res[i], cli_opts)
+       end
+ 
+       return res

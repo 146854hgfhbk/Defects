@@ -1,0 +1,22 @@
+diff --git a/detekt-rules-style/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedPrivateMemberSpec.kt b/detekt-rules-style/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedPrivateMemberSpec.kt
+index f7e39e0cb5d2..145541479fb7 100644
+--- a/detekt-rules-style/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedPrivateMemberSpec.kt
++++ b/detekt-rules-style/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedPrivateMemberSpec.kt
+@@ -1468,6 +1468,17 @@ class UnusedPrivateMemberSpec(val env: KotlinCoreEnvironment) {
+         }
+     }
+
++    @Nested
++    inner class `backtick identifiers - #5251` {
++        @Test
++        fun `does not report used backtick parameters`() {
++            val code = """
++                fun test(`foo bar`: Int) = `foo bar`
++            """
++            assertThat(subject.compileAndLintWithContext(env, code)).isEmpty()
++        }
++    }
++
+     @Nested
+     inner class `list get overloaded operator function - #3640` {
+         @Test

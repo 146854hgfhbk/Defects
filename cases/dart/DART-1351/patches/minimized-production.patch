@@ -1,0 +1,17 @@
+diff --git a/lib/src/html_renderer.dart b/lib/src/html_renderer.dart
+index 14dc958e466bae6e10a202a0d4ce05ba8c4dba90..25bcd09842cf29a93b9183ed9501e25113d8a098 100644
+--- a/lib/src/html_renderer.dart
++++ b/lib/src/html_renderer.dart
+@@ -77,8 +77,10 @@ class HtmlRenderer implements NodeVisitor {
+   void visitText(Text text) {
+     var content = text.text;
+     if (const ['p', 'li'].contains(_lastVisitedTag)) {
+-      content =
+-          LineSplitter.split(content).map((line) => line.trimLeft()).join('\n');
++      var lines = LineSplitter.split(content);
++      content = (content.contains('<pre>'))
++          ? lines.join('\n')
++          : lines.map((line) => line.trimLeft()).join('\n');
+       if (text.text.endsWith('\n')) {
+         content = '$content\n';
+       }

@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1407",
+  "technical_evidence_sha256": "b1720e8cf08ccb8202c1239fc5a090a206b81bb75208c35ac69eca82cece8f7a",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "8ad069b7157378b2da76e7ffaa2094e5e7f8b9af187c58b14edb884f64db05f7",
+  "reviewed_at": "2026-08-16T02:52:38.382138+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/async#176",
+  "rationale": "The minimized production patch carries exactly one behavioral edit: `CancelableOperation.isCompleted` changes from delegating to `_completer.isCompleted` (the completer's own `_isCompleted` flag, set synchronously by `complete`/`completeError`) to `_completer._inner.isCompleted` (actual result availability). That is precisely the defect named by the fix commit subject 'Make isComplete reflect result availability' and by the CHANGELOG line in the original commit: 'Fix a bug in `CancelableOperation.isComplete` where it may appear to be complete and no longer be cancelable when it in fact could still be canceled.' The pre-fix doc comment removed by the patch ('As such, [isCompleted] is true from the moment this [CancelableOperation] is created, regardless of whether [inner] has completed yet or not') documents the buggy behavior, confirming it is pre-existing rather than introduced. Traceability resolves the fix commit to issue 176 (verified_fix_issue_numbers=[176]), which matches the single allowed root cause key. The reproducing trigger, `test/cancelable_operation_test.dart::is not complete until the result is available`, constructs `CancelableOperation.fromFuture(backingWork.future)` and asserts `operation.isCompleted` is false before the backing future resolves and true afterward; it exercises only the pre-existing public `fromFuture` and `isCompleted` surface, so it introduces no dependency on any API added by the fix. The second declared selector is only adjusted with `await flushMicrotasks()` to accommodate the now-asynchronous transition and passes in both revisions, consistent with the non-reproducing-selector requirement. Remaining diff content in the minimized patch is dartdoc text in the same hunk describing the corrected `cancel`/`isCompleted` contract, not a refactor, feature extension, or config/test change, and the sole functional line is retained. Strict evidence (not a status label) supports runtime validity: build.both_versions, trigger.buggy_differential, trigger.deterministic (3 fingerprint groups), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green all passed post-minimization with 38 matrix runs and 3 repetitions, failed_checks empty. active_same_project_root_causes is empty, so no duplicate root cause exists.\n\nThe minimized production patch carries exactly one behavioral edit in lib/src/cancelable_operation.dart: CancelableOperation.isCompleted stops delegating to _completer.isCompleted (true as soon as complete() is called, even with a pending Future argument) and instead reads _completer._inner.isCompleted, so it now reflects whether the result is actually available. This matches the commit subject 'Make isComplete reflect result availability', the CHANGELOG entry in patches/original-commit.patch ('isComplete ... may appear to be complete and no longer be cancelable when it in fact could still be canceled'), and issue 176, which traceability.paths verifies as linked through fix_commit_to_issue with verified_fix_issue_numbers=[176]. The defect is pre-existing: the buggy revision's own doc comment asserted isCompleted is true from the moment fromFuture is called, which is the mis-specified behavior being corrected. The reproducing trigger 'is not complete until the result is available' builds a CancelableOperation.fromFuture over an unfinished Completer and asserts operation.isCompleted is false before and true after the backing future resolves; it uses only pre-existing public API (fromFuture, isCompleted) and introduces no API added by the fix, so it is semantically equivalent to the reported defect. Strict evidence (both pre- and post-minimization) shows build passing on both revisions, buggy differential isolating that selector, fixed clean on isolated/suite/reversed runs, 3 repetitions with 3 deterministic fingerprint groups, and a green fixed full suite. The minimized patch drops the CancelableCompleter doc rewrites and the fromFuture doc edit from the original commit; the doc lines it retains sit on the changed isCompleted getter and the adjacent cancel() semantics that the getter's meaning depends on, so no unrelated refactor, feature extension, config-only, or test-only change remains. active_same_project_root_causes is empty, so this root cause is not a duplicate of any active registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T02:52:07.277601+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8ad069b7157378b2da76e7ffaa2094e5e7f8b9af187c58b14edb884f64db05f7",
+      "response_sha256": "310d440b0ca21f4bb7f2a74207e2f386bd54b6c6e98f25d8e57d7bcedf9a7043",
+      "response_id": "msg_0431fea723c44c888673da48252472af",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7837119155555556,
+        "input_tokens": 12585,
+        "output_tokens": 888
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/async#176",
+      "rationale": "The minimized production patch carries exactly one behavioral edit: `CancelableOperation.isCompleted` changes from delegating to `_completer.isCompleted` (the completer's own `_isCompleted` flag, set synchronously by `complete`/`completeError`) to `_completer._inner.isCompleted` (actual result availability). That is precisely the defect named by the fix commit subject 'Make isComplete reflect result availability' and by the CHANGELOG line in the original commit: 'Fix a bug in `CancelableOperation.isComplete` where it may appear to be complete and no longer be cancelable when it in fact could still be canceled.' The pre-fix doc comment removed by the patch ('As such, [isCompleted] is true from the moment this [CancelableOperation] is created, regardless of whether [inner] has completed yet or not') documents the buggy behavior, confirming it is pre-existing rather than introduced. Traceability resolves the fix commit to issue 176 (verified_fix_issue_numbers=[176]), which matches the single allowed root cause key. The reproducing trigger, `test/cancelable_operation_test.dart::is not complete until the result is available`, constructs `CancelableOperation.fromFuture(backingWork.future)` and asserts `operation.isCompleted` is false before the backing future resolves and true afterward; it exercises only the pre-existing public `fromFuture` and `isCompleted` surface, so it introduces no dependency on any API added by the fix. The second declared selector is only adjusted with `await flushMicrotasks()` to accommodate the now-asynchronous transition and passes in both revisions, consistent with the non-reproducing-selector requirement. Remaining diff content in the minimized patch is dartdoc text in the same hunk describing the corrected `cancel`/`isCompleted` contract, not a refactor, feature extension, or config/test change, and the sole functional line is retained. Strict evidence (not a status label) supports runtime validity: build.both_versions, trigger.buggy_differential, trigger.deterministic (3 fingerprint groups), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green all passed post-minimization with 38 matrix runs and 3 repetitions, failed_checks empty. active_same_project_root_causes is empty, so no duplicate root cause exists.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/minimized-production.patch::lib/src/cancelable_operation.dart",
+        "patches/trigger-tests.patch::test/cancelable_operation_test.dart",
+        "patches/original-commit.patch::CHANGELOG.md",
+        "source_candidate.subject",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The body text of dart-archive/async#176 was not supplied; the defect identity rests on the fix commit subject, the removed buggy dartdoc, the CHANGELOG entry, and the fix_commit_to_issue traceability path rather than on the issue report itself.",
+        "The minimized patch still includes dartdoc rewording for `cancel()` and `isCompleted` alongside the single functional line; it is behavior-describing and non-executable, but the patch is not reduced to the one-line change.",
+        "Only one of the two declared selectors reproduces the defect; the other is a timing adjustment that passes in both revisions and contributes no differential signal.",
+        "The trigger depends on microtask ordering (`await backingWork.future`) to observe the transition; determinism is supported by 3 matching fingerprint groups but ordering-sensitive tests remain more fragile than value-based ones.",
+        "require_analyze_clean is false, so analyzer findings are diagnostic only and were not gated."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T02:52:38.381968+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8ad069b7157378b2da76e7ffaa2094e5e7f8b9af187c58b14edb884f64db05f7",
+      "response_sha256": "0800b3bca4853e0f71cc2850402df97e1e9815c4716b43e0535c55d06790a77a",
+      "response_id": "msg_e3f57a022b2b45d89946bfb6ba32cca9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6930516737313432,
+        "input_tokens": 12212,
+        "output_tokens": 733
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/async#176",
+      "rationale": "The minimized production patch carries exactly one behavioral edit in lib/src/cancelable_operation.dart: CancelableOperation.isCompleted stops delegating to _completer.isCompleted (true as soon as complete() is called, even with a pending Future argument) and instead reads _completer._inner.isCompleted, so it now reflects whether the result is actually available. This matches the commit subject 'Make isComplete reflect result availability', the CHANGELOG entry in patches/original-commit.patch ('isComplete ... may appear to be complete and no longer be cancelable when it in fact could still be canceled'), and issue 176, which traceability.paths verifies as linked through fix_commit_to_issue with verified_fix_issue_numbers=[176]. The defect is pre-existing: the buggy revision's own doc comment asserted isCompleted is true from the moment fromFuture is called, which is the mis-specified behavior being corrected. The reproducing trigger 'is not complete until the result is available' builds a CancelableOperation.fromFuture over an unfinished Completer and asserts operation.isCompleted is false before and true after the backing future resolves; it uses only pre-existing public API (fromFuture, isCompleted) and introduces no API added by the fix, so it is semantically equivalent to the reported defect. Strict evidence (both pre- and post-minimization) shows build passing on both revisions, buggy differential isolating that selector, fixed clean on isolated/suite/reversed runs, 3 repetitions with 3 deterministic fingerprint groups, and a green fixed full suite. The minimized patch drops the CancelableCompleter doc rewrites and the fromFuture doc edit from the original commit; the doc lines it retains sit on the changed isCompleted getter and the adjacent cancel() semantics that the getter's meaning depends on, so no unrelated refactor, feature extension, config-only, or test-only change remains. active_same_project_root_causes is empty, so this root cause is not a duplicate of any active registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/cancelable_operation.dart",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "traceability.verified_fix_issue_numbers",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The body of dart-archive/async#176 is not supplied verbatim; the issue-to-defect match rests on the verified fix_commit_to_issue link, PR 178, the commit subject, and the CHANGELOG text rather than on the reporter's own words.",
+        "The minimized patch still edits the doc comment on cancel(), which has no behavior change; it is tied to the isCompleted semantics but is strictly documentation.",
+        "The second declared trigger 'sends errors in a future to the future' does not reproduce the defect; it is an existing test amended with await flushMicrotasks() to stay valid under the new timing, so it contributes no independent fault evidence."
+      ]
+    }
+  ]
+}

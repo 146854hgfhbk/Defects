@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-804",
+  "technical_evidence_sha256": "b0085b5dbed9df469425319f0d36a07c3bc1a02dd8b13490e1cc4c8b928c50e3",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "a6b159a04e1302ffbbadff2fd6b3aa9010302ab1430bb0c6fe3bcf7c040cdb5a",
+  "reviewed_at": "2026-08-12T10:01:37.558589+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "intel/rohd#183",
+  "rationale": "Issue #183 reports that LogicValue.ofString fails with FormatException when binary strings exceed maximum positive signed int value (reproducer: LogicValue.ofString('1' * 64)). The minimized production patch introduces _unsignedBinaryParse helper that handles unsigned interpretation via BigInt+hex roundtrip when int.tryParse fails, replacing direct int.parse calls at two sites in LogicValue.ofString and one in bin(). The trigger test 'big unsigned int string' exactly matches the issue reproducer. Runtime evidence confirms: buggy version throws FormatException on this test (trigger.buggy_differential passed with reproduced selector), fixed version passes (trigger.fixed_clean passed), deterministic across 3 repetitions, and full suite green on fixed. The patch contains only the parsing fix with no formatting, refactoring, documentation-only, or feature extension changes. No active same-project root causes provided to check for duplication.\n\nIssue #183 reports LogicValue.ofString failing with FormatException when binary strings exceed max positive int64 (demonstrated with '1'*64). The minimized production patch introduces _unsignedBinaryParse helper to handle unsigned interpretation via BigInt→hex→'0x' prefix roundtrip, replacing direct int.parse calls at three sites (two in ofString, one in bin()). The trigger test 'big unsigned int string' exactly matches the issue reproducer: LogicValue.ofString('1' * 64) expecting equality to LogicValue.ofInt(-1, 64) (unsigned bit pattern 0xFFFFFFFFFFFFFFFF). Strict runtime evidence confirms: buggy version reproduces only this trigger (trigger.buggy_differential passed), fixed version passes all tests (trigger.fixed_clean passed), deterministic across 3 repetitions. The patch contains no formatting, documentation-only, or feature additions—only the parsing logic fix. No active same-project root causes provided for duplicate checking.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T10:01:24.501799+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a6b159a04e1302ffbbadff2fd6b3aa9010302ab1430bb0c6fe3bcf7c040cdb5a",
+      "response_sha256": "e6bc51ae459061e072dfd9eea544c1466d7ed23d5d8f40f4c147f0d1a132cf49",
+      "response_id": "msg_e5e59a9e-a5c0-4d1e-82",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3007
+        },
+        "cache_creation_input_tokens": 3007,
+        "cache_read_input_tokens": 6792,
+        "input_tokens": 8894,
+        "output_tokens": 885
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#183",
+      "rationale": "Issue #183 reports that LogicValue.ofString fails with FormatException when binary strings exceed maximum positive signed int value (reproducer: LogicValue.ofString('1' * 64)). The minimized production patch introduces _unsignedBinaryParse helper that handles unsigned interpretation via BigInt+hex roundtrip when int.tryParse fails, replacing direct int.parse calls at two sites in LogicValue.ofString and one in bin(). The trigger test 'big unsigned int string' exactly matches the issue reproducer. Runtime evidence confirms: buggy version throws FormatException on this test (trigger.buggy_differential passed with reproduced selector), fixed version passes (trigger.fixed_clean passed), deterministic across 3 repetitions, and full suite green on fixed. The patch contains only the parsing fix with no formatting, refactoring, documentation-only, or feature extension changes. No active same-project root causes provided to check for duplication.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.trigger.deterministic",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_tests[0].name",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "Unsigned interpretation correctness at int64 boundary (test expects -1 as signed representation of 0xFFFFFFFFFFFFFFFF)",
+        "Performance impact of BigInt roundtrip for large parseable strings"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T10:01:37.558332+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a6b159a04e1302ffbbadff2fd6b3aa9010302ab1430bb0c6fe3bcf7c040cdb5a",
+      "response_sha256": "97920f1c065bd05ddd0840d2370b381ef0e59d59a698287870d7c9af2e4c21d7",
+      "response_id": "msg_42bd0da0-529c-4434-80",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2614
+        },
+        "cache_creation_input_tokens": 2614,
+        "cache_read_input_tokens": 6888,
+        "input_tokens": 8894,
+        "output_tokens": 859
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#183",
+      "rationale": "Issue #183 reports LogicValue.ofString failing with FormatException when binary strings exceed max positive int64 (demonstrated with '1'*64). The minimized production patch introduces _unsignedBinaryParse helper to handle unsigned interpretation via BigInt→hex→'0x' prefix roundtrip, replacing direct int.parse calls at three sites (two in ofString, one in bin()). The trigger test 'big unsigned int string' exactly matches the issue reproducer: LogicValue.ofString('1' * 64) expecting equality to LogicValue.ofInt(-1, 64) (unsigned bit pattern 0xFFFFFFFFFFFFFFFF). Strict runtime evidence confirms: buggy version reproduces only this trigger (trigger.buggy_differential passed), fixed version passes all tests (trigger.fixed_clean passed), deterministic across 3 repetitions. The patch contains no formatting, documentation-only, or feature additions—only the parsing logic fix. No active same-project root causes provided for duplicate checking.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.trigger.deterministic",
+        "issue_urls[0]",
+        "source_candidate.issue_check.linked_issues[0].body"
+      ],
+      "risks": [
+        "Unsigned interpretation semantic verified by test expectation of -1 (signed) == 0xFFFFFFFFFFFFFFFF (unsigned)",
+        "Performance impact of BigInt roundtrip for large parseable strings not quantified"
+      ]
+    }
+  ]
+}

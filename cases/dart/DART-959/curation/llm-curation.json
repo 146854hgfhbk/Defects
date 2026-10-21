@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-959",
+  "technical_evidence_sha256": "e278bb9a50da11ff8db68bf430c2d04319241d9e2250a20de66c9d9b85e52320",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "e190f51e210181f1792519826c7c6b36925f6904499670d11d6b19fc7ff5d4be",
+  "reviewed_at": "2026-08-14T06:18:08.248222+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#826",
+  "rationale": "Issue #826 (labeled bug, closed by PR #873) reports that `--fix-function-typedefs` rewrites `typedef void MyFunction(var parameter);` into `typedef MyFunction = void Function(var dynamic parameter);`, which does not compile. The minimized production patch touches only lib/src/source_visitor.dart in visitSimpleFormalParameter: it moves the unconditional `modifier(node.keyword)` out of the shared path and, inside the `_insideNewTypedefFix && !hasType` branch where `dynamic` is synthesized, suppresses the `var` keyword while still emitting its preceding comments via writePrecedingCommentsAndNewlines. That is exactly the reported defect's mechanism, and it is a pre-existing behavior bug in the existing fix path, not a new feature. The minimized patch excludes the CHANGELOG.md entry, the pubspec.yaml version bump to 1.3.4-dev, and the fixture change present in the original commit, so it contains no documentation, configuration, or test-only content and no unrelated refactor beyond the required relocation of the modifier call. The trigger is the project-native fixture test/fixes/function_typedefs.unit as changed in the same upstream fixing commit, exercised through the existing test/fix_test.dart harness (selector 'fixes function_typedefs.unit'); it adds `>>> issue #826` and `>>> issue #826 with comment` cases matching the issue reproducer verbatim, plus corrections to pre-existing `var v3` expectations in the positional/optional/named metadata cases. It relies on no production API introduced by the fix, only on the pre-existing --fix-function-typedefs flag. Strict machine evidence for both the original and post-minimization states reports all gates passed: build.both_versions, selectors.present_and_unique (1 valid, unique), trigger.buggy_differential reproducing test/fix_test.dart::fixes function_typedefs.unit, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), matrix.complete (32 runs, 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty and dart-lang/dart_style#826 is the sole entry in allowed_root_cause_ids, so this root cause is not a duplicate.\n\nIssue #826 (labeled bug, closed by PR 873) reports that `--fix-function-typedefs` rewrites `typedef void MyFunction(var parameter);` into `typedef MyFunction = void Function(var dynamic parameter);`, which does not compile. The minimized production patch in lib/src/source_visitor.dart addresses exactly that: the unconditional `modifier(node.keyword)` is moved into the non-typedef-fix branch, and in the `_insideNewTypedefFix && !hasType` branch the `var` keyword is suppressed (while its preceding comments are still emitted via writePrecedingCommentsAndNewlines) because `dynamic` is being synthesized in its place. `final` is still emitted, consistent with `final dynamic x` being valid, so the behavior change is narrowly scoped to the reported invalid emission. The minimized patch contains only these two behavioral hunks; the CHANGELOG.md entry and the pubspec.yaml 1.3.3 -> 1.3.4-dev version bump present in the original commit are excluded, and no refactor, formatting, or feature extension is present. The trigger is the project-native fixture test/fixes/function_typedefs.unit driven by the pre-existing test/fix_test.dart harness under the existing test name \"fixes function_typedefs.unit\"; it is the unmodified upstream test portion of the same fixing commit, adds the literal issue reproducer (`typedef void MyFunction(var parameter);` -> `dynamic parameter`) plus a comment-retention variant, corrects three prior expectations that had baked in the buggy `var dynamic` output, and depends on no production API introduced by the fix (the `--fix-function-typedefs` path and `_insideNewTypedefFix` exist in the buggy revision 302882a). Strict machine evidence passes on both the original and post-minimization runs: build on both versions, unique selector, buggy differential reproducing test/fix_test.dart::fixes function_typedefs.unit, deterministic fingerprints over 3 repetitions across a 32-run matrix, fixed isolated/suite/reversed all clean, and fixed full suite green with buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty and dart-lang/dart_style#826 is in allowed_root_cause_ids, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:17:39.093380+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "e190f51e210181f1792519826c7c6b36925f6904499670d11d6b19fc7ff5d4be",
+      "response_sha256": "3cd564258b884b56a948f45ffcf72ea6271b79db3f0ec1c7ada3e298850f3ed6",
+      "response_id": "msg_aaae20633a4b46ff8820c8c20ed453a7",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5849265323383084,
+        "input_tokens": 14973,
+        "output_tokens": 826
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#826",
+      "rationale": "Issue #826 (labeled bug, closed by PR #873) reports that `--fix-function-typedefs` rewrites `typedef void MyFunction(var parameter);` into `typedef MyFunction = void Function(var dynamic parameter);`, which does not compile. The minimized production patch touches only lib/src/source_visitor.dart in visitSimpleFormalParameter: it moves the unconditional `modifier(node.keyword)` out of the shared path and, inside the `_insideNewTypedefFix && !hasType` branch where `dynamic` is synthesized, suppresses the `var` keyword while still emitting its preceding comments via writePrecedingCommentsAndNewlines. That is exactly the reported defect's mechanism, and it is a pre-existing behavior bug in the existing fix path, not a new feature. The minimized patch excludes the CHANGELOG.md entry, the pubspec.yaml version bump to 1.3.4-dev, and the fixture change present in the original commit, so it contains no documentation, configuration, or test-only content and no unrelated refactor beyond the required relocation of the modifier call. The trigger is the project-native fixture test/fixes/function_typedefs.unit as changed in the same upstream fixing commit, exercised through the existing test/fix_test.dart harness (selector 'fixes function_typedefs.unit'); it adds `>>> issue #826` and `>>> issue #826 with comment` cases matching the issue reproducer verbatim, plus corrections to pre-existing `var v3` expectations in the positional/optional/named metadata cases. It relies on no production API introduced by the fix, only on the pre-existing --fix-function-typedefs flag. Strict machine evidence for both the original and post-minimization states reports all gates passed: build.both_versions, selectors.present_and_unique (1 valid, unique), trigger.buggy_differential reproducing test/fix_test.dart::fixes function_typedefs.unit, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), matrix.complete (32 runs, 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty and dart-lang/dart_style#826 is the sole entry in allowed_root_cause_ids, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/fixes/function_typedefs.unit",
+        "trigger_tests[0]",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The issue text also mentions `final dynamic`, but the fix intentionally strips only `var` (the fixture retains `final dynamic v2`) since `final dynamic` is valid Dart; the accepted defect scope is therefore narrower than the issue's phrasing.",
+        "The trigger is a .unit fixture rather than a Dart test body, so the failure surfaces through the fix_test.dart harness; test granularity is at file level ('fixes function_typedefs.unit'), meaning the selector also covers the pre-existing cases in that fixture.",
+        "The same fixture hunk updates three pre-existing expectations (`var dynamic v3` to `dynamic v3`), so the trigger encodes both the new reproducer and corrected legacy expectations; these cannot be separated within the single selector.",
+        "require_analyze_clean is false, so static-analysis cleanliness on either revision is unverified."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:18:08.247909+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "e190f51e210181f1792519826c7c6b36925f6904499670d11d6b19fc7ff5d4be",
+      "response_sha256": "041f53cedc7c31147df2e9117334f305b47f56bafd4e2f83b2eadd9150d7451e",
+      "response_id": "msg_4d2daf17b92b407ab312e7f67d48ed1a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5345275722056385,
+        "input_tokens": 15029,
+        "output_tokens": 795
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#826",
+      "rationale": "Issue #826 (labeled bug, closed by PR 873) reports that `--fix-function-typedefs` rewrites `typedef void MyFunction(var parameter);` into `typedef MyFunction = void Function(var dynamic parameter);`, which does not compile. The minimized production patch in lib/src/source_visitor.dart addresses exactly that: the unconditional `modifier(node.keyword)` is moved into the non-typedef-fix branch, and in the `_insideNewTypedefFix && !hasType` branch the `var` keyword is suppressed (while its preceding comments are still emitted via writePrecedingCommentsAndNewlines) because `dynamic` is being synthesized in its place. `final` is still emitted, consistent with `final dynamic x` being valid, so the behavior change is narrowly scoped to the reported invalid emission. The minimized patch contains only these two behavioral hunks; the CHANGELOG.md entry and the pubspec.yaml 1.3.3 -> 1.3.4-dev version bump present in the original commit are excluded, and no refactor, formatting, or feature extension is present. The trigger is the project-native fixture test/fixes/function_typedefs.unit driven by the pre-existing test/fix_test.dart harness under the existing test name \"fixes function_typedefs.unit\"; it is the unmodified upstream test portion of the same fixing commit, adds the literal issue reproducer (`typedef void MyFunction(var parameter);` -> `dynamic parameter`) plus a comment-retention variant, corrects three prior expectations that had baked in the buggy `var dynamic` output, and depends on no production API introduced by the fix (the `--fix-function-typedefs` path and `_insideNewTypedefFix` exist in the buggy revision 302882a). Strict machine evidence passes on both the original and post-minimization runs: build on both versions, unique selector, buggy differential reproducing test/fix_test.dart::fixes function_typedefs.unit, deterministic fingerprints over 3 repetitions across a 32-run matrix, fixed isolated/suite/reversed all clean, and fixed full suite green with buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty and dart-lang/dart_style#826 is in allowed_root_cause_ids, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/fixes/function_typedefs.unit",
+        "trigger_tests",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "source_candidate.issue_check.linked_issues",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "Trigger granularity is coarse: the selector \"fixes function_typedefs.unit\" covers the whole fixture file, so the three corrected pre-existing expectations (var v3 -> dynamic v3) contribute to the failure alongside the two new issue #826 cases; the failing assertion cannot be attributed to a single case from the supplied evidence.",
+        "The issue text also claims `final` yields `final dynamic`; the fix intentionally leaves `final` untouched, so the accepted defect scope is narrower than the reporter's full description.",
+        "Fixture-format triggers (.unit) depend on the dart_style test harness rather than a standalone Dart test function, which couples the trigger to harness behavior in the buggy revision."
+      ]
+    }
+  ]
+}

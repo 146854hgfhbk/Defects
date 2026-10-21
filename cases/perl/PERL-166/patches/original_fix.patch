@@ -1,0 +1,67 @@
+diff --git a/Changes b/Changes
+index ab071b4..d72fd0b 100644
+--- a/Changes
++++ b/Changes
+@@ -7,6 +7,8 @@ TODO: http://stevehanov.ca/blog/index.php?id=104 compression
+         - Fix minor t/12_blessed.t typo.
+         - Fix GH #112: encode large whole-number NV values without .0 on
+           32-bit Perl (values exceeding UV_MAX that Perl stores as float).
++        - Fix GH #197: prefer IOK over pNOK when encoding values where
++          IV is accurate but NV is imprecise (SvNOK not set).
+ 
+ 4.41 2026-05-27 (rurban)
+ 	- Fix BOM-shift PV-corruption SIGABRT (CVE-2026-9516) (patch by Paul Johnson)
+diff --git a/XS.xs b/XS.xs
+index dace48e..75473de 100755
+--- a/XS.xs
++++ b/XS.xs
+@@ -2024,7 +2024,7 @@ encode_sv (pTHX_ enc_t *enc, SV *sv, SV *typesv)
+         UNLIKELY (sv == &PL_sv_yes || sv == &PL_sv_no)
+ #endif
+      ) type = JSON_TYPE_BOOL;
+-      else if (SvNOKp (sv)) type = JSON_TYPE_FLOAT;
++      else if (SvNOK (sv)) type = JSON_TYPE_FLOAT;
+       else if (SvIOKp (sv)) type = JSON_TYPE_INT;
+       else if (SvPOKp (sv)) type = JSON_TYPE_STRING;
+       else if (SvROK (sv)) process_ref = 1;
+diff --git a/t/117_numbers.t b/t/117_numbers.t
+index bf323c2..0c60b2b 100644
+--- a/t/117_numbers.t
++++ b/t/117_numbers.t
+@@ -3,7 +3,7 @@ use Cpanel::JSON::XS;
+ use Test::More;
+ use Config;
+ plan skip_all => "Yet unhandled inf/nan with $^O" if $^O eq 'dec_osf';
+-plan tests => 28;
++plan tests => 30;
+ 
+ # infnan_mode = 0:
+ is encode_json([9**9**9]),         '[null]', "inf -> null stringify_infnan(0)";
+@@ -142,4 +142,24 @@ is encode_json({test => [$num, $str]}), qq|{"test":[$resnum,"bar"]}|,
+ # Floats that fit in native range (like 1.0) still get .0.
+ is encode_json([1.0]), '[1.0]', 'GH#112 float 1.0 stays 1.0';
+ is encode_json([5439409363]), '[5439409363]', 'GH#112 large int (in IV) no .0';
+-is encode_json([3.14]), '[3.14]', 'GH#112 fractional float unchanged';
+\ No newline at end of file
++is encode_json([3.14]), '[3.14]', 'GH#112 fractional float unchanged';
++
++# GH #197: IOK + pNOK but not NOK — NV imprecise, IV accurate
++# When a large int is used in a float expression, perl upgrades the
++# scalar to PVNV and sets pNOK, but not NOK (NV lost precision).
++# We must encode the accurate integer, not the imprecise float.
++{
++    my $l = 412345678901234567;
++    my $g = $l + 1.2;  # upgrades $l: sets pNOK, keeps IOK, does NOT set NOK
++    is encode_json([$l]), '[412345678901234567]',
++        'GH#197 large int with stale NV: use IOK, not pNOK';
++}
++
++# GH #197: after int($float), both NOK and IOK are set.
++# The NV is the accurate full value (with fraction), prefer it.
++{
++    my $f = 1.5;
++    int($f);  # sets IOK (IV=1), keeps NOK (NV=1.5)
++    is encode_json([$f]), '[1.5]',
++        'GH#197 int($float) still encodes as float (NOK set)';
++}
+\ No newline at end of file

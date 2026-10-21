@@ -1,0 +1,95 @@
+diff --git a/lib/src/block_parser.dart b/lib/src/block_parser.dart
+index bbabd8c5ee1bdb5453aae851b09746a0f0877b53..a07c08a231416f99c72a74cd5e12c8de6d79ee5d 100644
+--- a/lib/src/block_parser.dart
++++ b/lib/src/block_parser.dart
+@@ -441,10 +441,12 @@ class FencedCodeBlockSyntax extends BlockSyntax {
+     // The Markdown tests expect a trailing newline.
+     childLines.add('');
+ 
+-    // Escape the code.
+-    var escaped = escapeHtml(childLines.join('\n'));
+-
+-    var code = Element.text('code', escaped);
++    var text = childLines.join('\n');
++    if (parser.document.encodeHtml) {
++      // Escape the code.
++      text = escapeHtml(text);
++    }
++    var code = Element.text('code', text);
+ 
+     // the info-string should be trimmed
+     // http://spec.commonmark.org/0.22/#example-100
+diff --git a/lib/src/inline_parser.dart b/lib/src/inline_parser.dart
+index d7e711d585cfcdba32a1030212097a7d7dd458f6..92572df83efd50bff479bd64a00d95d41fb27de8 100644
+--- a/lib/src/inline_parser.dart
++++ b/lib/src/inline_parser.dart
+@@ -1067,7 +1067,10 @@ class CodeSyntax extends InlineSyntax {
+   }
+ 
+   bool onMatch(InlineParser parser, Match match) {
+-    parser.addNode(Element.text('code', escapeHtml(match[2].trim())));
++    var code = match[2].trim();
++    if (parser.document.encodeHtml) code = escapeHtml(code);
++    parser.addNode(Element.text('code', code));
++
+     return true;
+   }
+ }
+diff --git a/test/document_test.dart b/test/document_test.dart
+index e5a937705341d3cc20a6f03fd4aa235dc9d5ffe3..e9744e1c0b7c52efa4c8cefabd1b19f09389fb1d 100644
+--- a/test/document_test.dart
++++ b/test/document_test.dart
+@@ -16,5 +16,53 @@ void main() {
+           const TypeMatcher<Text>()
+               .having((e) => e.text, 'text', equals('< &')));
+     });
++
++    test('encodeHtml true allow code block escaping', () {
++      var document = Document(encodeHtml: true);
++      var result = document.parseInline("```<p>Hello <em>Markdown</em></p>```");
++      expect(result, hasLength(1));
++      expect(
++          result[0],
++          const TypeMatcher<Element>().having(
++              (e) => e.textContent,
++              'text',
++              equals(
++                  "&lt;p&gt;Hello &lt;em&gt;Markdown&lt;/em&gt;&lt;/p&gt;")));
++    });
++
++    test('encodeHtml false prevents code block escaping', () {
++      var document = Document(encodeHtml: false);
++      var result = document.parseInline("```<p>Hello <em>Markdown</em></p>```");
++      expect(result, hasLength(1));
++      expect(
++          result[0],
++          const TypeMatcher<Element>().having((e) => e.textContent, 'text',
++              equals("<p>Hello <em>Markdown</em></p>")));
++    });
++
++    test('encodeHtml true allow code block escaping (BlockParser)', () {
++      var document = Document(encodeHtml: true);
++      var lines = "```\n<p>Hello <em>Markdown</em></p>\n```\n".split('\n');
++      var result = document.parseLines(lines);
++      expect(result, hasLength(1));
++      expect(
++          result[0],
++          const TypeMatcher<Element>().having(
++              (e) => e.textContent,
++              'text',
++              equals(
++                  "&lt;p&gt;Hello &lt;em&gt;Markdown&lt;/em&gt;&lt;/p&gt;\n")));
++    });
++
++    test('encodeHtml false prevents code block escaping (BlockParser)', () {
++      var document = Document(encodeHtml: false);
++      var lines = "```\n<p>Hello <em>Markdown</em></p>\n```\n".split('\n');
++      var result = document.parseLines(lines);
++      expect(result, hasLength(1));
++      expect(
++          result[0],
++          const TypeMatcher<Element>().having((e) => e.textContent, 'text',
++              equals("<p>Hello <em>Markdown</em></p>\n")));
++    });
+   });
+ }

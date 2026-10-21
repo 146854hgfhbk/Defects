@@ -1,0 +1,54 @@
+diff --git a/lib/HTTP/Request/Common.pm b/lib/HTTP/Request/Common.pm
+index 07322cb410baa33c6f30beb7cf79ca843ea57240..bec3d88476b54d48c5504a2369e32ceefd5dc7d5 100644
+--- a/lib/HTTP/Request/Common.pm
++++ b/lib/HTTP/Request/Common.pm
+@@ -87,9 +87,6 @@ sub request_type_with_data
+ 	    my $url = URI->new('http:');
+ 	    $url->query_form(ref($content) eq "HASH" ? %$content : @$content);
+ 	    $content = $url->query;
+-
+-	    # HTML/4.01 says that line breaks are represented as "CR LF" pairs (i.e., `%0D%0A')
+-	    $content =~ s/(?<!%0D)%0A/%0D%0A/g if defined($content);
+ 	}
+     }
+ 
+diff --git a/t/common-req.t b/t/common-req.t
+index 987b03ed6764ee2c745d2194becd21a5b157b839..0e4949d6cb0c0b460f4c1f60a4dbbfbe35b72d69 100644
+--- a/t/common-req.t
++++ b/t/common-req.t
+@@ -2,7 +2,6 @@ use strict;
+ use warnings;
+ 
+ use Test::More;
+-plan tests => 71;
+ 
+ use File::Spec;
+ use File::Temp qw(tempfile);
+@@ -86,9 +85,9 @@ note $r->as_string, "\n";
+ 
+ is($r->method, "POST");
+ is($r->content_type, "application/x-www-form-urlencoded");
+-is($r->content_length, 83);
+-is($r->header("bar"), "foo");
+-is($r->content, "foo=bar%3Bbaz&baz=a&baz=b&baz=c&foo=zoo%3D%26&space+=+%2B+&nl=a%0D%0Ab%0D%0Ac%0D%0A");
++is($r->content_length, 77, 'content_length');
++is($r->header("bar"), "foo", 'bar is foo');
++is($r->content, 'foo=bar%3Bbaz&baz=a&baz=b&baz=c&foo=zoo%3D%26&space+=+%2B+&nl=a%0Ab%0D%0Ac%0A');
+ 
+ $r = POST "http://example.com";
+ is($r->content_length, 0);
+@@ -184,7 +183,7 @@ like($r->content, qr/bar=24/);
+ is($r->content_type, "application/x-www-form-urlencoded");
+ is($r->content_length, 13);
+ 
+- 
++
+ #
+ # POST for File upload
+ #
+@@ -273,3 +272,5 @@ $r = HTTP::Request::Common::PATCH 'http://www.example.com',
+     'Content' => 'foobarbaz',
+     'Content-Length' => 12;   # a slight lie
+ is($r->header('Content-Length'), 9);
++
++done_testing();

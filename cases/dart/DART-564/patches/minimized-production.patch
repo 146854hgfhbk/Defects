@@ -1,0 +1,15 @@
+diff --git a/lib/src/jwt.dart b/lib/src/jwt.dart
+index 2c14a8b..ecc68fa 100644
+--- a/lib/src/jwt.dart
++++ b/lib/src/jwt.dart
+@@ -141,7 +141,9 @@ class JWT {
+           header: header,
+           audience: _parseAud(payload['aud']),
+           issuer: payload['iss'],
+-          subject: payload['sub'],
++          subject: (payload['sub'] is int)
++              ? payload['sub'].toString()
++              : payload['sub'],
+           jwtId: payload['jti'],
+         );
+       } else {

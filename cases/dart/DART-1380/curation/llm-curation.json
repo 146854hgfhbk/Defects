@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1380",
+  "technical_evidence_sha256": "78a78f93d54ec34da0b02649327d5406ec3589e0219a1981175faad4d936cb97",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "f2ceea59e611c8b298f190f778051169bad6ed367c01f69d81243eb552fef4eb",
+  "reviewed_at": "2026-08-15T08:58:37.022187+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/source_maps#40",
+  "rationale": "One coherent defect: SingleMapping.fromJson passed map['names'] directly to List<String>.from, which throws when a source map omits the optional 'names' field. The minimized production patch is a single expression change in lib/parser.dart (`map['names']` -> `map['names'] ?? []`), matching the commit subject 'Handle null names field when parsing source map files' and traceability to verified issue/PR 40. The trigger is the unmodified upstream test portion of the same fixing commit: it adds fixture MAP_WITH_SOURCE_LOCATION_AND_MISSING_NAMES (identical to the existing MAP_WITH_SOURCE_LOCATION minus the names key) and asserts the same parse results as the pre-existing 'parse with source location' test, so it exercises only pre-existing API (parse, SingleMapping.lines, entries, sourceNameId) and introduces no API added by the fix. The minimized patch is production-only, with no refactor, formatting, feature, docs, or config edits. Strict evidence for both the original and post-minimization runs reports all gates passed, including build.both_versions, trigger.buggy_differential and full_suite.buggy_reproduces_only_triggers on selector 'test/parser_test.dart::parse with source location and missing names entry', trigger.fixed_clean, full_suite.fixed_all_green, and determinism across 3 repetitions / 32 matrix runs. active_same_project_root_causes is empty, so this null-'names' root cause duplicates no active registry entry, and dart-archive/source_maps#40 is in allowed_root_cause_ids.\n\nThe production change is a single initializer guard in SingleMapping.fromJson: names = List<String>.from(map['names']) becomes List<String>.from(map['names'] ?? []), which is exactly the 'null names field' failure named in the commit subject and traced to issue 40 via fix_commit_to_merged_pr_to_issue (verified_fix_issue_numbers=[40], PR 40). The trigger adds one fixture (MAP_WITH_SOURCE_LOCATION_AND_MISSING_NAMES, identical to the existing MAP_WITH_SOURCE_LOCATION fixture minus the 'names' key) and one test that calls the pre-existing public parse() and reads pre-existing SingleMapping members (lines, entries, column, sourceUrlId, sourceColumn, sourceLine, sourceNameId), so it depends on no API introduced by the fix and reproduces precisely the omitted-names input the fix guards. The minimized production patch touches only that one line in lib/parser.dart, with no formatting, refactor, config, or doc edits; the test-only hunk is separated into patches/trigger-tests.patch. Strict evidence for both the original and post-minimization runs reports all gates passed, including trigger.buggy_differential and full_suite.buggy_reproduces_only_triggers reproducing 'test/parser_test.dart::parse with source location and missing names entry', trigger.fixed_clean, full_suite.fixed_all_green, trigger.deterministic across 3 repetitions, and build.both_versions. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and dart-archive/source_maps#40 is the supplied allowed key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T08:58:20.137126+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "f2ceea59e611c8b298f190f778051169bad6ed367c01f69d81243eb552fef4eb",
+      "response_sha256": "807c6dff89f113e6bc49eab5758408e7477211166f09a05844477876b8a445f9",
+      "response_id": "msg_4ce8854513524b14817e77197a7027ff",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6059336942288557,
+        "input_tokens": 8024,
+        "output_tokens": 642
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/source_maps#40",
+      "rationale": "One coherent defect: SingleMapping.fromJson passed map['names'] directly to List<String>.from, which throws when a source map omits the optional 'names' field. The minimized production patch is a single expression change in lib/parser.dart (`map['names']` -> `map['names'] ?? []`), matching the commit subject 'Handle null names field when parsing source map files' and traceability to verified issue/PR 40. The trigger is the unmodified upstream test portion of the same fixing commit: it adds fixture MAP_WITH_SOURCE_LOCATION_AND_MISSING_NAMES (identical to the existing MAP_WITH_SOURCE_LOCATION minus the names key) and asserts the same parse results as the pre-existing 'parse with source location' test, so it exercises only pre-existing API (parse, SingleMapping.lines, entries, sourceNameId) and introduces no API added by the fix. The minimized patch is production-only, with no refactor, formatting, feature, docs, or config edits. Strict evidence for both the original and post-minimization runs reports all gates passed, including build.both_versions, trigger.buggy_differential and full_suite.buggy_reproduces_only_triggers on selector 'test/parser_test.dart::parse with source location and missing names entry', trigger.fixed_clean, full_suite.fixed_all_green, and determinism across 3 repetitions / 32 matrix runs. active_same_project_root_causes is empty, so this null-'names' root cause duplicates no active registry entry, and dart-archive/source_maps#40 is in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "issue_urls #40 and pull_request_url #40 are the same GitHub artifact, so the defect report is the fixing PR itself rather than an independent third-party bug report; no separate reporter-supplied reproduction text was supplied.",
+        "The trigger is author-written and shipped in the fix commit, so it encodes the fix author's interpretation of correct behavior for a missing 'names' field rather than an externally reported failing scenario.",
+        "Coverage is narrow: the patch and trigger only cover an absent 'names' key, not other malformed shapes (for example non-list or null 'sources'), which remain unguarded.",
+        "Runtime claims rest entirely on the supplied machine-generated strict gates; analyzer cleanliness was not required (require_analyze_clean=false), and full_suite_repetitions=1."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T08:58:37.021858+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "f2ceea59e611c8b298f190f778051169bad6ed367c01f69d81243eb552fef4eb",
+      "response_sha256": "84fa44055d110af2ccef08634ba75b157aedbb3ffdb6021f30c534a8c1503fca",
+      "response_id": "msg_8b0c4eed92c94d3d97e8e3125886fefd",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.3969047184411276,
+        "input_tokens": 7164,
+        "output_tokens": 622
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/source_maps#40",
+      "rationale": "The production change is a single initializer guard in SingleMapping.fromJson: names = List<String>.from(map['names']) becomes List<String>.from(map['names'] ?? []), which is exactly the 'null names field' failure named in the commit subject and traced to issue 40 via fix_commit_to_merged_pr_to_issue (verified_fix_issue_numbers=[40], PR 40). The trigger adds one fixture (MAP_WITH_SOURCE_LOCATION_AND_MISSING_NAMES, identical to the existing MAP_WITH_SOURCE_LOCATION fixture minus the 'names' key) and one test that calls the pre-existing public parse() and reads pre-existing SingleMapping members (lines, entries, column, sourceUrlId, sourceColumn, sourceLine, sourceNameId), so it depends on no API introduced by the fix and reproduces precisely the omitted-names input the fix guards. The minimized production patch touches only that one line in lib/parser.dart, with no formatting, refactor, config, or doc edits; the test-only hunk is separated into patches/trigger-tests.patch. Strict evidence for both the original and post-minimization runs reports all gates passed, including trigger.buggy_differential and full_suite.buggy_reproduces_only_triggers reproducing 'test/parser_test.dart::parse with source location and missing names entry', trigger.fixed_clean, full_suite.fixed_all_green, trigger.deterministic across 3 repetitions, and build.both_versions. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and dart-archive/source_maps#40 is the supplied allowed key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.trigger.fixed_clean",
+        "case.json:source_candidate.subject",
+        "case.json:trigger_tests"
+      ],
+      "risks": [
+        "The GitHub issue body text was not supplied; the issue-to-defect link rests on the traceability path, PR title, and the semantics of the one-line null guard rather than on read issue prose.",
+        "The fix relies on Dart's dynamic Map lookup returning null for an absent key; a source map supplying 'names': null versus omitting the key are not separately covered by the single trigger, though both are handled by the same guard.",
+        "Full-suite confirmation ran only once (full_suite_repetitions=1), so flakiness at suite scope is less thoroughly sampled than the 3-repetition isolated trigger matrix."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "candidate_sha": "6b7b0dacbab147cbc47c795e5297da5a9ec2dbe8",
+  "cross_repository_issue_records": [],
+  "instance_id": "juliaintervals__intervalarithmetic.jl-577",
+  "issue_records": [
+    {
+      "body_excerpt": "This came up while working on https://github.com/JuliaIntervals/IntervalRootFinding.jl/pull/192.\r\n\r\n```julia\r\njulia> A = SMatrix{2,2}([-12..12 -12..12; -2.. -2 1..1])\r\n2\u00d72 SMatrix{2, 2, Interval{Float64}, 4} with indices SOneTo(2)\u00d7SOneTo(2):\r\n [-12.0, 12.0]  [-12.0, 12.0]\r\n  [-2.0, -2.0]    [1.0, 1.0]\r\n\r\njulia> B = SMatrix{2,2}([1.0 1.0; 1.0 1.0])\r\n2\u00d72 SMatrix{2, 2, Float64, 4} with indices SOneTo(2)\u00d7SOneTo(2):\r\n 1.0  1.0\r\n 1.0  1.0\r\n```\r\n\r\n`A*A` still works, but `A*B` and `B*A` do not work anymore.\r\n\r\n### v0.20.9\r\n\r\n```julia\r\njulia> A*B\r\n2\u00d72 SMatrix{2, 2, Interval{Float64}, 4} with indices SOneTo(2)\u00d7SOneTo(2):\r\n [-24, 24]  [-24, 24]\r\n  [-1, -1]   [-1, -1]\r\n```\r\n\r\n### v0.21.0\r\n\r\n```julia\r\njulia> A*B\r\nERROR: promotion of types Interval{Float64}, Float64 and Interval{Float64} failed to change any arguments\r\nStacktrace:\r\n  [1] error(::String, ::String, ::String)\r\n    @ Base ./error.jl:44\r\n  [2] sametype_error(input::Tuple{Interval{Float64}, Float64, Interval{Float64}})\r\n    @ Base ./promotion.jl:405\r\n  [3] not_sametype(x::Tuple{Interval{Float64}, Float64, Interval{Float64}}, y::Tuple{Interval{Float64}, Float64, Interval{Float64}})\r\n    @ Base ./promotion.jl:399\r\n  [4] promote\r\n    @ ./promotion.jl:388 [inlined]\r\n  [5] muladd(x::Interval{Float64}, y::Float64, z::Interval{Float64})\r\n    @ Base ./promotion.jl:447\r\n  [6] macro expansion\r\n    @ ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:221 [inlined]\r\n  [7] mul_loop\r\n    @ ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:188 [inlined]\r\n  [8] macro expansion\r\n    @ ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:139 [inlined]\r\n  [9] _mul\r\n    @ ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:130 [inlined]\r\n [10] *(A::SMatrix{2, 2, Interval{Float64}, 4}, B::SMatrix{2, 2, Float64, 4})\r\n    @ StaticArrays ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:11\r\n [11] top-level scope\r\n    @ REPL[67]:1\r\n```",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "number": 573,
+      "state": "closed",
+      "title": "Matrix multiplication with mixed Interval SMatrix and SMatrix broken",
+      "url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/issues/573"
+    },
+    {
+      "body_excerpt": "Closes #573",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "number": 577,
+      "state": "closed",
+      "title": "Implement `muladd`",
+      "url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/pull/577"
+    }
+  ],
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "project": "JuliaIntervals/IntervalArithmetic.jl",
+  "revision_boundary_recovery": {
+    "method": "exact_fix_commit_parent_with_identical_full_binary_patch",
+    "old_buggy_revision": "0efb7f27228faea75a2f3a5d21e2324b47173b67",
+    "old_merge_commit": "b26a28e4b0037fb83f395edc3e744dacf1c5ea53",
+    "patch_sha256": "83089975b99125666e75c49aedea48e99e7744073bda0fec58df4021c04a8440",
+    "project_toml_sha256": "1f8905dde87ec028f964609b81a841ee20bc24f27ecdc823dbb39a96a3329ad9",
+    "recovered_buggy_parent": "579ecbe8c7e1c841b078d59c8ba210a60eff586e",
+    "recovered_single_parent_fix_commit": "6b7b0dacbab147cbc47c795e5297da5a9ec2dbe8",
+    "status": "PATCH_BYTE_IDENTICAL"
+  },
+  "source": "merged_pull_request",
+  "swe_rebench": {
+    "base_commit": "579ecbe8c7e1c841b078d59c8ba210a60eff586e",
+    "environment_setup_commit": null,
+    "fail_to_pass": [
+      "decoration_tests/decoration_tests.jl",
+      "rand.jl",
+      "display_tests/display.jl",
+      "multidim_tests/multidim.jl"
+    ],
+    "image_name": null,
+    "license": null,
+    "original_base_commit": "0efb7f27228faea75a2f3a5d21e2324b47173b67"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_cross_repository_refs": [],
+    "commit_issue_refs": [
+      577
+    ],
+    "commit_message": "Implement `muladd`",
+    "original_merge_commit": "b26a28e4b0037fb83f395edc3e744dacf1c5ea53",
+    "pull_request": 577,
+    "pull_request_cross_repository_refs": [],
+    "pull_request_issue_refs": [
+      573
+    ],
+    "pull_request_title": "Implement `muladd`",
+    "refreshed_from_live_github": true
+  },
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "evidence_source": "merged_pull_request_body",
+      "fix_commit": "6b7b0dacbab147cbc47c795e5297da5a9ec2dbe8",
+      "issue_numbers": [
+        573
+      ],
+      "pull_request": 577
+    }
+  ],
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    573
+  ]
+}

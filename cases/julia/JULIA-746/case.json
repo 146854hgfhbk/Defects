@@ -1,0 +1,292 @@
+{
+  "bug_id": "JULIA-746",
+  "buggy_revision": "f425045d56f75c71493aba77e1b751f69f552e48",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "8a123a13d0da2e99f9f98ed9006aeb16f2e3b4d0",
+  "case_id": "JULIA-746",
+  "changed_production_files": [
+    "src/green_tree.jl",
+    "src/kinds.jl",
+    "src/source_files.jl",
+    "src/syntax_tree.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl",
+    "test/serialization.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "8a123a13d0da2e99f9f98ed9006aeb16f2e3b4d0",
+  "instance_id": "julialang__juliasyntax.jl-452",
+  "issue_id": 449,
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/449"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "parent_sha": "f425045d56f75c71493aba77e1b751f69f552e48",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "candidate_sha": "8a123a13d0da2e99f9f98ed9006aeb16f2e3b4d0",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "d30350b6554dad1a780d9e030757e2070b06227a7b9096b90c24d4a18a513e83",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T11:52:48Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.49615551880597014,
+      "input_tokens": 8094,
+      "output_tokens": 723
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.86, \"summary\": \"Issue #449 documents a genuine hash/equality contract violation: two GreenNode values parsed from identical source compare `==` true but produce different hashes, breaking Dict lookups. The upstream PR #452 bundles this fix with two feature additions (SyntaxNode/TreeNode equality for #450, Kind read/write serialization for #451), but minimization isolated the defect to a single necessary hunk: the new `Base.hash(node::GreenNode, h::UInt)` method in src/green_tree.jl. That hunk alone is a behavior fix to already-defined semantics, since `==` for GreenNode already existed and hash was falling back to object identity.\", \"evidence\": \"Issue #449 REPL transcript shows `x == y` true while `hash(x) == hash(y)` false, with the reporter noting 'This makes Dict's broken'. PR #452 body states 'Fixes #449 - a hash-== mismatch bug'. Minimized patch is a single added hash method mirroring the fields already used by the existing `==` (head, span, args). Minimization metadata reports hunk_count 6, kept_hunk_count 1, complete and globally_minimal with all kept hunks necessary. Runtime evidence reports stable_differential over 3 repetitions with the fixed full suite passing, and the dedicated trigger asserts equality, hash equality, and Dict key interchangeability. Upstream test file test/serialization.jl adds matching Equality/Hashing testsets for GreenNode.\", \"missing_evidence\": \"No PR number/title/body metadata in the candidate record itself (traceability is PR_MEDIATED via issue records), and no commit stats or pre-fix failure log text is included. The pass-to-fail run output for the dedicated trigger is asserted in runtime_evidence rather than shown.\", \"validation_risks\": \"The parent commit bundles feature work; if the harness ever applies the full upstream test patch instead of the dedicated trigger, the Equality/Hashing/Serialization testsets for Expr and SyntaxNode and the Kind read/write tests would fail for reasons unrelated to the isolated hash defect, inflating the failing set. The upstream tests also assert hash inequality between distinct parses, which is a probabilistic collision check rather than a strict guarantee; the dedicated trigger avoids this and should be preferred. Trigger uses `JuliaSyntax.parse(GreenNode, ...)` (internal-ish entry point) while upstream tests use `parsestmt`, so API-availability across the parent commit should be confirmed.\", \"suggested_tests\": \"Keep the dedicated GreenNode script: assert `x == y`, `hash(x) == hash(y)`, and `haskey(Dict(x => :present), y)` for two independent parses of the same source. Add a Set-based check (`length(Set([x, y])) == 1`) and a nested-subtree case to confirm hashing recurses through args. Optionally assert hash stability across repeated calls on the same object to rule out identity-derived hashing, and avoid relying on hash inequality for distinct inputs.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.86,
+    "summary": "Issue #449 documents a genuine hash/equality contract violation: two GreenNode values parsed from identical source compare `==` true but produce different hashes, breaking Dict lookups. The upstream PR #452 bundles this fix with two feature additions (SyntaxNode/TreeNode equality for #450, Kind read/write serialization for #451), but minimization isolated the defect to a single necessary hunk: the new `Base.hash(node::GreenNode, h::UInt)` method in src/green_tree.jl. That hunk alone is a behavior fix to already-defined semantics, since `==` for GreenNode already existed and hash was falling back to object identity.",
+    "evidence": "Issue #449 REPL transcript shows `x == y` true while `hash(x) == hash(y)` false, with the reporter noting 'This makes Dict's broken'. PR #452 body states 'Fixes #449 - a hash-== mismatch bug'. Minimized patch is a single added hash method mirroring the fields already used by the existing `==` (head, span, args). Minimization metadata reports hunk_count 6, kept_hunk_count 1, complete and globally_minimal with all kept hunks necessary. Runtime evidence reports stable_differential over 3 repetitions with the fixed full suite passing, and the dedicated trigger asserts equality, hash equality, and Dict key interchangeability. Upstream test file test/serialization.jl adds matching Equality/Hashing testsets for GreenNode.",
+    "missing_evidence": "No PR number/title/body metadata in the candidate record itself (traceability is PR_MEDIATED via issue records), and no commit stats or pre-fix failure log text is included. The pass-to-fail run output for the dedicated trigger is asserted in runtime_evidence rather than shown.",
+    "validation_risks": "The parent commit bundles feature work; if the harness ever applies the full upstream test patch instead of the dedicated trigger, the Equality/Hashing/Serialization testsets for Expr and SyntaxNode and the Kind read/write tests would fail for reasons unrelated to the isolated hash defect, inflating the failing set. The upstream tests also assert hash inequality between distinct parses, which is a probabilistic collision check rather than a strict guarantee; the dedicated trigger avoids this and should be preferred. Trigger uses `JuliaSyntax.parse(GreenNode, ...)` (internal-ish entry point) while upstream tests use `parsestmt`, so API-availability across the parent commit should be confirmed.",
+    "suggested_tests": "Keep the dedicated GreenNode script: assert `x == y`, `hash(x) == hash(y)`, and `haskey(Dict(x => :present), y)` for two independent parses of the same source. Add a Set-based check (`length(Set([x, y])) == 1`) and a nested-subtree case to confirm hashing recurses through args. Optionally assert hash stability across repeated calls on the same object to rule out identity-derived hashing, and avoid relying on hash inequality for distinct inputs."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "SWE-rebench-V2",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "Equality Expr",
+      "Equality SyntaxNode",
+      "Equality GreenNode",
+      "Hashing Expr",
+      "Hashing SyntaxNode",
+      "Hashing GreenNode",
+      "Serialization Expr",
+      "Serialization SyntaxNode",
+      "Serialization GreenNode"
+    ],
+    "PASS_TO_PASS": [
+      "Reference parser bugs",
+      "_printstyled",
+      "ambiguities",
+      "Tokenize",
+      "ParseStream",
+      "ParseStream constructors",
+      "ParseStream tree traversal",
+      "Inline test cases",
+      "Parser does not crash on broken code",
+      "Trivia attachment",
+      "Unicode normalization in tree conversion",
+      "Unbalanced bidirectional unicode",
+      "GreenNode",
+      "SyntaxNode",
+      "SyntaxNode pretty printing",
+      "token errors",
+      "parser errors",
+      "parser warnings",
+      "diagnostics for literal parsing",
+      "diagnostic printing",
+      "parser API",
+      "ParseError printing",
+      "tokenize() API",
+      "Expr parsing with build_tree",
+      "Expr parsing with SyntaxNode conversion",
+      "Parsing literals from strings",
+      "SourceFile lines and column indexing",
+      "SourceFile position indexing",
+      "SourceFile printing and text extraction",
+      "highlight()",
+      "Hooks for Core integration",
+      "Parse JuliaSyntax",
+      "Parse JuliaSyntax tests",
+      "Parse Base at /usr/local/julia/bin/../share/julia/base",
+      "Parse Base tests at /usr/local/julia/bin/../share/julia/test",
+      "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+    ],
+    "base_commit": "f425045d56f75c71493aba77e1b751f69f552e48",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "instance_id": "julialang__juliasyntax.jl-452",
+    "issue_url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/449",
+    "patch": "diff --git a/Project.toml b/Project.toml\nindex 6ffbaa40..e4215bd3 100644\n--- a/Project.toml\n+++ b/Project.toml\n@@ -4,13 +4,15 @@ authors = [\"Claire Foster <aka.c42f@gmail.com> and contributors\"]\n version = \"0.4.6\"\n \n [compat]\n+Serialization = \"1.0\"\n julia = \"1.0\"\n \n [deps]\n \n [extras]\n Logging = \"56ddb016-857b-54e1-b83d-db4d58db5568\"\n+Serialization = \"9e88b42a-f829-5b0c-bbe9-9e923198166b\"\n Test = \"8dfed614-e22c-5e08-85e1-65c5234f0b40\"\n \n [targets]\n-test = [\"Test\", \"Logging\"]\n+test = [\"Test\", \"Serialization\", \"Logging\"]\ndiff --git a/src/green_tree.jl b/src/green_tree.jl\nindex 28b3f3fb..c4df5163 100644\n--- a/src/green_tree.jl\n+++ b/src/green_tree.jl\n@@ -38,6 +38,7 @@ head(node::GreenNode)        = node.head\n \n Base.summary(node::GreenNode) = summary(node.head)\n \n+Base.hash(node::GreenNode, h::UInt) = hash((node.head, node.span, node.args), h)\n function Base.:(==)(n1::GreenNode, n2::GreenNode)\n     n1.head == n2.head && n1.span == n2.span && n1.args == n2.args\n end\ndiff --git a/src/kinds.jl b/src/kinds.jl\nindex 6de2f26a..f6706dd2 100644\n--- a/src/kinds.jl\n+++ b/src/kinds.jl\n@@ -922,7 +922,7 @@ const _kind_names =\n \n \"\"\"\n     K\"name\"\n-    Kind(namestr)\n+    Kind(id)\n \n `Kind` is a type tag for specifying the type of tokens and interior nodes of\n a syntax tree. Abstractly, this tag is used to define our own *sum types* for\n@@ -999,6 +999,18 @@ function Base.show(io::IO, k::Kind)\n     print(io, \"K\\\"$(convert(String, k))\\\"\")\n end\n \n+# Save the string representation rather than the bit pattern so that kinds\n+# can be serialized and deserialized across different JuliaSyntax versions.\n+function Base.write(io::IO, k::Kind)\n+    str = convert(String, k)\n+    write(io, UInt8(length(str))) + write(io, str)\n+end\n+function Base.read(io::IO, ::Type{Kind})\n+    len = read(io, UInt8)\n+    str = String(read(io, len))\n+    convert(Kind, str)\n+end\n+\n #-------------------------------------------------------------------------------\n \n \"\"\"\ndiff --git a/src/source_files.jl b/src/source_files.jl\nindex a8051a59..0ae8f385 100644\n--- a/src/source_files.jl\n+++ b/src/source_files.jl\n@@ -23,6 +23,12 @@ struct SourceFile\n     line_starts::Vector{Int}\n end\n \n+Base.hash(s::SourceFile, h::UInt) = hash((s.code, s.byte_offset, s.filename, s.first_line, s.line_starts), h)\n+function Base.:(==)(a::SourceFile, b::SourceFile)\n+    a.code == b.code && a.byte_offset == b.byte_offset && a.filename == b.filename &&\n+    a.first_line == b.first_line && a.line_starts == b.line_starts\n+end\n+\n function SourceFile(code::AbstractString; filename=nothing, first_line=1,\n                     first_index=1)\n     line_starts = Int[1]\ndiff --git a/src/syntax_tree.jl b/src/syntax_tree.jl\nindex 02ef17f4..608b9ce4 100644\n--- a/src/syntax_tree.jl\n+++ b/src/syntax_tree.jl\n@@ -17,6 +17,12 @@ mutable struct TreeNode{NodeData}   # ? prevent others from using this with Node\n     end\n end\n \n+# Exclude parent from hash and equality checks. This means that subtrees can compare equal.\n+Base.hash(node::TreeNode, h::UInt) = hash((node.children, node.data), h)\n+function Base.:(==)(a::TreeNode{T}, b::TreeNode{T}) where T\n+    a.children == b.children && a.data == b.data\n+end\n+\n # Implement \"pass-through\" semantics for field access: access fields of `data`\n # as if they were part of `TreeNode`\n function Base.getproperty(node::TreeNode, name::Symbol)\n@@ -44,6 +50,11 @@ struct SyntaxData <: AbstractSyntaxData\n     val::Any\n end\n \n+Base.hash(data::SyntaxData, h::UInt) = hash((data.source, data.raw, data.position, data.val), h)\n+function Base.:(==)(a::SyntaxData, b::SyntaxData)\n+    a.source == b.source && a.raw == b.raw && a.position == b.position && a.val == b.val\n+end\n+\n \"\"\"\n     SyntaxNode(source::SourceFile, raw::GreenNode{SyntaxHead};\n                keep_parens=false, position::Integer=1)\n",
+    "pr_url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/452",
+    "problem_statement": "GreenNode equality and hashing mismatch\n```julia-repl\r\njulia> x = JuliaSyntax.parse(JuliaSyntax.GreenNode, \"1 + 1\")\r\n     1:5      │[call]\r\n     1:1      │  Integer                ✔\r\n     2:2      │  Whitespace\r\n     3:3      │  +                      ✔\r\n     4:4      │  Whitespace\r\n     5:5      │  Integer                ✔\r\n\r\n\r\njulia> y = JuliaSyntax.parse(JuliaSyntax.GreenNode, \"1 + 1\")\r\n     1:5      │[call]\r\n     1:1      │  Integer                ✔\r\n     2:2      │  Whitespace\r\n     3:3      │  +                      ✔\r\n     4:4      │  Whitespace\r\n     5:5      │  Integer                ✔\r\n\r\n\r\njulia> x == y\r\ntrue\r\n\r\njulia> hash(x) == hash(y)\r\nfalse\r\n```\r\n\r\nThis makes `Dict`s broken.",
+    "test_patch": "diff --git a/test/runtests.jl b/test/runtests.jl\nindex bf2f93fb..317f993d 100644\n--- a/test/runtests.jl\n+++ b/test/runtests.jl\n@@ -37,3 +37,4 @@ if VERSION >= v\"1.6\"\n     include(\"parse_packages.jl\")\n end\n \n+include(\"serialization.jl\")\ndiff --git a/test/serialization.jl b/test/serialization.jl\nnew file mode 100644\nindex 00000000..5d194f05\n--- /dev/null\n+++ b/test/serialization.jl\n@@ -0,0 +1,29 @@\n+using Serialization\n+\n+@testset \"Equality $T\" for T in [Expr, SyntaxNode, JuliaSyntax.GreenNode]\n+    x = JuliaSyntax.parsestmt(T, \"f(x) = x + 2\")\n+    y = JuliaSyntax.parsestmt(T, \"f(x) = x + 2\")\n+    z = JuliaSyntax.parsestmt(T, \"f(x) = 2 + x\")\n+    @test x == y\n+    @test x != z\n+    @test y != z\n+end\n+\n+@testset \"Hashing $T\" for T in [Expr, SyntaxNode, JuliaSyntax.GreenNode]\n+    x = hash(JuliaSyntax.parsestmt(T, \"f(x) = x + 2\"))::UInt\n+    y = hash(JuliaSyntax.parsestmt(T, \"f(x) = x + 2\"))::UInt\n+    z = hash(JuliaSyntax.parsestmt(T, \"f(x) = 2 + x\"))::UInt\n+    @test x == y # Correctness\n+    @test x != z # Collision\n+    @test y != z # Collision\n+end\n+\n+@testset \"Serialization $T\" for T in [Expr, SyntaxNode, JuliaSyntax.GreenNode]\n+    x = JuliaSyntax.parsestmt(T, \"f(x) = x + 2\")\n+    f = tempname()\n+    open(f, \"w\") do io\n+        serialize(io, x)\n+    end\n+    y = open(deserialize, f, \"r\")\n+    @test x == y\n+end\n",
+    "repo": "JuliaLang/JuliaSyntax.jl",
+    "pr_description": "I need these helper functions to facilitate checking if a string parses the same way on different versions of JuliaSyntax. They're generally useful/bugfixes/implement missing functionality that should be expected, so I figure I'll include them in `src`.\r\n\r\nFixes #449 - a hash-== mismatch bug\r\nImplements #450 - supports equality on `SyntaxNode`\r\nImplements #451 - supports serialization by implementing `read` and `write` on `Kind`. I used strings instead of UInt16 to represent Kind, see inline comment for more info.",
+    "created_at": "2024-07-06 15:57:04",
+    "image_name": "docker.io/swerebenchv2/julialang-juliasyntax.jl:452-f425045",
+    "language": "julia",
+    "interface": "Method: Base.hash(node::GreenNode, h::UInt)  \nLocation: src/green_tree.jl  \nInputs:  \n- **node**: `JuliaSyntax.GreenNode` – the syntax tree node to be hashed.  \n- **h**: `UInt` – the hash seed (used by Julia's generic `hash` machinery).  \nOutputs: `UInt` – a hash value derived from the tuple `(node.head, node.span, node.args)` combined with the seed `h`.  \nDescription: Provides a deterministic hash for `GreenNode` objects so that two nodes with identical structural content produce the same hash, enabling correct use as dictionary keys and in sets.\n\nMethod: Base.:(==)(n1::GreenNode, n2::GreenNode)  \nLocation: src/green_tree.jl  \nInputs:  \n- **n1**, **n2**: `JuliaSyntax.GreenNode` – the two nodes to compare.  \nOutputs: `Bool` – `true` iff both nodes have identical `head`, `span`, and `args`; otherwise `false`.  \nDescription: Defines structural equality for `GreenNode` instances, ensuring that syntactically identical trees compare equal, which the tests use to verify parsing consistency.\n",
+    "license": "custom-check-github",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.88,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [],
+        "intent_completeness": "partial",
+        "pr_categories": [
+          "core_feat"
+        ],
+        "reasoning": "The issue reports that GreenNode equality works but its hash does not, breaking Dict usage. The added tests check that equality and hash are consistent for GreenNode (and related types) and that serialization round‑trips correctly, which directly addresses the mismatch. No test expectations contradict the issue, and the required changes are straightforward implementations of Base.hash (and related equality) methods, so the task is solvable. The issue statement is partial (only mentions GreenNode), but the tests define the full expected behavior, leading to a clean A classification.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 6,
+      "num_modified_lines": null,
+      "pr_author": "LilithHafner",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/452"
+    }
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "GreenNode equality and hashing contract"
+      ],
+      "assertion_expression_sha256": [],
+      "f2p_tests": [
+        "GreenNode equality and hashing contract"
+      ],
+      "mwe_basis": {
+        "defect": "Equal GreenNode values produced different hashes, violating Julia's hash/equality contract and breaking Dict lookup",
+        "public_api": "JuliaSyntax.parse(GreenNode, source), equality, hash, Dict",
+        "source_evidence": {
+          "extraction": "Public examples from issues #449 and #450, fixed and regression-tested by PR #452",
+          "upstream_tests_patch_sha256": "8d2f2e4a7bdf9c8e6795d92292b819f7bb519bfc836630b6e272e7b83fc8d812"
+        },
+        "upstream_issue": 449,
+        "upstream_pull_request": 452,
+        "upstream_test_files": [
+          "test/serialization.jl"
+        ]
+      },
+      "schema_version": 1
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "8f0c6e328d3efe62e998ec8fbdce5789a995a763268bafdcc0f5e1218b6cfb46",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "GreenNode equality and hashing contract"
+  ],
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "GreenNode equality and hashing contract"
+    ],
+    "exception_types": [
+      "0da15ce4be42579dac002ee468946ce27da6adb9612d25a94f0977a70042f977",
+      "ad9c4f144f9b5aeef0118fe0bcad497bc8b186c3ad315103d9f8b6880e3df878"
+    ],
+    "fingerprints": [
+      "0da15ce4be42579dac002ee468946ce27da6adb9612d25a94f0977a70042f977",
+      "ad9c4f144f9b5aeef0118fe0bcad497bc8b186c3ad315103d9f8b6880e3df878"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "8a123a13d0da2e99f9f98ed9006aeb16f2e3b4d0",
+    "parent_sha": "f425045d56f75c71493aba77e1b751f69f552e48",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "54f9be78c4fe130f6704a3fc9a8fa5a7f8d1008f0ae155b87e32e47e3defdfb2",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

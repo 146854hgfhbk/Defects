@@ -1,0 +1,253 @@
+{
+  "bug_id": "JULIA-731",
+  "buggy_revision": "0ed6717a7e119fc5a2c4b1e8ec0c11db2a0de1a4",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "b8cf0d1d13f127dfa109ead246bc7e8e11b11b8e",
+  "case_id": "JULIA-731",
+  "changed_production_files": [
+    "src/frontend/cast.jl",
+    "src/frontend/markdown.jl"
+  ],
+  "changed_test_files": [
+    "test/frontend/markdown.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "b8cf0d1d13f127dfa109ead246bc7e8e11b11b8e",
+  "instance_id": "comonicon__comonicon.jl-217",
+  "issue_id": 214,
+  "issue_urls": [
+    "https://github.com/comonicon/Comonicon.jl/issues/214"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "parent_sha": "0ed6717a7e119fc5a2c4b1e8ec0c11db2a0de1a4",
+  "project": "comonicon/Comonicon.jl",
+  "repository_url": "https://github.com/comonicon/Comonicon.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "candidate_sha": "b8cf0d1d13f127dfa109ead246bc7e8e11b11b8e",
+    "project": "comonicon/Comonicon.jl",
+    "input_sha256": "500334a942950c8c76b1fef8fdeb2e8959eb6a0d3991605cc0b6a1cb40d1f78e",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:37:32Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.36208721087893864,
+      "input_tokens": 4151,
+      "output_tokens": 637
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.88, \"summary\": \"The commit fixes a BoundsError raised when a command is defined with an empty docstring. `read_content(md::Markdown.MD)` indexed `md.content[1]` without checking for emptiness, and `has_docstring` called `first(...)` on a possibly empty collection. The patch guards both, returning the empty content and `false` respectively. This matches issue #214 and PR #217 (\\\"fix #214\\\"), and minimization keeps exactly the two markdown.jl guards as necessary.\", \"evidence\": \"Issue #214 titled 'Empty docstring causes a bounds error' provides a minimal reproducer (`\\\"\\\"\\\"\\\\n\\\"\\\"\\\" @main`) and points to the exact lines in src/frontend/markdown.jl that the patch changes. PR #217 body is 'fix #214'. Production diff adds an `isempty(content) && return false` guard in `has_docstring` and `!isempty(md.content) &&` in `read_content`. Test file test/frontend/markdown.jl is touched in the same change. Runtime evidence reports a stable differential across 3 repetitions with the full suite passing after the fix, via a dedicated trigger script.\", \"missing_evidence\": \"No named trigger test identifiers are listed, so the specific failing test case cannot be inspected. PR title/body and commit subject fields are empty in the record. The third hunk in src/frontend/cast.jl (an ArgumentError when CASTED_COMMANDS is undefined) is unexplained by the issue and was dropped by minimization; it is unclear whether it was a separate diagnostic addition bundled into the same commit.\", \"validation_risks\": \"Low. Main risk is that the trigger relies on a dedicated script rather than a named suite test, so reproducing the pre-fix failure in the harness depends on that script being preserved. The dropped cast.jl hunk means the reverted state differs from the true parent commit in one file; if any test exercises multi-command CLIs without @cast, behavior could diverge from expectations, though minimization reported all kept hunks necessary and globally minimal.\", \"suggested_tests\": \"Define a function/module with an entirely empty docstring and assert `has_docstring` returns false rather than throwing. Call `read_content` on a `Markdown.MD` with empty `content` and assert it returns the empty vector. Compile a `@main` entry with a blank docstring and assert help text generation succeeds without a BoundsError. Add a nested-MD case (`MD` whose first element is another `MD`) to confirm the recursion path is unaffected.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.88,
+    "summary": "The commit fixes a BoundsError raised when a command is defined with an empty docstring. `read_content(md::Markdown.MD)` indexed `md.content[1]` without checking for emptiness, and `has_docstring` called `first(...)` on a possibly empty collection. The patch guards both, returning the empty content and `false` respectively. This matches issue #214 and PR #217 (\"fix #214\"), and minimization keeps exactly the two markdown.jl guards as necessary.",
+    "evidence": "Issue #214 titled 'Empty docstring causes a bounds error' provides a minimal reproducer (`\"\"\"\\n\"\"\" @main`) and points to the exact lines in src/frontend/markdown.jl that the patch changes. PR #217 body is 'fix #214'. Production diff adds an `isempty(content) && return false` guard in `has_docstring` and `!isempty(md.content) &&` in `read_content`. Test file test/frontend/markdown.jl is touched in the same change. Runtime evidence reports a stable differential across 3 repetitions with the full suite passing after the fix, via a dedicated trigger script.",
+    "missing_evidence": "No named trigger test identifiers are listed, so the specific failing test case cannot be inspected. PR title/body and commit subject fields are empty in the record. The third hunk in src/frontend/cast.jl (an ArgumentError when CASTED_COMMANDS is undefined) is unexplained by the issue and was dropped by minimization; it is unclear whether it was a separate diagnostic addition bundled into the same commit.",
+    "validation_risks": "Low. Main risk is that the trigger relies on a dedicated script rather than a named suite test, so reproducing the pre-fix failure in the harness depends on that script being preserved. The dropped cast.jl hunk means the reverted state differs from the true parent commit in one file; if any test exercises multi-command CLIs without @cast, behavior could diverge from expectations, though minimization reported all kept hunks necessary and globally minimal.",
+    "suggested_tests": "Define a function/module with an entirely empty docstring and assert `has_docstring` returns false rather than throwing. Call `read_content` on a `Markdown.MD` with empty `content` and assert it returns the empty vector. Compile a `@main` entry with a blank docstring and assert help text generation succeeds without a BoundsError. Add a nested-MD case (`MD` whose first element is another `MD`) to confirm the recursion path is unaffected."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "SWE-rebench-V2",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "frontend",
+      "codegen",
+      "builder",
+      "scripts",
+      "example scripts"
+    ],
+    "PASS_TO_PASS": [
+      "options",
+      "argtype",
+      "ast"
+    ],
+    "base_commit": "0ed6717a7e119fc5a2c4b1e8ec0c11db2a0de1a4",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "instance_id": "comonicon__comonicon.jl-217",
+    "issue_url": "https://github.com/comonicon/Comonicon.jl/issues/214",
+    "patch": "diff --git a/src/frontend/cast.jl b/src/frontend/cast.jl\nindex f83454b..5aad66a 100644\n--- a/src/frontend/cast.jl\n+++ b/src/frontend/cast.jl\n@@ -521,6 +521,8 @@ end\n function codegen_multiple_main_entry(m::Module, line, cmd, configs)\n     name = configs.name\n \n+    isdefined(m, :CASTED_COMMANDS) ||\n+        throw(ArgumentError(\"expect @cast in module $m for multi-command CLI\"))\n     @gensym doc\n     return quote\n         Core.@__doc__ const COMMAND_ENTRY_DOC_STUB = nothing\ndiff --git a/src/frontend/markdown.jl b/src/frontend/markdown.jl\nindex 6191306..8ad317a 100644\n--- a/src/frontend/markdown.jl\n+++ b/src/frontend/markdown.jl\n@@ -29,7 +29,9 @@ function split_docstring(doc::Markdown.MD)\n end\n \n function has_docstring(doc::Markdown.MD)\n-    paragraph = first(read_content(doc))\n+    content = read_content(doc)\n+    isempty(content) && return false\n+    paragraph = first(content)\n     flag = paragraph isa Markdown.Paragraph && paragraph.content == Any[\"No documentation found.\"]\n     return !flag\n end\n@@ -132,7 +134,7 @@ end\n \n read_content(x) = x\n function read_content(md::Markdown.MD)\n-    if md.content[1] isa Markdown.MD\n+    if !isempty(md.content) && md.content[1] isa Markdown.MD\n         return read_content(md.content[1])\n     else\n         return md.content\n",
+    "pr_url": "https://github.com/comonicon/Comonicon.jl/pull/217",
+    "problem_statement": "Empty docstring causes a bounds error\nIf a blank command description is given, a bounds error is thrown.\r\n\r\n```julia\r\nusing Comonicon\r\n\"\"\"\r\n\"\"\"\r\n@main\r\n```\r\n\r\nThis is caused by\r\nhttps://github.com/comonicon/Comonicon.jl/blob/ebb18333389d6cdbaae2c191315d4b8c8de5290c/src/frontend/markdown.jl#L134-L140\r\n\r\nWhere we see `[1]` before checking that there is any content at all.\r\n\r\n###### Comonicon 0.12.17/master",
+    "test_patch": "diff --git a/test/frontend/markdown.jl b/test/frontend/markdown.jl\nindex e9d3f0c..6990616 100644\n--- a/test/frontend/markdown.jl\n+++ b/test/frontend/markdown.jl\n@@ -234,6 +234,22 @@ end\n     @test options[\"registry\"].hint == \"registry name\"\n end\n \n+module TestEmptyDocString\n+using Test\n+using Comonicon\n+\n+@cast test() = @test true\n+\n+\"\"\"\n+\"\"\"\n+@main\n+\n+end # TestEmptyDocString\n+\n+@testset \"empty docstring\" begin\n+    TestEmptyDocString.command_main([\"test\"])\n+end\n+\n end # TestMarkdown\n \n module TestLazyLoad\n",
+    "repo": "comonicon/Comonicon.jl",
+    "pr_description": "fix #214",
+    "created_at": "2022-08-13 03:47:26",
+    "image_name": "docker.io/swerebenchv2/comonicon-comonicon.jl:217-0ed6717",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "license": "MIT",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'",
+        "julia --project=. -e 'using Pkg; Pkg.add(\"TestEnv\")'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test(\"Comonicon\"; coverage=false, julia_args=`--color=no`)'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.99,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [
+          "https://github.com/comonicon/Comonicon.jl/blob/ebb18333389d6cdbaae2c191315d4b8c8de5290c/src/frontend/markdown.jl#L134-L140"
+        ],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports that an empty docstring triggers a bounds error when using @main, and provides a minimal reproducing example plus a link to the offending code. The test patch adds a module with an empty docstring and asserts that invoking the command does not raise, directly matching the described requirement. No mismatches between the test and the issue are present, and there are no signals of B‑category problems.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 3,
+      "num_modified_lines": null,
+      "pr_author": "Roger-luo",
+      "pr_labels": null,
+      "pr_url": "https://github.com/comonicon/Comonicon.jl/pull/217"
+    }
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "empty docstring command"
+      ],
+      "assertion_expression_sha256": [],
+      "f2p_tests": [
+        "empty docstring command"
+      ],
+      "mwe_basis": {
+        "defect": "An empty command docstring caused a BoundsError while Comonicon generated command metadata",
+        "public_api": "Comonicon @cast and @main macros plus generated command_main",
+        "source_evidence": {
+          "extraction": "Regression module and invocation extracted from the upstream test added by PR #217 for issue #214",
+          "upstream_tests_patch_sha256": "238843403e0afa4401c4232192c09301ff0ead2336b4a105debafc66deb886ad"
+        },
+        "upstream_issue": 214,
+        "upstream_pull_request": 217,
+        "upstream_test_files": [
+          "test/frontend/markdown.jl"
+        ]
+      },
+      "schema_version": 1
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "bc49f8b919e9c54e438da159426eb607214862097668f41f143a65a0f9f32014",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "empty docstring command"
+  ],
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "empty docstring command"
+    ],
+    "exception_types": [
+      "TRIGGER_EXIT_1"
+    ],
+    "fingerprints": [
+      "TRIGGER_EXIT_1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "b8cf0d1d13f127dfa109ead246bc7e8e11b11b8e",
+    "parent_sha": "0ed6717a7e119fc5a2c4b1e8ec0c11db2a0de1a4",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "c7940d3a33f5f19a9fcf84c97d13082937108f3a87b1622511232ed471fde6b0",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

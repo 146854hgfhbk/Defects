@@ -1,0 +1,32 @@
+diff --git a/lib/HTTP/Headers/Util.pm b/lib/HTTP/Headers/Util.pm
+index ee11cfbcf81841347a47cd1ac300f4cf86563446..411ba60417f80b8550e32c02143c8bfb6be875d2 100644
+--- a/lib/HTTP/Headers/Util.pm
++++ b/lib/HTTP/Headers/Util.pm
+@@ -50,7 +50,7 @@ sub _split_header_words
+ 		push(@res, [@cur]) if @cur;
+ 		@cur = ();
+ 	    }
+-	    elsif (s/^\s*;// || s/^\s+//) {
++	    elsif (s/^\s*;// || s/^\s+// || s/^=//) {
+ 		# continue
+ 	    }
+ 	    else {
+diff --git a/t/headers-util.t b/t/headers-util.t
+index 4555221943efa30ef227d59b6406efbe12c117a3..7959c9116fea2de3c1950b490bb89b7bd47056f5 100644
+--- a/t/headers-util.t
++++ b/t/headers-util.t
+@@ -28,7 +28,7 @@ my @s_tests = (
+     'basic; realm="\"foo\\\\bar\""'],
+ );
+ 
+-plan tests => @s_tests + 3;
++plan tests => @s_tests + 4;
+ 
+ for (@s_tests) {
+    my($arg, $expect) = @$_;
+@@ -44,3 +44,5 @@ note "# Extra tests\n";
+ is(join_header_words("foo" => undef, "bar" => "baz"), "foo; bar=baz");
+ is(join_header_words(), "");
+ is(join_header_words([]), "");
++# ignore bare =
++is_deeply(split_header_words("foo; =;bar=baz"), ["foo" => undef, "bar" => "baz"]);

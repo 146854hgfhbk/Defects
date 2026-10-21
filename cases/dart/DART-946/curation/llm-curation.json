@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-946",
+  "technical_evidence_sha256": "23327a340627afa7bae1ed3f57938fe13e6e4156ebdc0c3523df26719116422e",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "52c63642495eda952752241bd875537ed89b1bc83f97450ade1dd3a28653d52f",
+  "reviewed_at": "2026-08-14T06:08:00.153161+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#966",
+  "rationale": "Issue #966 (labeled bug, opened before the fix) reports that a comment placed directly above an `else if` inside a collection-literal if-element chain makes the formatter produce unexpected output. The commit message and PR #969 body identify the same root cause: every `else` in a chained if element emitted the first element's `else` token, duplicating the leading comment and dropping later ones. The minimized production patch is exactly that one token swap in lib/src/source_visitor.dart (`token(node.elseKeyword)` -> `token(element.elseKeyword)`), one hunk, one file, with the CHANGELOG, pubspec version bump, and fixture excluded. The trigger is the unchanged upstream fixture test/regression/0900/0966.stmt, whose input is the reproducer from the issue body verbatim (same for-in, if (conditionA) / two-line comment / else if (conditionB) / else shape), executed through the pre-existing test/formatter_test.dart regression harness, so it depends on no production API introduced by the fix. Strict evidence shows both original and post-minimization gates green: build on both revisions, isolated buggy differential failure on test/formatter_test.dart::regression 0966.stmt, deterministic across 3 repetitions in a complete 32-run matrix, fixed revision clean in isolated/suite/reversed runs, and buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty and dart-lang/dart_style#966 is the sole allowed verified issue key, so the root cause is not a duplicate.\n\nIssue #966 reports the formatter throwing 'produced unexpected output' when a comment sits directly above an `else if` inside a collection-literal for/if element chain. The commit message for 0fa8e861 names the exact mechanism: every `else` in a chained if element used the first element's `else` token, duplicating the comment attached to that token and dropping comments on later ones. The minimized production patch is precisely that one-token correction in lib/src/source_visitor.dart (`token(node.elseKeyword)` -> `token(element.elseKeyword)`) inside the chain iteration, so issue, fix, and trigger describe one pre-existing defect. The minimized patch contains only that single line; the CHANGELOG.md entry and pubspec.yaml version bump present in the original commit were excluded, and no refactor, formatting, feature, doc, or config change remains. The trigger is the unchanged upstream fixture test/regression/0900/0966.stmt, whose input is the reproducer from the issue body verbatim (same comment placement, same conditionA/conditionB/else chain), executed through the pre-existing test/formatter_test.dart regression harness; it depends on no production API introduced by the fix. Strict evidence for both the original and post-minimization gates reports all checks passed, including buggy differential reproduction of test/formatter_test.dart::regression 0966.stmt, deterministic fingerprints across 3 repetitions, fixed-side isolated/suite/reversed runs clean, and a full-suite buggy run failing only on the declared trigger. active_same_project_root_causes is empty, and the root cause key matches the single verified entry in allowed_root_cause_ids.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:07:39.381313+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "52c63642495eda952752241bd875537ed89b1bc83f97450ade1dd3a28653d52f",
+      "response_sha256": "92643c90882c5c04698af60b2832bd486b01a9b7c7b5e82b775f81c2b8d5f8a8",
+      "response_id": "msg_01be46c1cdb84f51b8498de57e4b8cdf",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4620759025538972,
+        "input_tokens": 13057,
+        "output_tokens": 670
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#966",
+      "rationale": "Issue #966 (labeled bug, opened before the fix) reports that a comment placed directly above an `else if` inside a collection-literal if-element chain makes the formatter produce unexpected output. The commit message and PR #969 body identify the same root cause: every `else` in a chained if element emitted the first element's `else` token, duplicating the leading comment and dropping later ones. The minimized production patch is exactly that one token swap in lib/src/source_visitor.dart (`token(node.elseKeyword)` -> `token(element.elseKeyword)`), one hunk, one file, with the CHANGELOG, pubspec version bump, and fixture excluded. The trigger is the unchanged upstream fixture test/regression/0900/0966.stmt, whose input is the reproducer from the issue body verbatim (same for-in, if (conditionA) / two-line comment / else if (conditionB) / else shape), executed through the pre-existing test/formatter_test.dart regression harness, so it depends on no production API introduced by the fix. Strict evidence shows both original and post-minimization gates green: build on both revisions, isolated buggy differential failure on test/formatter_test.dart::regression 0966.stmt, deterministic across 3 repetitions in a complete 32-run matrix, fixed revision clean in isolated/suite/reversed runs, and buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty and dart-lang/dart_style#966 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests[0]",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger is a data-driven fixture (.stmt) rather than a Dart test body, so its assertion strength depends on the formatter_test.dart harness parsing the >>> / <<< sections; the strict differential gate is the only direct proof it exercises the defect.",
+        "The fixture's expected output encodes upstream comment-indentation choices beyond the minimal defect symptom, so unrelated future changes to comment placement could break the trigger without the root cause regressing.",
+        "The issue reports an analysis-server exception while the fixture asserts formatted output, so the observable failure mode of the trigger is output mismatch rather than the user-visible exception; both trace to the same duplicated-comment cause per the commit message.",
+        "The committed fixture file has no trailing newline, a cosmetic fragility if the harness is ever strict about it."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:08:00.152865+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "52c63642495eda952752241bd875537ed89b1bc83f97450ade1dd3a28653d52f",
+      "response_sha256": "92c9275c93e4d3d8c9a6e1c5bff10b5b2a8e139add811f7e64be263589a850d3",
+      "response_id": "msg_4bbf204a892e4ed2bb85b60d66e0c1ce",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4089132217910448,
+        "input_tokens": 13081,
+        "output_tokens": 675
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#966",
+      "rationale": "Issue #966 reports the formatter throwing 'produced unexpected output' when a comment sits directly above an `else if` inside a collection-literal for/if element chain. The commit message for 0fa8e861 names the exact mechanism: every `else` in a chained if element used the first element's `else` token, duplicating the comment attached to that token and dropping comments on later ones. The minimized production patch is precisely that one-token correction in lib/src/source_visitor.dart (`token(node.elseKeyword)` -> `token(element.elseKeyword)`) inside the chain iteration, so issue, fix, and trigger describe one pre-existing defect. The minimized patch contains only that single line; the CHANGELOG.md entry and pubspec.yaml version bump present in the original commit were excluded, and no refactor, formatting, feature, doc, or config change remains. The trigger is the unchanged upstream fixture test/regression/0900/0966.stmt, whose input is the reproducer from the issue body verbatim (same comment placement, same conditionA/conditionB/else chain), executed through the pre-existing test/formatter_test.dart regression harness; it depends on no production API introduced by the fix. Strict evidence for both the original and post-minimization gates reports all checks passed, including buggy differential reproduction of test/formatter_test.dart::regression 0966.stmt, deterministic fingerprints across 3 repetitions, fixed-side isolated/suite/reversed runs clean, and a full-suite buggy run failing only on the declared trigger. active_same_project_root_causes is empty, and the root cause key matches the single verified entry in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "test/regression/0900/0966.stmt",
+        "lib/src/source_visitor.dart",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks",
+        "trigger_reduction.upstream_trigger_patch",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The trigger is a data fixture driven by a generic harness test name ('regression 0966.stmt') rather than a standalone Dart test function; renaming or reorganizing the regression directory would silently change selector resolution.",
+        "The fixture asserts formatted output text, so the trigger is sensitive to unrelated future formatting-style changes in dart_style even though the root cause is the else-token reuse.",
+        "The fixture file is committed without a trailing newline, which some tooling may normalize.",
+        "trigger_reduction.status remains EXECUTABLY_VALIDATED_PENDING_LLM_EQUIVALENCE and source_candidate.manual_confirmation.status is PENDING in the supplied record; this review supplies the equivalence judgment but does not update those upstream labels."
+      ]
+    }
+  ]
+}

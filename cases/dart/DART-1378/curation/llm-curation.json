@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1378",
+  "technical_evidence_sha256": "be53770a717083cd7df2de13e70efb5fdf0e0c5f390a48de3ee0d4c2115a2cd9",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "dbec4725f07408f2324f279238409d35ea85af742ff998026808acc033d6f39d",
+  "reviewed_at": "2026-08-15T08:56:48.829624+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/stack_trace#84",
+  "rationale": "One coherent defect: in the buggy revision `vmChainGap` is the constant '<asynchronous suspension>\\n', so after `trace.trim()` strips the trailing newline a gap marker on the final line is never removed by `replaceAll` and is instead parsed as a frame. The fix makes `vmChainGap` a multiLine RegExp with an optional trailing newline and filters resulting empty lines in `_parseVM`, which is exactly the behavior the CHANGELOG entry in patches/original-commit.patch describes ('Fix bug parsing asynchronous suspension gap markers at the end of stack traces') and matches the fix commit subject 'Fix async gap handling.' The reproduced trigger, test/trace_test.dart::'parses trace with async gap at end correctly', parses '#0 bop...\\n#1 twist...\\n<asynchronous suspension>\\n' and expects 2 frames, which is precisely the end-of-trace marker case; it uses only the pre-existing public API `Trace.parse` and introduces no API added by the fix. The minimized production patch touches only lib/src/trace.dart and lib/src/utils.dart with the two semantic edits, with the CHANGELOG and test hunks excluded, so no doc-only, config-only, test-only, refactor, or feature-extension content remains. Traceability resolves fix commit 45319bf -> merged PR 84 -> issue key #84, which is in allowed_root_cause_ids, and active_same_project_root_causes is empty so this root cause is not a duplicate. Both strict_original and strict_post_minimization report passed with no failed checks: build.both_versions, trigger.buggy_differential (reproduced selector as above), trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green.\n\nOne coherent defect: `vmChainGap` was a const string requiring a trailing newline ('<asynchronous suspension>\\n'), so after `trace.trim()` a suspension marker on the final line of a VM trace was never stripped and got parsed as an extra frame. The fix in lib/src/utils.dart makes the gap a multiLine RegExp with an optional trailing newline, and lib/src/trace.dart filters the now-possible empty lines before frame counting; both edits are jointly required for that single behavior and nothing else changes. The minimized production patch is identical to the production fix minus the CHANGELOG entry, so no refactor, formatting, feature, docs, config, or test noise remains. The trigger 'parses trace with async gap at end correctly' calls only the pre-existing public `Trace.parse` API with a literal trace ending in '<asynchronous suspension>\\n' and asserts 2 frames, which is exactly the reported symptom (CHANGELOG: 'Fix bug parsing asynchronous suspension gap markers at the end of stack traces'); it is the unchanged upstream test from the same fixing commit and introduces no new production API. Machine evidence confirms the pre-existing nature: strict_post_minimization shows build.both_versions pass, trigger.buggy_differential reproducing on that selector, trigger.fixed_clean and full_suite.fixed_all_green pass, deterministic over 3 repetitions with 44 matrix runs and no failed checks. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and dart-archive/stack_trace#84 is in allowed_root_cause_ids.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T08:56:00.448229+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "dbec4725f07408f2324f279238409d35ea85af742ff998026808acc033d6f39d",
+      "response_sha256": "21de6d3a83d68aa6ef492fc66a94207f99df828421a823eb18d4020e34c78e44",
+      "response_id": "msg_b610f157ffe74dc3b72f9ebd398b6221",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8599370438142621,
+        "input_tokens": 11624,
+        "output_tokens": 782
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/stack_trace#84",
+      "rationale": "One coherent defect: in the buggy revision `vmChainGap` is the constant '<asynchronous suspension>\\n', so after `trace.trim()` strips the trailing newline a gap marker on the final line is never removed by `replaceAll` and is instead parsed as a frame. The fix makes `vmChainGap` a multiLine RegExp with an optional trailing newline and filters resulting empty lines in `_parseVM`, which is exactly the behavior the CHANGELOG entry in patches/original-commit.patch describes ('Fix bug parsing asynchronous suspension gap markers at the end of stack traces') and matches the fix commit subject 'Fix async gap handling.' The reproduced trigger, test/trace_test.dart::'parses trace with async gap at end correctly', parses '#0 bop...\\n#1 twist...\\n<asynchronous suspension>\\n' and expects 2 frames, which is precisely the end-of-trace marker case; it uses only the pre-existing public API `Trace.parse` and introduces no API added by the fix. The minimized production patch touches only lib/src/trace.dart and lib/src/utils.dart with the two semantic edits, with the CHANGELOG and test hunks excluded, so no doc-only, config-only, test-only, refactor, or feature-extension content remains. Traceability resolves fix commit 45319bf -> merged PR 84 -> issue key #84, which is in allowed_root_cause_ids, and active_same_project_root_causes is empty so this root cause is not a duplicate. Both strict_original and strict_post_minimization report passed with no failed checks: build.both_versions, trigger.buggy_differential (reproduced selector as above), trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/minimized-production.patch::lib/src/utils.dart",
+        "patches/minimized-production.patch::lib/src/trace.dart",
+        "patches/trigger-tests.patch::test/trace_test.dart",
+        "patches/original-commit.patch::CHANGELOG.md",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_original.checks.trigger.fixed_clean",
+        "traceability.verified_fix_issue_numbers",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "Issue #84 and PR #84 are the same GitHub object, so the defect narrative comes from the PR/commit message and CHANGELOG rather than an independently filed bug report with reporter reproduction steps.",
+        "Two of the three declared trigger tests ('parses a package:stack_trace stack chain with end gap correctly' and 'parses trace with async gap correctly') pass on the buggy revision and add no differential value; only the end-gap test reproduces.",
+        "The chain-gap trigger test string omits a newline before '===== asynchronous gap ...', so it does not exercise a well-formed chain input; this is upstream test content and does not affect the reproduced selector.",
+        "The `.where((line) => line.isNotEmpty)` change also affects any trace containing blank lines, a slightly broader behavior change than the end-of-trace marker case, though it is required to keep line counting correct after the regex replacement."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T08:56:48.829233+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "dbec4725f07408f2324f279238409d35ea85af742ff998026808acc033d6f39d",
+      "response_sha256": "e01e986f5dcd40c92eb571c005e20f9ea479c6af2e6ee523511ff9bbd485b081",
+      "response_id": "msg_a53e70fe6859451c97d4345239d04848",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.9530160331343284,
+        "input_tokens": 12208,
+        "output_tokens": 737
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/stack_trace#84",
+      "rationale": "One coherent defect: `vmChainGap` was a const string requiring a trailing newline ('<asynchronous suspension>\\n'), so after `trace.trim()` a suspension marker on the final line of a VM trace was never stripped and got parsed as an extra frame. The fix in lib/src/utils.dart makes the gap a multiLine RegExp with an optional trailing newline, and lib/src/trace.dart filters the now-possible empty lines before frame counting; both edits are jointly required for that single behavior and nothing else changes. The minimized production patch is identical to the production fix minus the CHANGELOG entry, so no refactor, formatting, feature, docs, config, or test noise remains. The trigger 'parses trace with async gap at end correctly' calls only the pre-existing public `Trace.parse` API with a literal trace ending in '<asynchronous suspension>\\n' and asserts 2 frames, which is exactly the reported symptom (CHANGELOG: 'Fix bug parsing asynchronous suspension gap markers at the end of stack traces'); it is the unchanged upstream test from the same fixing commit and introduces no new production API. Machine evidence confirms the pre-existing nature: strict_post_minimization shows build.both_versions pass, trigger.buggy_differential reproducing on that selector, trigger.fixed_clean and full_suite.fixed_all_green pass, deterministic over 3 repetitions with 44 matrix runs and no failed checks. active_same_project_root_causes is empty, so this root cause duplicates no registry entry, and dart-archive/stack_trace#84 is in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/utils.dart",
+        "lib/src/trace.dart",
+        "test/trace_test.dart",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "traceability.verified_fix_issue_numbers",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "Traceability is degenerate: issue_urls #84 and pull_request_url #84 are the same GitHub object, so the 'issue' is the fix PR itself. There is no independent user-filed report; defect intent rests on the PR title, commit message, and CHANGELOG entry rather than a separate issue body.",
+        "Two of the three declared trigger tests ('parses a package:stack_trace stack chain with end gap correctly' and 'parses trace with async gap correctly') pass on the buggy revision and do not reproduce the defect; only 'parses trace with async gap at end correctly' is differential.",
+        "The const-to-RegExp change with multiLine anchoring is broader than strictly stripping a trailing marker (it can now match bare marker lines anywhere, including without a trailing newline); no supplied evidence rules out side effects outside the covered suite.",
+        "The first added test concatenates the chain gap without a preceding newline, so its trace string is malformed relative to real output; it contributes no defect signal."
+      ]
+    }
+  ]
+}

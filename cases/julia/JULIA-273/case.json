@@ -1,0 +1,124 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-273",
+  "bug_id": "JULIA-273",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "fredrikekre/Runic.jl",
+  "repository_url": "https://github.com/fredrikekre/Runic.jl.git",
+  "issue_urls": [
+    "https://github.com/fredrikekre/Runic.jl/issues/109"
+  ],
+  "issue_id": 109,
+  "buggy_revision": "3fea042aa6c5c9a24bbfd97747f3759092d1d16f",
+  "fixed_revision": "4649fc73440f7a68e452d06588c0f522d2a7d302",
+  "candidate_sha": "4649fc73440f7a68e452d06588c0f522d2a7d302",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "3fea042aa6c5c9a24bbfd97747f3759092d1d16f",
+  "changed_production_files": [
+    "src/runestone.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-273 anonymous function spacing"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "2cc1bfafc8ef9f8994ff4c30cbf469275696b1f89ec9e666ce8dbec87550c1eb",
+    "oracle": {
+      "public_api": "Runic.format_string",
+      "upstream_test_file": "test/runtests.jl",
+      "issue": "109",
+      "source_evidence": "isolated from the upstream issue 109 assertions in test/runtests.jl",
+      "upstream_test_patch_sha256": "4108813771a50a71590c04f4a086543208049e53a8b2433afd369f708b9e468f"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "4649fc73440f7a68e452d06588c0f522d2a7d302",
+    "project": "fredrikekre/Runic.jl",
+    "input_sha256": "42942ddaaa5f18cae5217fb6e40435f3912d7c1c39c24e3efcebf7dfe837378c",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:52:05Z",
+    "usage": {
+      "prompt_tokens": 1992,
+      "completion_tokens": 521,
+      "total_tokens": 2513
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.93,\n  \"summary\": \"Fix for a bad assertion in function signature handling that caused crashes when formatting certain valid Julia function forms (e.g., functor definitions with specific whitespace patterns). The assertion incorrectly assumed only anonymous functions or functors could have certain signature positions.\",\n  \"evidence\": \"The commit title explicitly states 'Fix bad assertion in function signatures (#110)', referencing issue #109 in the test comments. The production change removes overly strict `@assert` statements that would crash on valid input (functor definitions like `function (::Type{T})(::Int) where {T}` and `function ()() end`). The test file adds regression tests demonstrating these inputs now format correctly instead of triggering assertion failures.\",\n  \"missing_evidence\": \"The actual issue #109 body is not provided, but the test comments reference it directly and the failing inputs are clear from the test cases.\",\n  \"validation_risks\": \"Low risk. The fix removes assertions and uses a more robust `findnext` approach. The test cases clearly demonstrate the previously-crashing inputs now produce correct output.\",\n  \"suggested_tests\": \"Run the existing test suite to verify the new test cases pass. Additionally test edge cases like `function  (x)(y) end` (multiple spaces) and ensure other function formatting (standard definitions, anonymous functions) still work correctly.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.93,
+    "summary": "Fix for a bad assertion in function signature handling that caused crashes when formatting certain valid Julia function forms (e.g., functor definitions with specific whitespace patterns). The assertion incorrectly assumed only anonymous functions or functors could have certain signature positions.",
+    "evidence": "The commit title explicitly states 'Fix bad assertion in function signatures (#110)', referencing issue #109 in the test comments. The production change removes overly strict `@assert` statements that would crash on valid input (functor definitions like `function (::Type{T})(::Int) where {T}` and `function ()() end`). The test file adds regression tests demonstrating these inputs now format correctly instead of triggering assertion failures.",
+    "missing_evidence": "The actual issue #109 body is not provided, but the test comments reference it directly and the failing inputs are clear from the test cases.",
+    "validation_risks": "Low risk. The fix removes assertions and uses a more robust `findnext` approach. The test cases clearly demonstrate the previously-crashing inputs now produce correct output.",
+    "suggested_tests": "Run the existing test suite to verify the new test cases pass. Additionally test edge cases like `function  (x)(y) end` (multiple spaces) and ensure other function formatting (standard definitions, anonymous functions) still work correctly."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-273 anonymous function spacing"
+    ],
+    "exception_types": [
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+      "9757515f5b6f67cf33fc2a686878b209c00615930b4367abce35093ab5b42b96",
+      "c9035a525c6425f6adbf0450e0d4a19aad056b29f52360e945ee1af7b09df1fb"
+    ],
+    "fingerprints": [
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866",
+      "9757515f5b6f67cf33fc2a686878b209c00615930b4367abce35093ab5b42b96",
+      "c9035a525c6425f6adbf0450e0d4a19aad056b29f52360e945ee1af7b09df1fb"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

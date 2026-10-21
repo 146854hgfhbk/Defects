@@ -1,0 +1,277 @@
+diff --git a/lib/phoenix/code_reloader.ex b/lib/phoenix/code_reloader.ex
+index 9aeb034fe..931a7ccc5 100644
+--- a/lib/phoenix/code_reloader.ex
++++ b/lib/phoenix/code_reloader.ex
+@@ -30,17 +30,22 @@ defmodule Phoenix.CodeReloader do
+   applications from library dependencies.
+ 
+   This function is a no-op and returns `:ok` if Mix is not available.
++
++  ## Options
++
++    * `:reloadable_args` - additional CLI args to pass to the compiler tasks
++
+   """
+-  @spec reload(module) :: :ok | {:error, binary()}
+-  def reload(endpoint) do
+-    if Code.ensure_loaded?(Mix.Project), do: reload!(endpoint), else: :ok
++  @spec reload(module, keyword) :: :ok | {:error, binary()}
++  def reload(endpoint, opts \\ []) do
++    if Code.ensure_loaded?(Mix.Project), do: reload!(endpoint, opts), else: :ok
+   end
+ 
+   @doc """
+   Same as `reload/1` but it will raise if Mix is not available.
+   """
+-  @spec reload!(module) :: :ok | {:error, binary()}
+-  defdelegate reload!(endpoint), to: Phoenix.CodeReloader.Server
++  @spec reload!(module, keyword) :: :ok | {:error, binary()}
++  defdelegate reload!(endpoint, opts), to: Phoenix.CodeReloader.Server
+ 
+   @doc """
+   Synchronizes with the code server if it is alive.
+diff --git a/lib/phoenix/code_reloader/proxy.ex b/lib/phoenix/code_reloader/proxy.ex
+index fc203606f..2ada872bf 100644
+--- a/lib/phoenix/code_reloader/proxy.ex
++++ b/lib/phoenix/code_reloader/proxy.ex
+@@ -8,18 +8,26 @@ defmodule Phoenix.CodeReloader.Proxy do
+     GenServer.start(__MODULE__, :ok)
+   end
+ 
++  def diagnostics(proxy, diagnostics) do
++    GenServer.cast(proxy, {:diagnostics, diagnostics})
++  end
++
+   def stop(proxy) do
+-    GenServer.call(proxy, :stop)
++    GenServer.call(proxy, :stop, :infinity)
+   end
+ 
+   ## Callbacks
+ 
+   def init(:ok) do
+-    {:ok, ""}
++    {:ok, []}
++  end
++
++  def handle_cast({:diagnostics, diagnostics}, output) do
++    {:noreply, diagnostics |> Enum.map(&diagnostic_to_chars/1) |> Enum.reverse(output)}
+   end
+ 
+   def handle_call(:stop, _from, output) do
+-    {:stop, :normal, output, output}
++    {:stop, :normal, Enum.reverse(output), output}
+   end
+ 
+   def handle_info(msg, output) do
+@@ -47,6 +55,18 @@ defmodule Phoenix.CodeReloader.Proxy do
+ 
+   defp put_chars(from, reply, chars, output) do
+     send(Process.group_leader(), {:io_request, from, reply, {:put_chars, chars}})
+-    {:noreply, output <> IO.chardata_to_string(chars)}
++    {:noreply, [chars | output]}
+   end
++
++  defp diagnostic_to_chars(%{severity: :error, message: "**" <> _ = message}) do
++    "\n#{message}\n"
++  end
++
++  defp diagnostic_to_chars(%{severity: severity, message: message, file: file, position: position}) do
++    "\n#{severity}: #{message}\n  #{Path.relative_to_cwd(file)}#{position(position)}\n"
++  end
++
++  defp position({line, col}), do: ":#{line}:#{col}"
++  defp position(line) when is_integer(line) and line > 0, do: ":#{line}"
++  defp position(_), do: ""
+ end
+diff --git a/lib/phoenix/code_reloader/server.ex b/lib/phoenix/code_reloader/server.ex
+index 64f467b46..525c1e637 100644
+--- a/lib/phoenix/code_reloader/server.ex
++++ b/lib/phoenix/code_reloader/server.ex
+@@ -13,8 +13,8 @@ defmodule Phoenix.CodeReloader.Server do
+     GenServer.call(__MODULE__, :check_symlinks, :infinity)
+   end
+ 
+-  def reload!(endpoint) do
+-    GenServer.call(__MODULE__, {:reload!, endpoint}, :infinity)
++  def reload!(endpoint, opts) do
++    GenServer.call(__MODULE__, {:reload!, endpoint, opts}, :infinity)
+   end
+ 
+   def sync do
+@@ -58,9 +58,10 @@ defmodule Phoenix.CodeReloader.Server do
+     {:reply, :ok, %{state | check_symlinks: false}}
+   end
+ 
+-  def handle_call({:reload!, endpoint}, from, state) do
++  def handle_call({:reload!, endpoint, opts}, from, state) do
+     compilers = endpoint.config(:reloadable_compilers)
+-    reloadable_apps = endpoint.config(:reloadable_apps) || default_reloadable_apps()
++    apps = endpoint.config(:reloadable_apps) || default_reloadable_apps()
++    args = Keyword.get(opts, :reloadable_args, [])
+ 
+     # We do a backup of the endpoint in case compilation fails.
+     # If so we can bring it back to finish the request handling.
+@@ -70,7 +71,7 @@ defmodule Phoenix.CodeReloader.Server do
+     {res, out} =
+       proxy_io(fn ->
+         try do
+-          mix_compile(Code.ensure_loaded(Mix.Task), compilers, reloadable_apps, state.timestamp)
++          mix_compile(Code.ensure_loaded(Mix.Task), compilers, apps, args, state.timestamp)
+         catch
+           :exit, {:shutdown, 1} ->
+             :error
+@@ -159,7 +160,7 @@ defmodule Phoenix.CodeReloader.Server do
+ 
+   defp all_waiting(acc, endpoint) do
+     receive do
+-      {:"$gen_call", from, {:reload!, ^endpoint}} -> all_waiting([from | acc], endpoint)
++      {:"$gen_call", from, {:reload!, ^endpoint, _}} -> all_waiting([from | acc], endpoint)
+     after
+       0 -> acc
+     end
+@@ -174,7 +175,7 @@ defmodule Phoenix.CodeReloader.Server do
+     defp purge_protocols(_path), do: :ok
+   end
+ 
+-  defp mix_compile({:module, Mix.Task}, compilers, apps_to_reload, timestamp) do
++  defp mix_compile({:module, Mix.Task}, compilers, apps_to_reload, compile_args, timestamp) do
+     config = Mix.Project.config()
+     path = Mix.Project.consolidation_path(config)
+ 
+@@ -183,8 +184,8 @@ defmodule Phoenix.CodeReloader.Server do
+       purge_protocols(path)
+     end
+ 
+-    mix_compile_deps(Mix.Dep.cached(), apps_to_reload, compilers, timestamp, path)
+-    mix_compile_project(config[:app], apps_to_reload, compilers, timestamp, path)
++    mix_compile_deps(Mix.Dep.cached(), apps_to_reload, compile_args, compilers, timestamp, path)
++    mix_compile_project(config[:app], apps_to_reload, compile_args, compilers, timestamp, path)
+ 
+     if config[:consolidate_protocols] do
+       Code.prepend_path(path)
+@@ -193,30 +194,30 @@ defmodule Phoenix.CodeReloader.Server do
+     :ok
+   end
+ 
+-  defp mix_compile({:error, _reason}, _, _, _) do
++  defp mix_compile({:error, _reason}, _, _, _, _) do
+     raise "the Code Reloader is enabled but Mix is not available. If you want to " <>
+             "use the Code Reloader in production or inside an escript, you must add " <>
+             ":mix to your applications list. Otherwise, you must disable code reloading " <>
+             "in such environments"
+   end
+ 
+-  defp mix_compile_deps(deps, apps_to_reload, compilers, timestamp, path) do
++  defp mix_compile_deps(deps, apps_to_reload, compile_args, compilers, timestamp, path) do
+     for dep <- deps, dep.app in apps_to_reload do
+       Mix.Dep.in_dependency(dep, fn _ ->
+-        mix_compile_unless_stale_config(compilers, timestamp, path)
++        mix_compile_unless_stale_config(compilers, compile_args, timestamp, path)
+       end)
+     end
+   end
+ 
+-  defp mix_compile_project(nil, _, _, _, _), do: :ok
++  defp mix_compile_project(nil, _, _, _, _, _), do: :ok
+ 
+-  defp mix_compile_project(app, apps_to_reload, compilers, timestamp, path) do
++  defp mix_compile_project(app, apps_to_reload, compile_args, compilers, timestamp, path) do
+     if app in apps_to_reload do
+-      mix_compile_unless_stale_config(compilers, timestamp, path)
++      mix_compile_unless_stale_config(compilers, compile_args, timestamp, path)
+     end
+   end
+ 
+-  defp mix_compile_unless_stale_config(compilers, timestamp, path) do
++  defp mix_compile_unless_stale_config(compilers, compile_args, timestamp, path) do
+     manifests = Mix.Tasks.Compile.Elixir.manifests()
+     configs = Mix.Project.config_files()
+     config = Mix.Project.config()
+@@ -229,7 +230,7 @@ defmodule Phoenix.CodeReloader.Server do
+           purge_modules(Path.join(Mix.Project.app_path(config), "ebin"))
+         end
+ 
+-        mix_compile(compilers, config, path)
++        mix_compile(compilers, compile_args, config, path)
+ 
+       files ->
+         raise """
+@@ -243,7 +244,7 @@ defmodule Phoenix.CodeReloader.Server do
+     end
+   end
+ 
+-  defp mix_compile(compilers, config, consolidation_path) do
++  defp mix_compile(compilers, compile_args, config, consolidation_path) do
+     all = config[:compilers] || Mix.compilers()
+ 
+     compilers =
+@@ -255,7 +256,7 @@ defmodule Phoenix.CodeReloader.Server do
+     # We call build_structure mostly for Windows so new
+     # assets in priv are copied to the build directory.
+     Mix.Project.build_structure(config)
+-    args = ["--purge-consolidation-path-if-stale", consolidation_path]
++    args = ["--purge-consolidation-path-if-stale", consolidation_path | compile_args]
+     result = run_compilers(compilers, args, [])
+ 
+     cond do
+@@ -301,8 +302,8 @@ defmodule Phoenix.CodeReloader.Server do
+   defp run_compilers([compiler | compilers], args, acc) do
+     with {status, diagnostics} <- Mix.Task.run("compile.#{compiler}", args) do
+       # Diagnostics are written to stderr and therefore not captured,
+-      # so we print them to the group leader here
+-      Enum.each(diagnostics, &print_diagnostic/1)
++      # so we send them to the group leader here
++      Proxy.diagnostics(Process.group_leader(), diagnostics)
+       {status, diagnostics}
+     end
+     |> case do
+@@ -319,16 +320,4 @@ defmodule Phoenix.CodeReloader.Server do
+       :noop
+     end
+   end
+-
+-  defp print_diagnostic(%{severity: :error, message: "**" <> _ = message}) do
+-    IO.write("\n#{message}\n")
+-  end
+-
+-  defp print_diagnostic(%{severity: severity, message: message, file: file, position: position}) do
+-    IO.write("\n#{severity}: #{message}\n  #{Path.relative_to_cwd(file)}#{position(position)}\n")
+-  end
+-
+-  defp position({line, col}), do: ":#{line}:#{col}"
+-  defp position(line) when is_integer(line) and line > 0, do: ":#{line}"
+-  defp position(_), do: ""
+ end
+diff --git a/lib/phoenix/controller.ex b/lib/phoenix/controller.ex
+index 5cc2d1315..f2f9be3f6 100644
+--- a/lib/phoenix/controller.ex
++++ b/lib/phoenix/controller.ex
+@@ -307,7 +307,7 @@ defmodule Phoenix.Controller do
+ 
+         def call(conn, {:error, :unauthorized}) do
+           conn
+-          |> put_status(403)
++          |> put_status(:forbidden)
+           |> put_view(MyErrorView)
+           |> render(:"403")
+         end
+diff --git a/lib/phoenix/socket/transport.ex b/lib/phoenix/socket/transport.ex
+index e5a99a7ce..d2e8595bb 100644
+--- a/lib/phoenix/socket/transport.ex
++++ b/lib/phoenix/socket/transport.ex
+@@ -291,8 +291,12 @@ defmodule Phoenix.Socket.Transport do
+   Runs the code reloader if enabled.
+   """
+   def code_reload(conn, endpoint, opts) do
+-    reload? = Keyword.get(opts, :code_reloader, endpoint.config(:code_reloader))
+-    reload? && Phoenix.CodeReloader.reload(endpoint)
++    if Keyword.get(opts, :code_reloader, endpoint.config(:code_reloader)) do
++      # If the WebSocket reconnects, then often the page has already been reloaded
++      # and we don't want to print warnings twice, so we disable all warnings.
++      Phoenix.CodeReloader.reload(endpoint, reloadable_args: ~w(--no-all-warnings))
++    end
++
+     conn
+   end
+ 

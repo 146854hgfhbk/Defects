@@ -1,0 +1,80 @@
+diff --git a/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/ohosTest/ets/test/List.test.ets b/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/ohosTest/ets/test/List.test.ets
+index aeed2c933..23d03b76d 100644
+--- a/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,8 +13,8 @@
+  * limitations under the License.
+  */
+ 
+-import appTest from './app.test';
++import uiAbilityContextTest from './UIAbilityContext.test';
+ 
+ export default function testsuite() {
+-  appTest();
++  uiAbilityContextTest();
+ }
+diff --git a/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/ohosTest/ets/test/UIAbilityContext.test.ets b/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/ohosTest/ets/test/UIAbilityContext.test.ets
+new file mode 100644
+index 000000000..bc904cd80
+--- /dev/null
++++ b/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/ohosTest/ets/test/UIAbilityContext.test.ets
+@@ -0,0 +1,59 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import common from '@ohos.app.ability.common';
++import Want from '@ohos.app.ability.Want';
++import { describe, it, expect } from '@ohos/hypium';
++import { logger } from '../util/Logger';
++
++const TAG = '[Sample_ArkTSDistributedCalc_UIAbilityContext]';
++const UIABILITY_CONTEXT_KEY = 'UIAbilityContext';
++
++function wait(time: number): Promise<void> {
++  return new Promise<void>((resolve: Function) => {
++    setTimeout(resolve, time);
++  });
++}
++
++export default function uiAbilityContextTest() {
++  let delegator = AbilityDelegatorRegistry.getAbilityDelegator();
++
++  describe('UIAbilityContextTest', () => {
++    it('MainAbilityStoresUIAbilityContext_001', 0, async (done: Function) => {
++      logger.info(TAG, 'MainAbilityStoresUIAbilityContext_001 begin');
++      let want: Want = {
++        bundleName: 'ohos.samples.distributedcalc',
++        abilityName: 'MainAbility'
++      };
++      delegator.startAbility(want, (err) => {
++        logger.info(TAG, `startAbility end err ${JSON.stringify(err)}`);
++      });
++      await wait(2000);
++
++      let context = AppStorage.get<common.UIAbilityContext>(UIABILITY_CONTEXT_KEY);
++      if (context === undefined) {
++        logger.error(TAG, `${UIABILITY_CONTEXT_KEY} was not stored in AppStorage`);
++        expect(false).assertTrue();
++        done();
++        return;
++      }
++      let localhost = context.resourceManager.getStringByNameSync('localhost');
++      expect(localhost.length > 0).assertTrue();
++      logger.info(TAG, 'MainAbilityStoresUIAbilityContext_001 end');
++      done();
++    });
++  });
++}

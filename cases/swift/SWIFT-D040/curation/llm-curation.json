@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1650",
+  "technical_evidence_sha256": "e4fefa3974be3b8df83bcf10cbb86f84fcfcf89352f4d6d2f41c0ef5b57317c0",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "98b62c25e621f24708928dcea69f163b26e4fefe980a6197380128e36048d814",
+  "reviewed_at": "2026-09-09T13:47:39.733972+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "orlandos-nl/swift-json#65",
+  "rationale": "Issue #65 reports that IkigaJSONEncoder emits raw control characters (e.g. \"%0F\".removingPercentEncoding!) producing invalid JSON, and expects \\u000f as Foundation's JSONEncoder does. The minimized production patch is exactly the one behavioral hunk in Sources/_NIOJSON/Types/JSONArray.swift that adds a `case 0x00..<0x20` branch to the string-escaping switch, rewriting the byte as \\u00XX with lowercase hex. Automatic minimization dropped the only unrelated hunk (a trailing-whitespace-only edit at line ~75), leaving no refactor, formatting, feature, doc, config, or test change in the production patch. The trigger is the upstream test from the same fixing commit, testEncodeEscaping, which encodes \"Hello\\n %0F\".removingPercentEncoding! and asserts round-trip equality, byte equality with Foundation JSONEncoder, and presence of the literal \\u000f. Every API it uses (IkigaJSONEncoder, JSONEncoder/JSONDecoder, removingPercentEncoding) already exists on the buggy revision, so the FAIL_TO_PASS is a behavioral assertion failure rather than a fix-only-symbol compile error; strict evidence confirms build.both_versions PASS, trigger.buggy_differential reproducing only this selector, trigger.fixed_clean, deterministic over 3 repetitions, and fixed full suite green, both pre- and post-minimization. active_same_project_root_causes is empty, and traceability is fix_commit -> merged PR #66 -> issue #65, matching the single allowed root cause id.\n\nIssue #65 reports that IkigaJSONEncoder emits raw control characters (e.g. U+000F from \"%0F\".removingPercentEncoding!) producing invalid JSON, and states the expected output is \\u000f. The retained production hunk in Sources/_NIOJSON/Types/JSONArray.swift adds exactly that missing escape path: a `case 0x00..<0x20` branch that rewrites the byte as a \\u00XX sequence during string escaping. The trigger test testEncodeEscaping encodes \"Hello\\n %0F\".removingPercentEncoding!, round-trips it, compares byte output against Foundation's JSONEncoder, and asserts the payload contains \\\\u000f, which is the same symptom and same expected result as the issue. Traceability is fix_commit -> merged PR #66 (body: closes issue 65) -> issue #65, with verified_fix_issue_numbers=[65]. Minimization dropped hunk 1, which was a pure trailing-whitespace change at JSONArray.swift line ~75, and retained only hunk 2; the remaining diff has no refactor, feature extension, doc, config, or test content. The trigger uses only APIs present on the buggy revision (IkigaJSONEncoder, Foundation JSONEncoder/JSONDecoder, removingPercentEncoding), so it is a behavioral, not fix-only-API, failure. Strict evidence for both the original and post-minimization runs reports build.both_versions PASS, trigger.buggy_differential reproducing Tests/IkigaJSONTests/JSONTests.swift::testEncodeEscaping, trigger.fixed_clean PASS, trigger.deterministic across 3 repetitions, and full_suite.fixed_all_green with no failed checks. active_same_project_root_causes is empty, so #65 is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T13:47:18.494192+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "98b62c25e621f24708928dcea69f163b26e4fefe980a6197380128e36048d814",
+      "response_sha256": "7aa8bfa55416bbb2cd487da77ff19332227aff6876239921f346ab2fa2b50552",
+      "response_id": "msg_100e070a39fb4c9b89807e88a1f0bcfd",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5049943679601991,
+        "input_tokens": 12571,
+        "output_tokens": 620
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "orlandos-nl/swift-json#65",
+      "rationale": "Issue #65 reports that IkigaJSONEncoder emits raw control characters (e.g. \"%0F\".removingPercentEncoding!) producing invalid JSON, and expects \\u000f as Foundation's JSONEncoder does. The minimized production patch is exactly the one behavioral hunk in Sources/_NIOJSON/Types/JSONArray.swift that adds a `case 0x00..<0x20` branch to the string-escaping switch, rewriting the byte as \\u00XX with lowercase hex. Automatic minimization dropped the only unrelated hunk (a trailing-whitespace-only edit at line ~75), leaving no refactor, formatting, feature, doc, config, or test change in the production patch. The trigger is the upstream test from the same fixing commit, testEncodeEscaping, which encodes \"Hello\\n %0F\".removingPercentEncoding! and asserts round-trip equality, byte equality with Foundation JSONEncoder, and presence of the literal \\u000f. Every API it uses (IkigaJSONEncoder, JSONEncoder/JSONDecoder, removingPercentEncoding) already exists on the buggy revision, so the FAIL_TO_PASS is a behavioral assertion failure rather than a fix-only-symbol compile error; strict evidence confirms build.both_versions PASS, trigger.buggy_differential reproducing only this selector, trigger.fixed_clean, deterministic over 3 repetitions, and fixed full suite green, both pre- and post-minimization. active_same_project_root_causes is empty, and traceability is fix_commit -> merged PR #66 -> issue #65, matching the single allowed root cause id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks",
+        "case.json:minimized_patch_reference.automatic_minimization",
+        "case.json:traceability.paths"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue text is only available through the embedded source_candidate snapshot rather than an independently fetched record.",
+        "The trigger asserts byte-for-byte equality with Foundation's JSONEncoder output (XCTAssertEqual(json1, json2)), which is stricter than the reported symptom and could be brittle across Foundation versions even though it currently passes on the fixed revision.",
+        "The new range case relies on being ordered after the existing named escapes (e.g. newline) in the same switch; correctness of that ordering is inferred from the passing fixed-revision suite rather than from the full surrounding source shown here."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T13:47:39.733827+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "98b62c25e621f24708928dcea69f163b26e4fefe980a6197380128e36048d814",
+      "response_sha256": "cdf3d43a7af70f3cd78eb174e8fc0e52d03da94be4963495eb33bab1f9109761",
+      "response_id": "msg_23241c09d7f04210b3b3e35ff7c23de0",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4494497245771145,
+        "input_tokens": 12577,
+        "output_tokens": 639
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "orlandos-nl/swift-json#65",
+      "rationale": "Issue #65 reports that IkigaJSONEncoder emits raw control characters (e.g. U+000F from \"%0F\".removingPercentEncoding!) producing invalid JSON, and states the expected output is \\u000f. The retained production hunk in Sources/_NIOJSON/Types/JSONArray.swift adds exactly that missing escape path: a `case 0x00..<0x20` branch that rewrites the byte as a \\u00XX sequence during string escaping. The trigger test testEncodeEscaping encodes \"Hello\\n %0F\".removingPercentEncoding!, round-trips it, compares byte output against Foundation's JSONEncoder, and asserts the payload contains \\\\u000f, which is the same symptom and same expected result as the issue. Traceability is fix_commit -> merged PR #66 (body: closes issue 65) -> issue #65, with verified_fix_issue_numbers=[65]. Minimization dropped hunk 1, which was a pure trailing-whitespace change at JSONArray.swift line ~75, and retained only hunk 2; the remaining diff has no refactor, feature extension, doc, config, or test content. The trigger uses only APIs present on the buggy revision (IkigaJSONEncoder, Foundation JSONEncoder/JSONDecoder, removingPercentEncoding), so it is a behavioral, not fix-only-API, failure. Strict evidence for both the original and post-minimization runs reports build.both_versions PASS, trigger.buggy_differential reproducing Tests/IkigaJSONTests/JSONTests.swift::testEncodeEscaping, trigger.fixed_clean PASS, trigger.deterministic across 3 repetitions, and full_suite.fixed_all_green with no failed checks. active_same_project_root_causes is empty, so #65 is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.issue_check.traceability_paths",
+        "minimized_patch_reference.post_minimization_validation",
+        "strict_post_minimization.checks",
+        "strict_original.checks"
+      ],
+      "risks": [
+        "issue_evidence is null; issue text is only available via the embedded source_candidate copy rather than an independently fetched record.",
+        "The trigger asserts full byte equality with Foundation's JSONEncoder output (XCTAssertEqual(json1, json2)), which is slightly stricter than the issue's stated expectation and could be brittle if Foundation changes its escaping or formatting.",
+        "The trigger modifies an existing test in place rather than adding a new one, so the prior weaker assertion for \\n coverage no longer exists separately."
+      ]
+    }
+  ]
+}

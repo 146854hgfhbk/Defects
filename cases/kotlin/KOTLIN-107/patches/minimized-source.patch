@@ -1,0 +1,16 @@
+diff --git a/ktlint-cli/src/main/kotlin/com/pinterest/ktlint/cli/internal/KtlintCommandLine.kt b/ktlint-cli/src/main/kotlin/com/pinterest/ktlint/cli/internal/KtlintCommandLine.kt
+index 5a933eb66..b822c6446 100644
+--- a/ktlint-cli/src/main/kotlin/com/pinterest/ktlint/cli/internal/KtlintCommandLine.kt
++++ b/ktlint-cli/src/main/kotlin/com/pinterest/ktlint/cli/internal/KtlintCommandLine.kt
+@@ -520,7 +520,10 @@ internal class KtlintCommandLine : CliktCommand(name = "ktlint") {
+                     when {
+                         code.isStdIn -> {
+                             // Avoid Unicode characters on Windows OS to be malformed as stdout does not default to UTF-8
+-                            PrintWriter(OutputStreamWriter(System.out, UTF_8), true).printf(formattedFileContent)
++                            with(PrintWriter(OutputStreamWriter(System.out, UTF_8), true)) {
++                                write(formattedFileContent)
++                                flush()
++                            }
+                         }
+ 
+                         code.content != formattedFileContent -> {

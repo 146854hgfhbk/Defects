@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1006",
+  "technical_evidence_sha256": "374b34953f200063a7a209cfe1255c7eec925cb58be765048733d57a48d49260",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "56afa3cf6c81a6c78ca013f71a3d70febadda12b22741836ba60aeeff660be0e",
+  "reviewed_at": "2026-09-08T13:23:43.057653+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "swiftlang/swift-markdown#93",
+  "rationale": "The defect, trigger, and fix align on one behavior. The buggy code in Sources/Markdown/Parser/CommonMarkConverter.swift classified any cmark code node with backtick_count > 1 as a SymbolLink when .parseSymbolLinks was set, so CommonMark code spans that use multi-backtick delimiters to contain a literal backtick (e.g. `` ` ``) were mis-parsed as SymbolLink instead of InlineCode. The fix adds the single guard !literalContent.contains(\"`\"), which excludes exactly that case and nothing else. The fixing commit subject 'resolves #93 - allows backticks in code voice (#259)' plus traceability.verified_fix_issue_numbers=[93] ties this to the allowed issue key, and the test comments in the same commit cite issue 93 directly. The minimized production patch is one hunk touching one condition in one production file (original_hunk_count=1, retained=1, removed=0): no refactor, formatting, feature extension, doc, config, or test content is included; the test additions are carried separately in patches/trigger-tests.patch. The triggers are the unchanged upstream tests from the same fixing commit (trigger_reduction.removed_external_dependency=false), so no curator-authored substitute is involved, and they exercise only pre-existing public API (Document(parsing:options:), .parseSymbolLinks, debugDescription(options:)) — the fix introduces no new API. The three reproducing selectors assert InlineCode for backtick-containing code spans, which is precisely the reported defect; testDoubleBacktickSymbolLinkStillWorks is a same-behavior regression guard that correctly passes on both revisions. Runtime gates are machine-supplied and all green pre- and post-minimization (build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green; failed_checks empty; post_minimization_validation=PASS). active_same_project_root_causes is empty, so this root cause duplicates no active registry entry.\n\nThe single production hunk in Sources/Markdown/Parser/CommonMarkConverter.swift adds one guard clause (`!literalContent.contains(\"`\")`) to the SymbolLink branch, so a code span whose literal content itself contains a backtick is emitted as InlineCode instead of being reinterpreted as a symbol link when .parseSymbolLinks is enabled. That is exactly the behavior the three reproducing triggers assert: `Use `` ` `` to delimit`, `Use ``` ` ``` to delimit`, and `Use ``` `` ``` in code` each expect an InlineCode child, which on the buggy parent (2020df0) is produced as a SymbolLink because the pre-existing condition only checked cmark_node_get_backtick_count > 1. Traceability resolves the fix commit to issue #93 (verified_fix_issue_numbers=[93]) and the maintainer commit subject 'resolves #93 - allows backticks in code voice (#259)' names the same defect and the same narrowing rationale ('only flex when a backtick is part of the interior content'). The defect is pre-existing in the parser's symbol-link detection, not introduced by the tests. The patch is minimal: original_hunk_count=1, retained=1, removed=0, no formatting, refactor, doc, config, or behavior extension; the .symbolLink/.inlineCode return paths and their signatures are untouched, and no new production API is added. The trigger is the unchanged upstream test portion of the same fixing commit and uses only pre-existing public API (Document(parsing:options:), .parseSymbolLinks, debugDescription(options: .printSourceLocations)); testDoubleBacktickSymbolLinkStillWorks is a non-reproducing regression guard that passes on both revisions, consistent with the buggy_differential check. Strict evidence, both original and post-minimization, reports passed=true with no failed checks: builds green on both revisions, deterministic across 3 repetitions in a 50-run matrix, fixed revision isolated/suite/reversed all green, and the buggy full suite fails only on the three reproduced selectors. active_same_project_root_causes is empty, so swiftlang/swift-markdown#93 duplicates no registry entry, and it matches the sole allowed_root_cause_ids value.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-08T13:23:08.197172+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "56afa3cf6c81a6c78ca013f71a3d70febadda12b22741836ba60aeeff660be0e",
+      "response_sha256": "75da2d96c61942205f6a9cfdb5684598315cd61c89009de74b9a440866d0c453",
+      "response_id": "msg_1eae5343432948468b7088d914f01f8f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.639269547761194,
+        "input_tokens": 14467,
+        "output_tokens": 779
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-markdown#93",
+      "rationale": "The defect, trigger, and fix align on one behavior. The buggy code in Sources/Markdown/Parser/CommonMarkConverter.swift classified any cmark code node with backtick_count > 1 as a SymbolLink when .parseSymbolLinks was set, so CommonMark code spans that use multi-backtick delimiters to contain a literal backtick (e.g. `` ` ``) were mis-parsed as SymbolLink instead of InlineCode. The fix adds the single guard !literalContent.contains(\"`\"), which excludes exactly that case and nothing else. The fixing commit subject 'resolves #93 - allows backticks in code voice (#259)' plus traceability.verified_fix_issue_numbers=[93] ties this to the allowed issue key, and the test comments in the same commit cite issue 93 directly. The minimized production patch is one hunk touching one condition in one production file (original_hunk_count=1, retained=1, removed=0): no refactor, formatting, feature extension, doc, config, or test content is included; the test additions are carried separately in patches/trigger-tests.patch. The triggers are the unchanged upstream tests from the same fixing commit (trigger_reduction.removed_external_dependency=false), so no curator-authored substitute is involved, and they exercise only pre-existing public API (Document(parsing:options:), .parseSymbolLinks, debugDescription(options:)) — the fix introduces no new API. The three reproducing selectors assert InlineCode for backtick-containing code spans, which is precisely the reported defect; testDoubleBacktickSymbolLinkStillWorks is a same-behavior regression guard that correctly passes on both revisions. Runtime gates are machine-supplied and all green pre- and post-minimization (build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green; failed_checks empty; post_minimization_validation=PASS). active_same_project_root_causes is empty, so this root cause duplicates no active registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.message",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_reduction",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "issue_evidence is null: the body of swiftlang/swift-markdown#93 was not supplied, so the issue-to-defect mapping rests on the fixing commit subject, the in-test issue citation, and traceability metadata rather than on the reporter's own words.",
+        "trigger_reduction.status remains EXECUTABLY_VALIDATED_PENDING_LLM_EQUIVALENCE; equivalence is judged here from patch semantics, not from re-executing the tests.",
+        "The declared selector testDoubleBacktickSymbolLinkStillWorks passes on both revisions and contributes no differential signal; only the three reproducing selectors gate the defect.",
+        "The fix is a textual containment check on literal content, so any code span whose content legitimately includes a backtick can no longer be a symbol link; whether that is fully intended is not verifiable from the supplied evidence."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-08T13:23:43.056870+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "56afa3cf6c81a6c78ca013f71a3d70febadda12b22741836ba60aeeff660be0e",
+      "response_sha256": "122cae784373b18d0d7200c9b9f7d6901b77291031f7c34e900e44b958aeb531",
+      "response_id": "msg_845f02e7e1ae457085dd9930ccb615dd",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7036288680265339,
+        "input_tokens": 14986,
+        "output_tokens": 814
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-markdown#93",
+      "rationale": "The single production hunk in Sources/Markdown/Parser/CommonMarkConverter.swift adds one guard clause (`!literalContent.contains(\"`\")`) to the SymbolLink branch, so a code span whose literal content itself contains a backtick is emitted as InlineCode instead of being reinterpreted as a symbol link when .parseSymbolLinks is enabled. That is exactly the behavior the three reproducing triggers assert: `Use `` ` `` to delimit`, `Use ``` ` ``` to delimit`, and `Use ``` `` ``` in code` each expect an InlineCode child, which on the buggy parent (2020df0) is produced as a SymbolLink because the pre-existing condition only checked cmark_node_get_backtick_count > 1. Traceability resolves the fix commit to issue #93 (verified_fix_issue_numbers=[93]) and the maintainer commit subject 'resolves #93 - allows backticks in code voice (#259)' names the same defect and the same narrowing rationale ('only flex when a backtick is part of the interior content'). The defect is pre-existing in the parser's symbol-link detection, not introduced by the tests. The patch is minimal: original_hunk_count=1, retained=1, removed=0, no formatting, refactor, doc, config, or behavior extension; the .symbolLink/.inlineCode return paths and their signatures are untouched, and no new production API is added. The trigger is the unchanged upstream test portion of the same fixing commit and uses only pre-existing public API (Document(parsing:options:), .parseSymbolLinks, debugDescription(options: .printSourceLocations)); testDoubleBacktickSymbolLinkStillWorks is a non-reproducing regression guard that passes on both revisions, consistent with the buggy_differential check. Strict evidence, both original and post-minimization, reports passed=true with no failed checks: builds green on both revisions, deterministic across 3 repetitions in a 50-run matrix, fixed revision isolated/suite/reversed all green, and the buggy full suite fails only on the three reproduced selectors. active_same_project_root_causes is empty, so swiftlang/swift-markdown#93 duplicates no registry entry, and it matches the sole allowed_root_cause_ids value.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:minimized_patch_reference",
+        "case.json:source_candidate.message"
+      ],
+      "risks": [
+        "issue_evidence is null: the body and title of issue #93 were not supplied, so the reporter's own symptom description is corroborated only indirectly through the maintainer commit subject, the PR link, and the converging patch/test semantics.",
+        "The fix encodes a semantic trade-off rather than a strict correctness rule: a symbol name that legitimately contains a backtick can no longer be written as a symbol link, so a later upstream revision could change this behavior and invalidate the expected parse trees.",
+        "Triggers assert full debugDescription dumps including source locations, making them brittle to unrelated changes in range computation or dump formatting even though the guarded defect is unchanged.",
+        "One of four declared selectors (testDoubleBacktickSymbolLinkStillWorks) does not reproduce the defect and contributes only regression coverage, so the effective trigger set is three tests."
+      ]
+    }
+  ]
+}

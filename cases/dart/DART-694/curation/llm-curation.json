@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-694",
+  "technical_evidence_sha256": "530de40fd790ded34e260a659b5c19808fbf5b6f4b3527425e8c5a6c249ceaee",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "7aa73045a4fda7776669d10f4338a5cda8ad8cc459780991457a8c02eeb1a127",
+  "reviewed_at": "2026-08-11T23:38:51.326140+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "skroyc/acp-dart#8",
+  "rationale": "Issue #8 documents two pre-existing defects in connection/transport behavior: (1) validation-like exceptions incorrectly mapped to JSON-RPC -32603 internal error instead of -32602 invalid params, and (2) malformed NDJSON lines terminated the stream instead of being tolerated per TS SDK parity. The minimized production patch directly fixes both defects: _mapRequestError now distinguishes TypeError/FormatException/ArgumentError → invalidParams from unexpected exceptions → internalError, and ndJsonStream replaces throw with print() to continue processing after malformed lines. The trigger tests demonstrate the exact reported behaviors: 'maps validation-like exceptions to invalid params' verifies FormatException → -32602, 'maps unexpected exceptions to internal error' verifies StateError → -32603, 'maps invalid request params to invalid params error' verifies AgentSideConnection param validation, and 'skips malformed JSON lines and continues processing' verifies valid-invalid-valid sequence yields two valid messages without termination. All tests are part of the same fixing commit and directly validate the defect behaviors described in issue #8. Strict runtime validation confirms deterministic reproduction and clean fixed state across 50 matrix runs with 3+ repetitions per configuration. No unrelated refactoring, formatting, or feature extension present in minimized patch. No active same-project root causes provided for duplicate checking.\n\nIssue #8 explicitly documents two pre-existing defects: (1) error mapping inconsistency where validation-like exceptions incorrectly map to internal error instead of invalid params, differing from TypeScript SDK semantics; (2) NDJSON parser terminates stream on malformed lines instead of logging and continuing. The minimized production patch addresses both defects with isolated changes: _mapRequestError and _extractErrorData methods distinguish TypeError/FormatException/ArgumentError → -32602 invalidParams vs unexpected → -32603 internalError, and ndJsonStream replaces throw with print() to tolerate malformed lines. Three trigger tests semantically match the described defects: 'maps validation-like exceptions to invalid params' verifies FormatException → -32602 with structured data preservation, 'maps invalid request params to invalid params error' verifies AgentSideConnection param validation → -32602, and 'skips malformed JSON lines and continues processing' verifies valid-invalid-valid sequence yields two valid messages without stream termination. All trigger tests are present in the original commit test patch and reproduced deterministically at buggy revision. The patch contains no formatting, documentation-only (CHANGELOG/README excluded from production patch), or unrelated refactor changes. No duplicate entries exist in active_same_project_root_causes.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:38:38.170719+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "7aa73045a4fda7776669d10f4338a5cda8ad8cc459780991457a8c02eeb1a127",
+      "response_sha256": "f3a21df10fcf65fae2303072ae27f4e75424d429298d6ce2e25c83bef2953087",
+      "response_id": "msg_b1377ac4-b69d-4a87-87",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 6142
+        },
+        "cache_creation_input_tokens": 6142,
+        "cache_read_input_tokens": 15141,
+        "input_tokens": 20533,
+        "output_tokens": 1365
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "skroyc/acp-dart#8",
+      "rationale": "Issue #8 documents two pre-existing defects in connection/transport behavior: (1) validation-like exceptions incorrectly mapped to JSON-RPC -32603 internal error instead of -32602 invalid params, and (2) malformed NDJSON lines terminated the stream instead of being tolerated per TS SDK parity. The minimized production patch directly fixes both defects: _mapRequestError now distinguishes TypeError/FormatException/ArgumentError → invalidParams from unexpected exceptions → internalError, and ndJsonStream replaces throw with print() to continue processing after malformed lines. The trigger tests demonstrate the exact reported behaviors: 'maps validation-like exceptions to invalid params' verifies FormatException → -32602, 'maps unexpected exceptions to internal error' verifies StateError → -32603, 'maps invalid request params to invalid params error' verifies AgentSideConnection param validation, and 'skips malformed JSON lines and continues processing' verifies valid-invalid-valid sequence yields two valid messages without termination. All tests are part of the same fixing commit and directly validate the defect behaviors described in issue #8. Strict runtime validation confirms deterministic reproduction and clean fixed state across 50 matrix runs with 3+ repetitions per configuration. No unrelated refactoring, formatting, or feature extension present in minimized patch. No active same-project root causes provided for duplicate checking.",
+      "evidence_paths": [
+        "issue_urls[0] → https://github.com/SkrOYC/acp-dart/issues/8",
+        "patches/minimized-production.patch → lib/src/acp.dart _mapRequestError and _extractErrorData methods",
+        "patches/minimized-production.patch → lib/src/stream.dart StreamTransformer tolerant parsing logic",
+        "patches/trigger-tests.patch → test/acp_test.dart 'maps validation-like exceptions to invalid params'",
+        "patches/trigger-tests.patch → test/acp_test.dart 'maps unexpected exceptions to internal error'",
+        "patches/trigger-tests.patch → test/acp_test.dart 'maps invalid request params to invalid params error'",
+        "patches/trigger-tests.patch → test/stream_test.dart 'skips malformed JSON lines and continues processing'",
+        "strict_post_minimization.passed → true with trigger.buggy_differential and full_suite.buggy_reproduces_only_triggers confirmed"
+      ],
+      "risks": [
+        "Tolerant NDJSON parsing may mask legitimate protocol errors in scenarios where silent continuation is unintended",
+        "JSON extraction from error messages via jsonDecode assumes specific error string formats; malformed JSON in error text falls back to plain string representation"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:38:51.325877+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "7aa73045a4fda7776669d10f4338a5cda8ad8cc459780991457a8c02eeb1a127",
+      "response_sha256": "e4994720c8cf7d5a2e6df1f8b47a75fb2bfbbcb34be1ba835b2a2355e1e60303",
+      "response_id": "msg_bed0f354-84c2-4391-bd",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 6004
+        },
+        "cache_creation_input_tokens": 6004,
+        "cache_read_input_tokens": 15175,
+        "input_tokens": 20533,
+        "output_tokens": 1099
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "skroyc/acp-dart#8",
+      "rationale": "Issue #8 explicitly documents two pre-existing defects: (1) error mapping inconsistency where validation-like exceptions incorrectly map to internal error instead of invalid params, differing from TypeScript SDK semantics; (2) NDJSON parser terminates stream on malformed lines instead of logging and continuing. The minimized production patch addresses both defects with isolated changes: _mapRequestError and _extractErrorData methods distinguish TypeError/FormatException/ArgumentError → -32602 invalidParams vs unexpected → -32603 internalError, and ndJsonStream replaces throw with print() to tolerate malformed lines. Three trigger tests semantically match the described defects: 'maps validation-like exceptions to invalid params' verifies FormatException → -32602 with structured data preservation, 'maps invalid request params to invalid params error' verifies AgentSideConnection param validation → -32602, and 'skips malformed JSON lines and continues processing' verifies valid-invalid-valid sequence yields two valid messages without stream termination. All trigger tests are present in the original commit test patch and reproduced deterministically at buggy revision. The patch contains no formatting, documentation-only (CHANGELOG/README excluded from production patch), or unrelated refactor changes. No duplicate entries exist in active_same_project_root_causes.",
+      "evidence_paths": [
+        "source_candidate.origin_pull_request.body",
+        "source_candidate.production_files[0].patch",
+        "source_candidate.production_files[1].patch",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "trigger_tests[0-3]",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed"
+      ],
+      "risks": [
+        "Tolerant NDJSON policy may mask genuine protocol errors where silent continuation is unintended",
+        "JSON extraction via jsonDecode from error message strings assumes specific error formats; malformed JSON in error text falls back to raw string"
+      ]
+    }
+  ]
+}

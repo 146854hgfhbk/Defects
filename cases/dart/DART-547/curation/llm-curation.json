@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-547",
+  "technical_evidence_sha256": "e7f8b7d864f69b98b292bd2d05ea7fa99cfbbef872c7e65039087778c25043c3",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "a2c2a976cd14c0f3297db2624ddfbee66c34ea8cc0c42cd3a52c9b8a15d155ca",
+  "reviewed_at": "2026-08-11T23:17:48.841217+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/json_rpc_2#735",
+  "rationale": "Issue dart-lang/tools#735 reports a bug where returning null from a JSON-RPC method causes an exception. The production fix changes `Object result;` to `Object? result;` in lib/src/server.dart, making the variable nullable to handle null return values. The trigger test 'Allows a `null` result' registers a method returning null and verifies the response includes `'result': null`, directly testing the reported defect. The minimized production patch contains only the single-line type annotation change with no refactoring, formatting, documentation, or unrelated logic. The trigger test is from the same fixing commit and semantically matches the issue description. Runtime evidence confirms: all checks passed, trigger reproduces only on buggy (buggy_differential=true, buggy_reproduces_only_triggers=true), fixed version passes (fixed_clean=true), deterministic across 3 repetitions. No duplicate root causes exist in active_same_project_root_causes.\n\nAll acceptance criteria are satisfied. (1) Issue dart-lang/tools#735 describes a bug where a null result causes an exception; the test 'Allows a `null` result' registers a method returning null and expects it to succeed; the production fix adds the nullable annotation `Object?` to the result variable. All three describe the same defect: missing null-safety annotation causing runtime failure when a method returns null. (2) The minimized production patch changes only `Object result;` to `Object? result;` on line 204 of lib/src/server.dart—a single-line type annotation fix with no refactoring, formatting, documentation, configuration, or test changes. (3) The trigger test is the upstream test added in the same commit; it directly tests the defect (method returning null) and does not depend on any new API introduced by the fix—the fix only corrects a type annotation, not an API surface. (4) active_same_project_root_causes is empty, confirming no duplicate within this project.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:17:38.652994+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a2c2a976cd14c0f3297db2624ddfbee66c34ea8cc0c42cd3a52c9b8a15d155ca",
+      "response_sha256": "0db4a5a8b03288ee39a62af59eb4210e79efda69e6c5b3f3554aa8a50d2bf3a6",
+      "response_id": "msg_dd01651c-df1c-4c4a-a4",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 1350
+        },
+        "cache_creation_input_tokens": 1350,
+        "cache_read_input_tokens": 2515,
+        "input_tokens": 2916,
+        "output_tokens": 842
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/json_rpc_2#735",
+      "rationale": "Issue dart-lang/tools#735 reports a bug where returning null from a JSON-RPC method causes an exception. The production fix changes `Object result;` to `Object? result;` in lib/src/server.dart, making the variable nullable to handle null return values. The trigger test 'Allows a `null` result' registers a method returning null and verifies the response includes `'result': null`, directly testing the reported defect. The minimized production patch contains only the single-line type annotation change with no refactoring, formatting, documentation, or unrelated logic. The trigger test is from the same fixing commit and semantically matches the issue description. Runtime evidence confirms: all checks passed, trigger reproduces only on buggy (buggy_differential=true, buggy_reproduces_only_triggers=true), fixed version passes (fixed_clean=true), deterministic across 3 repetitions. No duplicate root causes exist in active_same_project_root_causes.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed",
+        "strict_post_minimization.checks.trigger.deterministic.passed",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "Test uses simple null return; does not verify behavior with complex async null results or null in nested structures"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:17:48.840960+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a2c2a976cd14c0f3297db2624ddfbee66c34ea8cc0c42cd3a52c9b8a15d155ca",
+      "response_sha256": "ec601c29f678beeb6961ee116ec3ba7430ab49d3a3f121eb0f32e750a7016b70",
+      "response_id": "msg_48d75dca-50fa-450e-a5",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 1078
+        },
+        "cache_creation_input_tokens": 1078,
+        "cache_read_input_tokens": 2582,
+        "input_tokens": 2916,
+        "output_tokens": 829
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/json_rpc_2#735",
+      "rationale": "All acceptance criteria are satisfied. (1) Issue dart-lang/tools#735 describes a bug where a null result causes an exception; the test 'Allows a `null` result' registers a method returning null and expects it to succeed; the production fix adds the nullable annotation `Object?` to the result variable. All three describe the same defect: missing null-safety annotation causing runtime failure when a method returns null. (2) The minimized production patch changes only `Object result;` to `Object? result;` on line 204 of lib/src/server.dart—a single-line type annotation fix with no refactoring, formatting, documentation, configuration, or test changes. (3) The trigger test is the upstream test added in the same commit; it directly tests the defect (method returning null) and does not depend on any new API introduced by the fix—the fix only corrects a type annotation, not an API surface. (4) active_same_project_root_causes is empty, confirming no duplicate within this project.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "traceability.verified_fix_issue_numbers",
+        "trigger_tests[0].name",
+        "strict_post_minimization.passed",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed"
+      ],
+      "risks": [
+        "Trigger test was added in the same commit as the fix, not pre-existing in the buggy revision"
+      ]
+    }
+  ]
+}

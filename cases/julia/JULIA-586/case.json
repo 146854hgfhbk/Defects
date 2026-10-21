@@ -1,0 +1,139 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-586",
+  "bug_id": "JULIA-586",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaArrays/StaticArrays.jl",
+  "repository_url": "https://github.com/JuliaArrays/StaticArrays.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "e23a2f5d0ceb27bab266908e11c3d2b1a395aab9",
+  "fixed_revision": "15a2672708870702831eab815edc6d191f5d489c",
+  "candidate_sha": "15a2672708870702831eab815edc6d191f5d489c",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "e23a2f5d0ceb27bab266908e11c3d2b1a395aab9",
+  "changed_production_files": [
+    "src/SDiagonal.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-586 manual behavior MWE"
+  ],
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "15a2672708870702831eab815edc6d191f5d489c",
+    "project": "JuliaArrays/StaticArrays.jl",
+    "input_sha256": "9148e833b4a8c565b60f9fda21a74175d4805415eae0ecd5bec84bfcacee7751",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:37:12Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.8678723474958541,
+      "input_tokens": 5344,
+      "output_tokens": 868
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"unknown\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.6, \"summary\": \"Single-hunk change in src/SDiagonal.jl replacing the `size(::Type{<:SDiagonal{N}})` methods (dispatch on a subtype of a type alias whose parameter sits in a covariant/UnionAll position) with explicit methods on `SDiagonal{N}` and `SDiagonal{N,T}`. This is the classic Julia pattern for fixing a static-parameter that cannot be resolved through `Type{<:Alias{N}}`, i.e. a broken/erroring `size` query on an SDiagonal type rather than a new capability. Recorded runtime evidence shows a stable differential across 3 repetitions with the full suite passing post-fix, consistent with a genuine behavioral defect fix.\", \"evidence\": \"minimized_production_patch touches only size dispatch signatures in src/SDiagonal.jl; minimization reports globally_minimal=true and all_hunks_necessary=true, so the behavior change is attributable to this one hunk. runtime_evidence.strict_differential=stable_differential over repetitions=3 with fixed_full_suite_passed=true, meaning the trigger fails at the parent commit and passes at the fix commit without collateral breakage. No API surface is added: `size(::Type{...})` already existed for SDiagonal; only the dispatch signatures change so the parameters N (and T) bind correctly.\", \"missing_evidence\": \"No PR title/body, no commit subject, no linked issue (issue_records empty), traceability_class=UNVERIFIED, so intent cannot be corroborated from author statements. No test files in the diff and trigger_tests is empty; the differential came from a harness-generated dedicated script whose contents and assertions are not shown. The pre-fix failure mode (MethodError, UndefVarError for N, or wrong dimensions) is not documented.\", \"validation_risks\": \"Because the fix narrows dispatch from `<:SDiagonal{N}` to the two concrete alias forms, any downstream type that is a strict subtype of the alias would no longer hit these methods; a trigger test that only exercises `SDiagonal{N}`/`SDiagonal{N,T}` could mask a regression there. Dispatch-resolution behavior for `Type{<:Alias}` is Julia-version sensitive, so the defect may not reproduce on all Julia versions, risking a non-reproducible or version-flaky trigger. Without the trigger script text, there is a chance the differential stems from a method-ambiguity or overwrite warning rather than a value-level failure.\", \"suggested_tests\": \"Assert `size(SDiagonal{3,Float64}) == (3,3)` and `size(SDiagonal{3}) == (3,3)` at the type level (these should error or misbehave at the parent commit). Assert the dimension-indexed form: `size(SDiagonal{3,Float64}, 1) == 3`, `size(SDiagonal{3,Float64}, 2) == 3`, `size(SDiagonal{3,Float64}, 3) == 1`, plus the one-parameter variants. Cross-check instance-level consistency: `size(SDiagonal(SVector(1.0,2.0,3.0))) == size(typeof(SDiagonal(SVector(1.0,2.0,3.0))))`. Add a check that `Size(SDiagonal{3,Float64})` / `length` and a downstream operation relying on type-level size (e.g. a matrix multiply or `\\\\` with an SVector) still return correct results and remain allocation-free. Pin the test to run across the CI Julia version matrix to confirm the defect is not version-specific.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "unknown"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.6,
+    "summary": "Single-hunk change in src/SDiagonal.jl replacing the `size(::Type{<:SDiagonal{N}})` methods (dispatch on a subtype of a type alias whose parameter sits in a covariant/UnionAll position) with explicit methods on `SDiagonal{N}` and `SDiagonal{N,T}`. This is the classic Julia pattern for fixing a static-parameter that cannot be resolved through `Type{<:Alias{N}}`, i.e. a broken/erroring `size` query on an SDiagonal type rather than a new capability. Recorded runtime evidence shows a stable differential across 3 repetitions with the full suite passing post-fix, consistent with a genuine behavioral defect fix.",
+    "evidence": "minimized_production_patch touches only size dispatch signatures in src/SDiagonal.jl; minimization reports globally_minimal=true and all_hunks_necessary=true, so the behavior change is attributable to this one hunk. runtime_evidence.strict_differential=stable_differential over repetitions=3 with fixed_full_suite_passed=true, meaning the trigger fails at the parent commit and passes at the fix commit without collateral breakage. No API surface is added: `size(::Type{...})` already existed for SDiagonal; only the dispatch signatures change so the parameters N (and T) bind correctly.",
+    "missing_evidence": "No PR title/body, no commit subject, no linked issue (issue_records empty), traceability_class=UNVERIFIED, so intent cannot be corroborated from author statements. No test files in the diff and trigger_tests is empty; the differential came from a harness-generated dedicated script whose contents and assertions are not shown. The pre-fix failure mode (MethodError, UndefVarError for N, or wrong dimensions) is not documented.",
+    "validation_risks": "Because the fix narrows dispatch from `<:SDiagonal{N}` to the two concrete alias forms, any downstream type that is a strict subtype of the alias would no longer hit these methods; a trigger test that only exercises `SDiagonal{N}`/`SDiagonal{N,T}` could mask a regression there. Dispatch-resolution behavior for `Type{<:Alias}` is Julia-version sensitive, so the defect may not reproduce on all Julia versions, risking a non-reproducible or version-flaky trigger. Without the trigger script text, there is a chance the differential stems from a method-ambiguity or overwrite warning rather than a value-level failure.",
+    "suggested_tests": "Assert `size(SDiagonal{3,Float64}) == (3,3)` and `size(SDiagonal{3}) == (3,3)` at the type level (these should error or misbehave at the parent commit). Assert the dimension-indexed form: `size(SDiagonal{3,Float64}, 1) == 3`, `size(SDiagonal{3,Float64}, 2) == 3`, `size(SDiagonal{3,Float64}, 3) == 1`, plus the one-parameter variants. Cross-check instance-level consistency: `size(SDiagonal(SVector(1.0,2.0,3.0))) == size(typeof(SDiagonal(SVector(1.0,2.0,3.0))))`. Add a check that `Size(SDiagonal{3,Float64})` / `length` and a downstream operation relying on type-level size (e.g. a matrix multiply or `\\` with an SVector) still return correct results and remain allocation-free. Pin the test to run across the CI Julia version matrix to confirm the defect is not version-specific."
+  },
+  "source_candidate_evidence": {
+    "source_index": "output/source_candidates.json",
+    "commit_sha": "15a2672708870702831eab815edc6d191f5d489c",
+    "production_files": [
+      "src/SDiagonal.jl"
+    ],
+    "test_files": [],
+    "file_details": {
+      "src/SDiagonal.jl": {
+        "status": "modified",
+        "hunks": 1,
+        "changes": 6
+      }
+    }
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "cf10172eae755f585b92c64fc90c992f1db613b352c5625a0674f085dec68799",
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "JULIA-586 manual behavior MWE"
+      ],
+      "added_testsets": [],
+      "assertion_expression_sha256": [],
+      "mwe_basis": "derived from upstream fix and commit test intent"
+    }
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-586 manual behavior MWE"
+    ],
+    "exception_types": [
+      "TRIGGER_EXIT_1"
+    ],
+    "fingerprints": [
+      "TRIGGER_EXIT_1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

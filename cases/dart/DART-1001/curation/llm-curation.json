@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1001",
+  "technical_evidence_sha256": "018db9f79cea5c57330b082d9181a8ea85d46d83e687970b8aad499dffa6a79a",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "4c1a930ee6fee925ec787082e7a5de441ab18adf367bf8ec99b0f1b14463ba5c",
+  "reviewed_at": "2026-08-14T06:03:40.209933+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "iamriajul/adhan-dart#8",
+  "rationale": "Issue #8 states verbatim that CalculationMethod.egyptian uses fajrAngle 20.0 and ishaAngle 18.0 where 19.5 and 17.5 are correct. The minimized production patch is a single hunk in lib/src/calculation_method.dart changing exactly those two literals (20.0->19.5, 18.0->17.5); the surrounding CalculationParameters construction and withMethodAdjustments(dhuhr: 1) block are untouched, so there is no refactor, formatting, feature, docs, or config change. The fix commit message closes #8 and cites the upstream adhan-java fix, and traceability records fix_commit_to_issue with verified_fix_issue_numbers=[8], matching the single allowed root cause id. The trigger is the unchanged upstream test portion of the same commit: test/src/calculation_method_test.dart 'Test CalculationMethod.getParameters' updates two expectations to 19.5/17.5 using only pre-existing APIs (CalculationMethod.egyptian.getParameters(), params.fajrAngle/ishaAngle, almostEqualD helper), so it introduces no dependency on an API created by the fix and asserts precisely the reported defect. Strict evidence (both pre- and post-minimization) reports all gates passed: build on both revisions, isolated buggy differential failure on the single declared selector, deterministic fingerprints across 3 repetitions over a 32-run matrix, fixed-revision isolated/suite/reversed runs clean, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so this root cause duplicates no registry entry.\n\nIssue #8 (created 2021-02-15, before the fix commit) states that CalculationMethod.egyptian returns fajrAngle 20.0 and ishaAngle 18.0 when they should be 19.5 and 17.5, describing a pre-existing wrong-constant defect. The minimized production patch is a single hunk in lib/src/calculation_method.dart changing exactly those two literals (fajrAngle: 20.0 -> 19.5, ishaAngle: 18.0 -> 17.5) inside the CalculationMethod.egyptian branch; the surrounding withMethodAdjustments call, structure, and formatting are untouched, so there is no refactor, feature extension, doc-only, or config-only content. The trigger patch is the upstream test portion of the same commit: it updates two existing expectations in test/src/calculation_method_test.dart to 19.5/17.5 using only pre-existing APIs (CalculationMethod.egyptian.getParameters(), params.fajrAngle, params.ishaAngle, helper almostEqualD), so it introduces no production API added by the fix and asserts precisely the values named in the issue. Strict machine evidence (identical for original and post-minimization) reports all gates passed: build on both revisions, trigger.buggy_differential reproducing test/src/calculation_method_test.dart::Test CalculationMethod.getParameters, trigger.deterministic with 3 fingerprint groups over 3 repetitions, trigger.fixed_clean, and full_suite.fixed_all_green with buggy full-suite failures limited to the reproduced trigger, which also rules out collateral breakage from the constant change. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and iamriajul/adhan-dart#8 is the sole allowed and verified issue key (traceability path fix_commit_to_issue, PR #15).",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:03:17.619510+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "4c1a930ee6fee925ec787082e7a5de441ab18adf367bf8ec99b0f1b14463ba5c",
+      "response_sha256": "7970549924898cd4a4dafc84160609c10443d09864e2b9502809932e0c1c23b4",
+      "response_id": "msg_906210c074a045c08dbea13585620775",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4787931782752902,
+        "input_tokens": 12437,
+        "output_tokens": 648
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "iamriajul/adhan-dart#8",
+      "rationale": "Issue #8 states verbatim that CalculationMethod.egyptian uses fajrAngle 20.0 and ishaAngle 18.0 where 19.5 and 17.5 are correct. The minimized production patch is a single hunk in lib/src/calculation_method.dart changing exactly those two literals (20.0->19.5, 18.0->17.5); the surrounding CalculationParameters construction and withMethodAdjustments(dhuhr: 1) block are untouched, so there is no refactor, formatting, feature, docs, or config change. The fix commit message closes #8 and cites the upstream adhan-java fix, and traceability records fix_commit_to_issue with verified_fix_issue_numbers=[8], matching the single allowed root cause id. The trigger is the unchanged upstream test portion of the same commit: test/src/calculation_method_test.dart 'Test CalculationMethod.getParameters' updates two expectations to 19.5/17.5 using only pre-existing APIs (CalculationMethod.egyptian.getParameters(), params.fajrAngle/ishaAngle, almostEqualD helper), so it introduces no dependency on an API created by the fix and asserts precisely the reported defect. Strict evidence (both pre- and post-minimization) reports all gates passed: build on both revisions, isolated buggy differential failure on the single declared selector, deterministic fingerprints across 3 repetitions over a 32-run matrix, fixed-revision isolated/suite/reversed runs clean, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so this root cause duplicates no registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/calculation_method.dart",
+        "test/src/calculation_method_test.dart",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers"
+      ],
+      "risks": [
+        "The trigger asserts the corrected constants directly, so it is close to a restatement of the patch rather than an end-to-end behavioral check; no PrayerTimes-level assertion confirms the downstream fajr/isha instants shift as expected.",
+        "Correctness of 19.5/17.5 rests on the issue text and the cited upstream adhan-java change, not on an internal invariant or an authoritative source verified here.",
+        "Analyzer cleanliness was not required (require_analyze_clean=false), so static-analysis regressions on either revision are unverified."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:03:40.209609+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "4c1a930ee6fee925ec787082e7a5de441ab18adf367bf8ec99b0f1b14463ba5c",
+      "response_sha256": "8e1b198604433615f203745ef52f9bcf946ba5d1ce58ab7c6818fc515d757dc5",
+      "response_id": "msg_1ecc22fb6d01445f9bc80cfe251c8144",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.3983056094859038,
+        "input_tokens": 12339,
+        "output_tokens": 687
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "iamriajul/adhan-dart#8",
+      "rationale": "Issue #8 (created 2021-02-15, before the fix commit) states that CalculationMethod.egyptian returns fajrAngle 20.0 and ishaAngle 18.0 when they should be 19.5 and 17.5, describing a pre-existing wrong-constant defect. The minimized production patch is a single hunk in lib/src/calculation_method.dart changing exactly those two literals (fajrAngle: 20.0 -> 19.5, ishaAngle: 18.0 -> 17.5) inside the CalculationMethod.egyptian branch; the surrounding withMethodAdjustments call, structure, and formatting are untouched, so there is no refactor, feature extension, doc-only, or config-only content. The trigger patch is the upstream test portion of the same commit: it updates two existing expectations in test/src/calculation_method_test.dart to 19.5/17.5 using only pre-existing APIs (CalculationMethod.egyptian.getParameters(), params.fajrAngle, params.ishaAngle, helper almostEqualD), so it introduces no production API added by the fix and asserts precisely the values named in the issue. Strict machine evidence (identical for original and post-minimization) reports all gates passed: build on both revisions, trigger.buggy_differential reproducing test/src/calculation_method_test.dart::Test CalculationMethod.getParameters, trigger.deterministic with 3 fingerprint groups over 3 repetitions, trigger.fixed_clean, and full_suite.fixed_all_green with buggy full-suite failures limited to the reproduced trigger, which also rules out collateral breakage from the constant change. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and iamriajul/adhan-dart#8 is the sole allowed and verified issue key (traceability path fix_commit_to_issue, PR #15).",
+      "evidence_paths": [
+        "case.json issue_urls",
+        "case.json source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json trigger_tests",
+        "case.json strict_post_minimization.checks",
+        "case.json active_same_project_root_causes",
+        "case.json allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The corrected values are a specification/data change; their correctness rests on the issue text and the cited upstream adhan-java PR rather than an internal invariant checked by the repository.",
+        "The trigger is an expectation-value edit to an existing assertion rather than a new independent test, so it verifies the constant directly and not downstream PrayerTimes behavior for the Egyptian method.",
+        "Full-suite evidence covers only 1 repetition (trigger isolation used 3), so rare order-dependent suite interactions are less thoroughly sampled."
+      ]
+    }
+  ]
+}

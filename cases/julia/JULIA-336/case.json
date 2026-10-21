@@ -1,0 +1,230 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-336",
+  "bug_id": "JULIA-336",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaDynamics/DrWatson.jl",
+  "repository_url": "https://github.com/JuliaDynamics/DrWatson.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaDynamics/DrWatson.jl/issues/284"
+  ],
+  "issue_id": 284,
+  "buggy_revision": "953888eb7c8782ae1278601a0fc9d563ed7803c7",
+  "fixed_revision": "f4c22d12e73b3fcce26ed8aecb1b0a5faeeeed9c",
+  "candidate_sha": "f4c22d12e73b3fcce26ed8aecb1b0a5faeeeed9c",
+  "source": "SWE-rebench-V2",
+  "instance_id": "juliadynamics__drwatson.jl-285",
+  "swe": {
+    "base_commit": "953888eb7c8782ae1278601a0fc9d563ed7803c7",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/JuliaDynamics/DrWatson.jl/pull/285",
+    "pr_number": 285,
+    "merge_commit": "f4c22d12e73b3fcce26ed8aecb1b0a5faeeeed9c",
+    "issue_url": "https://github.com/JuliaDynamics/DrWatson.jl/issues/284",
+    "merged_at": "2021-09-06T13:46:08Z",
+    "pr_title": "update defaults for keyword arguments of `savename`",
+    "patch": "diff --git a/CHANGELOG.md b/CHANGELOG.md\nindex eab7c2f9..4908f331 100644\n--- a/CHANGELOG.md\n+++ b/CHANGELOG.md\n@@ -1,3 +1,5 @@\n+# 2.4.1\n+* `savename`'s default options now have `sigdigits = 3` instead of `digits = 3` as stated in the documentation string. This was supposed to happen already since 2.0 but did not because of a bug. (#284)\n # 2.4.0\n * Add the macro version of `produce_or_load` to enable tagging with the calling source file and line.\n # 2.3.0\ndiff --git a/Project.toml b/Project.toml\nindex 0b2125c0..758c5df7 100644\n--- a/Project.toml\n+++ b/Project.toml\n@@ -1,7 +1,7 @@\n name = \"DrWatson\"\n uuid = \"634d3b9d-ee7a-5ddf-bec9-22491ea816e1\"\n repo = \"https://github.com/JuliaDynamics/DrWatson.jl.git\"\n-version = \"2.4.0\"\n+version = \"2.4.1\"\n \n [deps]\n Dates = \"ade2ca70-3891-5945-98fb-dc099432e06a\"\ndiff --git a/src/naming.jl b/src/naming.jl\nindex 24f2397a..1649d5a7 100644\n--- a/src/naming.jl\n+++ b/src/naming.jl\n@@ -84,9 +84,9 @@ savename(c::Any, suffix::String; kwargs...) =\n savename(prefix::String, c::Any; kwargs...) = savename(prefix, c, \"\"; kwargs...)\n function savename(prefix::String, c, suffix::String;\n                   allowedtypes = default_allowed(c),\n-                  accesses = allaccess(c), ignores = allignore(c), digits = 3,\n+                  accesses = allaccess(c), ignores = allignore(c), digits::Union{Int,Nothing} = nothing,\n                   connector = \"_\", expand::Vector{String} = default_expand(c),\n-                  sigdigits::Union{Int,Nothing}=nothing,\n+                  sigdigits::Union{Int,Nothing} = 3,\n                   val_to_string = nothing,\n                   sort = true, equals = \"=\")\n \n@@ -97,7 +97,7 @@ function savename(prefix::String, c, suffix::String;\n             `savename` (e.g. `datadir(\"path\", \"to\", \"folder\", savename(\"prefix\", data))`).\n         \"\"\"\n     end\n-    digits = sigdigits === nothing ? digits : nothing\n+    sigdigits = digits === nothing ? sigdigits : nothing\n     val2string = val_to_string === nothing ? (val -> valtostring(val, digits, sigdigits)) : val_to_string\n     # Here take care of extra prefix besides default\n     dpre = default_prefix(c)\n",
+    "test_patch": "diff --git a/test/naming_tests.jl b/test/naming_tests.jl\nindex 40f4ecda..7b5d0cf0 100644\n--- a/test/naming_tests.jl\n+++ b/test/naming_tests.jl\n@@ -112,7 +112,7 @@ di = @dict a c d\n @test savename(di,sigdigits=3) == \"a=1.23e-7_c=1_d=test\"\n @test savename(di,sigdigits=2) == \"a=1.2e-7_c=1_d=test\"\n @test savename(di,sigdigits=1) == \"a=1e-7_c=1_d=test\"\n-@test savename(di) == \"a=0.0_c=1_d=test\"\n+@test savename(di) == \"a=1.23e-7_c=1_d=test\" # default is sigdigits=3\n \n sn = savename(di,sigdigits=4)\n _,parsed,_ = parse_savename(sn)\n",
+    "FAIL_TO_PASS": [
+      "DrWatson"
+    ],
+    "PASS_TO_PASS": [],
+    "problem_statement": "`savename` documentation\nHi,\r\nI just noticed that the default values for the `savename` keywords that are given in the docs:\r\nhttps://github.com/JuliaDynamics/DrWatson.jl/blob/953888eb7c8782ae1278601a0fc9d563ed7803c7/src/naming.jl#L37\r\ndo not match the real default values:\r\nhttps://github.com/JuliaDynamics/DrWatson.jl/blob/953888eb7c8782ae1278601a0fc9d563ed7803c7/src/naming.jl#L87-L89\r\n\r\nI would like to argue that the documented default values are the more sensible choice, because I just found out, that for `h = [1.0, 0.1, 0.01, 0.001, 0.0001, 1.0e-5, 1.0e-6]` we get \r\n```julia\r\njulia> savename.(Dict.(:h.=>hs))\r\n7-element Vector{String}:\r\n \"h=1.0\"\r\n \"h=0.1\"\r\n \"h=0.01\"\r\n \"h=0.001\"\r\n \"h=0.0\"\r\n \"h=0.0\"\r\n \"h=0.0\"\r\n```\r\nwhereas with `sigdigits=3` we get\r\n```julia\r\njulia> savename.(Dict.(:h.=>hs), sigdigits=3)\r\n7-element Vector{String}:\r\n \"h=1.0\"\r\n \"h=0.1\"\r\n \"h=0.01\"\r\n \"h=0.001\"\r\n \"h=0.0001\"\r\n \"h=1e-5\"\r\n \"h=1e-6\"\r\n```\r\nbut I am aware that similar examples can be found for every possible default values for `digits`/`sigdigits`.\r\nShould I open a PR to change the docstring or the default values?",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "export HOME=/root",
+        "git config --global user.name \"GitUser\"",
+        "git config --global user.email \"git@us.er\"",
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'",
+        "julia --project=. -e 'using Pkg; Pkg.add([\"BSON\", \"DataFrames\", \"JLD2\", \"Parameters\"])'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "license": "custom-check-github",
+    "image_name": "docker.io/swerebenchv2/juliadynamics-drwatson.jl:285-953888e",
+    "instance_id": "juliadynamics__drwatson.jl-285",
+    "repo": "JuliaDynamics/DrWatson.jl",
+    "pr_description": "This closes #284.",
+    "created_at": "2021-09-06 12:08:13",
+    "language": "julia",
+    "interface": "Function: savename(prefix::String, c, suffix::String; allowedtypes=default_allowed(c), accesses=allaccess(c), ignores=allignore(c), digits::Union{Int,Nothing}=nothing, sigdigits::Union{Int,Nothing}=3, connector=\"_\", expand::Vector{String}=default_expand(c), val_to_string=nothing, sort=true, equals=\"=\")\nLocation: src/naming.jl\nInputs: \n- `prefix` (String): optional leading part of the generated name.  \n- `c` (Any): the container or object whose fields/entries are turned into a filename fragment.  \n- `suffix` (String): optional trailing part of the generated name.  \n- Keyword arguments:  \n  - `allowedtypes` – collection of types that may be converted (defaults to `default_allowed(c)`).  \n  - `accesses` – list of fields/keys to include (defaults to `allaccess(c)`).  \n  - `ignores` – fields/keys to exclude (defaults to `allignore(c)`).  \n  - `digits` (Union{Int,Nothing}) – legacy integer‑digit formatting; default `nothing`.  \n  - `sigdigits` (Union{Int,Nothing}) – number of significant digits for floating‑point values; **default now `3`**.  \n  - `connector` (String) – string joining key‑value pairs (default \"`_`\").  \n  - `expand` (Vector{String}) – keys whose values are expanded (default `default_expand(c)`).  \n  - `val_to_string` – custom conversion function (default `nothing`).  \n  - `sort` (Bool) – whether to sort keys before rendering (default `true`).  \n  - `equals` (String) – separator between key and value (default \"`=`\").\nOutputs: Returns a `String` suitable for use as a filename, encoding the selected contents of `c`. By default numeric values are formatted with three significant digits (`sigdigits=3`) unless `digits` is explicitly supplied, in which case `digits` takes precedence and `sigdigits` is ignored.\nDescription: Constructs a reproducible, file‑system‑safe name from a dictionary‑like object, using configurable formatting options. The change introduced in version 2.4.1 makes the default formatting use three significant digits, aligning the implementation with the documentation and affecting calls that rely on the default behavior (e.g., `savename(di)` in the test suite).\n",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.97,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [
+          "https://github.com/JuliaDynamics/DrWatson.jl/blob/953888eb7c8782ae1278601a0fc9d563ed7803c7/src/naming.jl#L37",
+          "https://github.com/JuliaDynamics/DrWatson.jl/blob/953888eb7c8782ae1278601a0fc9d563ed7803c7/src/naming.jl#L87-L89"
+        ],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug",
+          "documentation_enh"
+        ],
+        "reasoning": "The issue reports that the documented defaults for `savename` differ from the actual defaults and advocates changing the default to `sigdigits=3`. The test patch updates the expectation to reflect that new default, aligning with the intended behavior. No ambiguous specifications or external dependencies beyond the provided links are present, and the test changes directly correspond to the requested fix, so the task is cleanly solvable.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 4,
+      "num_modified_lines": null,
+      "pr_author": "fkastner",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaDynamics/DrWatson.jl/pull/285"
+    }
+  },
+  "parent_sha": "953888eb7c8782ae1278601a0fc9d563ed7803c7",
+  "changed_production_files": [
+    "src/naming.jl"
+  ],
+  "changed_test_files": [
+    "test/naming_tests.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-336 explicit digits overrides sigdigits"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "7011f8460748a94129319dfbf9cf1a69547c93d71763def7832172d33c229748",
+    "oracle": {
+      "mwe_basis": {
+        "upstream_test_file": "test/naming_tests.jl",
+        "public_api": "DrWatson.savename",
+        "defect": "explicit digits keyword was ignored whenever sigdigits was also supplied"
+      },
+      "source_evidence": "Minimal public-API MWE isolates the sigdigits/digits precedence reversal fixed by commit f4c22d12e73b."
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "swe_rebench_julia_base_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "f4c22d12e73b3fcce26ed8aecb1b0a5faeeeed9c",
+    "project": "JuliaDynamics/DrWatson.jl",
+    "input_sha256": "aac3c37d87bd6e28de8dd019016ddb34e69020dc7d069d1d7b7c4fa4cc96ef2e",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:52:47Z",
+    "usage": {
+      "prompt_tokens": 2139,
+      "completion_tokens": 693,
+      "total_tokens": 2832
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"unknown\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.72,\n  \"summary\": \"The commit fixes a bug in how `savename` handles its default digit formatting. Previously, the default was `digits=3` (fixed-point formatting) which produced misleading output like `a=0.0` for small numbers like `1.23e-7`. The fix changes the default to `sigdigits=3` (significant digits formatting), which produces `a=1.23e-7`. The priority logic between `digits` and `sigdigits` was also inverted to match the new defaults.\",\n  \"evidence\": \"The test change from `@test savename(di) == \\\"a=0.0_c=1_d=test\\\"` to `@test savename(di) == \\\"a=1.23e-7_c=1_d=test\\\"` demonstrates that the previous default behavior was producing incorrect/lossy output (rounding 1.23e-7 to 0.0). The commit message references PR #285. The fix changes both the default parameter values and the priority logic between `digits` and `sigdigits`.\",\n  \"missing_evidence\": \"No linked issue body is available to confirm the exact bug report. The PR body is empty. It's possible this could be interpreted as a design change rather than a strict bug fix, since the old behavior was 'working as coded' but producing poor default output.\",\n  \"validation_risks\": \"This changes the default output format of `savename`, which is a widely-used function. The old test expected `a=0.0` which was technically 'correct' under the old defaults but lossy. There's a semantic question of whether this is a bug fix (information loss in default formatting) or a behavior change (different default formatting strategy). The priority inversion (`digits === nothing ? sigdigits : nothing` vs the old `sigdigits === nothing ? digits : nothing`) could introduce subtle regressions if users were relying on explicit `digits` parameter behavior.\",\n  \"suggested_tests\": \"Test with explicit `digits` parameter to verify the priority logic still works correctly. Test with both `digits` and `sigdigits` specified simultaneously. Test edge cases like very large numbers, integers, and zero values under the new defaults.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "The commit fixes a bug in how `savename` handles its default digit formatting. Previously, the default was `digits=3` (fixed-point formatting) which produced misleading output like `a=0.0` for small numbers like `1.23e-7`. The fix changes the default to `sigdigits=3` (significant digits formatting), which produces `a=1.23e-7`. The priority logic between `digits` and `sigdigits` was also inverted to match the new defaults.",
+    "evidence": "The test change from `@test savename(di) == \"a=0.0_c=1_d=test\"` to `@test savename(di) == \"a=1.23e-7_c=1_d=test\"` demonstrates that the previous default behavior was producing incorrect/lossy output (rounding 1.23e-7 to 0.0). The commit message references PR #285. The fix changes both the default parameter values and the priority logic between `digits` and `sigdigits`.",
+    "missing_evidence": "No linked issue body is available to confirm the exact bug report. The PR body is empty. It's possible this could be interpreted as a design change rather than a strict bug fix, since the old behavior was 'working as coded' but producing poor default output.",
+    "validation_risks": "This changes the default output format of `savename`, which is a widely-used function. The old test expected `a=0.0` which was technically 'correct' under the old defaults but lossy. There's a semantic question of whether this is a bug fix (information loss in default formatting) or a behavior change (different default formatting strategy). The priority inversion (`digits === nothing ? sigdigits : nothing` vs the old `sigdigits === nothing ? digits : nothing`) could introduce subtle regressions if users were relying on explicit `digits` parameter behavior.",
+    "suggested_tests": "Test with explicit `digits` parameter to verify the priority logic still works correctly. Test with both `digits` and `sigdigits` specified simultaneously. Test edge cases like very large numbers, integers, and zero values under the new defaults."
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-336 explicit digits overrides sigdigits"
+    ],
+    "exception_types": [
+      "4309ea6176c062d2ab01d2b8ee9789d1dda63dd443dde9876d5c2dffb1ff2dbc"
+    ],
+    "fingerprints": [
+      "4309ea6176c062d2ab01d2b8ee9789d1dda63dd443dde9876d5c2dffb1ff2dbc"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "f4c22d12e73b3fcce26ed8aecb1b0a5faeeeed9c",
+    "parent_sha": "953888eb7c8782ae1278601a0fc9d563ed7803c7",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "0092fc6725271e71d95fa1dc8f32fea83286329107117f150335015b0b7247c4",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

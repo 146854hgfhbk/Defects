@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-202",
+  "technical_evidence_sha256": "e0a687a19947e33b592a04ee5441af92a5dbd401926d592168b711d1d9d42a6e",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "4b92ed2e0889ef911ec9bb798c77e63473664be9779f6b5f2011dcb1089f4b5f",
+  "reviewed_at": "2026-09-05T17:58:12.640651+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "pointfreeco/swift-identified-collections#24",
+  "rationale": "Issue #24 (\"IdentifiedArray Equatable issues due to KeyPath\") reports that two IdentifiedArrays holding identical elements compare unequal when their id key paths were formed in different contexts (generic `\\.id` vs. an explicitly passed KeyPath), with a minimal reproducer in the issue body. The minimized production patch is exactly that defect's root cause: one hunk, one line, in IdentifiedArray+Equatable.swift changing `lhs.id == rhs.id && lhs.elementsEqual(rhs)` to `lhs.elementsEqual(rhs)`. No refactor, formatting, feature, docs, config, or test content is present in the minimized production patch (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger is the upstream test `testEquatable` added in the same commit; the curator reduction only rewrites `XCTAssertEqual(lhs, rhs)` as `XCTAssertTrue(lhs == rhs)` and `XCTAssertNotEqual(lhs, rhs)` as `XCTAssertTrue(lhs != rhs)` to avoid randomized type-context addresses in diagnostics. Those forms invoke the same `Equatable` conformance with the same expected relationships, and every construction, mutation, and iteration pair is preserved, so it is semantically equivalent. The test uses only initializers (`init()`, `init(uncheckedUniqueElements:id:)`, `init(uniqueElements:id:)`, and the Identifiable-constrained variants) that exist at the buggy revision; the fix introduces no new production API. Machine-generated strict evidence passes on both the original and post-minimization configurations: build.both_versions PASS, trigger.buggy_differential PASS with reproduced selector `IdentifiedArrayTests.swift::testEquatable`, trigger.deterministic PASS (3 fingerprint groups over 3 repetitions), trigger.fixed_clean PASS, full_suite.fixed_all_green PASS, and the buggy full suite fails only on the reproduced trigger. active_same_project_root_causes is empty and the proposed root_cause_id matches the single verified issue key in allowed_root_cause_ids (traceability.verified_fix_issue_numbers=[24], path fix_commit_to_issue via PR #25).\n\nIssue #24 ('IdentifiedArray Equatable issues due to KeyPath') reports that two IdentifiedArrays holding identical elements compare unequal when their key paths were formed in different contexts (generic vs. concrete), with a minimal reproducer showing KeyPath equality failing. The minimized production patch is exactly that defect's root cause removal: one hunk, one line, in IdentifiedArray+Equatable.swift changing `lhs.id == rhs.id && lhs.elementsEqual(rhs)` to `lhs.elementsEqual(rhs)`. No formatting, refactor, doc, config, or test content is present in the minimized production patch (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger `IdentifiedArrayTests.testEquatable` is the upstream test from the same fix commit, only rewritten so `XCTAssertEqual(lhs, rhs)` becomes `XCTAssertTrue(lhs == rhs)` and `XCTAssertNotEqual(lhs, rhs)` becomes `XCTAssertTrue(lhs != rhs)`; for an Equatable type these assert the identical predicate via the same `==` witness, and the rewrite only avoids randomized type-context addresses in failure diagnostics. All arrays, initializers, mutations, and pairwise expectations are unchanged, and the test uses only initializers (`init()`, `init(uncheckedUniqueElements:id:)`, `init(uniqueElements:id:)`, and the Identifiable-constrained variants) that exist at the buggy revision 90628a5, so it depends on no API introduced by the fix. Strict machine evidence at both original and post-minimization stages passed every gate with no failed checks: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential reproducing exactly testEquatable, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), matrix.complete (32 runs, 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty and the proposed root cause equals the single allowed verified issue key, so it is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T17:57:47.335283+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "4b92ed2e0889ef911ec9bb798c77e63473664be9779f6b5f2011dcb1089f4b5f",
+      "response_sha256": "6f904a1145659369cf4aada73a7e84052955fb3a8c0b0063e8c29c9d25e83e7a",
+      "response_id": "msg_00b7dd794f064bc5b2dc0ee62e0c9a76",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6484616589054726,
+        "input_tokens": 17394,
+        "output_tokens": 787
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "pointfreeco/swift-identified-collections#24",
+      "rationale": "Issue #24 (\"IdentifiedArray Equatable issues due to KeyPath\") reports that two IdentifiedArrays holding identical elements compare unequal when their id key paths were formed in different contexts (generic `\\.id` vs. an explicitly passed KeyPath), with a minimal reproducer in the issue body. The minimized production patch is exactly that defect's root cause: one hunk, one line, in IdentifiedArray+Equatable.swift changing `lhs.id == rhs.id && lhs.elementsEqual(rhs)` to `lhs.elementsEqual(rhs)`. No refactor, formatting, feature, docs, config, or test content is present in the minimized production patch (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger is the upstream test `testEquatable` added in the same commit; the curator reduction only rewrites `XCTAssertEqual(lhs, rhs)` as `XCTAssertTrue(lhs == rhs)` and `XCTAssertNotEqual(lhs, rhs)` as `XCTAssertTrue(lhs != rhs)` to avoid randomized type-context addresses in diagnostics. Those forms invoke the same `Equatable` conformance with the same expected relationships, and every construction, mutation, and iteration pair is preserved, so it is semantically equivalent. The test uses only initializers (`init()`, `init(uncheckedUniqueElements:id:)`, `init(uniqueElements:id:)`, and the Identifiable-constrained variants) that exist at the buggy revision; the fix introduces no new production API. Machine-generated strict evidence passes on both the original and post-minimization configurations: build.both_versions PASS, trigger.buggy_differential PASS with reproduced selector `IdentifiedArrayTests.swift::testEquatable`, trigger.deterministic PASS (3 fingerprint groups over 3 repetitions), trigger.fixed_clean PASS, full_suite.fixed_all_green PASS, and the buggy full suite fails only on the reproduced trigger. active_same_project_root_causes is empty and the proposed root_cause_id matches the single verified issue key in allowed_root_cause_ids (traceability.verified_fix_issue_numbers=[24], path fix_commit_to_issue via PR #25).",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "minimized_patch_reference.post_minimization_validation",
+        "patches/trigger-tests-stable-diagnostics.patch",
+        "patches/trigger-tests.patch",
+        "trigger_reduction.rationale",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.checks",
+        "strict_original.checks"
+      ],
+      "risks": [
+        "The dedicated issue_evidence field is null; the issue text relied on here comes from the embedded source_candidate.issue_check.linked_issues snapshot rather than an independent fetch.",
+        "KeyPath identity/uniquing is a compiler and runtime detail, so the differential may not reproduce on other Swift toolchain versions even though it is confirmed deterministic on the recorded matrix.",
+        "The final phase of the trigger asserts inequality between arrays with differing element values, which exercises general `==` behavior rather than the key path defect; a failure there would not be specific to this root cause.",
+        "The fix loosens equality by no longer comparing the id key path, so any downstream expectation of key-path-sensitive inequality changes behavior; the fixed full suite is green, but this is a semantic relaxation accepted upstream."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T17:58:12.640432+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "4b92ed2e0889ef911ec9bb798c77e63473664be9779f6b5f2011dcb1089f4b5f",
+      "response_sha256": "ca8fee62c5e480a35701502797518d9257fcec8b832af878e26c6196dac00fbd",
+      "response_id": "msg_cf7e8910283146dc8ac8b4f78189c327",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5705895690547264,
+        "input_tokens": 17367,
+        "output_tokens": 782
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "pointfreeco/swift-identified-collections#24",
+      "rationale": "Issue #24 ('IdentifiedArray Equatable issues due to KeyPath') reports that two IdentifiedArrays holding identical elements compare unequal when their key paths were formed in different contexts (generic vs. concrete), with a minimal reproducer showing KeyPath equality failing. The minimized production patch is exactly that defect's root cause removal: one hunk, one line, in IdentifiedArray+Equatable.swift changing `lhs.id == rhs.id && lhs.elementsEqual(rhs)` to `lhs.elementsEqual(rhs)`. No formatting, refactor, doc, config, or test content is present in the minimized production patch (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger `IdentifiedArrayTests.testEquatable` is the upstream test from the same fix commit, only rewritten so `XCTAssertEqual(lhs, rhs)` becomes `XCTAssertTrue(lhs == rhs)` and `XCTAssertNotEqual(lhs, rhs)` becomes `XCTAssertTrue(lhs != rhs)`; for an Equatable type these assert the identical predicate via the same `==` witness, and the rewrite only avoids randomized type-context addresses in failure diagnostics. All arrays, initializers, mutations, and pairwise expectations are unchanged, and the test uses only initializers (`init()`, `init(uncheckedUniqueElements:id:)`, `init(uniqueElements:id:)`, and the Identifiable-constrained variants) that exist at the buggy revision 90628a5, so it depends on no API introduced by the fix. Strict machine evidence at both original and post-minimization stages passed every gate with no failed checks: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential reproducing exactly testEquatable, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), matrix.complete (32 runs, 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty and the proposed root cause equals the single allowed verified issue key, so it is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests-stable-diagnostics.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "minimized_patch_reference",
+        "trigger_reduction.rationale",
+        "allowed_root_cause_ids",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "KeyPath identity is a compiler/runtime detail; the differential was confirmed on the validation toolchain only, so reproduction on other Swift toolchains is not guaranteed.",
+        "The final phase of testEquatable asserts inequality between arrays with differing element values, which is unrelated to the key-path root cause; a failure there would not be a signal of the target defect.",
+        "issue_evidence and semantic_justification are null in case.json; the issue text used here comes from the embedded source_candidate issue snapshot rather than a separately captured issue evidence artifact.",
+        "The fix loosens equality semantics by dropping the id key-path comparison; the full suite is green at the fixed revision, but no test now pins key-path-sensitive inequality."
+      ]
+    }
+  ]
+}

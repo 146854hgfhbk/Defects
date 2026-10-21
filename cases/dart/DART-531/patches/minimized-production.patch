@@ -1,0 +1,13 @@
+diff --git a/lib/src/ethereum.dart b/lib/src/ethereum.dart
+index 39e602b..b0fad74 100644
+--- a/lib/src/ethereum.dart
++++ b/lib/src/ethereum.dart
+@@ -61,6 +61,8 @@ EthSignature ethereumSign(PrivateKey priv, List<int> hash) {
+ 
+   if (s > (priv.curve.n >> 1)) {
+     s = priv.curve.n - s;
++    // https://ethereum.stackexchange.com/a/53182
++    v ^= 1;
+   }
+ 
+   if (s.sign == 0) {

@@ -1,0 +1,107 @@
+diff --git a/code/Solutions/IM/Chat/products/phone/entry/src/ohosTest/ets/test/List.test.ets b/code/Solutions/IM/Chat/products/phone/entry/src/ohosTest/ets/test/List.test.ets
+index 7cde7cf4f..0e78cc2fc 100644
+--- a/code/Solutions/IM/Chat/products/phone/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/Solutions/IM/Chat/products/phone/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,8 +13,8 @@
+  * limitations under the License.
+  */
+ 
+-import abilityTest from './Ability.test'
++import optLayoutChatViewReuseTest from './OptLayoutChatViewReuse.test'
+ 
+ export default function testsuite() {
+-  abilityTest()
+-}
+\ No newline at end of file
++  optLayoutChatViewReuseTest()
++}
+diff --git a/code/Solutions/IM/Chat/products/phone/entry/src/ohosTest/ets/test/OptLayoutChatViewReuse.test.ets b/code/Solutions/IM/Chat/products/phone/entry/src/ohosTest/ets/test/OptLayoutChatViewReuse.test.ets
+new file mode 100644
+index 000000000..135a8a0d9
+--- /dev/null
++++ b/code/Solutions/IM/Chat/products/phone/entry/src/ohosTest/ets/test/OptLayoutChatViewReuse.test.ets
+@@ -0,0 +1,84 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, expect, it } from '@ohos/hypium';
++import { OptLayoutChatView } from '@ohos/chatlist/src/main/ets/view/OptLayoutChatView';
++import { ChatContact, ChatModel } from '@ohos/chatlist/src/main/ets/viewmodel/MsgBase';
++
++interface ChatItemHolder {
++  chatItem: ChatModel;
++}
++
++interface ReuseInvoker {
++  call(holder: ChatItemHolder, params: Record<string, Object>): void;
++}
++
++interface OptLayoutPrototype {
++  aboutToReuse?: ReuseInvoker;
++}
++
++interface OptLayoutConstructor {
++  prototype: OptLayoutPrototype;
++}
++
++class ReuseParams {
++  chatItem: ChatModel;
++
++  constructor(chatItem: ChatModel) {
++    this.chatItem = chatItem;
++  }
++}
++
++class ChatItemProbe implements ChatItemHolder {
++  chatItem: ChatModel = makeChatItem('row90-user-old', 'row90-message-old', 1);
++}
++
++function makeChatItem(userName: string, lastMsg: string, unreadMsgCount: number): ChatModel {
++  return new ChatModel(new ChatContact(userName, userName, ''), lastMsg, '12:00', unreadMsgCount);
++}
++
++function getOptLayoutReuseMethod(): ReuseInvoker | undefined {
++  let constructorRef = OptLayoutChatView as Object as OptLayoutConstructor;
++  return constructorRef.prototype.aboutToReuse;
++}
++
++export default function optLayoutChatViewReuseTest() {
++  describe('OptLayoutChatViewReuseTest', () => {
++    it('about_to_reuse_should_replace_rendered_chat_item_001', 0, () => {
++      let reuseMethod = getOptLayoutReuseMethod();
++      expect(reuseMethod !== undefined).assertTrue();
++      if (reuseMethod === undefined) {
++        return;
++      }
++
++      let probe = new ChatItemProbe();
++      let nextItem = makeChatItem('row90-user-next', 'row90-message-next', 9);
++
++      reuseMethod.call(probe, new ReuseParams(nextItem) as Object as Record<string, Object>);
++
++      expect(probe.chatItem.user.userName as string).assertEqual('row90-user-next');
++      expect(probe.chatItem.lastMsg).assertEqual('row90-message-next');
++      expect(probe.chatItem.unreadMsgCount).assertEqual(9);
++    });
++
++    it('chat_model_should_preserve_list_item_fields_002', 0, () => {
++      let chatItem = makeChatItem('row90-user-stable', 'row90-message-stable', 3);
++
++      expect(chatItem.user.userName as string).assertEqual('row90-user-stable');
++      expect(chatItem.lastMsg).assertEqual('row90-message-stable');
++      expect(chatItem.unreadMsgCount).assertEqual(3);
++    });
++  });
++}

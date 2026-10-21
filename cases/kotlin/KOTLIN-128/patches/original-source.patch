@@ -1,0 +1,13 @@
+diff --git a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/VarCouldBeVal.kt b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/VarCouldBeVal.kt
+index 0108094cd0..e602d19640 100644
+--- a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/VarCouldBeVal.kt
++++ b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/VarCouldBeVal.kt
+@@ -96,7 +96,7 @@ class VarCouldBeVal(config: Config = Config.empty) : Rule(config) {
+             if (assignments.isNullOrEmpty()) return false
+             val declarationDescriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
+             return assignments.any {
+-                it.getResolvedCall(bindingContext)?.resultingDescriptor == declarationDescriptor
++                it.getResolvedCall(bindingContext)?.resultingDescriptor?.original == declarationDescriptor
+             }
+         }
+ 

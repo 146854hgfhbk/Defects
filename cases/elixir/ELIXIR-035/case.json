@@ -1,0 +1,219 @@
+{
+  "schema_version": 2,
+  "case_id": "ELIXIR-035",
+  "id": "ELIXIR-035",
+  "upstream_id": "elixir-grpc__grpc-236",
+  "language": "Elixir",
+  "project": "elixir-grpc/grpc",
+  "repo": "elixir-grpc/grpc",
+  "provenance": {
+    "source_dataset": "SWE-rebench-V2",
+    "source_dataset_id": "nebius/SWE-rebench-V2",
+    "source_revision": "475dd5e",
+    "pr_url": "https://github.com/elixir-grpc/grpc/pull/236",
+    "issue_id": 176,
+    "issue_url": "https://github.com/elixir-grpc/grpc/issues/176",
+    "issue_relation": "PR_DESCRIPTION_ISSUE_REFERENCE",
+    "pr_merge_commit": "1e0598b6995adb4f3d1cc01cf67f3614ae7ca376",
+    "pr_merged": true,
+    "pr_base_sha": "da37494e3f20e38c403fe93a3ba950264618035c",
+    "pr_head_sha": "a0434dc33d6531152d0f693b4a1904cbd9191084",
+    "pr_commit_count": 8,
+    "fix_commit_relation": "multi_commit_pr(8)"
+  },
+  "buggy_revision": "da37494e3f20e38c403fe93a3ba950264618035c",
+  "fixed_revision": "1e0598b6995adb4f3d1cc01cf67f3614ae7ca376",
+  "revision_mode": "base_plus_gold_patch",
+  "revisions": {
+    "revision_mode": "base_plus_gold_patch",
+    "buggy": "da37494e3f20e38c403fe93a3ba950264618035c",
+    "fixed": {
+      "declared_commit": "1e0598b6995adb4f3d1cc01cf67f3614ae7ca376",
+      "base_commit": "da37494e3f20e38c403fe93a3ba950264618035c",
+      "patch": "patches/minimized-source.patch",
+      "note": "replay is base + canonical patch; the merge commit is the declared upstream reference"
+    }
+  },
+  "patch": {
+    "path": "patches/minimized-source.patch",
+    "upstream_path": "patches/upstream.patch",
+    "sha256": "c0ca9e940dd0b1d1e3852ac6c98ceca9c6acd08ca9bfeeb26b4d9855c757fbdf",
+    "upstream_sha256": "f8ef3018f27fb83f742a2813036f9d29e34c8bf86edb7e402e3d9e9d4e468c9d",
+    "changed_source_files": [
+      "lib/grpc/client/adapters/gun.ex",
+      "lib/grpc/stub.ex"
+    ]
+  },
+  "patch_sha256": "c0ca9e940dd0b1d1e3852ac6c98ceca9c6acd08ca9bfeeb26b4d9855c757fbdf",
+  "trigger_test_patch": "patches/trigger-tests.patch",
+  "trigger_test_patch_sha256": "e479cc3c83a289ac96cc128c91dd5c45374e8b557c3cd478a446082d95c874c9",
+  "triggering_tests": [
+    "connect/2 connects insecurely (custom options)",
+    "connect/2 connects insecurely (default options)"
+  ],
+  "trigger_tests": [
+    "connect/2 connects insecurely (custom options)",
+    "connect/2 connects insecurely (default options)"
+  ],
+  "expected_failure": {
+    "test_count": 2,
+    "tests": [
+      "connect/2 connects insecurely (custom options)",
+      "connect/2 connects insecurely (default options)"
+    ],
+    "exception_types": [],
+    "fingerprints": []
+  },
+  "minimization": {
+    "status": "HUMAN_REVIEWED_MINIMIZED_V1",
+    "policy": "drop non-production files; production only documentation/comment/format; same-file dangling guard",
+    "removed_hunks": 2,
+    "removed_files": [],
+    "forced_kept": [],
+    "upstream_equals_minimized": false,
+    "report": "patches/minimization.json",
+    "llm_review": "llm-hunk-review.json",
+    "review_status": "human_minimization_signoff_completed",
+    "reviewer_type": "human_dataset_curator",
+    "human_signoff": "completed",
+    "dynamic_revalidation": false,
+    "human_signoff_date": "2026-09-12",
+    "human_signoff_scope": "patch_minimization_only"
+  },
+  "environment": {
+    "backend": "swe_rebench_v2_docker",
+    "image": "docker.io/swerebenchv2/elixir-grpc-grpc:236-da37494"
+  },
+  "environment_lock": "environment.lock.json",
+  "commands": {
+    "test": "mix test --exclude integration --trace"
+  },
+  "validation": {
+    "status": "PASS",
+    "report": "validation/phase-d.json",
+    "report_sha256": "a7479ee1b29354bd1cc2641a847e02d9846d456463e1cbf3054d1b75204087be",
+    "protocol": "v5-f2p",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "result": "PASS"
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "elixir",
+    "reason": null,
+    "llm_semantic_decision": "BUG_FIX",
+    "human_confirmation": false
+  },
+  "release_integrity": "release-integrity.json",
+  "status": "ACTIVE",
+  "fixed_revision_kind": "upstream_pr_merge_commit",
+  "fixed_revision_parents": [
+    "da37494e3f20e38c403fe93a3ba950264618035c"
+  ],
+  "artifacts": {
+    "curation_decision": "curation-decision.json",
+    "llm_hunk_review": "llm-hunk-review.json",
+    "llm_semantic_review": "llm-semantic-review.json",
+    "minimization_decisions": "minimization-decisions.json",
+    "manual_minimization_confirmation": "manual-minimization-confirmation.json",
+    "minimization_report": "patches/minimization.json"
+  },
+  "execution_validation": {
+    "status": "PASS",
+    "protocol": "v5-f2p",
+    "evidence": "validation/phase-d.json",
+    "evidence_sha256": "a7479ee1b29354bd1cc2641a847e02d9846d456463e1cbf3054d1b75204087be",
+    "validated_at": "2026-09-12T00:56:49Z",
+    "b_failures": [
+      4,
+      4,
+      4
+    ],
+    "f_failures": [
+      2,
+      2,
+      2
+    ],
+    "gold_failures": [
+      2
+    ],
+    "dyn_dropped": 0,
+    "previous_validated_patch_sha256": "31e057b8952e7aa9f311b58cf651badbf2064bf1424305abf094299851205258",
+    "current_patch_sha256": "c0ca9e940dd0b1d1e3852ac6c98ceca9c6acd08ca9bfeeb26b4d9855c757fbdf",
+    "current_patch_revalidation": "COMPLETED_FULL_SUITE",
+    "f_rebinding_note": "F re-executed x3 with trimmed canonical patch; F full suite re-executed and residual failures are identical to GOLD. B/GOLD evidence retained because the removed mix.exs dev-tool hunk affects only the fixed canonical patch."
+  },
+  "bug_id": "ELIXIR-035",
+  "fixed_test_result": "pass",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "build_command": [
+    "export HOME=/workspace",
+    "mix deps.get",
+    "mix compile"
+  ],
+  "test_command": "mix test --exclude integration --trace",
+  "language_version": {
+    "elixir": "1.16.3",
+    "otp": "26"
+  },
+  "dependency_versions": {
+    "mix_lock_md5": "b1dd3e74e18816fe811ffc50db36dc74"
+  },
+  "operating_system_or_container": {
+    "container_image": "docker.io/swerebenchv2/elixir-grpc-grpc:236-da37494",
+    "image_id": "sha256:8f9fa14945653b3a00f621c43330abddc01dcf89156e3f6c7069ad51a532a68a",
+    "platform": "linux/amd64"
+  },
+  "traceability": {
+    "issue_id": 176,
+    "issue_url": "https://github.com/elixir-grpc/grpc/issues/176",
+    "pr_url": "https://github.com/elixir-grpc/grpc/pull/236",
+    "issue_closed": true,
+    "pr_merged": true,
+    "issue_referenced_in": "pull_request_body",
+    "fix_commit": "1e0598b6995adb4f3d1cc01cf67f3614ae7ca376",
+    "fix_commit_count": 1,
+    "single_parent_fix": true,
+    "upstream_fix_parents": [
+      "da37494e3f20e38c403fe93a3ba950264618035c"
+    ],
+    "upstream_fix_parent": "da37494e3f20e38c403fe93a3ba950264618035c",
+    "fix_commit_is_merge": false,
+    "provenance_strength": "PR_BODY_REFERENCE"
+  },
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "DONE",
+    "full_suite_validation": "PASS",
+    "protocol": "v5-f2p"
+  },
+  "upstream": {
+    "fix_commit": "1e0598b6995adb4f3d1cc01cf67f3614ae7ca376",
+    "fix_parent": "da37494e3f20e38c403fe93a3ba950264618035c",
+    "issue_url": "https://github.com/elixir-grpc/grpc/issues/176",
+    "pr_url": "https://github.com/elixir-grpc/grpc/pull/236"
+  },
+  "benchmark_revision": {
+    "mode": "base_plus_gold_patch",
+    "base_revision": "da37494e3f20e38c403fe93a3ba950264618035c",
+    "declared_fixed_revision": "1e0598b6995adb4f3d1cc01cf67f3614ae7ca376",
+    "fixed_construction": "base_plus_minimized_patch"
+  },
+  "strict_d4j_eligible": true,
+  "reason_code": null,
+  "upstream_revision": {
+    "fix_commit": "1e0598b6995adb4f3d1cc01cf67f3614ae7ca376",
+    "fix_parent": "da37494e3f20e38c403fe93a3ba950264618035c",
+    "issue_url": "https://github.com/elixir-grpc/grpc/issues/176",
+    "pr_url": "https://github.com/elixir-grpc/grpc/pull/236"
+  },
+  "excluded_tests_manifest": "validation/excluded-tests.json",
+  "canonical_test_policy": {
+    "raw_test_command": "mix test --exclude integration --trace",
+    "canonical_runner": "python3 tools/defects4x test --bug 35 --version <b|f> --workdir <checkout> --canonical --execute",
+    "fixed_acceptance": "PASS only after a normal, non-empty ExUnit completion with a valid summary and no infrastructure/process error; a non-zero raw exit may be normalized only when the summary failure count matches parsed failure identities and every identity is explicitly listed in validation/excluded-tests.json and reproduced in upstream GOLD."
+  },
+  "canonical_test_command": "python3 tools/defects4x test --bug 35 --version f --workdir <checkout> --canonical --execute"
+}

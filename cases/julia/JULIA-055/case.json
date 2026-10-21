@@ -1,0 +1,135 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-055",
+  "bug_id": "JULIA-055",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "SciML/SciMLBase.jl",
+  "repository_url": "https://github.com/SciML/SciMLBase.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "272a481ffee699bc99ebb4656bbed51fe98694b4",
+  "fixed_revision": "415cab45c4896c421dacc7a90f05a78d894fb551",
+  "candidate_sha": "415cab45c4896c421dacc7a90f05a78d894fb551",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "272a481ffee699bc99ebb4656bbed51fe98694b4",
+  "changed_production_files": [
+    "src/problems/ode_problems.jl",
+    "src/scimlfunctions.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "ODEProblem(SplitFunction) allocates _func_cache"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/JULIA-055-splitfunction.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "sha256": "95b07a91bb15516301e60438f95f589a4a8f077997c81b27bcf304063ccaabd1",
+    "timeout_seconds": 1800,
+    "oracle": {
+      "upstream_testset": "ODEProblem(SplitFunction) allocates _func_cache",
+      "expected_buggy_failure": "get_tmp(nothing, du) path before cache allocation",
+      "expected_fixed_behavior": "constructed ODEProblem allocates _func_cache and evaluates rhs",
+      "source_evidence": {
+        "origin_pull_request": 1463,
+        "upstream_testset": "ODEProblem(SplitFunction) allocates _func_cache",
+        "upstream_test_files": [
+          "test/ensemble_tests.jl",
+          "test/problem_building_test.jl"
+        ],
+        "upstream_test_files_sha256": {
+          "test/ensemble_tests.jl": "8a247347932fafed13f4737174ece4d107456c0fb7f4d8a01746be364633fc62",
+          "test/problem_building_test.jl": "124dbcd6f7f94557826946220750da1555491533b0b281ccdf0b58a09a149baa"
+        },
+        "upstream_tests_patch_sha256": "e30718a4a9fbefee859b4091e945b4aae65315f16c1718ce99197b28bc9fb023",
+        "extraction": "Self-contained behavioral MWE isolated from the named upstream fix testset."
+      }
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "upstream_fix_commit": "415cab45c4896c421dacc7a90f05a78d894fb551",
+    "selected_root_cause": "SplitFunction cache allocation",
+    "omitted_independent_changes": [
+      "ComplexEnsembleSummaryError and EnsembleSummary complex-data handling"
+    ]
+  },
+  "review": {
+    "candidate_sha": "415cab45c4896c421dacc7a90f05a78d894fb551",
+    "project": "SciML/SciMLBase.jl",
+    "input_sha256": "32266bdc00d010fcd57f8e8a0756a94fadd83a25f5987934caca761d8a267800",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T05:40:43Z",
+    "usage": {
+      "prompt_tokens": 3039,
+      "completion_tokens": 645,
+      "total_tokens": 3684
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"Fix for a real defect where constructing an in-place ODEProblem with a bare SplitFunction fails at RHS evaluation because `_func_cache` is never allocated. The SplitODEProblem path handled this, but the ODEProblem path did not, leading to `get_tmp(nothing, du)` → `ndims(::Type{Nothing})` error.\",\n  \"evidence\": \"The issue (#1463) documents the bug clearly: `ODEProblem(SplitFunction(f1!, f2!), u0, tspan)` leaves `_func_cache === nothing`, causing a crash on evaluation. The commit adds a dispatch on `ODEProblem(f::SplitFunction, ...)` that mirrors SplitODEProblem's cache allocation, and adds a guard with a clear ArgumentError in the call operator. Runtime evidence confirms the buggy state fails and the fixed state passes. The trigger test verifies cache allocation occurs.\",\n  \"missing_evidence\": \"No test file is included in the diff (test_files is empty), so the actual test code isn't visible — only the trigger test name is provided. The traceability class is UNVERIFIED, meaning automated upstream verification wasn't completed.\",\n  \"validation_risks\": \"The fix adds an ArgumentError throw in the SplitFunction call operator which changes behavior for any code path that previously hit the `get_tmp(nothing, du)` error — this is strictly an improvement (clearer error). The `remake(f; _func_cache)` call depends on `remake` supporting keyword override of `_func_cache` for SplitFunction, which needs verification in the target version.\",\n  \"suggested_tests\": \"1. Construct `ODEProblem(SplitFunction(f1!, f2!), zeros(3), (0.0, 1.0))` and verify `prob.f._func_cache !== nothing`. 2. Evaluate `prob.f(du, u, p, t)` and confirm no error. 3. Construct a SplitFunction without cache and call it directly to verify ArgumentError is thrown. 4. Verify out-of-place SplitFunction path is unaffected.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for a real defect where constructing an in-place ODEProblem with a bare SplitFunction fails at RHS evaluation because `_func_cache` is never allocated. The SplitODEProblem path handled this, but the ODEProblem path did not, leading to `get_tmp(nothing, du)` → `ndims(::Type{Nothing})` error.",
+    "evidence": "The issue (#1463) documents the bug clearly: `ODEProblem(SplitFunction(f1!, f2!), u0, tspan)` leaves `_func_cache === nothing`, causing a crash on evaluation. The commit adds a dispatch on `ODEProblem(f::SplitFunction, ...)` that mirrors SplitODEProblem's cache allocation, and adds a guard with a clear ArgumentError in the call operator. Runtime evidence confirms the buggy state fails and the fixed state passes. The trigger test verifies cache allocation occurs.",
+    "missing_evidence": "No test file is included in the diff (test_files is empty), so the actual test code isn't visible — only the trigger test name is provided. The traceability class is UNVERIFIED, meaning automated upstream verification wasn't completed.",
+    "validation_risks": "The fix adds an ArgumentError throw in the SplitFunction call operator which changes behavior for any code path that previously hit the `get_tmp(nothing, du)` error — this is strictly an improvement (clearer error). The `remake(f; _func_cache)` call depends on `remake` supporting keyword override of `_func_cache` for SplitFunction, which needs verification in the target version.",
+    "suggested_tests": "1. Construct `ODEProblem(SplitFunction(f1!, f2!), zeros(3), (0.0, 1.0))` and verify `prob.f._func_cache !== nothing`. 2. Evaluate `prob.f(du, u, p, t)` and confirm no error. 3. Construct a SplitFunction without cache and call it directly to verify ArgumentError is thrown. 4. Verify out-of-place SplitFunction path is unaffected."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "ODEProblem(SplitFunction) allocates _func_cache"
+    ],
+    "exception_types": [
+      "b6c63b25a44280070d85654900122edaf6ae23d5843cb251d8a5f3570cf524b4"
+    ],
+    "fingerprints": [
+      "b6c63b25a44280070d85654900122edaf6ae23d5843cb251d8a5f3570cf524b4"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

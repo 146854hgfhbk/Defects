@@ -1,0 +1,131 @@
+{
+  "bug_id": "JULIA-072",
+  "buggy_revision": "0f8418bf4b7eb6750634b46e3c6ae67152b80a57",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "5c33d9e872981ecff34c83fba98f80ba8f238cd7",
+  "case_id": "JULIA-072",
+  "changed_production_files": [
+    "src/glmfit.jl",
+    "src/linpred.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "5c33d9e872981ecff34c83fba98f80ba8f238cd7",
+  "instance_id": null,
+  "issue_id": 509,
+  "issue_urls": [
+    "https://github.com/JuliaStats/GLM.jl/issues/509"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": null,
+  "parent_sha": "0f8418bf4b7eb6750634b46e3c6ae67152b80a57",
+  "project": "JuliaStats/GLM.jl",
+  "repository_url": "https://github.com/JuliaStats/GLM.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-4-6",
+    "api_version": null,
+    "candidate_sha": "5c33d9e872981ecff34c83fba98f80ba8f238cd7",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.92,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Issue #509 clearly documents the bug with a reproducible example showing Julia returns 23 while R returns 22 for the same logistic regression model. The fix modifies `dof_residual` to condition on `dispersion_parameter`. PR #560 confirms an existing test had a wrong reference value, which was corrected. Two production files are changed (src/glmfit.jl, src/linpred.jl) and test file is updated.",
+    "input_sha256": "7fa5c74d7f9580f48e2516160754632d5b5b46dd1a78072bdc3d4fb8c83ebefc",
+    "missing_evidence": "Cannot see the actual diff to confirm the exact code changes, but issue and PR descriptions are very clear about what was changed and why.",
+    "project": "JuliaStats/GLM.jl",
+    "provider": "openai_compatible",
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.92,\n  \"summary\": \"Fix for incorrect `dof_residual` computation for GLM families without a dispersion parameter (Bernoulli, Binomial, Poisson). The result was off by 1 compared to R and Stata, caused by unconditionally adding 1 back in `dof_residual` when it should only do so for families with a dispersion parameter.\",\n  \"evidence\": \"Issue #509 clearly documents the bug with a reproducible example showing Julia returns 23 while R returns 22 for the same logistic regression model. The fix modifies `dof_residual` to condition on `dispersion_parameter`. PR #560 confirms an existing test had a wrong reference value, which was corrected. Two production files are changed (src/glmfit.jl, src/linpred.jl) and test file is updated.\",\n  \"missing_evidence\": \"Cannot see the actual diff to confirm the exact code changes, but issue and PR descriptions are very clear about what was changed and why.\",\n  \"validation_risks\": \"The fix touches `dof_residual` which could affect downstream calculations, but issue author notes vcov is not affected. The `dof` function definition in linpred.jl may also have been adjusted, which could have broader implications.\",\n  \"suggested_tests\": \"Test `dof_residual` for Binomial, Poisson, and Bernoulli family GLMs against known R values. Also test that Normal/Gamma family models still return correct `dof_residual`. Verify that `nobs - dof(model)` equals the residual degrees of freedom for non-dispersion families.\"\n}\n```",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-28T02:53:37Z",
+    "suggested_tests": "Test `dof_residual` for Binomial, Poisson, and Bernoulli family GLMs against known R values. Also test that Normal/Gamma family models still return correct `dof_residual`. Verify that `nobs - dof(model)` equals the residual degrees of freedom for non-dispersion families.",
+    "summary": "Fix for incorrect `dof_residual` computation for GLM families without a dispersion parameter (Bernoulli, Binomial, Poisson). The result was off by 1 compared to R and Stata, caused by unconditionally adding 1 back in `dof_residual` when it should only do so for families with a dispersion parameter.",
+    "usage": {
+      "completion_tokens": 534,
+      "prompt_tokens": 2247,
+      "total_tokens": 2781
+    },
+    "validation_risks": "The fix touches `dof_residual` which could affect downstream calculations, but issue author notes vcov is not affected. The `dof` function definition in linpred.jl may also have been adjusted, which could have broader implications."
+  },
+  "revision_mode": "real_upstream_commit",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": null,
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [],
+      "assertion_expression_sha256": [
+        "3b77828bdf431bbb51e3cb3fa45bad10d01bfa9f24a5eaef3a086eb75a330a4e"
+      ],
+      "f2p_tests": [],
+      "mwe_basis": "exact_assertions_from_upstream_fix_test_patch",
+      "schema_version": 1,
+      "source_evidence": {
+        "path": "trigger/upstream-tests.patch",
+        "sha256": "6acdfea7d8dc18fb89fe99c806f6a8b881364e41b260f854627b6371f92c6105",
+        "test_files": [
+          "test/runtests.jl"
+        ],
+        "test_files_sha256": {
+          "test/runtests.jl": "c2dfbb11b1058eb8bb9217f57de4ba4569de225ad6503a160a525deb03d55b6d"
+        }
+      }
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "739b115dcb1029b01577343d4d45958d8b437e158332b667268c600a116b83ae",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "Logistic regression residual degrees of freedom"
+  ],
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "Logistic regression residual degrees of freedom"
+    ],
+    "exception_types": [
+      "caf152b93be676d53f02706bd2aaa744c28433e1b8591cf5103ba2d834147688"
+    ],
+    "fingerprints": [
+      "caf152b93be676d53f02706bd2aaa744c28433e1b8591cf5103ba2d834147688"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

@@ -1,0 +1,179 @@
+diff --git a/lib/File/Temp.pm b/lib/File/Temp.pm
+index 77cd9f7..647af7a 100644
+--- a/lib/File/Temp.pm
++++ b/lib/File/Temp.pm
+@@ -1050,7 +1050,7 @@ that the temporary file is removed by the object destructor
+ if UNLINK is set to true (the default).
+ 
+ Supported arguments are the same as for C<tempfile>: UNLINK
+-(defaulting to true), DIR, EXLOCK, PERMS and SUFFIX.
++(defaulting to true), DIR, EXLOCK, PERMS, PREFIX and SUFFIX.
+ Additionally, the filename
+ template is specified using the TEMPLATE option. The OPEN option
+ is not supported (the file is always opened).
+@@ -1065,7 +1065,9 @@ Can call croak() if an error occurs.
+ 
+ Available since 0.14.
+ 
+-TEMPLATE available since 0.23
++TEMPLATE available since 0.23.
++
++PREFIX available since 0.2401.
+ 
+ =cut
+ 
+@@ -1332,6 +1334,14 @@ DIR option.
+ 
+   $fh = tempfile( DIR => $dir );
+ 
++A prefix can be added to the auto-generated filename using PREFIX:
++
++  ($fh, $filename) = tempfile( PREFIX => 'myprog' );
++
++This generates a filename like C</tmp/myprogXXXXXXXXXX>.  Useful for
++hinting at which program created the file.  PREFIX is ignored when an
++explicit template is supplied.
++
+ If called in scalar context, only the filehandle is returned and the
+ file will automatically be deleted when closed on operating systems
+ that support this (see the description of tmpfile() elsewhere in this
+@@ -1381,6 +1391,8 @@ EXLOCK flag available since 0.19.
+ 
+ PERMS flag available since 0.2310.
+ 
++PREFIX flag available since 0.2401.
++
+ =cut
+ 
+ sub tempfile {
+@@ -1399,6 +1411,7 @@ sub tempfile {
+                  "TMPDIR" => 0,     # Place tempfile in tempdir if template specified
+                  "EXLOCK" => 0,     # Open file with O_EXLOCK
+                  "PERMS"  => undef, # File permissions
++                 "PREFIX" => '',    # Filename prefix
+                 );
+ 
+   # Check to see whether we have an odd or even number of arguments
+@@ -1444,13 +1457,15 @@ sub tempfile {
+ 
+   } else {
+ 
++    my $basename = $options{"PREFIX"} . TEMPXXX;
++
+     if ($options{"DIR"}) {
+ 
+-      $template = File::Spec->catfile($options{"DIR"}, TEMPXXX);
++      $template = File::Spec->catfile($options{"DIR"}, $basename);
+ 
+     } else {
+ 
+-      $template = File::Spec->catfile(_wrap_file_spec_tmpdir(), TEMPXXX);
++      $template = File::Spec->catfile(_wrap_file_spec_tmpdir(), $basename);
+ 
+     }
+ 
+@@ -1625,10 +1640,17 @@ the rmtree() function from the L<File::Path|File::Path> module.
+ Of course, if the template is not specified, the temporary directory
+ will be created in tmpdir() and will also be removed at program exit.
+ 
++  $tempdir = tempdir( PREFIX => 'myprog', CLEANUP => 1 );
++
++Use PREFIX to add a string to the start of the auto-generated directory
++name. PREFIX is ignored when an explicit template is supplied.
++
+ Will croak() if there is an error.
+ 
+ Current API available since 0.05.
+ 
++PREFIX flag available since 0.2401.
++
+ =cut
+ 
+ # '
+@@ -1646,6 +1668,7 @@ sub tempdir  {
+                  "CLEANUP"    => 0, # Remove directory on exit
+                  "DIR"        => '', # Root directory
+                  "TMPDIR"     => 0,  # Use tempdir with template
++                 "PREFIX"     => '', # Directory name prefix
+                 );
+ 
+   # Check to see whether we have an odd or even number of arguments
+@@ -1688,13 +1711,15 @@ sub tempdir  {
+ 
+   } else {
+ 
++    my $basename = $options{"PREFIX"} . TEMPXXX;
++
+     if ($options{"DIR"}) {
+ 
+-      $template = File::Spec->catdir($options{"DIR"}, TEMPXXX);
++      $template = File::Spec->catdir($options{"DIR"}, $basename);
+ 
+     } else {
+ 
+-      $template = File::Spec->catdir(_wrap_file_spec_tmpdir(), TEMPXXX);
++      $template = File::Spec->catdir(_wrap_file_spec_tmpdir(), $basename);
+ 
+     }
+ 
+diff --git a/t/prefix.t b/t/prefix.t
+new file mode 100644
+index 0000000..4ce10b4
+--- /dev/null
++++ b/t/prefix.t
+@@ -0,0 +1,55 @@
++#!/usr/local/bin/perl -w
++# Test for File::Temp - PREFIX option (GitHub issue #12)
++
++use strict;
++use Test::More tests => 14;
++use File::Spec;
++use File::Basename qw/ basename /;
++
++use File::Temp qw/ tempfile tempdir /;
++
++# tempfile() with PREFIX
++{
++  my ($fh, $file) = tempfile( PREFIX => 'myprog' );
++  ok( defined $fh,  "tempfile PREFIX: got filehandle" );
++  ok( -f $file,     "tempfile PREFIX: file exists" );
++  like( basename($file), qr/^myprog/, "tempfile PREFIX: filename starts with prefix" );
++  close $fh;
++  unlink $file;
++}
++
++# tempfile() with PREFIX and DIR
++{
++  my $dir = File::Spec->tmpdir;
++  my ($fh, $file) = tempfile( PREFIX => 'myprog', DIR => $dir );
++  ok( defined $fh,  "tempfile PREFIX+DIR: got filehandle" );
++  ok( -f $file,     "tempfile PREFIX+DIR: file exists" );
++  like( basename($file), qr/^myprog/, "tempfile PREFIX+DIR: filename starts with prefix" );
++  close $fh;
++  unlink $file;
++}
++
++# tempfile() with PREFIX and SUFFIX
++{
++  my ($fh, $file) = tempfile( PREFIX => 'myprog', SUFFIX => '.tmp' );
++  ok( defined $fh, "tempfile PREFIX+SUFFIX: got filehandle" );
++  ok( -f $file,    "tempfile PREFIX+SUFFIX: file exists" );
++  like( basename($file), qr/^myprog.*\.tmp$/, "tempfile PREFIX+SUFFIX: correct name" );
++  close $fh;
++  unlink $file;
++}
++
++# tempdir() with PREFIX
++{
++  my $dir = tempdir( PREFIX => 'myprog', CLEANUP => 1 );
++  ok( defined $dir, "tempdir PREFIX: got directory" );
++  ok( -d $dir,      "tempdir PREFIX: directory exists" );
++  like( basename($dir), qr/^myprog/, "tempdir PREFIX: dirname starts with prefix" );
++}
++
++# File::Temp->new() with PREFIX
++{
++  my $fh = File::Temp->new( PREFIX => 'myprog' );
++  ok( -f "$fh", "OO new PREFIX: file exists" );
++  like( basename("$fh"), qr/^myprog/, "OO new PREFIX: filename starts with prefix" );
++}

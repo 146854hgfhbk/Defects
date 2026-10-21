@@ -1,0 +1,67 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 6a42b7c97bca3afae74747274a113e76f55460c6..c3a2f86a0747448a2ab3915dc130a076d455bea6 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -24,6 +24,8 @@ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) fo
+    [#361](https://github.com/lunarmodules/Penlight/pull/361)
+  - fix: `dir.rmtree` failed to remove symlinks to directories
+    [#365](https://github.com/lunarmodules/Penlight/pull/365)
++ - fix: `pretty.write` could error out on failing metamethods (Lua 5.3+)
++   [#368](https://github.com/lunarmodules/Penlight/pull/368)
+ 
+ 
+ ## 1.9.2 (2020-09-27)
+diff --git a/lua/pl/pretty.lua b/lua/pl/pretty.lua
+index 5fcef01c1e5f2309b65f73ebf5e51c95037c8e0c..09add30e2452935d9d42bcc15c989aedbb51bf2b 100644
+--- a/lua/pl/pretty.lua
++++ b/lua/pl/pretty.lua
+@@ -225,6 +225,29 @@ function pretty.write (tbl,space,not_clever)
+     end
+ 
+ 
++    -- safe versions for iterators since 5.3+ honors metamethods that can throw
++    -- errors
++    local ipairs = function(t)
++        local i = 0
++        local ok, v
++        local getter = function() return t[i] end
++        return function()
++                i = i + 1
++                ok, v = pcall(getter)
++                if v == nil or not ok then return end
++                return i, t[i]
++            end
++    end
++    local pairs = function(t)
++        local k, v, ok
++        local getter = function() return next(t, k) end
++        return function()
++                ok, k, v = pcall(getter)
++                if not ok then return end
++                return k, v
++            end
++    end
++
+     local writeit
+     writeit = function (t,oldindent,indent)
+         local tp = type(t)
+diff --git a/tests/test-pretty.lua b/tests/test-pretty.lua
+index 45345f0615c355d3b4049cf1ec050ef14e082674..99058e37ff6c3bb81a62c96b4f3739bfb770e97f 100644
+--- a/tests/test-pretty.lua
++++ b/tests/test-pretty.lua
+@@ -103,3 +103,15 @@ do  -- issue #203, item 3
+   local t = {}; t[t] = 1
+   pretty.write(t)  -- should not crash
+ end
++
++
++-- pretty.write fails if an __index metatable raises an error #257
++-- only applies to 5.3+ where iterators respect metamethods
++do
++  local t = setmetatable({},{
++    __index = function(self, key)
++      error("oops... couldn't find " .. tostring(key))
++    end
++  })
++  asserteq(pretty.write(t), "{\n}")
++end

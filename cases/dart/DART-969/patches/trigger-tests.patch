@@ -1,0 +1,70 @@
+diff --git a/test/comments/functions.unit b/test/comments/functions.unit
+index 0443087b..d0d9ea1f 100644
+--- a/test/comments/functions.unit
++++ b/test/comments/functions.unit
+@@ -234,4 +234,18 @@ function({
+   a,
+ }) {
+   ;
+-}
+\ No newline at end of file
++}
++>>> metadata in trailing comma parameter list splits together even with comment
++function(@Annotation longParameter,
++  // Comment.
++@Annotation @Other @Third longParameter2,) {}
++<<<
++function(
++  @Annotation
++      longParameter,
++  // Comment.
++  @Annotation
++  @Other
++  @Third
++      longParameter2,
++) {}
+\ No newline at end of file
+diff --git a/test/comments/switch.stmt b/test/comments/switch.stmt
+index f74d0d08..a6ad3fbf 100644
+--- a/test/comments/switch.stmt
++++ b/test/comments/switch.stmt
+@@ -87,6 +87,21 @@ switch (n) {
+   case 2:
+   // comment 2
+ }
++>>> bodies all split or don't together even with comment in the middle
++switch (n) {
++  case 0: longBodyExpression + thatForcesSplit;
++  // comment
++  case 1: c;
++}
++<<<
++switch (n) {
++  case 0:
++    longBodyExpression +
++        thatForcesSplit;
++  // comment
++  case 1:
++    c;
++}
+ >>> keeps one blank line around case comments in switch expression
+ e = switch (n) {
+ 
+diff --git a/test/regression/1100/1181.stmt b/test/regression/1100/1181.stmt
+new file mode 100644
+index 00000000..43c98250
+--- /dev/null
++++ b/test/regression/1100/1181.stmt
+@@ -0,0 +1,11 @@
++>>>
++switch (e) {
++  case E.e1:
++    break;
++  case E.e2:
++}
++<<<
++switch (e) {
++  case E.e1: break;
++  case E.e2:
++}
+\ No newline at end of file

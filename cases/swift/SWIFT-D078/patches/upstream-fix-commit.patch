@@ -1,0 +1,447 @@
+diff --git a/.gitignore b/.gitignore
+index 1c0fb57..ef0d2a7 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,6 +1,7 @@
+ .DS_Store
+ *.build
+ /.swiftpm
++/Examples/.swiftpm
+ /Packages
+ /*.swiftinterface
+ /*.xcodeproj
+diff --git a/Sources/SpyableMacro/Factories/ReceivedArgumentsFactory.swift b/Sources/SpyableMacro/Factories/ReceivedArgumentsFactory.swift
+index 82c75f4..84f368e 100644
+--- a/Sources/SpyableMacro/Factories/ReceivedArgumentsFactory.swift
++++ b/Sources/SpyableMacro/Factories/ReceivedArgumentsFactory.swift
+@@ -56,11 +56,27 @@ struct ReceivedArgumentsFactory {
+     private func variableType(parameterList: FunctionParameterListSyntax) -> TypeSyntaxProtocol {
+         let variableType: TypeSyntaxProtocol
+ 
+-        if parameterList.count == 1, let onlyParameter = parameterList.first {
+-            if onlyParameter.type.is(OptionalTypeSyntax.self) {
+-                variableType = onlyParameter.type
++        if parameterList.count == 1, var onlyParameterType = parameterList.first?.type {
++            if let attributedType = onlyParameterType.as(AttributedTypeSyntax.self) {
++                onlyParameterType = attributedType.baseType
++            }
++
++            if onlyParameterType.is(OptionalTypeSyntax.self) {
++                variableType = onlyParameterType
++            } else if onlyParameterType.is(FunctionTypeSyntax.self) {
++                variableType = OptionalTypeSyntax(
++                    wrappedType: TupleTypeSyntax(
++                        elements: TupleTypeElementListSyntax {
++                            TupleTypeElementSyntax(type: onlyParameterType)
++                        }
++                    ),
++                    questionMark: .postfixQuestionMarkToken()
++                )
+             } else {
+-                variableType = OptionalTypeSyntax(wrappedType: onlyParameter.type, questionMark: .postfixQuestionMarkToken())
++                variableType = OptionalTypeSyntax(
++                    wrappedType: onlyParameterType,
++                    questionMark: .postfixQuestionMarkToken()
++                )
+             }
+         } else {
+             let tupleElements = TupleTypeElementListSyntax {
+@@ -68,7 +84,13 @@ struct ReceivedArgumentsFactory {
+                     TupleTypeElementSyntax(
+                         name: parameter.secondName ?? parameter.firstName,
+                         colon: .colonToken(),
+-                        type: parameter.type
++                        type: {
++                            if let attributedType = parameter.type.as(AttributedTypeSyntax.self) {
++                                return attributedType.baseType
++                            } else {
++                                return parameter.type
++                            }
++                        }()
+                     )
+                 }
+             }
+diff --git a/Sources/SpyableMacro/Factories/ReceivedInvocationsFactory.swift b/Sources/SpyableMacro/Factories/ReceivedInvocationsFactory.swift
+index 315a667..350cb5f 100644
+--- a/Sources/SpyableMacro/Factories/ReceivedInvocationsFactory.swift
++++ b/Sources/SpyableMacro/Factories/ReceivedInvocationsFactory.swift
+@@ -64,15 +64,25 @@ struct ReceivedInvocationsFactory {
+     private func arrayElementType(parameterList: FunctionParameterListSyntax) -> TypeSyntaxProtocol {
+         let arrayElementType: TypeSyntaxProtocol
+ 
+-        if parameterList.count == 1, let onlyParameter = parameterList.first {
+-            arrayElementType = onlyParameter.type
++        if parameterList.count == 1, var onlyParameterType = parameterList.first?.type {
++            if let attributedType = onlyParameterType.as(AttributedTypeSyntax.self) {
++                onlyParameterType = attributedType.baseType
++            }
++
++            arrayElementType = onlyParameterType
+         } else {
+             let tupleElements = TupleTypeElementListSyntax {
+                 for parameter in parameterList {
+                     TupleTypeElementSyntax(
+                         name: parameter.secondName ?? parameter.firstName,
+                         colon: .colonToken(),
+-                        type: parameter.type
++                        type: {
++                            if let attributedType = parameter.type.as(AttributedTypeSyntax.self) {
++                                return attributedType.baseType
++                            } else {
++                                return parameter.type
++                            }
++                        }()
+                     )
+                 }
+             }
+diff --git a/Tests/SpyableMacroTests/Assertions/AssertBuildResult.swift b/Tests/SpyableMacroTests/Assertions/AssertBuildResult.swift
+index 44cdebb..85e6968 100644
+--- a/Tests/SpyableMacroTests/Assertions/AssertBuildResult.swift
++++ b/Tests/SpyableMacroTests/Assertions/AssertBuildResult.swift
+@@ -6,22 +6,22 @@ import _SwiftSyntaxTestSupport
+  Source: https://github.com/apple/swift-syntax/blob/4db7cb20e63f4dba0b030068687996723e352874/Tests/SwiftSyntaxBuilderTest/Assertions.swift#L19
+  */
+ func assertBuildResult<T: SyntaxProtocol>(
+-  _ buildable: T,
+-  _ expectedResult: String,
+-  trimTrailingWhitespace: Bool = true,
+-  file: StaticString = #file,
+-  line: UInt = #line
++    _ buildable: T,
++    _ expectedResult: String,
++    trimTrailingWhitespace: Bool = true,
++    file: StaticString = #file,
++    line: UInt = #line
+ ) {
+-  var buildableDescription = buildable.formatted().description
+-  var expectedResult = expectedResult
+-  if trimTrailingWhitespace {
+-    buildableDescription = buildableDescription.trimmingTrailingWhitespace()
+-    expectedResult = expectedResult.trimmingTrailingWhitespace()
+-  }
+-  assertStringsEqualWithDiff(
+-    buildableDescription,
+-    expectedResult,
+-    file: file,
+-    line: line
+-  )
++    var buildableDescription = buildable.formatted().description
++    var expectedResult = expectedResult
++    if trimTrailingWhitespace {
++        buildableDescription = buildableDescription.trimmingTrailingWhitespace()
++        expectedResult = expectedResult.trimmingTrailingWhitespace()
++    }
++    assertStringsEqualWithDiff(
++        buildableDescription,
++        expectedResult,
++        file: file,
++        line: line
++    )
+ }
+diff --git a/Tests/SpyableMacroTests/Factories/UT_ReceivedArgumentsFactory.swift b/Tests/SpyableMacroTests/Factories/UT_ReceivedArgumentsFactory.swift
+index e1c13a6..57dd82e 100644
+--- a/Tests/SpyableMacroTests/Factories/UT_ReceivedArgumentsFactory.swift
++++ b/Tests/SpyableMacroTests/Factories/UT_ReceivedArgumentsFactory.swift
+@@ -3,6 +3,9 @@ import XCTest
+ import SwiftSyntax
+ 
+ final class UT_ReceivedArgumentsFactory: XCTestCase {
++
++    // MARK: - Variable Declaration
++
+     func testVariableDeclarationSingleArgument() throws {
+         let variablePrefix = "foo"
+         let functionDeclaration = try FunctionDeclSyntax(
+@@ -60,6 +63,82 @@ final class UT_ReceivedArgumentsFactory: XCTestCase {
+         )
+     }
+ 
++    func testVariableDeclarationSingleArgumentWithEscapingAttribute() throws {
++        let variablePrefix = "foo"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func foo(completion: @escaping () -> Void)"
++        ) {}
++
++        let result = ReceivedArgumentsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var fooReceivedCompletion: (() -> Void)?
++            """
++        )
++    }
++
++    func testVariableDeclarationSingleArgumentWithEscapingAttributeAndTuple() throws {
++        let variablePrefix = "foo"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func foo(completion: @escaping (() -> Void))"
++        ) {}
++
++        let result = ReceivedArgumentsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var fooReceivedCompletion: (() -> Void)?
++            """
++        )
++    }
++
++    func testVariableDeclarationSingleClosureArgument() throws {
++        let variablePrefix = "foo"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func foo(completion: () -> Void)"
++        ) {}
++
++        let result = ReceivedArgumentsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var fooReceivedCompletion: (() -> Void)?
++            """
++        )
++    }
++
++    func testVariableDeclarationSingleOptionalClosureArgument() throws {
++        let variablePrefix = "foo"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func foo(completion: (() -> Void)?)"
++        ) {}
++
++        let result = ReceivedArgumentsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var fooReceivedCompletion: (() -> Void)?
++            """
++        )
++    }
++
+     func testVariableDeclarationMultiArguments() throws {
+         let variablePrefix = "foo"
+         let functionDeclaration = try FunctionDeclSyntax(
+@@ -79,6 +158,65 @@ final class UT_ReceivedArgumentsFactory: XCTestCase {
+         )
+     }
+ 
++    func testVariableDeclarationMultiArgumentsWithEscapingAttribute() throws {
++        let variablePrefix = "foo"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func foo(completion: @escaping () -> Void, _ count: (x: Int, UInt?)?, final price: Decimal?)"
++        ) {}
++
++        let result = ReceivedArgumentsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var fooReceivedArguments: (completion: () -> Void, count: (x: Int, UInt?)?, price: Decimal?)?
++            """
++        )
++    }
++
++    func testVariableDeclarationMultiArgumentsWithSomeClosureArgument() throws {
++        let variablePrefix = "foo"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func foo(completion: () -> Void, _ count: (x: Int, UInt?)?, final price: Decimal?)"
++        ) {}
++
++        let result = ReceivedArgumentsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var fooReceivedArguments: (completion: () -> Void, count: (x: Int, UInt?)?, price: Decimal?)?
++            """
++        )
++    }
++
++    func testVariableDeclarationMultiArgumentsWithSomeOptionalClosureArgument() throws {
++        let variablePrefix = "foo"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func foo(completion: (() -> Void)?, _ count: (x: Int, UInt?)?, final price: Decimal?)"
++        ) {}
++
++        let result = ReceivedArgumentsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var fooReceivedArguments: (completion: (() -> Void)?, count: (x: Int, UInt?)?, price: Decimal?)?
++            """
++        )
++    }
++
++    // MARK: - Assign Value To Variable Expression
++
+     func testAssignValueToVariableExpressionSingleArgumentFirstParameterName() throws {
+         let variablePrefix = "funcName"
+         let functionDeclaration = try FunctionDeclSyntax(
+diff --git a/Tests/SpyableMacroTests/Factories/UT_ReceivedInvocationsFactory.swift b/Tests/SpyableMacroTests/Factories/UT_ReceivedInvocationsFactory.swift
+index 234b3d1..a7f4104 100644
+--- a/Tests/SpyableMacroTests/Factories/UT_ReceivedInvocationsFactory.swift
++++ b/Tests/SpyableMacroTests/Factories/UT_ReceivedInvocationsFactory.swift
+@@ -3,6 +3,9 @@ import XCTest
+ import SwiftSyntax
+ 
+ final class UT_ReceivedInvocationsFactory: XCTestCase {
++
++    // MARK: - Variable Declaration
++
+     func testVariableDeclarationSingleArgument() throws {
+         let variablePrefix = "foo"
+         let functionDeclaration = try FunctionDeclSyntax(
+@@ -41,6 +44,63 @@ final class UT_ReceivedInvocationsFactory: XCTestCase {
+         )
+     }
+ 
++    func testVariableDeclarationSingleArgumentWithEscapingAttribute() throws {
++        let variablePrefix = "bar"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func bar(completion: @escaping () -> Void)"
++        ) {}
++
++        let result = ReceivedInvocationsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var barReceivedInvocations: [() -> Void] = []
++            """
++        )
++    }
++
++    func testVariableDeclarationSingleClosureArgument() throws {
++        let variablePrefix = "foo"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func foo(completion: () -> Void)"
++        ) {}
++
++        let result = ReceivedInvocationsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var fooReceivedInvocations: [() -> Void] = []
++            """
++        )
++    }
++
++    func testVariableDeclarationSingleOptionalClosureArgument() throws {
++        let variablePrefix = "name"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func name(completion: (() -> Void)?)"
++        ) {}
++
++        let result = ReceivedInvocationsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var nameReceivedInvocations: [(() -> Void)?] = []
++            """
++        )
++    }
++
+     func testVariableDeclarationMultiArguments() throws {
+         let variablePrefix = "func_name"
+         let functionDeclaration = try FunctionDeclSyntax(
+@@ -60,6 +120,65 @@ final class UT_ReceivedInvocationsFactory: XCTestCase {
+         )
+     }
+ 
++    func testVariableDeclarationMultiArgumentsWithEscapingAttribute() throws {
++        let variablePrefix = "foo"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func foo(completion: @escaping () -> Void, count: UInt, final price: Decimal?)"
++        ) {}
++
++        let result = ReceivedInvocationsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var fooReceivedInvocations: [(completion: () -> Void, count: UInt, price: Decimal?)] = []
++            """
++        )
++    }
++
++    func testVariableDeclarationMultiArgumentsWithSomeClosureArgument() throws {
++        let variablePrefix = "bar"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func bar(completion: () -> Void, _ count: (x: Int, UInt?)?, final price: Decimal?)"
++        ) {}
++
++        let result = ReceivedInvocationsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var barReceivedInvocations: [(completion: () -> Void, count: (x: Int, UInt?)?, price: Decimal?)] = []
++            """
++        )
++    }
++
++    func testVariableDeclarationMultiArgumentsWithSomeOptionalClosureArgument() throws {
++        let variablePrefix = "func_name"
++        let functionDeclaration = try FunctionDeclSyntax(
++            "func func_name(completion: (() -> Void)?, _ count: (x: Int, UInt?)?, final price: Decimal?)"
++        ) {}
++
++        let result = ReceivedInvocationsFactory().variableDeclaration(
++            variablePrefix: variablePrefix,
++            parameterList: functionDeclaration.signature.input.parameterList
++        )
++
++        assertBuildResult(
++            result,
++            """
++            var func_nameReceivedInvocations: [(completion: (() -> Void)?, count: (x: Int, UInt?)?, price: Decimal?)] = []
++            """
++        )
++    }
++
++    // MARK: - Append Value To Variable Expression
++
+     func testAppendValueToVariableExpressionSingleArgument() throws {
+         let variablePrefix = "funcName"
+         let functionDeclaration = try FunctionDeclSyntax(

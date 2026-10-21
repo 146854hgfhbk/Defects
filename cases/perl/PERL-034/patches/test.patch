@@ -1,0 +1,61 @@
+diff --git a/t/prefix.t b/t/prefix.t
+new file mode 100644
+index 0000000..4ce10b4
+--- /dev/null
++++ b/t/prefix.t
+@@ -0,0 +1,55 @@
++#!/usr/local/bin/perl -w
++# Test for File::Temp - PREFIX option (GitHub issue #12)
++
++use strict;
++use Test::More tests => 14;
++use File::Spec;
++use File::Basename qw/ basename /;
++
++use File::Temp qw/ tempfile tempdir /;
++
++# tempfile() with PREFIX
++{
++  my ($fh, $file) = tempfile( PREFIX => 'myprog' );
++  ok( defined $fh,  "tempfile PREFIX: got filehandle" );
++  ok( -f $file,     "tempfile PREFIX: file exists" );
++  like( basename($file), qr/^myprog/, "tempfile PREFIX: filename starts with prefix" );
++  close $fh;
++  unlink $file;
++}
++
++# tempfile() with PREFIX and DIR
++{
++  my $dir = File::Spec->tmpdir;
++  my ($fh, $file) = tempfile( PREFIX => 'myprog', DIR => $dir );
++  ok( defined $fh,  "tempfile PREFIX+DIR: got filehandle" );
++  ok( -f $file,     "tempfile PREFIX+DIR: file exists" );
++  like( basename($file), qr/^myprog/, "tempfile PREFIX+DIR: filename starts with prefix" );
++  close $fh;
++  unlink $file;
++}
++
++# tempfile() with PREFIX and SUFFIX
++{
++  my ($fh, $file) = tempfile( PREFIX => 'myprog', SUFFIX => '.tmp' );
++  ok( defined $fh, "tempfile PREFIX+SUFFIX: got filehandle" );
++  ok( -f $file,    "tempfile PREFIX+SUFFIX: file exists" );
++  like( basename($file), qr/^myprog.*\.tmp$/, "tempfile PREFIX+SUFFIX: correct name" );
++  close $fh;
++  unlink $file;
++}
++
++# tempdir() with PREFIX
++{
++  my $dir = tempdir( PREFIX => 'myprog', CLEANUP => 1 );
++  ok( defined $dir, "tempdir PREFIX: got directory" );
++  ok( -d $dir,      "tempdir PREFIX: directory exists" );
++  like( basename($dir), qr/^myprog/, "tempdir PREFIX: dirname starts with prefix" );
++}
++
++# File::Temp->new() with PREFIX
++{
++  my $fh = File::Temp->new( PREFIX => 'myprog' );
++  ok( -f "$fh", "OO new PREFIX: file exists" );
++  like( basename("$fh"), qr/^myprog/, "OO new PREFIX: filename starts with prefix" );
++}

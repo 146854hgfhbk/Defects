@@ -1,0 +1,63 @@
+diff --git a/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/BrowserUrlHandling.test.ets b/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/BrowserUrlHandling.test.ets
+new file mode 100644
+index 000000000..a7ba01c36
+--- /dev/null
++++ b/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/BrowserUrlHandling.test.ets
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (c) 2024 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++import { Browser } from '../../../main/ets/model/Browser';
++
++class LoadUrlProbe {
++  public requests: string[] = [];
++
++  loadUrl(url: string) {
++    this.requests.push(url);
++  }
++}
++
++export default function browserUrlHandlingTest() {
++  describe('BrowserUrlHandlingTest', () => {
++    it('LoadUrlDoesNotDuplicateHttpsScheme_001', 0, () => {
++      let browser = new Browser();
++      let probe = new LoadUrlProbe();
++      (browser.webControllerArray[0] as any).controller = probe;
++
++      browser.loadUrl('example.com/path');
++      browser.loadUrl('https://example.com/path');
++
++      expect(probe.requests[0]).assertEqual('https://example.com/path');
++      expect(probe.requests[1]).assertEqual('https://example.com/path');
++    })
++  })
++}
+diff --git a/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/List.test.ets b/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/List.test.ets
+index d522716aa..2604ac5bb 100644
+--- a/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/BasicFeature/Web/Browser/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import appTest from './app.test';
++import browserUrlHandlingTest from './BrowserUrlHandling.test';
+ 
+ export default function testsuite() {
+   appTest();
+-}
+\ No newline at end of file
++  browserUrlHandlingTest();
++}

@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-596",
+  "technical_evidence_sha256": "40b08e4cab587294aac13e8160085322aa293f940fe0ec10f97d274074323a42",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "a1f07b8167d4f6041fae32f7d898faa7db90adc643cc23cbf235790bb7af356d",
+  "reviewed_at": "2026-08-11T22:08:45.167591+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "close2/csv#70",
+  "rationale": "Issue #70 reports that CSV input '\"A B\", \"C, D\"' incorrectly parses into three fields (A B, C, D) with quote characters dropped. The minimized production patch changes a single guard condition from `!_insideQuotedString` to `!_insideString` in matchTextDelimiters logic (lib/src/csv_parser.dart lines 303-304), which prevents text delimiters from being swallowed inside unquoted strings. The two triggering tests ('Issue #70' and 'Quotes inside') were added in the same commit and directly validate this behavior using only the existing CsvToListConverter API. Strict runtime evidence confirms: (1) both tests fail deterministically on buggy revision c0aebba, (2) both pass on fixed revision fcb4f98, (3) buggy full-suite failures reproduce only these two triggers, (4) all fixed runs pass. The minimized patch excludes comment typo fixes ('a delimiter' → 'of a delimiter', comment wrapping), CHANGELOG.md updates, and pubspec.yaml version bump—none of which affect production logic. No duplicate exists in active_same_project_root_causes (empty list).\n\nIssue #70 reports that CSV input '\"A B\", \"C, D\"' incorrectly parses into three fields (A B, C, D) with quote characters silently dropped instead of two fields. The minimized production patch changes one semantic condition in csv_parser.dart (line 303: `!_insideQuotedString` → `!_insideString`) that controls when text delimiters are matched. This prevents text delimiters from being incorrectly consumed inside unquoted strings. The two triggering tests ('Issue #70' and 'Quotes inside') were added in the same commit and test the exact defect scenario using the existing CsvToListConverter API with no new production features. Strict runtime validation confirms both tests fail deterministically on buggy revision c0aebba and pass on fixed revision fcb4f98, with full suite green on fixed and only these two tests failing on buggy. The minimized patch excludes comment typo fixes (line 92, lines 202-203) from the original commit. No duplicate exists in active_same_project_root_causes (empty array).",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T22:08:30.321656+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a1f07b8167d4f6041fae32f7d898faa7db90adc643cc23cbf235790bb7af356d",
+      "response_sha256": "513e5864d3277c8142f35c1536499a2bfba02acca0d36f33da83e6b109c47fb1",
+      "response_id": "msg_40e7f323-2da1-4d83-a8",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2718
+        },
+        "cache_creation_input_tokens": 2718,
+        "cache_read_input_tokens": 6921,
+        "input_tokens": 8968,
+        "output_tokens": 957
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "close2/csv#70",
+      "rationale": "Issue #70 reports that CSV input '\"A B\", \"C, D\"' incorrectly parses into three fields (A B, C, D) with quote characters dropped. The minimized production patch changes a single guard condition from `!_insideQuotedString` to `!_insideString` in matchTextDelimiters logic (lib/src/csv_parser.dart lines 303-304), which prevents text delimiters from being swallowed inside unquoted strings. The two triggering tests ('Issue #70' and 'Quotes inside') were added in the same commit and directly validate this behavior using only the existing CsvToListConverter API. Strict runtime evidence confirms: (1) both tests fail deterministically on buggy revision c0aebba, (2) both pass on fixed revision fcb4f98, (3) buggy full-suite failures reproduce only these two triggers, (4) all fixed runs pass. The minimized patch excludes comment typo fixes ('a delimiter' → 'of a delimiter', comment wrapping), CHANGELOG.md updates, and pubspec.yaml version bump—none of which affect production logic. No duplicate exists in active_same_project_root_causes (empty list).",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests[0].name",
+        "trigger_tests[1].name",
+        "issue_urls[0]"
+      ],
+      "risks": [
+        "The commit message indicates issue #70 is only '(partially?)' fixed; the accepted output [['A B', ' \"C', ' D\"']] retains quote characters in fields 2-3 rather than producing two clean fields as the reporter expected, suggesting the test encodes maintainer semantics rather than original reporter intent."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T22:08:45.167401+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a1f07b8167d4f6041fae32f7d898faa7db90adc643cc23cbf235790bb7af356d",
+      "response_sha256": "f6ac9a10ce7748c6748f68a6ce8127e9971536f604bdea4c03ee321b46763a79",
+      "response_id": "msg_60f5b8f2-e170-44b3-a3",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3067
+        },
+        "cache_creation_input_tokens": 3067,
+        "cache_read_input_tokens": 6835,
+        "input_tokens": 8968,
+        "output_tokens": 997
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "close2/csv#70",
+      "rationale": "Issue #70 reports that CSV input '\"A B\", \"C, D\"' incorrectly parses into three fields (A B, C, D) with quote characters silently dropped instead of two fields. The minimized production patch changes one semantic condition in csv_parser.dart (line 303: `!_insideQuotedString` → `!_insideString`) that controls when text delimiters are matched. This prevents text delimiters from being incorrectly consumed inside unquoted strings. The two triggering tests ('Issue #70' and 'Quotes inside') were added in the same commit and test the exact defect scenario using the existing CsvToListConverter API with no new production features. Strict runtime validation confirms both tests fail deterministically on buggy revision c0aebba and pass on fixed revision fcb4f98, with full suite green on fixed and only these two tests failing on buggy. The minimized patch excludes comment typo fixes (line 92, lines 202-203) from the original commit. No duplicate exists in active_same_project_root_causes (empty array).",
+      "evidence_paths": [
+        "issue_urls[0]: https://github.com/close2/csv/issues/70",
+        "patches/minimized-production.patch: lines 303",
+        "patches/trigger-tests.patch: test 'Issue #70' and 'Quotes inside'",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed: true",
+        "strict_post_minimization.checks.trigger.deterministic.passed: true",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers.passed: true",
+        "strict_post_minimization.checks.full_suite.fixed_all_green.passed: true"
+      ],
+      "risks": [
+        "The fix commit message notes the issue is '(partially?)' fixed; the accepted behavior still produces three fields including quote fragments rather than the two fields the reporter expected, indicating the fix addresses quote-swallowing but not full RFC 4180 semantics"
+      ]
+    }
+  ]
+}

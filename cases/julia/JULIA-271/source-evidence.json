@@ -1,0 +1,63 @@
+{
+  "candidate_sha": "0ffbdbb86e9e30a1d3e7ab501461917b6419977d",
+  "project": "comonicon/Comonicon.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 228,
+      "url": "https://github.com/comonicon/Comonicon.jl/issues/228",
+      "state": "closed",
+      "title": "[BUG] Using optional optional types from Configurations fails with an error.",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug"
+      ],
+      "body_excerpt": "**Describe the bug**\r\nUsing optional optional [types from Configurations](https://comonicon.org/stable/conventions/#Working-with-option-types-from-Configurations) fails with an error.\r\n\r\n**Version of the package:**\r\n1.0.0, julia 1.8.3\r\n\r\n**To Reproduce**\r\n```julia\r\nmodule M\r\n\r\nusing Comonicon\r\nusing Configurations\r\n\r\n@option struct Opts\r\n    x::String = \"x\"\r\nend\r\n\r\n\"\"\"\r\n# Options\r\n- `-c, --config <path/to/option/or/specific field>`: config.\r\n\"\"\"\r\n@main function main(;config::Opts=Opts())\r\n    @show config\r\nend\r\n\r\nend\r\n\r\nM.command_main()\r\n```\r\n> ERROR: KeyError: key :config not found\r\nStacktrace:\r\n [1] getindex(h::Dict{Symbol, Any}, key::Symbol)\r\n   @ Base ./dict.jl:498\r\n [2] command_main(ARGS::Vector{String})\r\n   @ Main.M ~/.julia/dev/Comonicon/src/codegen/julia.jl:277\r\n [3] command_main()\r\n   @ Main.M ~/.julia/dev/Comonicon/src/codegen/julia.jl:90\r\n [4] top-level scope\r\n   @ REPL[2]:1\r\n\r\n**Expected behavior**\r\nThe function should show `config = Main.M.Opts(\"x\")`\r\n\r\n**Reason**\r\nAccessing `kwargs` [in `emit_leaf_call`](https://github.com/comonicon/Comonicon.jl/blob/master/src/codegen/julia.jl#L278) assumes that the option was already stored, which happens only for required options (afaik).\r\n"
+    },
+    {
+      "number": 229,
+      "url": "https://github.com/comonicon/Comonicon.jl/pull/229",
+      "state": "closed",
+      "title": "Fixed a bug with optional Config parameters",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "PR fixes https://github.com/comonicon/Comonicon.jl/issues/228 and adds tests that fail on the current version, but work fine with the fix."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        228
+      ],
+      "pull_request": 229,
+      "fix_commit": "0ffbdbb86e9e30a1d3e7ab501461917b6419977d",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Fixed a bug with optional Config parameters (#229)\n\nCo-authored-by: Viktor Petukhov <viktor.petukhov+gh@pm.me>",
+    "commit_issue_refs": [
+      229
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 229,
+    "pull_request_title": "Fixed a bug with optional Config parameters",
+    "pull_request_issue_refs": [
+      228
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    228
+  ],
+  "cross_repository_issue_records": []
+}

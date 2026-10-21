@@ -1,0 +1,97 @@
+diff --git a/lib/Test2/API.pm b/lib/Test2/API.pm
+index 995612451..3e131ccc5 100644
+--- a/lib/Test2/API.pm
++++ b/lib/Test2/API.pm
+@@ -445,6 +445,7 @@ sub run_subtest {
+     my $stack = $ctx->stack || $STACK;
+     my $hub = $stack->new_hub(
+         class => 'Test2::Hub::Subtest',
++        buffered => $buffered,
+         %$params,
+     );
+ 
+@@ -514,13 +515,20 @@ sub run_subtest {
+ 
+     my $trace = $ctx->trace;
+ 
++    my $bailed = $hub->bailed_out;
++
+     if (!$finished) {
+-        if(my $bailed = $hub->bailed_out) {
++        if ($bailed && !$buffered) {
+             $ctx->bail($bailed->reason);
+         }
+-        my $code = $hub->exit_code;
+-        $ok = !$code;
+-        $err = "Subtest ended with exit code $code" if $code;
++        elsif ($bailed && $buffered) {
++            $ok = 1;
++        }
++        else {
++            my $code = $hub->exit_code;
++            $ok = !$code;
++            $err = "Subtest ended with exit code $code" if $code;
++        }
+     }
+ 
+     $hub->finalize($trace, 1)
+@@ -549,6 +557,8 @@ sub run_subtest {
+     $ctx->diag("Bad subtest plan, expected " . $hub->plan . " but ran " . $hub->count)
+         if defined($plan_ok) && !$plan_ok;
+ 
++    $ctx->bail($bailed->reason) if $bailed && $buffered;
++
+     $ctx->release;
+     return $pass;
+ }
+diff --git a/lib/Test2/Event/Bail.pm b/lib/Test2/Event/Bail.pm
+index 6f0a4fbbc..3b5a32283 100644
+--- a/lib/Test2/Event/Bail.pm
++++ b/lib/Test2/Event/Bail.pm
+@@ -6,7 +6,7 @@ our $VERSION = '1.302080';
+ 
+ 
+ BEGIN { require Test2::Event; our @ISA = qw(Test2::Event) }
+-use Test2::Util::HashBase qw{reason};
++use Test2::Util::HashBase qw{reason buffered};
+ 
+ sub callback {
+     my $self = shift;
+diff --git a/lib/Test2/Formatter/TAP.pm b/lib/Test2/Formatter/TAP.pm
+index ddd91eda5..ea3dbbe88 100644
+--- a/lib/Test2/Formatter/TAP.pm
++++ b/lib/Test2/Formatter/TAP.pm
+@@ -242,7 +242,7 @@ sub event_bail {
+     my $self = shift;
+     my ($e, $num) = @_;
+ 
+-    return if $e->nested;
++    return if $e->nested && !$e->buffered;
+ 
+     return [
+         OUT_STD,
+diff --git a/lib/Test2/Hub/Subtest.pm b/lib/Test2/Hub/Subtest.pm
+index f652ede25..a50d04124 100644
+--- a/lib/Test2/Hub/Subtest.pm
++++ b/lib/Test2/Hub/Subtest.pm
+@@ -6,7 +6,7 @@ our $VERSION = '1.302080';
+ 
+ 
+ BEGIN { require Test2::Hub; our @ISA = qw(Test2::Hub) }
+-use Test2::Util::HashBase qw/nested bailed_out exit_code manual_skip_all id/;
++use Test2::Util::HashBase qw/nested bailed_out exit_code manual_skip_all id buffered/;
+ use Test2::Util qw/get_tid/;
+ 
+ my $ID = 1;
+@@ -23,7 +23,10 @@ sub process {
+     my ($e) = @_;
+     $e->set_nested($self->nested);
+     $e->set_in_subtest($self->{+ID});
+-    $self->set_bailed_out($e) if $e->isa('Test2::Event::Bail');
++    if ($e->isa('Test2::Event::Bail')) {
++        $e->set_buffered(1) if $self->{+BUFFERED};
++        $self->set_bailed_out($e);
++    }
+     $self->SUPER::process($e);
+ }
+ 

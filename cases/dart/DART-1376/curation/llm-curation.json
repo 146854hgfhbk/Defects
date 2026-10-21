@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1376",
+  "technical_evidence_sha256": "7ba38b70e7afc86c032ba4c7dedef140bdc87e32151c6d13ec80ac39e2382db0",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "402b8a71c50800235861b5f26e5d2652f3afde40e10a773eef5c2f0f8c023eb2",
+  "reviewed_at": "2026-08-15T08:55:20.033794+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/stack_trace#69",
+  "rationale": "The defect is a missing end anchor on the first alternative of the V8 URL location regex in lib/src/frame.dart: `^(.*?):(\\d+)(?::(\\d+))?|native$`. Because the alternative is unanchored and `(.*?)` is lazy, a URI containing a port stops matching at the authority colon, so `http://localhost:8080/stuff.dart.js:560:28` parses as uri `http://localhost` with line 8080 instead of uri `http://localhost:8080/stuff.dart.js`, line 560, column 28. The fix adds `$` to that alternative, which is exactly the behavior asserted by the trigger test 'parses a stack frame with a : in the authority' and exactly what the PR/commit subject and issue #69 describe ('Fix parsing for URIs with a : in the authority'). The pre-existing nature is confirmed by the strict gates: trigger.buggy_differential reproduces that selector alone on the buggy revision, trigger.fixed_clean and full_suite.fixed_all_green pass on the fixed revision, and determinism held over 3 repetitions in a 38-run matrix. The minimized production patch touches only lib/src/frame.dart and contains one behavioral line (the regex) plus one inert comment line whose example URL was refreshed on the construct being changed; there is no refactor, feature extension, config, or test content in the production patch, and the test hunk is isolated in patches/trigger-tests.patch. The trigger uses the pre-existing public `Frame.parseV8` API with no API introduced by the fix, so it runs unmodified against the buggy revision. active_same_project_root_causes is empty and dart-archive/stack_trace#69 is the sole allowed verified issue key, reached via traceability path fix_commit_to_merged_pr_to_issue.\n\nThe defect is a single missing end anchor in the V8 URL-location regex in lib/src/frame.dart: `^(.*?):(\\d+)(?::(\\d+))?|native$` lets the lazy `(.*?)` stop at the first `host:port` boundary, so `http://localhost:8080/stuff.dart.js:560:28` parses with uri `http://localhost` and line 8080. The fix adds `$` to the first alternative (`...(?::(\\d+))?$|native$`), forcing a full-string match. That is exactly the behavior described by the fix commit / PR #69 ('Fix parsing for URIs with a : in the authority'), which traceability verifies as linked to issue 69, and exactly what the trigger asserts: parseV8 of a frame with `http://localhost:8080/...` must yield uri `http://localhost:8080/stuff.dart.js`, line 560, column 28. The minimized production patch touches only the one regex line plus the adjacent comment example inside the same hunk; there is no refactor, API change, config, or test content in it, and the accompanying test change is isolated in patches/trigger-tests.patch. The trigger is the unchanged upstream test from the fixing commit and calls only the pre-existing public `Frame.parseV8` API (used by neighboring pre-fix tests in the same group), so it introduces no dependency on a new production API. The pre-existing selector 'parses a stack frame correctly' passes on the buggy revision while only the new selector fails, confirming the trigger isolates a pre-existing defect rather than a new feature. Strict evidence gates pass in both the original and post-minimization runs (build.both_versions, trigger.buggy_differential with reproduced selector test/frame_test.dart::'parses a stack frame with a : in the authority', trigger.fixed_clean, trigger.deterministic with 3 fingerprint groups, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete runs=38 at 3 repetitions), with no failed checks. active_same_project_root_causes is empty and dart-archive/stack_trace#69 is in allowed_root_cause_ids, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T08:54:38.095543+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "402b8a71c50800235861b5f26e5d2652f3afde40e10a773eef5c2f0f8c023eb2",
+      "response_sha256": "5404751c645daee5070adfb574c623378444b6569a89cc3eb810901a81be8621",
+      "response_id": "msg_1bb85e0e6c3842f29e2e5ce78317afe9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7963018675953566,
+        "input_tokens": 8883,
+        "output_tokens": 734
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/stack_trace#69",
+      "rationale": "The defect is a missing end anchor on the first alternative of the V8 URL location regex in lib/src/frame.dart: `^(.*?):(\\d+)(?::(\\d+))?|native$`. Because the alternative is unanchored and `(.*?)` is lazy, a URI containing a port stops matching at the authority colon, so `http://localhost:8080/stuff.dart.js:560:28` parses as uri `http://localhost` with line 8080 instead of uri `http://localhost:8080/stuff.dart.js`, line 560, column 28. The fix adds `$` to that alternative, which is exactly the behavior asserted by the trigger test 'parses a stack frame with a : in the authority' and exactly what the PR/commit subject and issue #69 describe ('Fix parsing for URIs with a : in the authority'). The pre-existing nature is confirmed by the strict gates: trigger.buggy_differential reproduces that selector alone on the buggy revision, trigger.fixed_clean and full_suite.fixed_all_green pass on the fixed revision, and determinism held over 3 repetitions in a 38-run matrix. The minimized production patch touches only lib/src/frame.dart and contains one behavioral line (the regex) plus one inert comment line whose example URL was refreshed on the construct being changed; there is no refactor, feature extension, config, or test content in the production patch, and the test hunk is isolated in patches/trigger-tests.patch. The trigger uses the pre-existing public `Frame.parseV8` API with no API introduced by the fix, so it runs unmodified against the buggy revision. active_same_project_root_causes is empty and dart-archive/stack_trace#69 is the sole allowed verified issue key, reached via traceability path fix_commit_to_merged_pr_to_issue.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/frame.dart",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.trigger.fixed_clean",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The minimized production patch retains a behaviorally inert comment edit (pub.dartlang.org example URL replaced with example.com); it cannot affect the trigger outcome but is strictly outside the minimal fix.",
+        "test/trace_test.dart::.parse parses a real package:stack_trace stack trace correctly is a resolved baseline full-suite exclusion, and full_suite.fixed_all_green reports 'runs=1 bad=1'; fixed-revision cleanliness therefore relies on that exclusion rather than a fully green suite.",
+        "Two selectors are declared but only 'parses a stack frame with a : in the authority' reproduces; 'parses a stack frame correctly' is a passing guard test, so it contributes no fault localization signal.",
+        "Full-suite verification ran a single repetition, so suite-level ordering interactions are less thoroughly sampled than the 3-repetition isolated trigger runs."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T08:55:20.033119+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "402b8a71c50800235861b5f26e5d2652f3afde40e10a773eef5c2f0f8c023eb2",
+      "response_sha256": "305b48854d8b0fa7ca4131e47efe3fca68cd82c280f02b2e672e4b1069033746",
+      "response_id": "msg_686e453336eb48f6ada44b6fb6f48fa1",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8735939772470979,
+        "input_tokens": 9201,
+        "output_tokens": 855
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/stack_trace#69",
+      "rationale": "The defect is a single missing end anchor in the V8 URL-location regex in lib/src/frame.dart: `^(.*?):(\\d+)(?::(\\d+))?|native$` lets the lazy `(.*?)` stop at the first `host:port` boundary, so `http://localhost:8080/stuff.dart.js:560:28` parses with uri `http://localhost` and line 8080. The fix adds `$` to the first alternative (`...(?::(\\d+))?$|native$`), forcing a full-string match. That is exactly the behavior described by the fix commit / PR #69 ('Fix parsing for URIs with a : in the authority'), which traceability verifies as linked to issue 69, and exactly what the trigger asserts: parseV8 of a frame with `http://localhost:8080/...` must yield uri `http://localhost:8080/stuff.dart.js`, line 560, column 28. The minimized production patch touches only the one regex line plus the adjacent comment example inside the same hunk; there is no refactor, API change, config, or test content in it, and the accompanying test change is isolated in patches/trigger-tests.patch. The trigger is the unchanged upstream test from the fixing commit and calls only the pre-existing public `Frame.parseV8` API (used by neighboring pre-fix tests in the same group), so it introduces no dependency on a new production API. The pre-existing selector 'parses a stack frame correctly' passes on the buggy revision while only the new selector fails, confirming the trigger isolates a pre-existing defect rather than a new feature. Strict evidence gates pass in both the original and post-minimization runs (build.both_versions, trigger.buggy_differential with reproduced selector test/frame_test.dart::'parses a stack frame with a : in the authority', trigger.fixed_clean, trigger.deterministic with 3 fingerprint groups, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete runs=38 at 3 repetitions), with no failed checks. active_same_project_root_causes is empty and dart-archive/stack_trace#69 is in allowed_root_cause_ids, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/frame.dart",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:issue_urls"
+      ],
+      "risks": [
+        "The minimized patch still carries one cosmetic comment edit (example URL changed from http://pub.dartlang.org/... to https://example.com/...) that has no behavioral effect and is not required by the fix; a stricter minimizer would drop it.",
+        "The strict gate relies on a resolved baseline exclusion (test/trace_test.dart::'.parse parses a real package:stack_trace stack trace correctly') that fails independently of this defect; full-suite greenness is therefore conditional on that exclusion remaining a genuine pre-existing failure.",
+        "full_suite_repetitions=1, so full-suite stability is less strongly established than the isolated trigger (3 repetitions).",
+        "Issue body text was not supplied; the issue-to-defect link rests on the PR/commit subject and the verified traceability path rather than on the issue narrative itself.",
+        "The fix is regex-anchoring only; other inputs previously mis-parsed by the unanchored alternative (e.g., unusual native/eval forms) are covered only to the extent the existing suite exercises them."
+      ]
+    }
+  ]
+}

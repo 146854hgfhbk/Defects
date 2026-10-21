@@ -1,0 +1,96 @@
+diff --git a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedImport.kt b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedImport.kt
+index ba7006f174..052f759918 100644
+--- a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedImport.kt
++++ b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedImport.kt
+@@ -27,13 +29,17 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
+  * from destructuring declarations (componentN imports).
+  */
+ @RequiresFullAnalysis
+-class UnusedImport(config: Config) : Rule(
++class UnusedImport(
++    config: Config,
++) : Rule(
+     config,
+-    "Unused Imports are dead code and should be removed."
++    "Unused Imports are dead code and should be removed.",
+ ) {
++    @Configuration("Additional operators from libraries or tools, such as 'assign'(e.g. compiler plugins for Gradle).")
++    private val additionalOperatorSet: List<String> by config(emptyList())
+ 
+     override fun visit(root: KtFile) {
+-        with(UnusedImportVisitor(bindingContext)) {
++        with(UnusedImportVisitor(bindingContext, additionalOperatorSet)) {
+             root.accept(this)
+             unusedImports().forEach {
+                 report(CodeSmell(Entity.from(it), "The import '${it.importedFqName}' is unused."))
+@@ -42,7 +48,10 @@ class UnusedImport(config: Config) : Rule(
+         super.visit(root)
+     }
+ 
+-    private class UnusedImportVisitor(private val bindingContext: BindingContext) : DetektVisitor() {
++    private class UnusedImportVisitor(
++        private val bindingContext: BindingContext,
++        private val additionalOperatorSet: List<String>,
++    ) : DetektVisitor() {
+         private var currentPackage: FqName? = null
+         private var imports: List<KtImportDirective>? = null
+         private val namedReferences = mutableSetOf<KtReferenceExpression>()
+@@ -150,25 +162,45 @@ class UnusedImport(config: Config) : Rule(
+         }
+ 
+         private fun KtReferenceExpression.fqNameOrNull(): FqName? {
+-            val descriptor = bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, this]
+-                ?: bindingContext[BindingContext.REFERENCE_TARGET, this]
++            val descriptor =
++                bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, this]
++                    ?: bindingContext[BindingContext.REFERENCE_TARGET, this]
+             return descriptor?.getImportableDescriptor()?.fqNameOrNull()
+         }
+     }
+ 
+     companion object {
+         // Kotlin language default operators
+-        private val operatorSet = setOf(
+-            "unaryPlus", "unaryMinus", "not", "inc", "dec", "plus", "minus", "times", "div",
+-            "mod", "rangeTo", "rangeUntil", "contains", "get", "set", "invoke",
+-            "plusAssign", "minusAssign", "timesAssign", "divAssign", "modAssign",
+-            "equals", "compareTo", "iterator", "getValue", "setValue", "provideDelegate",
+-        )
+-
+-        // Additional operators from libraries or tools, e.g. compiler plugins for Gradle
+-        private val additionalOperatorSet = setOf(
+-            "assign"
+-        )
++        private val operatorSet =
++            setOf(
++                "unaryPlus",
++                "unaryMinus",
++                "not",
++                "inc",
++                "dec",
++                "plus",
++                "minus",
++                "times",
++                "div",
++                "mod",
++                "rangeTo",
++                "rangeUntil",
++                "contains",
++                "get",
++                "set",
++                "invoke",
++                "plusAssign",
++                "minusAssign",
++                "timesAssign",
++                "divAssign",
++                "modAssign",
++                "equals",
++                "compareTo",
++                "iterator",
++                "getValue",
++                "setValue",
++                "provideDelegate",
++            )
+ 
+         private val kotlinDocReferencesRegExp = Regex("\\[([^]]+)](?!\\[)")
+         private val kotlinDocBlockTagReferenceRegExp = Regex("^@(see|throws|exception) (.+)")

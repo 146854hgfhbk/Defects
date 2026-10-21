@@ -1,0 +1,66 @@
+diff --git a/lib/src/modules/bus.dart b/lib/src/modules/bus.dart
+index e4dfc8c..954c9e3 100644
+--- a/lib/src/modules/bus.dart
++++ b/lib/src/modules/bus.dart
+@@ -39,7 +39,10 @@ class BusSubset extends Module with InlineSystemVerilog {
+           'Index out of bounds, indices $startIndex and $endIndex must be less than width-1');
+     }
+ 
+-    _original = Module.unpreferredName('original_' + bus.name);
++    // original name can't be unpreferred because you cannot do a bit slice on expressions
++    // in SystemVerilog, and other expressions could have been in-lined
++    _original = 'original_' + bus.name;
++
+     _subset =
+         Module.unpreferredName('subset_${endIndex}_${startIndex}_' + bus.name);
+ 
+diff --git a/test/bus_test.dart b/test/bus_test.dart
+index 881ab2b..6402888 100644
+--- a/test/bus_test.dart
++++ b/test/bus_test.dart
+@@ -42,6 +42,7 @@ class BusTestModule extends Module {
+     var aBJoined = addOutput('a_b_joined', width: a.width + b.width);
+     var aPlusB = addOutput('a_plus_b', width: a.width);
+     var a1 = addOutput('a1');
++    var expressionBitSelect = addOutput('expression_bit_select', width: 4);
+ 
+     aBar <= ~a;
+     aAndB <= a & b;
+@@ -52,6 +53,8 @@ class BusTestModule extends Module {
+     aBJoined <= [b, a].swizzle();
+     a1 <= a[1];
+     aPlusB <= a + b;
++    expressionBitSelect <=
++        [aBJoined, aShrunk, aRange, aRSliced, aPlusB].swizzle().slice(3, 0);
+   }
+ }
+ 
+@@ -148,7 +151,8 @@ void main() {
+       'a_reversed': 8,
+       'a_range': 3,
+       'a_b_joined': 16,
+-      'a_plus_b': 8
++      'a_plus_b': 8,
++      'expression_bit_select': 4,
+     };
+     test('NotGate bus', () async {
+       var gtm = BusTestModule(Logic(width: 8), Logic(width: 8));
+@@ -291,5 +295,18 @@ void main() {
+           signalToWidthMap: signalToWidthMap);
+       expect(simResult, equals(true));
+     });
++
++    test('expression bit select', () async {
++      var gtm = BusTestModule(Logic(width: 8), Logic(width: 8));
++      await gtm.build();
++      var vectors = [
++        Vector({'a': 1, 'b': 1}, {'expression_bit_select': 2}),
++      ];
++      await SimCompare.checkFunctionalVector(gtm, vectors);
++      var simResult = SimCompare.iverilogVector(
++          gtm.generateSynth(), gtm.runtimeType.toString(), vectors,
++          signalToWidthMap: signalToWidthMap, dontDeleteTmpFiles: true);
++      expect(simResult, equals(true));
++    });
+   });
+ }

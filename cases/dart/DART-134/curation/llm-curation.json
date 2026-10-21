@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-134",
+  "technical_evidence_sha256": "b29faeb9bb30760d285a5a7905117c53e2a66701e4cd7a9bdfa62d72a261b6f5",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "1838b5ad4658e043c13ca4b0f14cab0075c782c46b70861c4a467739e6db29f3",
+  "reviewed_at": "2026-08-11T12:27:56.983118+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "intel/rohd#212",
+  "rationale": "Issue #212 (labeled 'bug') reports that 64-bit-wide LogicValues are wrong when the value exceeds max positive Dart int, because BigInt.toInt() clamps; its reproducer is getRange(0,64) on a 128-bit ofBigInt value expected to equal 0xf0f0f0f0f0f0f0f0. The minimized production patch changes exactly the clamping call sites: _BigLogicValue.getRange now uses toIntUnsigned(newWidth) for both _value and _invalid, and LogicValue.ofBigInt uses toIntUnsigned(width) on the small path, with the new BigInt.toIntUnsigned helper being the mechanism of the fix rather than an added feature. Minimization dropped the two non-defect parts of the original commit: the analysis_options.yaml lint toggle (config-only) and the _unsignedBinaryParse rewrite (behavior-preserving refactor onto the same helper). The trigger patch is the unchanged upstream test portion of the same fixing commit and uses only pre-existing public APIs (LogicValue.ofBigInt, getRange, toInt, bin), not the newly introduced toIntUnsigned, so it does not depend on new production API. Strict evidence for both original and post-minimization runs passed all gates: build on both revisions, buggy differential reproducing the two ofBigInt/getRange selectors, non-reproducing selector passing, deterministic fingerprints over 3 repetitions, fixed isolated/suite/reversed clean, and fixed full suite green. The supplied active same-project root cause registry is empty, so intel/rohd#212 is not a duplicate.\n\nIssue #212 (labeled 'bug', closed by PR #213) reports that BigInt.toInt() clamping corrupts 64-bit LogicValues, and gives a reproducer: getRange(0,64) on a 128-bit value should equal 0xf0f0f0f0f0f0f0f0. The minimized production patch addresses exactly that root cause at both clamping call sites: _BigLogicValue.getRange and LogicValue.ofBigInt now route through the new toIntUnsigned(width) helper instead of toInt(). The minimization correctly excluded the two non-defect parts of the upstream commit: the analysis_options.yaml lint toggle (configuration-only) and the _unsignedBinaryParse rewrite (behavior-preserving refactor onto the new helper, since that path already used the 0x-hex trick). What remains is the helper plus its two call-site substitutions, all behavioral and all in scope. The trigger tests are the unaltered upstream test hunk and use only pre-existing public APIs (ofBigInt, getRange, toInt, bin); they do not touch the newly added BigLogicValueBigIntUtilities extension, so they compile at the buggy revision and do not depend on API introduced by the fix. Two of the three declared selectors reproduce the reported symptom under the strict matrix ('64-bit LogicValues larger than maximum positive value on integer' and '64-bit BigInts larger than max pos int value constructing'), matching the issue's own reproducer and the ofBigInt(width=64) case. Strict gates passed both pre- and post-minimization: build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic (4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, with 44 matrix runs at 3 repetitions and no failed checks. allowed_root_cause_ids contains intel/rohd#212 and active_same_project_root_causes is empty, so no duplicate root cause.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:27:27.099646+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "1838b5ad4658e043c13ca4b0f14cab0075c782c46b70861c4a467739e6db29f3",
+      "response_sha256": "5743948f0054e79814038ad2fad7720a6605060298ec7162e0431c46db8cb3e1",
+      "response_id": "msg_9350b000-4c1f-4bb3-8b",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3824
+        },
+        "cache_creation_input_tokens": 3824,
+        "cache_read_input_tokens": 8644,
+        "input_tokens": 11514,
+        "output_tokens": 1531
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#212",
+      "rationale": "Issue #212 (labeled 'bug') reports that 64-bit-wide LogicValues are wrong when the value exceeds max positive Dart int, because BigInt.toInt() clamps; its reproducer is getRange(0,64) on a 128-bit ofBigInt value expected to equal 0xf0f0f0f0f0f0f0f0. The minimized production patch changes exactly the clamping call sites: _BigLogicValue.getRange now uses toIntUnsigned(newWidth) for both _value and _invalid, and LogicValue.ofBigInt uses toIntUnsigned(width) on the small path, with the new BigInt.toIntUnsigned helper being the mechanism of the fix rather than an added feature. Minimization dropped the two non-defect parts of the original commit: the analysis_options.yaml lint toggle (config-only) and the _unsignedBinaryParse rewrite (behavior-preserving refactor onto the same helper). The trigger patch is the unchanged upstream test portion of the same fixing commit and uses only pre-existing public APIs (LogicValue.ofBigInt, getRange, toInt, bin), not the newly introduced toIntUnsigned, so it does not depend on new production API. Strict evidence for both original and post-minimization runs passed all gates: build on both revisions, buggy differential reproducing the two ofBigInt/getRange selectors, non-reproducing selector passing, deterministic fingerprints over 3 repetitions, fixed isolated/suite/reversed clean, and fixed full suite green. The supplied active same-project root cause registry is empty, so intel/rohd#212 is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/values/big_logic_value.dart",
+        "lib/src/values/logic_value.dart",
+        "case.json:strict_post_minimization.checks",
+        "case.json:issue_urls",
+        "case.json:traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "Declared selector '64-bit binary negatives are converted properly with bin' does not reproduce on the buggy revision (it exercised the already-correct _unsignedBinaryParse path, whose refactor was minimized out); it is a passing regression guard only.",
+        "toIntUnsigned relies on 64-bit native ints via _INT_BITS, so validation and reproduction are VM-specific and would not hold on a JS/web target.",
+        "The fix introduces a public extension on BigInt as part of the minimized patch; while unused by the triggers, it is a visible API surface addition alongside the behavior fix."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:27:56.982849+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "1838b5ad4658e043c13ca4b0f14cab0075c782c46b70861c4a467739e6db29f3",
+      "response_sha256": "8247a560a4e76847bb52371789c28746db7caf3cba6a7d4fe69db3dd37fc2122",
+      "response_id": "msg_1786451276787",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 12256,
+        "output_tokens": 1390,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#212",
+      "rationale": "Issue #212 (labeled 'bug', closed by PR #213) reports that BigInt.toInt() clamping corrupts 64-bit LogicValues, and gives a reproducer: getRange(0,64) on a 128-bit value should equal 0xf0f0f0f0f0f0f0f0. The minimized production patch addresses exactly that root cause at both clamping call sites: _BigLogicValue.getRange and LogicValue.ofBigInt now route through the new toIntUnsigned(width) helper instead of toInt(). The minimization correctly excluded the two non-defect parts of the upstream commit: the analysis_options.yaml lint toggle (configuration-only) and the _unsignedBinaryParse rewrite (behavior-preserving refactor onto the new helper, since that path already used the 0x-hex trick). What remains is the helper plus its two call-site substitutions, all behavioral and all in scope. The trigger tests are the unaltered upstream test hunk and use only pre-existing public APIs (ofBigInt, getRange, toInt, bin); they do not touch the newly added BigLogicValueBigIntUtilities extension, so they compile at the buggy revision and do not depend on API introduced by the fix. Two of the three declared selectors reproduce the reported symptom under the strict matrix ('64-bit LogicValues larger than maximum positive value on integer' and '64-bit BigInts larger than max pos int value constructing'), matching the issue's own reproducer and the ofBigInt(width=64) case. Strict gates passed both pre- and post-minimization: build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic (4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, with 44 matrix runs at 3 repetitions and no failed checks. allowed_root_cause_ids contains intel/rohd#212 and active_same_project_root_causes is empty, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/values/big_logic_value.dart",
+        "lib/src/values/logic_value.dart",
+        "case.json:issue_urls",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The third declared selector, '64-bit binary negatives are converted properly with bin', does not reproduce on the buggy revision because the minimized patch excludes the _unsignedBinaryParse refactor; it is a passing regression guard, not a trigger, and adds selector noise to the case.",
+        "The fix introduces a public extension (BigLogicValueBigIntUtilities.toIntUnsigned) as its mechanism. It is required by the patched call sites and unused by the triggers, but it is a visible API surface addition rather than a private helper.",
+        "toIntUnsigned relies on LogicValue._INT_BITS and 64-bit native integers; behavior would differ on a JS/web target, so validation results are only meaningful on the Dart VM.",
+        "Analyzer was diagnostic only (require_analyze_clean=false) and the upstream lint-config change was dropped, so avoid_js_rounded_ints may flag the new code under a strict analyze gate without indicating a defect."
+      ]
+    }
+  ]
+}

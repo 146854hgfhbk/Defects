@@ -1,0 +1,106 @@
+{
+  "candidate_sha": "9e6392e8ddb53979c7131de4b7dd05b00a9a5c89",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "SWE-rebench-V2",
+  "instance_id": "julialang__juliasyntax.jl-102",
+  "swe_rebench": {
+    "base_commit": "b2372b755d194d198c31cc9fb31cb63f8938fa46",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "Hooks for Core integration",
+      "Parse JuliaSyntax",
+      "Parse Base at /usr/local/julia/bin/../share/julia/base",
+      "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 42,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/42",
+      "state": "closed",
+      "title": "When using in REPL, `JuliaSyntax.jl` does not seem to work well with multiline parsing?",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug"
+      ],
+      "body_excerpt": "When I want to type\r\n\r\n```julia\r\nmap(1:10) do x\r\n    2x\r\nend\r\n```\r\n\r\nafter I type `map(1:10) do x` and hit return, I got\r\n\r\n```julia\r\njulia> map(1:10) do\r\nERROR: ParseError:\r\nError: premature end of input\r\n@ REPL[11]:2:1\r\nmap(1:10) do\r\nError: premature end of input\r\n@ REPL[11]:2:1\r\nmap(1:10) do\r\nError: Expected `end` but got unexpected tokens\r\n@ REPL[11]:2:1\r\nmap(1:10) do\r\n```\r\n\r\nOr if I want to type\r\n\r\n```julia\r\n w = u +\r\n     v +\r\n     1\r\n```\r\n\r\nI got\r\n\r\n```julia\r\njulia> w = u +\r\nERROR: ParseError:\r\nError: premature end of input\r\n@ REPL[14]:2:1\r\nw = u +\r\n```\r\n\r\nBut I can do them with copy-paste:\r\n\r\n<img width=\"153\" alt=\"image\" src=\"https://user-images.githubusercontent.com/25192197/184258129-75b6ec6c-a101-4827-805d-a669d7121844.png\">\r\n\r\nCan we make the REPL-mode tolerate multiline code a little bit more?"
+    },
+    {
+      "number": 71,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/71",
+      "state": "closed",
+      "title": "generate `:incomplete` expression",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This commit setups a specific diagnostic level `:incomplete` to distinguish\r\nincomplete cases from the other general error cases.\r\nDoes this approach sound reasonable?\r\n\r\nfix #42"
+    },
+    {
+      "number": 88,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/88",
+      "state": "closed",
+      "title": "Reworking some Julia AST forms",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": false,
+      "labels": [
+        "enhancement",
+        "design",
+        "trees"
+      ],
+      "body_excerpt": "With JuliaSyntax, we've got our own green tree (`GreenNode`) and AST (`SyntaxNode`) which often differ from `Expr`, due to the requirement that children are strictly in source order.  Some current differences are described in https://github.com/JuliaLang/JuliaSyntax.jl#tree-differences-between-greennode-and-expr. Given that we've been forced to diverge we might as well make the most of this and reconsider some aspects of `Expr` for two reasons:\r\n\r\n* To give extra textural information to users of green tree (eg, presence of parentheses), without the need to recompute this information by inspecting the trivia. (These nodes will probably be elided during AST conversion?)\r\n* To give extra information to AST users like macro writers (eg, conditional ternary is the same as `:if` for `Expr` users)\r\n\r\nList of possible changes\r\n\r\n* [x] Insertion of extra blocks inconsistent in various places, sometimes due to the need of `Expr` to hold `LineNumberNode`.  Avoid this!\r\n    * [x] `let` argument lists (#126)\r\n    * [x] short form functions have a block for the body line number\r\n    * [x] `elseif` conditional has a block for the line number\r\n    * [x] anon function `->` has a block only for the body line number\r\n* [x] Containers for string-like constructs - these are very useful for tooling which works with the tokens of the source text. Also separating the delimiters from the text they delimit removes a whole class of tokenization errors and lets the parser deal with them.\r\n    * [x] string (always use K\"string\" to wrap strings, even when they only contain a single `K\"String\"` token. See #94)\r\n    * [x] char (add a new `K\"char\"` for containing characters along with their delimiters?). See #121 \r\n    * [x] backticks (use `K\"`\"` or add `K\"backticks\"`?)\r\n    * [x] `var\"\"` syntax (use `K\"var\"`? as the head?) (#127)\r\n* [x] Faithful representation of the source text / avoid premature lowering\r\n    * [x] `K\"macrocall\"` - allow users to easily distinguish macrocalls with parentheses fro"
+    },
+    {
+      "number": 102,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/102",
+      "state": "closed",
+      "title": "Generate `Expr(:incomplete)`",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This allows REPL completion to work correctly. It works by pattern matching the parse tree, rather than hard coding incomplete expression detection into the parser itself.\r\n\r\nThis took a while because I got distracted with #88. Though doing some of those things first helped make this quite a lot cleaner. There's still more changes from #88 which would help make this nicer but for now it works.\r\n\r\nThe tests here are somewhat derived from `Base`, but I had to review them all (ie the tests pasted in https://github.com/JuliaLang/JuliaSyntax.jl/pull/71#issuecomment-1225364445) because they turn out to not really make sense.  For example, `\"begin;\"` and `\"begin\"` are both the prefix of a block construct, one of them shouldn't come out as `:other`.\r\n\r\nAlternative to #71, CC @aviatesk :-)\r\n\r\nFix #42, would close #71"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        42
+      ],
+      "pull_request": 102,
+      "fix_commit": "9e6392e8ddb53979c7131de4b7dd05b00a9a5c89",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Generate Expr(:incomplete) for errors which hit EOF (#102)\n\nThis allows REPL completion to work correctly. It works by pattern matching the parse tree, rather than hard coding incomplete expression detection into the parser itself. There's still more changes from #88 which would help make this nicer but for now it works.\r\n\r\nThe tests here are somewhat derived from Base, but had to be reviewed and tweaked because they turn out to not really be consistent. For example, \"begin;\" and \"begin\" are both the prefix of a block construct, one of them shouldn't come out as `:other`.",
+    "commit_issue_refs": [
+      88,
+      102
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 102,
+    "pull_request_title": "Generate `Expr(:incomplete)`",
+    "pull_request_issue_refs": [
+      42,
+      71,
+      88
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    42
+  ],
+  "cross_repository_issue_records": []
+}

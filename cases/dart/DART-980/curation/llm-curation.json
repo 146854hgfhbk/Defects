@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-980",
+  "technical_evidence_sha256": "3b8776a24cc0a8e49bfc294fda3310ae62d509f96cf7104da5ee13a6fc0b5b6f",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "ec57749727eefc8c09e01ca59ee5ee96dfa44827ea69e45a4299bdb132213efb",
+  "reviewed_at": "2026-08-14T06:26:09.234508+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#704",
+  "rationale": "Issue #704 reports a formatting regression in which a parenthesized multiline map literal forces `.forEach` onto its own line. The production fix in `lib/src/call_chain_visitor.dart` unwraps `ParenthesizedExpression` inside `_forcesSplit` before the existing collection-literal checks, which is exactly the reported cause: the target's parentheses hid the collection literal from the no-split rule. The removed TODO line `// * ParenthesizedExpression.` is the item the hunk implements, not an unrelated edit; the minimized patch is that single hunk only, with CHANGELOG.md correctly excluded from it. Triggers are the upstream fixtures from the same commit: `test/regression/0700/0704.unit` reproduces the issue body's code verbatim with the expected unsplit output, and the new case in `test/splitting/invocations.stmt` exercises nested parentheses over an unsplittable list target. Neither depends on any new production API; `_forcesSplit` is private and the fixtures are driven by the pre-existing `test/formatter_test.dart` harness. Strict evidence for both original and post-minimization runs shows build passing on both revisions, both declared selectors failing on the buggy revision (`trigger.buggy_differential`, `full_suite.buggy_reproduces_only_triggers`), fixed revision fully green, deterministic across 3 repetitions with no failed checks. `active_same_project_root_causes` is empty, so this root cause duplicates no registry entry, and `dart-lang/dart_style#704` is the supplied allowed key.\n\nIssue #704 reports a behavioral regression: code that formerly kept `.forEach(...)` on the same line as the closing `})` of a parenthesized map literal began emitting a forced split before `.` as of release 1.1.0, i.e. a pre-existing defect rather than a missing feature. The minimized production patch touches exactly one method, CallChainVisitor._forcesSplit, adding a while-loop that unwraps ParenthesizedExpression before the existing collection-literal checks, and deletes only the now-obsolete TODO bullet naming ParenthesizedExpression as unhandled. That is a single behavioral hunk with no refactor, formatting, config, or docs content; CHANGELOG.md and the fixtures are excluded from the minimized patch. The triggers are the upstream fixtures from the same fixing commit: test/regression/0700/0704.unit reproduces the issue body verbatim with the expected unsplit output, and the new invocations.stmt case `((([element,]))).someLongMethod();` exercises the same parenthesis-unwrapping root cause. Both are data fixtures consumed by the pre-existing test/formatter_test.dart harness, so they introduce no dependency on any production API added by the fix. Strict evidence records both original and post-minimization gates passing, including build.both_versions, trigger.buggy_differential with both selectors reproduced, trigger.fixed_clean, trigger.deterministic (4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, and matrix.complete at 38 runs with 3 repetitions. active_same_project_root_causes is empty and dart-lang/dart_style#704 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:25:44.656660+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ec57749727eefc8c09e01ca59ee5ee96dfa44827ea69e45a4299bdb132213efb",
+      "response_sha256": "27d94e518c549de80579771e5acadeed515a4777d4669dd86a899a38bcec1a82",
+      "response_id": "msg_3f121d08af674e3888eb36e34bc96d70",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5208660428524047,
+        "input_tokens": 15065,
+        "output_tokens": 659
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#704",
+      "rationale": "Issue #704 reports a formatting regression in which a parenthesized multiline map literal forces `.forEach` onto its own line. The production fix in `lib/src/call_chain_visitor.dart` unwraps `ParenthesizedExpression` inside `_forcesSplit` before the existing collection-literal checks, which is exactly the reported cause: the target's parentheses hid the collection literal from the no-split rule. The removed TODO line `// * ParenthesizedExpression.` is the item the hunk implements, not an unrelated edit; the minimized patch is that single hunk only, with CHANGELOG.md correctly excluded from it. Triggers are the upstream fixtures from the same commit: `test/regression/0700/0704.unit` reproduces the issue body's code verbatim with the expected unsplit output, and the new case in `test/splitting/invocations.stmt` exercises nested parentheses over an unsplittable list target. Neither depends on any new production API; `_forcesSplit` is private and the fixtures are driven by the pre-existing `test/formatter_test.dart` harness. Strict evidence for both original and post-minimization runs shows build passing on both revisions, both declared selectors failing on the buggy revision (`trigger.buggy_differential`, `full_suite.buggy_reproduces_only_triggers`), fixed revision fully green, deterministic across 3 repetitions with no failed checks. `active_same_project_root_causes` is empty, so this root cause duplicates no registry entry, and `dart-lang/dart_style#704` is the supplied allowed key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/call_chain_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/0700/0704.unit",
+        "test/splitting/invocations.stmt",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_tests",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The triggers are expectation-fixture files rather than Dart test code, so reproduction depends on the project's fixture-driven `formatter_test.dart` harness remaining stable; the strict matrix confirms it works at these two revisions only.",
+        "The `invocations.stmt` case uses triple-nested parentheses, slightly broader than the single-parenthesis case in the issue, though it targets the same `while` unwrap loop; the `0704.unit` fixture covers the reported case exactly.",
+        "`require_analyze_clean` is false, so analyzer diagnostics were not gated.",
+        "The added fixture file lacks a trailing newline, a cosmetic detail that could matter if fixture parsing changes upstream."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:26:09.234146+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "ec57749727eefc8c09e01ca59ee5ee96dfa44827ea69e45a4299bdb132213efb",
+      "response_sha256": "7c67cf0064ecc878194a28a48182fcf993f517819ce5a1b1bec8c5b0af19d21c",
+      "response_id": "msg_6aab586acb644a43bc1be0687a290c5c",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.559998211575456,
+        "input_tokens": 15227,
+        "output_tokens": 715
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#704",
+      "rationale": "Issue #704 reports a behavioral regression: code that formerly kept `.forEach(...)` on the same line as the closing `})` of a parenthesized map literal began emitting a forced split before `.` as of release 1.1.0, i.e. a pre-existing defect rather than a missing feature. The minimized production patch touches exactly one method, CallChainVisitor._forcesSplit, adding a while-loop that unwraps ParenthesizedExpression before the existing collection-literal checks, and deletes only the now-obsolete TODO bullet naming ParenthesizedExpression as unhandled. That is a single behavioral hunk with no refactor, formatting, config, or docs content; CHANGELOG.md and the fixtures are excluded from the minimized patch. The triggers are the upstream fixtures from the same fixing commit: test/regression/0700/0704.unit reproduces the issue body verbatim with the expected unsplit output, and the new invocations.stmt case `((([element,]))).someLongMethod();` exercises the same parenthesis-unwrapping root cause. Both are data fixtures consumed by the pre-existing test/formatter_test.dart harness, so they introduce no dependency on any production API added by the fix. Strict evidence records both original and post-minimization gates passing, including build.both_versions, trigger.buggy_differential with both selectors reproduced, trigger.fixed_clean, trigger.deterministic (4 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, and matrix.complete at 38 runs with 3 repetitions. active_same_project_root_causes is empty and dart-lang/dart_style#704 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/call_chain_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/0700/0704.unit",
+        "test/splitting/invocations.stmt",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The PR body phrases the change as \"extends that to allow parenthesized expressions\", which reads like an extension; only the issue text's before/after comparison establishes it as a 1.1.0 regression.",
+        "The defect is formatting-only, so the trigger asserts textual output rather than semantic program behavior, making it sensitive to unrelated future changes in the formatter's line-splitting heuristics.",
+        "The invocations.stmt trigger uses triple-nested parentheses, slightly broader than the single-parenthesis case in the issue, though it shares the same unwrapping root cause.",
+        "Full-suite gates ran with only 1 repetition, so flakiness at suite level is less strongly bounded than the 3-repetition isolated matrix.",
+        "0704.unit is committed without a trailing newline; harmless for the current harness but a possible fragility if fixture parsing changes."
+      ]
+    }
+  ]
+}

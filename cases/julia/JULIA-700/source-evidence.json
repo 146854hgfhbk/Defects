@@ -1,0 +1,72 @@
+{
+  "candidate_sha": "e62f4696ddce7d65e51ec87730255477e9ee6dc2",
+  "project": "JuliaCollections/DataStructures.jl",
+  "source": "merged_pull_request",
+  "instance_id": "juliacollections__datastructures.jl-858",
+  "swe_rebench": {
+    "base_commit": "d79c5d5ca02eef1cbd4c27aa5d651e7eca70e219",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "DataStructures"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 857,
+      "url": "https://github.com/JuliaCollections/DataStructures.jl/issues/857",
+      "state": "closed",
+      "title": "Base.in(x, KeySet{OrderedRobinDict}) should not use `get`",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "MWE:\r\n\r\n```julia\r\n## Incorrect answer if value is a negative Int\r\njulia> d = OrderedRobinDict(:a => -3)\r\nOrderedRobinDict{Symbol, Int64} with 1 entry:\r\n  :a => -3\r\n\r\njulia> :a in keys(d1)\r\nfalse\r\n\r\n# Completely errors out if value is not comparable against Int with >=\r\n\r\njulia> d = OrderedRobinDict(1 => [1,2,3], 2 => [4,5,6])\r\nOrderedRobinDict{Int64, Vector{Int64}} with 2 entries:\r\n  1 => [1, 2, 3]\r\n  2 => [4, 5, 6]\r\n\r\njulia> 1 in keys(d)\r\nERROR: MethodError: no method matching isless(::Int64, ::Vector{Int64})\r\n\r\nClosest candidates are:\r\n  isless(::Real, ::ColorTypes.AbstractGray)\r\n   @ ColorTypes C:\\Users\\mrufsvold\\.julia\\packages\\ColorTypes\\1dGw6\\src\\operations.jl:39\r\n  isless(::AbstractVector, ::AbstractVector)\r\n   @ Base abstractarray.jl:2911\r\n  isless(::Real, ::AbstractFloat)\r\n   @ Base operators.jl:178\r\n  ...\r\n\r\nStacktrace:\r\n [1] <(x::Int64, y::Vector{Int64})\r\n   @ Base .\\operators.jl:343\r\n [2] <=(x::Int64, y::Vector{Int64})\r\n   @ Base .\\operators.jl:392\r\n [3] >=(x::Vector{Int64}, y::Int64)\r\n   @ Base .\\operators.jl:416\r\n [4] in(key::Int64, v::Base.KeySet{Int64, OrderedRobinDict{Int64, Vector{Int64}}})\r\n   @ DataStructures C:\\Users\\mrufsvold\\.julia\\packages\\DataStructures\\59MD0\\src\\ordered_robin_dict.jl:306\r\n [5] top-level scope\r\n   @ REPL[74]:1\r\n```\r\n\r\nBase.in is using `get` and checks if the value is greater than zero, causing all these problems."
+    },
+    {
+      "number": 858,
+      "url": "https://github.com/JuliaCollections/DataStructures.jl/pull/858",
+      "state": "closed",
+      "title": "fix: check key values, not `get` return for haskey(k, orderedrobindict)",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Resolves #857 \r\n\r\nI am not sure if checking if the key appears in the key vector property is the right way to go. Open to another solution!"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        857
+      ],
+      "pull_request": 858,
+      "fix_commit": "e62f4696ddce7d65e51ec87730255477e9ee6dc2",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "fix: check key values, not `get` return for haskey(k, orderedrobindict) (#858)\n\n* fix: check key values, not `get` return for haskey(k, orderedrobindict)\r\n\r\n* Fix: use isequal in setindex!\r\n\r\n* re-fix: use `get` for `in keys()` but descend to the actual id-dict\r\n\r\n* Remove accidental paste in docstring\r\n\r\n* consolidate tests for issue under testset\r\n\r\n---------\r\n\r\nCo-authored-by: Micah Rufsvold <mjrufsvold@mathematica-mpr.com>",
+    "commit_issue_refs": [
+      858
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 858,
+    "pull_request_title": "fix: check key values, not `get` return for haskey(k, orderedrobindict)",
+    "pull_request_issue_refs": [
+      857
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    857
+  ],
+  "cross_repository_issue_records": []
+}

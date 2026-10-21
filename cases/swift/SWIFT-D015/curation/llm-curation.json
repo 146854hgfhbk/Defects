@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-442",
+  "technical_evidence_sha256": "b8dc3611b0c08be700d1bfb9312ef7eba5dc35c5155e92038a88317bdf5e0812",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "e92dddd5296965645aa5c29589af4a4cf58fd88970097dad71008edee2734c7a",
+  "reviewed_at": "2026-09-06T14:39:03.036247+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "yaslab/csv.swift#83",
+  "rationale": "Issue #83 ('This code causes a fatal error.', label bug) supplies a reproducer where the header has three fields and the following row is space-separated, so the row yields fewer fields than the header; decoding it via CSVRowDecoder traps. Traceability is fix_commit_to_merged_pr_to_issue: commit 266f27e ('Fix a crash that occurs when the number of fields is small') is the single commit of merged PR #92 whose body is 'This PR resolves #83.', and 83 appears in verified_fix_issue_numbers. The minimized production patch retains exactly one hunk in Sources/CSV/CSVReader.swift, replacing 'if index >= row.count { return nil }' with 'guard index < row.count else { return \"\" }'. That is the behavioral core of the reported crash: out-of-range field access no longer yields nil on the decoder path. Minimization removed the four unrelated hunks from the upstream commit (deletion of the dead fileprivate currentRowIndex/currentFieldIndex counters and the two currentRow = nil state resets), so the retained patch contains no refactor, formatting, feature, documentation, configuration, or test-only change; post_minimization_validation is PASS and every strict_post_minimization gate passed (build.both_versions, trigger.buggy_differential with both selectors reproduced, trigger.deterministic with 4/4 fingerprint groups, trigger.fixed_clean, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers, 38-run matrix at 3 repetitions). Both triggers come from the fix commit itself, not from a curator or later commit, and both exercise the same missing-field root cause: CSVRowDecoderTests.testNumberOfFieldsIsSmall mirrors the issue reproducer (five-field header, space-separated short row) and expects DecodingError.valueNotFound with codingPath 'intKey' instead of a trap, while CSVReaderTests.testSubscriptString2 asserts the reader-level behavior the decoder consumes ('key1,key2\\nvalue1' -> csv[\"key2\"] == \"\", csv[\"key9\"] still nil). Neither depends on any production API introduced by the fix; the fix adds no API and both tests use the pre-existing CSVReader(string:hasHeaderRow:), next(), subscript, and CSVRowDecoder surface, with inline string fixtures only. The build-compatibility patch is confined to a Date accuracy assertion in CSVRowDecoderTests and is applied symmetrically to both revisions, so it does not alter defect behavior. active_same_project_root_causes is empty and yaslab/csv.swift#83 is the sole entry in allowed_root_cause_ids, so the root cause is not a duplicate.\n\nIssue #83 ('This code causes a fatal error.', label bug) supplies a reproducer where a data row has fewer fields than the header and CSVRowDecoder aborts. Traceability is verified fix_commit_to_merged_pr_to_issue via merged PR #92 ('This PR resolves #83.'), single commit 266f27e, parent b5514ec. The minimized production patch retains exactly one hunk in Sources/CSV/CSVReader.swift, changing out-of-range field access from `return nil` to `return \"\"`, which is the behavioral cause of the decoder's fatal error; the four unrelated hunks from the original commit (removal of dead currentRowIndex/currentFieldIndex counters and the currentRow=nil state resets) were dropped, so no refactor, formatting, docs-only, config-only, or test-only content remains in the production patch. Both triggers are upstream tests from the fix commit reachable through pre-existing public API (CSVReader(string:hasHeaderRow:), next(), string subscript, CSVRowDecoder, existing SupportedDecodableExample fixture); no API introduced by the fix is referenced. testNumberOfFieldsIsSmall reproduces issue #83's short-row decode path and expects DecodingError.valueNotFound at codingPath 'intKey' instead of an abort, and testSubscriptString2 pins the same out-of-range reader behavior the decoder depends on. Machine-generated strict gates pass on both the original and post-minimization matrices (build.both_versions, selectors.present_and_unique 2/2, trigger.buggy_differential with both selectors reproduced, trigger.deterministic 4/4 fingerprint groups, trigger.fixed_clean, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers, 38 runs, 3 repetitions), with post_minimization_validation PASS. active_same_project_root_causes is empty and the root cause key is in allowed_root_cause_ids, so it is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T14:38:25.299006+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "e92dddd5296965645aa5c29589af4a4cf58fd88970097dad71008edee2734c7a",
+      "response_sha256": "d03eae993ec57322e6fdc3512e09cdbd4fb99360379ee6dfc3a54b23b02957d2",
+      "response_id": "msg_00a836a8a89c4017850da44cb2478f3a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.9281560094195688,
+        "input_tokens": 23544,
+        "output_tokens": 925
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "yaslab/csv.swift#83",
+      "rationale": "Issue #83 ('This code causes a fatal error.', label bug) supplies a reproducer where the header has three fields and the following row is space-separated, so the row yields fewer fields than the header; decoding it via CSVRowDecoder traps. Traceability is fix_commit_to_merged_pr_to_issue: commit 266f27e ('Fix a crash that occurs when the number of fields is small') is the single commit of merged PR #92 whose body is 'This PR resolves #83.', and 83 appears in verified_fix_issue_numbers. The minimized production patch retains exactly one hunk in Sources/CSV/CSVReader.swift, replacing 'if index >= row.count { return nil }' with 'guard index < row.count else { return \"\" }'. That is the behavioral core of the reported crash: out-of-range field access no longer yields nil on the decoder path. Minimization removed the four unrelated hunks from the upstream commit (deletion of the dead fileprivate currentRowIndex/currentFieldIndex counters and the two currentRow = nil state resets), so the retained patch contains no refactor, formatting, feature, documentation, configuration, or test-only change; post_minimization_validation is PASS and every strict_post_minimization gate passed (build.both_versions, trigger.buggy_differential with both selectors reproduced, trigger.deterministic with 4/4 fingerprint groups, trigger.fixed_clean, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers, 38-run matrix at 3 repetitions). Both triggers come from the fix commit itself, not from a curator or later commit, and both exercise the same missing-field root cause: CSVRowDecoderTests.testNumberOfFieldsIsSmall mirrors the issue reproducer (five-field header, space-separated short row) and expects DecodingError.valueNotFound with codingPath 'intKey' instead of a trap, while CSVReaderTests.testSubscriptString2 asserts the reader-level behavior the decoder consumes ('key1,key2\\nvalue1' -> csv[\"key2\"] == \"\", csv[\"key9\"] still nil). Neither depends on any production API introduced by the fix; the fix adds no API and both tests use the pre-existing CSVReader(string:hasHeaderRow:), next(), subscript, and CSVRowDecoder surface, with inline string fixtures only. The build-compatibility patch is confined to a Date accuracy assertion in CSVRowDecoderTests and is applied symmetrically to both revisions, so it does not alter defect behavior. active_same_project_root_causes is empty and yaslab/csv.swift#83 is the sole entry in allowed_root_cause_ids, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "minimized_patch_reference.retained_hunks",
+        "minimized_patch_reference.post_minimization_validation",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "traceability.paths[0]",
+        "strict_post_minimization.checks",
+        "patches/build-compatibility.patch"
+      ],
+      "risks": [
+        "testSubscriptString2 is an updated expectation on a pre-existing test (XCTAssertNil -> XCTAssertEqual \"\"), so in isolation it encodes the fix's chosen semantics rather than the crash symptom; defect coverage rests primarily on testNumberOfFieldsIsSmall.",
+        "CSVRowDecoder.swift is not shown in the supplied evidence, so the exact crash site on the buggy revision (force unwrap of the nil field versus the fatalError in the reader accessor) is inferred from the issue text and the strict differential rather than read directly.",
+        "Minimization dropped the upstream currentRow = nil resets, so this case does not cover the stale-currentRow aspect of the original fix; a future case touching that state would need to be checked against this root cause for overlap.",
+        "The subscript now returns an empty string where it previously returned nil, an observable API semantic change; full_suite.fixed_all_green passed, but downstream consumers distinguishing missing from empty fields are outside the benchmark's verification scope."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T14:39:03.035516+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "e92dddd5296965645aa5c29589af4a4cf58fd88970097dad71008edee2734c7a",
+      "response_sha256": "bb291c80d319cab7a66fb616418d7884210b6881a6be91b345b88afb82345e46",
+      "response_id": "msg_bfcf8f9bbf6948848b55258faca74894",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8494316483250416,
+        "input_tokens": 23583,
+        "output_tokens": 803
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "yaslab/csv.swift#83",
+      "rationale": "Issue #83 ('This code causes a fatal error.', label bug) supplies a reproducer where a data row has fewer fields than the header and CSVRowDecoder aborts. Traceability is verified fix_commit_to_merged_pr_to_issue via merged PR #92 ('This PR resolves #83.'), single commit 266f27e, parent b5514ec. The minimized production patch retains exactly one hunk in Sources/CSV/CSVReader.swift, changing out-of-range field access from `return nil` to `return \"\"`, which is the behavioral cause of the decoder's fatal error; the four unrelated hunks from the original commit (removal of dead currentRowIndex/currentFieldIndex counters and the currentRow=nil state resets) were dropped, so no refactor, formatting, docs-only, config-only, or test-only content remains in the production patch. Both triggers are upstream tests from the fix commit reachable through pre-existing public API (CSVReader(string:hasHeaderRow:), next(), string subscript, CSVRowDecoder, existing SupportedDecodableExample fixture); no API introduced by the fix is referenced. testNumberOfFieldsIsSmall reproduces issue #83's short-row decode path and expects DecodingError.valueNotFound at codingPath 'intKey' instead of an abort, and testSubscriptString2 pins the same out-of-range reader behavior the decoder depends on. Machine-generated strict gates pass on both the original and post-minimization matrices (build.both_versions, selectors.present_and_unique 2/2, trigger.buggy_differential with both selectors reproduced, trigger.deterministic 4/4 fingerprint groups, trigger.fixed_clean, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers, 38 runs, 3 repetitions), with post_minimization_validation PASS. active_same_project_root_causes is empty and the root cause key is in allowed_root_cause_ids, so it is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "minimized_patch_reference.retained_hunks",
+        "minimized_patch_reference.post_minimization_validation",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.paths",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "Sources/CSV/CSVReader.swift"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue body and labels come only from source_candidate.issue_check.linked_issues, not from an independently supplied issue record.",
+        "testSubscriptString2 is an updated existing assertion (XCTAssertNil -> XCTAssertEqual \"\") that encodes the post-fix semantics of the reader subscript rather than the crash symptom itself; defect reproduction rests primarily on testNumberOfFieldsIsSmall.",
+        "The fix changes an observable public semantic (out-of-range field nil -> empty string); downstream consumers relying on nil would see a behavior change, which the minimized patch preserves by design.",
+        "patches/build-compatibility.patch relaxes an unrelated millisecondsSince1970 date assertion to accuracy 1e-6; it is test-only and applied symmetrically to both revisions, but it is a harness deviation from upstream sources.",
+        "Minimization dropped the currentRow=nil hunks, so the stale-currentRow aspect of the upstream commit is intentionally out of scope for this benchmark case.",
+        "CSVRowDecoder.swift is not supplied, so the exact crash site inside the decoder is inferred from the reader contract rather than read directly."
+      ]
+    }
+  ]
+}

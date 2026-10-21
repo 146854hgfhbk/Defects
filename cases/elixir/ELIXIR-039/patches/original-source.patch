@@ -1,0 +1,326 @@
+diff --git a/conformance/exemptions.txt b/conformance/exemptions.txt
+index 7c39f7e..7c29239 100644
+--- a/conformance/exemptions.txt
++++ b/conformance/exemptions.txt
+@@ -1,5 +1,4 @@
+ Recommended.Proto2.JsonInput.FieldNameExtension.Validator
+-Required.Proto2.JsonInput.StoresDefaultPrimitive.Validator
+ Recommended.Proto3.JsonInput.IgnoreUnknownEnumStringValueInMapValue.ProtobufOutput
+ Recommended.Proto3.JsonInput.IgnoreUnknownEnumStringValueInOptionalField.ProtobufOutput
+ Recommended.Proto3.JsonInput.IgnoreUnknownEnumStringValueInRepeatedField.ProtobufOutput
+diff --git a/conformance/protobuf/runner.ex b/conformance/protobuf/runner.ex
+index c1bceeb..e9d2edd 100644
+--- a/conformance/protobuf/runner.ex
++++ b/conformance/protobuf/runner.ex
+@@ -5,21 +5,6 @@ defmodule Conformance.Protobuf.Runner do
+ 
+   @spec main() :: :ok
+   def main() do
+-    if System.otp_release() >= "25" do
+-      IO.puts(:stderr, """
+-      It seems like conformance tests are broken on OTP 25 due to some memory leak
+-      for some specific payloads. You can take a look at a couple of regression tests
+-      related to this in: test/protobuf/conformance_regressions_test.exs
+-
+-      Also take a look at these:
+-        * https://github.com/elixir-protobuf/protobuf/commit/19eeb0ebd17af23f4625445404a5c756675660aa
+-        * https://github.com/elixir-protobuf/protobuf/commit/11e1b40a6eaa51b4d2872feaee809e2834bb9b9b#diff-5ea66cbe2186e1e3db8d8bf8e5f117a060e2fa87df3e48dbc182e55af10bef70
+-
+-      """)
+-
+-      System.halt(1)
+-    end
+-
+     # Log things to stderr so that they don't interfere with the stdin/stdout interface
+     # of the conformance runner.
+     Logger.configure_backend(:console, device: :standard_error)
+diff --git a/lib/protobuf/decoder.ex b/lib/protobuf/decoder.ex
+index 9da9f54..b8609c7 100644
+--- a/lib/protobuf/decoder.ex
++++ b/lib/protobuf/decoder.ex
+@@ -233,8 +233,17 @@ defmodule Protobuf.Decoder do
+     %FieldProps{type: type, map?: map?, oneof: oneof, name_atom: name_atom, repeated?: repeated?} =
+       prop
+ 
+-    embedded_msg = decode(bin, type)
+-    val = if map?, do: %{embedded_msg.key => embedded_msg.value}, else: embedded_msg
++    embed_msg = decode(bin, type)
++
++    val =
++      if map? do
++        key = if is_nil(embed_msg.key), do: map_default(prop, :key), else: embed_msg.key
++        value = if is_nil(embed_msg.value), do: map_default(prop, :value), else: embed_msg.value
++        %{key => value}
++      else
++        embed_msg
++      end
++
+     val = if oneof, do: {name_atom, val}, else: val
+ 
+     cond do
+@@ -255,6 +264,15 @@ defmodule Protobuf.Decoder do
+     end
+   end
+ 
++  defp map_default(prop, key_or_value) do
++    prop.type.__message_props__().field_props
++    |> Enum.find(fn {_key, field_props} -> field_props.name_atom == key_or_value end)
++    |> then(fn {_key, field_props} ->
++      # Conformance only works when we use proto3 defaults here, even for proto2...
++      Protobuf.DSL.field_default(:proto3, field_props)
++    end)
++  end
++
+   defp deep_merge(_oneof1 = {tag1, val1}, oneof2 = {tag2, val2}, props) do
+     if tag1 == tag2 do
+       # If the field is a oneof, we merge its value and keep the tag.
+diff --git a/lib/protobuf/encoder.ex b/lib/protobuf/encoder.ex
+index 6992126..93ee98f 100644
+--- a/lib/protobuf/encoder.ex
++++ b/lib/protobuf/encoder.ex
+@@ -60,17 +60,21 @@ defmodule Protobuf.Encoder do
+       end
+ 
+     acc =
+-      case encode_field(class_field(prop), val, syntax, prop) do
++      case encode_field(prop, struct.__struct__, val, syntax) do
+         {:ok, iodata} -> [acc | iodata]
+         :skip -> acc
+       end
+ 
+     encode_fields(rest, syntax, struct, oneofs, acc)
++  end
++
++  defp encode_field(prop, struct_mod, val, syntax) do
++    do_encode_field(class_field(prop), val, syntax, prop)
+   rescue
+     error ->
+       raise Protobuf.EncodeError,
+         message:
+-          "Got error when encoding #{inspect(struct.__struct__)}##{prop.name_atom}: #{Exception.format(:error, error)}"
++          "Got error when encoding #{inspect(struct_mod)}##{prop.name_atom}: #{Exception.format(:error, error)}"
+   end
+ 
+   defp skip_field?(_syntax, [], _prop), do: true
+@@ -88,7 +92,7 @@ defmodule Protobuf.Encoder do
+   defp skip_field?(:proto3, false, %FieldProps{oneof: nil}), do: true
+   defp skip_field?(_syntax, _val, _prop), do: false
+ 
+-  defp encode_field(
++  defp do_encode_field(
+          :normal,
+          val,
+          syntax,
+@@ -102,11 +106,11 @@ defmodule Protobuf.Encoder do
+     end
+   end
+ 
+-  defp encode_field(:embedded, _val = nil, _syntax, _prop) do
++  defp do_encode_field(:embedded, _val = nil, _syntax, _prop) do
+     :skip
+   end
+ 
+-  defp encode_field(
++  defp do_encode_field(
+          :embedded,
+          val,
+          syntax,
+@@ -131,7 +135,7 @@ defmodule Protobuf.Encoder do
+     {:ok, result}
+   end
+ 
+-  defp encode_field(:packed, val, syntax, %FieldProps{type: type, encoded_fnum: fnum} = prop) do
++  defp do_encode_field(:packed, val, syntax, %FieldProps{type: type, encoded_fnum: fnum} = prop) do
+     if skip_field?(syntax, val, prop) or skip_enum?(syntax, val, prop) do
+       :skip
+     else
+@@ -251,7 +255,7 @@ defmodule Protobuf.Encoder do
+     Enum.reduce(pb_exts, [], fn {{ext_mod, key}, val}, acc ->
+       case Protobuf.Extension.get_extension_props(mod, ext_mod, key) do
+         %{field_props: prop} ->
+-          case encode_field(class_field(prop), val, :proto2, prop) do
++          case do_encode_field(class_field(prop), val, :proto2, prop) do
+             {:ok, iodata} -> [acc | iodata]
+             :skip -> acc
+           end
+diff --git a/lib/protobuf/json.ex b/lib/protobuf/json.ex
+index 1a51704..63c7193 100644
+--- a/lib/protobuf/json.ex
++++ b/lib/protobuf/json.ex
+@@ -121,8 +121,8 @@ defmodule Protobuf.JSON do
+   """
+   @spec encode!(struct, [encode_opt]) :: String.t() | no_return
+   def encode!(struct, opts \\ []) do
+-    case encode(struct, opts) do
+-      {:ok, json} -> json
++    case encode_to_iodata(struct, opts) do
++      {:ok, iodata} -> IO.iodata_to_binary(iodata)
+       {:error, error} -> raise error
+     end
+   end
+@@ -169,9 +169,41 @@ defmodule Protobuf.JSON do
+   """
+   @spec encode(struct, [encode_opt]) ::
+           {:ok, String.t()} | {:error, EncodeError.t() | Exception.t()}
+-  def encode(%_{} = struct, opts \\ []) when is_list(opts) do
++  def encode(struct, opts \\ []) when is_list(opts) do
++    case encode_to_iodata(struct, opts) do
++      {:ok, iodata} -> {:ok, IO.iodata_to_binary(iodata)}
++      {:error, error} -> {:error, error}
++    end
++  end
++
++  @doc """
++  Similar to `encode!/2`, but returns iodata
++
++  See `encode_to_iodata/2` for more information about when this function should
++  be preferred over `encode!/2`.
++  """
++  @spec encode_to_iodata!(struct, [encode_opt]) :: iodata()
++  def encode_to_iodata!(struct, opts \\ []) when is_list(opts) do
++    case encode_to_iodata(struct, opts) do
++      {:ok, iodata} -> iodata
++      {:error, error} -> raise error
++    end
++  end
++
++  @doc """
++  Similar to `encode/2`, but returns iodata
++
++  This function should be preferred to encode/2, if the generated JSON will be
++  handed over to one of the IO functions or sent over the socket. The Erlang
++  runtime is able to leverage vectorised writes and avoid allocating a continuous
++  buffer for the whole resulting string, lowering memory use and increasing
++  performance.
++  """
++  @spec encode_to_iodata(struct, [encode_opt]) ::
++          {:ok, iodata()} | {:error, EncodeError.t() | Exception.t()}
++  def encode_to_iodata(%_{} = struct, opts \\ []) when is_list(opts) do
+     if jason = load_jason() do
+-      with {:ok, map} <- to_encodable(struct, opts), do: jason.encode(map)
++      with {:ok, map} <- to_encodable(struct, opts), do: jason.encode_to_iodata(map)
+     else
+       {:error, EncodeError.new(:no_json_lib)}
+     end
+diff --git a/lib/protobuf/json/decode.ex b/lib/protobuf/json/decode.ex
+index f12df6c..bea70fa 100644
+--- a/lib/protobuf/json/decode.ex
++++ b/lib/protobuf/json/decode.ex
+@@ -376,8 +376,18 @@ defmodule Protobuf.JSON.Decode do
+ 
+   defp parse_int(string) do
+     case Integer.parse(string) do
+-      {int, ""} -> {:ok, int}
+-      _ -> :error
++      {int, ""} ->
++        {:ok, int}
++
++      _ ->
++        # We accept integers in scientific notation as well:
++        case Float.parse(string) do
++          {float, ""} ->
++            parse_float_as_int(float)
++
++          _ ->
++            :error
++        end
+     end
+   end
+ 
+diff --git a/lib/protobuf/json/encode.ex b/lib/protobuf/json/encode.ex
+index 63f29fe..13e97e0 100644
+--- a/lib/protobuf/json/encode.ex
++++ b/lib/protobuf/json/encode.ex
+@@ -159,22 +159,14 @@ defmodule Protobuf.JSON.Encode do
+     :maps.from_list(regular ++ oneofs)
+   end
+ 
+-  defp encode_regular_fields(struct, %{field_props: field_props}, opts) do
++  defp encode_regular_fields(struct, %{field_props: field_props, syntax: syntax}, opts) do
+     for {_field_num, %{name_atom: name, oneof: nil} = prop} <- field_props,
+         %{^name => value} = struct,
+-        emit?(prop, value) || opts[:emit_unpopulated] do
++        emit?(syntax, prop, value) || opts[:emit_unpopulated] do
+       encode_field(prop, value, opts)
+     end
+   end
+ 
+-  defp emit?(_prop, nil) do
+-    false
+-  end
+-
+-  defp emit?(prop, value) do
+-    if default?(prop, value), do: prop.proto3_optional?, else: true
+-  end
+-
+   defp encode_oneof_fields(struct, message_props, opts) do
+     %{field_tags: field_tags, field_props: field_props, oneof: oneofs} = message_props
+ 
+@@ -309,15 +301,18 @@ defmodule Protobuf.JSON.Encode do
+   defp maybe_repeat(%{repeated?: false}, val, fun), do: fun.(val)
+   defp maybe_repeat(%{repeated?: true}, val, fun), do: Enum.map(val, fun)
+ 
+-  defp default?(_prop, +0.0), do: true
+-  defp default?(_prop, nil), do: true
+-  defp default?(_prop, 0), do: true
+-  defp default?(_prop, false), do: true
+-  defp default?(_prop, []), do: true
+-  defp default?(_prop, ""), do: true
+-  defp default?(_prop, %{} = map) when map_size(map) == 0, do: true
+-  defp default?(%{type: {:enum, enum}}, key) when is_atom(key), do: enum.value(key) == 0
+-  defp default?(_prop, _value), do: false
++  defp emit?(:proto2, %{default: value}, value), do: false
++  defp emit?(:proto2, %{optional?: true}, val), do: not is_nil(val)
++  defp emit?(:proto3, %{proto3_optional?: true}, val), do: not is_nil(val)
++  defp emit?(_syntax, _prop, +0.0), do: false
++  defp emit?(_syntax, _prop, nil), do: false
++  defp emit?(_syntax, _prop, 0), do: false
++  defp emit?(_syntax, _prop, false), do: false
++  defp emit?(_syntax, _prop, []), do: false
++  defp emit?(_syntax, _prop, ""), do: false
++  defp emit?(_syntax, _prop, %{} = map) when map_size(map) == 0, do: false
++  defp emit?(_syntax, %{type: {:enum, enum}}, key) when is_atom(key), do: enum.value(key) != 0
++  defp emit?(_syntax, _prop, _value), do: true
+ 
+   defp transform_module(message, module) do
+     if transform_module = module.transform_module() do
+diff --git a/lib/protobuf/protoc/generator/message.ex b/lib/protobuf/protoc/generator/message.ex
+index 82c1dde..b3cefab 100644
+--- a/lib/protobuf/protoc/generator/message.ex
++++ b/lib/protobuf/protoc/generator/message.ex
+@@ -339,10 +339,10 @@ defmodule Protobuf.Protoc.Generator.Message do
+   end
+ 
+   # Omit `json_name` from the options list when it matches the original field
+-  # name to keep the list small. Only Proto3 has JSON support for now.
+-  defp add_json_name_to_opts(opts, :proto3, %{name: name, json_name: name}), do: opts
++  # name to keep the list small.
++  defp add_json_name_to_opts(opts, _, %{name: name, json_name: name}), do: opts
+ 
+-  defp add_json_name_to_opts(opts, :proto3, %{json_name: json_name}),
++  defp add_json_name_to_opts(opts, _, %{json_name: json_name}),
+     do: Keyword.put(opts, :json_name, json_name)
+ 
+   defp add_json_name_to_opts(opts, _syntax, _props), do: opts
+diff --git a/lib/protobuf/protoc/generator/util.ex b/lib/protobuf/protoc/generator/util.ex
+index 70a6ca5..59ed242 100644
+--- a/lib/protobuf/protoc/generator/util.ex
++++ b/lib/protobuf/protoc/generator/util.ex
+@@ -81,9 +81,14 @@ defmodule Protobuf.Protoc.Generator.Util do
+ 
+   @spec format(String.t()) :: String.t()
+   def format(code) when is_binary(code) do
+-    code
+-    |> Code.format_string!(locals_without_parens: @locals_without_parens)
+-    |> IO.iodata_to_binary()
++    formatted_code =
++      code
++      |> Code.format_string!(locals_without_parens: @locals_without_parens)
++      |> IO.iodata_to_binary()
++
++    # As neither Code.format_string!/2 nor protoc automatically adds a newline
++    # at end of files, we must add ourselves if not present.
++    if String.ends_with?(formatted_code, "\n"), do: formatted_code, else: formatted_code <> "\n"
+   end
+ 
+   @spec pad_comment(String.t(), non_neg_integer()) :: String.t()

@@ -1,0 +1,120 @@
+diff --git a/Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift b/Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift
+index 9a4047d9cce371835ba231baebd74d8f1babd459..5476ce9e6bc0c715f6fa1934c20b3df81824398e 100644
+--- a/Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift
++++ b/Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift
+@@ -1496,7 +1496,15 @@ private final class TokenStreamCreator: SyntaxVisitor {
+ 
+   override func visit(_ node: IfConfigDeclSyntax) -> SyntaxVisitorContinueKind {
+     // there has to be a break after an #endif
+-    after(node.poundEndif, tokens: .break(.same, size: 0))
++    let newlines: NewlineBehavior
++    if node.parent?.is(AttributeListSyntax.self) == true {
++      newlines = .elective
++    } else if isNestedInPostfixIfConfig(node: Syntax(node)) {
++      newlines = config.respectsExistingLineBreaks ? .elective : .soft
++    } else {
++      newlines = .soft
++    }
++    after(node.poundEndif, tokens: .break(.same, size: 0, newlines: newlines))
+     return .visitChildren
+   }
+ 
+@@ -3155,6 +3163,7 @@ private final class TokenStreamCreator: SyntaxVisitor {
+               )
+             }
+           }
++          after(element.lastToken(viewMode: .sourceAccurate), tokens: .break(.same, newlines: .hard))
+         } else {
+           after(element.lastToken(viewMode: .sourceAccurate), tokens: lineBreak)
+         }
+@@ -3166,7 +3175,8 @@ private final class TokenStreamCreator: SyntaxVisitor {
+       afterAttributeTokens.append(.close)
+     }
+     if !suppressFinalBreak {
+-      afterAttributeTokens.append(lineBreak)
++      let endsWithIfConfig = attributes.last?.is(IfConfigDeclSyntax.self) ?? false
++      afterAttributeTokens.append(endsWithIfConfig ? .break(.same, newlines: .hard) : lineBreak)
+     }
+     if !afterAttributeTokens.isEmpty {
+       after(attributes.lastToken(viewMode: .sourceAccurate), tokens: afterAttributeTokens)
+@@ -4315,10 +4325,9 @@ private final class TokenStreamCreator: SyntaxVisitor {
+       after(postfixIfExpr.lastToken(viewMode: .sourceAccurate), tokens: .contextualBreakingEnd)
+ 
+       for clause in postfixIfExpr.config.clauses {
+-        before(clause.poundKeyword, tokens: .break(.contextual, size: 0))
++        before(clause.poundKeyword, tokens: .break(.contextual, size: 0, newlines: .soft))
+       }
+-      before(postfixIfExpr.config.poundEndif, tokens: .break(.contextual, size: 0))
+-      after(postfixIfExpr.config.poundEndif, tokens: .break(.same, size: 0))
++      before(postfixIfExpr.config.poundEndif, tokens: .break(.contextual, size: 0, newlines: .soft))
+ 
+       return insertContextualBreaks(base, isTopLevel: false)
+     } else if let callingExpr = expr.asProtocol(CallingExprSyntaxProtocol.self) {
+diff --git a/Tests/SwiftFormatTests/PrettyPrint/RespectsExistingLineBreaksTests.swift b/Tests/SwiftFormatTests/PrettyPrint/RespectsExistingLineBreaksTests.swift
+index dfac19f36e1b99c0f757612a14d996b8a8889183..955a7147a1676db03c63ea329f980d686b0043d1 100644
+--- a/Tests/SwiftFormatTests/PrettyPrint/RespectsExistingLineBreaksTests.swift
++++ b/Tests/SwiftFormatTests/PrettyPrint/RespectsExistingLineBreaksTests.swift
+@@ -295,6 +295,63 @@ final class RespectsExistingLineBreaksTests: PrettyPrintTestCase {
+     )
+   }
+ 
++  func testIfConfigKeepsRequiredLineBreakAfterEndif() {
++    let input =
++      """
++      #if FLAG
++      @frozen
++      #endif
++      struct S {}
++
++      switch x {
++      #if A
++      case 1: f()
++      #endif
++      #if B
++      case 2: g()
++      #endif
++      }
++
++      let x =
++        base
++        #if FLAG
++        .foo()
++        #endif
++        .bar()
++
++      """
++
++    let expected =
++      """
++      #if FLAG
++        @frozen
++      #endif
++      struct S {}
++
++      switch x { #if A
++        case 1: f()
++      #endif
++      #if B
++        case 2: g()
++      #endif
++      }
++
++      let x = base
++        #if FLAG
++          .foo()
++        #endif
++        .bar()
++
++      """
++
++    assertPrettyPrintEqual(
++      input: input,
++      expected: expected,
++      linelength: 100,
++      configuration: configuration(respectingExistingLineBreaks: false)
++    )
++  }
++
+   /// Creates a new configuration with the given value for `respectsExistingLineBreaks` and default
+   /// values for everything else.
+   private func configuration(respectingExistingLineBreaks: Bool) -> Configuration {

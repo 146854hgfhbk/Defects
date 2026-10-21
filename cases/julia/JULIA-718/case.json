@@ -1,0 +1,251 @@
+{
+  "bug_id": "JULIA-718",
+  "buggy_revision": "13db5995f6bf4a9c7c097764aed96f9991dc9cc2",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "ac96481f1f44b5ee52a44d5f8054acf4c31666e5",
+  "case_id": "JULIA-718",
+  "changed_production_files": [
+    "src/tools.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "ac96481f1f44b5ee52a44d5f8054acf4c31666e5",
+  "instance_id": "juliafolds2__ohmythreads.jl-101",
+  "issue_id": 100,
+  "issue_urls": [
+    "https://github.com/JuliaFolds2/OhMyThreads.jl/issues/100"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "parent_sha": "13db5995f6bf4a9c7c097764aed96f9991dc9cc2",
+  "project": "JuliaFolds2/OhMyThreads.jl",
+  "repository_url": "https://github.com/JuliaFolds2/OhMyThreads.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "candidate_sha": "ac96481f1f44b5ee52a44d5f8054acf4c31666e5",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.7,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Traceability is STRICT_DIRECT: PR title/body explicitly closes issue #100, and the issue documents concrete reproduction code plus actual vs. expected output (4 'after' prints expected with ntasks=2 over 1:8; only 1 observed). The docstring quoted in the issue establishes the intended contract that the implementation violated. Production change is confined to a single file (src/tools.jl), and test changes are confined to test/runtests.jl with named trigger testsets ('regions', '@barrier'), indicating fail-to-pass coverage exists in the same commit.",
+    "input_sha256": "77c1fd5d276bc6367f013155d172da04d34552a7952a78722e29511b02bff588",
+    "missing_evidence": "No diff content was provided, so the exact production change and the exact added assertions are unverified. No runtime_evidence (pre-fix failing test output, post-fix passing run) was supplied. It is not shown whether the docstring was also edited, nor whether the maintainer changed semantics or merely fixed the implementation to match docs. The role of the '@barrier' testset in the trigger set is unexplained — it may indicate the shared region/task-local mechanism was reworked, which would widen the blast radius beyond `@only_one`.",
+    "project": "JuliaFolds2/OhMyThreads.jl",
+    "provider": "claude",
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.7, \"summary\": \"Issue #100 reports that `@only_one` inside a `@tasks for` block runs its region exactly once overall instead of once per task (i.e., on every iteration of a single designated task), contradicting the documented semantics 'executed by only one of the parallel tasks (all other tasks skip over this region)'. PR #101 ('Fix #100') changes src/tools.jl in 3 hunks and adds/updates tests in test/runtests.jl covering the `regions` and `@barrier` testsets. This is a semantic correction of existing, documented runtime behavior rather than a new capability, so it fits the Defects4J-style pattern.\", \"evidence\": \"Traceability is STRICT_DIRECT: PR title/body explicitly closes issue #100, and the issue documents concrete reproduction code plus actual vs. expected output (4 'after' prints expected with ntasks=2 over 1:8; only 1 observed). The docstring quoted in the issue establishes the intended contract that the implementation violated. Production change is confined to a single file (src/tools.jl), and test changes are confined to test/runtests.jl with named trigger testsets ('regions', '@barrier'), indicating fail-to-pass coverage exists in the same commit.\", \"missing_evidence\": \"No diff content was provided, so the exact production change and the exact added assertions are unverified. No runtime_evidence (pre-fix failing test output, post-fix passing run) was supplied. It is not shown whether the docstring was also edited, nor whether the maintainer changed semantics or merely fixed the implementation to match docs. The role of the '@barrier' testset in the trigger set is unexplained — it may indicate the shared region/task-local mechanism was reworked, which would widen the blast radius beyond `@only_one`.\", \"validation_risks\": \"Concurrency-sensitive tests are the main risk: assertions about how many times a region executes, or which task executes it, can be order- or scheduler-dependent and may be flaky under different `ntasks`, thread counts, or Julia versions. Tests must be run with sufficient threads (e.g., -t 4) or they may trivially pass/fail regardless of the fix. If `@barrier` and `@only_one` share internal state, the fix may not isolate cleanly to a single failing test. There is also a small chance the maintainer resolved the ambiguity by redefining semantics (a behavior change users could read as an API change) rather than fixing a strict contract violation.\", \"suggested_tests\": \"1) Deterministic count test: run `@tasks for i in 1:8; @set ntasks=2; @only_one push!(counter_channel, i); end` and assert the region executed exactly `nchunks`-per-task-iteration count (4) rather than 1. 2) Assert all `@only_one` executions come from the same task/chunk id (e.g., record `Threads.threadid()`/task-local chunk index and check uniqueness). 3) Verify `@only_one` interacts correctly with `@barrier` in the same loop body and that ordering guarantees hold. 4) Parameterize over ntasks in {1,2,4} and over `@set chunking=false` to confirm behavior scales as documented. 5) Run the suite with multiple thread counts (1 and >=4) and repeat the region tests several times to detect scheduler-dependent flakiness. 6) Confirm the pre-fix commit fails only the 'regions'/'@barrier' testsets and the rest of runtests.jl passes.\"}",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-30T04:01:23Z",
+    "suggested_tests": "1) Deterministic count test: run `@tasks for i in 1:8; @set ntasks=2; @only_one push!(counter_channel, i); end` and assert the region executed exactly `nchunks`-per-task-iteration count (4) rather than 1. 2) Assert all `@only_one` executions come from the same task/chunk id (e.g., record `Threads.threadid()`/task-local chunk index and check uniqueness). 3) Verify `@only_one` interacts correctly with `@barrier` in the same loop body and that ordering guarantees hold. 4) Parameterize over ntasks in {1,2,4} and over `@set chunking=false` to confirm behavior scales as documented. 5) Run the suite with multiple thread counts (1 and >=4) and repeat the region tests several times to detect scheduler-dependent flakiness. 6) Confirm the pre-fix commit fails only the 'regions'/'@barrier' testsets and the rest of runtests.jl passes.",
+    "summary": "Issue #100 reports that `@only_one` inside a `@tasks for` block runs its region exactly once overall instead of once per task (i.e., on every iteration of a single designated task), contradicting the documented semantics 'executed by only one of the parallel tasks (all other tasks skip over this region)'. PR #101 ('Fix #100') changes src/tools.jl in 3 hunks and adds/updates tests in test/runtests.jl covering the `regions` and `@barrier` testsets. This is a semantic correction of existing, documented runtime behavior rather than a new capability, so it fits the Defects4J-style pattern.",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.5066351392703151,
+      "input_tokens": 3781,
+      "output_tokens": 864
+    },
+    "validation_risks": "Concurrency-sensitive tests are the main risk: assertions about how many times a region executes, or which task executes it, can be order- or scheduler-dependent and may be flaky under different `ntasks`, thread counts, or Julia versions. Tests must be run with sufficient threads (e.g., -t 4) or they may trivially pass/fail regardless of the fix. If `@barrier` and `@only_one` share internal state, the fix may not isolate cleanly to a single failing test. There is also a small chance the maintainer resolved the ambiguity by redefining semantics (a behavior change users could read as an API change) rather than fixing a strict contract violation."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "regions",
+      "@barrier"
+    ],
+    "PASS_TO_PASS": [
+      "Aqua.jl",
+      "Basics",
+      "ChunkSplitters.Chunk",
+      "macro API",
+      "WithTaskLocals",
+      "chunking mode + chunksize option",
+      "top-level kwargs",
+      "empty collections"
+    ],
+    "base_commit": "13db5995f6bf4a9c7c097764aed96f9991dc9cc2",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "instance_id": "juliafolds2__ohmythreads.jl-101",
+    "issue_url": "https://github.com/JuliaFolds2/OhMyThreads.jl/issues/100",
+    "patch": "diff --git a/src/tools.jl b/src/tools.jl\nindex b0d95fd8..8029afe0 100644\n--- a/src/tools.jl\n+++ b/src/tools.jl\n@@ -31,8 +31,8 @@ May be used to mark a region in parallel code to be executed by a single task on\n See [`try_enter!`](@ref) and [`reset!`](@ref).\n \"\"\"\n mutable struct OnlyOneRegion\n-    @atomic latch::Bool\n-    OnlyOneRegion() = new(false)\n+    @atomic task::Union{Task, Nothing}\n+    OnlyOneRegion() = new(nothing)\n end\n \n \"\"\"\n@@ -62,15 +62,14 @@ end\n ```\n \"\"\"\n function try_enter!(f, s::OnlyOneRegion)\n-    latch = @atomic :monotonic s.latch\n-    if latch\n+    ct = current_task()\n+    t = @atomic :monotonic s.task\n+    if !isnothing(t) && ct != t\n         return\n     end\n-    (_, success) = @atomicreplace s.latch false=>true\n-    if !success\n-        return\n+    if ct == t || (@atomicreplace s.task nothing=>ct).success\n+        f()\n     end\n-    f()\n     return\n end\n \n@@ -78,8 +77,8 @@ end\n Reset the `OnlyOneRegion` (so that it can be used again).\n \"\"\"\n function reset!(s::OnlyOneRegion)\n-    @atomicreplace s.latch true=>false\n-    nothing\n+    @atomic s.task = nothing\n+    return\n end\n \n \"\"\"\n",
+    "pr_url": "https://github.com/JuliaFolds2/OhMyThreads.jl/pull/101",
+    "problem_statement": "`@only_one` block is executed by a single iteration (not a single task)\nFrom my understanding of the docstring\r\n```\r\n  @only_one begin ... end\r\n\r\n  This can be used inside a @tasks for ... end block to mark a region of code to be executed by only one\r\n  of the parallel tasks (all other tasks skip over this region).\r\n```\r\nI was expecting\r\n```julia\r\n@tasks for i in 1:8\r\n    @set ntasks = 2\r\n\r\n    println(i, \": before\")\r\n    @only_one begin\r\n        println(i, \": after\")\r\n    end\r\nend\r\n```\r\nto print after 4 times (since a single task has to run 4 iterations of the loop).  Instead, I get the output\r\n```\r\n5: before\r\n1: before\r\n5: after\r\n6: before\r\n2: before\r\n7: before\r\n8: before\r\n3: before\r\n4: before\r\n```\r\nIs this expected? Should the docstring be changed or I just got it wrong? It seems to me that this macro should be called `@only_once` instead.",
+    "test_patch": "diff --git a/test/runtests.jl b/test/runtests.jl\nindex c436ab05..5681665f 100644\n--- a/test/runtests.jl\n+++ b/test/runtests.jl\n@@ -454,6 +454,22 @@ end\n         catch ErrorException\n             @test false\n         end\n+\n+        x = 0\n+        y = 0\n+        try\n+            @tasks for i in 1:10\n+                @set ntasks = 2\n+\n+                y += 1 # not safe (race condition)\n+                @only_one begin\n+                    x += 1 # parallel-safe because only a single task will execute this\n+                end\n+            end\n+            @test x == 5 # a single task should have incremented x 5 times\n+        catch ErrorException\n+            @test false\n+        end\n     end\n \n     @testset \"@only_one + @one_by_one\" begin\n",
+    "repo": "JuliaFolds2/OhMyThreads.jl",
+    "pr_description": "Closes #100",
+    "created_at": "2024-03-28 14:04:01",
+    "image_name": "docker.io/swerebenchv2/juliafolds2-ohmythreads.jl:101-13db599",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "license": "MIT",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.97,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "documentation_enh"
+        ],
+        "reasoning": "The issue asks whether @only_one should run once per task (i.e., five times for ten iterations with two tasks) and suggests the docstring may be misleading. The added test asserts this exact behavior (x == 5), matching the described expectation. No mismatches with other tests or missing information are present, and there are no external dependencies or ambiguous specifications, so the task is cleanly solvable.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 2,
+      "num_modified_lines": null,
+      "pr_author": "carstenbauer",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaFolds2/OhMyThreads.jl/pull/101"
+    }
+  },
+  "timezone": "UTC",
+  "traceability_class": "STRICT_DIRECT",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "@only_one resets its region for each task batch"
+      ],
+      "assertion_expression_sha256": [],
+      "f2p_tests": [
+        "@only_one resets its region for each task batch"
+      ],
+      "mwe_basis": {
+        "defect": "OnlyOneRegion kept a permanent boolean latch, so @only_one ran only in the first batch rather than once per task region.",
+        "public_api": "OhMyThreads.@tasks, @set ntasks, and @only_one",
+        "source_evidence": {
+          "extraction": "PR #100 adds the same @tasks loop with ntasks = 2 and asserts x == 5. This self-contained MWE preserves that behavioral oracle and does not inspect source text.",
+          "upstream_tests_patch_sha256": "3d29f1a4ab0465f562b75a89f0bda711ae2c544ed9093438c42263fa5c22feb2"
+        },
+        "upstream_issue": 100,
+        "upstream_pull_request": 100,
+        "upstream_test_files": [
+          "test/runtests.jl"
+        ]
+      },
+      "schema_version": 1
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "abc56137b7abfe7c8d6e5a99f2eecaa12f053461d77b5aa87cbae3b66770a706",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "@only_one resets its region for each task batch"
+  ],
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "@only_one resets its region for each task batch"
+    ],
+    "exception_types": [
+      "TRIGGER_EXIT_1"
+    ],
+    "fingerprints": [
+      "TRIGGER_EXIT_1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "ac96481f1f44b5ee52a44d5f8054acf4c31666e5",
+    "parent_sha": "13db5995f6bf4a9c7c097764aed96f9991dc9cc2",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "741b727f4194e5d73461ba4e47571ec2e3d1a38b274cf01ed0ce82d4fa234d5d",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

@@ -1,0 +1,158 @@
+diff --git a/Sources/X509/CSR/CertificationRequestInfo.swift b/Sources/X509/CSR/CertificationRequestInfo.swift
+index 9f4bc65a92325daa4d16d258f58b8071a185dab7..7fa709f270c43d55a1f9b92577b0010728740dcd 100644
+--- a/Sources/X509/CSR/CertificationRequestInfo.swift
++++ b/Sources/X509/CSR/CertificationRequestInfo.swift
+@@ -61,7 +61,7 @@ extension CertificationRequestInfo: DERImplicitlyTaggable {
+     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+             let version = try CertificateSigningRequest.Version(rawValue: Int(derEncoded: &nodes))
+-            let subject = try DistinguishedName(derEncoded: &nodes)
++            let subject = try DistinguishedName.derEncoded(&nodes)
+             let spki = try Certificate.PublicKey(spki: SubjectPublicKeyInfo(derEncoded: &nodes))
+             let attributes = try CertificateSigningRequest.Attributes(
+                 DER.set(
+diff --git a/Sources/X509/CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift b/Sources/X509/CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift
+index 319dfed14a9aaadb07e017385df6846e0ccb6a40..02b67591f11955de9279df3a95f06e1a0ac81870 100644
+--- a/Sources/X509/CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift
++++ b/Sources/X509/CryptographicMessageSyntax/CMSIssuerAndSerialNumber.swift
+@@ -44,7 +44,7 @@ struct CMSIssuerAndSerialNumber: DERImplicitlyTaggable, Hashable, Sendable {
+     @inlinable
+     init(derEncoded rootNode: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+         self = try DER.sequence(rootNode, identifier: identifier) { nodes in
+-            let issuer = try DistinguishedName(derEncoded: &nodes)
++            let issuer = try DistinguishedName.derEncoded(&nodes)
+             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)
+             return .init(issuer: issuer, serialNumber: .init(bytes: serialNumber))
+         }
+diff --git a/Sources/X509/DistinguishedName.swift b/Sources/X509/DistinguishedName.swift
+index b080a3ae3fd18a7a4a3aa0db8f0c22199aa3f0c5..9539248775e71826d1cbd1655c933ca0e9dfc143 100644
+--- a/Sources/X509/DistinguishedName.swift
++++ b/Sources/X509/DistinguishedName.swift
+@@ -176,6 +176,34 @@ extension DistinguishedName: CustomDebugStringConvertible {
+     }
+ }
+ 
++extension DistinguishedName: DERSerializable {
++    @inlinable
++    public func serialize(into coder: inout DER.Serializer) throws {
++        try coder.appendConstructedNode(identifier: .sequence) { rootCoder in
++            for element in self.rdns {
++                try element.serialize(into: &rootCoder)
++            }
++        }
++    }
++}
++
++extension DistinguishedName: DERParseable {
++    @inlinable
++    public init(derEncoded rootNode: ASN1Node) throws {
++        self.rdns = try DER.sequence(of: RelativeDistinguishedName.self, identifier: .sequence, rootNode: rootNode)
++    }
++
++    @inlinable
++    static func derEncoded(_ sequenceNodeIterator: inout ASN1NodeCollection.Iterator) throws -> DistinguishedName {
++        // This is a workaround for the fact that, even though the conformance to DERImplicitlyTaggable is
++        // deprecated, Swift still prefers calling init(derEncoded:withIdentifier:) instead of this one.
++        let dnFactory: (inout ASN1NodeCollection.Iterator) throws -> DistinguishedName =
++            DistinguishedName.init(derEncoded:)
++        return try dnFactory(&sequenceNodeIterator)
++    }
++}
++
++@available(*, deprecated, message: "Distinguished names may not be implicitly tagged")
+ extension DistinguishedName: DERImplicitlyTaggable {
+     @inlinable
+     public static var defaultIdentifier: ASN1Identifier {
+diff --git a/Sources/X509/GeneralName.swift b/Sources/X509/GeneralName.swift
+index 7a0eb5347ff8b259a40ca6f3125665a76f4e7bb6..a592257ed6e2edb817b8e9efd08519d0596055ae 100644
+--- a/Sources/X509/GeneralName.swift
++++ b/Sources/X509/GeneralName.swift
+@@ -58,7 +58,13 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
+         case Self.x400AddressTag:
+             self = .x400Address(ASN1Any(derEncoded: rootNode))
+         case Self.directoryNameTag:
+-            self = try .directoryName(DistinguishedName(derEncoded: rootNode, withIdentifier: Self.directoryNameTag))
++            self = try DER.explicitlyTagged(
++                rootNode,
++                tagNumber: Self.directoryNameTag.tagNumber,
++                tagClass: Self.directoryNameTag.tagClass
++            ) { node in
++                return try .directoryName(DistinguishedName(derEncoded: node))
++            }
+         case Self.ediPartyNameTag:
+             self = .ediPartyName(ASN1Any(derEncoded: rootNode))
+         case Self.uriTag:
+@@ -87,7 +93,7 @@ public enum GeneralName: Hashable, Sendable, DERParseable, DERSerializable {
+         case .x400Address(let orAddress):
+             try orAddress.serialize(into: &coder)
+         case .directoryName(let name):
+-            try name.serialize(into: &coder, withIdentifier: Self.directoryNameTag)
++            try coder.serialize(name, explicitlyTaggedWithIdentifier: Self.directoryNameTag)
+         case .ediPartyName(let name):
+             try name.serialize(into: &coder)
+         case .uniformResourceIdentifier(let name):
+diff --git a/Sources/X509/X509BaseTypes/TBSCertificate.swift b/Sources/X509/X509BaseTypes/TBSCertificate.swift
+index 074625803d8f11138d709308dbd639bd92447953..ffabe0295f233a5cd6ed93aa98dae3723cd437a2 100644
+--- a/Sources/X509/X509BaseTypes/TBSCertificate.swift
++++ b/Sources/X509/X509BaseTypes/TBSCertificate.swift
+@@ -116,9 +116,9 @@ struct TBSCertificate: DERImplicitlyTaggable, Hashable, Sendable {
+ 
+             let serialNumber = try ArraySlice<UInt8>(derEncoded: &nodes)
+             let signature = try AlgorithmIdentifier(derEncoded: &nodes)
+-            let issuer = try DistinguishedName(derEncoded: &nodes)
++            let issuer = try DistinguishedName.derEncoded(&nodes)
+             let validity = try Validity(derEncoded: &nodes)
+-            let subject = try DistinguishedName(derEncoded: &nodes)
++            let subject = try DistinguishedName.derEncoded(&nodes)
+             let subjectPublicKeyInfo = try SubjectPublicKeyInfo(derEncoded: &nodes)
+             let issuerUniqueID = try DER.optionalExplicitlyTagged(&nodes, tagNumber: 1, tagClass: .contextSpecific) {
+                 try UniqueIdentifier(derEncoded: $0)
+diff --git a/Tests/X509Tests/CertificateTests.swift b/Tests/X509Tests/CertificateTests.swift
+index 4f7a8f0ab7dc5f26bf4c2abd9131b2dcd6bb909a..9a7512b4d137b19bb8cf68f47a58c441efb39969 100644
+--- a/Tests/X509Tests/CertificateTests.swift
++++ b/Tests/X509Tests/CertificateTests.swift
+@@ -641,4 +641,44 @@ final class CertificateTests: XCTestCase {
+         )
+         print(intermediate)
+     }
++
++    func testAKISerialization() throws {
++        let t = GeneralName.directoryName(
++            try DistinguishedName {
++                CommonName("CA")
++                OrganizationName("Some Org")
++                CountryName("Some Country")
++            }
++        )
++        let aki = AuthorityKeyIdentifierValue(AuthorityKeyIdentifier(authorityCertIssuer: [t]))
++        var serializer = DER.Serializer()
++        try serializer.serialize(aki)
++        let bytes = serializer.serializedBytes
++
++        let decoded = try AuthorityKeyIdentifierValue(derEncoded: bytes)
++        XCTAssertEqual(decoded.authorityCertIssuer, aki.authorityCertIssuer)
++
++        XCTAssertEqual(
++            bytes,
++            [
++                0x30, 0x3d,  // SEQUENCE, length 61 bytes
++                0xa1, 0x3b,  // [1], length 59 bytes
++                0xa4, 0x39,  // [4], length 57 bytes
++                0x30, 0x37,  // SEQUENCE, length 55 bytes
++                0x31, 0xb,  // SET, length 11 bytes
++                0x30, 0x9,  // SEQUENCE, length 9 bytes
++                0x6, 0x3, 0x55, 0x4, 0x3,  // OID, common name
++                0xc, 0x2, 0x43, 0x41,  // UTF-8 string, "CA"
++                0x31, 0x11,  // SET, length 17 bytes
++                0x30, 0xf,  // SEQUENCE, length 15 bytes
++                0x6, 0x3, 0x55, 0x4, 0xa,  // OID, organizationName
++                0xc, 0x8, 0x53, 0x6f, 0x6d, 0x65, 0x20, 0x4f, 0x72, 0x67,  // UTF-8 string, "Some Org"
++                0x31, 0x15,  // SET, length 21 bytes
++                0x30, 0x13,  // SEQUENCE, length 19 bytes
++                0x6, 0x3, 0x55, 0x4, 0x6,  // OID, countryName
++                0x13, 0xc, 0x53, 0x6f, 0x6d, 0x65, 0x20, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x72, 0x79,
++                // Printable string, "Some Country"
++            ]
++        )
++    }
+ }

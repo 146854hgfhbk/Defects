@@ -1,0 +1,15 @@
+﻿sha=15890fa88b00ed220a257eef0014f0e4805024f6
+subject=Fix event sorting
+body=A warning and an inline option boundary event can share location
+when a function declaration is unreachable code (a push event is generated
+for each closure start). Previously event comparator assumed that only two
+warnings or two inline option events can share location, resulting in an
+error when this assumption is violated.
+
+The fix is to compare events of different types by set priority before
+falling back to code comparison for warning. Also remove a hack
+that partially worked around this issue by adding `code` field
+to some inline option events.
+
+Ref #74.
+

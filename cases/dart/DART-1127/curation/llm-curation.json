@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1127",
+  "technical_evidence_sha256": "05d270b0f39fdcb5fe300dd0f73baf73e070accfc9f917802d5ea2baa2de177c",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "cf2e5bcef159abe465910d28635953052d96ef14cac5c02bec6445761f4de5a5",
+  "reviewed_at": "2026-08-14T17:17:12.733465+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "tekartik/sembast.dart#333",
+  "rationale": "Issue #333 reports a crash in JdbWriteEntry with a stack trace that goes JdbWriteEntry.value (jdb.dart:88) -> toString -> late field 'id', i.e. the valueOrNull getter at line 88 threw on a JdbWriteEntry whose txnRecord was unset, and the error path then hit the uninitialized late 'id' while interpolating toString. The production fix in sembast/lib/src/jdb.dart changes exactly that getter from the non-null assertion form (txnRecord!.record.value) to the null-aware form (txnRecord?.record.value), so valueOrNull yields null instead of throwing for entries constructed without a txnRecord. That is the same pre-existing defect, and the commit message ('fix issue #333 again for sqflite implementation') plus the fix_commit_to_issue traceability path link them. The minimized patch touches one hunk in one production file: the behavioral change plus the coherent rename of the private getter (_txnRecordNull -> _txnRecordValueOrNull, matching its new null-returning semantics), deletion of a dead commented-out line in the same three-line region, and a one-line doc comment on the adjacent getter. No feature extension, no config or test change, no refactor outside the fixed getter. The trigger is the unchanged upstream test portion of the same fixing commit: JdbWriteEntry(txnRecord: null) followed by expect(valueOrNull, isNull). It exercises the exact null-txnRecord precondition from the crash and relies only on the pre-existing nullable txnRecord constructor parameter (the patch leaves the constructor and field untouched, and the buggy code's own txnRecord! proves the field was already nullable), so no post-fix API is required. Strict evidence gates pass on both the original and post-minimization runs: build on both revisions, isolated buggy differential on test/jdb_memory_test.dart::JdbWriteEntry, fixed clean on isolated/suite/reversed runs, deterministic across 3 repetitions with 32 matrix runs, and fixed full suite all green with buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so tekartik/sembast.dart#333 is not a duplicate, and it is the sole entry in allowed_root_cause_ids.\n\nIssue #333 reports a runtime crash whose stack trace lands in package:sembast/src/jdb.dart around the JdbWriteEntry value getter (frames: JdbWriteEntry.value at jdb.dart:88 -> toString at jdb.dart:98 -> JdbWriteEntry.id LateInitializationError), reached from JdbDatabaseSqflite._txnAddEntries. The production diff touches exactly that locus: valueOrNull stops force-unwrapping txnRecord (txnRecord!.record.value) and becomes null-aware (txnRecord?.record.value), so a write entry with no txnRecord yields null instead of throwing and cascading into the late-field error inside the value getter's catch/toString interpolation. The commit message '[sembast] fix issue #333 again for sqflite implementation' plus the verified fix_commit_to_issue traceability path ties commit 7069777 to the reported pre-existing defect (buggy parent c4b4da3). The minimized patch is confined to one hunk in one production file (sembast/lib/src/jdb.dart) and contains only the null-safety change, the directly implied rename of the private helper (_txnRecordNull -> _txnRecordValueOrNull, whose old name asserted the non-null behavior being removed), deletion of one adjacent commented-out dead line, and one doc-comment touch-up in the same hunk; there is no unrelated refactor, feature extension, config change, and the patch is not documentation- or test-only. The trigger is the unchanged upstream test portion of the same fixing commit (sembast/test/jdb_memory_test.dart::JdbWriteEntry adding JdbWriteEntry(txnRecord: null) and expecting valueOrNull to be null), which exercises the identical unguarded-null-assertion path and uses only the pre-existing JdbWriteEntry constructor and valueOrNull getter, so it depends on no API introduced by the fix. Strict evidence (original and post-minimization) shows both revisions build, the selector fails alone on the buggy revision, is deterministic across 3 repetitions in a 32-run matrix, buggy full-suite failures are limited to the reproduced trigger, and all fixed isolated/suite/reversed runs are green; no runtime gate failed. active_same_project_root_causes is empty and the proposed root cause matches the single allowed verified key, so it is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T17:16:18.650326+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "cf2e5bcef159abe465910d28635953052d96ef14cac5c02bec6445761f4de5a5",
+      "response_sha256": "79a9228b250cba73d8de95d62ec0683f71f01e6a01119a7ff0f20b69e05d97bc",
+      "response_id": "msg_6fb4c1d7a7914936a434f7075cc3ed0b",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.0593579741956884,
+        "input_tokens": 18149,
+        "output_tokens": 826
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "tekartik/sembast.dart#333",
+      "rationale": "Issue #333 reports a crash in JdbWriteEntry with a stack trace that goes JdbWriteEntry.value (jdb.dart:88) -> toString -> late field 'id', i.e. the valueOrNull getter at line 88 threw on a JdbWriteEntry whose txnRecord was unset, and the error path then hit the uninitialized late 'id' while interpolating toString. The production fix in sembast/lib/src/jdb.dart changes exactly that getter from the non-null assertion form (txnRecord!.record.value) to the null-aware form (txnRecord?.record.value), so valueOrNull yields null instead of throwing for entries constructed without a txnRecord. That is the same pre-existing defect, and the commit message ('fix issue #333 again for sqflite implementation') plus the fix_commit_to_issue traceability path link them. The minimized patch touches one hunk in one production file: the behavioral change plus the coherent rename of the private getter (_txnRecordNull -> _txnRecordValueOrNull, matching its new null-returning semantics), deletion of a dead commented-out line in the same three-line region, and a one-line doc comment on the adjacent getter. No feature extension, no config or test change, no refactor outside the fixed getter. The trigger is the unchanged upstream test portion of the same fixing commit: JdbWriteEntry(txnRecord: null) followed by expect(valueOrNull, isNull). It exercises the exact null-txnRecord precondition from the crash and relies only on the pre-existing nullable txnRecord constructor parameter (the patch leaves the constructor and field untouched, and the buggy code's own txnRecord! proves the field was already nullable), so no post-fix API is required. Strict evidence gates pass on both the original and post-minimization runs: build on both revisions, isolated buggy differential on test/jdb_memory_test.dart::JdbWriteEntry, fixed clean on isolated/suite/reversed runs, deterministic across 3 repetitions with 32 matrix runs, and fixed full suite all green with buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so tekartik/sembast.dart#333 is not a duplicate, and it is the sole entry in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "sembast/lib/src/jdb.dart",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.issue_check.traceability_paths",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "trigger_tests[0]"
+      ],
+      "risks": [
+        "The trigger is a unit-level assertion on valueOrNull with a null txnRecord, not an end-to-end reproduction of the reported sqflite delete/writeIfRevision path; equivalence rests on the stack trace pointing at the same getter rather than on a replayed delete scenario.",
+        "The minimized hunk still carries two non-behavioral edits (removal of a commented-out line and a doc comment reword on the adjacent value getter) that a stricter minimization would drop.",
+        "The commit message says 'fix issue #333 again', implying an earlier commit addressed the same issue on a different code path; if that earlier fix is later admitted to the benchmark, root-cause overlap under #333 would need re-checking. The supplied active registry is empty, so no duplicate exists today.",
+        "The latent secondary fault visible in the trace (late 'id' throwing inside toString during error formatting) is not addressed by this patch and remains reachable in other paths."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T17:17:12.733107+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "cf2e5bcef159abe465910d28635953052d96ef14cac5c02bec6445761f4de5a5",
+      "response_sha256": "bf52044e268f32781bf0bcc74cc0c3e7852b12f32c66e775079ef327af54c518",
+      "response_id": "msg_cc410a404d124ee7ae920e1c84eb61a3",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.0923222021227197,
+        "input_tokens": 18565,
+        "output_tokens": 895
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "tekartik/sembast.dart#333",
+      "rationale": "Issue #333 reports a runtime crash whose stack trace lands in package:sembast/src/jdb.dart around the JdbWriteEntry value getter (frames: JdbWriteEntry.value at jdb.dart:88 -> toString at jdb.dart:98 -> JdbWriteEntry.id LateInitializationError), reached from JdbDatabaseSqflite._txnAddEntries. The production diff touches exactly that locus: valueOrNull stops force-unwrapping txnRecord (txnRecord!.record.value) and becomes null-aware (txnRecord?.record.value), so a write entry with no txnRecord yields null instead of throwing and cascading into the late-field error inside the value getter's catch/toString interpolation. The commit message '[sembast] fix issue #333 again for sqflite implementation' plus the verified fix_commit_to_issue traceability path ties commit 7069777 to the reported pre-existing defect (buggy parent c4b4da3). The minimized patch is confined to one hunk in one production file (sembast/lib/src/jdb.dart) and contains only the null-safety change, the directly implied rename of the private helper (_txnRecordNull -> _txnRecordValueOrNull, whose old name asserted the non-null behavior being removed), deletion of one adjacent commented-out dead line, and one doc-comment touch-up in the same hunk; there is no unrelated refactor, feature extension, config change, and the patch is not documentation- or test-only. The trigger is the unchanged upstream test portion of the same fixing commit (sembast/test/jdb_memory_test.dart::JdbWriteEntry adding JdbWriteEntry(txnRecord: null) and expecting valueOrNull to be null), which exercises the identical unguarded-null-assertion path and uses only the pre-existing JdbWriteEntry constructor and valueOrNull getter, so it depends on no API introduced by the fix. Strict evidence (original and post-minimization) shows both revisions build, the selector fails alone on the buggy revision, is deterministic across 3 repetitions in a 32-run matrix, buggy full-suite failures are limited to the reproduced trigger, and all fixed isolated/suite/reversed runs are green; no runtime gate failed. active_same_project_root_causes is empty and the proposed root cause matches the single allowed verified key, so it is not a duplicate.",
+      "evidence_paths": [
+        "case.json:issue_urls[0]",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.message",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:trigger_tests[0]",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The trigger is a unit-level assertion on valueOrNull rather than the reported sembast_sqflite delete flow; the end-to-end LateInitializationError during store.delete() is not directly reproduced, only the shared root-cause getter.",
+        "The commit is one of four in PR #335 and a later commit in the same PR (45dd5dd) again modifies sembast/lib/src/jdb.dart and jdb_memory_test.dart, so this revision may be a partial fix for issue #333; the curated defect is nonetheless self-contained and green at the fixed revision.",
+        "value still casts valueOrNull to a non-null Value, so a null txnRecord reaching value may still error at that call site; only the valueOrNull path is covered by the trigger.",
+        "The hunk bundles a private-helper rename and doc-comment edit with the semantic change; judged incidental to the fix locus rather than an unrelated refactor."
+      ]
+    }
+  ]
+}

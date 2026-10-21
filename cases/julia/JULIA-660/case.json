@@ -1,0 +1,144 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-660",
+  "bug_id": "JULIA-660",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaWeb/URIs.jl",
+  "repository_url": "https://github.com/JuliaWeb/URIs.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaWeb/URIs.jl/issues/42"
+  ],
+  "issue_id": 42,
+  "buggy_revision": "66dc0c83117006f0e0dc0d5d8cd652cad413ba50",
+  "fixed_revision": "285098a5d7f2a797757d08f56dc8c8633f3268dc",
+  "candidate_sha": "285098a5d7f2a797757d08f56dc8c8633f3268dc",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "66dc0c83117006f0e0dc0d5d8cd652cad413ba50",
+  "changed_production_files": [
+    "src/URIs.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-660 AbstractString escapeuri MWE"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "75b2b3850ec638cd53dd26ffbc7c723e78b435b9c4c37f38f27d1010b19792d1",
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "JULIA-660 AbstractString escapeuri MWE"
+      ],
+      "added_testsets": [
+        "JULIA-660 AbstractString escapeuri MWE"
+      ],
+      "assertion_expression_sha256": [],
+      "mwe_basis": {
+        "upstream_pull_request": 48,
+        "upstream_issue": 42,
+        "upstream_test_files": [
+          "test/runtests.jl"
+        ],
+        "defect": "escapeuri rejected custom AbstractString implementations because _bytes only dispatched on String and SubString{String}",
+        "public_api": "URIs.escapeuri",
+        "source_evidence": {
+          "upstream_tests_patch_sha256": "313ca9417dc5261aa06c9e3ab1fb63f4c72ecdeb6e8c0dadaaaffa1461c59e03",
+          "extraction": "assertion copied verbatim from the upstream fixed test; CustomString test fixture copied verbatim"
+        }
+      }
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "285098a5d7f2a797757d08f56dc8c8633f3268dc",
+    "project": "JuliaWeb/URIs.jl",
+    "input_sha256": "3f581d5d1feaa470ec78d0006d4743a3bbd26cbf8fdd31bb3e48f18eacfdb4fc",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T12:24:48Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.518963304079602,
+      "input_tokens": 5322,
+      "output_tokens": 760
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.74, \"summary\": \"Single-hunk fix widening the internal `_bytes` dispatch from `String`/`SubString{String}` to `AbstractString`, so `URIs.escapeuri` no longer throws MethodError for other AbstractString subtypes (e.g. `String15` from InlineStrings, or any user type defining `codeunits`). Issue #42 reports the crash, PR #48 fixes it, and the upstream test patch adds a verbatim regression assertion using a `CustomString <: AbstractString` fixture. Runtime evidence shows a stable differential across 3 repetitions with the full fixed suite passing.\", \"evidence\": \"Production patch removes the two concrete-type `_bytes` methods and replaces them with `_bytes(s::AbstractString) = codeunits(s)`. Issue #42 title is `ERROR: MethodError: no method matching _bytes(::String15)`, an outright crash on a public escaping path, not a missing capability request. PR #48 body states `Fixes .../issues/42`. Upstream test in test/runtests.jl asserts `escapeuri(CustomString(\\\"http://example.com\\\")) == escapeuri(\\\"http://example.com\\\")`, which fails with MethodError pre-fix and passes post-fix. Minimization reports 1 of 1 hunk kept, globally minimal, all hunks necessary. Trigger uses public API only (URIs.escapeuri).\", \"missing_evidence\": \"No commit stats or diff line counts supplied, and no captured pre-fix stack trace in the record (the MethodError is inferred from the issue title and the dispatch change). The surrounding `escapeuri` signature is not shown, so I cannot confirm from the provided text that it is declared over `AbstractString`; that would settle definitively whether this is an unhandled case or a widened contract.\", \"validation_risks\": \"Classification is arguably borderline: PR title 'Support AbstactString in escapeuri' reads like a capability extension, though no public API or signature is added and the observable symptom is a crash, so I treat it as a dispatch-gap defect. The test fixture `CustomString` implements only `Base.codeunits` and not the full AbstractString interface, so the trigger depends on `escapeuri` touching only the codeunits path; a future refactor calling other AbstractString methods would make the test fail for reasons unrelated to the defect. `codeunits` on an arbitrary AbstractString is not guaranteed to be defined, so the broadened method can shift a MethodError from `_bytes` to `codeunits` for unsupported types, which is fine for this oracle but worth noting.\", \"suggested_tests\": \"Keep the upstream verbatim assertion as the F2P test. Add: escapeuri on an InlineStrings `String15` value equals escapeuri on the equivalent `String` (matching the original issue exactly); escapeuri on a `SubString{String}` and a plain `String` to confirm no regression on the previously handled types; escapequery/unescapeuri round-trip on a CustomString input; and a check that `_bytes` on `Vector{UInt8}`, `Base.CodeUnits`, and `SubArray{UInt8}` still dispatch to the unchanged methods.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.74,
+    "summary": "Single-hunk fix widening the internal `_bytes` dispatch from `String`/`SubString{String}` to `AbstractString`, so `URIs.escapeuri` no longer throws MethodError for other AbstractString subtypes (e.g. `String15` from InlineStrings, or any user type defining `codeunits`). Issue #42 reports the crash, PR #48 fixes it, and the upstream test patch adds a verbatim regression assertion using a `CustomString <: AbstractString` fixture. Runtime evidence shows a stable differential across 3 repetitions with the full fixed suite passing.",
+    "evidence": "Production patch removes the two concrete-type `_bytes` methods and replaces them with `_bytes(s::AbstractString) = codeunits(s)`. Issue #42 title is `ERROR: MethodError: no method matching _bytes(::String15)`, an outright crash on a public escaping path, not a missing capability request. PR #48 body states `Fixes .../issues/42`. Upstream test in test/runtests.jl asserts `escapeuri(CustomString(\"http://example.com\")) == escapeuri(\"http://example.com\")`, which fails with MethodError pre-fix and passes post-fix. Minimization reports 1 of 1 hunk kept, globally minimal, all hunks necessary. Trigger uses public API only (URIs.escapeuri).",
+    "missing_evidence": "No commit stats or diff line counts supplied, and no captured pre-fix stack trace in the record (the MethodError is inferred from the issue title and the dispatch change). The surrounding `escapeuri` signature is not shown, so I cannot confirm from the provided text that it is declared over `AbstractString`; that would settle definitively whether this is an unhandled case or a widened contract.",
+    "validation_risks": "Classification is arguably borderline: PR title 'Support AbstactString in escapeuri' reads like a capability extension, though no public API or signature is added and the observable symptom is a crash, so I treat it as a dispatch-gap defect. The test fixture `CustomString` implements only `Base.codeunits` and not the full AbstractString interface, so the trigger depends on `escapeuri` touching only the codeunits path; a future refactor calling other AbstractString methods would make the test fail for reasons unrelated to the defect. `codeunits` on an arbitrary AbstractString is not guaranteed to be defined, so the broadened method can shift a MethodError from `_bytes` to `codeunits` for unsupported types, which is fine for this oracle but worth noting.",
+    "suggested_tests": "Keep the upstream verbatim assertion as the F2P test. Add: escapeuri on an InlineStrings `String15` value equals escapeuri on the equivalent `String` (matching the original issue exactly); escapeuri on a `SubString{String}` and a plain `String` to confirm no regression on the previously handled types; escapequery/unescapeuri round-trip on a CustomString input; and a check that `_bytes` on `Vector{UInt8}`, `Base.CodeUnits`, and `SubArray{UInt8}` still dispatch to the unchanged methods."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-660 AbstractString escapeuri MWE"
+    ],
+    "exception_types": [
+      "2c6320d823fdbc783f48e99e3f2a1a3bcb97bb4735adf4238ae62380ddc7a6e1",
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866"
+    ],
+    "fingerprints": [
+      "2c6320d823fdbc783f48e99e3f2a1a3bcb97bb4735adf4238ae62380ddc7a6e1",
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

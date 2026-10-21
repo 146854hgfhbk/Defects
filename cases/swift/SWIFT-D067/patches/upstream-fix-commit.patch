@@ -1,0 +1,67 @@
+diff --git a/Sources/NIOHTTPCompression/HTTPResponseCompressor.swift b/Sources/NIOHTTPCompression/HTTPResponseCompressor.swift
+index 108b1c2..ef3fdc6 100644
+--- a/Sources/NIOHTTPCompression/HTTPResponseCompressor.swift
++++ b/Sources/NIOHTTPCompression/HTTPResponseCompressor.swift
+@@ -280,7 +280,7 @@ private struct PartialHTTPResponse {
+     /// buffer and losing all copies of the other HTTP data. At this point it may freely be reused.
+     mutating func flush(compressor: inout NIOCompression.Compressor, allocator: ByteBufferAllocator) -> (HTTPResponseHead?, ByteBuffer?, HTTPServerResponsePart?) {
+         var outputBody: ByteBuffer? = nil
+-        if self.body.readableBytes > 0 {
++        if self.body.readableBytes > 0 || mustFlush {
+             let compressedBody = compressor.compress(inputBuffer: &self.body, allocator: allocator, finalise: mustFlush)
+             if isCompleteResponse {
+                 head!.headers.remove(name: "transfer-encoding")
+diff --git a/Tests/NIOHTTPCompressionTests/HTTPResponseCompressorTest+XCTest.swift b/Tests/NIOHTTPCompressionTests/HTTPResponseCompressorTest+XCTest.swift
+index 3159ca3..1be6791 100644
+--- a/Tests/NIOHTTPCompressionTests/HTTPResponseCompressorTest+XCTest.swift
++++ b/Tests/NIOHTTPCompressionTests/HTTPResponseCompressorTest+XCTest.swift
+@@ -44,6 +44,7 @@ extension HTTPResponseCompressorTest {
+                 ("testOverridesContentEncodingHeader", testOverridesContentEncodingHeader),
+                 ("testRemovingHandlerFailsPendingWrites", testRemovingHandlerFailsPendingWrites),
+                 ("testDoesNotBufferWritesNoAlgorithm", testDoesNotBufferWritesNoAlgorithm),
++                ("testChunkedGzipResponseProducesCorrectNumberOfWrites", testChunkedGzipResponseProducesCorrectNumberOfWrites),
+                 ("testStartsWithSameUnicodeScalarsWorksOnEmptyStrings", testStartsWithSameUnicodeScalarsWorksOnEmptyStrings),
+                 ("testStartsWithSameUnicodeScalarsWorksOnLongerNeedleFalse", testStartsWithSameUnicodeScalarsWorksOnLongerNeedleFalse),
+                 ("testStartsWithSameUnicodeScalarsWorksOnSameStrings", testStartsWithSameUnicodeScalarsWorksOnSameStrings),
+diff --git a/Tests/NIOHTTPCompressionTests/HTTPResponseCompressorTest.swift b/Tests/NIOHTTPCompressionTests/HTTPResponseCompressorTest.swift
+index 6824b62..4d3651a 100644
+--- a/Tests/NIOHTTPCompressionTests/HTTPResponseCompressorTest.swift
++++ b/Tests/NIOHTTPCompressionTests/HTTPResponseCompressorTest.swift
+@@ -545,6 +545,37 @@ class HTTPResponseCompressorTest: XCTestCase {
+         XCTAssertNoThrow(try channel.pipeline.removeHandler(name: "compressor").wait())
+         XCTAssertNoThrow(try writePromise.futureResult.wait())
+     }
++    
++    func testChunkedGzipResponseProducesCorrectNumberOfWrites() throws {
++        let channel = try compressionChannel()
++        try sendRequest(acceptEncoding: "gzip", channel: channel)
++        let finalPromise = channel.eventLoop.makePromise(of: Void.self)
++        let head = HTTPResponseHead(version: HTTPVersion(major: 1, minor: 1), status: .ok)
++        var bodyBuffer = channel.allocator.buffer(capacity: 20)
++        bodyBuffer.writeBytes([UInt8](repeating: 60, count: 20))
++
++        channel.write(NIOAny(HTTPServerResponsePart.head(head)), promise: nil)
++        channel.writeAndFlush(NIOAny(HTTPServerResponsePart.body(.byteBuffer(bodyBuffer))), promise: nil)
++        channel.writeAndFlush(NIOAny(HTTPServerResponsePart.end(nil)), promise: finalPromise)
++        
++        try finalPromise.futureResult.wait()
++        
++        var writeCount = 0
++        while try channel.readOutbound(as: ByteBuffer.self) != nil {
++            writeCount += 1
++        }
++        
++        // Expected number of emitted writes in the chunked response is 8:
++        //   1. HTTP response header
++        //   2. First chunk length
++        //   3. First chunk body
++        //   4. CRLF
++        //   5. Second chunk length
++        //   6. Second chunk body
++        //   7. CRLF
++        //   8. End of message chunk
++        XCTAssertEqual(writeCount, 8)
++    }
+ 
+     func testStartsWithSameUnicodeScalarsWorksOnEmptyStrings() throws {
+         XCTAssertTrue("".startsWithSameUnicodeScalars(string: ""))

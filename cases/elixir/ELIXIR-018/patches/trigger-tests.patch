@@ -1,0 +1,23 @@
+diff --git a/test/absinthe/schema/notation_test.exs b/test/absinthe/schema/notation_test.exs
+index 9d45d6e1..9364ef49 100644
+--- a/test/absinthe/schema/notation_test.exs
++++ b/test/absinthe/schema/notation_test.exs
+@@ -534,6 +534,18 @@ defmodule Absinthe.Schema.NotationTest do
+     end
+   end
+ 
++  test "No nested non_null" do
++    assert_notation_error(
++      "NestedNonNull",
++      """
++      object :really_null do
++        field :foo, non_null(non_null(:string))
++      end
++      """,
++      "Invalid schema notation: `non_null` must not be nested"
++    )
++  end
++
+   @doc """
+   Assert a notation error occurs.
+ 

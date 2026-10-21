@@ -1,0 +1,26 @@
+diff --git a/R/every-some-none.R b/R/every-some-none.R
+index 26642b21..e0946cdf 100644
+--- a/R/every-some-none.R
++++ b/R/every-some-none.R
+@@ -25,16 +25,18 @@
+ every <- function(.x, .p, ...) {
+   .p <- as_predicate(.p, ..., .mapper = TRUE, .allow_na = TRUE)
+ 
+-  val <- TRUE
+   for (i in seq_along(.x)) {
+-    val <- val && .p(.x[[i]], ...)
++    val <- .p(.x[[i]], ...)
+ 
+     if (is_false(val)) {
+       return(FALSE)
+     }
++    if (anyNA(val)) {
++      return(NA)
++    }
+   }
+ 
+-  val
++  TRUE
+ }
+ 
+ #' @export

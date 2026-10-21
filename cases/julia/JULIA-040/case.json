@@ -1,0 +1,118 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-040",
+  "bug_id": "JULIA-040",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/407"
+  ],
+  "issue_id": 407,
+  "buggy_revision": "5c134f41c3cd3254bab245ff5eab16fdf81f7d8c",
+  "fixed_revision": "30109d49a4fc1ea553ea1108f24ea40bf8b77e3b",
+  "candidate_sha": "30109d49a4fc1ea553ea1108f24ea40bf8b77e3b",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "5c134f41c3cd3254bab245ff5eab16fdf81f7d8c",
+  "changed_production_files": [
+    "src/parser.jl"
+  ],
+  "changed_test_files": [
+    "test/parser.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-040 generator trailing-junk recovery"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "a8490f16b625a3d726e6c6ddfd348134187db575b57cb896cb101b744a8bf055",
+    "oracle": {
+      "mwe_basis": "upstream parser recovery regression assertions",
+      "source_evidence": "Literal assertions from JuliaSyntax test/parser.jl: malformed generator tails are retained as error-t syntax nodes rather than accepted as ordinary arguments.",
+      "upstream_test_patch_sha256": "bb029081916185e581ddcacb291a9f2e41b6316da68ed014609bf9100bfbb70a"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "30109d49a4fc1ea553ea1108f24ea40bf8b77e3b",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "2f3a7b3e128d2cdfe5a5d27eff8f3ab6608e74bb02db148fd805caeb7d5455fb",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:52:45Z",
+    "usage": {
+      "prompt_tokens": 2131,
+      "completion_tokens": 553,
+      "total_tokens": 2684
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.88,\n  \"summary\": \"Fix for a parsing defect where JuliaSyntax incorrectly allowed trailing non-delimited expressions after generators (e.g., `(x for x in xs a, b)`) which should have been a syntax error. The fix disallows this invalid syntax, aligning with the behavior of the flisp parser in most contexts.\",\n  \"evidence\": \"Issue #407 clearly documents the bug: JuliaSyntax allows parsing of trailing junk after generators that should produce a syntax error. PR #497 explicitly states it 'Fixes #407' and describes disallowing these invalid forms. The commit modifies `src/parser.jl` (production code) and `test/parser.jl` (test code). The issue shows concrete examples of incorrect parse trees being produced for invalid syntax.\",\n  \"missing_evidence\": \"Cannot see the actual diff content to verify the exact code changes, but the metadata (production file + test file + issue + PR description) strongly aligns with a real bug fix.\",\n  \"validation_risks\": \"The fix introduces new error cases for syntax that was previously accepted silently. Some existing code relying on the accidentally-permissive behavior could break. The PR notes that `f(y for x in xs; a)` parameter syntax is still allowed since the flisp parser allowed it and it's used in Base.\",\n  \"suggested_tests\": \"Test that `(x for x in xs a)` produces a parse error. Test that `(x for x in xs a, b)` produces a parse error. Test that `f(x for x in xs; a)` still parses correctly (parameter syntax allowed). Test that `(x for x in xs; a)` produces an error.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.88,
+    "summary": "Fix for a parsing defect where JuliaSyntax incorrectly allowed trailing non-delimited expressions after generators (e.g., `(x for x in xs a, b)`) which should have been a syntax error. The fix disallows this invalid syntax, aligning with the behavior of the flisp parser in most contexts.",
+    "evidence": "Issue #407 clearly documents the bug: JuliaSyntax allows parsing of trailing junk after generators that should produce a syntax error. PR #497 explicitly states it 'Fixes #407' and describes disallowing these invalid forms. The commit modifies `src/parser.jl` (production code) and `test/parser.jl` (test code). The issue shows concrete examples of incorrect parse trees being produced for invalid syntax.",
+    "missing_evidence": "Cannot see the actual diff content to verify the exact code changes, but the metadata (production file + test file + issue + PR description) strongly aligns with a real bug fix.",
+    "validation_risks": "The fix introduces new error cases for syntax that was previously accepted silently. Some existing code relying on the accidentally-permissive behavior could break. The PR notes that `f(y for x in xs; a)` parameter syntax is still allowed since the flisp parser allowed it and it's used in Base.",
+    "suggested_tests": "Test that `(x for x in xs a)` produces a parse error. Test that `(x for x in xs a, b)` produces a parse error. Test that `f(x for x in xs; a)` still parses correctly (parameter syntax allowed). Test that `(x for x in xs; a)` produces an error."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-040 generator trailing-junk recovery"
+    ],
+    "exception_types": [
+      "4b38abb3992b3e5e4b3babd51ed6f0001f7917ca87187c3fbbcb7b2246419185",
+      "d5373b8d119271fc63df5d8e8a114e0a08b758d0a41e2b25df1f264149443e79"
+    ],
+    "fingerprints": [
+      "4b38abb3992b3e5e4b3babd51ed6f0001f7917ca87187c3fbbcb7b2246419185",
+      "d5373b8d119271fc63df5d8e8a114e0a08b758d0a41e2b25df1f264149443e79"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

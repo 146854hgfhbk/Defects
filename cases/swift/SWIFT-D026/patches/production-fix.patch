@@ -1,0 +1,21 @@
+diff --git a/Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift b/Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift
+index a3aeb96bcae32c9ef30231ec3c8392d1de0138d1..5199bd11dddded8efcb491a7d09d8ef598eb98bf 100644
+--- a/Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift
++++ b/Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift
+@@ -11,6 +11,7 @@ public extension DatabaseInfo {
+     var entities = [ EntityInfo ]()
+     entities.reserveCapacity(schema.tables.count + schema.views.count)
+     
++    let dbName = schema.tables.contains(where: { $0.name == name }) ? "\(name)DB" : name
+     for table in schema.tables {
+       let isWithoutRowID = table.isTableWithoutRowID
+       let indices  = schema.indices [table.name] ?? []
+@@ -56,7 +57,7 @@ public extension DatabaseInfo {
+       entities.append(entity)
+     }
+ 
+-    self.init(name: name, userVersion: schema.userVersion, entities: entities)
++    self.init(name: dbName, userVersion: schema.userVersion, entities: entities)
+   }
+ }
+ 

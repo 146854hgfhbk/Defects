@@ -1,0 +1,48 @@
+diff --git a/R/options.R b/R/options.R
+index 2e0b8060..19d0940a 100644
+--- a/R/options.R
++++ b/R/options.R
+@@ -69,8 +69,7 @@ load_options <- function(base_path = ".") {
+     current_package_dir = NA_character_,
+     rd_family_title = list(),
+     knitr_chunk_options = NULL,
+-    restrict_image_formats = TRUE,
+-    lazy_data = FALSE
++    restrict_image_formats = TRUE
+   )
+ 
+   unknown_opts <- setdiff(names(opts), names(defaults))
+@@ -89,7 +88,7 @@ load_options <- function(base_path = ".") {
+ 
+ load_options_description <- function(base_path = ".") {
+   desc_path <- file.path(base_path, "DESCRIPTION")
+-  dcf <- read.dcf(desc_path, fields = c("Roxygen", "Package", "LazyData"))
++  dcf <- read.dcf(desc_path, fields = c("Roxygen", "Package"))
+   desc_opts <- dcf[[1, 1]]
+ 
+   if (is.na(desc_opts)) {
+@@ -100,7 +99,6 @@ load_options_description <- function(base_path = ".") {
+ 
+   opts$current_package <- dcf[[1, 2]]
+   opts$current_package_dir <- normalizePath(base_path)
+-  opts$lazy_data <- identical(dcf[[1, 3]], "true")
+   opts
+ }
+ 
+diff --git a/R/rd-usage.R b/R/rd-usage.R
+index 5ba2c915..0b2d1d8d 100644
+--- a/R/rd-usage.R
++++ b/R/rd-usage.R
+@@ -33,11 +33,7 @@ object_usage.default <- function(x) {
+ 
+ #' @export
+ object_usage.data <- function(x) {
+-  if (roxy_meta_get("lazy_data", FALSE)) {
+-    rd(x$alias)
+-  } else {
+-    rd(paste0("data(", x$alias, ")"))
+-  }
++  rd(x$alias)
+ }
+ 
+ #' @export

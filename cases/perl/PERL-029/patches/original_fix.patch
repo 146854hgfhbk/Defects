@@ -1,0 +1,196 @@
+diff --git a/CSV_XS.pm b/CSV_XS.pm
+index eef5af617f6aeb3b19557ff3858cc3f612b29584..44fe124076f2009916254be8c3d57f40b0c3e3ba 100644
+--- a/CSV_XS.pm
++++ b/CSV_XS.pm
+@@ -2608,7 +2608,8 @@ X<getline_all>
+ This will return a reference to a list of L<getline ($fh)|/getline> results.
+ In this call, C<keep_meta_info> is disabled.  If C<$offset> is negative, as
+ with C<splice>, only the last  C<abs ($offset)> records of C<$fh> are taken
+-into consideration.
++into consideration. Parameters C<$offset> and C<$length> are expected to be
++an integers. Non-integer values are interpreted as integer without check.
+ 
+ Given a CSV file with 10 lines:
+ 
+diff --git a/CSV_XS.xs b/CSV_XS.xs
+index 326f90050900cf3f93a32ba39a93a9ce0735a2c3..fcc3a83ba2bae26007274d99c096e5aa81300ed0 100644
+--- a/CSV_XS.xs
++++ b/CSV_XS.xs
+@@ -2195,14 +2195,14 @@ static SV *cx_xsParse_all (pTHX_ SV *self, HV *hv, SV *io, SV *off, SV *len) {
+ 
+     SetupCsv (&csv, hv, self);
+ 
+-    if (SvIOK (off)) {
++    if (SvOK (off)) {
+ 	skip = SvIV (off);
+ 	if (skip < 0) {
+ 	    tail = -skip;
+ 	    skip = -1;
+ 	    }
+ 	}
+-    if (SvIOK (len))
++    if (SvOK (len))
+ 	length = SvIV (len);
+ 
+     while (c_xsParse (csv, hv, row, NULL, io, 1)) {
+diff --git a/ChangeLog b/ChangeLog
+index d6a0391015c44c8a80d7a6558f62eca8d23ab0d7..8f8a0e2390d29099d350facf9d18050c019a2c70 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,6 +1,7 @@
+-1.49	- 2022-06-21, H.Merijn Brand
++1.49	- 2022-09-12, H.Merijn Brand
+     * csv2xlsx --split=CxP [--split-label=C]
+     * Full documentation/manual for csv2xlsx
++    * Fix non-integer arguments to getline_all (issue 39)
+ 
+ 1.48	- 2022-05-24, H.Merijn Brand
+     * It's 2022
+diff --git a/doc/CSV_XS.3 b/doc/CSV_XS.3
+index 7d2016cb633022629e6d60c71a3639e59eeb933c..59d8b9157cf8c8a38bd0f1b70bfa840d3e2a066d 100644
+--- a/doc/CSV_XS.3
++++ b/doc/CSV_XS.3
+@@ -133,7 +133,7 @@
+ .\" ========================================================================
+ .\"
+ .IX Title "STDIN 1"
+-.TH STDIN 1 "2022-06-21" "perl v5.36.0" "User Contributed Perl Documentation"
++.TH STDIN 1 "2022-09-12" "perl v5.36.0" "User Contributed Perl Documentation"
+ .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
+ .\" way too many mistakes in technical documents.
+ .if n .ad l
+@@ -1342,7 +1342,8 @@ The \*(L"string\*(R", \*(L"fields\*(R", and \*(L"status\*(R" methods are meaning
+ This will return a reference to a list of getline ($fh) results.
+ In this call, \f(CW\*(C`keep_meta_info\*(C'\fR is disabled.  If \f(CW$offset\fR is negative, as
+ with \f(CW\*(C`splice\*(C'\fR, only the last  \f(CW\*(C`abs ($offset)\*(C'\fR records of \f(CW$fh\fR are taken
+-into consideration.
++into consideration. Parameters \f(CW$offset\fR and \f(CW$length\fR are expected to be
++an integers. Non-integer values are interpreted as integer without check.
+ .PP
+ Given a \s-1CSV\s0 file with 10 lines:
+ .PP
+diff --git a/doc/CSV_XS.html b/doc/CSV_XS.html
+index e1ed99cc59c4f4d3e124ec4e6f7d3bdbfddd8d3d..83e2b46869d9f2f70406a92d308522a29d8e0810 100644
+--- a/doc/CSV_XS.html
++++ b/doc/CSV_XS.html
+@@ -979,7 +979,7 @@ $csv-&gt;print ($fh,   undef  );   # 48500 recs/sec</code></pre>
+ $arrayref = $csv-&gt;getline_all ($fh, $offset);
+ $arrayref = $csv-&gt;getline_all ($fh, $offset, $length);</code></pre>
+ 
+-<p>This will return a reference to a list of <a href="#getline">getline ($fh)</a> results. In this call, <code>keep_meta_info</code> is disabled. If <code>$offset</code> is negative, as with <code>splice</code>, only the last <code>abs ($offset)</code> records of <code>$fh</code> are taken into consideration.</p>
++<p>This will return a reference to a list of <a href="#getline">getline ($fh)</a> results. In this call, <code>keep_meta_info</code> is disabled. If <code>$offset</code> is negative, as with <code>splice</code>, only the last <code>abs ($offset)</code> records of <code>$fh</code> are taken into consideration. Parameters <code>$offset</code> and <code>$length</code> are expected to be an integers. Non-integer values are interpreted as integer without check.</p>
+ 
+ <p>Given a CSV file with 10 lines:</p>
+ 
+diff --git a/doc/CSV_XS.man b/doc/CSV_XS.man
+index 5ad1545e41df4057a3cec4f2eebaf99502f37dfe..b682c8813f5cc9d5edbabbf425d2897c7ac29889 100644
+--- a/doc/CSV_XS.man
++++ b/doc/CSV_XS.man
+@@ -986,7 +986,9 @@ STDIN(1)              User Contributed Perl Documentation             STDIN(1)
+        This will return a reference to a list of getline ($fh) results.  In
+        this call, "keep_meta_info" is disabled.  If $offset is negative, as
+        with "splice", only the last  "abs ($offset)" records of $fh are taken
+-       into consideration.
++       into consideration. Parameters $offset and $length are expected to be
++       an integers. Non-integer values are interpreted as integer without
++       check.
+ 
+        Given a CSV file with 10 lines:
+ 
+@@ -3106,4 +3108,4 @@ STDIN(1)              User Contributed Perl Documentation             STDIN(1)
+ 
+ 
+ 
+-perl v5.36.0                      2022-06-21                          STDIN(1)
++perl v5.36.0                      2022-09-12                          STDIN(1)
+diff --git a/doc/CSV_XS.md b/doc/CSV_XS.md
+index 93e0e110edaa2a4c86758352aef30557f8223ff0..4af3b7c2eb137a0641649a47db9bea2fe12e4d06 100644
+--- a/doc/CSV_XS.md
++++ b/doc/CSV_XS.md
+@@ -1022,7 +1022,8 @@ The ["string"](#string), ["fields"](#fields), and ["status"](#status) methods ar
+ This will return a reference to a list of [getline ($fh)](#getline) results.
+ In this call, `keep_meta_info` is disabled.  If `$offset` is negative, as
+ with `splice`, only the last  `abs ($offset)` records of `$fh` are taken
+-into consideration.
++into consideration. Parameters `$offset` and `$length` are expected to be
++an integers. Non-integer values are interpreted as integer without check.
+ 
+ Given a CSV file with 10 lines:
+ 
+diff --git a/doc/csv2xlsx.3 b/doc/csv2xlsx.3
+index f176bc03f379b41be61c0a209f52ca82cd4b26cd..60e88638d713e9afa13fdf859b2cc9dedfd333dd 100644
+--- a/doc/csv2xlsx.3
++++ b/doc/csv2xlsx.3
+@@ -133,7 +133,7 @@
+ .\" ========================================================================
+ .\"
+ .IX Title "STDIN 1"
+-.TH STDIN 1 "2022-06-21" "perl v5.36.0" "User Contributed Perl Documentation"
++.TH STDIN 1 "2022-06-22" "perl v5.36.0" "User Contributed Perl Documentation"
+ .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
+ .\" way too many mistakes in technical documents.
+ .if n .ad l
+diff --git a/doc/csv2xlsx.man b/doc/csv2xlsx.man
+index 6c5063bf030038ee492ea01ecc2713ed100295c6..3e63987588d87c596b9e42a514a9284e50dc68c5 100644
+--- a/doc/csv2xlsx.man
++++ b/doc/csv2xlsx.man
+@@ -135,10 +135,10 @@ STDIN(1)              User Contributed Perl Documentation             STDIN(1)
+ 
+        -S CxP
+        --split=CxP
+-         When dealing with big CSV datasets, this option enables you to
+-         split the data over several sheets. When all the "-S" options match
+-         in a single row, that row will be the first row of a new sheet. (see
+-         also "--sl=C")
++         When dealing with big CSV datasets, this option enables you to split
++         the data over several sheets. When all the "-S" options match in a
++         single row, that row will be the first row of a new sheet. (see also
++         "--sl=C")
+ 
+          C The column that should be examined. "A" = 1. If lower case, the
+            value of that column is matched case insensitive when appropriate.
+@@ -207,4 +207,4 @@ STDIN(1)              User Contributed Perl Documentation             STDIN(1)
+ 
+ 
+ 
+-perl v5.36.0                      2022-06-21                          STDIN(1)
++perl v5.36.0                      2022-06-22                          STDIN(1)
+diff --git a/t/77_getall.t b/t/77_getall.t
+index 2c729666dfa6c34b0adea24b07fa48a1a7154827..e717018770f3ce4e72ad9b2d6d87995e66891fc4 100644
+--- a/t/77_getall.t
++++ b/t/77_getall.t
+@@ -3,7 +3,7 @@
+ use strict;
+ use warnings;
+ 
+-use Test::More tests => 61;
++use Test::More tests => 81;
+ 
+ BEGIN {
+     require_ok "Text::CSV_XS";
+@@ -28,13 +28,19 @@ sub do_tests {
+     $sub->(\@list);
+     $sub->(\@list,         0);
+     $sub->([@list[2,3]],   2);
+-    $sub->([],             0,  0);
+-    $sub->(\@list,         0, 10);
+-    $sub->([@list[0,1]],   0,  2);
+-    $sub->([@list[1,2]],   1,  2);
++    $sub->([],             0,   0);
++    $sub->(\@list,         0,  10);
++    $sub->([@list[0,1]],   0,   2);
++    $sub->([@list[1,2]],   1,   2);
++    $sub->([@list[1,2]], 1e0,   2);
++    $sub->([@list[1,2]], "1",   2);
+     $sub->([@list[1..3]], -3);
+-    $sub->([@list[1,2]],  -3,  2);
+-    $sub->([@list[1..3]], -3,  3);
++    $sub->([@list[1,2]],  -3,   2);
++    $sub->([@list[1..3]], -3,   3);
++
++    $sub->([$list[0]],     0,   1);
++    $sub->([$list[0]],     0, 1e0);
++    $sub->([$list[0]],     0, "1");
+     } # do_tests
+ 
+ foreach my $eol ("\n", "\r") {

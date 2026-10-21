@@ -1,0 +1,46 @@
+diff --git a/lib/Test2/Tools/Basic.pm b/lib/Test2/Tools/Basic.pm
+index 2b98f2f01c41ce55623a3450bc7ee417da850262..675ef26518d637b4ae499511fca0a792ba8243c9 100644
+--- a/lib/Test2/Tools/Basic.pm
++++ b/lib/Test2/Tools/Basic.pm
+@@ -104,7 +104,9 @@ sub skip_all {
+ sub done_testing {
+     my $ctx = context();
+     $ctx->hub->finalize($ctx->trace, 1);
++    my $count = $ctx->hub->count;
+     $ctx->release;
++    return $count;
+ }
+ 
+ sub bail_out {
+@@ -202,6 +204,8 @@ tests are run.
+ Used to mark the end of testing. This is a safe way to have a dynamic or
+ unknown number of tests.
+ 
++Returns the number of assertions that were made, which is 0 when none were.
++
+ =item bail_out($reason)
+ 
+ Invoked when something has gone horribly wrong: stop everything, kill all threads and
+diff --git a/lib/Test2/Tools/Tiny.pm b/lib/Test2/Tools/Tiny.pm
+index b574eb714dd6288963987112eec35c60bb8ff8fd..b47f9cb866d976b2f7e55fd732d93176260cc5a9 100644
+--- a/lib/Test2/Tools/Tiny.pm
++++ b/lib/Test2/Tools/Tiny.pm
+@@ -208,7 +208,9 @@ sub plan {
+ sub done_testing {
+     my $ctx = context();
+     $ctx->done_testing;
++    my $count = $ctx->hub->count;
+     $ctx->release;
++    return $count;
+ }
+ 
+ sub warnings(&) {
+@@ -364,6 +366,8 @@ Set the plan.
+ 
+ Set the plan to the current test count.
+ 
++Returns the number of assertions that were made, which is 0 when none were.
++
+ =item $warnings = warnings { ... }
+ 
+ Capture an arrayref of warnings from the block.

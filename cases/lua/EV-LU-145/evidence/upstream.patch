@@ -1,0 +1,27 @@
+diff --git a/lua/pl/stringx.lua b/lua/pl/stringx.lua
+index 7fce4620f4a9627a5fd609dad5f966aabc6805ba..82aedd6ac699d7c1057bba8296828c517bae4985 100644
+--- a/lua/pl/stringx.lua
++++ b/lua/pl/stringx.lua
+@@ -488,7 +488,8 @@ function stringx.quote_string(s)
+     assert_string(1,s)
+     -- Find out if there are any embedded long-quote sequences that may cause issues.
+     -- This is important when strings are embedded within strings, like when serializing.
+-    local equal_signs = has_lquote(s)
++    -- Append a closing bracket to catch unfinished long-quote sequences at the end of the string.
++    local equal_signs = has_lquote(s .. "]")
+ 
+     -- Note that strings containing "\r" can't be quoted using long brackets
+     -- as Lua lexer converts all newlines to "\n" within long strings.
+diff --git a/tests/test-stringx.lua b/tests/test-stringx.lua
+index 01d676b609bada7ec759ac46adda894d85f456d4..984afff8940c855612fd41aca3001cef6299f88f 100644
+--- a/tests/test-stringx.lua
++++ b/tests/test-stringx.lua
+@@ -322,6 +322,8 @@ assert_str_round_trip( "Unescapped quote \" in the middle")
+ assert_str_round_trip( "[[Embedded long quotes \\\". Escaped must stay! ]]")
+ assert_str_round_trip( [[Long quoted string with a slash prior to quote \\\". ]])
+ assert_str_round_trip( "[[Completely normal\n long quote. ]]")
++assert_str_round_trip( "String with a newline\nending with a closing bracket]")
++assert_str_round_trip( "[[String with opening brackets ending with part of a long closing bracket]=")
+ assert_str_round_trip( "\n[[Completely normal\n long quote. Except that we lead with a return! Tricky! ]]")
+ assert_str_round_trip( '"balance [======[ doesn\'t ]====] mater when searching for embedded long-string quotes.')
+ assert_str_round_trip( "Any\0 \t control character other than a return will be handled by the %q mechanism.")

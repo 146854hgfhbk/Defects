@@ -1,0 +1,36 @@
+diff --git a/moses.lua b/moses.lua
+index 88a2cf278f25d4cc61fa60bfb5216632cabb1da9..cee9eb0bb759c7516b3ca265b0ecaf0dd7b0c14c 100644
+--- a/moses.lua
++++ b/moses.lua
+@@ -1204,8 +1204,8 @@ function M.chunk(array, f)
+   local ch, ck, prev, val = {}, 0
+   for k,v in ipairs(array) do
+     val = f(v, k)
+-    prev = (prev==nil) and val or prev
+     ck = ((val~=prev) and (ck+1) or ck)
++    prev = (prev==nil) and val or prev
+     if not ch[ck] then
+       ch[ck] = {array[k]}
+     else
+diff --git a/spec/array_spec.lua b/spec/array_spec.lua
+index ff8063c6c70ee52d48dbbacbc65e1a52cf83561d..725d6ec0d101462e08efc98d255068c22f67ea96 100644
+--- a/spec/array_spec.lua
++++ b/spec/array_spec.lua
+@@ -380,6 +380,17 @@ describe('Array functions specs', function()
+       assert.is_true(M.isEqual(v[3], {3,3}))
+       assert.is_true(M.isEqual(v[4], {4,4}))             
+     end)  
++
++    it('chunks in blocks consecutive values when using identity as function', function()
++      local t = {1,1,2,2,3,3,4}
++      local v = M.chunk(t, function(v) return v end)
++      assert.is_nil(v[0])
++      assert.equal(#v, 4)
++      assert.is_true(M.isEqual(v[1], {1,1}))
++      assert.is_true(M.isEqual(v[2], {2,2}))
++      assert.is_true(M.isEqual(v[3], {3,3}))
++      assert.is_true(M.isEqual(v[4], {4}))
++    end)  
+     
+   end)
+   

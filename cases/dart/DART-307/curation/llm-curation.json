@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-307",
+  "technical_evidence_sha256": "b54f038ebf8dc1fd1930eafb8c6f90561072c98ef7528dae987c66cbf0b83a1a",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "fde696fa96bf9459b1182133a4ead90ba4f4a5ea728cb39677c808b5dfd9914a",
+  "reviewed_at": "2026-08-11T11:56:30.705605+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1544",
+  "rationale": "Issue #1544 (labeled bug) reports the formatter emitting `import 'package:archive/archive.dart' if (dart.library.io) '...' as archive;`, i.e. the `as` prefix printed after `if` configuration clauses, which is not valid Dart and made the formatter report unexpected output. The minimized production patch fixes exactly that ordering in both formatter paths: in lib/src/front_end/piece_factory.dart the `clauses` list is now populated with the `as`/`deferred` piece before iterating `directive.configurations`, and in lib/src/short/source_visitor.dart `_visitConfigurations(node.configurations)` moves from before to after the `asKeyword` block. Both hunks are pure statement reordering with the accompanying comments moved along; no API addition, no refactor, no formatting-only or config-only edits (CHANGELOG and test fixtures are excluded from the minimized patch). The triggers are upstream data-driven fixtures from later commit 953ecbc that reference the same issue: two new regression fixtures reproducing the exact source from the issue report, plus 'Both configuration and prefix.' cases appended to existing directives.unit and import.unit. They exercise only source-text formatting through the pre-existing short/tall test harnesses, so they depend on no production API introduced by the fix. Strict evidence records both original and post-minimization gates as passed: build on both revisions, four unique selectors all reproducing on buggy, fixed all-green isolated/suite/reversed, deterministic fingerprints (6 groups), 50-run matrix with 3 repetitions, and buggy full-suite failures limited to the declared triggers. active_same_project_root_causes is empty, so #1544 is not a duplicate, and it matches the single allowed root cause id.\n\nIssue #1544 (labeled bug, closed by PR #1550) reports that formatting an import carrying both an `as` prefix and an `if` configuration emits the `as` clause after the configuration, producing syntactically invalid Dart and, in the first report, dropping the leading line. The minimized production patch matches that root cause exactly: in lib/src/front_end/piece_factory.dart the `clauses` list is now populated with the `as`/`deferred` piece before iterating `directive.configurations`, and in lib/src/short/source_visitor.dart the `_visitConfigurations` call moves from before the `asKeyword` block to after it. Both hunks are pure emission-order changes in the tall and short formatters respectively; the commit message states the defect existed in both formatters, so the second file is part of the same defect rather than an unrelated edit. No refactor, feature extension, rename, or formatting-only churn appears in the minimized patch, and the CHANGELOG entry present in the original commit is excluded from it. Triggers come from the upstream fix commit (953ecbc, the PR #1550 landing) and are data-file fixtures driven by the existing short/tall format test harnesses: the new regression/1500/1544.unit files reproduce the issue's own input verbatim, and the appended `Both configuration and prefix.` cases in directives.unit and import.unit express the same defect minimally. They exercise only the pre-existing formatter entry points, so no production API introduced by the fix is required. Strict machine evidence reports all gates green in both the original and post-minimization runs: build on both revisions, 4 declared unique selectors, buggy differential with all four selectors reproducing, buggy full suite failing only on those reproduced triggers, fixed isolated/suite/reversed runs clean, determinism across 3 repetitions with 6 fingerprint groups over a complete 50-run matrix. active_same_project_root_causes is empty, so #1544 is not a duplicate, and it is the single verified issue key in allowed_root_cause_ids.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T11:56:04.211552+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "fde696fa96bf9459b1182133a4ead90ba4f4a5ea728cb39677c808b5dfd9914a",
+      "response_sha256": "21b829091e49fcacd3351af24292ef36e7d3140f0b24c1985e563682e3dbd692",
+      "response_id": "msg_e9cec78a-253c-4468-bb",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 7387
+        },
+        "cache_creation_input_tokens": 7387,
+        "cache_read_input_tokens": 17395,
+        "input_tokens": 23800,
+        "output_tokens": 1746
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1544",
+      "rationale": "Issue #1544 (labeled bug) reports the formatter emitting `import 'package:archive/archive.dart' if (dart.library.io) '...' as archive;`, i.e. the `as` prefix printed after `if` configuration clauses, which is not valid Dart and made the formatter report unexpected output. The minimized production patch fixes exactly that ordering in both formatter paths: in lib/src/front_end/piece_factory.dart the `clauses` list is now populated with the `as`/`deferred` piece before iterating `directive.configurations`, and in lib/src/short/source_visitor.dart `_visitConfigurations(node.configurations)` moves from before to after the `asKeyword` block. Both hunks are pure statement reordering with the accompanying comments moved along; no API addition, no refactor, no formatting-only or config-only edits (CHANGELOG and test fixtures are excluded from the minimized patch). The triggers are upstream data-driven fixtures from later commit 953ecbc that reference the same issue: two new regression fixtures reproducing the exact source from the issue report, plus 'Both configuration and prefix.' cases appended to existing directives.unit and import.unit. They exercise only source-text formatting through the pre-existing short/tall test harnesses, so they depend on no production API introduced by the fix. Strict evidence records both original and post-minimization gates as passed: build on both revisions, four unique selectors all reproducing on buggy, fixed all-green isolated/suite/reversed, deterministic fingerprints (6 groups), 50-run matrix with 3 repetitions, and buggy full-suite failures limited to the declared triggers. active_same_project_root_causes is empty, so #1544 is not a duplicate, and it matches the single allowed root cause id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/front_end/piece_factory.dart",
+        "lib/src/short/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks",
+        "case.json:source_candidate.issue_check.linked_issues[0].body"
+      ],
+      "risks": [
+        "Two of the four triggers are additions to pre-existing fixture files (short/whitespace/directives.unit, tall/top_level/import.unit); the whole-file selector granularity means those suites' pass/fail hinges on file-level fixture content, though the appended cases cover only the `as` + `if` defect.",
+        "Fixtures lack trailing newlines ('No newline at end of file'), so whitespace-exact harnesses could be sensitive to line-ending normalization during patch application.",
+        "The tall-formatter expected output changes wrapping for unrelated portions of the regression sample (e.g. `_webCallback` body), so those lines are incidental formatter behavior of the revision rather than part of the defect."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T11:56:30.705300+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "fde696fa96bf9459b1182133a4ead90ba4f4a5ea728cb39677c808b5dfd9914a",
+      "response_sha256": "f36956be0428c849c3c2beb5d017105caaa1a27b7af0c1ce97bcd4826b78c4ea",
+      "response_id": "msg_1786449390513",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 24233,
+        "output_tokens": 1221,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1544",
+      "rationale": "Issue #1544 (labeled bug, closed by PR #1550) reports that formatting an import carrying both an `as` prefix and an `if` configuration emits the `as` clause after the configuration, producing syntactically invalid Dart and, in the first report, dropping the leading line. The minimized production patch matches that root cause exactly: in lib/src/front_end/piece_factory.dart the `clauses` list is now populated with the `as`/`deferred` piece before iterating `directive.configurations`, and in lib/src/short/source_visitor.dart the `_visitConfigurations` call moves from before the `asKeyword` block to after it. Both hunks are pure emission-order changes in the tall and short formatters respectively; the commit message states the defect existed in both formatters, so the second file is part of the same defect rather than an unrelated edit. No refactor, feature extension, rename, or formatting-only churn appears in the minimized patch, and the CHANGELOG entry present in the original commit is excluded from it. Triggers come from the upstream fix commit (953ecbc, the PR #1550 landing) and are data-file fixtures driven by the existing short/tall format test harnesses: the new regression/1500/1544.unit files reproduce the issue's own input verbatim, and the appended `Both configuration and prefix.` cases in directives.unit and import.unit express the same defect minimally. They exercise only the pre-existing formatter entry points, so no production API introduced by the fix is required. Strict machine evidence reports all gates green in both the original and post-minimization runs: build on both revisions, 4 declared unique selectors, buggy differential with all four selectors reproducing, buggy full suite failing only on those reproduced triggers, fixed isolated/suite/reversed runs clean, determinism across 3 repetitions with 6 fingerprint groups over a complete 50-run matrix. active_same_project_root_causes is empty, so #1544 is not a duplicate, and it is the single verified issue key in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/front_end/piece_factory.dart",
+        "lib/src/short/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/tall/top_level/import.unit",
+        "test/short/whitespace/directives.unit",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "Two of the four selectors (short/whitespace/directives.unit, tall/top_level/import.unit) are shared fixture files whose selector granularity is the whole file, so those selectors also cover pre-existing unrelated cases; isolation to the newly appended `as` + `if` case rests on the buggy-differential and fixed-clean evidence rather than per-case selectors.",
+        "The tall regression fixture's expected output includes formatting of unrelated constructs in the issue's sample (for example the `_webCallback` argument wrapping), so it is broader than the minimal defect and could become brittle if unrelated tall-style formatting rules change.",
+        "Formatter fixtures are whitespace-exact and several files end without a trailing newline, leaving some sensitivity to line-ending or trailing-newline handling during fixture extraction."
+      ]
+    }
+  ]
+}

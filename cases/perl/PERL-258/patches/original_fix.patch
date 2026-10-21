@@ -1,0 +1,156 @@
+diff --git a/Changes b/Changes
+index 72dc5b5..96b0158 100644
+--- a/Changes
++++ b/Changes
+@@ -2,6 +2,10 @@ Revision history for Path-Tiny
+ 
+ {{$NEXT}}
+ 
++    [Additions]
++
++    - Added `has_same_bytes` to efficiently compare the contents of two files.
++
+ 0.124     2022-09-02 11:06:12-04:00 America/New_York
+ 
+     - No changes from 0.123-TRIAL.
+diff --git a/Makefile.PL b/Makefile.PL
+index f84c947..261875f 100644
+--- a/Makefile.PL
++++ b/Makefile.PL
+@@ -23,6 +23,7 @@ my %WriteMakefileArgs = (
+     "Encode" => 0,
+     "Exporter" => "5.57",
+     "Fcntl" => 0,
++    "File::Compare" => 0,
+     "File::Copy" => 0,
+     "File::Glob" => 0,
+     "File::Path" => "2.07",
+@@ -65,6 +66,7 @@ my %FallbackPrereqs = (
+   "ExtUtils::MakeMaker" => 0,
+   "Fcntl" => 0,
+   "File::Basename" => 0,
++  "File::Compare" => 0,
+   "File::Copy" => 0,
+   "File::Glob" => 0,
+   "File::Path" => "2.07",
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index c5c39f0..9aca216 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -1113,6 +1113,52 @@ sub filehandle {
+     return $fh;
+ }
+ 
++=method has_same_bytes
++
++    if ( path("foo.txt")->has_same_bytes("bar.txt") ) {
++       # ...
++    }
++
++This method returns true if both the invocant and the argument can be opened as
++file handles and the handles contain the same bytes.  It returns false if their
++contents differ.  If either can't be opened as a file (e.g. a directory or
++non-existent file), the method throws an exception.  If both can be opened and
++both have the same C<realpath>, the method returns true without scanning any
++data.
++
++=cut
++
++sub has_same_bytes {
++    my ($self, $other_path) = @_;
++    my $other = path($other_path);
++
++    my $fh1 = $self->openr_raw({ locked => 1 });
++    my $fh2 = $other->openr_raw({ locked => 1 });
++
++    # check for directories
++    if (-d $fh1) {
++        $self->_throw('has_same_bytes', $self->[PATH], "directory not allowed");
++    }
++    if (-d $fh2) {
++        $self->_throw('has_same_bytes', $other->[PATH], "directory not allowed");
++    }
++
++    # Now that handles are open, we know the inputs are readable files that
++    # exist, so it's safe to compare via realpath
++    if ($self->realpath eq $other->realpath) {
++        return 1
++    }
++
++    # result is 0 for equal, 1 for unequal, -1 for error
++    require File::Compare;
++    my $res = File::Compare::compare($fh1, $fh2, 65536);
++    if ($res < 0) {
++        $self->_throw('has_same_bytes')
++    }
++
++    return $res == 0;
++}
++
+ =method is_absolute, is_relative
+ 
+     if ( path("/tmp")->is_absolute ) { ... }
+diff --git a/t/has_same_bytes.t b/t/has_same_bytes.t
+new file mode 100644
+index 0000000..e4a1a93
+--- /dev/null
++++ b/t/has_same_bytes.t
+@@ -0,0 +1,58 @@
++use 5.008001;
++use strict;
++use warnings;
++use Test::More 0.96;
++
++use lib 't/lib';
++use TestUtils qw/exception has_symlinks/;
++
++use Path::Tiny;
++
++my $dir  = Path::Tiny->tempdir;
++
++# identical contents in two files
++my $file1a = $dir->child("file1b.txt");
++my $file1b = $dir->child("file1a.txt");
++for my $f ( $file1a, $file1b ) {
++    $f->spew("hello world");
++}
++
++# different contents
++my $file2 = $dir->child("file2.txt");
++$file2->spew("goodbye world");
++
++# a directory, instead of a file
++my $subdir = $dir->child("subdir");
++$subdir->mkpath;
++
++subtest "only files" => sub  {
++    ok( $file1a->has_same_bytes($file1a), "same file");
++    ok( $file1a->has_same_bytes($file1b), "different files, same contents");
++    ok( ! $file1a->has_same_bytes($file2), "different files, different contents");
++};
++
++subtest "symlinks" => sub  {
++    plan skip_all => "No symlink support"
++      unless has_symlinks();
++
++    my $file1c = $dir->child("file1c.txt");
++    symlink "$file1a" => "$file1c";
++
++    ok( $file1a->has_same_bytes($file1c), "file compared to self symlink");
++    ok( $file1c->has_same_bytes($file1a), "self symlink compared to file");
++};
++
++subtest "exception" => sub  {
++    my $doesnt_exist = $dir->child("doesnt_exist.txt");
++
++    like( exception { $file1a->has_same_bytes($doesnt_exist) }, qr/no such file/i, "file->has_same_bytes(doesnt_exist)");
++    like( exception { $doesnt_exist->has_same_bytes($file1a) }, qr/no such file/i, "doesnt_exist->has_same_bytes(file)");
++    like( exception { $file1a->has_same_bytes($subdir) }, qr/directory not allowed/, "file->has_same_bytes(dir)");
++    like( exception { $subdir->has_same_bytes($file1a) }, qr/directory not allowed/, "dir->has_same_bytes(file)");
++    like( exception { $subdir->has_same_bytes($subdir) }, qr/directory not allowed/, "dir->has_same_bytes(dir)");
++    like( exception { $subdir->has_same_bytes($dir) }, qr/directory not allowed/, "dir->has_same_bytes(different_dir)");
++};
++
++
++done_testing;
++# COPYRIGHT

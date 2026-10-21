@@ -1,0 +1,35 @@
+diff --git a/Sources/Algorithms/RandomSample.swift b/Sources/Algorithms/RandomSample.swift
+index 94c5c12983bcd9a95e5a33e510c03fc6fd70b94d..fd52ce7681d4c1843df2f422f7d76867e02ec4b0 100644
+--- a/Sources/Algorithms/RandomSample.swift
++++ b/Sources/Algorithms/RandomSample.swift
+@@ -87,14 +87,14 @@ extension Collection {
+ internal func nextW<G: RandomNumberGenerator>(
+   k: Int, using rng: inout G
+ ) -> Double {
+-  Double.root(.random(in: 0..<1, using: &rng), k)
++  Double.root(1 - .random(in: 0..<1, using: &rng), k)
+ }
+ 
+ @usableFromInline
+ internal func nextOffset<G: RandomNumberGenerator>(
+   w: Double, using rng: inout G
+ ) -> Int {
+-  Int(Double.log(.random(in: 0..<1, using: &rng)) / .log(1 - w))
++  Int(Double.log(1 - .random(in: 0..<1, using: &rng)) / .log(1 - w))
+ }
+ 
+ extension Collection {
+diff --git a/Tests/SwiftAlgorithmsTests/RandomSampleTests.swift b/Tests/SwiftAlgorithmsTests/RandomSampleTests.swift
+index 0e6ad8e68f03b413af61b4d5d2156f9a5f657e21..dad2cc66d0e4a04ce6b1052b4459ae17249dea22 100644
+--- a/Tests/SwiftAlgorithmsTests/RandomSampleTests.swift
++++ b/Tests/SwiftAlgorithmsTests/RandomSampleTests.swift
+@@ -95,4 +95,9 @@ final class RandomSampleTests: XCTestCase {
+     let sample2c = c.randomStableSample(count: k, using: &generator)
+     XCTAssertEqual(sample1c, sample2c)
+   }
++
++  func testRandomSampleZeroRandom() {
++    var generator = SplitMix64(seed: 0x61c8864680b583eb) // this seed starts with 0
++    _ = c.randomSample(count: k, using: &generator) // must not crash
++  }
+ }

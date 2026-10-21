@@ -1,0 +1,41 @@
+diff --git a/src/luacheck/detect_cyclomatic_complexity.lua b/src/luacheck/detect_cyclomatic_complexity.lua
+index facdac991e1171201e85cc1ee14574bb4512c6f2..d4e32a53d81cf39d82fe09028bc5d6a4cbf20d95 100644
+--- a/src/luacheck/detect_cyclomatic_complexity.lua
++++ b/src/luacheck/detect_cyclomatic_complexity.lua
+@@ -28,29 +28,21 @@ function CyclomaticComplexityMetric:incr_decisions(count)
+    self.count = self.count + count
+ end
+ 
+-function CyclomaticComplexityMetric:calc_expr_Op(node)
+-   if node[1] == "and" or node[1] == "or" then
++function CyclomaticComplexityMetric:calc_expr(node)
++   if node.tag == "Op" and (node[1] == "and" or node[1] == "or") then
+       self:incr_decisions(1)
+    end
+ 
+-   self:calc_expr(node[2])
+-   if node[3] then
+-      self:calc_expr(node[3])
+-   end
+-end
+-
+--- expr: {operator, expression, expression}
+-function CyclomaticComplexityMetric:calc_expr(node)
+-   local f = self["calc_expr_" .. node.tag]
+-   if f then
+-      f(self, node)
++   if node.tag ~= "Function" then
++      self:calc_exprs(node)
+    end
+ end
+ 
+--- exprs: {expr, expr, ...}
+ function CyclomaticComplexityMetric:calc_exprs(exprs)
+    for _, expr in ipairs(exprs) do
+-      self:calc_expr(expr)
++      if type(expr) == "table" then
++         self:calc_expr(expr)
++      end
+    end
+ end
+ 

@@ -1,0 +1,31 @@
+diff --git a/src/glmfit.jl b/src/glmfit.jl
+--- a/src/glmfit.jl
++++ b/src/glmfit.jl
+@@ -351,10 +351,7 @@ function nullloglikelihood(m::GeneralizedLinearModel)
+     return ll
+ end
+ 
+-function dof(x::GeneralizedLinearModel)
+-    modelrank = linpred_rank(x.pp)
+-    dispersion_parameter(x.rr.d) ? modelrank + 1 : modelrank
+-end
++dof(obj::GeneralizedLinearModel) = linpred_rank(obj) + dispersion_parameter(obj.rr.d)
+ 
+ function _fit!(m::AbstractGLM, verbose::Bool, maxiter::Integer, minstepfac::Real,
+                atol::Real, rtol::Real, start)
+diff --git a/src/linpred.jl b/src/linpred.jl
+--- a/src/linpred.jl
++++ b/src/linpred.jl
+@@ -387,10 +387,11 @@ coef(obj::LinPredModel) = coef(obj.pp)
+ coefnames(x::LinPredModel) =
+     x.formula === nothing ? ["x$i" for i in 1:length(coef(x))] : coefnames(formula(x).rhs)
+ 
+-dof_residual(obj::LinPredModel) = nobs(obj) - dof(obj) + 1
++dof_residual(obj::LinPredModel) = nobs(obj) - linpred_rank(obj)
+ 
+ hasintercept(m::LinPredModel) = any(i -> all(==(1), view(m.pp.X , :, i)), 1:size(m.pp.X, 2))
+ 
++linpred_rank(x::LinPredModel) = linpred_rank(x.pp)
+ linpred_rank(x::LinPred) = length(x.beta0)
+ linpred_rank(x::DensePredChol{<:Any, <:CholeskyPivoted}) = rank(x.chol)
+ linpred_rank(x::DensePredChol{<:Any, <:Cholesky}) = rank(x.chol.U)

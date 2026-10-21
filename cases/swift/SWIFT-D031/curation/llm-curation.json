@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-206",
+  "technical_evidence_sha256": "de51bf70139494a7d09ad87a6cca56c61ad63eee7274d31e50b42b3df0942ef3",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "94fa3ac932f5145a0d40624b21eeabd5cb7fc4dc8417c6865f12c75dbe1f6094",
+  "reviewed_at": "2026-09-05T15:36:59.619809+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "swiftlang/swift-format#1223",
+  "rationale": "Issue #1223 (body embedded in source_candidate.issue_check.linked_issues) reports that with respectsExistingLineBreaks:false the break after #endif is collapsed, emitting non-parsing Swift (`#endif struct S {}`) when an #if wraps an attribute of the following decl. The minimized production patch touches only Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift and only the newline behavior of breaks around #endif: hunk 1 selects .elective/.soft NewlineBehavior for the break after node.poundEndif by context, hunk 3 emits a .hard break when an attribute list ends with an IfConfigDeclSyntax (the exact issue scenario), and hunk 4 makes the postfix-#if clause breaks .soft and drops the now-redundant after(poundEndif) break superseded by hunk 1. All three are the same root cause (elective breaks after #endif being discarded), with no formatting, refactor, doc, config, or feature change; automatic minimization removed hunk 2 and post_minimization_validation is PASS, so the retained subset is the validated minimum. The trigger is the unchanged upstream test from the same fixing commit; its first case is verbatim the issue reproducer, and it uses only pre-existing helpers (assertPrettyPrintEqual, the file's private configuration(respectingExistingLineBreaks:)) and no API introduced by the fix (NewlineBehavior, .break(_:size:newlines:), isNestedInPostfixIfConfig, config.respectsExistingLineBreaks all pre-exist, as none are added by the diff). Strict evidence for both the original and post-minimization states passes every gate: build on both revisions, unique selector, buggy differential reproducing only testIfConfigKeepsRequiredLineBreakAfterEndif, deterministic across 3 repetitions, fixed isolated/suite/reversed clean, and fixed full suite all green. active_same_project_root_causes is empty, so #1223 is not a duplicate.\n\nIssue #1223 reports that with respectsExistingLineBreaks: false, the required line break after #endif is collapsed so a declaration is glued onto the #endif line, producing unparseable Swift (`#endif struct S {}`). The fix commit 4f78786 (PR #1225, 'Fix #endif gluing onto the following token', message 'fix ##1223') changes exactly the break/newline behavior around #endif in Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift, and the trigger test testIfConfigKeepsRequiredLineBreakAfterEndif embeds the issue's exact reproducer (#if FLAG / @frozen / #endif / struct S {}) with respectingExistingLineBreaks: false, asserting the break after #endif is preserved. Same defect across issue, trigger, and fix. The minimized production patch keeps three hunks, all in the single production file and all on the #endif line-break path: (1) context-sensitive NewlineBehavior for the break after node.poundEndif, (3) a hard break when an attribute list ends with an IfConfigDecl, and (4) soft newlines on postfix-#if clause breaks plus removal of the now-duplicated after(poundEndif) break that hunk 1 subsumes. Automatic minimization reports chosen_subset == minimal_hunks == [1,3,4] with the fourth hunk removed and post_minimization_validation PASS, so every retained hunk is behaviorally required by the trigger; there is no formatting-only, doc-only, config-only, or feature change. The trigger is the unmodified upstream test portion of the same fixing commit (removed_external_dependency: false) and relies only on pre-existing test infrastructure (PrettyPrintTestCase.assertPrettyPrintEqual, the file's existing private configuration(respectingExistingLineBreaks:) helper) and pre-existing production API (NewlineBehavior, .break(.same, size:newlines:), config.respectsExistingLineBreaks); no API introduced by the fix is used. Machine-generated strict evidence passes all gates both originally and post-minimization: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential with the declared selector reproducing, trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with no failed checks. active_same_project_root_causes is empty, so swiftlang/swift-format#1223 is not a duplicate, and it matches the single allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T15:36:23.167193+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "94fa3ac932f5145a0d40624b21eeabd5cb7fc4dc8417c6865f12c75dbe1f6094",
+      "response_sha256": "0e84d39aa6eb7a87cd7517df88d77ffcab3bd989cd9f101c4b49e5c14a5290e3",
+      "response_id": "msg_d0953088efb54f978ea70560ac9c2028",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8289522635157545,
+        "input_tokens": 20030,
+        "output_tokens": 720
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#1223",
+      "rationale": "Issue #1223 (body embedded in source_candidate.issue_check.linked_issues) reports that with respectsExistingLineBreaks:false the break after #endif is collapsed, emitting non-parsing Swift (`#endif struct S {}`) when an #if wraps an attribute of the following decl. The minimized production patch touches only Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift and only the newline behavior of breaks around #endif: hunk 1 selects .elective/.soft NewlineBehavior for the break after node.poundEndif by context, hunk 3 emits a .hard break when an attribute list ends with an IfConfigDeclSyntax (the exact issue scenario), and hunk 4 makes the postfix-#if clause breaks .soft and drops the now-redundant after(poundEndif) break superseded by hunk 1. All three are the same root cause (elective breaks after #endif being discarded), with no formatting, refactor, doc, config, or feature change; automatic minimization removed hunk 2 and post_minimization_validation is PASS, so the retained subset is the validated minimum. The trigger is the unchanged upstream test from the same fixing commit; its first case is verbatim the issue reproducer, and it uses only pre-existing helpers (assertPrettyPrintEqual, the file's private configuration(respectingExistingLineBreaks:)) and no API introduced by the fix (NewlineBehavior, .break(_:size:newlines:), isNestedInPostfixIfConfig, config.respectsExistingLineBreaks all pre-exist, as none are added by the diff). Strict evidence for both the original and post-minimization states passes every gate: build on both revisions, unique selector, buggy differential reproducing only testIfConfigKeepsRequiredLineBreakAfterEndif, deterministic across 3 repetitions, fixed isolated/suite/reversed clean, and fixed full suite all green. active_same_project_root_causes is empty, so #1223 is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "minimized_patch_reference.post_minimization_validation",
+        "trigger_reduction.upstream_trigger_patch"
+      ],
+      "risks": [
+        "The single trigger test bundles three scenarios (attribute-wrapped #if, switch cases, postfix member chain), so the pass/fail differential cannot attribute failure to one hunk individually; only the aggregate buggy-fails/fixed-passes signal is verified.",
+        "The expected output encodes `switch x { #if A` on one line, which is a questionable formatting result in its own right; the test pins current printer behavior rather than proving that output re-parses for every case.",
+        "issue_evidence and semantic_justification are null; issue text was taken from the embedded source_candidate payload rather than an independent fetch."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T15:36:59.618991+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "94fa3ac932f5145a0d40624b21eeabd5cb7fc4dc8417c6865f12c75dbe1f6094",
+      "response_sha256": "cd7d6e87208fd44db28601de342dc6085908ddfa201b046647e2d966a0152970",
+      "response_id": "msg_5458e889b6cc4393968d0206e406889b",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7920765771475954,
+        "input_tokens": 20199,
+        "output_tokens": 937
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#1223",
+      "rationale": "Issue #1223 reports that with respectsExistingLineBreaks: false, the required line break after #endif is collapsed so a declaration is glued onto the #endif line, producing unparseable Swift (`#endif struct S {}`). The fix commit 4f78786 (PR #1225, 'Fix #endif gluing onto the following token', message 'fix ##1223') changes exactly the break/newline behavior around #endif in Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift, and the trigger test testIfConfigKeepsRequiredLineBreakAfterEndif embeds the issue's exact reproducer (#if FLAG / @frozen / #endif / struct S {}) with respectingExistingLineBreaks: false, asserting the break after #endif is preserved. Same defect across issue, trigger, and fix. The minimized production patch keeps three hunks, all in the single production file and all on the #endif line-break path: (1) context-sensitive NewlineBehavior for the break after node.poundEndif, (3) a hard break when an attribute list ends with an IfConfigDecl, and (4) soft newlines on postfix-#if clause breaks plus removal of the now-duplicated after(poundEndif) break that hunk 1 subsumes. Automatic minimization reports chosen_subset == minimal_hunks == [1,3,4] with the fourth hunk removed and post_minimization_validation PASS, so every retained hunk is behaviorally required by the trigger; there is no formatting-only, doc-only, config-only, or feature change. The trigger is the unmodified upstream test portion of the same fixing commit (removed_external_dependency: false) and relies only on pre-existing test infrastructure (PrettyPrintTestCase.assertPrettyPrintEqual, the file's existing private configuration(respectingExistingLineBreaks:) helper) and pre-existing production API (NewlineBehavior, .break(.same, size:newlines:), config.respectsExistingLineBreaks); no API introduced by the fix is used. Machine-generated strict evidence passes all gates both originally and post-minimization: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential with the declared selector reproducing, trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with no failed checks. active_same_project_root_causes is empty, so swiftlang/swift-format#1223 is not a duplicate, and it matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "case.json:issue_urls[0]",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.origin_pull_request.title",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:minimized_patch_reference.automatic_minimization",
+        "case.json:minimized_patch_reference.post_minimization_validation",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_reduction",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The upstream trigger also locks in secondary expectations from the same commit, notably `switch x { #if A` (the #if placed on the opening-brace line). That output is odd-looking and, while produced by the same #endif/#if break logic, it means the test asserts more than the minimal issue reproducer.",
+        "Hunk 4 (postfix member-chain #if) addresses a code path not shown in the issue text; it is justified only by minimization showing it is required for the trigger to pass, not by the public issue itself.",
+        "TokenStreamCreator is central to the pretty printer, so the retained newline-behavior changes could shift formatting for #if/#endif shapes beyond those covered by the single trigger; full_suite.fixed_all_green bounds this only to the existing suite.",
+        "No independent issue_evidence blob was supplied; the issue body relied on here comes from the fetched source_candidate metadata."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-438",
+  "technical_evidence_sha256": "6dbda3d22c6bf1b568cfcc07c9fdd976be69e2627ce1396a6ba37ba6e6a9a692",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "31ba52d98bf52376313877762f1b536997fa43d41a5854dc35dbca48a4ac68db",
+  "reviewed_at": "2026-09-05T23:24:21.979289+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "mattpolzin/openapikit#402",
+  "rationale": "Issue #402 ('Handling of path /') reports that the root path serializes as '//' instead of '/'. The minimized production patch is the single hunk in Sources/OpenAPIKitCore/Shared/Path.swift that adds an early return of \"/\" from rawValue when components is empty, which is exactly the reported serialization defect in pre-existing behavior (no new API, no feature extension, no docs/config/test content, no reformatting of surrounding code; the odd indentation is inside the added fix lines themselves). Original commit contained only this production hunk plus a test-file hunk, and minimization retained 1/1 production hunks with post_minimization_validation PASS. The curator trigger Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift::testInitializeRootPath is a verbatim extraction of the upstream-added assertions (OpenAPI.Path(rawValue: \"/\") then XCTAssertEqual(rawValue, \"/\")), relocated to a space-free path; both OpenAPI.Path(rawValue:) and rawValue pre-date the fix (the untouched neighboring assertions t1-t7 already use them), and the strict matrix confirms the buggy revision builds and fails only on this selector, so the trigger does not depend on any API introduced by the fix. Machine-generated strict gates pass on both the original and post-minimization runs (build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic with 3 fingerprint groups, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers, 32-run complete matrix, no failed checks). active_same_project_root_causes is empty, so #402 is not a duplicate, and it matches the single allowed_root_cause_ids entry.\n\nIssue #402 ('Handling of path '/'') reports that the root path serializes as '//' instead of '/', a correctness defect in pre-existing behavior of OpenAPI.Path.rawValue. The minimized production patch is exactly one hunk in Sources/OpenAPIKitCore/Shared/Path.swift adding an early return of \"/\" when components is empty, which addresses precisely that serialization path; no refactor, feature, doc, config, or test content is included in the minimized production patch. The curator trigger Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift::testInitializeRootPath is a verbatim extraction of the upstream-added assertions (Path(rawValue: \"/\") plus XCTAssertEqual(rawValue, \"/\")) moved into a space-free file path; it uses only Path(rawValue:) and rawValue, both already exercised by pre-existing assertions in PathItemTests at parent 90c137c3, so it does not depend on any API introduced by the fix. Machine-generated strict gates pass both pre- and post-minimization: build.both_versions, trigger.buggy_differential (the selector fails alone on the buggy revision), trigger.fixed_clean, trigger.deterministic (3 repetitions, 3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with a complete 32-run matrix and no failed checks. active_same_project_root_causes is empty, so #402 is not a duplicate of any active registry entry, and it matches the single allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T23:23:59.903329+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "31ba52d98bf52376313877762f1b536997fa43d41a5854dc35dbca48a4ac68db",
+      "response_sha256": "75d76588dec3f84e45bd9cac21c213caa9dbf12f38377aa5191810d90799d987",
+      "response_id": "msg_a6b605a79d224eafb63999340b61d6f8",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5085443733333334,
+        "input_tokens": 13561,
+        "output_tokens": 679
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "mattpolzin/openapikit#402",
+      "rationale": "Issue #402 ('Handling of path /') reports that the root path serializes as '//' instead of '/'. The minimized production patch is the single hunk in Sources/OpenAPIKitCore/Shared/Path.swift that adds an early return of \"/\" from rawValue when components is empty, which is exactly the reported serialization defect in pre-existing behavior (no new API, no feature extension, no docs/config/test content, no reformatting of surrounding code; the odd indentation is inside the added fix lines themselves). Original commit contained only this production hunk plus a test-file hunk, and minimization retained 1/1 production hunks with post_minimization_validation PASS. The curator trigger Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift::testInitializeRootPath is a verbatim extraction of the upstream-added assertions (OpenAPI.Path(rawValue: \"/\") then XCTAssertEqual(rawValue, \"/\")), relocated to a space-free path; both OpenAPI.Path(rawValue:) and rawValue pre-date the fix (the untouched neighboring assertions t1-t7 already use them), and the strict matrix confirms the buggy revision builds and fails only on this selector, so the trigger does not depend on any API introduced by the fix. Machine-generated strict gates pass on both the original and post-minimization runs (build.both_versions, trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic with 3 fingerprint groups, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers, 32-run complete matrix, no failed checks). active_same_project_root_causes is empty, so #402 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests-compatible.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "minimized_patch_reference.post_minimization_validation",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "issue_evidence is null; issue text was read only from the embedded source_candidate.issue_check.linked_issues copy rather than an independent fetch.",
+        "The full pre-fix body of Path.rawValue and its trailingSlash handling is not shown, so the exact pre-fix output string ('//') is inferred from the issue report plus the observed differential rather than read directly.",
+        "Empty-component behavior for Path([], trailingSlash: true) is not pinned by any assertion, so that edge case remains unspecified after the fix.",
+        "Evidence grade is portable_release_evidence with only 1 full-suite repetition, so cross-toolchain/platform stability of the trigger is less strongly established than the 3-repetition isolated runs."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T23:24:21.978584+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "31ba52d98bf52376313877762f1b536997fa43d41a5854dc35dbca48a4ac68db",
+      "response_sha256": "3432b9b8ee304651d57c5def530e28b0623abc3daaf6cd8ac6cfb8b9f0241d61",
+      "response_id": "msg_fe079bd9dc314ff0b74e994fd939e35a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4475187845771144,
+        "input_tokens": 13557,
+        "output_tokens": 654
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "mattpolzin/openapikit#402",
+      "rationale": "Issue #402 ('Handling of path '/'') reports that the root path serializes as '//' instead of '/', a correctness defect in pre-existing behavior of OpenAPI.Path.rawValue. The minimized production patch is exactly one hunk in Sources/OpenAPIKitCore/Shared/Path.swift adding an early return of \"/\" when components is empty, which addresses precisely that serialization path; no refactor, feature, doc, config, or test content is included in the minimized production patch. The curator trigger Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift::testInitializeRootPath is a verbatim extraction of the upstream-added assertions (Path(rawValue: \"/\") plus XCTAssertEqual(rawValue, \"/\")) moved into a space-free file path; it uses only Path(rawValue:) and rawValue, both already exercised by pre-existing assertions in PathItemTests at parent 90c137c3, so it does not depend on any API introduced by the fix. Machine-generated strict gates pass both pre- and post-minimization: build.both_versions, trigger.buggy_differential (the selector fails alone on the buggy revision), trigger.fixed_clean, trigger.deterministic (3 repetitions, 3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with a complete 32-run matrix and no failed checks. active_same_project_root_causes is empty, so #402 is not a duplicate of any active registry entry, and it matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests-compatible.patch",
+        "patches/trigger-tests.patch",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.verified_fix_issue_numbers",
+        "trigger_reduction.rationale"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue text is only available second-hand through source_candidate.issue_check.linked_issues, so the wording was not independently fetched.",
+        "The added return statement carries anomalous indentation in the upstream patch; harmless functionally but it means the retained hunk is not style-clean.",
+        "The trigger only pins the rawValue string for the empty-components case; behavior of Path([], trailingSlash: true) and full document encode/decode round-trips with a '/' paths key remain unpinned by the benchmark trigger.",
+        "Semantic equivalence of the extracted trigger rests on the upstream assertion pair; the curator file drops the surrounding unrelated assertions, so any coupling between them (none observed) would not be detected."
+      ]
+    }
+  ]
+}

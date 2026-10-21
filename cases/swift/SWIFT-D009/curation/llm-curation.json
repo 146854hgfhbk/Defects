@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-409",
+  "technical_evidence_sha256": "53df2d571f1f87b10bf937d426d22c0e4a4c2a3cab3721198fcd43c7bd872b83",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "731339f88c7c1807dc6b9374cbfc2b57d9aab88574396937b1dcd7fe364bca6c",
+  "reviewed_at": "2026-09-06T13:43:26.232495+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-algorithms#69",
+  "rationale": "Issue #69 reports that randomSample traps when Double.random(in: 0..<1) yields 0, because Double.log(0.0) is -inf and Int(-inf) is not representable. The minimized production patch is a single 2-line hunk in Sources/Algorithms/RandomSample.swift that shifts the sampled value from [0,1) to (0,1] via `1 - .random(in: 0..<1)` in nextOffset (removing the log(0) case) and in nextW (keeping w != 0 so the divisor .log(1 - w) is nonzero), which is exactly the defect and mechanism described in the issue and PR #70 body. Both changed lines address the same zero-sample root cause; there is no refactor, formatting, feature extension, documentation, or configuration content, and the production and test changes are separated (production_fix.patch vs trigger-tests.patch). The trigger is the unchanged upstream test testRandomSampleZeroRandom from the same fixing commit, using the exact SplitMix64 seed 0x61c8864680b583eb named in the issue reproducer together with the pre-existing randomSample(count:using:) API and pre-existing test fixtures, so it does not depend on any API introduced by the fix. Traceability is fix_commit_to_merged_pr_to_issue with verified_fix_issue_numbers=[69], matching allowed_root_cause_ids, and active_same_project_root_causes is empty, so this is not a duplicate. Machine-generated strict evidence passes all gates both originally and post-minimization: build on both revisions, unique selector, buggy differential failure on the declared selector, deterministic fingerprints over 3 repetitions, fixed-revision isolated/suite/reversed runs clean, and buggy full-suite failures limited to the reproduced trigger.\n\nIssue #69 reports that randomSample traps when Double.random(in: 0..<1) yields 0, because Double.log(0.0) is -inf and Int(-inf) is not representable. The minimized production patch is exactly that defect's fix: two lines in Sources/Algorithms/RandomSample.swift shifting the sampled value from [0,1) to (0,1] via `1 - .random(in: 0..<1, using: &rng)` in nextW and nextOffset, addressing both log(0) = -inf and the w == 0 case that makes log(1 - w) zero (division by zero), as described in PR #70's body. Traceability is fix_commit -> merged PR #70 -> issue #69. The patch is a single hunk, production-only, 2 additions/2 deletions, with no refactor, formatting, feature, documentation, or configuration change (original_hunk_count=1, retained=1, removed=0; post_minimization_validation PASS). The trigger is the unchanged upstream test from the same fixing commit: testRandomSampleZeroRandom uses the pre-existing SplitMix64 helper and pre-existing fixtures c and k, calls the pre-existing randomSample(count:using:) API, and reproduces the issue reporter's own seed 0x61c8864680b583eb; it introduces no API created by the fix. Machine-generated strict evidence passes all gates on both the original and post-minimization configurations: build.both_versions, selectors.present_and_unique (1 declared, 1 valid, 1 unique), trigger.buggy_differential reproducing Tests/SwiftAlgorithmsTests/RandomSampleTests.swift::testRandomSampleZeroRandom, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), matrix.complete (32 runs), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty, so apple/swift-algorithms#69 is not a duplicate of any active registry entry, and it is the sole allowed_root_cause_ids value.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T13:43:00.012508+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "731339f88c7c1807dc6b9374cbfc2b57d9aab88574396937b1dcd7fe364bca6c",
+      "response_sha256": "05835762d09218129b10370893bbf1338d3d95109a42356adbb952ab304d50c6",
+      "response_id": "msg_9379d3312ecb408bb2767161f0079a8d",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5823204236484246,
+        "input_tokens": 15653,
+        "output_tokens": 773
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-algorithms#69",
+      "rationale": "Issue #69 reports that randomSample traps when Double.random(in: 0..<1) yields 0, because Double.log(0.0) is -inf and Int(-inf) is not representable. The minimized production patch is a single 2-line hunk in Sources/Algorithms/RandomSample.swift that shifts the sampled value from [0,1) to (0,1] via `1 - .random(in: 0..<1)` in nextOffset (removing the log(0) case) and in nextW (keeping w != 0 so the divisor .log(1 - w) is nonzero), which is exactly the defect and mechanism described in the issue and PR #70 body. Both changed lines address the same zero-sample root cause; there is no refactor, formatting, feature extension, documentation, or configuration content, and the production and test changes are separated (production_fix.patch vs trigger-tests.patch). The trigger is the unchanged upstream test testRandomSampleZeroRandom from the same fixing commit, using the exact SplitMix64 seed 0x61c8864680b583eb named in the issue reproducer together with the pre-existing randomSample(count:using:) API and pre-existing test fixtures, so it does not depend on any API introduced by the fix. Traceability is fix_commit_to_merged_pr_to_issue with verified_fix_issue_numbers=[69], matching allowed_root_cause_ids, and active_same_project_root_causes is empty, so this is not a duplicate. Machine-generated strict evidence passes all gates both originally and post-minimization: build on both revisions, unique selector, buggy differential failure on the declared selector, deterministic fingerprints over 3 repetitions, fixed-revision isolated/suite/reversed runs clean, and buggy full-suite failures limited to the reproduced trigger.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:trigger_tests[0]",
+        "case.json:traceability.paths[0]",
+        "case.json:strict_original.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.fixed_all_green",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.origin_pull_request.body",
+        "case.json:minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue text was read from source_candidate.issue_check metadata rather than an independently captured issue snapshot.",
+        "The trigger contains no assertion and relies on abnormal process termination on the buggy revision; its failing signal depends on the harness treating the trap as a failure, and strict evidence reports this as satisfied without exposing the failure fingerprint itself.",
+        "The trigger's reproduction depends on SplitMix64 emitting 0 first for the hardcoded seed, so it is sensitive to any future change in that test-only generator helper.",
+        "The nextW change alters generated sampling sequences for seeded runs; the full suite is green on the fixed revision, but downstream tests comparing exact sampled output would be seed-sensitive.",
+        "The fix commit is one of four commits in PR #70 (later commits switch to log(onePlus:) and add clamping), so the accepted revision pair predates the final upstream form of this code."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T13:43:26.232339+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "731339f88c7c1807dc6b9374cbfc2b57d9aab88574396937b1dcd7fe364bca6c",
+      "response_sha256": "cf62c0e226ffeada3fbbe5db9a2fb326a9d0f0440bd9d789a96cd6b782817da4",
+      "response_id": "msg_8b1571dfc37d479c8718a841f4d4e03b",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5645870372470979,
+        "input_tokens": 15854,
+        "output_tokens": 832
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-algorithms#69",
+      "rationale": "Issue #69 reports that randomSample traps when Double.random(in: 0..<1) yields 0, because Double.log(0.0) is -inf and Int(-inf) is not representable. The minimized production patch is exactly that defect's fix: two lines in Sources/Algorithms/RandomSample.swift shifting the sampled value from [0,1) to (0,1] via `1 - .random(in: 0..<1, using: &rng)` in nextW and nextOffset, addressing both log(0) = -inf and the w == 0 case that makes log(1 - w) zero (division by zero), as described in PR #70's body. Traceability is fix_commit -> merged PR #70 -> issue #69. The patch is a single hunk, production-only, 2 additions/2 deletions, with no refactor, formatting, feature, documentation, or configuration change (original_hunk_count=1, retained=1, removed=0; post_minimization_validation PASS). The trigger is the unchanged upstream test from the same fixing commit: testRandomSampleZeroRandom uses the pre-existing SplitMix64 helper and pre-existing fixtures c and k, calls the pre-existing randomSample(count:using:) API, and reproduces the issue reporter's own seed 0x61c8864680b583eb; it introduces no API created by the fix. Machine-generated strict evidence passes all gates on both the original and post-minimization configurations: build.both_versions, selectors.present_and_unique (1 declared, 1 valid, 1 unique), trigger.buggy_differential reproducing Tests/SwiftAlgorithmsTests/RandomSampleTests.swift::testRandomSampleZeroRandom, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), matrix.complete (32 runs), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green. active_same_project_root_causes is empty, so apple/swift-algorithms#69 is not a duplicate of any active registry entry, and it is the sole allowed_root_cause_ids value.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.origin_pull_request.body",
+        "case.json:traceability.paths",
+        "case.json:strict_post_minimization.checks",
+        "case.json:strict_original.checks",
+        "case.json:minimized_patch_reference",
+        "case.json:trigger_tests",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The trigger test contains no assertion; it passes on the fixed revision and only fails on the buggy revision through abnormal process termination. Acceptance relies on the harness's crash-aware differential result rather than an XCTAssert outcome.",
+        "This commit was selected from a 4-commit PR; later commits in PR #70 replaced the approach with log(onePlus:) plus clamping and removed offset + 1. The curated fix therefore matches the reported defect but not the final merged implementation, so residual numerical edge cases (e.g., extreme w values or offset overflow) addressed later remain present in the fixed revision.",
+        "issue_evidence is null; the issue text was read from source_candidate.issue_check.linked_issues rather than an independently fetched record.",
+        "The nextW change alters generated sample sequences for seeded runs; full_suite.fixed_all_green shows no existing test broke, but only 1 full-suite repetition was performed."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+diff --git a/lib/src/widgets/tree_view/tree_view.dart b/lib/src/widgets/tree_view/tree_view.dart
+index dc05297..011e10e 100644
+--- a/lib/src/widgets/tree_view/tree_view.dart
++++ b/lib/src/widgets/tree_view/tree_view.dart
+@@ -68,14 +69,12 @@ class AnsiTreeView extends AnsiWidget {
+         final String newChar = theme.headerTheme.border.style.boxDrawingSet.middleTopEdge;
+         final String temp = newChar.isEmpty
+             ? ''
+-            : headerRows[2]
+-                .unformatted
++            : headerRows.last.unformatted
+                 .replaceRange(prefixLength, prefixLength + 1, newChar)
+                 .colored(foreground: theme.headerTheme.border.color);
+ 
+         header = <String>[
+-          headerRows[0],
+-          headerRows[1],
++          ...headerRows.sublist(0, headerRows.length - 1),
+           temp,
+         ].join(AnsiEscapeCodes.newLine);
+       }

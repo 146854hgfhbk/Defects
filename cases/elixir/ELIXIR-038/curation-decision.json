@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "case_id": "ELIXIR-038",
+  "manual_review_status": "delegated_agent_review_completed",
+  "reviewer": "agent (delegated by dataset owner)",
+  "reviewer_type": "agent_delegated",
+  "human_confirmation": false,
+  "rejection_code": null,
+  "review_dimension": "defect_semantics",
+  "semantic_decision": "BUG_FIX",
+  "semantic_reason": "The PR fixes a reported defect (#145) where starting the :protobuf application was not idempotent: restarting after stop crashed because :persistent_term entries were not cleared on shutdown. The change adds an Application.stop/1 callback that calls __unload_extensions__/0 to erase extension keys from :persistent_term, restoring correct restart behavior. This corrects existing broken behavior rather than introducing new functionality; the removal of the GlobalStore wrapper and OTP 21 support are incidental cleanups.",
+  "technical_validation_status": "upstream_summary_only; local dynamic validation pending",
+  "patch_minimization_review": {
+    "status": "human_review_accepted",
+    "llm_review": "llm-hunk-review.json",
+    "deep_review": "PHASE-C-DEEP-REVIEW.md",
+    "audit_table": "MINIMIZATION_AUDIT.csv",
+    "removed_hunk_count": 1,
+    "forced_kept": 0,
+    "human_confirmation": true,
+    "reviewer": "dataset owner / human curator",
+    "reviewed_at": "2026-09-12"
+  },
+  "delegation_note": "Defect-semantics review remains agent-delegated; patch minimization was separately confirmed by the human dataset curator on 2026-09-12.",
+  "reviewed_at": "2026-09-11",
+  "human_minimization_confirmation": true,
+  "human_minimization_reviewer": "dataset owner / human curator",
+  "human_minimization_reviewed_at": "2026-09-12"
+}

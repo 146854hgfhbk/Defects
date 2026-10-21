@@ -1,0 +1,80 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 29af03e4..0072f542 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -3,6 +3,7 @@
+ * Support triple-shift `>>>` and `>>>=` operators (#992).
+ * Support non-function type aliases (#993).
+ * Less indentation on nested `?:` (#713, #722).
++* Correct constructor initializer indentation after `required` (#1010).
+ 
+ # 2.0.0
+ 
+diff --git a/lib/src/source_visitor.dart b/lib/src/source_visitor.dart
+index 6f7365ce..b075062d 100644
+--- a/lib/src/source_visitor.dart
++++ b/lib/src/source_visitor.dart
+@@ -940,8 +940,12 @@ class SourceVisitor extends ThrowingAstVisitor {
+       //           super();
+       space();
+       if (node.initializers.length > 1) {
+-        _writeText(node.parameters.parameters.last.isOptional ? ' ' : '  ',
+-            node.separator!.offset);
++        var padding = '  ';
++        if (node.parameters.parameters.last.isNamed ||
++            node.parameters.parameters.last.isOptionalPositional) {
++          padding = ' ';
++        }
++        _writeText(padding, node.separator!.offset);
+       }
+ 
+       // ":".
+diff --git a/test/regression/1000/1010.unit b/test/regression/1000/1010.unit
+new file mode 100644
+index 00000000..2f620595
+--- /dev/null
++++ b/test/regression/1000/1010.unit
+@@ -0,0 +1,42 @@
++>>>
++class Foo {
++  Foo({
++    required int x,
++  })   : assert(x != 0),
++        assert(x != -1);
++}
++<<<
++class Foo {
++  Foo({
++    required int x,
++  })  : assert(x != 0),
++        assert(x != -1);
++}
++>>>
++class Foo {
++  Foo({
++    int x,
++  })   : assert(x != 0),
++        assert(x != -1);
++}
++<<<
++class Foo {
++  Foo({
++    int x,
++  })  : assert(x != 0),
++        assert(x != -1);
++}
++>>>
++class Foo {
++  Foo([
++    int x,
++  ])   : assert(x != 0),
++        assert(x != -1);
++}
++<<<
++class Foo {
++  Foo([
++    int x,
++  ])  : assert(x != 0),
++        assert(x != -1);
++}
+\ No newline at end of file

@@ -1,0 +1,52 @@
+diff --git a/lib/src/front_end/piece_factory.dart b/lib/src/front_end/piece_factory.dart
+index 3414351..337f51b 100644
+--- a/lib/src/front_end/piece_factory.dart
++++ b/lib/src/front_end/piece_factory.dart
+@@ -812,13 +812,8 @@ mixin PieceFactory {
+         pieces.visit(directive.uri);
+       });
+ 
+-      // Include any `if` clauses.
+-      var clauses = <Piece>[];
+-      for (var configuration in directive.configurations) {
+-        clauses.add(nodePiece(configuration));
+-      }
+-
+       // Include the `as` clause.
++      var clauses = <Piece>[];
+       if (asKeyword != null) {
+         clauses.add(pieces.build(() {
+           pieces.token(deferredKeyword, spaceAfter: true);
+@@ -828,6 +823,11 @@ mixin PieceFactory {
+         }));
+       }
+ 
++      // Include any `if` clauses.
++      for (var configuration in directive.configurations) {
++        clauses.add(nodePiece(configuration));
++      }
++
+       // Include the `show` and `hide` clauses.
+       for (var combinatorNode in directive.combinators) {
+         switch (combinatorNode) {
+diff --git a/lib/src/short/source_visitor.dart b/lib/src/short/source_visitor.dart
+index b9deb50..3102b61 100644
+--- a/lib/src/short/source_visitor.dart
++++ b/lib/src/short/source_visitor.dart
+@@ -1955,8 +1955,6 @@ class SourceVisitor extends ThrowingAstVisitor {
+       space();
+       visit(node.uri);
+ 
+-      _visitConfigurations(node.configurations);
+-
+       if (node.asKeyword != null) {
+         soloSplit();
+         token(node.deferredKeyword, after: space);
+@@ -1965,6 +1963,7 @@ class SourceVisitor extends ThrowingAstVisitor {
+         visit(node.prefix);
+       }
+ 
++      _visitConfigurations(node.configurations);
+       _visitCombinators(node.combinators);
+     });
+   }

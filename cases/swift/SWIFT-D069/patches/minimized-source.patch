@@ -1,0 +1,14 @@
+diff --git a/Sources/NIOHTTP2/HTTP2ChannelHandler.swift b/Sources/NIOHTTP2/HTTP2ChannelHandler.swift
+index 51d8a2a0..898d5cf7 100644
+--- a/Sources/NIOHTTP2/HTTP2ChannelHandler.swift
++++ b/Sources/NIOHTTP2/HTTP2ChannelHandler.swift
+@@ -505,7 +505,9 @@ extension NIOHTTP2Handler {
+ 
+         switch stateChange {
+         case .streamClosed(let streamClosedData):
++            self.outboundBuffer.connectionWindowSize = streamClosedData.localConnectionWindowSize
+             self.inboundEventBuffer.pendingUserEvent(StreamClosedEvent(streamID: streamClosedData.streamID, reason: streamClosedData.reason))
++            self.inboundEventBuffer.pendingUserEvent(NIOHTTP2WindowUpdatedEvent(streamID: .rootStream, inboundWindowSize: streamClosedData.remoteConnectionWindowSize, outboundWindowSize: streamClosedData.localConnectionWindowSize))
+ 
+             let failedWrites = self.outboundBuffer.streamClosed(streamClosedData.streamID)
+             let error = NIOHTTP2Errors.StreamClosed(streamID: streamClosedData.streamID, errorCode: streamClosedData.reason ?? .cancel)

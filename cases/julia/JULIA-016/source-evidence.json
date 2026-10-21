@@ -1,0 +1,80 @@
+{
+  "candidate_sha": "17b92856fa20381e6625ca0b2530496ef299457c",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 350,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/350",
+      "state": "closed",
+      "title": "Parentheses not required warning in `using A: (..)`",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug"
+      ],
+      "body_excerpt": "In this case, parentheses are requires, but the warning says they are not:\r\n```julia\r\njulia> JuliaSyntax.parse(Expr, \"using A: (..)\")\r\nERROR: ParseError:\r\n# Warning @ line 1:10\r\nusing A: (..)\r\n#        └──┘ ── parentheses are not required here\r\nStacktrace:\r\n [1] _parse(rule::Symbol, need_eof::Bool, ::Type{…}, text::String, index::Int64; version::VersionNumber, ignore_trivia::Bool, filename::Nothing, first_line::Int64, ignore_errors::Bool, ignore_warnings::Bool, kws::@Kwargs{})\r\n   @ JuliaSyntax ~/.julia/dev/JuliaSyntax/src/parser_api.jl:93\r\n [2] _parse (repeats 2 times)\r\n   @ JuliaSyntax ~/.julia/dev/JuliaSyntax/src/parser_api.jl:77 [inlined]\r\n [3] parsestmt(::Type{Expr}, text::String)\r\n   @ JuliaSyntax ~/.julia/dev/JuliaSyntax/src/parser_api.jl:140\r\n [4] parse(::Type, ::Vararg{Any}; kwargs::@Kwargs{})\r\n   @ JuliaSyntax ./deprecated.jl:116\r\n [5] parse(::Type, ::Vararg{Any})\r\n   @ JuliaSyntax ./deprecated.jl:113\r\n [6] top-level scope\r\n   @ REPL[19]:1\r\nSome type information was truncated. Use `show(err)` to see complete types.\r\n\r\njulia> JuliaSyntax.parse(Expr, \"using A: ..\")\r\nERROR: ParseError:\r\n# Error @ line 1:12\r\nusing A: ..\r\n#          └ ── premature end of input\r\nStacktrace:\r\n [1] _parse(rule::Symbol, need_eof::Bool, ::Type{…}, text::String, index::Int64; version::VersionNumber, ignore_trivia::Bool, filename::Nothing, first_line::Int64, ignore_errors::Bool, ignore_warnings::Bool, kws::@Kwargs{})\r\n   @ JuliaSyntax ~/.julia/dev/JuliaSyntax/src/parser_api.jl:93\r\n [2] _parse (repeats 2 times)\r\n   @ JuliaSyntax ~/.julia/dev/JuliaSyntax/src/parser_api.jl:77 [inlined]\r\n [3] parsestmt(::Type{Expr}, text::String)\r\n   @ JuliaSyntax ~/.julia/dev/JuliaSyntax/src/parser_api.jl:140\r\n [4] parse(::Type, ::Vararg{Any}; kwargs::@Kwargs{})\r\n   @ JuliaSyntax ./deprecated.jl:116\r\n [5] parse(::Type, ::Vararg{Any})\r\n   @ JuliaSyntax ./deprecated.jl:113\r\n [6] top-level scope\r\n   @ REPL[20]:1\r\nSome type information was truncated. Use `show(err)` to see complete types.\r\n```"
+    },
+    {
+      "number": 473,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/473",
+      "state": "closed",
+      "title": "`using :A` now tries to load package A while it used to error",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug",
+        "parser"
+      ],
+      "body_excerpt": "This looks inconsistent:\r\n\r\n```julia\r\njulia> JuliaSyntax.parseall(Expr, \"using :A\", ignore_warnings=true)\r\n:($(Expr(:toplevel, :(#= line 1 =#), :(using A))))\r\n\r\njulia> JuliaSyntax.fl_parseall(\"using :A\")\r\n:($(Expr(:toplevel, :(#= none:1 =#), :($(Expr(:error, \"invalid \\\"using\\\" statement: expected identifier\"))))))\r\n```\r\n\r\n\r\n```julia-repl\r\njulia> using :A\r\nERROR: ArgumentError: Package A not found in current path.\r\n- Run `import Pkg; Pkg.add(\"A\")` to install the A package.\r\n\r\njulia> VERSION\r\nv\"1.10.4\"\r\n```\r\n\r\n```julia-repl\r\njulia> using :A\r\nERROR: syntax: invalid \"using\" statement: expected identifier\r\nStacktrace:\r\n [1] top-level scope\r\n   @ none:1\r\n\r\njulia> VERSION\r\nv\"1.9.4\"\r\n```"
+    },
+    {
+      "number": 477,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/477",
+      "state": "closed",
+      "title": "Make `using :A` an error; fix `using A: (..)` warning",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fix #473 fix #350"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        350,
+        473
+      ],
+      "pull_request": 477,
+      "fix_commit": "17b92856fa20381e6625ca0b2530496ef299457c",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Make `using :A` an error; fix `using A: (..)` warning (#477)",
+    "commit_issue_refs": [
+      477
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 477,
+    "pull_request_title": "Make `using :A` an error; fix `using A: (..)` warning",
+    "pull_request_issue_refs": [
+      350,
+      473
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    350,
+    473
+  ],
+  "cross_repository_issue_records": []
+}

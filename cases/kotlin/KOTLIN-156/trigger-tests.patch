@@ -1,0 +1,25 @@
+diff --git a/test/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateDefinitionInspectionTest.kt b/test/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateDefinitionInspectionTest.kt
+index 89212e026c..f731049202 100644
+--- a/test/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateDefinitionInspectionTest.kt
++++ b/test/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateDefinitionInspectionTest.kt
+@@ -39,4 +39,19 @@ class LatexDuplicateDefinitionInspectionTest : TexifyInspectionTestBase(LatexDup
+         )
+         myFixture.checkHighlighting()
+     }
++
++    fun testIfthenelse() {
++        myFixture.configureByText(
++            LatexFileType,
++            """
++            \usepackage{ifthen}
++            \ifthenelse {\equal{\venue}{1}}{
++                \newcommand\examLocation{Building 1}
++            }{
++                \newcommand\examLocation{Building 2}
++            }
++            """.trimIndent()
++        )
++        myFixture.checkHighlighting()
++    }
+ }
+\ No newline at end of file

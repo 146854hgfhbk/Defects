@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-994",
+  "technical_evidence_sha256": "dadb4f2eb92cb31ef6e78de4bc7e469e28a6bc2d8c479fee1f121d6bd7a5fee2",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "3c47cf5cd259d832d6c432c0095c29f6457d7389066103bbdcee5abdc04ebc1b",
+  "reviewed_at": "2026-08-14T06:33:26.198504+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1504",
+  "rationale": "Issue #1504 (labeled bug) reports that tall-style formatting rewrites '\\r\\n' to '\\n' inside multi-line strings while short style preserves it. The production fix targets exactly that mechanism: GroupCode._build in lib/src/back_end/code.dart hardcoded newline emission via StringBuffer.writeln(), and the patch replaces it with buffer.write(lineEnding), threading the value through build([String? lineEnding]) (defaulting to '\\n') and wiring it from the existing DartFormatter option at the single call site in lib/src/front_end/piece_writer.dart (solution.code.build(_formatter.lineEnding)). Both production hunks are on the newline-emission path; the only cosmetic element is the local rename formatter->solver inside the same three modified lines, which disambiguates the local from _formatter now referenced there, and the added doc comment documents the new parameter. No feature extension: DartFormatter.lineEnding already existed and was honored by short style. The trigger is the unchanged upstream test file portion of the same commit; it parameterizes test/dart_formatter_test.dart over short and tall style using pre-existing APIs (DartFormatter constructor params languageVersion/indent/lineEnding and tallStyleExperimentFlag from lib/src/constants.dart), so it does not depend on any API introduced by the fix. Strict evidence records the single reproduced selector as test/dart_formatter_test.dart::'handles Windows line endings in multiline strings', which asserts '\\r\\n' preservation in a triple-quoted string, semantically the same behavior described in the issue; the other 19 declared selectors pass on the buggy revision. Runtime gates all passed (build.both_versions, trigger.buggy_differential, trigger.deterministic with 3 fingerprint groups, trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green) at 3 repetitions and identically post-minimization. active_same_project_root_causes is empty, and dart-lang/dart_style#1504 is in allowed_root_cause_ids.\n\nIssue #1504 (labeled bug) reports that under the tall-style experiment the formatter rewrites '\\r\\n' inside triple-quoted strings to '\\n', while short style preserves it. The production fix addresses exactly that mechanism: lib/src/back_end/code.dart replaced the hardcoded StringBuffer.writeln() calls in _NewlineCode handling with buffer.write(lineEnding), threading lineEnding through GroupCode.build/_build, and lib/src/front_end/piece_writer.dart passes the already-existing _formatter.lineEnding into solution.code.build(). The defect is pre-existing at parent 8e7e8910 (the tall-style back end simply never consulted DartFormatter.lineEnding, an option short style already honored), so this is a behavior fix, not a feature. The minimized production patch touches only these two files and contains no test, config, or documentation-only content; the only non-behavioral bits are a doc comment on build() describing the new parameter and a colocated local variable rename formatter->solver inside the three modified lines, neither of which constitutes a separable refactor. The trigger is the unchanged upstream assertion 'handles Windows line endings in multiline strings', which already existed before the commit; the test patch only parameterizes dart_formatter_test.dart to run the existing suite under both styles via the pre-existing tallStyleExperimentFlag and the pre-existing DartFormatter(lineEnding:, indent:, languageVersion:, experimentFlags:) constructor. It exercises DartFormatter's public API rather than the new optional GroupCode.build parameter, and build.both_versions passing confirms the trigger compiles against the buggy revision. Strict evidence shows trigger.buggy_differential reproducing exactly that one selector, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with no failed checks in either strict_original or strict_post_minimization. active_same_project_root_causes is empty and dart-lang/dart_style#1504 is the supplied allowed root cause key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:32:59.611920+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3c47cf5cd259d832d6c432c0095c29f6457d7389066103bbdcee5abdc04ebc1b",
+      "response_sha256": "f06663310b15fc17b486924e9f613057d65af5c81c61de08bc8b9137b93b2469",
+      "response_id": "msg_6d64853931714cf6aacb6f8c953e9e3d",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7697826443781094,
+        "input_tokens": 30264,
+        "output_tokens": 793
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1504",
+      "rationale": "Issue #1504 (labeled bug) reports that tall-style formatting rewrites '\\r\\n' to '\\n' inside multi-line strings while short style preserves it. The production fix targets exactly that mechanism: GroupCode._build in lib/src/back_end/code.dart hardcoded newline emission via StringBuffer.writeln(), and the patch replaces it with buffer.write(lineEnding), threading the value through build([String? lineEnding]) (defaulting to '\\n') and wiring it from the existing DartFormatter option at the single call site in lib/src/front_end/piece_writer.dart (solution.code.build(_formatter.lineEnding)). Both production hunks are on the newline-emission path; the only cosmetic element is the local rename formatter->solver inside the same three modified lines, which disambiguates the local from _formatter now referenced there, and the added doc comment documents the new parameter. No feature extension: DartFormatter.lineEnding already existed and was honored by short style. The trigger is the unchanged upstream test file portion of the same commit; it parameterizes test/dart_formatter_test.dart over short and tall style using pre-existing APIs (DartFormatter constructor params languageVersion/indent/lineEnding and tallStyleExperimentFlag from lib/src/constants.dart), so it does not depend on any API introduced by the fix. Strict evidence records the single reproduced selector as test/dart_formatter_test.dart::'handles Windows line endings in multiline strings', which asserts '\\r\\n' preservation in a triple-quoted string, semantically the same behavior described in the issue; the other 19 declared selectors pass on the buggy revision. Runtime gates all passed (build.both_versions, trigger.buggy_differential, trigger.deterministic with 3 fingerprint groups, trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green) at 3 repetitions and identically post-minimization. active_same_project_root_causes is empty, and dart-lang/dart_style#1504 is in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/back_end/code.dart",
+        "lib/src/front_end/piece_writer.dart",
+        "patches/trigger-tests.patch",
+        "test/dart_formatter_test.dart",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The declared trigger selector is identified by test name only ('handles Windows line endings in multiline strings'), which now exists in both the 'short style' and 'tall style' groups; the strict differential confirms a failing/passing split, but the selector string alone does not disambiguate which group reproduces.",
+        "The trigger patch rewrites the whole test file into a parameterized helper, so 19 of the 20 declared selectors are unrelated to this defect and only pass-through evidence; a narrower single-test trigger would be tighter.",
+        "The piece_writer.dart local rename formatter->solver is cosmetic; it is colocated with the fix and behavior-neutral, but it is not strictly required by the defect.",
+        "Line-ending assertions are whitespace-sensitive, so checkout normalization (core.autocrlf) in a different environment could alter reproduction; not verifiable from the supplied evidence."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:33:26.198117+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3c47cf5cd259d832d6c432c0095c29f6457d7389066103bbdcee5abdc04ebc1b",
+      "response_sha256": "c5a78928565d9707595d1144d17ac951824b7fc91bd4da69399fb6d28256f7b4",
+      "response_id": "msg_904c52f3f19042ecb6a6c78de6e9525f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6291978062023218,
+        "input_tokens": 30150,
+        "output_tokens": 760
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1504",
+      "rationale": "Issue #1504 (labeled bug) reports that under the tall-style experiment the formatter rewrites '\\r\\n' inside triple-quoted strings to '\\n', while short style preserves it. The production fix addresses exactly that mechanism: lib/src/back_end/code.dart replaced the hardcoded StringBuffer.writeln() calls in _NewlineCode handling with buffer.write(lineEnding), threading lineEnding through GroupCode.build/_build, and lib/src/front_end/piece_writer.dart passes the already-existing _formatter.lineEnding into solution.code.build(). The defect is pre-existing at parent 8e7e8910 (the tall-style back end simply never consulted DartFormatter.lineEnding, an option short style already honored), so this is a behavior fix, not a feature. The minimized production patch touches only these two files and contains no test, config, or documentation-only content; the only non-behavioral bits are a doc comment on build() describing the new parameter and a colocated local variable rename formatter->solver inside the three modified lines, neither of which constitutes a separable refactor. The trigger is the unchanged upstream assertion 'handles Windows line endings in multiline strings', which already existed before the commit; the test patch only parameterizes dart_formatter_test.dart to run the existing suite under both styles via the pre-existing tallStyleExperimentFlag and the pre-existing DartFormatter(lineEnding:, indent:, languageVersion:, experimentFlags:) constructor. It exercises DartFormatter's public API rather than the new optional GroupCode.build parameter, and build.both_versions passing confirms the trigger compiles against the buggy revision. Strict evidence shows trigger.buggy_differential reproducing exactly that one selector, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green, with no failed checks in either strict_original or strict_post_minimization. active_same_project_root_causes is empty and dart-lang/dart_style#1504 is the supplied allowed root cause key.",
+      "evidence_paths": [
+        "case.json issue_urls",
+        "case.json source_candidate.issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "lib/src/back_end/code.dart",
+        "lib/src/front_end/piece_writer.dart",
+        "patches/trigger-tests.patch",
+        "case.json strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json trigger_reduction.upstream_trigger_patch",
+        "case.json allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The production patch carries a cosmetic local rename (formatter -> solver) and a doc comment inside the modified hunks; behaviorally inert but not strictly part of the minimal fix.",
+        "20 selectors are declared while only 'handles Windows line endings in multiline strings' reproduces, so the case's declared trigger set is much broader than the defect-specific assertion.",
+        "Assertions are whitespace-sensitive: CRLF normalization by git autocrlf or an editor could mask or fabricate the differential on other checkouts.",
+        "The fix depends on _formatter.lineEnding inference upstream; a defect in that inference path would not be covered by this trigger."
+      ]
+    }
+  ]
+}

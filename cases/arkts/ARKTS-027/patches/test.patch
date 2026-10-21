@@ -1,0 +1,153 @@
+diff --git a/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/test/FlexListLayout.test.ets b/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/test/FlexListLayout.test.ets
+new file mode 100644
+index 000000000..e1c1be692
+--- /dev/null
++++ b/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/test/FlexListLayout.test.ets
+@@ -0,0 +1,48 @@
++/*
++ * Copyright (c) 2024 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++import { Driver, ON } from '@ohos.UiTest';
++import { Logger } from '../../../main/ets/common/Logger';
++
++const TAG = '[Sample_RPC_FlexListLayout]';
++
++export default function flexListLayoutTest() {
++  describe('FlexListLayoutTest', () => {
++    it('RPC_FlexListLayout_001', 0, async () => {
++      let driver = await Driver.create();
++      await driver.delayMs(1000);
++
++      await driver.assertComponentExist(ON.text('FlexListLayoutAnchor'));
++      await driver.assertComponentExist(ON.text('LayoutCategory'));
++      await driver.assertComponentExist(ON.id('amount'));
++
++      let anchor = await driver.findComponent(ON.id('layoutAnchor'));
++      let category = await driver.findComponent(ON.text('LayoutCategory'));
++      let amount = await driver.findComponent(ON.id('amount'));
++      let anchorBounds = await anchor.getBounds();
++      let categoryBounds = await category.getBounds();
++      let amountBounds = await amount.getBounds();
++      let categoryCenterY = (categoryBounds.top + categoryBounds.bottom) / 2;
++      let amountCenterY = (amountBounds.top + amountBounds.bottom) / 2;
++      let rowCenterGap = Math.abs(categoryCenterY - amountCenterY);
++      let topGap = categoryBounds.top - anchorBounds.bottom;
++
++      Logger.info(TAG, `rowCenterGap=${rowCenterGap}, topGap=${topGap}`);
++      expect(rowCenterGap).assertLess(12);
++      expect(topGap).assertLess(12);
++    })
++  })
++}
+diff --git a/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/test/List.test.ets b/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/test/List.test.ets
+index 7cde7cf4f..d2b88b6b8 100644
+--- a/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,7 @@
+  */
+ 
+-import abilityTest from './Ability.test'
++import flexListLayoutTest from './FlexListLayout.test'
+ 
+ export default function testsuite() {
+-  abilityTest()
+-}
+\ No newline at end of file
++  flexListLayoutTest()
++}
+diff --git a/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/testability/pages/Index.ets b/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/testability/pages/Index.ets
+index 68d1fc453..9ed1c837c 100644
+--- a/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/testability/pages/Index.ets
++++ b/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/ets/testability/pages/Index.ets
+@@ -14,6 +14,7 @@
+  */
+ 
+ import Logger from '../../utils/Logger';
++import { FlexList } from '../../../../main/ets/common/FlexList';
+ 
+ @Entry
+ @Component
+@@ -22,31 +23,25 @@ struct Index {
+     Logger.info('TestAbility index aboutToAppear');
+   }
+ 
+-  @State message: string = 'Hello World'
++  selectStuff(index: number, good: string, count: number) {
++    Logger.info(`FlexList test selectStuff ${index}, ${good}, ${count}`);
++  }
+ 
+   build() {
+-    Row() {
+-      Column() {
+-        Text(this.message)
+-          .fontSize(50)
+-          .fontWeight(FontWeight.Bold)
+-        Button() {
+-          Text('next page')
+-            .fontSize(20)
+-            .fontWeight(FontWeight.Bold)
+-        }
+-        .type(ButtonType.Capsule)
+-        .margin({
+-          top: 20
+-        })
+-        .backgroundColor('#0D9FFB')
+-        .width('35%')
+-        .height('5%')
+-        .onClick(() => {
+-        })
+-      }
+-      .width('100%')
++    Column() {
++      Text('FlexListLayoutAnchor')
++        .id('layoutAnchor')
++        .height(20)
++        .fontSize(12)
++
++      FlexList({
++        category: 'LayoutCategory',
++        menu: ['alpha', 'beta'],
++        index: 0,
++        selectStuff: this.selectStuff.bind(this)
++      })
+     }
++    .width('100%')
+     .height('100%')
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/resources/base/element/color.json b/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/resources/base/element/color.json
+index 3c712962d..2cc1a406e 100644
+--- a/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/resources/base/element/color.json
++++ b/code/BasicFeature/Connectivity/RPC/entry/src/ohosTest/resources/base/element/color.json
+@@ -3,6 +3,14 @@
+     {
+       "name": "start_window_background",
+       "value": "#FFFFFF"
++    },
++    {
++      "name": "button_bg",
++      "value": "#CCCCCC"
++    },
++    {
++      "name": "text_color",
++      "value": "#999999"
+     }
+   ]
+-}
+\ No newline at end of file
++}

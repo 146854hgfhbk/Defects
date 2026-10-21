@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "case_id": "ARKTS-039",
+  "status": "VALIDATED_ACTIVE",
+  "source_dataset": "ArkEval",
+  "source_instance_id": "openharmony__applications_app_samples+a75464b1-3818",
+  "project": "openharmony/applications_app_samples",
+  "repo_url": "https://gitee.com/openharmony/applications_app_samples",
+  "title": "【Sample】ComponentCollection 修复shadow切换blur无效",
+  "pr_number": 3818,
+  "pr_url": "https://gitee.com/openharmony/applications_app_samples/pulls/3818",
+  "issue_urls": [
+    "https://gitee.com/openharmony/applications_app_samples/issues/I8KQ2I"
+  ],
+  "buggy_revision": "a75464b19d0c6e76eb57a01d8129b4163d1c66b3",
+  "fixed_revision": "59766c2536ed7ada8c6a774955f4ea99a3623152",
+  "revision_mode": "strict_upstream_boundary",
+  "project_root": "code/UI/ArkTsComponentCollection/ComponentCollection",
+  "changed_production_files": [
+    "code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/ets/pages/universal/properties/effectsSample/EffectsSample.ets",
+    "code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/resources/base/element/string.json",
+    "code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/resources/en/element/string.json",
+    "code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/main/resources/zh/element/string.json"
+  ],
+  "trigger_test_files": [
+    "code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/EffectsShadowOffsetRange.test.ets",
+    "code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/List.test.ets"
+  ],
+  "target": "EffectsShadowOffsetRangeTest#shadowTabShouldExposeNegativeAndPositiveOffsetRange",
+  "runner": "/ets/TestRunner/OpenHarmonyTestRunner",
+  "bundle": "ohos.samples.componentcollection",
+  "patches": {
+    "upstream": "patches/upstream.patch",
+    "source": "patches/source.patch",
+    "test": "patches/test.patch",
+    "harness": null
+  },
+  "source_patch_sha256": "b74060129d704cb9dbed1dfacdacbfc8098eca906edcd55363914f6bdb8c5dc5",
+  "source_diff_payload_sha256": "a222053801c640474f23759964701f3f149b72db6a6073d95807b1b7536f14ba",
+  "test_patch_sha256": "2544df69ff51f90b11569e2838180490f6459fcc5a8ab30b70baa2b8a9c53445",
+  "build_commands": {
+    "buggy": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api10-overlay-full-v1-s0/work/S019/buggy/code/UI/ArkTsComponentCollection/ComponentCollection",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api10-overlay-full-v1-s0/work/S019/buggy/code/UI/ArkTsComponentCollection/ComponentCollection",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    },
+    "fixed": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api10-overlay-full-v1-s0/work/S019/fixed/code/UI/ArkTsComponentCollection/ComponentCollection",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/candidate100-api10-overlay-full-v1-s0/work/S019/fixed/code/UI/ArkTsComponentCollection/ComponentCollection",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    }
+  },
+  "test_command_template": [
+    "hdc",
+    "-t",
+    "127.0.0.1:5555",
+    "shell",
+    "aa",
+    "test",
+    "-b",
+    "ohos.samples.componentcollection",
+    "-m",
+    "entry_test",
+    "-s",
+    "unittest",
+    "/ets/TestRunner/OpenHarmonyTestRunner",
+    "-s",
+    "class",
+    "EffectsShadowOffsetRangeTest#shadowTabShouldExposeNegativeAndPositiveOffsetRange"
+  ],
+  "environment_lock": "environment.lock.json",
+  "validation": "validation/validation.json",
+  "selection_status": "ACTIVE",
+  "release_eligibility": "ACTIVE",
+  "issue_id": "I8KQ2I",
+  "traceability_type": "ISSUE",
+  "bug_report_id": "I8KQ2I",
+  "bug_report_url": "https://gitee.com/openharmony/applications_app_samples/issues/I8KQ2I",
+  "fix_kind": "production_source",
+  "branch_specific_instance": false,
+  "shared_fix_pattern": false,
+  "duplicate": false,
+  "duplicate_of": null,
+  "minimization_method": "manual_hunk_audit",
+  "minimization_closure": {
+    "status": "PASS",
+    "method": "manual_hunk_audit",
+    "source_patch_changed": false,
+    "runtime_rerun": false,
+    "reason": "Behavioral offset-range hunks and their runtime resources are essential. Co-located style normalization is non-behavioral; the long shadow label is retained as supporting UI/layout context because the reduced trial lost the shared tab precondition before reaching the oracle. The exact upstream patch already has stable B/F x3 evidence."
+  },
+  "semantic_oracle_note": {
+    "issue_id": "I8KQ2I",
+    "reported_behavior": "Selecting BLUR alone in ComponentCollection shadow controls produced no visible shadow change.",
+    "trigger_relation": "The protected trigger observes the corrected shadow offset range/state introduced by the fix. It is an indirect state-level oracle for the repair mechanism, not a source-text assertion.",
+    "runtime_rerun": false
+  }
+}

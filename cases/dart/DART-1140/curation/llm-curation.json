@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1140",
+  "technical_evidence_sha256": "5b473922f9da2ae32e370807bce592ca5096937178b513f13078648c8bf4630b",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "22aa2372312547b1f3a25d1f95c9ce357a62f135dff0ce86b15311edc26d4cf6",
+  "reviewed_at": "2026-08-14T13:11:47.302997+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1642",
+  "rationale": "Issue #1642 (\"Make sure to preserve a space between `?` and `.`\", opened 2025-02-07) states that when a dot-shorthand appears as the value of a null-aware element, the formatter must keep the `?` and `.` separated so they are not re-lexed as a single `?.` token. The minimized production patch is a single hunk in `visitNullAwareElement` that computes `space` for the three dot-shorthand node kinds and forwards it to the already-existing `space:` parameter of `writePrefix`; the diff changes only that call plus an explanatory comment, with no refactor, formatting, feature, docs, or config edits. The trigger is the unchanged upstream fixture portion of the same commit (`test/tall/expression/collection_null_aware.stmt`, plus the comment fixture), asserting `? .property` / `? .invocation()` / `? .new()` output rather than a collapsed `?.` — exactly the reported defect, exercised through the existing `test/tall_format_test.dart` harness with no new production API. Strict runtime evidence shows a clean differential: buggy full-suite and isolated failure limited to `tall/expression/collection_null_aware.stmt`, fixed revision all green, deterministic across 3 repetitions with both selectors declared and unique, and no failed gates. `active_same_project_root_causes` is empty and the root cause matches the single allowed verified issue key.\n\nIssue #1642 ('Make sure to preserve a space between `?` and `.`') states that when a dot-shorthand expression appears inside a null-aware collection element, the formatter must keep a space so `? .infinity` is not emitted as the single `?.` token, which would make the output unparseable. The minimized production patch is exactly one hunk in the pre-existing `visitNullAwareElement` method: `writePrefix(node.question, node.value)` becomes `writePrefix(node.question, space: space, node.value)`, where `space` is true only for `DotShorthandConstructorInvocation`, `DotShorthandInvocation`, and `DotShorthandPropertyAccess`. Both the method and the `space:` parameter of `writePrefix` exist at the buggy revision (b6fe5750, which already formats dot shorthands), so this changes existing output behavior rather than adding an API or feature; the only non-logic addition is an explanatory comment on the fix itself, with no refactor, formatting, config, or doc-only churn. The trigger is the unmodified upstream fixture portion of the same fix commit (additions to the existing test/tall/expression/collection_null_aware.stmt and collection_null_aware_comment.stmt), driven through the project-native test/tall_format_test.dart harness; it exercises exactly the `?` + dot-shorthand combination named in the issue and depends on no API introduced by the fix. Strict machine evidence gates all pass: build on both revisions, buggy differential reproduced on tall/expression/collection_null_aware.stmt with deterministic fingerprints over 3 repetitions, fixed revision all green in isolated, suite, and reversed runs, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so #1642 is not a duplicate, and it matches the sole allowed_root_cause_ids entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T13:11:13.239613+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "22aa2372312547b1f3a25d1f95c9ce357a62f135dff0ce86b15311edc26d4cf6",
+      "response_sha256": "134a7b20f8269930bb762adfd61a8f56fb889836a893699b76656391b6672fb6",
+      "response_id": "msg_4ab728a1b4454267951967e9526c2e6a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7706466566169154,
+        "input_tokens": 16525,
+        "output_tokens": 681
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1642",
+      "rationale": "Issue #1642 (\"Make sure to preserve a space between `?` and `.`\", opened 2025-02-07) states that when a dot-shorthand appears as the value of a null-aware element, the formatter must keep the `?` and `.` separated so they are not re-lexed as a single `?.` token. The minimized production patch is a single hunk in `visitNullAwareElement` that computes `space` for the three dot-shorthand node kinds and forwards it to the already-existing `space:` parameter of `writePrefix`; the diff changes only that call plus an explanatory comment, with no refactor, formatting, feature, docs, or config edits. The trigger is the unchanged upstream fixture portion of the same commit (`test/tall/expression/collection_null_aware.stmt`, plus the comment fixture), asserting `? .property` / `? .invocation()` / `? .new()` output rather than a collapsed `?.` — exactly the reported defect, exercised through the existing `test/tall_format_test.dart` harness with no new production API. Strict runtime evidence shows a clean differential: buggy full-suite and isolated failure limited to `tall/expression/collection_null_aware.stmt`, fixed revision all green, deterministic across 3 repetitions with both selectors declared and unique, and no failed gates. `active_same_project_root_causes` is empty and the root cause matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json issue_urls",
+        "case.json source_candidate.issue_check.linked_issues[0].body",
+        "case.json strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json strict_post_minimization.checks.full_suite.fixed_all_green",
+        "case.json traceability.verified_fix_issue_numbers",
+        "case.json trigger_tests"
+      ],
+      "risks": [
+        "The buggy parent (b6fe5750) is an intermediate commit of the same PR #1748 that first landed dot-shorthand formatting, so the defect existed only in unreleased in-PR state rather than in a published dart_style version; it is pre-existing relative to the fix commit but never shipped.",
+        "Only one of the two declared selectors (`collection_null_aware.stmt`) reproduces; `collection_null_aware_comment.stmt` passes on the buggy revision and therefore contributes no differential signal, likely because an intervening comment already forces separation.",
+        "The fixture cases depend on the `dot-shorthands` experiment and language version 3.10, so reproduction is tied to the pinned analyzer/SDK in the recorded environment.",
+        "The fix enumerates three dot-shorthand node types explicitly; any future shorthand node kind would silently fall through to no space, a limitation not covered by the trigger."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T13:11:47.302667+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "22aa2372312547b1f3a25d1f95c9ce357a62f135dff0ce86b15311edc26d4cf6",
+      "response_sha256": "db46b20acc213dc51082ecda20693e170069a46ea1f24d5e7b4edd384586537d",
+      "response_id": "msg_287da43b6a1d4a5198a83f57c79b15c1",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7370697009618573,
+        "input_tokens": 16416,
+        "output_tokens": 734
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1642",
+      "rationale": "Issue #1642 ('Make sure to preserve a space between `?` and `.`') states that when a dot-shorthand expression appears inside a null-aware collection element, the formatter must keep a space so `? .infinity` is not emitted as the single `?.` token, which would make the output unparseable. The minimized production patch is exactly one hunk in the pre-existing `visitNullAwareElement` method: `writePrefix(node.question, node.value)` becomes `writePrefix(node.question, space: space, node.value)`, where `space` is true only for `DotShorthandConstructorInvocation`, `DotShorthandInvocation`, and `DotShorthandPropertyAccess`. Both the method and the `space:` parameter of `writePrefix` exist at the buggy revision (b6fe5750, which already formats dot shorthands), so this changes existing output behavior rather than adding an API or feature; the only non-logic addition is an explanatory comment on the fix itself, with no refactor, formatting, config, or doc-only churn. The trigger is the unmodified upstream fixture portion of the same fix commit (additions to the existing test/tall/expression/collection_null_aware.stmt and collection_null_aware_comment.stmt), driven through the project-native test/tall_format_test.dart harness; it exercises exactly the `?` + dot-shorthand combination named in the issue and depends on no API introduced by the fix. Strict machine evidence gates all pass: build on both revisions, buggy differential reproduced on tall/expression/collection_null_aware.stmt with deterministic fingerprints over 3 repetitions, fixed revision all green in isolated, suite, and reversed runs, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so #1642 is not a duplicate, and it matches the sole allowed_root_cause_ids entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_reduction.upstream_trigger_patch",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The buggy revision b6fe5750 is an intermediate commit of PR #1748, whose earlier commits introduced dot-shorthand formatting support; the defect therefore existed only on that branch state rather than in a released mainline version, even though the issue predates the work by months.",
+        "Issue #1642 carries only a 'language-change' label and no defect label, so defect classification rests on the semantic reading of its body and the observed output regression, not on repository metadata.",
+        "Two trigger selectors are declared but only tall/expression/collection_null_aware.stmt reproduced the failure; the comment fixture passes on the buggy revision and contributes no differential signal.",
+        "Both language features involved are experiment-gated, so reproduction depends on the pinned analyzer 8.0.0 and SDK experiment flags captured in this revision pair."
+      ]
+    }
+  ]
+}

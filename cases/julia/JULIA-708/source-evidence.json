@@ -1,0 +1,78 @@
+{
+  "candidate_sha": "d98bba3597245c4ceaa8a2accd1278b0d0b310f2",
+  "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+  "source": "merged_pull_request",
+  "instance_id": "julialinearalgebra__genericlinearalgebra.jl-69",
+  "swe_rebench": {
+    "base_commit": "a3140d3a206d95dd631b33422ead93c3b24cf9ce",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "The General eigenvalue problem",
+      "Test sign of eigenvalues",
+      "Problem dimension (5,6)",
+      "Problem dimension (50,60)",
+      "Problem dimension (150,200)",
+      "The Ivan Slapničar Challenge",
+      "Compare to Base methods. Problem dimension (9,10)"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 67,
+      "url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/67",
+      "state": "closed",
+      "title": "Convergence problems of some matrices",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "Hi,\r\n\r\nI'm encountering some matrices that fail to converge when computing eigenvalues. Consider the following:\r\n\r\n```julia\r\njulia> t = [1 -2 1 -1 -1 0; 0 1 0 1 0 1; 1 -1 2 0 -1 0; 0 1 0 2 1 1; 1 0 1 0 0 0; 0 -1 1 -1 -2 0]\r\n6×6 Array{Int64,2}:\r\n 1  -2  1  -1  -1  0\r\n 0   1  0   1   0  1\r\n 1  -1  2   0  -1  0\r\n 0   1  0   2   1  1\r\n 1   0  1   0   0  0\r\n 0  -1  1  -1  -2  0\r\n\r\njulia> using LinearAlgebra\r\n\r\njulia> using GenericLinearAlgebra\r\n\r\njulia> eigvals(t)\r\n6-element Array{Complex{Float64},1}:\r\n -7.294730590901527e-9 + 0.0im\r\n 7.2947305672186945e-9 + 0.0im\r\n    1.4999999999999996 - 0.8660254037844369im\r\n    1.4999999999999996 + 0.8660254037844369im\r\n    1.5000000000000018 - 0.8660254037844406im\r\n    1.5000000000000018 + 0.8660254037844406im\r\n\r\njulia> eigvals(big.(t))\r\nERROR: ArgumentError: iteration limit 600 reached\r\nStacktrace:\r\n [1] _schur!(::GenericLinearAlgebra.HessenbergFactorization{BigFloat,Array{BigFloat,2},GenericLinearAlgebra.Householder{BigFloat,S} where S<:(Union{DenseArray{T,1}, Base.ReinterpretArray{T,1,S,A} where S where A<:Union{SubArray{T,N,A,I,true} where I<:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A<:DenseArray where N where T, DenseArray}, Base.ReshapedArray{T,1,A,MI} where MI<:Tuple{Vararg{Base.MultiplicativeInverses.SignedMultiplicativeInverse{Int64},N} where N} where A<:Union{Base.ReinterpretArray{T,N,S,A} where S where A<:Union{SubArray{T,N,A,I,true} where I<:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A<:DenseArray where N where T, DenseArray} where N where T, SubArray{T,N,A,I,true} where I<:Union{Tuple{Vararg{Real,N} where N}, Tuple{AbstractUnitRange,Vararg{Any,N} where N}} where A<:DenseArray where N where T, DenseArray}, SubArray{T,1,A,I,L} where L where I<:Tuple{Vararg{Union{Int64, AbstractRange{Int64}, Base.AbstractCartesianIndex},N} where N} where\r\nA<:Union{Base.ReinterpretArray{T,N,S,A} where S where A<:Union{SubArray{T,N,A,I,true} whe"
+    },
+    {
+      "number": 69,
+      "url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/69",
+      "state": "closed",
+      "title": "Fix exceptional shift such that we can handle more matrices.",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Also reduce the default number of iterations. Add complicated\r\ntest matrices.\r\n\r\nFixes https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/67"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        67
+      ],
+      "pull_request": 69,
+      "fix_commit": "d98bba3597245c4ceaa8a2accd1278b0d0b310f2",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Fix exceptional shift such that we can handle more matrices. (#69)\n\n* Fix exceptional shift such that we can handle more matrices.\r\nAlso reduce the default number of iterations. Add complicated\r\ntest matrices.\r\n\r\n* Drop Julia 1.0 support and delete azurepipelines.yml file",
+    "commit_issue_refs": [
+      69
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 69,
+    "pull_request_title": "Fix exceptional shift such that we can handle more matrices.",
+    "pull_request_issue_refs": [
+      67
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    67
+  ],
+  "cross_repository_issue_records": []
+}

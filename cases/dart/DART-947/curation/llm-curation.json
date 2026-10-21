@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-947",
+  "technical_evidence_sha256": "7a43bddc5e5d62d25e17b85e9f5cbbe53bfca5411aa3b1521ef217db4804ffc7",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "3205c09d4802ba773153ec9b5ae4b35916ccba557fd77ab807a3271f8b745780",
+  "reviewed_at": "2026-08-14T06:08:54.991673+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#855",
+  "rationale": "Issue #855 reports a crash with \"type '_PropertySelector' is not a subtype of type '_MethodSelector'\" thrown from CallChainVisitor's constructor (stack frame call_chain_visitor.dart:151), i.e. a pre-existing unsound implicit downcast when the hanging selector after block arguments is a property access rather than a method call. The minimized production patch touches exactly that code path, widening the declared types of the `_hangingCall` field and the local `hangingCall` variable from `_MethodSelector` to the `_Selector` supertype; it excludes the version bump in bin/format.dart, the CHANGELOG entry, and the pubspec version present in the original commit, so it carries no refactor, feature, docs, or config change. The trigger is the upstream fixture test/regression/0800/0855.unit from the same fixing commit (byte-identical per trigger_reduction, sha256 9803d435...), consumed by the existing regression harness in test/formatter_test.dart as selector \"regression 0855.unit\"; its input is a cascade whose block-argument call chain ends in a property access, matching the reported defect, and it uses no API introduced by the fix (the patch only relaxes existing private type annotations). Strict machine evidence for both the original and post-minimization configurations passed all gates, including trigger.buggy_differential with reproduced=[('test/formatter_test.dart','regression 0855.unit')], trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), build.both_versions, and full_suite.fixed_all_green with buggy full-suite failures limited to the declared trigger. Root cause dart-lang/dart_style#855 is in allowed_root_cause_ids and active_same_project_root_causes is empty, so it is not a duplicate.\n\nIssue #855 reports a formatter crash with the exact runtime type error \"type '_PropertySelector' is not a subtype of type '_MethodSelector'\" thrown from CallChainVisitor's constructor (call_chain_visitor.dart:151), which is precisely the local variable `hangingCall` and field `_hangingCall` whose declared types the minimized patch widens from the subclass `_MethodSelector` to the base `_Selector`. The commit message states the same root cause: an unsafe implicit downcast when the hanging call is actually a property selector. The minimized production patch (patches/minimized-production.patch) contains only those two type-annotation lines in lib/src/call_chain_visitor.dart; the CHANGELOG entry, pubspec version bump, and the bin/format.dart version constant present in the original commit and in production-fix.patch are excluded, so no documentation-only, configuration-only, or unrelated change remains. The trigger is the unchanged upstream regression fixture test/regression/0800/0855.unit, exercised through the project-native harness test/formatter_test.dart::regression 0855.unit; its content is the code_builder-style cascade from the issue's reproduction (build_script_generate.dart), including `refer('sendPort').nullSafeProperty('send').call([...])` — a property selector hanging after block arguments — and it depends on no API introduced by the fix, since the fix only relaxes two internal type annotations. Machine-generated strict evidence reports all gates green both originally and post-minimization: build.both_versions, trigger.buggy_differential with reproduced selector test/formatter_test.dart::regression 0855.unit, trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, full_suite.fixed_all_green, and full_suite.buggy_reproduces_only_triggers. active_same_project_root_causes is empty and dart-lang/dart_style#855 is the sole allowed root-cause key, so this root cause duplicates no registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:08:27.826637+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3205c09d4802ba773153ec9b5ae4b35916ccba557fd77ab807a3271f8b745780",
+      "response_sha256": "edd413645228f2d71b4917bf37cff0b771e3d706ea954a98f1a4666f7077d1d6",
+      "response_id": "msg_13cb6b67d4b04ae0ac58727da24b00ae",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5376193372802652,
+        "input_tokens": 18130,
+        "output_tokens": 702
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#855",
+      "rationale": "Issue #855 reports a crash with \"type '_PropertySelector' is not a subtype of type '_MethodSelector'\" thrown from CallChainVisitor's constructor (stack frame call_chain_visitor.dart:151), i.e. a pre-existing unsound implicit downcast when the hanging selector after block arguments is a property access rather than a method call. The minimized production patch touches exactly that code path, widening the declared types of the `_hangingCall` field and the local `hangingCall` variable from `_MethodSelector` to the `_Selector` supertype; it excludes the version bump in bin/format.dart, the CHANGELOG entry, and the pubspec version present in the original commit, so it carries no refactor, feature, docs, or config change. The trigger is the upstream fixture test/regression/0800/0855.unit from the same fixing commit (byte-identical per trigger_reduction, sha256 9803d435...), consumed by the existing regression harness in test/formatter_test.dart as selector \"regression 0855.unit\"; its input is a cascade whose block-argument call chain ends in a property access, matching the reported defect, and it uses no API introduced by the fix (the patch only relaxes existing private type annotations). Strict machine evidence for both the original and post-minimization configurations passed all gates, including trigger.buggy_differential with reproduced=[('test/formatter_test.dart','regression 0855.unit')], trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), build.both_versions, and full_suite.fixed_all_green with buggy full-suite failures limited to the declared trigger. Root cause dart-lang/dart_style#855 is in allowed_root_cause_ids and active_same_project_root_causes is empty, so it is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/call_chain_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/0800/0855.unit",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "traceability.verified_fix_issue_numbers",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The fixture's expected output equals its input, so the test only asserts the formatter no longer crashes; it does not pin any formatting decision for hanging property selectors, and a future regression that changes layout without crashing would not be caught.",
+        "The fix relaxes a static type rather than adding an explicit branch, so evidence that every downstream use of `_hangingCall` correctly handles a `_PropertySelector` rests on the passing suite rather than on the diff itself.",
+        "The fixture file lacks a trailing newline, which the harness apparently tolerates but makes the case sensitive to future changes in the regression-file parser."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:08:54.991224+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3205c09d4802ba773153ec9b5ae4b35916ccba557fd77ab807a3271f8b745780",
+      "response_sha256": "9ca78b0a9bfb2a76dc1d0ca6f9fc1fdf68a40971167182f6864e422bbe1a9528",
+      "response_id": "msg_f70e7f6a697d43e0b13d68da3a7c16e3",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.44405484225538977,
+        "input_tokens": 18054,
+        "output_tokens": 686
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#855",
+      "rationale": "Issue #855 reports a formatter crash with the exact runtime type error \"type '_PropertySelector' is not a subtype of type '_MethodSelector'\" thrown from CallChainVisitor's constructor (call_chain_visitor.dart:151), which is precisely the local variable `hangingCall` and field `_hangingCall` whose declared types the minimized patch widens from the subclass `_MethodSelector` to the base `_Selector`. The commit message states the same root cause: an unsafe implicit downcast when the hanging call is actually a property selector. The minimized production patch (patches/minimized-production.patch) contains only those two type-annotation lines in lib/src/call_chain_visitor.dart; the CHANGELOG entry, pubspec version bump, and the bin/format.dart version constant present in the original commit and in production-fix.patch are excluded, so no documentation-only, configuration-only, or unrelated change remains. The trigger is the unchanged upstream regression fixture test/regression/0800/0855.unit, exercised through the project-native harness test/formatter_test.dart::regression 0855.unit; its content is the code_builder-style cascade from the issue's reproduction (build_script_generate.dart), including `refer('sendPort').nullSafeProperty('send').call([...])` — a property selector hanging after block arguments — and it depends on no API introduced by the fix, since the fix only relaxes two internal type annotations. Machine-generated strict evidence reports all gates green both originally and post-minimization: build.both_versions, trigger.buggy_differential with reproduced selector test/formatter_test.dart::regression 0855.unit, trigger.deterministic (3 fingerprint groups over 3 repetitions), trigger.fixed_clean, full_suite.fixed_all_green, and full_suite.buggy_reproduces_only_triggers. active_same_project_root_causes is empty and dart-lang/dart_style#855 is the sole allowed root-cause key, so this root cause duplicates no registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.message",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The regression fixture asserts input equals output (idempotent formatting), so on the fixed revision it verifies only that no crash occurs and that formatting is stable, not a specific corrected layout.",
+        "case.json production_files still lists bin/format.dart even though the minimized patch excludes it; downstream tooling that rebuilds from production_files rather than the minimized patch could reintroduce the version-bump noise.",
+        "Issue-to-fix traceability rests on a single fix_commit_to_issue path (commit text 'Fix #855'); the issue thread itself contains no independent maintainer confirmation of the chosen minimization."
+      ]
+    }
+  ]
+}

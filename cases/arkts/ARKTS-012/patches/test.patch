@@ -1,0 +1,84 @@
+diff --git a/code/SystemFeature/Security/CertificateFramework/entry/src/ohosTest/ets/test/CertCount.test.ets b/code/SystemFeature/Security/CertificateFramework/entry/src/ohosTest/ets/test/CertCount.test.ets
+new file mode 100644
+index 000000000..117942c9a
+--- /dev/null
++++ b/code/SystemFeature/Security/CertificateFramework/entry/src/ohosTest/ets/test/CertCount.test.ets
+@@ -0,0 +1,62 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry'
++import { Driver, ON } from '@ohos.UiTest'
++import { describe, it, expect } from '@ohos/hypium'
++
++const BUNDLE = 'CertCount_'
++const abilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator()
++
++async function startCertFrameworkAbility() {
++  await abilityDelegator.startAbility({
++    bundleName: 'com.samples.certframework',
++    abilityName: 'EntryAbility'
++  })
++}
++
++async function expectInitialCountersUseExactZero(driver: Driver) {
++  let legacyCounters = await driver.findComponents(ON.text('0/100'))
++  let legacyCounterCount = legacyCounters ? legacyCounters.length : 0
++  expect(legacyCounterCount).assertEqual(0)
++
++  let zeroCounters = await driver.findComponents(ON.text('0'))
++  let zeroCounterCount = zeroCounters ? zeroCounters.length : 0
++  expect(zeroCounterCount >= 3).assertTrue()
++}
++
++export default function certCountTest() {
++  describe('certCountTest', () => {
++    it(BUNDLE + 'InitialCounterLabels_001', 0, async (done: Function) => {
++      let driver = Driver.create()
++      await startCertFrameworkAbility()
++      await driver.delayMs(1000)
++
++      await driver.assertComponentExist(ON.id('tab_certframework'))
++      let certFrameworkTab = await driver.findComponent(ON.id('tab_certframework'))
++      await certFrameworkTab.click()
++      await driver.delayMs(200)
++      await expectInitialCountersUseExactZero(driver)
++
++      await driver.assertComponentExist(ON.id('tab_certchain'))
++      let certChainTab = await driver.findComponent(ON.id('tab_certchain'))
++      await certChainTab.click()
++      await driver.delayMs(200)
++      await expectInitialCountersUseExactZero(driver)
++
++      done()
++    })
++  })
++}
+diff --git a/code/SystemFeature/Security/CertificateFramework/entry/src/ohosTest/ets/test/List.test.ets b/code/SystemFeature/Security/CertificateFramework/entry/src/ohosTest/ets/test/List.test.ets
+index 47ea1ac7a..9c708ec06 100644
+--- a/code/SystemFeature/Security/CertificateFramework/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/SystemFeature/Security/CertificateFramework/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Ability.test'
++import certCountTest from './CertCount.test'
+ 
+ export default function testsuite() {
+   abilityTest();
+-}
+\ No newline at end of file
++  certCountTest();
++}

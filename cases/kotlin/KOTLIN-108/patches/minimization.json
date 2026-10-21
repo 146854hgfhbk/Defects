@@ -1,0 +1,508 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-22T08:37:08.226121+00:00",
+  "generated_by": "minimize_patch.py",
+  "patch_direction": "buggy_to_fixed",
+  "application_direction": "fixed_to_buggy_via_reverse_apply",
+  "policy": {
+    "granularity": "unified_diff_hunk",
+    "safe_automatic_categories": [
+      "comment",
+      "documentation",
+      "format",
+      "unrelated"
+    ],
+    "semantic_hunks_default": "KEEP",
+    "uncertain_hunks_default": "UNCERTAIN_AND_KEEP",
+    "llm_remove_requires_explicit_decision": true,
+    "removal_requires_differential_validation": true,
+    "batch_safe_candidates_first": true,
+    "verify_all_hunks": true,
+    "signature_fields": [
+      "trigger_set",
+      "exception_type",
+      "normalized_message",
+      "normalized_stack_hash"
+    ],
+    "necessity_evidence": [
+      "bug_not_reproduced with three complete compile and full-suite runs, repeat consistency, and no infrastructure errors",
+      "candidate source compilation fails in three isolated runs with an identical Kotlin compiler diagnostic fingerprint while fixed compile and full-suite runs pass"
+    ]
+  },
+  "original_patch": "original-source.patch",
+  "original_patch_sha256": "96578622b8b113c921c5fe61c4881aad49171b4ca0accabbc7617f4dd7031060",
+  "minimized_patch": "minimized-source.patch",
+  "minimized_patch_sha256": "96578622b8b113c921c5fe61c4881aad49171b4ca0accabbc7617f4dd7031060",
+  "original_hunk_count": 1,
+  "retained_hunk_count": 1,
+  "removed_hunk_count": 0,
+  "baseline_validation": {
+    "acceptable": true,
+    "status": "stable_differential",
+    "repeat_consistent": true,
+    "signature_complete": true,
+    "signature": {
+      "trigger_set": [
+        "com.pinterest.ktlint.rule.engine.api.KtLintTest.Issue 3220 - Given some code that contains the UTF8 BOM character somewhere but not a the start then ensure this character is not removed()"
+      ],
+      "failures": [
+        {
+          "test_id": "com.pinterest.ktlint.rule.engine.api.KtLintTest.Issue 3220 - Given some code that contains the UTF8 BOM character somewhere but not a the start then ensure this character is not removed()",
+          "exception_type": "org.opentest4j.AssertionFailedError",
+          "normalized_message": "org.opentest4j.AssertionFailedError: expected: \"<PATH> Although probably not visible in your editor, this file contains at UTF BOM --> ﻿ <-- <PATH> The indent before this comment needs to be removed by ktlint format \" but was: \"<PATH> Although probably not visible in your editor, this file contains at UTF BOM --> <-- <PATH> The indent before this comment needs to be removed by ktlint format \"",
+          "normalized_stack_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ]
+    },
+    "fixed_passed_all_runs": true,
+    "buggy_failed_all_runs": true,
+    "full_suite_valid": true,
+    "compile_valid": true,
+    "compile_fixed_runs": 3,
+    "compile_buggy_runs": 3,
+    "full_fixed_runs": 3,
+    "full_buggy_runs": 3,
+    "infrastructure_error_count": 0
+  },
+  "baseline_validation_source": {
+    "kind": "existing_validation_report",
+    "case_id": "KOTLIN-108",
+    "file": "baseline-validation.json",
+    "sha256": "ae5c68be7cd40f559abdcc0027bf3737940c6f757a2d9f3b46d708934666c4bd"
+  },
+  "hunks": [
+    {
+      "hunk_id": "F001-H001",
+      "file": "ktlint-rule-engine/src/main/kotlin/com/pinterest/ktlint/rule/engine/internal/RuleExecutionContext.kt",
+      "header": "@@ -260,7 +260,13 @@ internal class RuleExecutionContext private constructor(",
+      "category": "semantic",
+      "initial_decision": "REMOVE_CANDIDATE_FOR_NECESSITY_CHECK",
+      "source": "exhaustive_differential_check",
+      "eligible_for_automatic_removal": true,
+      "reason": "Production-code semantics may change; retained by default; removal is tested to establish that this retained hunk is necessary; retained because removal changes the differential evidence; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation",
+      "validation_evidence": {
+        "attempted": true,
+        "mode": "individual_exhaustive",
+        "accepted": false,
+        "reason": "removal consistently eliminates the defect under complete three-run differential validation",
+        "candidate_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "candidate": {
+          "acceptable": false,
+          "status": "bug_not_reproduced",
+          "repeat_consistent": true,
+          "signature_complete": false,
+          "signature": {
+            "trigger_set": [],
+            "failures": []
+          },
+          "fixed_passed_all_runs": true,
+          "buggy_failed_all_runs": false,
+          "full_suite_valid": true,
+          "compile_valid": true,
+          "compile_fixed_runs": 3,
+          "compile_buggy_runs": 3,
+          "full_fixed_runs": 3,
+          "full_buggy_runs": 3,
+          "infrastructure_error_count": 0,
+          "validation_provenance": {
+            "case_id": "KOTLIN-108",
+            "generated_by": "validation_engine.py",
+            "schema_version": 2,
+            "policy": {
+              "repetitions": 3,
+              "timeout_seconds": 1800,
+              "fresh_worktree_per_repetition": true,
+              "individual_trigger_processes": true,
+              "compile_before_tests": true,
+              "full_suite_run_per_version": 3,
+              "offline": true,
+              "environment_lock_sha256": "9dc991b13a3564f40eafed14c8da78d2386782e7de4446c156b643f623d22cb9",
+              "trigger_patch_states": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "state": "already_present"
+                }
+              ],
+              "buggy_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "run_matrix": [
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 224,
+                "junit_file_count": 43,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 224,
+                "junit_file_count": 43,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 224,
+                "junit_file_count": 43,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 224,
+                "junit_file_count": 43,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 224,
+                "junit_file_count": 43,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.rule.engine.api.KtLintTest"
+                ],
+                "tests": 13,
+                "junit_file_count": 4,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 224,
+                "junit_file_count": 43,
+                "failure_fingerprint": null
+              }
+            ],
+            "derived": {
+              "status": "bug_not_reproduced",
+              "stable": false,
+              "fixed_passed_all_runs": true,
+              "buggy_failed_all_runs": false,
+              "full_suite_valid": true,
+              "compile_valid": true,
+              "compile_fixed_runs": 3,
+              "compile_buggy_runs": 3,
+              "full_fixed_runs": 3,
+              "full_buggy_runs": 3,
+              "full_buggy_failed": false,
+              "buggy_failed_test_count": 0,
+              "buggy_failed_tests": [],
+              "buggy_failure_types": [],
+              "failure_fingerprints": [],
+              "broken_tests": [],
+              "flaky_tests": [],
+              "order_dependent_tests": [],
+              "infrastructure_error_count": 0
+            },
+            "source_report_sha256": "4c281c8b70cdaa659f364c070851e0eaff2aea5127ec853ddefc71d8e6ba800d",
+            "embedded_report": "minimization-evidence/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855-4c281c8b70cdaa659f364c070851e0eaff2aea5127ec853ddefc71d8e6ba800d.evidence.json",
+            "embedded_report_sha256": "bedb4ad13f29ae7121d688dc3e47a5db720c95e4f9374146c8b58e4e1c751fc1"
+          }
+        },
+        "source_validation_report": "D:\\Desktop\\综述试验方案\\kotlin-defects-miner-review\\output\\exhaustive-minimization\\KOTLIN-108\\validation-artifacts\\candidate-001\\validation.json",
+        "source_validation_sha256": "4c281c8b70cdaa659f364c070851e0eaff2aea5127ec853ddefc71d8e6ba800d"
+      },
+      "decision": "KEEP"
+    }
+  ],
+  "manual_confirmation_required": false,
+  "evidence_confirmation": {
+    "decision": "CONFIRMED_BY_EXHAUSTIVE_DIFFERENTIAL_EVIDENCE",
+    "confirmed_at": "2026-07-24T14:46:46.288457+00:00",
+    "method": "exact cardinality subset search with decisive differential evidence for every retained and removed hunk",
+    "human_review_claimed": false
+  },
+  "evidence_reclassified_at": "2026-07-24T14:46:46.258272+00:00"
+}

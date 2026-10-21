@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-830",
+  "technical_evidence_sha256": "cd1da0b5e83f615abf1f844c72de9f2540af2aab409bcb454b3acee4142447dc",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "216cd3fcab8ab317ae8a3c5b11009322e9b918d3cc0efb735e92cad6c5cecf13",
+  "reviewed_at": "2026-09-06T13:43:56.516095+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "stencilproject/stencil#253",
+  "rationale": "Issue #253 (labeled 'bug') reports that the documented form `{% if (one or two) and three %}` fails with a dangling-token error because token components are split on whitespace only, so parentheses must be space-surrounded. The minimized production patch is a single hunk in Sources/Tokenizer.swift that, inside appendWord, peels a leading '(' or trailing ')' off a word into its own component and recurses on the remainder — exactly the whitespace-only splitting defect described. The trigger is the unchanged upstream test edit from the same fixing commit: IfNodeSpec's existing 'can parse an if with complex expression' case changes its block value to `if value == \"test\" and (not name or not (name and surname))`, which contains `(not` and `surname))` and therefore exercises only the patched path; it uses pre-existing Token/if-parsing entry points and no API introduced by the fix. Patch scope is production-behavior only: 6 added lines, no formatting, refactor, docs, or config change (the CHANGELOG and later cleanup commits ab4b136/e70023d/59ca064/e4090c7 of PR #254 are excluded). The build-compatibility patch touches only a test file, qualifying `Expression` as `Stencil.Expression` to avoid a Swift 6 Foundation name collision, and is applied symmetrically to buggy and fixed revisions without altering assertions. Traceability is fix_commit_to_merged_pr_to_issue via PR #254 ('Resolves #253'). Machine-generated strict gates pass both pre- and post-minimization: build on both revisions, buggy differential on Tests/StencilTests/IfNodeSpec.swift::testIfNode, deterministic across 3 repetitions (32 matrix runs), fixed isolated/suite/reversed clean, and fixed full suite all green with buggy full-suite failures limited to the reproduced trigger. No active same-project root causes are registered, and stencilproject/stencil#253 is in allowed_root_cause_ids.\n\nIssue #253 (labeled 'bug') reports that documented syntax `{% if (one or two) and three %}` throws a dangling-token error because token components are split on whitespace only, so parentheses must be space-surrounded. The single retained production hunk in Sources/Tokenizer.swift addresses exactly that: a word with a leading '(' or trailing ')' (and not equal to the bare bracket) is decomposed into a separate bracket component plus a recursive appendWord on the remainder. Traceability is fix_commit_to_merged_pr_to_issue via merged PR #254 ('Resolves #253'), whose title matches the commit subject. The trigger is the unchanged upstream test hunk from the same fixing commit: IfNodeSpec's 'can parse an if with complex expression' input becomes `if value == \"test\" and (not name or not (name and surname))`, containing `(not` and `surname))` — the exact non-space-delimited parenthesis forms in the issue. It uses only pre-existing Token/.block and if-parsing entry points and introduces no API added by the fix. Strict evidence shows both revisions build, the declared selector Tests/StencilTests/IfNodeSpec.swift::testIfNode fails alone on the buggy revision and is the only buggy full-suite failure, fixed isolated/suite/reversed runs are clean, determinism holds over 3 repetitions (32 matrix runs), and the same gate set passes post-minimization (1 of 1 hunk retained, 0 removed). The only auxiliary change is a test-file-scoped build-compatibility edit qualifying `Expression` as `Stencil.Expression` in ExpressionSpec.swift to avoid a Swift 6 Foundation name collision, applied symmetrically to both revisions with no assertion or production-logic effect; the production patch itself contains no refactor, formatting, feature, docs, or config change. active_same_project_root_causes is empty and the proposed root cause matches the sole allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T13:43:32.944188+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "216cd3fcab8ab317ae8a3c5b11009322e9b918d3cc0efb735e92cad6c5cecf13",
+      "response_sha256": "bab4363de9fe9c4b4359a074fb6f5db56bfaaeba7a642a024dda20cc9739f03c",
+      "response_id": "msg_57142414c9da443ebb55afd6ef80775e",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5625830320729686,
+        "input_tokens": 15122,
+        "output_tokens": 750
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "stencilproject/stencil#253",
+      "rationale": "Issue #253 (labeled 'bug') reports that the documented form `{% if (one or two) and three %}` fails with a dangling-token error because token components are split on whitespace only, so parentheses must be space-surrounded. The minimized production patch is a single hunk in Sources/Tokenizer.swift that, inside appendWord, peels a leading '(' or trailing ')' off a word into its own component and recurses on the remainder — exactly the whitespace-only splitting defect described. The trigger is the unchanged upstream test edit from the same fixing commit: IfNodeSpec's existing 'can parse an if with complex expression' case changes its block value to `if value == \"test\" and (not name or not (name and surname))`, which contains `(not` and `surname))` and therefore exercises only the patched path; it uses pre-existing Token/if-parsing entry points and no API introduced by the fix. Patch scope is production-behavior only: 6 added lines, no formatting, refactor, docs, or config change (the CHANGELOG and later cleanup commits ab4b136/e70023d/59ca064/e4090c7 of PR #254 are excluded). The build-compatibility patch touches only a test file, qualifying `Expression` as `Stencil.Expression` to avoid a Swift 6 Foundation name collision, and is applied symmetrically to buggy and fixed revisions without altering assertions. Traceability is fix_commit_to_merged_pr_to_issue via PR #254 ('Resolves #253'). Machine-generated strict gates pass both pre- and post-minimization: build on both revisions, buggy differential on Tests/StencilTests/IfNodeSpec.swift::testIfNode, deterministic across 3 repetitions (32 matrix runs), fixed isolated/suite/reversed clean, and fixed full suite all green with buggy full-suite failures limited to the reproduced trigger. No active same-project root causes are registered, and stencilproject/stencil#253 is in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/build-compatibility.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.paths",
+        "case.json:trigger_tests"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue text was read from the embedded source_candidate.issue_check.linked_issues record rather than an independently fetched issue snapshot.",
+        "The selected commit is 1 of 6 in PR #254; later commits (\"handle more edge cases\", force-unwrap removal, first/last instead of hasPrefix/hasSuffix) indicate this hunk does not cover every parenthesis edge case, so the benchmark defect is narrower than issue #253 in full.",
+        "Because the fix lives in the shared tokenizer, behavior for parentheses inside string literals or filter arguments is only indirectly covered by the passing full suite at this revision.",
+        "The trigger is a modification of an existing spec case rather than a new test, so the selector Tests/StencilTests/IfNodeSpec.swift::testIfNode covers the whole Spectre spec method, not solely the parenthesized assertion."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T13:43:56.515929+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "216cd3fcab8ab317ae8a3c5b11009322e9b918d3cc0efb735e92cad6c5cecf13",
+      "response_sha256": "a244eeb17da23f3b7a665bd62c2684a4bfd3fa0a447037c83d09d7ddd4f5028d",
+      "response_id": "msg_6590c2a91fd74ca6a30def0706466464",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5125850283250415,
+        "input_tokens": 15183,
+        "output_tokens": 766
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "stencilproject/stencil#253",
+      "rationale": "Issue #253 (labeled 'bug') reports that documented syntax `{% if (one or two) and three %}` throws a dangling-token error because token components are split on whitespace only, so parentheses must be space-surrounded. The single retained production hunk in Sources/Tokenizer.swift addresses exactly that: a word with a leading '(' or trailing ')' (and not equal to the bare bracket) is decomposed into a separate bracket component plus a recursive appendWord on the remainder. Traceability is fix_commit_to_merged_pr_to_issue via merged PR #254 ('Resolves #253'), whose title matches the commit subject. The trigger is the unchanged upstream test hunk from the same fixing commit: IfNodeSpec's 'can parse an if with complex expression' input becomes `if value == \"test\" and (not name or not (name and surname))`, containing `(not` and `surname))` — the exact non-space-delimited parenthesis forms in the issue. It uses only pre-existing Token/.block and if-parsing entry points and introduces no API added by the fix. Strict evidence shows both revisions build, the declared selector Tests/StencilTests/IfNodeSpec.swift::testIfNode fails alone on the buggy revision and is the only buggy full-suite failure, fixed isolated/suite/reversed runs are clean, determinism holds over 3 repetitions (32 matrix runs), and the same gate set passes post-minimization (1 of 1 hunk retained, 0 removed). The only auxiliary change is a test-file-scoped build-compatibility edit qualifying `Expression` as `Stencil.Expression` in ExpressionSpec.swift to avoid a Swift 6 Foundation name collision, applied symmetrically to both revisions with no assertion or production-logic effect; the production patch itself contains no refactor, formatting, feature, docs, or config change. active_same_project_root_causes is empty and the proposed root cause matches the sole allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/build-compatibility.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:traceability.paths",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "The selected commit is 1 of 6 in PR #254; later commits ('handle more edge cases', 'do not use force unwrap', 'use first/last instead of hasPrefix/hasSuffix') further harden the same tokenizer path, so this revision pair captures a partial fix of issue #253 rather than the final merged form.",
+        "The trigger selector is the whole spec method testIfNode rather than a single case; a future unrelated failure inside IfNodeSpec would be indistinguishable at selector granularity.",
+        "The recursive appendWord change is in the shared tokenizer, so tokenization of parentheses inside string literals or filter arguments could be affected; only the project's own suite (full-suite repetitions = 1) bounds this.",
+        "issue_evidence and semantic_justification are null in the case record; issue content is available only through source_candidate.issue_check, which is untrusted fetched text."
+      ]
+    }
+  ]
+}

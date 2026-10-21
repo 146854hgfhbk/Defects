@@ -1,0 +1,13 @@
+FROM docker.m.daocloud.io/library/python:3.12-slim@sha256:646fb0bca3dd3ea1bcc6feb72c17ed16eed6e10cffc732fcc1478bd3e7f02d7b
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl git unzip && rm -rf /var/lib/apt/lists/*
+ARG DART_SDK_URL="https://storage.googleapis.com/dart-archive/channels/stable/release/3.10.0/sdk/dartsdk-linux-x64-release.zip"
+ARG DART_SDK_SHA256="a27681be873c3891692285db8d656e7494ca80c74e86613b8085fc6cffa3e31d"
+RUN curl -fsSL "$DART_SDK_URL" -o /tmp/dart-sdk.zip \
+ && echo "$DART_SDK_SHA256  /tmp/dart-sdk.zip" | sha256sum -c - \
+ && unzip -q /tmp/dart-sdk.zip -d /opt \
+ && chmod -R a+rx /opt/dart-sdk \
+ && rm /tmp/dart-sdk.zip
+COPY environment/requirements-reproduction.txt /tmp/requirements-reproduction.txt
+RUN pip install --no-cache-dir -r /tmp/requirements-reproduction.txt
+ENV PATH="/opt/dart-sdk/bin:${PATH}" TZ=UTC LANG=C.UTF-8 LC_ALL=C.UTF-8 DART_SUPPRESS_ANALYTICS=true
+WORKDIR /workspace

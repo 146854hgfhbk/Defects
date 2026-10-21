@@ -1,0 +1,64 @@
+diff --git a/XS.pm b/XS.pm
+index 90103bb..7ac530f 100644
+--- a/XS.pm
++++ b/XS.pm
+@@ -145,7 +145,7 @@ B<Changes to JSON::XS>
+ 
+ package Cpanel::JSON::XS;
+ 
+-our $VERSION = '3.0110';
++our $VERSION = '3.0111';
+ our @ISA = qw(Exporter);
+ 
+ our @EXPORT = qw(encode_json decode_json to_json from_json);
+@@ -1246,6 +1246,10 @@ before encoding as JSON strings, and anything else as number value:
+    # undef becomes null
+    encode_json [undef]                  # yields [null]
+ 
++   # inf or nan becomes null, unless you answered
++   # "Do you want to handle inf/nan as strings" with yes
++   encode_json [9**9**9]                # yields [null]
++
+ You can force the type to be a JSON string by stringifying it:
+ 
+    my $x = 3.1; # some variable containing a number
+diff --git a/XS.xs b/XS.xs
+index bfe808e..d65759f 100644
+--- a/XS.xs
++++ b/XS.xs
+@@ -24,6 +24,14 @@
+ #define HAVE_NO_POWL
+ #endif
+ 
++#if defined(_WIN32)
++#define STR_INF "1.#INF"
++#define STR_NAN "1.#IND"
++#else
++#define STR_INF "inf"
++#define STR_NAN "nan"
++#endif
++
+ /* some old perls do not have this, try to make it work, no */
+ /* guarantees, though. if it breaks, you get to keep the pieces. */
+ #ifndef UTF8_MAXBYTES
+@@ -963,12 +971,16 @@ encode_sv (pTHX_ enc_t *enc, SV *sv)
+       saveend = enc->end;
+       Gconvert (SvNVX (sv), NV_DIG, 0, enc->cur);
+ 
+-      if (strEQ(enc->cur, "nan") || strEQ(enc->cur, "inf")) {
++      if (strEQ(enc->cur, STR_INF) || strEQ(enc->cur, STR_NAN)
++          || (*enc->cur == '-' &&
++              (strEQ(enc->cur+1, STR_INF) || strEQ(enc->cur+1, STR_NAN)))
++          ) {
+ #ifdef STRINGIFY_INFNAN
+-        memmove(enc->cur+1, enc->cur, 4);
++        const int l = strlen(enc->cur);
++        memmove(enc->cur+1, enc->cur, l);
+         *enc->cur = '"';
+-        *(enc->cur + 4) = '"';
+-        *(enc->cur + 5) = 0;
++        *(enc->cur + l+1) = '"';
++        *(enc->cur + l+2) = 0;
+ #else
+         strncpy(enc->cur, "null\0", 5);
+ #endif

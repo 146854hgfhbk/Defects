@@ -1,0 +1,31 @@
+diff --git a/spec/cli_spec.lua b/spec/cli_spec.lua
+index 015f8c86876821c0ba6f7843279ad5a1a1be5ebb..35365dca775b33fd8f417e928fecb40033fbf70d 100644
+--- a/spec/cli_spec.lua
++++ b/spec/cli_spec.lua
+@@ -1461,6 +1461,13 @@ Critical error: Couldn't find configuration file spec/configs/config_404.luachec
+ ]], get_output "spec/samples/empty.lua --config=spec/configs/config_404.luacheckrc")
+             assert.equal(4, get_exitcode "spec/samples/empty.lua --config=spec/configs/config_404.luacheckrc")
+          end)
++
++         it("raises critical error on config with invalid options", function()
++            assert.equal([[
++Critical error: in config loaded from spec/configs/invalid_config.luacheckrc: invalid value of option 'ignore': array of strings expected, got string
++]], get_output "spec/samples/empty.lua --config=spec/configs/invalid_config.luacheckrc")
++            assert.equal(4, get_exitcode "spec/samples/empty.lua --config=spec/configs/invalid_config.luacheckrc")
++         end)
+       end)
+ 
+       describe("overwriting", function()
+diff --git a/src/luacheck/runner.lua b/src/luacheck/runner.lua
+index eb7cdf27e7809993fc6acd9ffa08ad1bc3623a53..24e0ec8fa371c84cde7eac75117c7a70096cb9f6 100644
+--- a/src/luacheck/runner.lua
++++ b/src/luacheck/runner.lua
+@@ -41,7 +41,7 @@ function runner.new(opts)
+    config_stack, err = config.stack_configs({base_config, override_config})
+ 
+    if not config_stack then
+-      error(("bad argument #1 to 'runner.new' (%s)"):format(err))
++      return nil, err
+    end
+ 
+    return Runner(config_stack)

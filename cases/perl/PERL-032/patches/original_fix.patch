@@ -1,0 +1,219 @@
+diff --git a/lib/Test2/API.pm b/lib/Test2/API.pm
+index 0bd5f2028..7f390c52d 100644
+--- a/lib/Test2/API.pm
++++ b/lib/Test2/API.pm
+@@ -175,9 +175,19 @@ our @EXPORT_OK = qw{
+     test2_enable_trace_stamps
+     test2_disable_trace_stamps
+     test2_trace_stamps_enabled
++
++    test2_add_pending_diag
++    test2_get_pending_diags
++    test2_clear_pending_diags
+ };
+ BEGIN { require Exporter; our @ISA = qw(Exporter) }
+ 
++my @PENDING_DIAGS;
++
++sub test2_add_pending_diag { push @PENDING_DIAGS => @_ }
++sub test2_get_pending_diags { @PENDING_DIAGS }
++sub test2_clear_pending_diags { my @out = @PENDING_DIAGS; @PENDING_DIAGS = (); return @out }
++
+ my $STACK       = $INST->stack;
+ my $CONTEXTS    = $INST->contexts;
+ my $INIT_CBS    = $INST->context_init_callbacks;
+@@ -445,6 +455,7 @@ sub context {
+             eval_error  => $eval_error,
+             child_error => $child_error,
+             _is_spawn   => [$pkg, $file, $line, $sub],
++            _start_fail_count => $hub->{failed} || 0,
+         },
+         'Test2::API::Context'
+     ) if $current && $depth_ok;
+@@ -493,15 +504,16 @@ sub context {
+     my $aborted = 0;
+     $current = bless(
+         {
+-            _aborted     => \$aborted,
+-            stack        => $stack,
+-            hub          => $hub,
+-            trace        => $trace,
+-            _is_canon    => 1,
+-            _depth       => $depth,
+-            errno        => $errno,
+-            eval_error   => $eval_error,
+-            child_error  => $child_error,
++            _aborted          => \$aborted,
++            stack             => $stack,
++            hub               => $hub,
++            trace             => $trace,
++            _is_canon         => 1,
++            _depth            => $depth,
++            errno             => $errno,
++            eval_error        => $eval_error,
++            child_error       => $child_error,
++            _start_fail_count => $hub->{failed} || 0,
+             $params{on_release} ? (_on_release => [$params{on_release}]) : (),
+         },
+         'Test2::API::Context'
+diff --git a/lib/Test2/API/Context.pm b/lib/Test2/API/Context.pm
+index 777a91e54..19613cabe 100644
+--- a/lib/Test2/API/Context.pm
++++ b/lib/Test2/API/Context.pm
+@@ -25,7 +25,7 @@ my %LOADED = (
+ use Test2::Util::ExternalMeta qw/meta get_meta set_meta delete_meta/;
+ use Test2::Util::HashBase qw{
+     stack hub trace _on_release _depth _is_canon _is_spawn _aborted
+-    errno eval_error child_error thrown
++    errno eval_error child_error thrown _failed _start_fail_count
+ };
+ 
+ # Private, not package vars
+@@ -42,6 +42,8 @@ sub init {
+     confess "The 'hub' attribute is required"
+         unless $self->{+HUB};
+ 
++    $self->{+_START_FAIL_COUNT} = $self->{+HUB}->{failed} || 0;
++
+     $self->{+_DEPTH} = 0 unless defined $self->{+_DEPTH};
+ 
+     $self->{+ERRNO}       = $! unless exists $self->{+ERRNO};
+@@ -64,6 +66,8 @@ sub DESTROY {
+     my $hub = $self->{+HUB};
+     my $hid = $hub->{hid};
+ 
++    $self->{+_FAILED} = ($hub->{failed} || 0) - $self->{+_START_FAIL_COUNT};
++
+     # Do not show the warning if it looks like an exception has been thrown, or
+     # if the context is not local to this process or thread.
+     {
+@@ -111,6 +115,12 @@ Cleaning up the CONTEXT stack...
+         $_->($self) for reverse @$hcbk;
+     }
+     $_->($self) for reverse @$ON_RELEASE;
++
++    if (my @diags = Test2::API::test2_clear_pending_diags()) {
++        if ($self->{+_FAILED} || ${$self->{+_ABORTED}}) {
++            $self->diag($_) for @diags;
++        }
++    }
+ }
+ 
+ # release exists to implement behaviors like die-on-fail. In die-on-fail you
+@@ -131,6 +141,8 @@ sub release {
+     my $hub = $self->{+HUB};
+     my $hid = $hub->{hid};
+ 
++    $self->{+_FAILED} = ($hub->{failed} || 0) - $self->{+_START_FAIL_COUNT};
++
+     croak "context thinks it is canon, but it is not"
+         unless $CONTEXTS->{$hid} && $CONTEXTS->{$hid} == $self;
+ 
+@@ -146,6 +158,12 @@ sub release {
+     }
+     $_->($self) for reverse @$ON_RELEASE;
+ 
++    if (my @diags = Test2::API::test2_clear_pending_diags()) {
++        if ($self->{+_FAILED} || ${$self->{+_ABORTED}}) {
++            $self->diag($_) for @diags;
++        }
++    }
++
+     # Do this last so that nothing else changes them.
+     # If one of the hooks dies then these do not get restored, this is
+     # intentional
+diff --git a/lib/Test2/Tools/Exception.pm b/lib/Test2/Tools/Exception.pm
+index 7762e8eb8..1e31a2bbf 100644
+--- a/lib/Test2/Tools/Exception.pm
++++ b/lib/Test2/Tools/Exception.pm
+@@ -5,7 +5,7 @@ use warnings;
+ our $VERSION = '1.302204';
+ 
+ use Carp qw/carp/;
+-use Test2::API qw/context/;
++use Test2::API qw/context test2_add_pending_diag test2_clear_pending_diags/;
+ 
+ our @EXPORT = qw/dies lives try_ok/;
+ use base 'Exporter';
+@@ -42,6 +42,8 @@ sub lives(&) {
+         $err = $@;
+     }
+ 
++    test2_add_pending_diag("Exception: $err");
++
+     # If the eval failed we want to set $@ to the error.
+     $@ = $err;
+     return 0;
+@@ -53,12 +55,13 @@ sub try_ok(&;$) {
+     my $ok = &lives($code);
+     my $err = $@;
+ 
++    my @diag = test2_clear_pending_diags();
++
+     # Context should be obtained AFTER code is run so that events inside the
+     # codeblock report inside the codeblock itself. This will also preserve $@
+     # as thrown inside the codeblock.
+     my $ctx = context();
+-    chomp(my $diag = "Exception: $err");
+-    $ctx->ok($ok, $name, [$diag]);
++    $ctx->ok($ok, $name, \@diag);
+     $ctx->release;
+ 
+     $@ = $err unless $ok;
+diff --git a/lib/Test2/Tools/Warnings.pm b/lib/Test2/Tools/Warnings.pm
+index ee364aa0d..cefed1106 100644
+--- a/lib/Test2/Tools/Warnings.pm
++++ b/lib/Test2/Tools/Warnings.pm
+@@ -4,7 +4,7 @@ use warnings;
+ 
+ our $VERSION = '1.302204';
+ 
+-use Test2::API qw/context/;
++use Test2::API qw/context test2_add_pending_diag/;
+ 
+ our @EXPORT = qw/warns warning warnings no_warnings/;
+ use base 'Exporter';
+@@ -17,7 +17,14 @@ sub warns(&) {
+     return $warnings;
+ }
+ 
+-sub no_warnings(&) { return !&warns(@_) }
++sub no_warnings(&) {
++    my $warnings = &warnings(@_);
++    return 1 if !@$warnings;
++
++    test2_add_pending_diag(@$warnings);
++
++    return 0;
++}
+ 
+ sub warning(&) {
+     my $code = shift;
+diff --git a/t/modules/Tools/Warnings.t b/t/modules/Tools/Warnings.t
+index 6dd7ecb90..8b43b3b62 100644
+--- a/t/modules/Tools/Warnings.t
++++ b/t/modules/Tools/Warnings.t
+@@ -11,7 +11,22 @@ is(warns { warn 'a' }, 1, "1 warning");
+ is(warns { warn 'a' for 1 .. 4 }, 4, "4 warnings");
+ 
+ ok(no_warnings { 0 }, "no warnings");
+-ok(!no_warnings { warn 'a' }, "warnings");
++
++ok(!no_warnings { warn 'blah 1' }, "warnings");
++
++my $es = intercept {
++    ok(!no_warnings { warn "blah 2\n" }, "warnings 1");
++    ok(no_warnings { warn "blah 3\n" }, "warnings 2")
++};
++
++like(
++    [grep { $_->isa('Test2::Event::Diag') } @$es],
++    [
++        {message => qr/Failed test 'warnings 2'/},
++        {message => "blah 3\n"},
++    ],
++    "When the test failed we got a diag about the warning, but we got no diag when it passed"
++);
+ 
+ is(
+     warnings { 0 },

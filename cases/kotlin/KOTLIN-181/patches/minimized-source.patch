@@ -1,0 +1,55 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRule.kt
+index 4ef5f5fb..486c136a 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRule.kt
+@@ -196,27 +199,33 @@ public class FunctionLiteralRule :
+     private fun ASTNode.exceedsMaxLineLength() = lineLengthWithoutNewlinePrefix() > maxLineLength
+ 
+     private fun ASTNode.wrapFirstParameterToNewline() =
+-        takeIf { it.treeParent.elementType == FUNCTION_LITERAL }
++        if (isFunctionLiteralLambdaWithNonEmptyValueParameterList()) {
++            // Disallow when max line is exceeded:
++            //    val foo = someCallExpression { someLongParameterName ->
++            //        bar()
++            //    }
++            val stopAtLeaf =
++                children()
++                    .first { it.elementType == VALUE_PARAMETER }
++                    .lastChildLeafOrSelf()
++                    .nextLeaf { !it.isWhiteSpaceWithoutNewline() && !it.isPartOfComment() }
++            leavesOnLine()
++                .takeWhile { it.prevLeaf() != stopAtLeaf }
++                .lineLengthWithoutNewlinePrefix()
++                .let { it > maxLineLength }
++        } else {
++            false
++        }
++
++    private fun ASTNode.isFunctionLiteralLambdaWithNonEmptyValueParameterList() =
++        takeIf { it.elementType == VALUE_PARAMETER_LIST }
++            ?.takeIf { it.findChildByType(VALUE_PARAMETER) != null }
++            ?.takeIf { it.treeParent.elementType == FUNCTION_LITERAL }
+             ?.treeParent
+             ?.takeIf { it.treeParent.elementType == LAMBDA_EXPRESSION }
+             ?.treeParent
+             ?.takeIf { it.treeParent.elementType == LAMBDA_ARGUMENT }
+-            ?.let {
+-                // Disallow when max line is exceeded:
+-                //    val foo = someCallExpression { someLongParameterName ->
+-                //        bar()
+-                //    }
+-                val stopAtLeaf =
+-                    children()
+-                        .first { it.elementType == VALUE_PARAMETER }
+-                        .lastChildLeafOrSelf()
+-                        .nextLeaf { !it.isWhiteSpaceWithoutNewline() && !it.isPartOfComment() }
+-                leavesOnLine()
+-                    .takeWhile { it.prevLeaf() != stopAtLeaf }
+-                    .lineLengthWithoutNewlinePrefix()
+-                    .let { it > maxLineLength }
+-            }
+-            ?: false
++            .let { it != null }
+ 
+     private fun rewriteToMultilineParameterList(
+         parameterList: ASTNode,

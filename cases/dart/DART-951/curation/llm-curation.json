@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-951",
+  "technical_evidence_sha256": "ce8a6b9d311c7fcb0de202a3dd87e8f54a57735e032f77788bc6ada4a6f28f2b",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "461be8094d53baaa20a6f3c5b15051af7c68be897e90ca7f23cc18fe26ac7d8a",
+  "reviewed_at": "2026-08-14T08:14:12.179698+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#901",
+  "rationale": "Issue #901 reports that a Line Separator (U+2028) inside a comment makes dartfmt abort with 'The formatter produced unexpected output', because the formatter trims trailing comment whitespace with String.trim() semantics while its self-check comparison (_isWhitespace in lib/src/string_compare.dart) recognized only ASCII whitespace (0x0009-0x000D, 0x0020). The minimized production patch changes exactly that predicate to the String.trim() set, which is the single behavioral cause of the reported mismatch; the commit message and PR #944 body ('Don't crash when trailing non-ASCII whitespace is trimmed. Fix #901') confirm the same defect. The minimized patch is one hunk in one function plus the doc comment describing that predicate; the unrelated 'library dart_style.src.string_compare;' removal present in the original commit was dropped during minimization, and no test, config, or feature change remains. The triggers are upstream tests from the same fixing commit, not curator-written, and they exercise pre-existing API: test/formatter_test.dart::whitespace unicode.unit formats comments containing U+2028 and the other Unicode whitespace code points end-to-end (the exact reported scenario), and test/string_compare_test.dart::test unicode whitespace characters exercises the already-existing equalIgnoringWhitespace entry point; the fix introduces no new public API. Strict evidence for both original and post-minimization runs passed all gates, with reproduced triggers limited to those two selectors, deterministic across 3 repetitions, buggy full-suite failures confined to the reproduced triggers, and fixed revision all green. active_same_project_root_causes is empty, so #901 is not a duplicate, and it matches allowed_root_cause_ids.\n\nIssue #901 reports that a U+2028 LINE SEPARATOR inside a comment makes dartfmt abort with 'The formatter produced unexpected output', where the reported output is the correctly formatted source with the separator removed. That symptom is exactly a disagreement between the trimming dartfmt applies to trailing comment whitespace (String.trim() semantics, Unicode-aware) and the ASCII-only `_isWhitespace` used by the self-check comparison in lib/src/string_compare.dart, which then judged input and output unequal. The minimized production patch changes only that predicate to the String.trim() whitespace set (including 0x2028), and nothing else: the `library dart_style.src.string_compare;` removal present in patches/original-commit.patch is excluded from patches/minimized-production.patch, and the minimized form still passes every strict gate (strict_post_minimization.checks all passed), so the excluded line was cosmetic and non-load-bearing. Triggers come from the same upstream commit, not curator invention. The reproduced ones are test/formatter_test.dart::'whitespace unicode.unit', an end-to-end format of comments containing U+2028 and the other Unicode spaces that matches the reported scenario, and test/string_compare_test.dart::'test unicode whitespace characters', which exercises the pre-existing `equalIgnoringWhitespace` entry point directly. Neither depends on an API introduced by the fix: `equalIgnoringWhitespace` and the .unit fixture runner predate the commit, and the only new test-side code is the `_unescapeUnicode` helper in test/utils.dart, which is test scaffolding for expressing code points in fixtures. The inverted assertion in string_compare_test (isFalse to isTrue) is the removal of an assertion that encoded the buggy ASCII-only assumption, not a feature extension; the independent formatter_test trigger anchors it to the reported defect. Buggy-revision differential and fixed-revision cleanliness are machine-verified in both strict reports (trigger.buggy_differential, trigger.fixed_clean, full_suite.fixed_all_green, 3 repetitions, 56 matrix runs). active_same_project_root_causes is empty and #901 is the sole allowed verified issue key, so no duplicate root cause.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T08:13:34.135872+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "461be8094d53baaa20a6f3c5b15051af7c68be897e90ca7f23cc18fe26ac7d8a",
+      "response_sha256": "06e6f8f79f8acc5ba3330477e60d4339218daafc755325cc68911e8072c92256",
+      "response_id": "msg_390e9316fb4b407bb811711e28da6d89",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7280217270315091,
+        "input_tokens": 23354,
+        "output_tokens": 719
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#901",
+      "rationale": "Issue #901 reports that a Line Separator (U+2028) inside a comment makes dartfmt abort with 'The formatter produced unexpected output', because the formatter trims trailing comment whitespace with String.trim() semantics while its self-check comparison (_isWhitespace in lib/src/string_compare.dart) recognized only ASCII whitespace (0x0009-0x000D, 0x0020). The minimized production patch changes exactly that predicate to the String.trim() set, which is the single behavioral cause of the reported mismatch; the commit message and PR #944 body ('Don't crash when trailing non-ASCII whitespace is trimmed. Fix #901') confirm the same defect. The minimized patch is one hunk in one function plus the doc comment describing that predicate; the unrelated 'library dart_style.src.string_compare;' removal present in the original commit was dropped during minimization, and no test, config, or feature change remains. The triggers are upstream tests from the same fixing commit, not curator-written, and they exercise pre-existing API: test/formatter_test.dart::whitespace unicode.unit formats comments containing U+2028 and the other Unicode whitespace code points end-to-end (the exact reported scenario), and test/string_compare_test.dart::test unicode whitespace characters exercises the already-existing equalIgnoringWhitespace entry point; the fix introduces no new public API. Strict evidence for both original and post-minimization runs passed all gates, with reproduced triggers limited to those two selectors, deterministic across 3 repetitions, buggy full-suite failures confined to the reproduced triggers, and fixed revision all green. active_same_project_root_causes is empty, so #901 is not a duplicate, and it matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/string_compare.dart",
+        "patches/trigger-tests.patch",
+        "test/whitespace/unicode.unit",
+        "test/string_compare_test.dart",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_original.checks.trigger.deterministic",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger patch carries two unrelated test-only reformatting edits in test/command_line_test.dart and their selectors are declared as triggers; they do not reproduce the defect (they pass on the buggy revision) but add noise to the trigger set and could be pruned.",
+        "test/whitespace/trailing.unit is declared as a trigger but does not reproduce (ASCII-only trailing whitespace), so it contributes no differential signal.",
+        "test/string_compare_test.dart inverts a prior assertion from isFalse to isTrue, so on its own it reads as an intentional expectation change; the defect character is established by the end-to-end unicode.unit trigger and the issue report rather than by that assertion.",
+        "The predicate drops U+180E relative to the old test list; this matches current String.trim() semantics but is not independently verified by the supplied evidence."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T08:14:12.179326+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "461be8094d53baaa20a6f3c5b15051af7c68be897e90ca7f23cc18fe26ac7d8a",
+      "response_sha256": "587f0fe40dca087cdefbed252b34879098839c8275a1a1bff2fa6e980e8676c8",
+      "response_id": "msg_f3ff16d6f1e646bfad636bc3c83b69ab",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8663211307794362,
+        "input_tokens": 23923,
+        "output_tokens": 850
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#901",
+      "rationale": "Issue #901 reports that a U+2028 LINE SEPARATOR inside a comment makes dartfmt abort with 'The formatter produced unexpected output', where the reported output is the correctly formatted source with the separator removed. That symptom is exactly a disagreement between the trimming dartfmt applies to trailing comment whitespace (String.trim() semantics, Unicode-aware) and the ASCII-only `_isWhitespace` used by the self-check comparison in lib/src/string_compare.dart, which then judged input and output unequal. The minimized production patch changes only that predicate to the String.trim() whitespace set (including 0x2028), and nothing else: the `library dart_style.src.string_compare;` removal present in patches/original-commit.patch is excluded from patches/minimized-production.patch, and the minimized form still passes every strict gate (strict_post_minimization.checks all passed), so the excluded line was cosmetic and non-load-bearing. Triggers come from the same upstream commit, not curator invention. The reproduced ones are test/formatter_test.dart::'whitespace unicode.unit', an end-to-end format of comments containing U+2028 and the other Unicode spaces that matches the reported scenario, and test/string_compare_test.dart::'test unicode whitespace characters', which exercises the pre-existing `equalIgnoringWhitespace` entry point directly. Neither depends on an API introduced by the fix: `equalIgnoringWhitespace` and the .unit fixture runner predate the commit, and the only new test-side code is the `_unescapeUnicode` helper in test/utils.dart, which is test scaffolding for expressing code points in fixtures. The inverted assertion in string_compare_test (isFalse to isTrue) is the removal of an assertion that encoded the buggy ASCII-only assumption, not a feature extension; the independent formatter_test trigger anchors it to the reported defect. Buggy-revision differential and fixed-revision cleanliness are machine-verified in both strict reports (trigger.buggy_differential, trigger.fixed_clean, full_suite.fixed_all_green, 3 repetitions, 56 matrix runs). active_same_project_root_causes is empty and #901 is the sole allowed verified issue key, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/original-commit.patch",
+        "patches/trigger-tests.patch",
+        "test/whitespace/unicode.unit",
+        "test/string_compare_test.dart",
+        "lib/src/string_compare.dart",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks",
+        "case.json:strict_original.checks.trigger.buggy_differential",
+        "case.json:allowed_root_cause_ids",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "patches/trigger-tests.patch carries cosmetic line-wrapping edits in test/command_line_test.dart that are unrelated to the defect; they are test-only and outside the production patch, but they add noise to the trigger artifact.",
+        "Two declared selectors (test/command_line_test.dart::'non-verbose shows description and common options' and 'verbose shows description and all options') do not reproduce and are pure formatting reflows; they contribute nothing as triggers and could be dropped.",
+        "test/whitespace/trailing.unit is materialized but is not among the reproduced triggers, so it acts as a regression guard rather than defect evidence.",
+        "The string_compare_test trigger asserts a reversed pre-existing expectation, so its standalone semantic link to issue #901 rests on the formatter_test unicode.unit trigger rather than on the unit test text alone.",
+        "The strict evidence confirms failure fingerprints, not that the buggy-revision failure message is verbatim the 'produced unexpected output' text quoted in the issue."
+      ]
+    }
+  ]
+}

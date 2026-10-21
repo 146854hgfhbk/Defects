@@ -1,0 +1,43 @@
+diff --git a/Sources/X509/CryptographicMessageSyntax/CMSOperations.swift b/Sources/X509/CryptographicMessageSyntax/CMSOperations.swift
+index cd1cd37750d7f97b91f2931bb7f517998e6742ee..ba9aff5c93cc57a10f1bfe2d56a011ece1e2a939 100644
+--- a/Sources/X509/CryptographicMessageSyntax/CMSOperations.swift
++++ b/Sources/X509/CryptographicMessageSyntax/CMSOperations.swift
+@@ -36,6 +36,7 @@ public enum CMS: Sendable {
+             return try self.signWithSigningTime(
+                 bytes,
+                 signatureAlgorithm: signatureAlgorithm,
++                additionalIntermediateCertificates: additionalIntermediateCertificates,
+                 certificate: certificate,
+                 privateKey: privateKey,
+                 signingTime: signingTime,
+diff --git a/Tests/X509Tests/CMSTests.swift b/Tests/X509Tests/CMSTests.swift
+index 2a9ec4bc2bbe9ad491c59d44b704573b91b7c0e8..7a3c40a2ece13f5e75626c5365e8537fe380cd35 100644
+--- a/Tests/X509Tests/CMSTests.swift
++++ b/Tests/X509Tests/CMSTests.swift
+@@ -1154,6 +1154,26 @@ final class CMSTests: XCTestCase {
+         XCTAssertValidSignature(isValidSignature)
+     }
+ 
++    func testSigningWithSigningTimeSignedAttrAndIntermediates() async throws {
++        let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
++        let signature = try CMS.sign(
++            data,
++            signatureAlgorithm: .ecdsaWithSHA256,
++            additionalIntermediateCertificates: [Self.intermediateCert],
++            certificate: Self.leaf2Cert,
++            privateKey: Self.leaf2Key,
++            signingTime: Date()
++        )
++        let isValidSignature = await CMS.isValidSignature(
++            dataBytes: data,
++            signatureBytes: signature,
++            trustRoots: CertificateStore([Self.rootCert])
++        ) {
++            Self.defaultPolicies
++        }
++        XCTAssertValidSignature(isValidSignature)
++    }
++
+     func testSigningAttachedWithSigningTimeSignedAttr() async throws {
+         let data: [UInt8] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+         let signature = try CMS.sign(

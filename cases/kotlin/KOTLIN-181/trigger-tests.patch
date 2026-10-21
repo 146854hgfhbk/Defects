@@ -1,0 +1,38 @@
+diff --git a/documentation/release-latest/docs/rules/experimental.md b/documentation/release-latest/docs/rules/experimental.md
+index 6b084dd85b..bfcdeaff2a 100644
+--- a/documentation/release-latest/docs/rules/experimental.md
++++ b/documentation/release-latest/docs/rules/experimental.md
+@@ -456,9 +456,6 @@ If the function literal contains multiple parameter and at least one parameter o
+
+ Rule id: `function-literal` (`standard` rule set)
+
+-!!! Note
+-    This rule is only run when `ktlint_code_style` is set to `ktlint_official` or when the rule is enabled explicitly.
+-
+ ## Function type modifier spacing
+
+ Enforce a single whitespace between the modifier list and the function type.
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRuleTest.kt
+index 8141a92350..3ed2f88938 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRuleTest.kt
+@@ -449,4 +449,19 @@ class FunctionLiteralRuleTest {
+                 LintViolation(3, 77, "Newline expected before closing brace"),
+             ).isFormattedAs(formattedCode)
+     }
++
++    @Test
++    fun `Issue 2331 - Given a function literal with redundant arrow`() {
++        val code =
++            """
++            fun foo(block: () -> Unit): Unit = foo { -> block() }
++            """.trimIndent()
++        val formattedCode =
++            """
++            fun foo(block: () -> Unit): Unit = foo { block() }
++            """.trimIndent()
++        functionLiteralRuleAssertThat(code)
++            .hasLintViolation(1, 42, "Arrow is redundant when parameter list is empty")
++            .isFormattedAs(formattedCode)
++    }
+ }

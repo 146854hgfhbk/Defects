@@ -1,0 +1,59 @@
+diff --git a/Sources/CasePaths/Operators.swift b/Sources/CasePaths/Operators.swift
+index af48b3c..b5e1ea3 100644
+--- a/Sources/CasePaths/Operators.swift
++++ b/Sources/CasePaths/Operators.swift
+@@ -142,6 +142,19 @@ public prefix func / <Root>(
+   (/root).extract(from:)
+ }
+ 
++/// Returns a void case path for a case with no associated value.
++///
++/// - Note: This operator is only intended to be used with enum cases that have no associated
++///   values. Its behavior is otherwise undefined.
++/// - Parameter root: A case with no an associated value.
++/// - Returns: A void case path.
++@_disfavoredOverload
++public prefix func / <Root>(
++  root: Root
++) -> (Root?) -> Void? {
++  (/root).extract(from:)
++}
++
+ precedencegroup CasePathCompositionPrecedence {
+   associativity: right
+ }
+diff --git a/Tests/CasePathsTests/CasePathsTests.swift b/Tests/CasePathsTests/CasePathsTests.swift
+index 3597a1b..ab4e4c6 100644
+--- a/Tests/CasePathsTests/CasePathsTests.swift
++++ b/Tests/CasePathsTests/CasePathsTests.swift
+@@ -824,6 +824,11 @@ final class CasePathsTests: XCTestCase {
+       "hello, world")
+ 
+     XCTAssertNil((/Result.failure).extract(from: result))
++
++    let success: (Result<String?, Error>) -> String? = /Result.success
++    XCTAssertEqual(success(result), "hello, world")
++    let failure: (Result<String?, Error>) -> Error? = /Result.failure
++    XCTAssertNil(failure(result))
+   }
+ 
+   func testExtractFromOptionalRoot() {
+@@ -852,6 +857,18 @@ final class CasePathsTests: XCTestCase {
+     XCTAssertNil((/Foo.foo).extract(from: opt))
+     XCTAssertNil((/Foo.bar).extract(from: opt))
+     XCTAssertNil((/Foo.baz).extract(from: opt))
++
++    let extractExpression: (Foo?) -> String? = /Foo.foo
++    XCTAssertNotNil(extractExpression(.some(.foo("blob1"))))
++    XCTAssertNil(extractExpression(.some(.bar("blob2"))))
++    XCTAssertNil(extractExpression(.some(.baz)))
++    XCTAssertNil(extractExpression(nil))
++
++    let voidExtractExpression: (Foo?) -> Void? = /Foo.baz
++    XCTAssertNil(voidExtractExpression(.some(.foo("blob1"))))
++    XCTAssertNil(voidExtractExpression(.some(.bar("blob2"))))
++    XCTAssertNotNil(voidExtractExpression(.some(.baz)))
++    XCTAssertNil(voidExtractExpression(nil))
+   }
+ 
+   func testExtractFromOptionalRootWithEmbeddedTagBits() {

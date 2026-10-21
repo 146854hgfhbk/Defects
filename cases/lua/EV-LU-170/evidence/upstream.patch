@@ -1,0 +1,113 @@
+diff --git a/inspect.lua b/inspect.lua
+index 2be3a212614ce5e43cf79b79477bcbcb63edaec7..638a673a708ab1a31ceb041c96c7266a24ffe203 100644
+--- a/inspect.lua
++++ b/inspect.lua
+@@ -145,6 +145,13 @@ local function parse_filter(filter)
+   return function(x) return dictionary[x] end
+ end
+ 
++local function makePath(path, key)
++  local newPath, len = {}, #path
++  for i=1, len do newPath[i] = path[i] end
++  newPath[len+1] = key
++  return newPath
++end
++
+ -------------------------------------------------------------------
+ function inspect.inspect(rootObject, options)
+   options       = options or {}
+@@ -202,11 +209,11 @@ function inspect.inspect(rootObject, options)
+   local function putKey(k)
+     if isIdentifier(k) then return puts(k) end
+     puts( "[" )
+-    putValue(k)
++    putValue(k, {})
+     puts("]")
+   end
+ 
+-  local function putTable(t)
++  local function putTable(t, path)
+     if alreadyVisited(t) then
+       puts('<table ', getId(t), '>')
+     elseif level >= depth then
+@@ -230,7 +237,7 @@ function inspect.inspect(rootObject, options)
+         for i=1, length do
+           needsComma = commaControl(needsComma)
+           puts(' ')
+-          putValue(t[i])
++          putValue(t[i], makePath(path, i))
+         end
+ 
+         for _,k in ipairs(dictKeys) do
+@@ -238,14 +245,14 @@ function inspect.inspect(rootObject, options)
+           tabify()
+           putKey(k)
+           puts(' = ')
+-          putValue(t[k])
++          putValue(t[k], makePath(path, k))
+         end
+ 
+         if mt then
+           needsComma = commaControl(needsComma)
+           tabify()
+           puts('<metatable> = ')
+-          putValue(mt)
++          putValue(mt, makePath(path, '<metatable>'))
+         end
+       end)
+ 
+@@ -261,8 +268,8 @@ function inspect.inspect(rootObject, options)
+   end
+ 
+   -- putvalue is forward-declared before putTable & putKey
+-  putValue = function(v)
+-    if filter(v) then
++  putValue = function(v, path)
++    if filter(v, path) then
+       puts('<filtered>')
+     else
+       local tv = type(v)
+@@ -272,14 +279,14 @@ function inspect.inspect(rootObject, options)
+       elseif tv == 'number' or tv == 'boolean' or tv == 'nil' then
+         puts(tostring(v))
+       elseif tv == 'table' then
+-        putTable(v)
++        putTable(v, path)
+       else
+         puts('<',tv,' ',getId(v),'>')
+       end
+     end
+   end
+ 
+-  putValue(rootObject)
++  putValue(rootObject, {})
+ 
+   return table.concat(buffer)
+ end
+diff --git a/spec/inspect_spec.lua b/spec/inspect_spec.lua
+index 72e38d4c31c7cf426b45615537ba71daa1540143..36daac8b3e418a6edfa7d56b7f378c71d14cd1d6 100644
+--- a/spec/inspect_spec.lua
++++ b/spec/inspect_spec.lua
+@@ -216,6 +216,22 @@ describe( 'inspect', function()
+ 
+       end)
+ 
++      it('filters by path', function()
++        local people = { tony = { age = 21 }, martha = { age = 34} }
++        local hideMarthaAge = function(_,path)
++          return table.concat(path, '.') == 'martha.age'
++        end
++
++        assert.equals(inspect(people, {filter = hideMarthaAge}), [[{
++  martha = {
++    age = <filtered>
++  },
++  tony = {
++    age = 21
++  }
++}]])
++      end)
++
+       it('does not increase the table ids', function()
+         local a = {'this is a'}
+         local b = {}

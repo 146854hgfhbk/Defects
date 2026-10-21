@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1421",
+  "technical_evidence_sha256": "0a959c89225485a090c37bcf07bfc97e0307297af4463f3577b64c8beb0141ef",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "2ff1d0528789d8c2acc53bafb84e48bdcead5763c07d97317e6dbd62fa14c33d",
+  "reviewed_at": "2026-08-16T07:30:47.678236+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/string_scanner#80",
+  "rationale": "Issue #80 reports a RangeError from LineScanner when a zero-length pattern matches between CR and LF ('foo\\nbar\\r' then RegExp('(?!x)')). The buggy code's _newlinesIn unconditionally called newlines.removeLast() whenever _betweenCRLF was true, so an empty match text produced an empty match list and removeLast() threw. The minimized production patch (patches/minimized-production.patch) changes exactly that: _newlinesIn gains a required endPosition parameter and replaces the unconditional _betweenCRLF removal with a boundary-aware guard (endPosition < string.length && text.endsWith('\\r') && string[endPosition] == '\\n'), plus the three call sites updated to pass endPosition. Tracing the trigger against the minimized patch: 'foo\\nbar\\r' yields two regex matches, the trailing CR is removed by the new guard (line 1, column 4, identical to prior behavior), and the subsequent zero-length match yields an empty list where the guard short-circuits on text.endsWith('\\r'), so no removeLast and no RangeError. The minimized patch deliberately excludes the unrelated parts of the upstream commit: the CHANGELOG/pubspec version bump, the test-file rewrites, the newPosition == position early return, the newPosition == 0 reset, the column-arithmetic/lastIndexOf rework, and the _newlineRegExp rewrite (the second, independent CHANGELOG bullet about column when position != 0). No formatting-only, docs-only, config-only, or test-only change remains in the minimized production patch; the added inline comment documents the new guard itself. The trigger is the upstream regression test from the fix commit, verbatim reproducing the issue's minimal repro and using only pre-existing public API (expect, line, column) — no API introduced by the fix. Both strict runtime gates (strict_original and strict_post_minimization) report all checks passed with zero failed checks: single unique selector, buggy differential reproduction, deterministic fingerprints across 3 repetitions, fixed isolated/suite/reversed all clean, full suite green on fixed and failing only on the declared trigger on buggy. active_same_project_root_causes is empty, so no duplicate root cause; dart-archive/string_scanner#80 is the supplied allowed id (officially transferred to dart-lang/tools#1797, with the fix commit 084b201c literally citing the original issue URL).\n\nIssue #80 reports a RangeError when LineScanner.scan matches a zero-length pattern while positioned between CR and LF; the reproduction is scanner.expect('foo\\nbar\\r') followed by scanner.expect(RegExp('(?!x)')). The buggy code in lib/src/line_scanner.dart unconditionally executes `if (_betweenCRLF) newlines.removeLast();` inside _newlinesIn, which throws when the newline match list is empty (the empty-match case), matching the reported symptom exactly. The minimized production patch replaces that state-based removal with a boundary-aware condition (endPosition < string.length && text.endsWith('\\r') && string[endPosition] == '\\n'), which is precisely why the empty-text call no longer removes from an empty list, and threads the required endPosition through the three existing call sites (both position-setter branches and scan). Every line in the minimized patch is required for the new signature or the new condition: no regex rewrite, no position-setter column re-derivation, no CHANGELOG, no pubspec version bump, no test-file edits are carried into it, so the upstream commit's second, independent CHANGELOG bullet (column computation when position is non-zero) and the lone-CR regex change are excluded rather than bundled. Note that the supplied semantic_justification argues the position-setter arithmetic is entailed by the endPosition rework; that argument is not needed here because the minimized patch does not contain those changes and still passes the strict gates. The trigger is the upstream regression test from the same fix commit (PR #81), 'scanning a zero length match between CR LF does not fail', which is a literal transcription of the issue's reproduction and exercises only pre-existing public API (LineScanner, expect, line, column) — endPosition is a private-method parameter, so the trigger does not depend on any API introduced by the fix. active_same_project_root_causes is empty and dart-archive/string_scanner#80 is the single allowed verified issue key, so this root cause is not a duplicate. Machine-generated strict evidence reports all gates passed both originally and post-minimization: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential reproducing exactly the declared selector, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), matrix.complete (32 runs), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green; no failed checks and no runtime result is being overridden or assumed.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T07:30:06.968109+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "2ff1d0528789d8c2acc53bafb84e48bdcead5763c07d97317e6dbd62fa14c33d",
+      "response_sha256": "4e10c8f0297b7748d63f814e28643254285b6fc61ec9ba62bebc531353cf37dd",
+      "response_id": "msg_1c45eb0624954a67956c871961570ac7",
+      "attempts": 3,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.2666511062023218,
+        "input_tokens": 21144,
+        "output_tokens": 929
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/string_scanner#80",
+      "rationale": "Issue #80 reports a RangeError from LineScanner when a zero-length pattern matches between CR and LF ('foo\\nbar\\r' then RegExp('(?!x)')). The buggy code's _newlinesIn unconditionally called newlines.removeLast() whenever _betweenCRLF was true, so an empty match text produced an empty match list and removeLast() threw. The minimized production patch (patches/minimized-production.patch) changes exactly that: _newlinesIn gains a required endPosition parameter and replaces the unconditional _betweenCRLF removal with a boundary-aware guard (endPosition < string.length && text.endsWith('\\r') && string[endPosition] == '\\n'), plus the three call sites updated to pass endPosition. Tracing the trigger against the minimized patch: 'foo\\nbar\\r' yields two regex matches, the trailing CR is removed by the new guard (line 1, column 4, identical to prior behavior), and the subsequent zero-length match yields an empty list where the guard short-circuits on text.endsWith('\\r'), so no removeLast and no RangeError. The minimized patch deliberately excludes the unrelated parts of the upstream commit: the CHANGELOG/pubspec version bump, the test-file rewrites, the newPosition == position early return, the newPosition == 0 reset, the column-arithmetic/lastIndexOf rework, and the _newlineRegExp rewrite (the second, independent CHANGELOG bullet about column when position != 0). No formatting-only, docs-only, config-only, or test-only change remains in the minimized production patch; the added inline comment documents the new guard itself. The trigger is the upstream regression test from the fix commit, verbatim reproducing the issue's minimal repro and using only pre-existing public API (expect, line, column) — no API introduced by the fix. Both strict runtime gates (strict_original and strict_post_minimization) report all checks passed with zero failed checks: single unique selector, buggy differential reproduction, deterministic fingerprints across 3 repetitions, fixed isolated/suite/reversed all clean, full suite green on fixed and failing only on the declared trigger on buggy. active_same_project_root_causes is empty, so no duplicate root cause; dart-archive/string_scanner#80 is the supplied allowed id (officially transferred to dart-lang/tools#1797, with the fix commit 084b201c literally citing the original issue URL).",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "issue_evidence.body_excerpt",
+        "issue_evidence.upstream_fix",
+        "trigger_tests[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "traceability.fixed_commit.message",
+        "active_same_project_root_causes",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The minimized patch retains the legacy _newlineRegExp (r'\\r\\n?|\\n') and the surviving 'if (_betweenCRLF) newlines.removeLast();' in the backward branch of the position setter, so a structurally similar RangeError remains reachable when moving position backwards; this preserves pre-existing behavior rather than introducing a regression, but the benchmark case covers only the forward/zero-length manifestation of #80.",
+        "The case's semantic_justification argues that the position-setter column arithmetic and the newPosition == 0 / == position guards are entailed by the fix; the minimized patch supplied does not contain them, so that argument is not relied upon. Judgment rests on the minimized patch content, which is narrower and cleaner than the justification describes.",
+        "The upstream commit bundles a second, independent defect (column when setting position from a non-zero offset). It is correctly excluded here, but the fixed_revision named in the case is the full upstream commit, so any tooling that builds the fixed side from that SHA rather than from the minimized patch would include the unrelated change.",
+        "Runtime conclusions are taken entirely from the supplied machine-generated strict gates; no build or test execution was independently performed here."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-16T07:30:47.678020+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "2ff1d0528789d8c2acc53bafb84e48bdcead5763c07d97317e6dbd62fa14c33d",
+      "response_sha256": "2c2202ab51f47e800aa80a6a967f3fbb28bd615df864279d93896e594b705ca1",
+      "response_id": "msg_323c1380283e4565b7e0a08a6d22c299",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8393201670315091,
+        "input_tokens": 19696,
+        "output_tokens": 902
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/string_scanner#80",
+      "rationale": "Issue #80 reports a RangeError when LineScanner.scan matches a zero-length pattern while positioned between CR and LF; the reproduction is scanner.expect('foo\\nbar\\r') followed by scanner.expect(RegExp('(?!x)')). The buggy code in lib/src/line_scanner.dart unconditionally executes `if (_betweenCRLF) newlines.removeLast();` inside _newlinesIn, which throws when the newline match list is empty (the empty-match case), matching the reported symptom exactly. The minimized production patch replaces that state-based removal with a boundary-aware condition (endPosition < string.length && text.endsWith('\\r') && string[endPosition] == '\\n'), which is precisely why the empty-text call no longer removes from an empty list, and threads the required endPosition through the three existing call sites (both position-setter branches and scan). Every line in the minimized patch is required for the new signature or the new condition: no regex rewrite, no position-setter column re-derivation, no CHANGELOG, no pubspec version bump, no test-file edits are carried into it, so the upstream commit's second, independent CHANGELOG bullet (column computation when position is non-zero) and the lone-CR regex change are excluded rather than bundled. Note that the supplied semantic_justification argues the position-setter arithmetic is entailed by the endPosition rework; that argument is not needed here because the minimized patch does not contain those changes and still passes the strict gates. The trigger is the upstream regression test from the same fix commit (PR #81), 'scanning a zero length match between CR LF does not fail', which is a literal transcription of the issue's reproduction and exercises only pre-existing public API (LineScanner, expect, line, column) — endPosition is a private-method parameter, so the trigger does not depend on any API introduced by the fix. active_same_project_root_causes is empty and dart-archive/string_scanner#80 is the single allowed verified issue key, so this root cause is not a duplicate. Machine-generated strict evidence reports all gates passed both originally and post-minimization: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential reproducing exactly the declared selector, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups over 3 repetitions), matrix.complete (32 runs), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green; no failed checks and no runtime result is being overridden or assumed.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "issue_evidence.body_excerpt",
+        "issue_evidence.expected",
+        "traceability.fixed_commit.message",
+        "trigger_tests[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The minimized fix is narrower than upstream: it keeps the old `\\r\\n?|\\n` regex and the original column arithmetic, so the lone-CR line-counting behavior and the non-zero-position column bug described in the second CHANGELOG bullet remain present at the fixed revision.",
+        "The backward branch of the position setter still calls `if (_betweenCRLF) newlines.removeLast();` after _newlinesIn, so a removal can occur twice for that path; this is pre-existing structure preserved by minimization, but it means the fixed revision is not identical in behavior to upstream 1.4.0.",
+        "The issue was officially transferred to dart-lang/tools#1797 and the source repository is archived, so the original issue URL may only resolve via redirect; the root_cause_id uses the pre-transfer key as supplied in allowed_root_cause_ids.",
+        "All build and test claims rest entirely on the supplied strict evidence blocks; no runtime verification was performed during curation."
+      ]
+    }
+  ]
+}

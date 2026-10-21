@@ -1,0 +1,73 @@
+{
+  "candidate_sha": "27a78e0856ed81a648f0c819d8de80d3c7540b71",
+  "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+  "source": "merged_pull_request",
+  "instance_id": "julialinearalgebra__genericlinearalgebra.jl-125",
+  "swe_rebench": {
+    "base_commit": "7d686836f5e1994d24b309693b3090f18aa04b86",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "Singular value decomposition",
+      "LAPACK wrappers"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 70,
+      "url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/70",
+      "state": "closed",
+      "title": "svdvals! failing for empty matrices",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "The singular value decompositon fails for empty matrices with element types not `<: BlasFloat`:\r\n\r\n```julia\r\njulia> svdvals!(Float16.(ones(10,0)))\r\nERROR: DimensionMismatch(\"length of diagonal vector is 0, length of off-diagonal vector is 0\")\r\nStacktrace:\r\n [1] Bidiagonal\r\n   @ /home/julia/julia/usr/share/julia/stdlib/v1.6/LinearAlgebra/src/bidiag.jl:11 [inlined]\r\n [2] Bidiagonal\r\n   @ /home/julia/julia/usr/share/julia/stdlib/v1.6/LinearAlgebra/src/bidiag.jl:17 [inlined]\r\n [3] Bidiagonal\r\n   @ /home/julia/julia/usr/share/julia/stdlib/v1.6/LinearAlgebra/src/bidiag.jl:75 [inlined]\r\n [4] bidiagonalize!(A::Matrix{Float16})\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/JoKjw/src/svd.jl:269\r\n [5] svdvals!(A::Matrix{Float16}; tol::Float16, debug::Bool)\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/JoKjw/src/svd.jl:487\r\n [6] svdvals!(A::Matrix{Float16})\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/JoKjw/src/svd.jl:487\r\n [7] top-level scope\r\n   @ REPL[121]:1\r\n\r\njulia> svdvals!(BigFloat.(ones(10,0)))\r\nERROR: DimensionMismatch(\"length of diagonal vector is 0, length of off-diagonal vector is 0\")\r\nStacktrace:\r\n [1] Bidiagonal\r\n   @ /home/julia/julia/usr/share/julia/stdlib/v1.6/LinearAlgebra/src/bidiag.jl:11 [inlined]\r\n [2] Bidiagonal\r\n   @ /home/julia/julia/usr/share/julia/stdlib/v1.6/LinearAlgebra/src/bidiag.jl:17 [inlined]\r\n [3] Bidiagonal\r\n   @ /home/julia/julia/usr/share/julia/stdlib/v1.6/LinearAlgebra/src/bidiag.jl:75 [inlined]\r\n [4] bidiagonalize!(A::Matrix{BigFloat})\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/JoKjw/src/svd.jl:269\r\n [5] svdvals!(A::Matrix{BigFloat}; tol::BigFloat, debug::Bool)\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/JoKjw/src/svd.jl:487\r\n [6] svdvals!(A::Matrix{BigFloat})\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/JoKjw/src/svd.jl:487\r\n [7] top-level scope\r\n   @ REPL[122]:1\r\n\r\njulia> svdvals!(Float32.(ones(10,0)))\r\nFloat32[]"
+    },
+    {
+      "number": 125,
+      "url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/125",
+      "state": "closed",
+      "title": "Fix SVD of matrices with zero sizes",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fixes https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/70"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        70
+      ],
+      "pull_request": 125,
+      "fix_commit": "27a78e0856ed81a648f0c819d8de80d3c7540b71",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Fix SVD of matrices with zero sizes (#125)",
+    "commit_issue_refs": [
+      125
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 125,
+    "pull_request_title": "Fix SVD of matrices with zero sizes",
+    "pull_request_issue_refs": [
+      70
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    70
+  ],
+  "cross_repository_issue_records": []
+}

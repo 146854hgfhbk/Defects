@@ -1,0 +1,22 @@
+diff --git a/detekt-rules-errorprone/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/bugs/UnconditionalJumpStatementInLoopSpec.kt b/detekt-rules-errorprone/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/bugs/UnconditionalJumpStatementInLoopSpec.kt
+index 4384d505fdb..05e01869a0c 100644
+--- a/detekt-rules-errorprone/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/bugs/UnconditionalJumpStatementInLoopSpec.kt
++++ b/detekt-rules-errorprone/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/bugs/UnconditionalJumpStatementInLoopSpec.kt
+@@ -352,4 +352,17 @@ class UnconditionalJumpStatementInLoopSpec {
+ 
+         assertThat(findings).isEmpty()
+     }
++
++    // https://github.com/detekt/detekt/issues/6442
++    @Test
++    fun `does not report a conditional break in a single body expression`() {
++        val code = """
++            import java.util.concurrent.BlockingQueue
++            
++            fun <T> BlockingQueue<T>.pollEach(action: (T) -> Unit) {
++                while (true) this.poll()?.let { action(it) } ?: break
++            }
++        """.trimIndent()
++        assertThat(subject.compileAndLint(code)).isEmpty()
++    }
+ }

@@ -1,0 +1,70 @@
+diff --git a/Sources/ArgumentParser/Parsing/CommandParser.swift b/Sources/ArgumentParser/Parsing/CommandParser.swift
+index b3296d6..96a4592 100644
+--- a/Sources/ArgumentParser/Parsing/CommandParser.swift
++++ b/Sources/ArgumentParser/Parsing/CommandParser.swift
+@@ -38,7 +38,12 @@ struct CommandParser {
+   }
+ 
+   var commandStack: [ParsableCommand.Type] {
+-    let result = decodedArguments.compactMap { $0.commandType }
++    // Filter to only include types that exist in the command tree.
++    // This prevents @OptionGroup types that happen to conform to
++    // ParsableCommand from being included in the command stack (#578).
++    let result = decodedArguments
++      .compactMap { $0.commandType }
++      .filter { !commandTree.path(to: $0).isEmpty }
+     if currentNode.element == result.last {
+       return result
+     } else {
+diff --git a/Tests/ArgumentParserUnitTests/HelpGenerationTests.swift b/Tests/ArgumentParserUnitTests/HelpGenerationTests.swift
+index cc3973c..b56ab99 100644
+--- a/Tests/ArgumentParserUnitTests/HelpGenerationTests.swift
++++ b/Tests/ArgumentParserUnitTests/HelpGenerationTests.swift
+@@ -1492,4 +1492,47 @@ extension HelpGenerationTests {
+         """)
+     #endif
+   }
++
++  // MARK: - Option group usage string regression (#578)
++
++  private struct OptionGroupOptions: ParsableCommand {
++    @Option
++    var num: Int = 0
++  }
++
++  private struct OptionGroupCommand: ParsableCommand {
++    static let configuration = CommandConfiguration(commandName: "test")
++
++    @OptionGroup
++    var options: OptionGroupOptions
++
++    @Argument
++    var arg: String = ""
++  }
++
++  func testOptionGroupUsageDoesNotIncludeGroupName() throws {
++    // The usage string from --help should not prepend the OptionGroup
++    // type name when all arguments are optional (#578).
++    let result = try OptionGroupCommand.parseAsRoot(["--help"])
++    guard let helpCommand = result as? HelpCommand else {
++      XCTFail("Expected HelpCommand, got \(type(of: result))")
++      return
++    }
++    let helpText = helpCommand.generateHelp(screenWidth: 80)
++    AssertEqualStrings(
++      actual: helpText,
++      expected: """
++        USAGE: test [--num <num>] [<arg>]
++
++        ARGUMENTS:
++          <arg>
++
++        OPTIONS:
++          --num <num>             (default: 0)
++          -h, --help              Show help information.
++
++        """)
++  }
+ }
++
++

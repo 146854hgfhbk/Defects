@@ -1,0 +1,133 @@
+diff --git a/lib/src/widgets/tree_view/theme.dart b/lib/src/widgets/tree_view/theme.dart
+index 97abc85..9e38964 100644
+--- a/lib/src/widgets/tree_view/theme.dart
++++ b/lib/src/widgets/tree_view/theme.dart
+@@ -142,7 +142,7 @@ abstract class AnsiTreeHeaderTheme {
+   @DefaultValue(true)
+   bool get showHash;
+ 
+-  bool get hasBorder => border.style != AnsiBorderStyle.none;
++  bool get hasBorder => border.style != AnsiBorderStyle.none && border.type != AnsiBorderType.none;
+ }
+ 
+ /// **AnsiTreeNodeTheme**
+diff --git a/lib/src/widgets/tree_view/tree_view.dart b/lib/src/widgets/tree_view/tree_view.dart
+index dc05297..011e10e 100644
+--- a/lib/src/widgets/tree_view/tree_view.dart
++++ b/lib/src/widgets/tree_view/tree_view.dart
+@@ -44,15 +44,16 @@ class AnsiTreeView extends AnsiWidget {
+     if (!theme.headerTheme.hideHeader) {
+       final String hash = theme.headerTheme.showHash ? '<${data.hashCode.toString().italic()}>'.dim() : '';
+ 
+-      String header = AnsiGrid.list(
+-        <String>[
+-          theme.headerTheme.customHeader.isNullOrEmpty ? '${data.runtimeType}$hash' : theme.headerTheme.customHeader!,
+-        ],
+-        theme: AnsiGridTheme(
+-          border: theme.headerTheme.border,
+-          transparent: true,
+-          headerTextTheme: theme.headerTheme.textTheme,
+-        ),
++      String header = AnsiOutlinedText(
++        theme.headerTheme.customHeader.isNullOrEmpty ? '${data.runtimeType}$hash' : theme.headerTheme.customHeader!,
++        border: theme.headerTheme.border,
++        transparent: true,
++        foregroundColor: theme.headerTheme.textTheme.foregroundColor,
++        backgroundColor: theme.headerTheme.textTheme.backgroundColor,
++        padding: theme.headerTheme.textTheme.padding,
++        style: theme.headerTheme.textTheme.style,
++        alignment: theme.headerTheme.textTheme.alignment,
++        fixedWidth: theme.headerTheme.textTheme.fixedWidth,
+       ).formattedText;
+ 
+       final List<String> headerRows = header.split(AnsiEscapeCodes.newLine).where((String line) {
+@@ -68,14 +69,12 @@ class AnsiTreeView extends AnsiWidget {
+         final String newChar = theme.headerTheme.border.style.boxDrawingSet.middleTopEdge;
+         final String temp = newChar.isEmpty
+             ? ''
+-            : headerRows[2]
+-                .unformatted
++            : headerRows.last.unformatted
+                 .replaceRange(prefixLength, prefixLength + 1, newChar)
+                 .colored(foreground: theme.headerTheme.border.color);
+ 
+         header = <String>[
+-          headerRows[0],
+-          headerRows[1],
++          ...headerRows.sublist(0, headerRows.length - 1),
+           temp,
+         ].join(AnsiEscapeCodes.newLine);
+       }
+diff --git a/test/widgets/tree_view/mocks.dart b/test/widgets/tree_view/mocks.dart
+index af374e5..ce76998 100644
+--- a/test/widgets/tree_view/mocks.dart
++++ b/test/widgets/tree_view/mocks.dart
+@@ -116,6 +116,30 @@ const String treeviewNestedMock = '''
+                    └── (empty)
+ ''';
+ 
++const String treeviewWithVerticalPaddedHeaderMock = '''[38;5;31m┌───────┐[0m
++[38;5;31m│[0m       [38;5;31m│[0m
++[38;5;31m│[0mNode<1>[38;5;31m│[0m
++[38;5;31m│[0m       [38;5;31m│[0m
++[38;5;31m└──┬────┘[0m
++   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m7845445335[23m[0m
++   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++        [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
++        [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m1231231231[23m[0m
++        [38;5;31m│[0m   [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++        [38;5;31m│[0m   [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++        [38;5;31m│[0m        [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m0[22m[0m
++        [38;5;31m│[0m            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m34454354453[23m[0m
++        [38;5;31m│[0m            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++        [38;5;31m│[0m            [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++        [38;5;31m│[0m                 [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(empty)[23m[0m
++        [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1m1[22m[0m
++            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mid[22m[0m: [38;5;145m[3m5463456343[23m[0m
++            [38;5;31m├[0m[38;5;31m──[0m [38;5;15m[1mchild[22m[0m: [38;5;145m[3mnull[23m[0m
++            [38;5;31m└[0m[38;5;31m──[0m [38;5;15m[1mnodes[22m[0m
++                 [38;5;31m└[0m[38;5;31m──[0m [38;5;145m[3m(empty)[23m[0m
++''';
++
+ const String treeviewEmptyMock = '''
+ _Map<String, dynamic>
+          ├── map
+diff --git a/test/widgets/tree_view/tree_view_test.dart b/test/widgets/tree_view/tree_view_test.dart
+index e7b41e4..2781040 100644
+--- a/test/widgets/tree_view/tree_view_test.dart
++++ b/test/widgets/tree_view/tree_view_test.dart
+@@ -122,6 +122,33 @@ void main() {
+       expect(actual.unformatted, treeviewNestedMock);
+     });
+ 
++    test('header with vertical padding', () {
++      final Node node1 = Node(
++        id: '1231231231',
++        nodes: <Node>[
++          Node(id: '34454354453'),
++        ],
++      );
++      final Node node2 = Node(id: '5463456343');
++      final Node node3 = Node(
++        id: '7845445335',
++        nodes: <Node>[
++          node1,
++          node2,
++        ],
++      );
++
++      final String actual = AnsiTreeView(
++        node3,
++        theme: AnsiTreeViewTheme.$default().copyWith.headerTheme.textTheme(
++              AnsiTextTheme(
++                padding: AnsiPadding.vertical(1),
++              ),
++            ),
++      ).toString();
++      expect(actual.toString(), treeviewWithVerticalPaddedHeaderMock);
++    });
++
+     test('empty', () {
+       final Map<String, dynamic> map = <String, dynamic>{
+         'map': <String, dynamic>{

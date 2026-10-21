@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "case_id": "JULIA-616",
+  "status": "trigger_ready",
+  "mode": "dedicated_script",
+  "origin": "manual_mwe_from_upstream_fix",
+  "script_sha256": "8d9d9e2b26a5c970b10720b73f3d579781cb42d9f21afa846c10bd62ec1c6417",
+  "oracle": {
+    "schema_version": 1,
+    "f2p_tests": [
+      "JULIA-616 shared Shuffle configuration is not mutated"
+    ],
+    "added_testsets": [
+      "JULIA-616 shared Shuffle configuration is not mutated"
+    ],
+    "assertion_expression_sha256": [],
+    "mwe_basis": {
+      "upstream_pull_request": 669,
+      "upstream_test_files": [],
+      "defect": "Writing with a caller-owned Shuffle filter pipeline mutates the shared filter configuration, making reuse unsafe and creating a race when shared across writers.",
+      "public_api": "JLD2.jldopen(filename, \"w\"; compress=[JLD2.Shuffle(), JLD2.Deflate()])",
+      "source_evidence": {
+        "origin_pull_request_title": "Avoid mutating filters.",
+        "origin_pull_request_excerpt": "With the current set_local! function for Shuffle, this would be a race condition. This PR fixes that issue.",
+        "extraction": "Behavioral MWE uses the same compression pipeline API exercised by the repository compression tests; it asserts caller-owned configuration remains unchanged and file round-trip succeeds."
+      }
+    }
+  }
+}

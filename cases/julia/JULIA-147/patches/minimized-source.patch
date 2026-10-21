@@ -1,0 +1,21 @@
+diff --git a/src/Bridges/Constraint/bridges/GeoMeanBridge.jl b/src/Bridges/Constraint/bridges/GeoMeanBridge.jl
+--- a/src/Bridges/Constraint/bridges/GeoMeanBridge.jl
++++ b/src/Bridges/Constraint/bridges/GeoMeanBridge.jl
+@@ -374,7 +374,7 @@ function MOI.get(
+             MOI.get(model, _variable_attribute(attr), bridge.xij[1]) / sqrt(N)
+     end
+     set = MOI.get(model, MOI.ConstraintSet(), bridge.t_upper_bound_constraint)
+-    output[1] += MOI.constant(set)
++    output[1] -= MOI.constant(set)
+     return output
+ end
+ 
+@@ -404,7 +404,7 @@ function MOI.set(
+         model,
+         attr,
+         bridge.t_upper_bound_constraint,
+-        value[1] - sN * xl1 - t_constant,
++        value[1] - sN * xl1 + t_constant,
+     )
+     offset = length(bridge.rsoc_constraints)
+     for i in l:-1:1

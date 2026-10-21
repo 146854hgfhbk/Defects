@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-949",
+  "technical_evidence_sha256": "cd43848369af4e8e3d1b907825b845903cb887326c38e1f317864c443da76591",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "de24ca55581d925f78ef1888a17370133468e6324992f7663aa119c2d93772d9",
+  "reviewed_at": "2026-08-14T06:11:15.141169+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#813",
+  "rationale": "Issue #813 (\"unnecessary indentation in collection-if with chained `else if`\") reports that each `else if` in a collection-literal if-element chain gains an extra indentation level, with concrete before/after output in the issue body. The fix commit 1e98f24 (\"Avoid needless indentation on chained if-else elements. Fix #813.\") rewrites SourceVisitor.visitIfElement to flatten the chain into a list of IfElements and emit it under one rule instead of recursing into elseElement with a fresh nestExpression per level, which is precisely the mechanism producing the reported progressive indentation. The minimized production patch touches only lib/src/source_visitor.dart and is byte-identical to production-fix.patch; the CHANGELOG.md entry and the .stmt fixture from the original commit are excluded, so no documentation-, configuration-, or test-only content remains in the production diff. The method rewrite (chain collection loop, spreadBrackets map, local visitChild closure) is the behavioral change itself, not an unrelated refactor, and the second PR commit (02e8406, \"Use collection for!\" plus pub upgrade and lint fixes) was correctly excluded from the buggy/fixed revision pair. The trigger is the unchanged upstream fixture portion of the same commit, exercised through the pre-existing harness test/formatter_test.dart::\"splitting list_collection_if.stmt\"; the added cases (\"chained if-else\", \"long chained if-else\", with and without a trailing else) assert flat `else if` indentation, matching the issue exactly, and depend on no production API introduced by the fix since the fixture is data-driven input/expected-output text. Strict evidence for both the original and post-minimization states shows all gates passed: buggy differential on the single declared selector, deterministic across 3 repetitions (32 matrix runs), fixed isolated/suite/reversed all clean, and the buggy full suite failing only on the reproduced trigger. active_same_project_root_causes is empty and dart-lang/dart_style#813 is the sole allowed verified issue key, so no duplicate root cause.\n\nIssue #813 reports that a collection literal with chained `else if` elements is formatted with progressively growing indentation (each `else` on its own line, followed by an indented `if`). The minimized production patch touches only lib/src/source_visitor.dart:visitIfElement, collecting the chain of IfElement nodes into a flat list and emitting them under one rule with `space()` between `else` and the following `if`, which is exactly the mechanism that removes the extra indentation level described in the issue. The trigger is the upstream fixture portion of the same fixing commit (test/splitting/list_collection_if.stmt) executed by the pre-existing test/formatter_test.dart harness; its added cases ('chained if-else', 'long chained if-else', 'chained if-else with else at end') encode the flat `else if` output the issue asks for, and the fixture is declarative formatter input/output data, so it depends on no production API introduced by the fix. Minimization dropped the CHANGELOG.md documentation line and kept the fixture out of the production patch, leaving no refactor-only, config-only, or doc-only content; the visitIfElement rewrite (extracted visitChild closure, spreadBrackets map) is the behavior change itself rather than incidental cleanup. Strict machine evidence passes on both original and post-minimization runs: buggy differential reproduces the single declared selector test/formatter_test.dart::splitting list_collection_if.stmt, fixed isolated/suite/reversed runs are clean, determinism over 3 repetitions with 32 matrix runs, and both revisions build. active_same_project_root_causes is empty and dart-lang/dart_style#813 is the only allowed verified issue key, so no duplicate root cause exists.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:10:17.789190+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "de24ca55581d925f78ef1888a17370133468e6324992f7663aa119c2d93772d9",
+      "response_sha256": "e08957fc8debe2b8848d2267007d4ff83325de3a22ac63656cd17e011594d567",
+      "response_id": "msg_459d376a14fb47ae9ddd393d70ced92b",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6887908188059702,
+        "input_tokens": 22770,
+        "output_tokens": 773
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#813",
+      "rationale": "Issue #813 (\"unnecessary indentation in collection-if with chained `else if`\") reports that each `else if` in a collection-literal if-element chain gains an extra indentation level, with concrete before/after output in the issue body. The fix commit 1e98f24 (\"Avoid needless indentation on chained if-else elements. Fix #813.\") rewrites SourceVisitor.visitIfElement to flatten the chain into a list of IfElements and emit it under one rule instead of recursing into elseElement with a fresh nestExpression per level, which is precisely the mechanism producing the reported progressive indentation. The minimized production patch touches only lib/src/source_visitor.dart and is byte-identical to production-fix.patch; the CHANGELOG.md entry and the .stmt fixture from the original commit are excluded, so no documentation-, configuration-, or test-only content remains in the production diff. The method rewrite (chain collection loop, spreadBrackets map, local visitChild closure) is the behavioral change itself, not an unrelated refactor, and the second PR commit (02e8406, \"Use collection for!\" plus pub upgrade and lint fixes) was correctly excluded from the buggy/fixed revision pair. The trigger is the unchanged upstream fixture portion of the same commit, exercised through the pre-existing harness test/formatter_test.dart::\"splitting list_collection_if.stmt\"; the added cases (\"chained if-else\", \"long chained if-else\", with and without a trailing else) assert flat `else if` indentation, matching the issue exactly, and depend on no production API introduced by the fix since the fixture is data-driven input/expected-output text. Strict evidence for both the original and post-minimization states shows all gates passed: buggy differential on the single declared selector, deterministic across 3 repetitions (32 matrix runs), fixed isolated/suite/reversed all clean, and the buggy full suite failing only on the reproduced trigger. active_same_project_root_causes is empty and dart-lang/dart_style#813 is the sole allowed verified issue key, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.trigger.fixed_clean",
+        "case.json:strict_original.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:trigger_tests"
+      ],
+      "risks": [
+        "The trigger selector covers the whole test/splitting/list_collection_if.stmt fixture (99 added lines across seven cases, including spread-collection and nested-chain scenarios), so it is broader than the minimal issue repro; the strict differential proves failure at file granularity, not per-case.",
+        "The fixed code writes token(node.elseKeyword) inside the per-element loop rather than token(element.elseKeyword); this reads as an upstream oversight that the passing fixtures do not distinguish, and it could surface in later chained/nested cases.",
+        "No independent evidence beyond the machine-generated strict gates that the buggy revision reproduces the exact indentation output shown in the issue body; equivalence is inferred from the fixture expectations plus the differential result."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:11:15.140848+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "de24ca55581d925f78ef1888a17370133468e6324992f7663aa119c2d93772d9",
+      "response_sha256": "a28c7e92779c2ce7d87be6a02a55e73405a8909aeb17401ca2b2cf5bcac7a108",
+      "response_id": "msg_e4af56506e8f493dadeb3f94d0ce684c",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6336168914759536,
+        "input_tokens": 22543,
+        "output_tokens": 721
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#813",
+      "rationale": "Issue #813 reports that a collection literal with chained `else if` elements is formatted with progressively growing indentation (each `else` on its own line, followed by an indented `if`). The minimized production patch touches only lib/src/source_visitor.dart:visitIfElement, collecting the chain of IfElement nodes into a flat list and emitting them under one rule with `space()` between `else` and the following `if`, which is exactly the mechanism that removes the extra indentation level described in the issue. The trigger is the upstream fixture portion of the same fixing commit (test/splitting/list_collection_if.stmt) executed by the pre-existing test/formatter_test.dart harness; its added cases ('chained if-else', 'long chained if-else', 'chained if-else with else at end') encode the flat `else if` output the issue asks for, and the fixture is declarative formatter input/output data, so it depends on no production API introduced by the fix. Minimization dropped the CHANGELOG.md documentation line and kept the fixture out of the production patch, leaving no refactor-only, config-only, or doc-only content; the visitIfElement rewrite (extracted visitChild closure, spreadBrackets map) is the behavior change itself rather than incidental cleanup. Strict machine evidence passes on both original and post-minimization runs: buggy differential reproduces the single declared selector test/formatter_test.dart::splitting list_collection_if.stmt, fixed isolated/suite/reversed runs are clean, determinism over 3 repetitions with 32 matrix runs, and both revisions build. active_same_project_root_causes is empty and dart-lang/dart_style#813 is the only allowed verified issue key, so no duplicate root cause exists.",
+      "evidence_paths": [
+        "case.json:issue_check.linked_issues[0].body",
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/splitting/list_collection_if.stmt",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger selector is file-granular ('splitting list_collection_if.stmt'), so the failing unit bundles the new chained if-else cases with pre-existing cases in the same fixture; isolation of the specific failing case rests on the differential gate rather than a per-case selector.",
+        "The fixture additions also cover spread/unspread and nested chained if-else output, which is broader than the exact snippet in issue #813 though it shares the same visitIfElement root cause.",
+        "The defect is formatter output shape only, so behavioral confirmation depends entirely on golden-file comparison; expected-output lines in the fixture were authored by the fix commit and were not independently re-derived here.",
+        "The PR contains a second commit ('Use collection for!') that also edits source_visitor.dart; only the first commit is used, and no evidence rules out later stylistic drift in that method affecting reproduction on newer revisions."
+      ]
+    }
+  ]
+}

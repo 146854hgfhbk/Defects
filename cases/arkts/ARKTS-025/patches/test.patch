@@ -1,0 +1,167 @@
+diff --git a/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/ets/test/ChoicePhotosSelectionUpdate.test.ets b/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/ets/test/ChoicePhotosSelectionUpdate.test.ets
+new file mode 100644
+index 000000000..b165113ab
+--- /dev/null
++++ b/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/ets/test/ChoicePhotosSelectionUpdate.test.ets
+@@ -0,0 +1,125 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import common from '@ohos.app.ability.common';
++import abilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl';
++import mediaLibrary from '@ohos.multimedia.mediaLibrary';
++import Want from '@ohos.app.ability.Want';
++import { Driver, ON } from '@ohos.UiTest';
++import { describe, it, expect } from '@ohos/hypium';
++
++const BUNDLE_NAME: string = 'ohos.samples.imageshow';
++const ABILITY_NAME: string = 'MainAbility';
++const ALLOW_TEXT: string = '允许';
++const ADD_PICTURE_TEXT: string = '添加图片/照片';
++const MEDIA_PERMISSIONS: Permissions[] = [
++  'ohos.permission.READ_MEDIA',
++  'ohos.permission.WRITE_MEDIA'
++];
++
++let delegator = AbilityDelegatorRegistry.getAbilityDelegator();
++
++async function getTestAbilityContext(): Promise<common.UIAbilityContext> {
++  let ability = await delegator.getCurrentTopAbility();
++  return ability.context as common.UIAbilityContext;
++}
++
++async function allowPermissionDialog(driver: Driver): Promise<void> {
++  try {
++    let allowButton = await driver.findComponent(ON.text(ALLOW_TEXT));
++    await allowButton.click();
++    await driver.delayMs(500);
++  } catch (error) {
++  }
++}
++
++async function requestTestMediaPermissions(driver: Driver): Promise<void> {
++  let context = await getTestAbilityContext();
++  let atManager = abilityAccessCtrl.createAtManager();
++  let requestTask = atManager.requestPermissionsFromUser(context, MEDIA_PERMISSIONS);
++  for (let index = 0; index < 4; index++) {
++    await driver.delayMs(500);
++    await allowPermissionDialog(driver);
++  }
++  let result = await requestTask;
++  expect(result.authResults.length >= 2).assertTrue();
++  expect(result.authResults[0]).assertEqual(0);
++  expect(result.authResults[1]).assertEqual(0);
++}
++
++async function seedImageAssets(): Promise<void> {
++  let context = await getTestAbilityContext();
++  let media = mediaLibrary.getMediaLibrary(context);
++  let imageDir = await media.getPublicDirectory(mediaLibrary.DirectoryType.DIR_IMAGE);
++  let timestamp = new Date().getTime();
++  for (let index = 0; index < 3; index++) {
++    await media.createAsset(mediaLibrary.MediaType.IMAGE, `imageshow_gold_${timestamp}_${index}.jpg`, imageDir);
++  }
++}
++
++async function startImageShow(driver: Driver): Promise<void> {
++  let want: Want = {
++    bundleName: BUNDLE_NAME,
++    abilityName: ABILITY_NAME
++  };
++  await delegator.startAbility(want);
++  await driver.delayMs(1500);
++  await allowPermissionDialog(driver);
++  await allowPermissionDialog(driver);
++}
++
++async function componentCount(driver: Driver, id: string): Promise<number> {
++  let components = await driver.findComponents(ON.id(id));
++  if (components === null) {
++    return 0;
++  }
++  return components.length;
++}
++
++export default function choicePhotosSelectionUpdateTest() {
++  describe('ChoicePhotosSelectionUpdateTest', () => {
++    it('ChoicePhotos_DeleteSelectedImageRefreshesBadges_001', 0, async () => {
++      let driver = Driver.create();
++      await requestTestMediaPermissions(driver);
++      await seedImageAssets();
++      await startImageShow(driver);
++
++      let addPicture = await driver.findComponent(ON.text(ADD_PICTURE_TEXT));
++      await addPicture.click();
++      await driver.delayMs(1000);
++
++      for (let index = 1; index <= 3; index++) {
++        await driver.assertComponentExist(ON.id(`image${index}`));
++        let imageItem = await driver.findComponent(ON.id(`image${index}`));
++        await imageItem.click();
++        await driver.delayMs(500);
++        await driver.assertComponentExist(ON.id(`select${index}`));
++        await driver.assertComponentExist(ON.id(`selected${index}`));
++      }
++
++      let deleteImage = await driver.findComponent(ON.id('deleteImage2'));
++      await deleteImage.click();
++      await driver.delayMs(1000);
++
++      expect(await componentCount(driver, 'select3')).assertEqual(0);
++      expect(await componentCount(driver, 'selected3')).assertEqual(0);
++      await driver.assertComponentExist(ON.id('select1'));
++      await driver.assertComponentExist(ON.id('select2'));
++      await driver.assertComponentExist(ON.id('selected1'));
++      await driver.assertComponentExist(ON.id('selected2'));
++    })
++  })
++}
+diff --git a/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/ets/test/List.test.ets b/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/ets/test/List.test.ets
+index b00d0ae8a..7ae8dc397 100644
+--- a/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,8 +13,8 @@
+  * limitations under the License.
+  */
+ 
+-import abilityTest from './Ability.test';
++import choicePhotosSelectionUpdateTest from './ChoicePhotosSelectionUpdate.test';
+ 
+ export default function testsuite() {
+-  abilityTest();
+-}
+\ No newline at end of file
++  choicePhotosSelectionUpdateTest();
++}
+diff --git a/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/module.json5 b/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/module.json5
+index 4296f18aa..09432f520 100644
+--- a/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/module.json5
++++ b/code/BasicFeature/Media/ImageShow/entry/src/ohosTest/module.json5
+@@ -47,6 +47,14 @@
+           }
+         ]
+       }
++    ],
++    "requestPermissions": [
++      {
++        "name": "ohos.permission.READ_MEDIA"
++      },
++      {
++        "name": "ohos.permission.WRITE_MEDIA"
++      }
+     ]
+   }
+ }

@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1730",
+  "technical_evidence_sha256": "97198ae507515be9b8900447bb613c8af812562a5a1581362b8e986168cb9f80",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "4f5d9fb23de1cd92acbce1cf0de6f0e6b958ade2e5ba96b6557d7f401d848192",
+  "reviewed_at": "2026-09-09T17:27:00.188671+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "macpaw/openai#345",
+  "rationale": "Issue #345 reports that configured parsingOptions ([.relaxed, .fillRequiredFieldIfKeyNotFound, .fillRequiredFieldIfValueNotFound]) had no effect on the async chats path, producing DecodingError.keyNotFound. The minimized production patch is a single added line in Sources/OpenAI/Private/Client/AsyncClient.swift that sets decoder.userInfo[.parsingOptions] = configuration.parsingOptions immediately before decoder.decode, i.e. it propagates an already-existing configuration value into the already-existing CodingUserInfoKey the response decoders consult. That is exactly the omission the issue describes; no refactor, formatting, feature, docs, config, or test change is present (one file, one hunk, one addition, retained_hunk_count=1, removed_hunk_count=0, post_minimization_validation PASS). The curator trigger exercises the same public path (OpenAI.chats via the pre-existing URLSessionMock and MockStreamingSessionFactory) with parsingOptions: .relaxed and a chat completion payload omitting a required key, asserting the relaxed default rather than any API added by the fix. All symbols it touches (Configuration.parsingOptions, .relaxed, the mocks) predate the commit, and strict evidence confirms build.both_versions passed, so the failure on the buggy revision is a genuine decoding assertion/error failure and not a fix-only-API compile error. Strict gates pass on both the original and post-minimization runs: trigger.buggy_differential reproduced testAsyncChatsHonorsRelaxedParsing, trigger.fixed_clean, trigger.deterministic (3 outcome groups, 3 repetitions, 32-run matrix complete), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no failed checks. active_same_project_root_causes is empty and macpaw/openai#345 is the sole allowed verified issue key, so no duplicate root cause exists.\n\nIssue #345 reports that configured parsingOptions ([.relaxed, .fillRequiredFieldIfKeyNotFound, ...]) have no effect on the async chats path, producing DecodingError.keyNotFound on a missing key. The minimized production patch is a single one-line addition in Sources/OpenAI/Private/Client/AsyncClient.swift that sets decoder.userInfo[.parsingOptions] = configuration.parsingOptions immediately before decoder.decode, which is exactly the missing propagation that made the pre-existing parsing options inert on this path. PR #346 ('Add missing parsingOptions to decoder', 'To fix #345') traces to the issue via fix_commit_to_merged_pr_to_issue, and commit_stats confirms one production file, one hunk, zero test/other files, so there is no refactor, formatting, feature, docs, or config change. The curator trigger constructs the public OpenAI client with parsingOptions: .relaxed over the pre-existing URLSessionMock and MockStreamingSessionFactory, feeds a chat completion payload missing the required id key, and asserts relaxed fill-in behavior (result.id == \"\") plus preserved fields. Both the client API and the parsing options contract predate the fix, and strict evidence records build.both_versions PASS, so the same trigger source compiles and runs on buggy and fixed revisions; the failure on the buggy revision is a genuine decoding assertion/error difference, not an unavailable-symbol compile error. Strict original and post-minimization gates both pass with a unique selector, deterministic outcomes over 3 repetitions, buggy differential limited to the declared trigger, and fixed full suite all green. active_same_project_root_causes is empty, so macpaw/openai#345 is not a duplicate of any active registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T17:26:38.156964+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "4f5d9fb23de1cd92acbce1cf0de6f0e6b958ade2e5ba96b6557d7f401d848192",
+      "response_sha256": "72e163a83ce2a9b0df06dd11a4a151381a880aa4e095293a096a21aa19e42926",
+      "response_id": "msg_11c59bad52684e3a8acb379ece3083f3",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5595070789054727,
+        "input_tokens": 13453,
+        "output_tokens": 704
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "macpaw/openai#345",
+      "rationale": "Issue #345 reports that configured parsingOptions ([.relaxed, .fillRequiredFieldIfKeyNotFound, .fillRequiredFieldIfValueNotFound]) had no effect on the async chats path, producing DecodingError.keyNotFound. The minimized production patch is a single added line in Sources/OpenAI/Private/Client/AsyncClient.swift that sets decoder.userInfo[.parsingOptions] = configuration.parsingOptions immediately before decoder.decode, i.e. it propagates an already-existing configuration value into the already-existing CodingUserInfoKey the response decoders consult. That is exactly the omission the issue describes; no refactor, formatting, feature, docs, config, or test change is present (one file, one hunk, one addition, retained_hunk_count=1, removed_hunk_count=0, post_minimization_validation PASS). The curator trigger exercises the same public path (OpenAI.chats via the pre-existing URLSessionMock and MockStreamingSessionFactory) with parsingOptions: .relaxed and a chat completion payload omitting a required key, asserting the relaxed default rather than any API added by the fix. All symbols it touches (Configuration.parsingOptions, .relaxed, the mocks) predate the commit, and strict evidence confirms build.both_versions passed, so the failure on the buggy revision is a genuine decoding assertion/error failure and not a fix-only-API compile error. Strict gates pass on both the original and post-minimization runs: trigger.buggy_differential reproduced testAsyncChatsHonorsRelaxedParsing, trigger.fixed_clean, trigger.deterministic (3 outcome groups, 3 repetitions, 32-run matrix complete), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no failed checks. active_same_project_root_causes is empty and macpaw/openai#345 is the sole allowed verified issue key, so no duplicate root cause exists.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_reduction.rationale",
+        "production_files"
+      ],
+      "risks": [
+        "The trigger is curator-written rather than upstream (upstream-trigger.patch is empty), so no maintainer-authored regression test corroborates the reproduction.",
+        "The trigger omits the 'id' key rather than the issue's 'system_fingerprint' key and uses only .relaxed instead of the reporter's full option set; the propagation defect is identical but the specific field and option combination differ from the report.",
+        "issue_evidence is null in the case record; the issue text is only available via the embedded source_candidate payload.",
+        "Verification relies on the supplied strict evidence; the internal decoder behavior for each response model was not independently inspected."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T17:27:00.187974+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "4f5d9fb23de1cd92acbce1cf0de6f0e6b958ade2e5ba96b6557d7f401d848192",
+      "response_sha256": "805a1218cdf2434b556f1b10324ee0ac2d7cbfc0b370485dbe4d444b4b6420f8",
+      "response_id": "msg_f3620da35a304a05ad4b65ea51adc9b0",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.48254123509121066,
+        "input_tokens": 13379,
+        "output_tokens": 661
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "macpaw/openai#345",
+      "rationale": "Issue #345 reports that configured parsingOptions ([.relaxed, .fillRequiredFieldIfKeyNotFound, ...]) have no effect on the async chats path, producing DecodingError.keyNotFound on a missing key. The minimized production patch is a single one-line addition in Sources/OpenAI/Private/Client/AsyncClient.swift that sets decoder.userInfo[.parsingOptions] = configuration.parsingOptions immediately before decoder.decode, which is exactly the missing propagation that made the pre-existing parsing options inert on this path. PR #346 ('Add missing parsingOptions to decoder', 'To fix #345') traces to the issue via fix_commit_to_merged_pr_to_issue, and commit_stats confirms one production file, one hunk, zero test/other files, so there is no refactor, formatting, feature, docs, or config change. The curator trigger constructs the public OpenAI client with parsingOptions: .relaxed over the pre-existing URLSessionMock and MockStreamingSessionFactory, feeds a chat completion payload missing the required id key, and asserts relaxed fill-in behavior (result.id == \"\") plus preserved fields. Both the client API and the parsing options contract predate the fix, and strict evidence records build.both_versions PASS, so the same trigger source compiles and runs on buggy and fixed revisions; the failure on the buggy revision is a genuine decoding assertion/error difference, not an unavailable-symbol compile error. Strict original and post-minimization gates both pass with a unique selector, deterministic outcomes over 3 repetitions, buggy differential limited to the declared trigger, and fixed full suite all green. active_same_project_root_causes is empty, so macpaw/openai#345 is not a duplicate of any active registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "source_candidate.commit_stats",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "traceability.paths"
+      ],
+      "risks": [
+        "The trigger exercises a missing required id key while the issue text cites a missing system_fingerprint key; the mechanism (parsingOptions never reaching the decoder) is identical but the specific field differs from the user's report.",
+        "issue_evidence is null in the case record; the issue body is only available through source_candidate.issue_check, so the reported symptom is verified indirectly.",
+        "Coverage is limited to the async chats path; the patch does not address whether other client paths propagate parsingOptions correctly.",
+        "The reproducer relies on the repository's in-memory URLSessionMock rather than the third-party OpenRouter endpoint named in the issue, so host/basePath-specific behavior is not exercised."
+      ]
+    }
+  ]
+}

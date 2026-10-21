@@ -1,0 +1,47 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8c93c047890564faacbf4a790623c409d79a14c7..b1faed0c152cae2c24c2edacacfa735b0588bff6 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -11,6 +11,8 @@ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) fo
+    [#431](https://github.com/lunarmodules/Penlight/pull/431)
+  - feat: `app.require_here` now follows symlink'd main modules to their directory
+    [#423](https://github.com/lunarmodules/Penlight/pull/423)
++ - fix: `pretty.write` invalid order function for sorting
++   [#430](https://github.com/lunarmodules/Penlight/pull/430)
+  - fix: `compat.warn` raised write guard warning in OpenResty
+    [#414](https://github.com/lunarmodules/Penlight/pull/414)
+  - feat: `utils.enum` now accepts hash tables, to enable better error handling
+diff --git a/lua/pl/pretty.lua b/lua/pl/pretty.lua
+index 09add30e2452935d9d42bcc15c989aedbb51bf2b..9f3fb9d074c8e32aa34b404d42dfa423de2062de 100644
+--- a/lua/pl/pretty.lua
++++ b/lua/pl/pretty.lua
+@@ -284,10 +284,11 @@ function pretty.write (tbl,space,not_clever)
+                end
+             end
+             table.sort(ordered_keys, function (a, b)
+-                if type(a) == type(b)  and type(a) == 'string' then
+-                    return a < b
++                if type(a) == type(b) then
++                    return tostring(a) < tostring(b)
++                else
++                    return type(a) < type(b)
+                 end
+-                return type(a) == 'boolean' or (type(b) ~= 'boolean' and type(a) == 'table')
+             end)
+             local function write_entry (key, val)
+                 local tkey = type(key)
+diff --git a/tests/test-pretty.lua b/tests/test-pretty.lua
+index 99058e37ff6c3bb81a62c96b4f3739bfb770e97f..6cb08197ea1b7d1900739b438af5fc4be9f77b7d 100644
+--- a/tests/test-pretty.lua
++++ b/tests/test-pretty.lua
+@@ -86,8 +86,8 @@ asserteq( pretty.write(t1,""), [[{{},{}}]] )
+ 
+ -- Check that write correctly print table with non number or string as keys
+ 
+-t1 = { [true] = "boolean", a = "a", b = "b", [1] = 1, [0] = 0 }
+-asserteq( pretty.write(t1,""), [[{1,["true"]="boolean",a="a",b="b",[0]=0}]] )
++t1 = { [true] = "boolean", [false] = "untrue", a = "a", b = "b", [1] = 1, [0] = 0 }
++asserteq( pretty.write(t1,""), [[{1,["false"]="untrue",["true"]="boolean",a="a",b="b",[0]=0}]] )
+ 
+ 
+ -- Check number formatting

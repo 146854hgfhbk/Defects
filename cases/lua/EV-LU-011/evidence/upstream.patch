@@ -1,0 +1,116 @@
+diff --git a/spec/check_spec.lua b/spec/check_spec.lua
+index e121e73511e2ab7f268437e761b32ff7ec171bf0..13e76f50131d884dc92b0df819f9755595ffd7e9 100644
+--- a/spec/check_spec.lua
++++ b/spec/check_spec.lua
+@@ -81,6 +81,29 @@ end
+       ]])
+    end)
+ 
++   it("detects useless local _ variable", function()
++      assert.same({
++         {code = "211", name = "_", useless = true, line = 2, column = 10, end_column = 10},
++         {code = "211", name = "_", useless = true, line = 7, column = 13, end_column = 13},
++         {code = "211", name = "_", filtered = true, secondary = true, line = 12, column = 13, end_column = 13}
++      }, check[[
++do
++   local _
++end
++
++do
++   local a = 5
++   local b, _ = a
++   b()
++end
++
++do
++   local c, _ = ...
++   c()
++end
++      ]])
++   end)
++
+    it("reports unused function with forward declaration as variable, not value", function()
+       assert.same({
+          {code = "211", name = "noop", func = true, line = 1, column = 22, end_column = 25}
+diff --git a/spec/filter_spec.lua b/spec/filter_spec.lua
+index e293eda258e07d8abaef4d9857d947060b60d82f..14d7268d058a047417e7d4eb07af1e30e8cc0963 100644
+--- a/spec/filter_spec.lua
++++ b/spec/filter_spec.lua
+@@ -30,12 +30,17 @@ describe("filter", function()
+       }))
+    end)
+ 
+-   it("removes unused var/value and redefined warnings related to _", function()
++   it("removes unused var/value and redefined warnings related to _, unless it's useless", function()
+       assert.same({
+          {
+             {
+                code = "211",
+                name = "foo"
++            },
++            {
++               code = "211",
++               name = "_",
++               useless = true
+             }
+          }
+       }, filter({
+@@ -46,7 +51,8 @@ describe("filter", function()
+             },
+             {
+                code = "211",
+-               name = "_"
++               name = "_",
++               useless = true
+             },
+             {
+                code = "412",
+diff --git a/src/luacheck/analyze.lua b/src/luacheck/analyze.lua
+index b87c76ef9b8b50f70c8668a0ccf472fa73458956..4a76e3b52c2935ef6480e697d2ae525fef10a3e2 100644
+--- a/src/luacheck/analyze.lua
++++ b/src/luacheck/analyze.lua
+@@ -175,7 +175,7 @@ local function check_var(chstate, var)
+       end
+    elseif #var.values == 1 then
+       if not var.values[1].used then
+-         chstate:warn_unused_variable(var.values[1])
++         chstate:warn_unused_variable(var.values[1], nil, nil, var.values[1].empty)
+       elseif var.values[1].empty then
+          var.empty = true
+          chstate:warn_unset(var)
+diff --git a/src/luacheck/check.lua b/src/luacheck/check.lua
+index 7e9db2a4f66b3c1256381fc0ab588a5a85b9d147..7c7adb101e82ada76b9f06a68ab8cce3ca4dae7f 100644
+--- a/src/luacheck/check.lua
++++ b/src/luacheck/check.lua
+@@ -50,7 +50,7 @@ end
+ 
+ -- W12* (read-only global) and W131 (unused global) are patched in during filtering.
+ 
+-function ChState:warn_unused_variable(value, recursive, self_recursive)
++function ChState:warn_unused_variable(value, recursive, self_recursive, useless)
+    self:warn({
+       code = "21" .. type_codes[value.var.type],
+       name = value.var.name,
+@@ -60,7 +60,8 @@ function ChState:warn_unused_variable(value, recursive, self_recursive)
+       func = (value.type == "func") or nil,
+       mutually_recursive = not self_recursive and recursive or nil,
+       recursive = self_recursive,
+-      self = value.var.self
++      self = value.var.self,
++      useless = value.var.name == "_" and useless or nil
+    }, value.var.self)
+ end
+ 
+diff --git a/src/luacheck/filter.lua b/src/luacheck/filter.lua
+index 57388d8fc30253c613a4309b52847b9467fad846..c811b10bbad4785cb36540b6f0cf610658d59fd3 100644
+--- a/src/luacheck/filter.lua
++++ b/src/luacheck/filter.lua
+@@ -212,7 +212,7 @@ local function is_enabled(rules, warning)
+ end
+ 
+ function filter.filters(opts, warning)
+-   if warning.code:match("[234]..") and warning.name == "_" then
++   if warning.code:match("[234]..") and warning.name == "_" and not warning.useless then
+       return true
+    end
+ 

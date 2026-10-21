@@ -1,0 +1,17 @@
+diff --git a/Sources/NIOHTTP2/HTTP2ChannelHandler.swift b/Sources/NIOHTTP2/HTTP2ChannelHandler.swift
+--- a/Sources/NIOHTTP2/HTTP2ChannelHandler.swift
++++ b/Sources/NIOHTTP2/HTTP2ChannelHandler.swift
+@@ -591,8 +591,13 @@ extension NIOHTTP2Handler {
+         }
+         
+         self.isUnbufferingAndFlushingAutomaticFrames = false
++        self.flushIfNecessary(context: context)
++    }
+ 
++    /// Emits a flush if a frame has been written.
++    private func flushIfNecessary(context: ChannelHandlerContext) {
+         if self.wroteFrame {
++            self.wroteFrame = false
+             context.flush()
+         }
+     }

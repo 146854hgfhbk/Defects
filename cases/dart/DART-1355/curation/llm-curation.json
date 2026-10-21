@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1355",
+  "technical_evidence_sha256": "40f1a5116079f9824ca33a066b35efc4da54185f013c6346e75af143587ac2ed",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "b4b11bafc3e80b427747bfc2c1038137d091bcd7fcb3ac2001f8c7d3502e4aca",
+  "reviewed_at": "2026-08-15T07:11:55.258506+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "google/quiver-dart#480",
+  "rationale": "The three artifacts describe one pre-existing defect in LinkedLruHashMap.removeLru. The buggy parent revision ee39eb4 executes `_tail = _tail.previous; _tail.next = null;`, so when the map drops to zero entries the tail becomes null (NPE/failed unlink) and `_head` is left dangling at the evicted node. The fix in lib/src/collection/lru_map.dart makes the tail write null-aware and clears `_head` when the list empties, matching the commit/PR record 'Correct putIfAbsent when maximumSize is 1 (#480) -- If we remove the last element in the map in removeLru, we need to clear out _head as well.' The trigger 'handles maximumSize 1 correctly' sets maximumSize = 1, calls putIfAbsent('B', ...), and asserts keys == ['B'], which is exactly the eviction-to-empty path that leaves a stale head, and it uses only pre-existing public API (maximumSize setter, putIfAbsent, keys); the fix introduces no new API. The minimized production patch equals the production half of the single upstream commit: five lines in one method, with only an explanatory comment attached to the new branch, no reformatting, no feature extension, no config or doc-only edits. The test half is separated into patches/trigger-tests.patch and is byte-identical to the upstream test hunk, so the trigger is upstream-native rather than curator-authored. active_same_project_root_causes is empty and google/quiver-dart#480 is the sole entry in allowed_root_cause_ids, so no duplicate root cause. Runtime gates are taken only from the supplied strict evidence: both strict_original and strict_post_minimization report passed=true with no failed checks, including buggy differential reproduction of the single declared selector, deterministic fingerprints across 3 repetitions, fixed isolated/suite/reversed runs clean, and fixed full suite all green.\n\nThe defect is a pre-existing null/state-consistency bug in LinkedLruHashMap.removeLru: after `_tail = _tail.previous`, the code unconditionally wrote `_tail.next = null`, which breaks when the map drops to zero entries, and `_head` was left pointing at the evicted node. The production patch changes exactly that: `_tail?.next = null` plus clearing `_head` when `_tail == null` (patches/minimized-production.patch, lib/src/collection/lru_map.dart, single hunk of 1 removed / 6 added lines). The commit subject and body ('Correct putIfAbsent when maximumSize is 1 (#480)' / 'If we remove the last element in the map in removeLru, we need to clear out _head as well') describe the same failure mode, and traceability.verified_fix_issue_numbers resolves to 480, which matches the sole allowed root cause id. The trigger is the unchanged upstream test from the same fixing commit ('handles maximumSize 1 correctly'): it sets maximumSize = 1, calls putIfAbsent, and asserts keys == ['B'] — all pre-existing public API on LruMap, with no API introduced by the fix, so it is semantically equivalent to the reported defect rather than a feature probe. The minimized patch is production-only with no formatting, doc, config, or test churn; the test edit lives solely in patches/trigger-tests.patch. Machine-generated strict gates pass in both the original and post-minimization runs: trigger.buggy_differential reproduces the declared selector alone, trigger.fixed_clean is green across isolated/suite/reversed runs, trigger.deterministic shows 3/3 fingerprint groups, full_suite.buggy_reproduces_only_triggers confirms no collateral failures, and build.both_versions passes. active_same_project_root_causes is empty, so this root cause duplicates no registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T07:11:32.040803+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "b4b11bafc3e80b427747bfc2c1038137d091bcd7fcb3ac2001f8c7d3502e4aca",
+      "response_sha256": "1bea6413cfdade3a5ebd5bc958c0954c7dc60d5bc7ace3c98b62adf6b306d9ea",
+      "response_id": "msg_698ec49bbd374085a270c0bc9c3810b8",
+      "attempts": 2,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5098772942288557,
+        "input_tokens": 7110,
+        "output_tokens": 722
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "google/quiver-dart#480",
+      "rationale": "The three artifacts describe one pre-existing defect in LinkedLruHashMap.removeLru. The buggy parent revision ee39eb4 executes `_tail = _tail.previous; _tail.next = null;`, so when the map drops to zero entries the tail becomes null (NPE/failed unlink) and `_head` is left dangling at the evicted node. The fix in lib/src/collection/lru_map.dart makes the tail write null-aware and clears `_head` when the list empties, matching the commit/PR record 'Correct putIfAbsent when maximumSize is 1 (#480) -- If we remove the last element in the map in removeLru, we need to clear out _head as well.' The trigger 'handles maximumSize 1 correctly' sets maximumSize = 1, calls putIfAbsent('B', ...), and asserts keys == ['B'], which is exactly the eviction-to-empty path that leaves a stale head, and it uses only pre-existing public API (maximumSize setter, putIfAbsent, keys); the fix introduces no new API. The minimized production patch equals the production half of the single upstream commit: five lines in one method, with only an explanatory comment attached to the new branch, no reformatting, no feature extension, no config or doc-only edits. The test half is separated into patches/trigger-tests.patch and is byte-identical to the upstream test hunk, so the trigger is upstream-native rather than curator-authored. active_same_project_root_causes is empty and google/quiver-dart#480 is the sole entry in allowed_root_cause_ids, so no duplicate root cause. Runtime gates are taken only from the supplied strict evidence: both strict_original and strict_post_minimization report passed=true with no failed checks, including buggy differential reproduction of the single declared selector, deterministic fingerprints across 3 repetitions, fixed isolated/suite/reversed runs clean, and fixed full suite all green.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/collection/lru_map.dart",
+        "test/collection/lru_map_test.dart",
+        "case.json:source_candidate.candidate.message",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests"
+      ],
+      "risks": [
+        "Reference #480 appears to be the merged pull request number rather than a separately filed bug report; the defect description comes from the PR title and commit body, and no independent issue-thread text was supplied for cross-checking.",
+        "commit_url is null and the pull_request_url points at the commit page, so the PR discussion itself was not available for review.",
+        "Only one trigger selector covers the defect; the symmetric stale-head path reachable through other eviction entry points (e.g., repeated operator[]= at maximumSize 1) is not exercised by the benchmark trigger.",
+        "require_analyze_clean is false, so analyzer diagnostics on either revision were treated as non-blocking."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T07:11:55.258144+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "b4b11bafc3e80b427747bfc2c1038137d091bcd7fcb3ac2001f8c7d3502e4aca",
+      "response_sha256": "58a87b63f824e5039c8c22b70defcb5187f242be0ebaa26e129a50d40dfa1875",
+      "response_id": "msg_a8823f79965c4d1faf64947aca17535f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.49893973154228854,
+        "input_tokens": 7066,
+        "output_tokens": 722
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "google/quiver-dart#480",
+      "rationale": "The defect is a pre-existing null/state-consistency bug in LinkedLruHashMap.removeLru: after `_tail = _tail.previous`, the code unconditionally wrote `_tail.next = null`, which breaks when the map drops to zero entries, and `_head` was left pointing at the evicted node. The production patch changes exactly that: `_tail?.next = null` plus clearing `_head` when `_tail == null` (patches/minimized-production.patch, lib/src/collection/lru_map.dart, single hunk of 1 removed / 6 added lines). The commit subject and body ('Correct putIfAbsent when maximumSize is 1 (#480)' / 'If we remove the last element in the map in removeLru, we need to clear out _head as well') describe the same failure mode, and traceability.verified_fix_issue_numbers resolves to 480, which matches the sole allowed root cause id. The trigger is the unchanged upstream test from the same fixing commit ('handles maximumSize 1 correctly'): it sets maximumSize = 1, calls putIfAbsent, and asserts keys == ['B'] — all pre-existing public API on LruMap, with no API introduced by the fix, so it is semantically equivalent to the reported defect rather than a feature probe. The minimized patch is production-only with no formatting, doc, config, or test churn; the test edit lives solely in patches/trigger-tests.patch. Machine-generated strict gates pass in both the original and post-minimization runs: trigger.buggy_differential reproduces the declared selector alone, trigger.fixed_clean is green across isolated/suite/reversed runs, trigger.deterministic shows 3/3 fingerprint groups, full_suite.buggy_reproduces_only_triggers confirms no collateral failures, and build.both_versions passes. active_same_project_root_causes is empty, so this root cause duplicates no registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/collection/lru_map.dart",
+        "case.json:trigger_tests",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:strict_post_minimization.checks",
+        "case.json:source_candidate.candidate.message"
+      ],
+      "risks": [
+        "The referenced '#480' is the squash-merge pull request number; the supplied issue_urls entry points at issues/480 but no issue body text was provided, so defect intent is inferred from the commit message and patch rather than an independent reporter narrative.",
+        "Trigger asserts only the keys ordering after eviction; it does not directly exercise the null-dereference path via other removeLru callers (e.g. repeated put at maximumSize 1), so the fix's full behavioral surface is under-covered.",
+        "full_suite repetitions = 1 (trigger repetitions = 3), so full-suite flakiness has weaker statistical support than the isolated trigger.",
+        "require_analyze_clean is false; analyzer output was diagnostic only, so static-analysis regressions from the added null-aware access were not gated."
+      ]
+    }
+  ]
+}

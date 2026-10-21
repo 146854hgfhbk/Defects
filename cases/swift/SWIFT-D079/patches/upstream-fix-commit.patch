@@ -1,0 +1,61 @@
+diff --git a/Sources/SpyableMacro/Factories/FunctionImplementationFactory.swift b/Sources/SpyableMacro/Factories/FunctionImplementationFactory.swift
+index 1fb3267..5e38ecf 100644
+--- a/Sources/SpyableMacro/Factories/FunctionImplementationFactory.swift
++++ b/Sources/SpyableMacro/Factories/FunctionImplementationFactory.swift
+@@ -69,7 +69,7 @@ struct FunctionImplementationFactory {
+     ) -> FunctionDeclSyntax {
+         FunctionDeclSyntax(
+             attributes: protocolFunctionDeclaration.attributes,
+-            modifiers: protocolFunctionDeclaration.modifiers,
++            modifiers: protocolFunctionDeclaration.modifiers.removingMutating,
+             funcKeyword: protocolFunctionDeclaration.funcKeyword,
+             name: protocolFunctionDeclaration.name,
+             genericParameterClause: protocolFunctionDeclaration.genericParameterClause,
+@@ -142,3 +142,11 @@ struct FunctionImplementationFactory {
+         )
+     }
+ }
++
++private extension DeclModifierListSyntax {
++    var removingMutating: Self {
++        filter {
++            $0.name.text != TokenSyntax.keyword(.mutating).text
++        }
++    }
++}
+diff --git a/Tests/SpyableMacroTests/Macro/UT_SpyableMacro.swift b/Tests/SpyableMacroTests/Macro/UT_SpyableMacro.swift
+index a8422f2..56b7d62 100644
+--- a/Tests/SpyableMacroTests/Macro/UT_SpyableMacro.swift
++++ b/Tests/SpyableMacroTests/Macro/UT_SpyableMacro.swift
+@@ -28,6 +28,7 @@ final class UT_SpyableMacro: XCTestCase {
+                 set
+             }
+ 
++            mutating func logout()
+             func initialize(name: String, secondName: String?)
+             func fetchConfig() async throws -> [String: String]
+             func fetchData(_ name: (String, count: Int)) async -> (() -> Void)
+@@ -73,6 +74,15 @@ final class UT_SpyableMacro: XCTestCase {
+                 }
+                 var underlyingAdded: (() -> Void )!
+                     var removed: (() -> Void)?
++                var logoutCallsCount = 0
++                var logoutCalled: Bool {
++                    return logoutCallsCount > 0
++                }
++                var logoutClosure: (() -> Void)?
++                func logout() {
++                    logoutCallsCount += 1
++                    logoutClosure?()
++                }
+                 var initializeNameSecondNameCallsCount = 0
+                 var initializeNameSecondNameCalled: Bool {
+                     return initializeNameSecondNameCallsCount > 0
+@@ -80,7 +90,6 @@ final class UT_SpyableMacro: XCTestCase {
+                 var initializeNameSecondNameReceivedArguments: (name: String, secondName: String?)?
+                 var initializeNameSecondNameReceivedInvocations: [(name: String, secondName: String?)] = []
+                 var initializeNameSecondNameClosure: ((String, String?) -> Void)?
+-
+                     func initialize(name: String, secondName: String?) {
+                     initializeNameSecondNameCallsCount += 1
+                     initializeNameSecondNameReceivedArguments = (name, secondName)

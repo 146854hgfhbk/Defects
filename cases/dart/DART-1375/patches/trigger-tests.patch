@@ -1,0 +1,20 @@
+diff --git a/test/parse_test.dart b/test/parse_test.dart
+index 9c8748796bdc7fb72f1d029e072eeace5604b9ac..96395674c9b34e773bbf7a7186addbd43ee0acd6 100644
+--- a/test/parse_test.dart
++++ b/test/parse_test.dart
+@@ -61,6 +61,15 @@ void main() {
+         expect(results['verbose'], isTrue);
+         expect(results['Verbose'], isFalse);
+       });
++
++      test('match letters, numbers, hyphens and underscores', () {
++        var parser = ArgParser();
++        var allCharacters =
++            'abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789';
++        parser.addFlag(allCharacters);
++        var results = parser.parse(['--$allCharacters']);
++        expect(results[allCharacters], isTrue);
++      });
+     });
+ 
+     group('flags negated with "no-"', () {

@@ -1,0 +1,14 @@
+diff --git a/pkgs/matcher/lib/src/iterable_matchers.dart b/pkgs/matcher/lib/src/iterable_matchers.dart
+index 0fbdb5c877f3c89cc26c84e95415afacd5668cb2..21bf73c01f4c59b353e93aade7a560d0aa6cb07d 100644
+--- a/pkgs/matcher/lib/src/iterable_matchers.dart
++++ b/pkgs/matcher/lib/src/iterable_matchers.dart
+@@ -297,7 +297,8 @@ class _PairwiseCompare<S, T> extends _IterableMatcher {
+     var i = 0;
+     for (var e in _expected) {
+       iterator.moveNext();
+-      if (!_comparator(e, iterator.current as T)) {
++      var current = iterator.current;
++      if (current is! T || !_comparator(e, current)) {
+         addStateInfo(matchState, {
+           'index': i,
+           'expected': e,

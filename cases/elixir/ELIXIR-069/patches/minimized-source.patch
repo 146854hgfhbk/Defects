@@ -1,0 +1,118 @@
+diff --git a/lib/broadway.ex b/lib/broadway.ex
+--- a/lib/broadway.ex
++++ b/lib/broadway.ex
+@@ -544,10 +557,13 @@ defmodule Broadway do
+ 
+   """
+   @spec test_messages(GenServer.server(), data :: [term]) :: reference
+-  def test_messages(broadway, data) when is_list(data) do
++  def test_messages(broadway, data, opts \\ []) when is_list(data) and is_list(opts) do
++    batch_mode = Keyword.get(opts, :batch_mode, :flush)
+     ref = make_ref()
+     ack = {Broadway.CallerAcknowledger, {self(), ref}, :ok}
+-    messages = Enum.map(data, &%Message{data: &1, acknowledger: ack})
++
++    messages = Enum.map(data, &%Message{data: &1, acknowledger: ack, batch_mode: batch_mode})
++
+     :ok = push_messages(broadway, messages)
+     ref
+   end
+diff --git a/lib/broadway/batcher.ex b/lib/broadway/batcher.ex
+--- a/lib/broadway/batcher.ex
++++ b/lib/broadway/batcher.ex
+@@ -81,29 +81,41 @@ defmodule Broadway.Batcher do
+ 
+   defp handle_events_per_batch_key([%{batch_key: batch_key} | _] = events, acc, state) do
+     {current, pending_count, timer} = init_or_get_batch(batch_key, state)
+-    {current, pending_count, events} = split_counting(batch_key, events, pending_count, current)
+ 
+-    acc = deliver_or_update_batch(batch_key, current, pending_count, timer, acc, state)
++    {current, pending_count, events, flush?} =
++      split_counting(batch_key, events, pending_count, false, current)
++
++    acc = deliver_or_update_batch(batch_key, current, pending_count, flush?, timer, acc, state)
+     handle_events_per_batch_key(events, acc, state)
+   end
+ 
+-  defp split_counting(batch_key, [%{batch_key: batch_key} = event | events], count, acc)
+-       when count > 0,
+-       do: split_counting(batch_key, events, count - 1, [event | acc])
++  defp split_counting(batch_key, [%{batch_key: batch_key} = event | events], count, flush?, acc)
++       when count > 0 do
++    flush? = flush? or event.batch_mode == :flush
++    split_counting(batch_key, events, count - 1, flush?, [event | acc])
++  end
+ 
+-  defp split_counting(_batch_key, events, count, acc), do: {acc, count, events}
++  defp split_counting(_batch_key, events, count, flush?, acc), do: {acc, count, events, flush?}
+ 
+-  defp deliver_or_update_batch(batch_key, current, 0, timer, acc, state) do
+-    delete_batch(batch_key)
+-    cancel_batch_timeout(timer)
+-    [wrap_for_delivery(batch_key, current, state) | acc]
++  defp deliver_or_update_batch(batch_key, current, _pending_count, true, timer, acc, state) do
++    deliver_batch(batch_key, current, timer, acc, state)
++  end
++
++  defp deliver_or_update_batch(batch_key, current, 0, _flush?, timer, acc, state) do
++    deliver_batch(batch_key, current, timer, acc, state)
+   end
+ 
+-  defp deliver_or_update_batch(batch_key, current, pending_count, timer, acc, _state) do
++  defp deliver_or_update_batch(batch_key, current, pending_count, _flush?, timer, acc, _state) do
+     put_batch(batch_key, {current, pending_count, timer})
+     acc
+   end
+ 
++  defp deliver_batch(batch_key, current, timer, acc, state) do
++    delete_batch(batch_key)
++    cancel_batch_timeout(timer)
++    [wrap_for_delivery(batch_key, current, state) | acc]
++  end
++
+   ## General batch handling
+ 
+   defp init_or_get_batch(batch_key, state) do
+diff --git a/lib/broadway/message.ex b/lib/broadway/message.ex
+--- a/lib/broadway/message.ex
++++ b/lib/broadway/message.ex
+@@ -20,6 +20,7 @@ defmodule Broadway.Message do
+           acknowledger: {module, ack_ref :: term, data :: term},
+           batcher: atom,
+           batch_key: term,
++          batch_mode: :bulk | :flush,
+           status: :ok | {:failed, reason :: binary}
+         }
+ 
+@@ -29,6 +30,7 @@ defmodule Broadway.Message do
+             acknowledger: nil,
+             batcher: :default,
+             batch_key: :default,
++            batch_mode: :bulk,
+             status: :ok
+ 
+   @doc """
+@@ -61,6 +63,23 @@ defmodule Broadway.Message do
+     %Message{message | batch_key: batch_key}
+   end
+ 
++  @doc """
++  Sets the batching mode for the message.
++
++  When the mode is `:bulk`, the batch that the message is in is delivered after
++  the batch size or the batch timeout is reached.
++
++  When the mode is `:flush`, the batch that the message is in is delivered
++  immediately after processing. Note it doesn't mean the batch contains only a single element
++  but rather that all messages receives from the processor are delivered without waiting.
++
++  The default mode for messages is `:bulk`.
++  """
++  @spec put_batch_mode(message :: Message.t(), mode :: :bulk | :flush) :: Message.t()
++  def put_batch_mode(%Message{} = message, mode) when mode in [:bulk, :flush] do
++    %Message{message | batch_mode: mode}
++  end
++
+   @doc """
+   Mark a message as failed.
+ 

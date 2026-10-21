@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-706",
+  "status": "trigger_ready",
+  "mode": "dedicated_script",
+  "origin": "manual_mwe_from_upstream_fix",
+  "trigger_sha256": "cabb874a86dcf4cbe21ab971cd10c8e60e00a4d03a93e134b693be5485367130",
+  "trigger_name": "failed conversion leaves CircularBuffer unchanged",
+  "oracle": {
+    "mwe_basis": "public DataStructures.CircularBuffer behavior",
+    "defect": "A failed element conversion incremented buffer length before throwing.",
+    "source_evidence": {
+      "upstream_issue": 754,
+      "upstream_test_file": "test/test_circular_buffer.jl",
+      "basis": "Issue 754 state-integrity assertion from the first upstream fix commit; the oracle deliberately accepts either exception type."
+    },
+    "upstream_test_patch_sha256": "3f7018cff0ace20b11c80e24c6789feaff8eca4d4cb5672d9a28f58b1f97c092"
+  },
+  "superseded_acquisition": {
+    "schema_version": 1,
+    "case_id": "JULIA-706",
+    "status": "trigger_ready",
+    "mode": "test_patch_suite",
+    "origin": "swe_rebench_test_patch",
+    "patch_sha256": "8b88cf5a1a0f62c59d2a5c4af0dc0ba7224284753d0eb50567c1239d32611f06",
+    "test_files": [
+      "test/test_circular_buffer.jl"
+    ],
+    "test_files_sha256": {},
+    "added_testsets": [
+      "Issue 754"
+    ],
+    "inferred_testset_context": [
+      "fill a non empty buffer"
+    ],
+    "assertion_expression_sha256": [
+      "ae5d569a970d9eeca65ed97ee66944bbfc44931a334c1825a35a530f3078b71e",
+      "5d5e63d49978bf8d1c8521f0b5e9eb02c149fc6f66beea6a062919244ad1b2b1",
+      "2ef105c5e94a8e351d570176398e46d9f03ada01d0ac53d00ebcec42094bf7fd"
+    ],
+    "f2p_tests": [
+      "CircularBuffer"
+    ],
+    "manual_review_required": false
+  }
+}

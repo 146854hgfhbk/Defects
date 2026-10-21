@@ -1,0 +1,166 @@
+diff --git a/Changes b/Changes
+index a47b31fa3f5e67402823172a7e1cea98ad2cee10..6d7600554c262b78fbc060c64a82fd81ec4128d4 100644
+--- a/Changes
++++ b/Changes
+@@ -20,6 +20,7 @@
+     - Enforce end() in a bag that also uses all_items; extra items were ignored. This includes the implicit end() inside is(), so such bags now warn or fail where they silently passed. [github #1086]
+     - Document that Test2::Plugin::BailOnFail and Test2::Plugin::DieOnFail cannot act on a failure inside a forked subtest until the owning process merges it [github #1081]
+     - Use Test2::V0 instead of the deprecated Test2::Bundle::Extended in the Test2::Tools::AsyncSubtest and Test2::Tools::Spec examples [github #1079]
++    - Fail a Test::More subtest whose code dies, reporting the exception inside it, instead of reporting the subtest as passing. The exception still propagates. [github #1075]
+ 
+ 1.302222  2026-06-15 10:18:50-07:00 America/Los_Angeles
+ 
+diff --git a/lib/Test/Builder.pm b/lib/Test/Builder.pm
+index 78cf58caa9682a2d66d8d770505ae033ebc97693..33c40530569dd992fc80e4b94821463c83dc4925 100644
+--- a/lib/Test/Builder.pm
++++ b/lib/Test/Builder.pm
+@@ -261,8 +261,8 @@ sub child {
+ 
+ sub finalize {
+     my $self = shift;
+-    my $ok = 1;
+-    ($ok) = @_ if @_;
++    my $end_hub = 1;
++    ($end_hub) = @_ if @_;
+ 
+     my $st_ctx = $self->ctx;
+     my $chub = $self->{Hub} || return $st_ctx->release;
+@@ -284,7 +284,7 @@ sub finalize {
+     delete $ctx->hub->meta(__PACKAGE__, {})->{child};
+ 
+     $chub->finalize($trace->snapshot(hid => $chub->hid, nested => $chub->nested), 1)
+-        if $ok
++        if $end_hub
+         && $chub->count
+         && !$chub->no_ending
+         && !$chub->ended;
+@@ -396,6 +396,12 @@ sub subtest {
+         $err = "Subtest ended with exit code $code" if $code;
+     }
+ 
++    # Record the exception inside the subtest so it fails and says why. The
++    # exception is still rethrown below, this only stops the subtest reporting
++    # success for code that never finished.
++    $st_ctx->send_event('Exception', error => $err)
++        if !$ok && defined($err);
++
+     my $st_hub  = $st_ctx->hub;
+     my $plan  = $st_hub->plan;
+     my $count = $st_hub->count;
+@@ -405,7 +411,7 @@ sub subtest {
+         $st_ctx->diag('No tests run!');
+     }
+ 
+-    $child->finalize($st_ctx->trace);
++    $child->finalize;
+ 
+     $ctx->release;
+ 
+diff --git a/lib/Test/More.pm b/lib/Test/More.pm
+index d036dd91f2be5567f4272d97070585406c17d093..b48d6dd9f3516be5195544caad71af032005f71b 100644
+--- a/lib/Test/More.pm
++++ b/lib/Test/More.pm
+@@ -796,6 +796,10 @@ considered a skip.
+ 
+ Returns true if the subtest passed, false otherwise.
+ 
++If the code dies, the subtest fails and the exception is reported inside it.
++The exception is then rethrown, so it still reaches your test file and ends it
++the way any other uncaught exception would.
++
+ Due to how subtests work, you may omit a plan if you desire.  This adds an
+ implicit C<done_testing()> to the end of your subtest.  The following two
+ subtests are equivalent:
+diff --git a/t/AI/regression/1075-subtest-exception.t b/t/AI/regression/1075-subtest-exception.t
+new file mode 100644
+index 0000000000000000000000000000000000000000..c6b1efcff73eb610d03bb3734d05d0f4c7796aa6
+--- /dev/null
++++ b/t/AI/regression/1075-subtest-exception.t
+@@ -0,0 +1,87 @@
++use strict;
++use warnings;
++
++use Test::More;
++use Test2::API qw/intercept/;
++
++# An exception inside a subtest must fail the subtest, report the error, and
++# still propagate to the caller.
++
++my ($err, $events);
++
++$events = intercept(sub {
++    eval {
++        subtest died_after_a_passing_assertion => sub {
++            ok(1, "ran before the exception");
++            die "boom\n";
++            ok(1, "never runs");
++        };
++        1;
++    } or $err = $@;
++});
++
++is($err, "boom\n", "the exception still propagates to the caller");
++
++my ($subtest) = grep { $_->isa('Test2::Event::Subtest') } @$events;
++ok($subtest, "got a subtest event");
++ok(!$subtest->pass, "the subtest failed");
++
++my @errors = map { @{$_->facet_data->{errors} || []} } @{$subtest->subevents};
++is(scalar(@errors), 1, "one error recorded inside the subtest");
++like($errors[0]->{details}, qr/^boom/, "the error says what went wrong");
++
++my @asserts = grep { $_->facet_data->{assert} } @{$subtest->subevents};
++is(scalar(@asserts), 1, "the assertion that did run is still reported");
++ok($asserts[0]->facet_data->{assert}{pass}, "and it still passes");
++
++my @plans = grep { $_->facet_data->{plan} } @{$subtest->subevents};
++is(scalar(@plans), 1, "the subtest was still finalized with a plan");
++
++# A subtest that dies before running anything was already a failure, but it
++# should now say why.
++
++undef $err;
++$events = intercept(sub {
++    eval {
++        subtest died_before_any_assertion => sub { die "early boom\n" };
++        1;
++    } or $err = $@;
++});
++
++is($err, "early boom\n", "the early exception propagates too");
++
++my ($fail) = grep { $_->facet_data->{assert} && !$_->facet_data->{assert}{pass} } @$events;
++ok($fail, "the subtest is reported as a failure");
++
++# Nothing changes for a subtest that completes.
++
++$events = intercept(sub {
++    subtest all_good => sub { ok(1, "fine") };
++});
++
++my ($passing) = grep { $_->isa('Test2::Event::Subtest') } @$events;
++ok($passing->pass, "a subtest that does not die still passes");
++is(
++    scalar(map { @{$_->facet_data->{errors} || []} } @{$passing->subevents}),
++    0,
++    "and records no errors"
++);
++
++# skip_all inside a subtest is not an exception.
++
++$events = intercept(sub {
++    subtest skipper => sub {
++        plan skip_all => 'nothing to do here';
++        ok(0, "never runs");
++    };
++});
++
++my ($skipped) = grep { $_->facet_data->{assert} } @$events;
++ok($skipped->facet_data->{assert}{pass}, "a subtest that skips all still passes");
++is(
++    scalar(map { @{$_->facet_data->{errors} || []} } @$events),
++    0,
++    "and records no errors"
++);
++
++done_testing;

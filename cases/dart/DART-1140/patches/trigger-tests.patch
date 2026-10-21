@@ -1,0 +1,47 @@
+diff --git a/test/tall/expression/collection_null_aware.stmt b/test/tall/expression/collection_null_aware.stmt
+index 4847d717d85dfb039c0f43a8dc4cecaa5baca740..38563acc54dc36330c2c3fa9b3952e5fbc4ebd19 100644
+--- a/test/tall/expression/collection_null_aware.stmt
++++ b/test/tall/expression/collection_null_aware.stmt
+@@ -27,3 +27,17 @@ var list = [
+   ?(veryLongExpression +
+       thatIsForcedToSplit),
+ ];
++>>> (experiment dot-shorthands) Preserves space for dot shorthand.
++### If the space between `?` and `.` is removed, it would become a single `?.`
++### token and thus a parse error.
++var list = [
++  ?  .  property  ,
++  ?  .  invocation  (  )  ,
++  ?  .  new  (  )  ,
++];
++<<< 3.10
++var list = [
++  ? .property,
++  ? .invocation(),
++  ? .new(),
++];
+diff --git a/test/tall/expression/collection_null_aware_comment.stmt b/test/tall/expression/collection_null_aware_comment.stmt
+index 8e6aa9029bf5e6fba7ce34a5bdb342139117ac25..e8bbd8b3e758765a2986241a94b95ab29c8c4528 100644
+--- a/test/tall/expression/collection_null_aware_comment.stmt
++++ b/test/tall/expression/collection_null_aware_comment.stmt
+@@ -33,3 +33,20 @@ var map = {
+       ? // c
+       value,
+ };
++>>> (experiment dot-shorthands) Comment between `?` and `.` of dot shorthand.
++var list = [
++  ?  /* c */  .  property  ,
++  ?  // c
++  .  invocation  (  )  ,
++  ?  /// c
++  .  new  (  )  ,
++];
++<<< 3.10
++var list = [
++  ? /* c */ .property,
++  ? // c
++  .invocation(),
++  ?
++  /// c
++  .new(),
++];

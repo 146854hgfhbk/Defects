@@ -1,0 +1,40 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 1864e0277ed0f4b75ed014d38067a8562ad07ccb..85d1d903c84d535c3260616511af42081dc52116 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -25,6 +25,8 @@
+   - `types.is_empty` would return true on spaces always, indepedent of the parameter
+   - `types.to_bool` will now compare case-insensitive for the extra passed strings
+   - `app.require_here` will now properly handle an absolute base path
++  - `stringx.split` will no longer append an empty match if the number of requested
++    elements has already been reached.
+ 
+ ## 1.6.0 (2018-11-23)
+ 
+diff --git a/lua/pl/stringx.lua b/lua/pl/stringx.lua
+index ce670953c2730007eb19e49480b97edccae060f2..91d0ef0103f9a993345e8d25c3abc13f6848cb3e 100644
+--- a/lua/pl/stringx.lua
++++ b/lua/pl/stringx.lua
+@@ -190,7 +190,9 @@ function stringx.split(s,re,n)
+         plain = false
+     end
+     local res = usplit(s,re,plain,n)
+-    if re and re ~= '' and find(s,re,-#re,true) then
++    if re and re ~= '' and
++       find(s,re,-#re,true) and
++       (n or math.huge) > #res then
+         res[#res+1] = ""
+     end
+     return makelist(res)
+diff --git a/tests/test-stringx.lua b/tests/test-stringx.lua
+index 8052f28e91aff45a621f7e38184782c365105320..b8e5bd477019f67f5662979181554b752837edd4 100644
+--- a/tests/test-stringx.lua
++++ b/tests/test-stringx.lua
+@@ -150,6 +150,7 @@ asserteq(split('a', 'a'), {''})
+ asserteq(split(' 1  2  3 '),{'1','2','3'})
+ asserteq(split('a*bb*c*ddd','*'),{'a','bb','c','ddd'})
+ asserteq(split('dog:fred:bonzo:alice',':',3), {'dog','fred','bonzo:alice'})
++asserteq(split('dog:fred:bonzo:alice:',':',3), {'dog','fred','bonzo:alice:'})
+ asserteq(split('///','/'),{'','','',''})
+ -- capitalize
+ asserteq(T(stringx.capitalize('')), T(''))

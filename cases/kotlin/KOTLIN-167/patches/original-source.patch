@@ -1,0 +1,108 @@
+diff --git a/helper-cli/src/main/kotlin/commands/ListLicensesCommand.kt b/helper-cli/src/main/kotlin/commands/ListLicensesCommand.kt
+index dbe0e24ce..885947362 100644
+--- a/helper-cli/src/main/kotlin/commands/ListLicensesCommand.kt
++++ b/helper-cli/src/main/kotlin/commands/ListLicensesCommand.kt
+@@ -35,8 +35,6 @@ import com.github.ajalt.clikt.parameters.types.file
+ 
+ import java.io.File
+ import java.lang.IllegalArgumentException
+-import java.nio.file.FileSystems
+-import java.nio.file.Paths
+ 
+ import org.ossreviewtoolkit.helper.utils.PackageConfigurationOption
+ import org.ossreviewtoolkit.helper.utils.createProvider
+@@ -52,6 +50,7 @@ import org.ossreviewtoolkit.model.Provenance
+ import org.ossreviewtoolkit.model.RepositoryProvenance
+ import org.ossreviewtoolkit.model.Severity
+ import org.ossreviewtoolkit.model.TextLocation
++import org.ossreviewtoolkit.utils.common.FileMatcher
+ import org.ossreviewtoolkit.utils.common.expandTilde
+ import org.ossreviewtoolkit.utils.spdx.SpdxSingleLicenseExpression
+ 
+@@ -151,9 +150,8 @@ internal class ListLicensesCommand : CliktCommand(
+     private val fileAllowList by option(
+         "--file-allow-list",
+         help = "Output only license findings for files whose paths matches any of the given glob expressions."
+-    ).convert { csv ->
+-        csv.split(',').map { pattern -> FileSystems.getDefault().getPathMatcher("glob:$pattern") }
+-    }.default(emptyList())
++    ).split(",")
++        .default(emptyList())
+ 
+     override fun run() {
+         val ortResult = readOrtResult(ortFile).replaceConfig(repositoryConfigurationFile)
+@@ -190,9 +188,7 @@ internal class ListLicensesCommand : CliktCommand(
+                     !offendingOnly || license in violatedRulesByLicense
+                 }.mapValues { (license, locations) ->
+                     locations.filter { location ->
+-                        val isAllowedFile = fileAllowList.isEmpty() || fileAllowList.any {
+-                            it.matches(Paths.get(location.path))
+-                        }
++                        val isAllowedFile = fileAllowList.isEmpty() || FileMatcher.match(fileAllowList, location.path)
+ 
+                         val isIncluded = !omitExcluded || !isPathExcluded(provenance, location.path) ||
+                                 ignoreExcludedRuleIds.intersect(violatedRulesByLicense[license].orEmpty()).isNotEmpty()
+diff --git a/model/src/main/kotlin/config/PathExclude.kt b/model/src/main/kotlin/config/PathExclude.kt
+index 6b2aa48b5..a3c7dbf79 100644
+--- a/model/src/main/kotlin/config/PathExclude.kt
++++ b/model/src/main/kotlin/config/PathExclude.kt
+@@ -21,8 +21,7 @@ package org.ossreviewtoolkit.model.config
+ 
+ import com.fasterxml.jackson.annotation.JsonInclude
+ 
+-import java.nio.file.FileSystems
+-import java.nio.file.Paths
++import org.ossreviewtoolkit.utils.common.FileMatcher
+ 
+ /**
+  * Defines paths which should be excluded. Each file that is matched by the [glob][pattern] is marked as excluded. If a
+@@ -46,9 +45,11 @@ data class PathExclude(
+     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+     val comment: String = ""
+ ) {
+-    private val glob by lazy {
+-        FileSystems.getDefault().getPathMatcher("glob:${pattern.removePrefix("./")}")
+-    }
+-
+-    fun matches(path: String) = glob.matches(Paths.get(path))
++    /**
++     * Return true if and only if this [PathExclude] matches the given [path].
++     */
++    fun matches(path: String) = FileMatcher.match(
++        pattern = pattern.removePrefix("./"),
++        path = path
++    )
+ }
+diff --git a/model/src/main/kotlin/utils/FindingCurationMatcher.kt b/model/src/main/kotlin/utils/FindingCurationMatcher.kt
+index 6183cff13..3e5168bd4 100644
+--- a/model/src/main/kotlin/utils/FindingCurationMatcher.kt
++++ b/model/src/main/kotlin/utils/FindingCurationMatcher.kt
+@@ -19,12 +19,10 @@
+ 
+ package org.ossreviewtoolkit.model.utils
+ 
+-import java.nio.file.FileSystems
+-import java.nio.file.Paths
+-
+ import org.ossreviewtoolkit.model.LicenseFinding
+ import org.ossreviewtoolkit.model.config.LicenseFindingCuration
+ import org.ossreviewtoolkit.model.licenses.LicenseFindingCurationResult
++import org.ossreviewtoolkit.utils.common.FileMatcher
+ import org.ossreviewtoolkit.utils.spdx.SpdxConstants
+ 
+ /**
+@@ -35,10 +33,10 @@ class FindingCurationMatcher {
+         finding: LicenseFinding,
+         curation: LicenseFindingCuration,
+         relativeFindingPath: String
+-    ): Boolean =
+-        FileSystems.getDefault()
+-            .getPathMatcher("glob:${curation.path}")
+-            .matches(Paths.get(finding.location.prependPath(relativeFindingPath)))
++    ): Boolean = FileMatcher.match(
++        pattern = curation.path,
++        path = finding.location.prependPath(relativeFindingPath)
++    )
+ 
+     private fun isStartLineMatching(finding: LicenseFinding, curation: LicenseFindingCuration): Boolean =
+         curation.startLines.isEmpty() || curation.startLines.any { it == finding.location.startLine }

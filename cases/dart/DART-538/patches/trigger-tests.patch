@@ -1,0 +1,57 @@
+diff --git a/test/widgets/table/fixed_width_table_test.dart b/test/widgets/table/fixed_width_table_test.dart
+index b864b11..d5519ee 100644
+--- a/test/widgets/table/fixed_width_table_test.dart
++++ b/test/widgets/table/fixed_width_table_test.dart
+@@ -51,6 +51,21 @@ void main() {
+     )}';
+     expect(actual.withForegroundColor(AnsiColor.indianRed), nonTransparentTableMock);
+   });
++
++  test('non-transparent with colored borders', () {
++    expect(
++      AnsiTable(
++        border: const AnsiBorder(
++          style: AnsiBorderStyle.square,
++          type: AnsiBorderType.all,
++          color: AnsiColor.cadetBlue,
++        ),
++        transparent: false,
++        rows: <AnsiTableRow>[AnsiTableRow(data: headerData), ...data],
++      ).formattedText,
++      nonTransparentTableWithColoredBordersMock,
++    );
++  });
+ }
+ 
+ final Map<AnsiBorderType, String> tableMocks = <AnsiBorderType, String>{
+@@ -159,11 +174,22 @@ const String footerBorderTableMock = '''
+ const String nonTransparentTableMock = '''
+ \x1B[38;5;131mthis is a table
+ \x1B[0m┌───────────────┬───────────────┬───────────────┐
+-│Name           │Hex            │RGB            │
+-├───────────────┼───────────────┼───────────────┤
+-│Red            │#ff0000        │(255, 0, 0)    │
+-├───────────────┼───────────────┼───────────────┤
+-│Green          │#008000        │(0, 128, 0)    │
+-├───────────────┼───────────────┼───────────────┤
+-│Blue           │#0000ff        │(0, 0, 255)    │
+-└───────────────┴───────────────┴───────────────┘\x1B[0m''';
++\x1B[0m│Name           │Hex            │RGB            │
++\x1B[0m├───────────────┼───────────────┼───────────────┤
++\x1B[0m│Red            │#ff0000        │(255, 0, 0)    │
++\x1B[0m├───────────────┼───────────────┼───────────────┤
++\x1B[0m│Green          │#008000        │(0, 128, 0)    │
++\x1B[0m├───────────────┼───────────────┼───────────────┤
++\x1B[0m│Blue           │#0000ff        │(0, 0, 255)    │
++\x1B[0m└───────────────┴───────────────┴───────────────┘\x1B[0m''';
++
++const String nonTransparentTableWithColoredBordersMock = '''
++[38;5;72m[0m┌───────────────┬───────────────┬───────────────┐[0m
++[0m[38;5;72m│[0mName           [38;5;72m│[0mHex            [38;5;72m│[0mRGB            [38;5;72m│[0m
++[38;5;72m[0m├───────────────┼───────────────┼───────────────┤[0m
++[0m[38;5;72m│[0mRed            [38;5;72m│[0m#ff0000        [38;5;72m│[0m(255, 0, 0)    [38;5;72m│[0m
++[38;5;72m[0m├───────────────┼───────────────┼───────────────┤[0m
++[0m[38;5;72m│[0mGreen          [38;5;72m│[0m#008000        [38;5;72m│[0m(0, 128, 0)    [38;5;72m│[0m
++[38;5;72m[0m├───────────────┼───────────────┼───────────────┤[0m
++[0m[38;5;72m│[0mBlue           [38;5;72m│[0m#0000ff        [38;5;72m│[0m(0, 0, 255)    [38;5;72m│[0m
++[38;5;72m[0m└───────────────┴───────────────┴───────────────┘[0m''';

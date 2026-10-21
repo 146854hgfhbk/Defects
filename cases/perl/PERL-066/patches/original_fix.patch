@@ -1,0 +1,50 @@
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index ef6b3a5..77de9b4 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -244,6 +244,8 @@ sub path {
+         $path .= ( _is_root($path) ? "" : "/" ) . join( "/", @_ );
+     }
+ 
++    my ($tilde) = $path =~ m{^(~[^/]*).*};
++
+     # canonicalize, but with unix slashes and put back trailing volume slash
+     my $cpath = $path = File::Spec->canonpath($path);
+     $path =~ tr[\\][/] if IS_WIN32();
+@@ -259,11 +261,14 @@ sub path {
+     }
+ 
+     # do any tilde expansions
+-    if ( $path =~ m{^(~[^/]*).*} ) {
++    if ( defined $tilde ) {
+         require File::Glob;
+-        my ($homedir) = File::Glob::bsd_glob($1);
++        my ($homedir) = File::Glob::bsd_glob($tilde);
+         $homedir =~ tr[\\][/] if IS_WIN32();
+-        $path =~ s{^(~[^/]*)}{$homedir};
++        $path =~ s{^\Q$tilde\E}{$homedir};
++    }
++    else {
++        $path =~ s{^~}{./~};
+     }
+ 
+     bless [ $path, $cpath ], __PACKAGE__;
+diff --git a/t/basic.t b/t/basic.t
+index 81209f2..04b4ac2 100644
+--- a/t/basic.t
++++ b/t/basic.t
+@@ -152,11 +152,14 @@ is $file->parent,  '/foo/baz';
+         ["~fun\ttimes",           undef,                    'Test tab' ],
+         ["~new\nline",            undef,                    'Test newline' ],
+         ['~'.$username.' file',   undef,                    'Test \'~$username file\'' ],
++        ['./~',                   undef,                    'Test literal tilde under current directory' ],
+     );
+ 
+     for my $test (@tests) {
+         is(path($test->[0]), defined $test->[1] ? $test->[1] : $test->[0], $test->[2]);
+     }
++
++    is(path('.')->child('~'), './~', 'Test indirect forms of literal tilde under current directory');
+ }
+ 
+ # freeze/thaw

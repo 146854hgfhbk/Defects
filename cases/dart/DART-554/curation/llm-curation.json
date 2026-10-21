@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-554",
+  "technical_evidence_sha256": "147ac6695f86870e9df3cc8127fdbd1f99eb62070acd3b110b7c183c59969e27",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "8b0d7637a7b8b91a16afb74c1a50a341a02a33eef2484ceeedc3eae53a0551d7",
+  "reviewed_at": "2026-08-11T23:18:18.928007+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/stack_trace#1858",
+  "rationale": "The issue dart-lang/tools#1858 reports that V8 WebAssembly stack frames with https:// URIs (e.g., 'at a::b::c() (https://a.b.com/x/y/z.wasm:wasm-function[66334]:0x12c28ad)') are not parsed by Frame.parseV8 and are stripped as Unparsed frames. The minimized production patch changes exactly one character class in lib/src/frame.dart line 51: the _v8WasmFrame regex URI capture group from 'wasm:\\S+' to '\\S+', allowing any non-whitespace URI scheme instead of only 'wasm:'. The added test calls Frame.parseV8 with the exact failing input pattern from the issue and asserts the parsed uri, line, column, and member fields. Strict runtime validation confirms: (1) the test fails deterministically on the buggy revision (trigger.buggy_differential passed, reproduced the single trigger), (2) passes on the fixed revision (trigger.fixed_clean passed), (3) the full suite remains green at fixed (full_suite.fixed_all_green passed), and (4) all 32 matrix runs completed with 3 repetitions (matrix.complete and matrix.repetitions passed). The trigger test is the unchanged upstream test portion of the fixing commit (trigger_reduction.status EXECUTABLY_VALIDATED_PENDING_LLM_EQUIVALENCE, upstream_trigger_patch present). No unrelated refactor, formatting, documentation, configuration, or test-only change exists in the minimized production patch. No active_same_project_root_causes were supplied, so no duplication.\n\nThe issue dart-lang/tools#1858 reports that V8 Wasm stack frames with HTTPS URIs (e.g., 'at a::b::c() (https://a.b.com/x/y/z.wasm:wasm-function[66334]:0x12c28ad)') fail to parse in Frame.parseV8 because the _v8WasmFrame regex requires 'wasm:' scheme URIs. The minimized production patch changes exactly one character class in lib/src/frame.dart line 51 from 'wasm:\\S+' to '\\S+', relaxing the URI group to accept any scheme. The trigger test exercises Frame.parseV8 with the exact HTTPS Wasm URI format reported in the issue and expects proper parsing (uri, line, column, member). Strict validation confirms all checks passed: the trigger fails deterministically on buggy (3 repetitions), passes on fixed, and the full suite remains green. No unrelated formatting, refactoring, documentation, or configuration changes are present. The active_same_project_root_causes list is empty, confirming no duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:18:06.014974+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8b0d7637a7b8b91a16afb74c1a50a341a02a33eef2484ceeedc3eae53a0551d7",
+      "response_sha256": "2f07efcbac30f546cad818a1b6e87444cfa7cade7c666106cba47e5ad547e276",
+      "response_id": "msg_26a05399-fd40-48d4-94",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2263
+        },
+        "cache_creation_input_tokens": 2263,
+        "cache_read_input_tokens": 5825,
+        "input_tokens": 7427,
+        "output_tokens": 1176
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/stack_trace#1858",
+      "rationale": "The issue dart-lang/tools#1858 reports that V8 WebAssembly stack frames with https:// URIs (e.g., 'at a::b::c() (https://a.b.com/x/y/z.wasm:wasm-function[66334]:0x12c28ad)') are not parsed by Frame.parseV8 and are stripped as Unparsed frames. The minimized production patch changes exactly one character class in lib/src/frame.dart line 51: the _v8WasmFrame regex URI capture group from 'wasm:\\S+' to '\\S+', allowing any non-whitespace URI scheme instead of only 'wasm:'. The added test calls Frame.parseV8 with the exact failing input pattern from the issue and asserts the parsed uri, line, column, and member fields. Strict runtime validation confirms: (1) the test fails deterministically on the buggy revision (trigger.buggy_differential passed, reproduced the single trigger), (2) passes on the fixed revision (trigger.fixed_clean passed), (3) the full suite remains green at fixed (full_suite.fixed_all_green passed), and (4) all 32 matrix runs completed with 3 repetitions (matrix.complete and matrix.repetitions passed). The trigger test is the unchanged upstream test portion of the fixing commit (trigger_reduction.status EXECUTABLY_VALIDATED_PENDING_LLM_EQUIVALENCE, upstream_trigger_patch present). No unrelated refactor, formatting, documentation, configuration, or test-only change exists in the minimized production patch. No active_same_project_root_causes were supplied, so no duplication.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "traceability.verified_fix_issue_numbers[1858]",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed=true",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed=true",
+        "strict_post_minimization.checks.full_suite.fixed_all_green.passed=true",
+        "strict_post_minimization.checks.matrix.complete.passed=true",
+        "source_candidate.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body"
+      ],
+      "risks": [
+        "The broadened URI regex (\\S+ instead of wasm:\\S+) is deliberately permissive; the runtime validation confirms existing frame_test.dart cases remain green, mitigating the risk of shadowing non-Wasm V8 frames."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:18:18.927817+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8b0d7637a7b8b91a16afb74c1a50a341a02a33eef2484ceeedc3eae53a0551d7",
+      "response_sha256": "f16930d861bc803cc78756ff4e09157e9c1459036a6874e1f8e44dd1e385c065",
+      "response_id": "msg_08837af6-d6d4-4ce0-b8",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2254
+        },
+        "cache_creation_input_tokens": 2254,
+        "cache_read_input_tokens": 5827,
+        "input_tokens": 7427,
+        "output_tokens": 893
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/stack_trace#1858",
+      "rationale": "The issue dart-lang/tools#1858 reports that V8 Wasm stack frames with HTTPS URIs (e.g., 'at a::b::c() (https://a.b.com/x/y/z.wasm:wasm-function[66334]:0x12c28ad)') fail to parse in Frame.parseV8 because the _v8WasmFrame regex requires 'wasm:' scheme URIs. The minimized production patch changes exactly one character class in lib/src/frame.dart line 51 from 'wasm:\\S+' to '\\S+', relaxing the URI group to accept any scheme. The trigger test exercises Frame.parseV8 with the exact HTTPS Wasm URI format reported in the issue and expects proper parsing (uri, line, column, member). Strict validation confirms all checks passed: the trigger fails deterministically on buggy (3 repetitions), passes on fixed, and the full suite remains green. No unrelated formatting, refactoring, documentation, or configuration changes are present. The active_same_project_root_causes list is empty, confirming no duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "issue_urls[0]",
+        "source_candidate.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed",
+        "strict_post_minimization.checks.full_suite.fixed_all_green.passed",
+        "traceability.verified_fix_issue_numbers[0]"
+      ],
+      "risks": [
+        "The broadened URI regex group (\\S+) is deliberately permissive; regression in non-Wasm V8 frame parsing would require full suite execution to detect, though strict validation confirms full_suite.fixed_all_green passed."
+      ]
+    }
+  ]
+}

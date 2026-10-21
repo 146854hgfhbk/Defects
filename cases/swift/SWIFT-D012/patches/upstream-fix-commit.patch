@@ -1,0 +1,52 @@
+diff --git a/PapyrusCore/Sources/RequestBuilder.swift b/PapyrusCore/Sources/RequestBuilder.swift
+index ea0c657..43a9685 100644
+--- a/PapyrusCore/Sources/RequestBuilder.swift
++++ b/PapyrusCore/Sources/RequestBuilder.swift
+@@ -205,13 +205,23 @@ public struct RequestBuilder {
+     }
+ 
+     private func parameterizedPath() throws -> String {
+-        try parameters.reduce(into: path.split(separator: "/")) { newPath, component in
++        var pathComponents = path.split(separator: "/")
++        var staticQuery: Substring? = nil
++
++        if let lastComponent = pathComponents.last, let startOfQuery = lastComponent.lastIndex(of: "?") {
++            pathComponents.removeLast()
++            staticQuery = lastComponent.suffix(from: startOfQuery)
++            pathComponents.append(lastComponent.prefix(upTo: startOfQuery))
++        }
++
++        return try parameters.reduce(into: pathComponents) { newPath, component in
++            print(newPath, component)
+             guard let index = newPath.firstIndex(of: ":\(component.key)") else {
+                 throw PapyrusError("Tried to set path parameter `\(component.key)` but did not find `:\(component.key)` in path `\(path)`.")
+             }
+ 
+             newPath[index] = component.value[...]
+-        }.joined(separator: "/")
++        }.joined(separator: "/") + (staticQuery ?? "")
+     }
+ 
+     private func bodyData() throws -> Data? {
+diff --git a/PapyrusCore/Tests/ParameterTests.swift b/PapyrusCore/Tests/ParameterTests.swift
+index 1fb0811..5c8e149 100644
+--- a/PapyrusCore/Tests/ParameterTests.swift
++++ b/PapyrusCore/Tests/ParameterTests.swift
+@@ -20,4 +20,17 @@ final class ParameterTests: XCTestCase {
+         req.addParameter("partTwo", value: "valueTwo")
+         XCTAssertEqual(try req.fullURL().absoluteString, "foo/bar/valueOne/valueTwo")
+     }
++    
++    func testPathWithStaticQuery() {
++        var req = RequestBuilder(baseURL: "foo/", method: "GET", path: "bar/:baz?query=1")
++        req.addParameter("baz", value: "value")
++
++        XCTAssertEqual(try req.fullURL().absoluteString, "foo/bar/value?query=1")
++
++
++        var reqWithTermination = RequestBuilder(baseURL: "foo/", method: "GET", path: "bar/:baz/?query=1")
++        reqWithTermination.addParameter("baz", value: "value")
++
++        XCTAssertEqual(try reqWithTermination.fullURL().absoluteString, "foo/bar/value/?query=1")
++    }
+ }

@@ -1,0 +1,41 @@
+diff --git a/test/regression_tall/other/misc.unit b/test/regression_tall/other/misc.unit
+new file mode 100644
+index 0000000000000000000000000000000000000000..0b4f9d6b8bc538c937a430dcede3055f75c46554
+--- /dev/null
++++ b/test/regression_tall/other/misc.unit
+@@ -0,0 +1,22 @@
++>>> Incorrect cost calculation when merging subtrees led to wrong solution.
++SomeVeryLongReturnType
++someFunctionName(SomeType_parameter1 AnotherType_parameter2) {
++  {
++    deps.then(() {
++          ;
++        })
++        .then(________traverseDeps_depender__deps_);
++  }
++}
++<<<
++SomeVeryLongReturnType someFunctionName(
++  SomeType_parameter1 AnotherType_parameter2,
++) {
++  {
++    deps
++        .then(() {
++          ;
++        })
++        .then(________traverseDeps_depender__deps_);
++  }
++}
+\ No newline at end of file
+diff --git a/test/tall_format_test.dart b/test/tall_format_test.dart
+index 93f84d1d6d9d8d628dec2a3996036d52fc033d33..80a8344dcf19e8e9a41425856e6907894e0b06d9 100644
+--- a/test/tall_format_test.dart
++++ b/test/tall_format_test.dart
+@@ -21,6 +21,7 @@ void main() async {
+   await testDirectory('top_level', tall: true);
+   await testDirectory('type', tall: true);
+   await testDirectory('variable', tall: true);
++  await testDirectory('regression_tall', tall: true);
+ 
+   test('throws a FormatterException on failed parse', () {
+     var formatter = DartFormatter();

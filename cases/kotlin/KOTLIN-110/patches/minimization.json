@@ -1,0 +1,508 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-22T11:27:57.911092+00:00",
+  "generated_by": "minimize_patch.py",
+  "patch_direction": "buggy_to_fixed",
+  "application_direction": "fixed_to_buggy_via_reverse_apply",
+  "policy": {
+    "granularity": "unified_diff_hunk",
+    "safe_automatic_categories": [
+      "comment",
+      "documentation",
+      "format",
+      "unrelated"
+    ],
+    "semantic_hunks_default": "KEEP",
+    "uncertain_hunks_default": "UNCERTAIN_AND_KEEP",
+    "llm_remove_requires_explicit_decision": true,
+    "removal_requires_differential_validation": true,
+    "batch_safe_candidates_first": true,
+    "verify_all_hunks": true,
+    "signature_fields": [
+      "trigger_set",
+      "exception_type",
+      "normalized_message",
+      "normalized_stack_hash"
+    ],
+    "necessity_evidence": [
+      "bug_not_reproduced with three complete compile and full-suite runs, repeat consistency, and no infrastructure errors",
+      "candidate source compilation fails in three isolated runs with an identical Kotlin compiler diagnostic fingerprint while fixed compile and full-suite runs pass"
+    ]
+  },
+  "original_patch": "original-source.patch",
+  "original_patch_sha256": "9d999cd4ea5cd4bc62c227786ad9ba0589340a30afaa819e53a1ff28702d2998",
+  "minimized_patch": "minimized-source.patch",
+  "minimized_patch_sha256": "9d999cd4ea5cd4bc62c227786ad9ba0589340a30afaa819e53a1ff28702d2998",
+  "original_hunk_count": 1,
+  "retained_hunk_count": 1,
+  "removed_hunk_count": 0,
+  "baseline_validation": {
+    "acceptable": true,
+    "status": "stable_differential",
+    "repeat_consistent": true,
+    "signature_complete": true,
+    "signature": {
+      "trigger_set": [
+        "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest.Issue 3227 - Given an EOL comment before RPAR then do not remove the newline()"
+      ],
+      "failures": [
+        {
+          "test_id": "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest.Issue 3227 - Given an EOL comment before RPAR then do not remove the newline()",
+          "exception_type": "java.lang.AssertionError",
+          "normalized_message": "java.lang.AssertionError: Expecting empty but was: [LintError(line=2, col=21, ruleId=RuleId(value=standard:paren-spacing), detail=Unexpected spacing before \")\", canBeAutoCorrected=true), LintError(line=3, col=22, ruleId=RuleId(value=standard:paren-spacing), detail=Unexpected spacing before \")\", canBeAutoCorrected=true)]",
+          "normalized_stack_hash": "da6e3a8c790562a6162947b0a1cfb6564650fac1a5015250bfc56803fa283d0d"
+        }
+      ]
+    },
+    "fixed_passed_all_runs": true,
+    "buggy_failed_all_runs": true,
+    "full_suite_valid": true,
+    "compile_valid": true,
+    "compile_fixed_runs": 3,
+    "compile_buggy_runs": 3,
+    "full_fixed_runs": 3,
+    "full_buggy_runs": 3,
+    "infrastructure_error_count": 0
+  },
+  "baseline_validation_source": {
+    "kind": "existing_validation_report",
+    "case_id": "KOTLIN-110",
+    "file": "baseline-validation.json",
+    "sha256": "89eb22ae0d48068ee3b435804d3c405e7b1a40e9c87611781d2908c599b4b747"
+  },
+  "hunks": [
+    {
+      "hunk_id": "F001-H001",
+      "file": "ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/SpacingAroundParensRule.kt",
+      "header": "@@ -184,7 +184,7 @@ public class SpacingAroundParensRule : StandardRule(\"paren-spacing\") {",
+      "category": "semantic",
+      "initial_decision": "REMOVE_CANDIDATE_FOR_NECESSITY_CHECK",
+      "source": "exhaustive_differential_check",
+      "eligible_for_automatic_removal": true,
+      "reason": "Production-code semantics may change; retained by default; removal is tested to establish that this retained hunk is necessary; retained because removal changes the differential evidence; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation",
+      "validation_evidence": {
+        "attempted": true,
+        "mode": "individual_exhaustive",
+        "accepted": false,
+        "reason": "removal consistently eliminates the defect under complete three-run differential validation",
+        "candidate_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "candidate": {
+          "acceptable": false,
+          "status": "bug_not_reproduced",
+          "repeat_consistent": true,
+          "signature_complete": false,
+          "signature": {
+            "trigger_set": [],
+            "failures": []
+          },
+          "fixed_passed_all_runs": true,
+          "buggy_failed_all_runs": false,
+          "full_suite_valid": true,
+          "compile_valid": true,
+          "compile_fixed_runs": 3,
+          "compile_buggy_runs": 3,
+          "full_fixed_runs": 3,
+          "full_buggy_runs": 3,
+          "infrastructure_error_count": 0,
+          "validation_provenance": {
+            "case_id": "KOTLIN-110",
+            "generated_by": "validation_engine.py",
+            "schema_version": 2,
+            "policy": {
+              "repetitions": 3,
+              "timeout_seconds": 1800,
+              "fresh_worktree_per_repetition": true,
+              "individual_trigger_processes": true,
+              "compile_before_tests": true,
+              "full_suite_run_per_version": 3,
+              "offline": true,
+              "environment_lock_sha256": "ed9906e10f167e94bc0390eb46f4457d8fa904bdb6c556fa8aab7f818e59a582",
+              "trigger_patch_states": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "state": "already_present"
+                }
+              ],
+              "buggy_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "run_matrix": [
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 2612,
+                "junit_file_count": 273,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 2612,
+                "junit_file_count": 273,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 2612,
+                "junit_file_count": 273,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 2612,
+                "junit_file_count": 273,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 2612,
+                "junit_file_count": 273,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.pinterest.ktlint.ruleset.standard.rules.SpacingAroundParensRuleTest"
+                ],
+                "tests": 21,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 2612,
+                "junit_file_count": 273,
+                "failure_fingerprint": null
+              }
+            ],
+            "derived": {
+              "status": "bug_not_reproduced",
+              "stable": false,
+              "fixed_passed_all_runs": true,
+              "buggy_failed_all_runs": false,
+              "full_suite_valid": true,
+              "compile_valid": true,
+              "compile_fixed_runs": 3,
+              "compile_buggy_runs": 3,
+              "full_fixed_runs": 3,
+              "full_buggy_runs": 3,
+              "full_buggy_failed": false,
+              "buggy_failed_test_count": 0,
+              "buggy_failed_tests": [],
+              "buggy_failure_types": [],
+              "failure_fingerprints": [],
+              "broken_tests": [],
+              "flaky_tests": [],
+              "order_dependent_tests": [],
+              "infrastructure_error_count": 0
+            },
+            "source_report_sha256": "255f32cf077c0d41c66cff9fac86cdea56660c65e70d270d6bb5ff374a2dd607",
+            "embedded_report": "minimization-evidence/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855-255f32cf077c0d41c66cff9fac86cdea56660c65e70d270d6bb5ff374a2dd607.evidence.json",
+            "embedded_report_sha256": "dc8cce9f7f7ec28b9bcc3fdb02844e0b5a92461222e6eaf2c5c29fe5d14942b2"
+          }
+        },
+        "source_validation_report": "D:\\Desktop\\综述试验方案\\kotlin-defects-miner-review\\output\\exhaustive-minimization\\KOTLIN-110\\validation-artifacts\\candidate-001\\validation.json",
+        "source_validation_sha256": "255f32cf077c0d41c66cff9fac86cdea56660c65e70d270d6bb5ff374a2dd607"
+      },
+      "decision": "KEEP"
+    }
+  ],
+  "manual_confirmation_required": false,
+  "evidence_confirmation": {
+    "decision": "CONFIRMED_BY_EXHAUSTIVE_DIFFERENTIAL_EVIDENCE",
+    "confirmed_at": "2026-07-24T14:46:46.595321+00:00",
+    "method": "exact cardinality subset search with decisive differential evidence for every retained and removed hunk",
+    "human_review_claimed": false
+  },
+  "evidence_reclassified_at": "2026-07-24T14:46:46.553251+00:00"
+}

@@ -1,0 +1,99 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-062",
+  "bug_id": "JULIA-062",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/julia/issues/57223"
+  ],
+  "issue_id": 57223,
+  "buggy_revision": "2e965a159dd9f87d216d2d50ecbd2ed4f9af2c5a",
+  "fixed_revision": "4b175929f30f58386cb0343310b7a6abc1bbbcfe",
+  "candidate_sha": "4b175929f30f58386cb0343310b7a6abc1bbbcfe",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "2e965a159dd9f87d216d2d50ecbd2ed4f9af2c5a",
+  "changed_production_files": [
+    "src/parser.jl"
+  ],
+  "changed_test_files": [
+    "test/parser.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-062 upstream fix test patch"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "test_patch_suite",
+    "path": "trigger/upstream-tests.patch",
+    "origin": "upstream_fix_test_patch",
+    "timeout_seconds": 1800,
+    "test_files": [
+      "test/parser.jl"
+    ],
+    "test_files_sha256": {
+      "test/parser.jl": "6cf691eec0389dc1cee39a5b950a462c81bddb980287713bfd7e8ddecb7f9705"
+    },
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "JULIA-062 upstream fix test patch"
+      ],
+      "added_testsets": [],
+      "assertion_expression_sha256": []
+    },
+    "sha256": "d6254a692b54e433a7182d60b0929a98dbcb8b143a77b46acc0eb63bb18bc467"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "4b175929f30f58386cb0343310b7a6abc1bbbcfe",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "2753633162611ef4f67978061642283e28691ff9dcf0a4b39c96905c1b674606",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:53:26Z",
+    "usage": {
+      "prompt_tokens": 2125,
+      "completion_tokens": 561,
+      "total_tokens": 2686
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.78,\n  \"summary\": \"Fix for a parsing bug where `$(x) -> rhs` incorrectly added a tuple wrapper due to a prior parsing change (#522). The fix avoids wrapping the LHS in a tuple when parsing parentheses inside interpolation (`$`) contexts, where lookahead for `->` is unreliable.\",\n  \"evidence\": \"Issue #534 explicitly references a bug (julia/issues/57223) introduced by the parsing change in #522. The description explains the incorrect behavior: when `$` has higher precedence than `->`, the parser cannot reliably look ahead at `->` in `parse_paren()`, causing incorrect tuple wrapping. The commit modifies `src/parser.jl` (production code) and `test/parser.jl` (test code), indicating both a fix and test evidence. The issue is clearly a regression/defect rather than a feature request.\",\n  \"missing_evidence\": \"Actual diff content is not provided, so the exact code change cannot be inspected. The test file details are not shown, so specific test assertions cannot be verified directly.\",\n  \"validation_risks\": \"The fix is described as addressing only the `$` case while leaving `&` and `::` cases broken. Need to ensure the test suite passes and that the fix doesn't regress other `->` parsing behaviors introduced in #522.\",\n  \"suggested_tests\": \"Test `$(x) -> rhs` parses without tuple wrapper on LHS. Test that `(x) -> rhs` still correctly produces tuple-p. Test that `(a;x=1)->b` still produces the correct tuple-p with parameters. Negative tests for the still-broken `&(x) -> y` and `::(x) -> y` cases.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.78,
+    "summary": "Fix for a parsing bug where `$(x) -> rhs` incorrectly added a tuple wrapper due to a prior parsing change (#522). The fix avoids wrapping the LHS in a tuple when parsing parentheses inside interpolation (`$`) contexts, where lookahead for `->` is unreliable.",
+    "evidence": "Issue #534 explicitly references a bug (julia/issues/57223) introduced by the parsing change in #522. The description explains the incorrect behavior: when `$` has higher precedence than `->`, the parser cannot reliably look ahead at `->` in `parse_paren()`, causing incorrect tuple wrapping. The commit modifies `src/parser.jl` (production code) and `test/parser.jl` (test code), indicating both a fix and test evidence. The issue is clearly a regression/defect rather than a feature request.",
+    "missing_evidence": "Actual diff content is not provided, so the exact code change cannot be inspected. The test file details are not shown, so specific test assertions cannot be verified directly.",
+    "validation_risks": "The fix is described as addressing only the `$` case while leaving `&` and `::` cases broken. Need to ensure the test suite passes and that the fix doesn't regress other `->` parsing behaviors introduced in #522.",
+    "suggested_tests": "Test `$(x) -> rhs` parses without tuple wrapper on LHS. Test that `(x) -> rhs` still correctly produces tuple-p. Test that `(a;x=1)->b` still produces the correct tuple-p with parameters. Negative tests for the still-broken `&(x) -> y` and `::(x) -> y` cases."
+  },
+  "origin_dataset": null
+}

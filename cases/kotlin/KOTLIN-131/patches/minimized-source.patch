@@ -1,0 +1,27 @@
+diff --git a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedImports.kt b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedImports.kt
+index e793942b1f..e5b1853974 100644
+--- a/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedImports.kt
++++ b/detekt-rules-style/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/style/UnusedImports.kt
+@@ -113,15 +113,16 @@ class UnusedImports(config: Config) : Rule(config) {
+         }
+ 
+         override fun visitDeclaration(dcl: KtDeclaration) {
+-            val kdoc = dcl.docComment?.getDefaultSection()
++            val kdoc = dcl.docComment?.getAllSections()
+ 
+-            kdoc?.getChildrenOfType<KDocTag>()
+-                ?.map { it.text }
+-                ?.forEach { handleKDoc(it) }
++            kdoc?.forEach { kdocSection ->
++                kdocSection.getChildrenOfType<KDocTag>()
++                    .map { it.text }
++                    .forEach { handleKDoc(it) }
+ 
+-            kdoc?.getContent()?.let {
+-                handleKDoc(it)
++                handleKDoc(kdocSection.getContent())
+             }
++
+             super.visitDeclaration(dcl)
+         }
+ 

@@ -1,0 +1,243 @@
+{
+  "bug_id": "JULIA-721",
+  "buggy_revision": "b6a755a58c2eb2d325f14e0f7db856f3296e43d6",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "2bd6debf5aea8226de1a995070375a3eba9dc048",
+  "case_id": "JULIA-721",
+  "changed_production_files": [
+    "src/_Fitting.jl"
+  ],
+  "changed_test_files": [
+    "test/test_Fitting.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "2bd6debf5aea8226de1a995070375a3eba9dc048",
+  "instance_id": "hyrodium__basicbspline.jl-215",
+  "issue_id": 214,
+  "issue_urls": [
+    "https://github.com/hyrodium/BasicBSpline.jl/issues/214"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "parent_sha": "b6a755a58c2eb2d325f14e0f7db856f3296e43d6",
+  "project": "hyrodium/BasicBSpline.jl",
+  "repository_url": "https://github.com/hyrodium/BasicBSpline.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "candidate_sha": "2bd6debf5aea8226de1a995070375a3eba9dc048",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.82,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Issue #214 gives a concrete reproducer (`BasicBSpline.innerproduct_R(x->x, (P,))` with `BSplineSpace{3}(KnotVector(1:12))`) and a stacktrace pointing at src/_Fitting.jl:95 `setindex!` converting 0.17499999999999996 to Int64 — an unambiguous element-type/promotion defect in existing public-facing behavior, not a missing feature. PR body states \"This PR fixes #214\", traceability class is STRICT_DIRECT, and commit subject matches the issue title. Scope is narrow: one production file, one test file, trigger test suite BasicBSpline.jl.",
+    "input_sha256": "620f285efc5e30131364eafab16a7e895d3db2054d3ae421143585bb7e8c95ff",
+    "missing_evidence": "The actual diff hunks are not provided, so I cannot confirm the fix is a type-promotion change (e.g. `float(...)`/`promote_type` on the output array eltype) rather than a broader refactor of the quadrature code. No file_details or runtime_evidence (pre-fix failing / post-fix passing test output) was supplied, and the added test content in test/test_Fitting.jl is not visible.",
+    "project": "hyrodium/BasicBSpline.jl",
+    "provider": "claude",
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"PR 215 fixes an InexactError thrown by `innerproduct`/`fittingcontrolpoints` when a BSplineSpace has an integer-typed knot vector: the accumulation array is allocated with the knot element type (Int64) and then assigned a non-integer quadrature result. The fix touches a single production file (src/_Fitting.jl, 3 hunks) with a matching test update in test/test_Fitting.jl, and directly references issue #214 which contains a minimal reproducer and stacktrace.\", \"evidence\": \"Issue #214 gives a concrete reproducer (`BasicBSpline.innerproduct_R(x->x, (P,))` with `BSplineSpace{3}(KnotVector(1:12))`) and a stacktrace pointing at src/_Fitting.jl:95 `setindex!` converting 0.17499999999999996 to Int64 — an unambiguous element-type/promotion defect in existing public-facing behavior, not a missing feature. PR body states \\\"This PR fixes #214\\\", traceability class is STRICT_DIRECT, and commit subject matches the issue title. Scope is narrow: one production file, one test file, trigger test suite BasicBSpline.jl.\", \"missing_evidence\": \"The actual diff hunks are not provided, so I cannot confirm the fix is a type-promotion change (e.g. `float(...)`/`promote_type` on the output array eltype) rather than a broader refactor of the quadrature code. No file_details or runtime_evidence (pre-fix failing / post-fix passing test output) was supplied, and the added test content in test/test_Fitting.jl is not visible.\", \"validation_risks\": \"Floating-point comparisons in fitting/inner-product tests may need tolerances, so an exact-equality assertion could be brittle across Julia versions or BLAS backends. If the fix widens element types, other tests asserting concrete return types (e.g. control-point eltype) could shift and produce failures beyond the target test. The trigger test is listed as the whole package suite rather than a specific testset, so isolating the single failing test for the Defects4J-style pre/post check will require identifying the exact testset name.\", \"suggested_tests\": \"Reproduce the issue directly: assert `BasicBSpline.innerproduct_R(x->x, (BSplineSpace{3}(KnotVector(1:12)),))` returns without error and yields Float64 values close to expected. Add a parallel case for `innerproduct_I` and for `fittingcontrolpoints` with an integer KnotVector. Cross-check that the same call with a Float64 KnotVector still produces identical numerical results, and verify the returned array eltype is a float type for integer-knot inputs.\"}",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-30T04:01:37Z",
+    "suggested_tests": "Reproduce the issue directly: assert `BasicBSpline.innerproduct_R(x->x, (BSplineSpace{3}(KnotVector(1:12)),))` returns without error and yields Float64 values close to expected. Add a parallel case for `innerproduct_I` and for `fittingcontrolpoints` with an integer KnotVector. Cross-check that the same call with a Float64 KnotVector still produces identical numerical results, and verify the returned array eltype is a float type for integer-knot inputs.",
+    "summary": "PR 215 fixes an InexactError thrown by `innerproduct`/`fittingcontrolpoints` when a BSplineSpace has an integer-typed knot vector: the accumulation array is allocated with the knot element type (Int64) and then assigned a non-integer quadrature result. The fix touches a single production file (src/_Fitting.jl, 3 hunks) with a matching test update in test/test_Fitting.jl, and directly references issue #214 which contains a minimal reproducer and stacktrace.",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.32059777864013267,
+      "input_tokens": 3138,
+      "output_tokens": 687
+    },
+    "validation_risks": "Floating-point comparisons in fitting/inner-product tests may need tolerances, so an exact-equality assertion could be brittle across Julia versions or BLAS backends. If the fix widens element types, other tests asserting concrete return types (e.g. control-point eltype) could shift and produce failures beyond the target test. The trigger test is listed as the whole package suite rather than a specific testset, so isolating the single failing test for the Defects4J-style pre/post check will require identifying the exact testset name."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "BasicBSpline.jl"
+    ],
+    "PASS_TO_PASS": [],
+    "base_commit": "b6a755a58c2eb2d325f14e0f7db856f3296e43d6",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "instance_id": "hyrodium__basicbspline.jl-215",
+    "issue_url": "https://github.com/hyrodium/BasicBSpline.jl/issues/214",
+    "patch": "diff --git a/src/_Fitting.jl b/src/_Fitting.jl\nindex c889eefa3..c270cf210 100644\n--- a/src/_Fitting.jl\n+++ b/src/_Fitting.jl\n@@ -78,7 +78,7 @@ function innerproduct_I(func, Ps::Tuple{<:AbstractBSplineSpace{p₁}}) where {p\n     l₁ = length(k₁)\n     nodes₁, weights₁ = SVector{p₁+1}.(gausslegendre(p₁+1))\n \n-    sample_point = func(leftendpoint(domain(P₁)))\n+    sample_point = func(float(leftendpoint(domain(P₁))))\n     b = Array{typeof(sample_point),1}(undef, n₁)\n     fill!(b, zero(sample_point))\n \n@@ -106,7 +106,7 @@ function innerproduct_I(func, Ps::Tuple{<:AbstractBSplineSpace{p₁},<:AbstractB\n     nodes₁, weights₁ = SVector{p₁+1}.(gausslegendre(p₁+1))\n     nodes₂, weights₂ = SVector{p₂+1}.(gausslegendre(p₂+1))\n \n-    sample_point = func(leftendpoint(domain(P₁)),leftendpoint(domain(P₂)))\n+    sample_point = func(float(leftendpoint(domain(P₁))),float(leftendpoint(domain(P₂))))\n     b = Array{typeof(sample_point),2}(undef, n₁, n₂)\n     fill!(b, zero(sample_point))\n \n@@ -146,7 +146,7 @@ function innerproduct_I(func, Ps::Tuple{<:AbstractBSplineSpace{p₁},<:AbstractB\n     nodes₂, weights₂ = SVector{p₂+1}.(gausslegendre(p₂+1))\n     nodes₃, weights₃ = SVector{p₃+1}.(gausslegendre(p₃+1))\n \n-    sample_point = func(leftendpoint(domain(P₁)),leftendpoint(domain(P₂)),leftendpoint(domain(P₃)))\n+    sample_point = func(float(leftendpoint(domain(P₁))),float(leftendpoint(domain(P₂))),float(leftendpoint(domain(P₃))))\n     b = Array{typeof(sample_point),3}(undef, n₁, n₂, n₃)\n     fill!(b, zero(sample_point))\n \n",
+    "pr_url": "https://github.com/hyrodium/BasicBSpline.jl/pull/215",
+    "problem_statement": "`InexactError` with `fittingcontrolpoints`\n```julia\r\njulia> P = BSplineSpace{3}(KnotVector(1:12))\r\nBSplineSpace{3, Int64}(KnotVector([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]))\r\n\r\njulia> BasicBSpline.innerproduct_R(x->x, (P,))\r\nERROR: InexactError: Int64(0.17499999999999996)\r\nStacktrace:\r\n [1] Int64\r\n   @ ./float.jl:812 [inlined]\r\n [2] convert\r\n   @ ./number.jl:7 [inlined]\r\n [3] setindex!\r\n   @ ./array.jl:903 [inlined]\r\n [4] innerproduct_I(func::var\"#3#4\", Ps::Tuple{BSplineSpace{3, Int64}})\r\n   @ BasicBSpline ~/.julia/dev/BasicBSpline/src/_Fitting.jl:95\r\n [5] innerproduct_R(func::var\"#3#4\", Ps::Tuple{BSplineSpace{3, Int64}})\r\n   @ BasicBSpline ~/.julia/dev/BasicBSpline/src/_Fitting.jl:200\r\n [6] top-level scope\r\n   @ REPL[12]:1\r\n```",
+    "test_patch": "diff --git a/test/test_Fitting.jl b/test/test_Fitting.jl\nindex 5bbdb1df6..ad1379f86 100644\n--- a/test/test_Fitting.jl\n+++ b/test/test_Fitting.jl\n@@ -226,4 +226,12 @@\n             @test BasicBSpline.innerproduct_R(BSplineSpace(P)) isa Symmetric{Float64,Matrix{Float64}}\n         end\n     end\n+\n+    @testset \"specific issues\" begin\n+        # https://github.com/hyrodium/BasicBSpline.jl/issues/214\n+        P = BSplineSpace{3}(KnotVector(1:12))\n+        @test BasicBSpline.innerproduct_R(t->t, (P,)) ≈ 3:10\n+        @test BasicBSpline.innerproduct_R((t1,t2)->t1+t2, (P,P)) ≈ [i+j for i in 3:10, j in 3:10]\n+        @test BasicBSpline.innerproduct_R((t1,t2,t3)->t1+t2+t3, (P,P,P)) ≈ [i+j+k for i in 3:10, j in 3:10, k in 3:10]\n+    end\n end\n",
+    "repo": "hyrodium/BasicBSpline.jl",
+    "pr_description": "This PR fixes #214.",
+    "created_at": "2022-05-14 03:22:23",
+    "image_name": "docker.io/swerebenchv2/hyrodium-basicbspline.jl:215-b6a755a",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "license": "MIT",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.99,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [
+          "https://github.com/hyrodium/BasicBSpline.jl/issues/214"
+        ],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports an InexactError when calling innerproduct_R with integer knot vectors, caused by passing integer endpoints to user functions. The tests added in the patch assert that innerproduct_R returns numeric arrays matching the expected ranges, which aligns with the intended behavior of the function. There are no signs of test suite coupling, implicit naming, external dependencies, ambiguous specifications, unrelated patch artifacts, or hidden domain knowledge. Therefore the task is a clear, solvable bug fix.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 2,
+      "num_modified_lines": null,
+      "pr_author": "hyrodium",
+      "pr_labels": null,
+      "pr_url": "https://github.com/hyrodium/BasicBSpline.jl/pull/215"
+    }
+  },
+  "timezone": "UTC",
+  "traceability_class": "STRICT_DIRECT",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "integer-knot fitting inner product accepts floating quadrature values"
+      ],
+      "assertion_expression_sha256": [],
+      "f2p_tests": [
+        "integer-knot fitting inner product accepts floating quadrature values"
+      ],
+      "mwe_basis": {
+        "defect": "Fitting with integer knot endpoints allocated an integer accumulator and raised InexactError when quadrature produced fractional values.",
+        "public_api": "BSplineSpace, KnotVector, and BasicBSpline.innerproduct_R",
+        "source_evidence": {
+          "extraction": "The trigger is the one-dimensional regression assertion added by PR #215 for issue #214. It observes the computed numeric result and does not inspect implementation text.",
+          "upstream_tests_patch_sha256": "b658b0d37897a00491ff64a545182e512d43bb6b02d1be859eb207029a2c6be5"
+        },
+        "upstream_issue": 214,
+        "upstream_pull_request": 215,
+        "upstream_test_files": [
+          "test/test_Fitting.jl"
+        ]
+      },
+      "schema_version": 1
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "6a5d03ef4a58129f7abaa5b15d99d97a02d35cdafe096faf415ee75d05fb341e",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "integer-knot fitting inner product accepts floating quadrature values"
+  ],
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "integer-knot fitting inner product accepts floating quadrature values"
+    ],
+    "exception_types": [
+      "TRIGGER_EXIT_1"
+    ],
+    "fingerprints": [
+      "TRIGGER_EXIT_1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "2bd6debf5aea8226de1a995070375a3eba9dc048",
+    "parent_sha": "b6a755a58c2eb2d325f14e0f7db856f3296e43d6",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "879bd067baaff2b0157ee9d0a9c0a6d625a97deac1c566fa808da99bd23e9a64",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

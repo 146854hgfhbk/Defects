@@ -1,0 +1,62 @@
+diff --git a/test/tall/statement/try.stmt b/test/tall/statement/try.stmt
+index 65d18fc..b1e79b6 100644
+--- a/test/tall/statement/try.stmt
++++ b/test/tall/statement/try.stmt
+@@ -110,4 +110,33 @@ try {
+ } on FooException {
+ } on BarException {
+   doSomething();
+-}
+\ No newline at end of file
++}
++>>> Split inside catch clause without stack trace.
++try {
++  doSomething();
++} catch (someSurprisinglyLongVariableName) {
++  doSomething();
++}
++<<<
++try {
++  doSomething();
++} catch (
++  someSurprisinglyLongVariableName
++) {
++  doSomething();
++}
++>>> Split inside catch clause with stack trace.
++try {
++  doSomething();
++} catch (longErrorVariable, longStackTrace) {
++  doSomething();
++}
++<<<
++try {
++  doSomething();
++} catch (
++  longErrorVariable,
++  longStackTrace
++) {
++  doSomething();
++}
+diff --git a/test/tall/statement/try_comment.stmt b/test/tall/statement/try_comment.stmt
+index 0076a41..4bcfc8a 100644
+--- a/test/tall/statement/try_comment.stmt
++++ b/test/tall/statement/try_comment.stmt
+@@ -27,7 +27,7 @@ try {
+   body;
+ } catch (
+   // comment
+-  e,
++  e
+ ) {
+   print(e);
+ }
+@@ -38,7 +38,7 @@ try { body; } catch (e// comment
+ try {
+   body;
+ } catch (
+-  e, // comment
++  e // comment
+ ) {
+   print(e);
+ }

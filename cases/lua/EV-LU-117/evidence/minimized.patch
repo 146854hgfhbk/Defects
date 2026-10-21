@@ -1,0 +1,164 @@
+diff --git a/src/luacheck/analyze.lua b/src/luacheck/analyze.lua
+index a2199a4796685fd9eaf6347c2f7515b2bfa9b528..57d5b90b88ccd958f87a904e31b527d4b9ad05ba 100644
+--- a/src/luacheck/analyze.lua
++++ b/src/luacheck/analyze.lua
+@@ -21,20 +21,23 @@ local function in_scope(var, index)
+    return (var.scope_start <= index) and (index <= var.scope_end)
+ end
+ 
+--- Called when value of var is live at an item.
++-- Called when value of var is live at an item, maybe several times.
+ -- Registers value as live where variable is accessed or liveness propogation stops.
+--- Stops when out of scope of variable or at another assignment to it.
+-local function value_propogation_callback(line, index, item, var, value)
++-- Stops when out of scope of variable, at another assignment to it or at an item
++-- encountered already.
++-- When stopping at a visited item, only save value if the item is in the current stack
++-- of items, i.e. when propogation followed some path from it to previous item
++local function value_propogation_callback(line, stack, index, item, visited, var, value)
+    if not item then
+       register_value(line.last_live_values, var, value)
+       return true
+    end
+ 
+-   if item.accesses and item.accesses[var] then
++   if not visited[index] and item.accesses and item.accesses[var] then
+       add_resolution(item, var, value)
+    end
+ 
+-   if not in_scope(var, index) or (item.set_variables and item.set_variables[var]) then
++   if stack[index] or (not visited[index] and (not in_scope(var, index) or item.set_variables and item.set_variables[var])) then
+       if not item.live_values then  
+          item.live_values = {}    
+       end
+@@ -42,6 +45,12 @@ local function value_propogation_callback(line, index, item, var, value)
+       register_value(item.live_values, var, value)  
+       return true
+    end
++
++   if visited[index] then
++      return true
++   end
++
++   visited[index] = true
+ end
+ 
+ -- For each node accessing variables, adds table {var = {values}} to field `used_values`.
+@@ -58,7 +67,7 @@ local function propogate_values(line)
+          for var, value in pairs(item.set_variables) do
+             if var.line == line then
+                -- Values are only live at the item after assignment.
+-               core_utils.walk_line(line, {}, i + 1, value_propogation_callback, var, value)
++               core_utils.walk_line(line, i + 1, value_propogation_callback, {}, var, value)
+             end
+          end
+       end
+@@ -121,7 +130,7 @@ local function propogate_closures(line)
+       if item.lines then
+          for _, subline in ipairs(item.lines) do
+             -- Closures are considered live at the item they are created.
+-            core_utils.walk_line(line, {}, i, closure_propogation_callback, subline)
++            core_utils.walk_line_once(line, {}, i, closure_propogation_callback, subline)
+          end
+       end
+    end
+diff --git a/src/luacheck/core_utils.lua b/src/luacheck/core_utils.lua
+index 20a97da5a19b333494c66a776c11e3a276ab1fb9..a80a40c66826804aa9480f6903defd554225b64c 100644
+--- a/src/luacheck/core_utils.lua
++++ b/src/luacheck/core_utils.lua
+@@ -1,30 +1,56 @@
+ local core_utils = {}
+ 
+--- Calls callback with line, index, item, ... for each item reachable from starting item.
+--- `visited` is a set of already visited indexes.
++-- Calls callback with line, stack_set, index, item, ... for each item reachable from starting item.
++-- `stack_set` is a set of indices of items in current propogation path from root, excluding current item.
+ -- Callback can return true to stop walking from current item.
+-function core_utils.walk_line(line, visited, index, callback, ...)
+-   if visited[index] then
+-      return
+-   end
++function core_utils.walk_line(line, index, callback, ...)
++   local stack = {}
++   local stack_set = {}
++   local backlog = {}
++   local level = 0
+ 
+-   visited[index] = true
+-   local item = line.items[index]
++   while index do
++      local item = line.items[index]
+ 
+-   if callback(line, index, item, ...) then
+-      return
++      if not callback(line, stack_set, index, item, ...) and item then
++         level = level + 1
++         stack[level] = index
++         stack_set[index] = true
++
++         if item.tag == "Jump" then
++            index = item.to
++         elseif item.tag == "Cjump" then
++            backlog[level] = index + 1
++            index = item.to
++         else
++            index = index + 1
++         end
++      else
++         while level > 0 and not backlog[level] do
++            stack_set[stack[level]] = nil
++            level = level - 1
++         end
++
++         index = backlog[level]
++         backlog[level] = nil
++      end
+    end
++end
+ 
+-   if not item then
+-      return
+-   elseif item.tag == "Jump" then
+-      return core_utils.walk_line(line, visited, item.to, callback, ...)
+-   elseif item.tag == "Cjump" then
+-      core_utils.walk_line(line, visited, item.to, callback, ...)
+-      return core_utils.walk_line(line, visited, index + 1, callback, ...)
+-   else
+-      return core_utils.walk_line(line, visited, index + 1, callback, ...)
++local function once_per_item_callback_adapter(line, _, index, item, visited, callback, ...)
++   if visited[index] then
++      return true
+    end
++
++   visited[index] = true
++   return callback(line, index, item, ...)
++end
++
++-- Calls callback with line, index, item, ... for each item reachable from starting item once.
++-- `visited` is a set of already visited indexes.
++-- Callback can return true to stop walking from current item.
++function core_utils.walk_line_once(line, visited, index, callback, ...)
++   return core_utils.walk_line(line, index, once_per_item_callback_adapter, visited, callback, ...)
+ end
+ 
+ -- Given a "global set" warning, return whether it is an implicit definition.
+diff --git a/src/luacheck/reachability.lua b/src/luacheck/reachability.lua
+index 1e0de7c532dedac9401a4eccb7166d4d3f3b0386..006f8a612591902bbe4cc0c8434c6f20f81fdf1f 100644
+--- a/src/luacheck/reachability.lua
++++ b/src/luacheck/reachability.lua
+@@ -31,13 +31,13 @@ end
+ -- Emits warnings: unreachable code, uninitialized access.
+ function reachability(chstate, line)
+    local reachable_indexes = {}
+-   core_utils.walk_line(line, reachable_indexes, 1, reachability_callback, chstate)
++   core_utils.walk_line_once(line, reachable_indexes, 1, reachability_callback, chstate)
+ 
+    for i, item in ipairs(line.items) do
+       if not reachable_indexes[i] then
+          if item.location then
+             chstate:warn_unreachable(item.location, item.loop_end, item.token)
+-            core_utils.walk_line(line, reachable_indexes, i, noop_callback)
++            core_utils.walk_line_once(line, reachable_indexes, i, noop_callback)
+          end
+       end
+    end

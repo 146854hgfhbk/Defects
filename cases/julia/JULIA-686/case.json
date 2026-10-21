@@ -1,0 +1,242 @@
+{
+  "bug_id": "JULIA-686",
+  "buggy_revision": "a90f9f2d4fdc1beb72f20471e5424678b3370949",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "85e8031de66020819bb61146163ed51f9fa3e006",
+  "case_id": "JULIA-686",
+  "changed_production_files": [
+    "src/svd.jl"
+  ],
+  "changed_test_files": [
+    "test/svd.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "85e8031de66020819bb61146163ed51f9fa3e006",
+  "instance_id": "julialinearalgebra__genericlinearalgebra.jl-120",
+  "issue_id": 119,
+  "issue_urls": [
+    "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/119"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "parent_sha": "a90f9f2d4fdc1beb72f20471e5424678b3370949",
+  "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+  "repository_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "candidate_sha": "677f33049508a88a76e8cedfc77e79db243daf43",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.82,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Production patch is one minimal hunk introducing `_sign(x) = ifelse(iszero(x), one(x), sign(x))` and using it in `rmul!(U, Diagonal(_sign.(s)))` inside `_sort_and_adjust!`; minimization reports globally_minimal with all hunks necessary. Issue #119 documents a concrete failure of `svd(zeros(BigFloat, 2, 2))`; PR #120 title states 'Test svd of zero matrix and fix the sign flipping when there are zero singular values' and closes #119. Runtime evidence shows a stable_differential over 3 repetitions with the fixed full suite passing, indicating the test patch fails on the parent and passes on the fixed commit.",
+    "input_sha256": "30e4d041a7a74ecebaa9a7018d1cbca1181a72c4012f590ca7bc6055189a4c5a",
+    "missing_evidence": "No explicit trigger test names are listed and the test diff itself is not shown, so the exact failing assertion is unverified. The PR body/title are empty in the record; the linkage relies on the issue records. Unclear whether the BoundsError in the #119 stacktrace (svdDemmelKahan! index 0) was fixed by this same commit or by a separate change, since this hunk only addresses sign handling.",
+    "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+    "provider": "claude",
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"Single-hunk fix in src/svd.jl replacing `sign` with a modified `_sign` (returning 1 for zero input) when adjusting singular value signs, so zero singular values no longer zero out the corresponding columns of U. Paired test changes in test/svd.jl and linked issue #119 / PR #120 describe SVD failures for zero (or rank-deficient) matrices in BigFloat.\", \"evidence\": \"Production patch is one minimal hunk introducing `_sign(x) = ifelse(iszero(x), one(x), sign(x))` and using it in `rmul!(U, Diagonal(_sign.(s)))` inside `_sort_and_adjust!`; minimization reports globally_minimal with all hunks necessary. Issue #119 documents a concrete failure of `svd(zeros(BigFloat, 2, 2))`; PR #120 title states 'Test svd of zero matrix and fix the sign flipping when there are zero singular values' and closes #119. Runtime evidence shows a stable_differential over 3 repetitions with the fixed full suite passing, indicating the test patch fails on the parent and passes on the fixed commit.\", \"missing_evidence\": \"No explicit trigger test names are listed and the test diff itself is not shown, so the exact failing assertion is unverified. The PR body/title are empty in the record; the linkage relies on the issue records. Unclear whether the BoundsError in the #119 stacktrace (svdDemmelKahan! index 0) was fixed by this same commit or by a separate change, since this hunk only addresses sign handling.\", \"validation_risks\": \"If the original BoundsError path was fixed in a different commit, the parent revision may error before reaching `_sort_and_adjust!`, which would still produce a failing test but for a different root cause than this hunk. Test may compare U/V columns for zero singular values, where sign/basis choices are not unique, so overly strict equality assertions could be brittle across BLAS/precision settings.\", \"suggested_tests\": \"Assert `svd(zeros(BigFloat, n, n))` succeeds and returns U and V with orthonormal columns (U'U ≈ I, V'V ≈ I) and all-zero singular values; check no column of U is entirely zero. Add a rank-deficient BigFloat case (e.g. a matrix with one exact zero singular value) and verify the reconstruction U*Diagonal(S)*Vᴴ ≈ A plus non-degenerate U, V. Include non-square shapes and a Float64 control case.\"}",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-31T04:37:01Z",
+    "revision_equivalence": {
+      "buggy_parent": "a90f9f2d4fdc1beb72f20471e5424678b3370949",
+      "method": "merge_second_parent_with_exact_tree_and_full_binary_diff",
+      "old_merge_commit": "677f33049508a88a76e8cedfc77e79db243daf43",
+      "recovered_single_parent_fix_commit": "85e8031de66020819bb61146163ed51f9fa3e006",
+      "status": "TREE_AND_PATCH_BYTE_IDENTICAL",
+      "tree_sha": "4bf075e16ed724688141d2698177fd028dc3e321"
+    },
+    "suggested_tests": "Assert `svd(zeros(BigFloat, n, n))` succeeds and returns U and V with orthonormal columns (U'U ≈ I, V'V ≈ I) and all-zero singular values; check no column of U is entirely zero. Add a rank-deficient BigFloat case (e.g. a matrix with one exact zero singular value) and verify the reconstruction U*Diagonal(S)*Vᴴ ≈ A plus non-degenerate U, V. Include non-square shapes and a Float64 control case.",
+    "summary": "Single-hunk fix in src/svd.jl replacing `sign` with a modified `_sign` (returning 1 for zero input) when adjusting singular value signs, so zero singular values no longer zero out the corresponding columns of U. Paired test changes in test/svd.jl and linked issue #119 / PR #120 describe SVD failures for zero (or rank-deficient) matrices in BigFloat.",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.3693186594029851,
+      "input_tokens": 4546,
+      "output_tokens": 649
+    },
+    "validation_risks": "If the original BoundsError path was fixed in a different commit, the parent revision may error before reaching `_sort_and_adjust!`, which would still produce a failing test but for a different root cause than this hunk. Test may compare U/V columns for zero singular values, where sign/basis choices are not unique, so overly strict equality assertions could be brittle across BLAS/precision settings."
+  },
+  "revision_boundary_recovery": {
+    "buggy_parent": "a90f9f2d4fdc1beb72f20471e5424678b3370949",
+    "method": "merge_second_parent_with_exact_tree_and_full_binary_diff",
+    "old_merge_commit": "677f33049508a88a76e8cedfc77e79db243daf43",
+    "recovered_single_parent_fix_commit": "85e8031de66020819bb61146163ed51f9fa3e006",
+    "status": "TREE_AND_PATCH_BYTE_IDENTICAL",
+    "tree_sha": "4bf075e16ed724688141d2698177fd028dc3e321"
+  },
+  "revision_mode": "real_upstream_commit",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "Singular value decomposition",
+      "LAPACK wrappers"
+    ],
+    "PASS_TO_PASS": [
+      "rankUpdate!",
+      "triangular multiplication: UpperTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "triangular multiplication: UnitUpperTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "triangular multiplication: LowerTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "triangular multiplication: UnitLowerTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "Cholesky",
+      "The QR decomposition",
+      "The General eigenvalue problem",
+      "Test sign of eigenvalues"
+    ],
+    "base_commit": "a90f9f2d4fdc1beb72f20471e5424678b3370949",
+    "boundary_type": "MERGE_COMMIT",
+    "created_at": "2023-03-31 11:15:29",
+    "image_name": "docker.io/swerebenchv2/julialinearalgebra-genericlinearalgebra.jl:120-a90f9f2",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()' 2>&1"
+    },
+    "instance_id": "julialinearalgebra__genericlinearalgebra.jl-120",
+    "interface": "Function: svd(A::AbstractMatrix{T}) where T\nLocation: src/svd.jl (method overload provided by GenericLinearAlgebra)\nInputs: \n- **A**: a matrix of any numeric element type `T` (e.g., `Matrix{BigFloat}`), may be empty or contain only zeros; dimensions `m × n`.\nOutputs: \n- Returns an SVD decomposition object (typically `LinearAlgebra.SVD{T}`) with publicly accessible fields:\n  - **S**: a vector of length `min(m,n)` containing the singular values (non‑negative, sorted descending). For a zero matrix, this is a zero vector.\n  - **U**: an `m × m` orthogonal/unitary matrix of left singular vectors. For a zero square matrix, this equals the identity matrix.\n  - **Vt**: an `n × n` orthogonal/unitary matrix of right singular vectors transposed. For a zero square matrix, this equals the identity matrix.\nDescription: Computes the singular value decomposition of the input matrix. The implementation now correctly handles the special case where the matrix consists entirely of zeros (including `BigFloat` zeros) by returning zero singular values and identity matrices for the singular vector factors, avoiding out‑of‑bounds errors. This behavior is explicitly verified in the test suite for Issue 119. \n",
+    "issue_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/119",
+    "language": "julia",
+    "license": "MIT",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.96,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "edge_case_bug",
+          "regression_bug"
+        ],
+        "reasoning": "The issue reports a BoundsError when calling svd on a zero‑matrix of BigFloat and shows a stack trace, asking for a fix. The added test asserts that svd returns zero singular values and identity matrices for U and Vt, which directly captures the intended correct behaviour. There are no signs of test‑suite coupling, implicit naming, external dependencies, ambiguous specifications beyond the clear bug, unrelated patch changes, or hidden domain knowledge. Hence the task is a straightforward, solvable bug fix.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 2,
+      "num_modified_lines": null,
+      "pr_author": "andreasnoack",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/120"
+    },
+    "patch": "diff --git a/src/svd.jl b/src/svd.jl\nindex dd21116..1d53d65 100644\n--- a/src/svd.jl\n+++ b/src/svd.jl\n@@ -253,12 +253,16 @@ function _svdvals!(B::Bidiagonal{T}; tol = eps(T)) where {T<:Real}\n     return sort(abs.(diag(B)), rev = true)\n end\n \n+# We want to avoid that zero eigenvalues zero out any singular vectors so we'd\n+# have to use a modified sign function\n+_sign(x) = ifelse(iszero(x), one(x), sign(x))\n+\n function _sort_and_adjust!(U, s, Vᴴ)\n     n = length(s)\n \n     # Adjust sign of singular values if necessary\n     if any(!isposdef, s)\n-        rmul!(U, Diagonal(sign.(s)))\n+        rmul!(U, Diagonal(_sign.(s)))\n         map!(abs, s, s)\n     end\n \n",
+    "pr_description": "zero singular values\r\n\r\nCloses #119",
+    "pr_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/120",
+    "problem_statement": "BoundsError bug in SVD for zero matrix\nI see the following behavior in v0.3.8 (not sure when it started, but this error did not occur before about Dec 5, 2022, the last time I ran Hypatia.jl's test suite):\r\n```\r\njulia> svd(zeros(BigFloat, 2, 2))\r\nERROR: BoundsError: attempt to access 1-element Vector{BigFloat} at index [0]\r\nStacktrace:\r\n [1] setindex!\r\n   @ ./array.jl:966 [inlined]\r\n [2] svdDemmelKahan!(B::Bidiagonal{BigFloat, Vector{BigFloat}}, n1::Int64, n2::Int64, U::Matrix{BigFloat}, Vᴴ::Matrix{BigFloat})\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/ilNvI/src/svd.jl:110\r\n [3] __svd!(B::Bidiagonal{BigFloat, Vector{BigFloat}}, U::Matrix{BigFloat}, Vᴴ::Matrix{BigFloat}; tol::BigFloat, debug::Bool)\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/ilNvI/src/svd.jl:184\r\n [4] _svd!(B::Bidiagonal{BigFloat, Vector{BigFloat}}; tol::BigFloat, debug::Bool)\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/ilNvI/src/svd.jl:301\r\n [5] svd!(A::Matrix{BigFloat}; tol::BigFloat, full::Bool, alg::LinearAlgebra.DivideAndConquer, debug::Bool)\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/ilNvI/src/svd.jl:658\r\n [6] #svd#114\r\n   @ ~/julia/usr/share/julia/stdlib/v1.8/LinearAlgebra/src/svd.jl:179 [inlined]\r\n [7] svd(A::Matrix{BigFloat})\r\n   @ LinearAlgebra ~/julia/usr/share/julia/stdlib/v1.8/LinearAlgebra/src/svd.jl:178\r\n [8] top-level scope\r\n   @ REPL[15]:1\r\n```",
+    "recovered_fix_commit": "85e8031de66020819bb61146163ed51f9fa3e006",
+    "repo": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+    "test_patch": "diff --git a/test/svd.jl b/test/svd.jl\nindex eb60047..8fddc86 100644\n--- a/test/svd.jl\n+++ b/test/svd.jl\n@@ -241,4 +241,11 @@ using Test, GenericLinearAlgebra, LinearAlgebra, Quaternions, DoubleFloats\n         BF = GenericLinearAlgebra.bidiagonalize!(copy(A))\n         @test (BF.rightQ' * Matrix(I, size(A)...)) * BF.rightQ ≈ I\n     end\n+\n+    @testset \"Issue 119\" begin\n+        F = svd(zeros(BigFloat, 2, 2))\n+        @test F.S == zeros(2)\n+        @test F.U == I\n+        @test F.Vt == I\n+    end\n end\n"
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "9466316a36abbea369838cf720d15118495929fb7e59ff5e3e6e0aabc913b348",
+    "oracle": {
+      "mwe_basis": "public LinearAlgebra.svd behavior",
+      "defect": "Zero singular values incorrectly zeroed singular vectors during sign adjustment.",
+      "source_evidence": {
+        "upstream_test_file": "test/svd.jl",
+        "basis": "Exact Issue 119 behavior assertions from the upstream fix commit."
+      },
+      "upstream_test_patch_sha256": "b3b337b0c0447949ddd91eab6a01cb0bc35cb2026a28bee9dd285e14aff84abd"
+    }
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "zero BigFloat SVD preserves singular vectors"
+  ],
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "zero BigFloat SVD preserves singular vectors"
+    ],
+    "exception_types": [
+      "45ddb5bfb2645ff0962da9f5eff363f545da4e5f1a2ecf32d4697ed612c847c8"
+    ],
+    "fingerprints": [
+      "45ddb5bfb2645ff0962da9f5eff363f545da4e5f1a2ecf32d4697ed612c847c8"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

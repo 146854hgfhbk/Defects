@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-019",
+  "technical_evidence_sha256": "630cfd1fac96d3d218d13d6266284eb33b2550a27c0656fb2bddf55bf19924d3",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "72eff16983c258c9a034e46b71fe2e18223276fd17c0c731e712ba3b4197cce0",
+  "reviewed_at": "2026-09-06T08:11:59.678704+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "vapor/jwt#103",
+  "rationale": "Issue #103 ('Sporadic failure of ES256', bug label) states the exact mechanism: when r or s is small, BN_bn2bin returns fewer than 32 bytes, so the JOSE r||s encoding required by RFC 7515 A.3 ends up padded on the wrong side. The minimized production patch is the single hunk in Sources/JWTKit/JWTSigner+ECDSA.swift that captures the BN_bn2bin return counts and left-pads each half to 32 bytes — a behavior correction to already-shipped ES256 signing, with no API addition, rename, reformatting, config, or doc change (original_hunk_count=1, retained=1, removed=0, post_minimization_validation=PASS). Commit message 'account for bn2bin < 32 return; #103' and PR #104 body 'Fixes #103' give the fix_commit_to_issue traceability path (verified_fix_issue_numbers=[103]). The trigger is the upstream test from the same commit: testECDSAPublicPrivate wrapped in a 1000-iteration sign/verify loop, using only pre-existing JWT.sign and JWT(from:verifiedBy:) surfaces, so it introduces no dependency on a new production API; the 'stable' variant only converts thrown verification failure into an XCTAssertNil on a captured error, preserving the same failure semantics. Strict machine evidence on both the original and post-minimization gates passes with no failed checks: build.both_versions, trigger.buggy_differential reproducing Tests/JWTKitTests/JWTKitTests.swift::testECDSAPublicPrivate, trigger.deterministic (3/3 fingerprint groups over 3 repetitions, 32 matrix runs), trigger.fixed_clean, and full_suite.fixed_all_green with buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty, so vapor/jwt#103 is not a duplicate and matches allowed_root_cause_ids.\n\nIssue #103 ('Sporadic failure of ES256', bug label) states the exact mechanism: when r or s is small, BN_bn2bin writes fewer than 32 bytes, so the fixed-width r||s JOSE signature (RFC 7515 A.3) is padded on the wrong side and verification fails intermittently. The minimized production patch is that one behavioral change and nothing else: it captures the BN_bn2bin return counts and left-pads each half to 32 bytes in Sources/JWTKit/JWTSigner+ECDSA.swift, one hunk, retained 1 of 1, no formatting, refactor, config, or doc content, and no new public API. Traceability is direct (commit subject 'account for bn2bin < 32 return; #103', PR #104 body 'Fixes #103', fix_commit_to_issue path, verified_fix_issue_numbers=[103]). The trigger, testECDSAPublicPrivate, exercises only pre-existing surfaces (jwt.sign(using:) and JWT(from:verifiedBy:)); the curator-stabilized variant differs from the upstream test only in capturing the first thrown verification error and asserting it is nil rather than asserting payload equality per iteration, which detects the same mis-encoded-signature failure and introduces no dependency on fix-introduced API. Runtime gates are machine-supplied and all pass in both the original and post-minimization strict runs: build on both revisions, isolated buggy differential on the single declared selector, deterministic fingerprinting across 3 repetitions of a 32-run matrix, fixed revision clean in isolated/suite/reversed runs, and buggy full-suite failures limited to the reproduced trigger. The build-compatibility patch (EVP_MD_type to EVP_MD_get_type) is confined to RSA-only code and is applied identically to both revisions, so it does not alter the ECDSA defect logic. allowed_root_cause_ids contains vapor/jwt#103 and active_same_project_root_causes is empty, so this root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T08:11:28.393222+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "72eff16983c258c9a034e46b71fe2e18223276fd17c0c731e712ba3b4197cce0",
+      "response_sha256": "ed6d7c5fa7c3e88ad87d4639ddf4d55c217bb8f0fe9847a04c38405cc350d498",
+      "response_id": "msg_4201329cbd3c40f184d87b61ce487c35",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.70063490079602,
+        "input_tokens": 17120,
+        "output_tokens": 819
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "vapor/jwt#103",
+      "rationale": "Issue #103 ('Sporadic failure of ES256', bug label) states the exact mechanism: when r or s is small, BN_bn2bin returns fewer than 32 bytes, so the JOSE r||s encoding required by RFC 7515 A.3 ends up padded on the wrong side. The minimized production patch is the single hunk in Sources/JWTKit/JWTSigner+ECDSA.swift that captures the BN_bn2bin return counts and left-pads each half to 32 bytes — a behavior correction to already-shipped ES256 signing, with no API addition, rename, reformatting, config, or doc change (original_hunk_count=1, retained=1, removed=0, post_minimization_validation=PASS). Commit message 'account for bn2bin < 32 return; #103' and PR #104 body 'Fixes #103' give the fix_commit_to_issue traceability path (verified_fix_issue_numbers=[103]). The trigger is the upstream test from the same commit: testECDSAPublicPrivate wrapped in a 1000-iteration sign/verify loop, using only pre-existing JWT.sign and JWT(from:verifiedBy:) surfaces, so it introduces no dependency on a new production API; the 'stable' variant only converts thrown verification failure into an XCTAssertNil on a captured error, preserving the same failure semantics. Strict machine evidence on both the original and post-minimization gates passes with no failed checks: build.both_versions, trigger.buggy_differential reproducing Tests/JWTKitTests/JWTKitTests.swift::testECDSAPublicPrivate, trigger.deterministic (3/3 fingerprint groups over 3 repetitions, 32 matrix runs), trigger.fixed_clean, and full_suite.fixed_all_green with buggy full-suite failures limited to the declared trigger. active_same_project_root_causes is empty, so vapor/jwt#103 is not a duplicate and matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/trigger-tests-stable.patch",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:traceability.paths",
+        "case.json:minimized_patch_reference"
+      ],
+      "risks": [
+        "The defect is probabilistic: triggering depends on an ECDSA nonce yielding a short r or s (~1/64 per iteration). The 1000-iteration loop makes a miss very unlikely and the deterministic gate passed 3/3, but the trigger is statistical rather than byte-deterministic.",
+        "The stable trigger discards the original payload-equality assertion and only checks that no error is thrown, so it would not detect a payload-corruption variant of the same code path.",
+        "patches/build-compatibility.patch renames EVP_MD_type to EVP_MD_get_type in the RSA-only signer for OpenSSL 3; it is outside the minimized patch and stated to be applied identically to both revisions, but it means the benchmarked build differs slightly from the upstream revisions.",
+        "The fix computes 32 - count, which would trap if BN_bn2bin ever returned more than 32 bytes (a different curve or crypto backend), changing the failure mode rather than the assertion outcome.",
+        "issue_evidence and semantic_justification are null; the issue text relied upon comes from the embedded source_candidate.issue_check payload rather than an independently fetched record."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T08:11:59.678535+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "72eff16983c258c9a034e46b71fe2e18223276fd17c0c731e712ba3b4197cce0",
+      "response_sha256": "e4b7a613df4a1e52bd8911635ea10daeb8cc2572a023fc27703af7a22aa8903f",
+      "response_id": "msg_c1f8e57d934946cc8084c7ebe568f1cd",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6703522160199005,
+        "input_tokens": 17283,
+        "output_tokens": 871
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "vapor/jwt#103",
+      "rationale": "Issue #103 ('Sporadic failure of ES256', bug label) states the exact mechanism: when r or s is small, BN_bn2bin writes fewer than 32 bytes, so the fixed-width r||s JOSE signature (RFC 7515 A.3) is padded on the wrong side and verification fails intermittently. The minimized production patch is that one behavioral change and nothing else: it captures the BN_bn2bin return counts and left-pads each half to 32 bytes in Sources/JWTKit/JWTSigner+ECDSA.swift, one hunk, retained 1 of 1, no formatting, refactor, config, or doc content, and no new public API. Traceability is direct (commit subject 'account for bn2bin < 32 return; #103', PR #104 body 'Fixes #103', fix_commit_to_issue path, verified_fix_issue_numbers=[103]). The trigger, testECDSAPublicPrivate, exercises only pre-existing surfaces (jwt.sign(using:) and JWT(from:verifiedBy:)); the curator-stabilized variant differs from the upstream test only in capturing the first thrown verification error and asserting it is nil rather than asserting payload equality per iteration, which detects the same mis-encoded-signature failure and introduces no dependency on fix-introduced API. Runtime gates are machine-supplied and all pass in both the original and post-minimization strict runs: build on both revisions, isolated buggy differential on the single declared selector, deterministic fingerprinting across 3 repetitions of a 32-run matrix, fixed revision clean in isolated/suite/reversed runs, and buggy full-suite failures limited to the reproduced trigger. The build-compatibility patch (EVP_MD_type to EVP_MD_get_type) is confined to RSA-only code and is applied identically to both revisions, so it does not alter the ECDSA defect logic. allowed_root_cause_ids contains vapor/jwt#103 and active_same_project_root_causes is empty, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests-stable.patch",
+        "patches/trigger-tests.patch",
+        "Sources/JWTKit/JWTSigner+ECDSA.swift",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.deterministic",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_tests[0]",
+        "traceability.verified_fix_issue_numbers",
+        "minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "The trigger is probabilistic at its core: it depends on a random ECDSA nonce producing a short r or s. The 1000-iteration loop plus 3 strict repetitions makes a miss very unlikely, but the buggy revision could in principle pass by chance on a different host or crypto backend.",
+        "The stabilized trigger asserts only that no verification error was thrown; it does not assert per-iteration payload equality or byte-level right-alignment of r||s, so it would not catch a mis-encoding that still verifies.",
+        "issue_evidence and semantic_justification are null in the case record; the issue text relied on here comes from the embedded source_candidate issue_check payload rather than an independently supplied issue artifact.",
+        "The fix assumes BN_bn2bin never returns more than 32 bytes; with a non-P-256 curve or a different OpenSSL/BoringSSL backend, 32 - count would trap, changing the failure mode.",
+        "A separate build-compatibility patch is required for OpenSSL 3, so the harness result is environment-conditioned even though the patch is applied symmetrically to both revisions."
+      ]
+    }
+  ]
+}

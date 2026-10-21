@@ -1,0 +1,33 @@
+diff --git a/lib/URI/_userpass.pm b/lib/URI/_userpass.pm
+index 1e48c02..22ebf1d 100644
+--- a/lib/URI/_userpass.pm
++++ b/lib/URI/_userpass.pm
+@@ -40,8 +40,8 @@ sub password
+ 	my $user = defined($info) ? $info : "";
+ 	$user =~ s/:.*//;
+ 
+-	if (!defined($new) && !length($user)) {
+-	    $self->userinfo(undef);
++	if (!defined($new)) {
++	    $self->userinfo($user || undef);
+ 	} else {
+ 	    $new = "" unless defined($new);
+ 	    $new =~ s/%/%25/g;
+diff --git a/t/userpass.t b/t/userpass.t
+new file mode 100644
+index 0000000..b18aa3d
+--- /dev/null
++++ b/t/userpass.t
+@@ -0,0 +1,12 @@
++use strict;
++use warnings;
++
++print "1..1\n";
++
++use URI;
++
++my $uri = URI->new("rsync://foo:bar\@example.com");
++$uri->password(undef);
++
++print "not " if $uri->as_string =~ /foo:\@example.com/;
++print "ok 1\n";

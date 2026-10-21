@@ -1,0 +1,223 @@
+diff --git a/code/BasicFeature/Web/Browser/entry/src/main/ets/common/PhoneLayout.ets b/code/BasicFeature/Web/Browser/entry/src/main/ets/common/PhoneLayout.ets
+index 15f6249b15..b39ba28a8f 100644
+--- a/code/BasicFeature/Web/Browser/entry/src/main/ets/common/PhoneLayout.ets
++++ b/code/BasicFeature/Web/Browser/entry/src/main/ets/common/PhoneLayout.ets
+@@ -106,9 +106,7 @@ export struct PhoneLayout {
+                   this.browser.Refresh();
+                   break;
+                 case 5:
+-                  this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl({
+-                    url: $rawfile('phone.html')
+-                  });
++                  this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl($rawfile('phone.html'));
+                   break;
+                 default:
+                   break;
+@@ -142,9 +140,7 @@ export struct PhoneLayout {
+           })
+           .onSubmit((enterKey: EnterKeyType) => {
+             Logger.info(TAG, `onSubmit`);
+-            this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl({
+-              url: `https://${this.addr}`
+-            });
++            this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl(`https://${this.addr}`);
+             this.addr = '';
+           })
+       }
+diff --git a/code/BasicFeature/Web/Browser/entry/src/main/ets/common/TitleBar.ets b/code/BasicFeature/Web/Browser/entry/src/main/ets/common/TitleBar.ets
+index 9202106af9..58ce8501c1 100644
+--- a/code/BasicFeature/Web/Browser/entry/src/main/ets/common/TitleBar.ets
++++ b/code/BasicFeature/Web/Browser/entry/src/main/ets/common/TitleBar.ets
+@@ -15,6 +15,7 @@
+ 
+ import { Browser, LoadingStatus, WebObject } from '../model/Browser';
+ import Logger from '../model/Logger';
++import webview from '@ohos.web.webview';
+ 
+ const TAG: string = '[TitleBar]';
+ const BUTTON_WIDTH: number = 22;
+@@ -91,18 +92,16 @@ export struct TabletTitle {
+         .onClick((event: ClickEvent) => {
+           switch (item.id) {
+             case 1:
+-              this.browser.Back()
++              this.browser.Back();
+               break;
+             case 2:
+-              this.browser.Forward()
++              this.browser.Forward();
+               break;
+             case 3:
+-              this.browser.Refresh()
++              this.browser.Refresh();
+               break;
+             case 4:
+-              this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl({
+-                url: $rawfile('pad.html')
+-              })
++              this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl($rawfile('pad.html'));
+               break;
+           }
+         })
+@@ -121,9 +120,7 @@ export struct TabletTitle {
+         .onSubmit((enterKey: EnterKeyType) => {
+           Logger.info(TAG, `onSubmit`)
+           if (this.addr.length !== 0) {
+-            this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl({
+-              url: `https://${this.addr}`
+-            });
++            this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl(`https://${this.addr}`);
+             this.addr = '';
+           }
+         })
+@@ -214,21 +211,31 @@ export struct BrowserTabs {
+ export struct WebTab {
+   @Link browser: Browser;
+   @Link isPhone: boolean;
++  @State userAgent: string = '';
+   isRegistered: boolean = false;
+   testObj = {
+     test: (addr) => {
+       Logger.info(TAG, `addr= ${this.browser.tabArrayIndex}`);
+-      this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl({ url: `https://${addr}` });
++      this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl(`https://${addr}`);
+     },
+     searchWord: (word: string) => {
+       Logger.info(`search word= ${word}`);
+       let code = encodeURI(word);
+-      this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl({
+-        url: `https://www.bing.com/search?q=${code}`
+-      });
++      this.browser.webControllerArray[this.browser.tabArrayIndex].controller.loadUrl(`https://www.bing.com/search?q=${code}`);
+     }
+   }
+ 
++  aboutToAppear() {
++    webview.once('webInited', () => {
++      try {
++        this.userAgent = this.browser.webControllerArray[this.browser.tabArrayIndex].controller.getUserAgent();
++        Logger.info(`getUserAgent successed, detail: ${this.userAgent}`);
++      } catch (error) {
++        Logger.error(`getUserAgent failed, error info: ${this.userAgent}`);
++      }
++    })
++  }
++
+   build() {
+     Tabs({ barPosition: BarPosition.Start, controller: this.browser.tabsController }) {
+       ForEach(this.browser.webArray, item => {
+@@ -240,7 +247,16 @@ export struct WebTab {
+             .javaScriptAccess(true)
+             .fileAccess(true)
+             .domStorageAccess(true)
+-            .userAgent(this.isPhone ? PHONE_USER_AGENT : PAD_USER_AGENT)
++            .userAgent(this.userAgent)
++            .mixedMode(MixedMode.All)
++            .multiWindowAccess(true)
++            .onWindowNew((event) => {
++              Logger.info(TAG, `onWindowNew targetUrl: ` + event.targetUrl);
++              if (event.targetUrl !== 'about:blank' && event.targetUrl !== '') {
++                this.browser?.webControllerArray[item.key]?.controller.loadUrl(event.targetUrl);
++              }
++              event.handler.setWebController(null);
++            })
+             .onPageBegin((event) => {
+               Logger.info(TAG, `onPageBegin= ${JSON.stringify(event)}`)
+               if (event.url.startsWith('http')) {
+@@ -253,7 +269,7 @@ export struct WebTab {
+             .onPageEnd((event) => {
+               Logger.info(TAG, `onPageEnd= ${JSON.stringify(event)}`)
+               if (item.key < this.browser.webControllerArray.length && this.browser.webControllerArray[item.key]?.controller) {
+-                this.browser.webControllerArray[item.key]?.controller?.runJavaScript({ script: 'adapterDevice()' });
++                this.browser.webControllerArray[item.key]?.controller?.runJavaScript('adapterDevice()');
+                 this.browser.loadingStatus = LoadingStatus.END;
+                 this.registerFunc(this.browser.webControllerArray[item.key]);
+               }
+@@ -285,9 +301,7 @@ export struct WebTab {
+   registerFunc(webObject: WebObject) {
+     if (!webObject.isRegistered) {
+       Logger.info(TAG, `registerFunc`);
+-      webObject.controller.registerJavaScriptProxy({
+-        object: this.testObj, name: 'etsObj', methodList: ['test', 'searchWord']
+-      })
++      webObject.controller.registerJavaScriptProxy(this.testObj, 'etsObj', ['test', 'searchWord']);
+       webObject.isRegistered = true;
+       webObject.controller.refresh();
+     }
+diff --git a/code/BasicFeature/Web/Browser/entry/src/main/ets/model/Browser.ets b/code/BasicFeature/Web/Browser/entry/src/main/ets/model/Browser.ets
+index da9791c347..e92f67b829 100644
+--- a/code/BasicFeature/Web/Browser/entry/src/main/ets/model/Browser.ets
++++ b/code/BasicFeature/Web/Browser/entry/src/main/ets/model/Browser.ets
+@@ -14,11 +14,12 @@
+  */
+ import Logger from './Logger'
+ import prompt from '@ohos.prompt';
++import webview from '@ohos.web.webview';
+ 
+ export class WebObject {
+-  controller: WebController;
++  controller: webview.WebviewController;
+   isRegistered: boolean;
+-  constructor(controller: WebController, isRegistered: boolean) {
++  constructor(controller: webview.WebviewController, isRegistered: boolean) {
+     this.controller = controller
+     this.isRegistered = isRegistered
+   }
+@@ -51,7 +52,7 @@ export class Browser {
+ 
+   webArray: Array<WebKey> = [new WebKey(0, new Date().getTime())]
+   tabsController: TabsController = new TabsController()
+-  webControllerArray: Array<WebObject> = [new WebObject(new WebController(), false)]
++  webControllerArray: Array<WebObject> = [new WebObject(new webview.WebviewController(), false)]
+ 
+   deleteTab(index: number) {
+     Logger.info(TAG, `delete before tab index= ${index} controller length ${this.webControllerArray.length} tabArrayIndex= ${this.tabArrayIndex}`)
+@@ -81,7 +82,7 @@ export class Browser {
+       })
+       return;
+     }
+-    let webController: WebController = new WebController();
++    let webController: webview.WebviewController = new webview.WebviewController();
+     let object = new WebObject(webController, false)
+     this.webControllerArray.push(object)
+     this.webArray.push(new WebKey(this.webArray.length, new Date().getTime()))
+@@ -110,7 +111,7 @@ export class Browser {
+ 
+   loadUrl(addr: string) {
+     addr = "https://" + addr;
+-    this.webControllerArray[this.tabArrayIndex].controller.loadUrl({ url: addr })
++    this.webControllerArray[this.tabArrayIndex].controller.loadUrl(addr);
+   }
+ 
+   Back() {
+diff --git a/code/BasicFeature/Web/Browser/entry/src/main/ets/pages/Index.ets b/code/BasicFeature/Web/Browser/entry/src/main/ets/pages/Index.ets
+index 29aab524e2..11e8e9033a 100644
+--- a/code/BasicFeature/Web/Browser/entry/src/main/ets/pages/Index.ets
++++ b/code/BasicFeature/Web/Browser/entry/src/main/ets/pages/Index.ets
+@@ -43,6 +43,9 @@ struct Index {
+         PhoneLayout({ browser: $browser })
+       }
+     }
++    .margin({
++      bottom: 72
++    })
+   }
+ 
+   aboutToAppear() {
+diff --git a/code/BasicFeature/Web/Browser/hvigor/hvigor-config.json5 b/code/BasicFeature/Web/Browser/hvigor/hvigor-config.json5
+index 835122515a..e981c529a6 100644
+--- a/code/BasicFeature/Web/Browser/hvigor/hvigor-config.json5
++++ b/code/BasicFeature/Web/Browser/hvigor/hvigor-config.json5
+@@ -14,8 +14,8 @@
+  */
+ 
+ {
+-  "hvigorVersion": "2.0.0",
++  "hvigorVersion": "2.4.2",
+   "dependencies": {
+-    "@ohos/hvigor-ohos-plugin": "2.0.0"
++    "@ohos/hvigor-ohos-plugin": "2.4.2"
+   }
+-}
++}
+\ No newline at end of file

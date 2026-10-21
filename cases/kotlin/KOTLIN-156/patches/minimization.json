@@ -1,0 +1,2028 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-08-15T02:56:38.714910+00:00",
+  "generated_by": "minimize_patch.py",
+  "algorithm": "conservative_candidate_reduction_v1",
+  "generator_sha256": "7db6e2e02fd1368788eda60a7a253fa1019cb4123570ae4d56204024d5a3131f",
+  "patch_direction": "buggy_to_fixed",
+  "application_direction": "fixed_to_buggy_via_reverse_apply",
+  "policy": {
+    "granularity": "unified_diff_hunk",
+    "safe_automatic_categories": [
+      "comment",
+      "documentation",
+      "format",
+      "unrelated"
+    ],
+    "semantic_hunks_default": "KEEP",
+    "uncertain_hunks_default": "UNCERTAIN_AND_KEEP",
+    "llm_remove_requires_explicit_decision": true,
+    "removal_requires_differential_validation": true,
+    "batch_safe_candidates_first": true,
+    "verify_all_hunks": false,
+    "signature_fields": [
+      "trigger_set",
+      "exception_type",
+      "normalized_message",
+      "normalized_stack_hash"
+    ]
+  },
+  "original_patch": "original-source.patch",
+  "original_patch_sha256": "daa9c354fb2893c635e91a8573e98811e72d4facc6aff4420132ae3a33969791",
+  "minimized_patch": "minimized-source.patch",
+  "minimized_patch_sha256": "daa9c354fb2893c635e91a8573e98811e72d4facc6aff4420132ae3a33969791",
+  "original_hunk_count": 8,
+  "retained_hunk_count": 8,
+  "removed_hunk_count": 0,
+  "baseline_validation": {
+    "acceptable": true,
+    "status": "stable_differential",
+    "repeat_consistent": true,
+    "signature_complete": true,
+    "signature": {
+      "trigger_set": [
+        "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+      ],
+      "failures": [
+        {
+          "test_id": "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse",
+          "exception_type": "org.junit.ComparisonFailure",
+          "normalized_message": "org.junit.ComparisonFailure: aaa.tex: extra (3:5<PATH>: '\\newcommand' (Command '\\examLocation' is defined multiple times) [HighlightInfoTypeImpl[severity=ERROR, key=ERRORS_ATTRIBUTES]] aaa.tex: extra (5:5<PATH>: '\\newcommand' (Command '\\examLocation' is defined multiple times) [HighlightInfoTypeImpl[severity=ERROR, key=ERRORS_ATTRIBUTES]] expected:<...al{\\venue}{1}}{ [\\newcommand\\examLocation{Building 1} }{ \\newcommand]\\examLocation{Buildi...> but was:<...al{\\venue}{1}}{ [<error descr=\"Command '",
+          "normalized_stack_hash": "0f15ed9559ffa505350f3614df958917108144d6c5000f56568752711c10cb7f"
+        }
+      ]
+    },
+    "fixed_passed_all_runs": true,
+    "buggy_failed_all_runs": true,
+    "full_suite_valid": true,
+    "compile_valid": true,
+    "compile_fixed_runs": 3,
+    "compile_buggy_runs": 3,
+    "full_fixed_runs": 3,
+    "full_buggy_runs": 3,
+    "infrastructure_error_count": 0
+  },
+  "baseline_validation_source": {
+    "kind": "existing_validation_report",
+    "case_id": "KOTLIN-156",
+    "file": "baseline-validation.json",
+    "sha256": "e0c0f78f44a5e332d0b52989e85cf46af76f8684c3b42737bf4c8725a95fad4c"
+  },
+  "hunks": [
+    {
+      "hunk_id": "F001-H001",
+      "file": "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateDefinitionInspection.kt",
+      "header": "@@ -7,10 +7,11 @@ import com.intellij.codeInspection.ProblemHighlightType",
+      "category": "semantic",
+      "initial_decision": "KEEP",
+      "source": "llm",
+      "eligible_for_automatic_removal": false,
+      "reason": "Required isInConditionalBranch import for both retained inspection checks.",
+      "validation_evidence": {
+        "attempted": false
+      },
+      "decision": "KEEP"
+    },
+    {
+      "hunk_id": "F001-H002",
+      "file": "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateDefinitionInspection.kt",
+      "header": "@@ -32,6 +33,7 @@ open class LatexDuplicateDefinitionInspection : TexifyInspectionBase() {",
+      "category": "semantic",
+      "initial_decision": "KEEP",
+      "source": "llm",
+      "eligible_for_automatic_removal": false,
+      "reason": "Core fix: ignores definitions found in conditional branches during fileset counting.",
+      "validation_evidence": {
+        "attempted": false
+      },
+      "decision": "KEEP"
+    },
+    {
+      "hunk_id": "F001-H003",
+      "file": "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateDefinitionInspection.kt",
+      "header": "@@ -39,6 +41,7 @@ open class LatexDuplicateDefinitionInspection : TexifyInspectionBase() {",
+      "category": "semantic",
+      "initial_decision": "KEEP",
+      "source": "llm",
+      "eligible_for_automatic_removal": false,
+      "reason": "Core fix: ignores conditional definitions during local duplicate reporting.",
+      "validation_evidence": {
+        "attempted": false
+      },
+      "decision": "KEEP"
+    },
+    {
+      "hunk_id": "F002-H001",
+      "file": "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt",
+      "header": "@@ -6,18 +6,23 @@ import com.intellij.codeInspection.ProblemHighlightType",
+      "category": "unrelated",
+      "initial_decision": "REMOVE_CANDIDATE",
+      "source": "llm",
+      "eligible_for_automatic_removal": true,
+      "reason": "Duplicate-label inspection refactor is outside the duplicate-definition trigger.; retained because removal makes the candidate source uncompilable with an identical Kotlin compiler diagnostic fingerprint in three isolated runs",
+      "validation_evidence": {
+        "attempted": true,
+        "mode": "individual_after_batch",
+        "accepted": false,
+        "reason": "Candidate validation was not stable and complete",
+        "candidate_patch_sha256": "0d61b36f47c01306e1cf77bbb6d036ce04b304cf8a2081c625c2e94d4b9f7497",
+        "batch": {
+          "attempted": true,
+          "mode": "safe_candidate_batch",
+          "accepted": false,
+          "reason": "Candidate validation was not stable and complete",
+          "candidate_patch_sha256": "8ef0d0f114e37b75fe2ecb67d266d80ab57b0aa84dcb2842210c05500b0b6bac",
+          "candidate": {
+            "acceptable": false,
+            "status": "infrastructure_error",
+            "repeat_consistent": true,
+            "signature_complete": false,
+            "signature": {
+              "trigger_set": [],
+              "failures": []
+            },
+            "fixed_passed_all_runs": true,
+            "buggy_failed_all_runs": false,
+            "full_suite_valid": false,
+            "compile_valid": false,
+            "compile_fixed_runs": 3,
+            "compile_buggy_runs": 3,
+            "full_fixed_runs": 3,
+            "full_buggy_runs": 0,
+            "infrastructure_error_count": 3,
+            "deterministic_compile_failure": {
+              "deterministic": true,
+              "buggy_compile_runs": 3,
+              "fixed_compile_runs": 3,
+              "fixed_full_suite_runs": 3,
+              "diagnostic_fingerprint": "8da133d375b5e93d6cd42d790c236deae02927a00a8f228ec0352d0fee6b7e41",
+              "diagnostics": [
+                "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'isInConditionalBranch'."
+              ]
+            },
+            "validation_provenance": {
+              "case_id": "KOTLIN-156",
+              "generated_by": "validation_engine.py",
+              "generator_sha256": "df5554dc062a98332be9700b966d939fe798c8e0f1f8162e82a60366a64cbf48",
+              "schema_version": 2,
+              "policy": {
+                "repetitions": 3,
+                "timeout_seconds": 3600,
+                "fresh_worktree_per_repetition": true,
+                "individual_trigger_processes": true,
+                "compile_before_tests": true,
+                "full_suite_run_per_version": 3,
+                "offline": true,
+                "environment_lock_sha256": "79c2540490b1305c880de63bf384d66219fbf81484781b63d9233f8dd177111b",
+                "validation_input_fingerprint": "ecab4c2194af37589320357ad1bd35d6fd65a36ab652b2dd68a5c21bd300234e",
+                "trigger_patch_states": [
+                  {
+                    "attempt": 1,
+                    "version": "fixed",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 1,
+                    "version": "buggy",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 2,
+                    "version": "buggy",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 2,
+                    "version": "fixed",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 3,
+                    "version": "fixed",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 3,
+                    "version": "buggy",
+                    "state": "applied"
+                  }
+                ],
+                "buggy_patch_sha256": "8ef0d0f114e37b75fe2ecb67d266d80ab57b0aa84dcb2842210c05500b0b6bac"
+              },
+              "run_matrix": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "compile",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "isolated-trigger",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "trigger-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "full-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 796,
+                  "junit_file_count": 140,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "scope": "compile",
+                  "exit_code": 1,
+                  "timed_out": false,
+                  "infrastructure_error": true,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "scope": "compile",
+                  "exit_code": 1,
+                  "timed_out": false,
+                  "infrastructure_error": true,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "compile",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "isolated-trigger",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "trigger-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "full-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 796,
+                  "junit_file_count": 140,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "compile",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "isolated-trigger",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "trigger-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "full-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 796,
+                  "junit_file_count": 140,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "scope": "compile",
+                  "exit_code": 1,
+                  "timed_out": false,
+                  "infrastructure_error": true,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                }
+              ],
+              "derived": {
+                "status": "infrastructure_error",
+                "stable": false,
+                "fixed_passed_all_runs": true,
+                "buggy_failed_all_runs": false,
+                "full_suite_valid": false,
+                "compile_valid": false,
+                "compile_fixed_runs": 3,
+                "compile_buggy_runs": 3,
+                "full_fixed_runs": 3,
+                "full_buggy_runs": 0,
+                "full_buggy_failed": false,
+                "buggy_failed_test_count": 0,
+                "buggy_failed_tests": [],
+                "buggy_failure_types": [],
+                "failure_fingerprints": [],
+                "reproducing_trigger_tests": [],
+                "non_reproducing_trigger_tests": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "broken_tests": [],
+                "flaky_tests": [],
+                "order_dependent_tests": [],
+                "infrastructure_error_count": 3
+              },
+              "source_report": "__REFERENCE_USER_HOME__/kotlin-defects-miner-review/output/minimization/KOTLIN-156/validation-artifacts/candidate-050/validation.json",
+              "source_report_sha256": "66e5287524490887589eed9de3ad036e3c856625c9f58ddb0837ecac207426aa"
+            }
+          }
+        },
+        "candidate": {
+          "acceptable": false,
+          "status": "infrastructure_error",
+          "repeat_consistent": true,
+          "signature_complete": false,
+          "signature": {
+            "trigger_set": [],
+            "failures": []
+          },
+          "fixed_passed_all_runs": true,
+          "buggy_failed_all_runs": false,
+          "full_suite_valid": false,
+          "compile_valid": false,
+          "compile_fixed_runs": 3,
+          "compile_buggy_runs": 3,
+          "full_fixed_runs": 3,
+          "full_buggy_runs": 0,
+          "infrastructure_error_count": 3,
+          "deterministic_compile_failure": {
+            "deterministic": true,
+            "buggy_compile_runs": 3,
+            "fixed_compile_runs": 3,
+            "fixed_full_suite_runs": 3,
+            "diagnostic_fingerprint": "d43d0812a8a4c9cd631057f6db6ea96fe694eacbc73642fed984381ef488972e",
+            "diagnostics": [
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Argument type mismatch: actual type is 'kotlin.Any', but 'com.intellij.psi.PsiElement' was expected.",
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Argument type mismatch: actual type is 'kotlin.reflect.KClass<ERROR CLASS: Unresolved name: LatexNoMathContent>', but 'kotlin.reflect.KClass<T>' was expected.",
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Cannot infer type for this parameter. Please specify it explicitly.",
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'LatexNoMathContent'.",
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'LatexTypes'.",
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'elementType'.",
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'isInConditionalBranch'.",
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'nextSibling'.",
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'prevSibling'."
+            ]
+          },
+          "validation_provenance": {
+            "case_id": "KOTLIN-156",
+            "generated_by": "validation_engine.py",
+            "generator_sha256": "df5554dc062a98332be9700b966d939fe798c8e0f1f8162e82a60366a64cbf48",
+            "schema_version": 2,
+            "policy": {
+              "repetitions": 3,
+              "timeout_seconds": 3600,
+              "fresh_worktree_per_repetition": true,
+              "individual_trigger_processes": true,
+              "compile_before_tests": true,
+              "full_suite_run_per_version": 3,
+              "offline": true,
+              "environment_lock_sha256": "79c2540490b1305c880de63bf384d66219fbf81484781b63d9233f8dd177111b",
+              "validation_input_fingerprint": "82a7b4ec8fb6fa29da1e708ef152888b07f0abdf67e2c58c36fd1ebbe238b44f",
+              "trigger_patch_states": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "state": "applied"
+                }
+              ],
+              "buggy_patch_sha256": "0d61b36f47c01306e1cf77bbb6d036ce04b304cf8a2081c625c2e94d4b9f7497"
+            },
+            "run_matrix": [
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 796,
+                "junit_file_count": 140,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 1,
+                "timed_out": false,
+                "infrastructure_error": true,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 1,
+                "timed_out": false,
+                "infrastructure_error": true,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 796,
+                "junit_file_count": 140,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 796,
+                "junit_file_count": 140,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 1,
+                "timed_out": false,
+                "infrastructure_error": true,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              }
+            ],
+            "derived": {
+              "status": "infrastructure_error",
+              "stable": false,
+              "fixed_passed_all_runs": true,
+              "buggy_failed_all_runs": false,
+              "full_suite_valid": false,
+              "compile_valid": false,
+              "compile_fixed_runs": 3,
+              "compile_buggy_runs": 3,
+              "full_fixed_runs": 3,
+              "full_buggy_runs": 0,
+              "full_buggy_failed": false,
+              "buggy_failed_test_count": 0,
+              "buggy_failed_tests": [],
+              "buggy_failure_types": [],
+              "failure_fingerprints": [],
+              "reproducing_trigger_tests": [],
+              "non_reproducing_trigger_tests": [
+                "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+              ],
+              "broken_tests": [],
+              "flaky_tests": [],
+              "order_dependent_tests": [],
+              "infrastructure_error_count": 3
+            },
+            "source_report": "__REFERENCE_USER_HOME__/kotlin-defects-miner-review/output/minimization/KOTLIN-156/validation-artifacts/candidate-051/validation.json",
+            "source_report_sha256": "6d73c74d13ab0fa71c95b35397613ddba048bbc86e2d2b2a037b7e8d66941d4f"
+          }
+        }
+      },
+      "decision": "KEEP"
+    },
+    {
+      "hunk_id": "F002-H002",
+      "file": "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt",
+      "header": "@@ -125,7 +130,7 @@ open class LatexDuplicateLabelInspection : TexifyInspectionBase() {",
+      "category": "unrelated",
+      "initial_decision": "REMOVE_CANDIDATE",
+      "source": "llm",
+      "eligible_for_automatic_removal": true,
+      "reason": "Duplicate-label inspection behavior is outside the duplicate-definition trigger.; retained because removal makes the candidate source uncompilable with an identical Kotlin compiler diagnostic fingerprint in three isolated runs",
+      "validation_evidence": {
+        "attempted": true,
+        "mode": "individual_after_batch",
+        "accepted": false,
+        "reason": "Candidate validation was not stable and complete",
+        "candidate_patch_sha256": "19ad3fe6826b3f6ae5f0a322104c5e1c555e524daa897ea38a9e42d654bc68cc",
+        "batch": {
+          "attempted": true,
+          "mode": "safe_candidate_batch",
+          "accepted": false,
+          "reason": "Candidate validation was not stable and complete",
+          "candidate_patch_sha256": "8ef0d0f114e37b75fe2ecb67d266d80ab57b0aa84dcb2842210c05500b0b6bac",
+          "candidate": {
+            "acceptable": false,
+            "status": "infrastructure_error",
+            "repeat_consistent": true,
+            "signature_complete": false,
+            "signature": {
+              "trigger_set": [],
+              "failures": []
+            },
+            "fixed_passed_all_runs": true,
+            "buggy_failed_all_runs": false,
+            "full_suite_valid": false,
+            "compile_valid": false,
+            "compile_fixed_runs": 3,
+            "compile_buggy_runs": 3,
+            "full_fixed_runs": 3,
+            "full_buggy_runs": 0,
+            "infrastructure_error_count": 3,
+            "deterministic_compile_failure": {
+              "deterministic": true,
+              "buggy_compile_runs": 3,
+              "fixed_compile_runs": 3,
+              "fixed_full_suite_runs": 3,
+              "diagnostic_fingerprint": "8da133d375b5e93d6cd42d790c236deae02927a00a8f228ec0352d0fee6b7e41",
+              "diagnostics": [
+                "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'isInConditionalBranch'."
+              ]
+            },
+            "validation_provenance": {
+              "case_id": "KOTLIN-156",
+              "generated_by": "validation_engine.py",
+              "generator_sha256": "df5554dc062a98332be9700b966d939fe798c8e0f1f8162e82a60366a64cbf48",
+              "schema_version": 2,
+              "policy": {
+                "repetitions": 3,
+                "timeout_seconds": 3600,
+                "fresh_worktree_per_repetition": true,
+                "individual_trigger_processes": true,
+                "compile_before_tests": true,
+                "full_suite_run_per_version": 3,
+                "offline": true,
+                "environment_lock_sha256": "79c2540490b1305c880de63bf384d66219fbf81484781b63d9233f8dd177111b",
+                "validation_input_fingerprint": "ecab4c2194af37589320357ad1bd35d6fd65a36ab652b2dd68a5c21bd300234e",
+                "trigger_patch_states": [
+                  {
+                    "attempt": 1,
+                    "version": "fixed",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 1,
+                    "version": "buggy",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 2,
+                    "version": "buggy",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 2,
+                    "version": "fixed",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 3,
+                    "version": "fixed",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 3,
+                    "version": "buggy",
+                    "state": "applied"
+                  }
+                ],
+                "buggy_patch_sha256": "8ef0d0f114e37b75fe2ecb67d266d80ab57b0aa84dcb2842210c05500b0b6bac"
+              },
+              "run_matrix": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "compile",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "isolated-trigger",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "trigger-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "full-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 796,
+                  "junit_file_count": 140,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "scope": "compile",
+                  "exit_code": 1,
+                  "timed_out": false,
+                  "infrastructure_error": true,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "scope": "compile",
+                  "exit_code": 1,
+                  "timed_out": false,
+                  "infrastructure_error": true,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "compile",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "isolated-trigger",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "trigger-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "full-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 796,
+                  "junit_file_count": 140,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "compile",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "isolated-trigger",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "trigger-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "full-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 796,
+                  "junit_file_count": 140,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "scope": "compile",
+                  "exit_code": 1,
+                  "timed_out": false,
+                  "infrastructure_error": true,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                }
+              ],
+              "derived": {
+                "status": "infrastructure_error",
+                "stable": false,
+                "fixed_passed_all_runs": true,
+                "buggy_failed_all_runs": false,
+                "full_suite_valid": false,
+                "compile_valid": false,
+                "compile_fixed_runs": 3,
+                "compile_buggy_runs": 3,
+                "full_fixed_runs": 3,
+                "full_buggy_runs": 0,
+                "full_buggy_failed": false,
+                "buggy_failed_test_count": 0,
+                "buggy_failed_tests": [],
+                "buggy_failure_types": [],
+                "failure_fingerprints": [],
+                "reproducing_trigger_tests": [],
+                "non_reproducing_trigger_tests": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "broken_tests": [],
+                "flaky_tests": [],
+                "order_dependent_tests": [],
+                "infrastructure_error_count": 3
+              },
+              "source_report": "__REFERENCE_USER_HOME__/kotlin-defects-miner-review/output/minimization/KOTLIN-156/validation-artifacts/candidate-050/validation.json",
+              "source_report_sha256": "66e5287524490887589eed9de3ad036e3c856625c9f58ddb0837ecac207426aa"
+            }
+          }
+        },
+        "candidate": {
+          "acceptable": false,
+          "status": "infrastructure_error",
+          "repeat_consistent": true,
+          "signature_complete": false,
+          "signature": {
+            "trigger_set": [],
+            "failures": []
+          },
+          "fixed_passed_all_runs": true,
+          "buggy_failed_all_runs": false,
+          "full_suite_valid": false,
+          "compile_valid": false,
+          "compile_fixed_runs": 3,
+          "compile_buggy_runs": 3,
+          "full_fixed_runs": 3,
+          "full_buggy_runs": 0,
+          "infrastructure_error_count": 3,
+          "deterministic_compile_failure": {
+            "deterministic": true,
+            "buggy_compile_runs": 3,
+            "fixed_compile_runs": 3,
+            "fixed_full_suite_runs": 3,
+            "diagnostic_fingerprint": "8da133d375b5e93d6cd42d790c236deae02927a00a8f228ec0352d0fee6b7e41",
+            "diagnostics": [
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'isInConditionalBranch'."
+            ]
+          },
+          "validation_provenance": {
+            "case_id": "KOTLIN-156",
+            "generated_by": "validation_engine.py",
+            "generator_sha256": "df5554dc062a98332be9700b966d939fe798c8e0f1f8162e82a60366a64cbf48",
+            "schema_version": 2,
+            "policy": {
+              "repetitions": 3,
+              "timeout_seconds": 3600,
+              "fresh_worktree_per_repetition": true,
+              "individual_trigger_processes": true,
+              "compile_before_tests": true,
+              "full_suite_run_per_version": 3,
+              "offline": true,
+              "environment_lock_sha256": "79c2540490b1305c880de63bf384d66219fbf81484781b63d9233f8dd177111b",
+              "validation_input_fingerprint": "a6aefd782b3c1e18333cfe091b674a87760ba00a98bb19a896cbb8866bab548f",
+              "trigger_patch_states": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "state": "applied"
+                }
+              ],
+              "buggy_patch_sha256": "19ad3fe6826b3f6ae5f0a322104c5e1c555e524daa897ea38a9e42d654bc68cc"
+            },
+            "run_matrix": [
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 796,
+                "junit_file_count": 140,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 1,
+                "timed_out": false,
+                "infrastructure_error": true,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 1,
+                "timed_out": false,
+                "infrastructure_error": true,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 796,
+                "junit_file_count": 140,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 796,
+                "junit_file_count": 140,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 1,
+                "timed_out": false,
+                "infrastructure_error": true,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              }
+            ],
+            "derived": {
+              "status": "infrastructure_error",
+              "stable": false,
+              "fixed_passed_all_runs": true,
+              "buggy_failed_all_runs": false,
+              "full_suite_valid": false,
+              "compile_valid": false,
+              "compile_fixed_runs": 3,
+              "compile_buggy_runs": 3,
+              "full_fixed_runs": 3,
+              "full_buggy_runs": 0,
+              "full_buggy_failed": false,
+              "buggy_failed_test_count": 0,
+              "buggy_failed_tests": [],
+              "buggy_failure_types": [],
+              "failure_fingerprints": [],
+              "reproducing_trigger_tests": [],
+              "non_reproducing_trigger_tests": [
+                "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+              ],
+              "broken_tests": [],
+              "flaky_tests": [],
+              "order_dependent_tests": [],
+              "infrastructure_error_count": 3
+            },
+            "source_report": "__REFERENCE_USER_HOME__/kotlin-defects-miner-review/output/minimization/KOTLIN-156/validation-artifacts/candidate-052/validation.json",
+            "source_report_sha256": "311cee4534e96e47998a30541fa7b944e3aae44d9bd83b1382cb7a5e9282e347"
+          }
+        }
+      },
+      "decision": "KEEP"
+    },
+    {
+      "hunk_id": "F002-H003",
+      "file": "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt",
+      "header": "@@ -151,54 +156,4 @@ open class LatexDuplicateLabelInspection : TexifyInspectionBase() {",
+      "category": "unrelated",
+      "initial_decision": "REMOVE_CANDIDATE",
+      "source": "llm",
+      "eligible_for_automatic_removal": true,
+      "reason": "Removal of duplicate-label private helpers is outside the trigger.; retained because removal makes the candidate source uncompilable with an identical Kotlin compiler diagnostic fingerprint in three isolated runs",
+      "validation_evidence": {
+        "attempted": true,
+        "mode": "individual_after_batch",
+        "accepted": false,
+        "reason": "Candidate validation was not stable and complete",
+        "candidate_patch_sha256": "e37ba41d0eb7ef3014d567b7860a343f7cade9621853d127c096066015dcba86",
+        "batch": {
+          "attempted": true,
+          "mode": "safe_candidate_batch",
+          "accepted": false,
+          "reason": "Candidate validation was not stable and complete",
+          "candidate_patch_sha256": "8ef0d0f114e37b75fe2ecb67d266d80ab57b0aa84dcb2842210c05500b0b6bac",
+          "candidate": {
+            "acceptable": false,
+            "status": "infrastructure_error",
+            "repeat_consistent": true,
+            "signature_complete": false,
+            "signature": {
+              "trigger_set": [],
+              "failures": []
+            },
+            "fixed_passed_all_runs": true,
+            "buggy_failed_all_runs": false,
+            "full_suite_valid": false,
+            "compile_valid": false,
+            "compile_fixed_runs": 3,
+            "compile_buggy_runs": 3,
+            "full_fixed_runs": 3,
+            "full_buggy_runs": 0,
+            "infrastructure_error_count": 3,
+            "deterministic_compile_failure": {
+              "deterministic": true,
+              "buggy_compile_runs": 3,
+              "fixed_compile_runs": 3,
+              "fixed_full_suite_runs": 3,
+              "diagnostic_fingerprint": "8da133d375b5e93d6cd42d790c236deae02927a00a8f228ec0352d0fee6b7e41",
+              "diagnostics": [
+                "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'isInConditionalBranch'."
+              ]
+            },
+            "validation_provenance": {
+              "case_id": "KOTLIN-156",
+              "generated_by": "validation_engine.py",
+              "generator_sha256": "df5554dc062a98332be9700b966d939fe798c8e0f1f8162e82a60366a64cbf48",
+              "schema_version": 2,
+              "policy": {
+                "repetitions": 3,
+                "timeout_seconds": 3600,
+                "fresh_worktree_per_repetition": true,
+                "individual_trigger_processes": true,
+                "compile_before_tests": true,
+                "full_suite_run_per_version": 3,
+                "offline": true,
+                "environment_lock_sha256": "79c2540490b1305c880de63bf384d66219fbf81484781b63d9233f8dd177111b",
+                "validation_input_fingerprint": "ecab4c2194af37589320357ad1bd35d6fd65a36ab652b2dd68a5c21bd300234e",
+                "trigger_patch_states": [
+                  {
+                    "attempt": 1,
+                    "version": "fixed",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 1,
+                    "version": "buggy",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 2,
+                    "version": "buggy",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 2,
+                    "version": "fixed",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 3,
+                    "version": "fixed",
+                    "state": "applied"
+                  },
+                  {
+                    "attempt": 3,
+                    "version": "buggy",
+                    "state": "applied"
+                  }
+                ],
+                "buggy_patch_sha256": "8ef0d0f114e37b75fe2ecb67d266d80ab57b0aa84dcb2842210c05500b0b6bac"
+              },
+              "run_matrix": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "compile",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "isolated-trigger",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "trigger-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "scope": "full-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 796,
+                  "junit_file_count": 140,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "scope": "compile",
+                  "exit_code": 1,
+                  "timed_out": false,
+                  "infrastructure_error": true,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "scope": "compile",
+                  "exit_code": 1,
+                  "timed_out": false,
+                  "infrastructure_error": true,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "compile",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "isolated-trigger",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "trigger-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "scope": "full-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 796,
+                  "junit_file_count": 140,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "compile",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "isolated-trigger",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "trigger-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [
+                    "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                  ],
+                  "tests": 1,
+                  "junit_file_count": 1,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "scope": "full-suite",
+                  "exit_code": 0,
+                  "timed_out": false,
+                  "infrastructure_error": false,
+                  "filters": [],
+                  "tests": 796,
+                  "junit_file_count": 140,
+                  "failure_fingerprint": null
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "scope": "compile",
+                  "exit_code": 1,
+                  "timed_out": false,
+                  "infrastructure_error": true,
+                  "filters": [],
+                  "tests": 0,
+                  "junit_file_count": 0,
+                  "failure_fingerprint": null
+                }
+              ],
+              "derived": {
+                "status": "infrastructure_error",
+                "stable": false,
+                "fixed_passed_all_runs": true,
+                "buggy_failed_all_runs": false,
+                "full_suite_valid": false,
+                "compile_valid": false,
+                "compile_fixed_runs": 3,
+                "compile_buggy_runs": 3,
+                "full_fixed_runs": 3,
+                "full_buggy_runs": 0,
+                "full_buggy_failed": false,
+                "buggy_failed_test_count": 0,
+                "buggy_failed_tests": [],
+                "buggy_failure_types": [],
+                "failure_fingerprints": [],
+                "reproducing_trigger_tests": [],
+                "non_reproducing_trigger_tests": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "broken_tests": [],
+                "flaky_tests": [],
+                "order_dependent_tests": [],
+                "infrastructure_error_count": 3
+              },
+              "source_report": "__REFERENCE_USER_HOME__/kotlin-defects-miner-review/output/minimization/KOTLIN-156/validation-artifacts/candidate-050/validation.json",
+              "source_report_sha256": "66e5287524490887589eed9de3ad036e3c856625c9f58ddb0837ecac207426aa"
+            }
+          }
+        },
+        "candidate": {
+          "acceptable": false,
+          "status": "infrastructure_error",
+          "repeat_consistent": true,
+          "signature_complete": false,
+          "signature": {
+            "trigger_set": [],
+            "failures": []
+          },
+          "fixed_passed_all_runs": true,
+          "buggy_failed_all_runs": false,
+          "full_suite_valid": false,
+          "compile_valid": false,
+          "compile_fixed_runs": 3,
+          "compile_buggy_runs": 3,
+          "full_fixed_runs": 3,
+          "full_buggy_runs": 0,
+          "infrastructure_error_count": 3,
+          "deterministic_compile_failure": {
+            "deterministic": true,
+            "buggy_compile_runs": 3,
+            "fixed_compile_runs": 3,
+            "fixed_full_suite_runs": 3,
+            "diagnostic_fingerprint": "9e4dc6790a5c7dcfa41f01bbc804a89d71a689c03621fbfe15245f8b67939d0e",
+            "diagnostics": [
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'isNextConditionalEnd'.",
+              "src/nl/hannahsten/texifyidea/inspections/latex/redundancy/LatexDuplicateLabelInspection.kt: Unresolved reference 'isPreviousConditionalStart'."
+            ]
+          },
+          "validation_provenance": {
+            "case_id": "KOTLIN-156",
+            "generated_by": "validation_engine.py",
+            "generator_sha256": "df5554dc062a98332be9700b966d939fe798c8e0f1f8162e82a60366a64cbf48",
+            "schema_version": 2,
+            "policy": {
+              "repetitions": 3,
+              "timeout_seconds": 3600,
+              "fresh_worktree_per_repetition": true,
+              "individual_trigger_processes": true,
+              "compile_before_tests": true,
+              "full_suite_run_per_version": 3,
+              "offline": true,
+              "environment_lock_sha256": "79c2540490b1305c880de63bf384d66219fbf81484781b63d9233f8dd177111b",
+              "validation_input_fingerprint": "599cffabab07dad95d17e776d26f475dc8ad35ad9d17a58be0cb74f0b3b39f90",
+              "trigger_patch_states": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "state": "applied"
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "state": "applied"
+                }
+              ],
+              "buggy_patch_sha256": "e37ba41d0eb7ef3014d567b7860a343f7cade9621853d127c096066015dcba86"
+            },
+            "run_matrix": [
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 796,
+                "junit_file_count": 140,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 1,
+                "timed_out": false,
+                "infrastructure_error": true,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 1,
+                "timed_out": false,
+                "infrastructure_error": true,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 796,
+                "junit_file_count": 140,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+                ],
+                "tests": 1,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 796,
+                "junit_file_count": 140,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 1,
+                "timed_out": false,
+                "infrastructure_error": true,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              }
+            ],
+            "derived": {
+              "status": "infrastructure_error",
+              "stable": false,
+              "fixed_passed_all_runs": true,
+              "buggy_failed_all_runs": false,
+              "full_suite_valid": false,
+              "compile_valid": false,
+              "compile_fixed_runs": 3,
+              "compile_buggy_runs": 3,
+              "full_fixed_runs": 3,
+              "full_buggy_runs": 0,
+              "full_buggy_failed": false,
+              "buggy_failed_test_count": 0,
+              "buggy_failed_tests": [],
+              "buggy_failure_types": [],
+              "failure_fingerprints": [],
+              "reproducing_trigger_tests": [],
+              "non_reproducing_trigger_tests": [
+                "nl.hannahsten.texifyidea.inspections.latex.redundancy.LatexDuplicateDefinitionInspectionTest.testIfthenelse"
+              ],
+              "broken_tests": [],
+              "flaky_tests": [],
+              "order_dependent_tests": [],
+              "infrastructure_error_count": 3
+            },
+            "source_report": "__REFERENCE_USER_HOME__/kotlin-defects-miner-review/output/minimization/KOTLIN-156/validation-artifacts/candidate-053/validation.json",
+            "source_report_sha256": "dc6f6e1668a7778aca601ad710d356ab05f66344caf3ed1e5111a8724601ff9a"
+          }
+        }
+      },
+      "decision": "KEEP"
+    },
+    {
+      "hunk_id": "F003-H001",
+      "file": "src/nl/hannahsten/texifyidea/lang/commands/LatexGenericRegularCommand.kt",
+      "header": "@@ -142,6 +142,7 @@ enum class LatexGenericRegularCommand(",
+      "category": "semantic",
+      "initial_decision": "KEEP",
+      "source": "llm",
+      "eligible_for_automatic_removal": false,
+      "reason": "Defines IFTHENELSE metadata required for the exact testIfthenelse trigger path.",
+      "validation_evidence": {
+        "attempted": false
+      },
+      "decision": "KEEP"
+    },
+    {
+      "hunk_id": "F004-H001",
+      "file": "src/nl/hannahsten/texifyidea/util/ConditionalCommands.kt",
+      "header": "@@ -0,0 +1,76 @@",
+      "category": "semantic",
+      "initial_decision": "KEEP",
+      "source": "llm",
+      "eligible_for_automatic_removal": false,
+      "reason": "Provides isInConditionalBranch used by the retained duplicate-definition fix.",
+      "validation_evidence": {
+        "attempted": false
+      },
+      "decision": "KEEP"
+    }
+  ],
+  "manual_confirmation_required": true
+}

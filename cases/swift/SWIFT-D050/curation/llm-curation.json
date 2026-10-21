@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1777",
+  "technical_evidence_sha256": "4f266ab441f4bc6fc106f9a1c6011b9898a9e0e3869d39cd72d236dc9a6fcff8",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "ccf97092bbb96185d83467f0eaf4c726ac0070956a4f363821b9758785a2d359",
+  "reviewed_at": "2026-09-10T05:34:35.083240+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "orlandos-nl/swift-json#60",
+  "rationale": "Issue #60 reports a valid JSON document rejected with parsingError.unexpectedToken(reason: expectedComma), i.e. correct input failing on a pre-existing code path in release 2.4.2. The minimized production patch touches exactly one hunk in Sources/_JSONCore/Parser/JSONParser+Parsing.swift: the pre-8-byte-boundary alignment loop returned unconditionally on a '\"' byte, so an escaped quote was mistaken for the string terminator, leaving the tokenizer mid-string and emitting a spurious expectedComma. The fix adds the backwards backslash-parity count that the SWAR bulk scan and tail loop already perform, which matches the reported symptom mechanically (a value beginning with \\\" is exactly the travel-sample shape from hotel.json). The patch is behavioral only: no API surface added, no refactor, formatting, docs, config, or test content in patches/minimized-production.patch (retained_hunks=[1], removed_hunk_count=0, post_minimization_validation PASS). The trigger is the unchanged upstream test from the same fixing commit and uses only IkigaJSONDecoder().decode with inline raw-string literals, all present on the buggy revision, so it is not a fix-only-API compile artifact; strict evidence records build.both_versions PASS and trigger.buggy_differential reproducing Tests/IkigaJSONTests/JSONTests.swift::testEscapedQuoteAtStartOfValue on the buggy revision with trigger.fixed_clean and full_suite.fixed_all_green, deterministic over 3 repetitions and a 32-run matrix, both pre- and post-minimization. The assertion checks the decoded value #\"\"fantastic resort\" Great hotel\"# rather than a new error category, so the semantics tested are the ones the issue expected. active_same_project_root_causes is empty and orlandos-nl/swift-json#60 is the sole allowed key, so no duplicate root cause.\n\nIssue #60 reports a valid JSON document rejected with parsingError(unexpectedToken(reason: expectedComma)), i.e. correct input failing on pre-existing parse behavior. The fix commit message and the single production hunk in Sources/_JSONCore/Parser/JSONParser+Parsing.swift address exactly that: the pre-8-byte-boundary alignment loop in the SWAR string scanner returned on any '\"' without the backwards backslash-parity count that the bulk scan and tail loop already performed, so an escaped quote terminated the string early and left the parser mid-string. The minimized patch is that one hunk (1 of 1 retained, 0 removed) and contains only control-flow change guarding the existing return; no refactor, formatting, feature, docs, or config content, and no new API surface. The trigger, testEscapedQuoteAtStartOfValue, is the unchanged upstream test from the same fixing commit and exercises the identical symptom class (escaped quote at the start of a string value, plus the array-nested travel-sample shape from the issue) using only IkigaJSONDecoder().decode, which exists on the buggy revision; strict evidence confirms build.both_versions passed, so this is a genuine behavioral differential and not a fix-only-API compile failure. Strict gates on both original and post-minimization runs passed with no failed checks: trigger.buggy_differential reproduced the declared selector, trigger.fixed_clean and full_suite.fixed_all_green passed, full_suite.buggy_reproduces_only_triggers confirmed no collateral buggy failures, and determinism held over 3 repetitions across 32 matrix runs. active_same_project_root_causes is empty and orlandos-nl/swift-json#60 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-10T05:34:11.731491+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "ccf97092bbb96185d83467f0eaf4c726ac0070956a4f363821b9758785a2d359",
+      "response_sha256": "ebe53f32b458bb7359ebdf8df8fe662b95951cb22e1aa1a4ade029856245d783",
+      "response_id": "msg_6ef8fed891f44ee39ddc2c96854c22f6",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5669541821558873,
+        "input_tokens": 14901,
+        "output_tokens": 742
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "orlandos-nl/swift-json#60",
+      "rationale": "Issue #60 reports a valid JSON document rejected with parsingError.unexpectedToken(reason: expectedComma), i.e. correct input failing on a pre-existing code path in release 2.4.2. The minimized production patch touches exactly one hunk in Sources/_JSONCore/Parser/JSONParser+Parsing.swift: the pre-8-byte-boundary alignment loop returned unconditionally on a '\"' byte, so an escaped quote was mistaken for the string terminator, leaving the tokenizer mid-string and emitting a spurious expectedComma. The fix adds the backwards backslash-parity count that the SWAR bulk scan and tail loop already perform, which matches the reported symptom mechanically (a value beginning with \\\" is exactly the travel-sample shape from hotel.json). The patch is behavioral only: no API surface added, no refactor, formatting, docs, config, or test content in patches/minimized-production.patch (retained_hunks=[1], removed_hunk_count=0, post_minimization_validation PASS). The trigger is the unchanged upstream test from the same fixing commit and uses only IkigaJSONDecoder().decode with inline raw-string literals, all present on the buggy revision, so it is not a fix-only-API compile artifact; strict evidence records build.both_versions PASS and trigger.buggy_differential reproducing Tests/IkigaJSONTests/JSONTests.swift::testEscapedQuoteAtStartOfValue on the buggy revision with trigger.fixed_clean and full_suite.fixed_all_green, deterministic over 3 repetitions and a 32-run matrix, both pre- and post-minimization. The assertion checks the decoded value #\"\"fantastic resort\" Great hotel\"# rather than a new error category, so the semantics tested are the ones the issue expected. active_same_project_root_causes is empty and orlandos-nl/swift-json#60 is the sole allowed key, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "strict_original.checks.full_suite.fixed_all_green",
+        "trigger_tests[0]",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The trigger uses a minimized inline literal rather than the issue's 38KB hotel.json fixture; equivalence to the original reproducer rests on the commit message's root-cause account plus the validated differential, not on decoding the original document.",
+        "The failing branch only executes for bytes before the first 8-byte alignment boundary, so the trigger's sensitivity depends on buffer offset; a future refactor of the alignment window could silently stop exercising the defect.",
+        "The fix's backwards scan uses wrapping subtraction with a searchStart &- 1 sentinel; the surrounding index types were not inspected here, so underflow behavior at searchStart == 0 is unverified by the supplied evidence.",
+        "issue_evidence is null; the issue text was read from source_candidate.issue_check.linked_issues rather than a separately fetched record."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-10T05:34:35.082544+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "ccf97092bbb96185d83467f0eaf4c726ac0070956a4f363821b9758785a2d359",
+      "response_sha256": "ca4642379d3bd7a7efe11893dd102f7afb6b767513e8a9950cf7e1ae669b0aba",
+      "response_id": "msg_d2437665d6374466a69faba420692e67",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4613747275290216,
+        "input_tokens": 14731,
+        "output_tokens": 752
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "orlandos-nl/swift-json#60",
+      "rationale": "Issue #60 reports a valid JSON document rejected with parsingError(unexpectedToken(reason: expectedComma)), i.e. correct input failing on pre-existing parse behavior. The fix commit message and the single production hunk in Sources/_JSONCore/Parser/JSONParser+Parsing.swift address exactly that: the pre-8-byte-boundary alignment loop in the SWAR string scanner returned on any '\"' without the backwards backslash-parity count that the bulk scan and tail loop already performed, so an escaped quote terminated the string early and left the parser mid-string. The minimized patch is that one hunk (1 of 1 retained, 0 removed) and contains only control-flow change guarding the existing return; no refactor, formatting, feature, docs, or config content, and no new API surface. The trigger, testEscapedQuoteAtStartOfValue, is the unchanged upstream test from the same fixing commit and exercises the identical symptom class (escaped quote at the start of a string value, plus the array-nested travel-sample shape from the issue) using only IkigaJSONDecoder().decode, which exists on the buggy revision; strict evidence confirms build.both_versions passed, so this is a genuine behavioral differential and not a fix-only-API compile failure. Strict gates on both original and post-minimization runs passed with no failed checks: trigger.buggy_differential reproduced the declared selector, trigger.fixed_clean and full_suite.fixed_all_green passed, full_suite.buggy_reproduces_only_triggers confirmed no collateral buggy failures, and determinism held over 3 repetitions across 32 matrix runs. active_same_project_root_causes is empty and orlandos-nl/swift-json#60 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_original.checks.build.both_versions",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "minimized_patch_reference.post_minimization_validation",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger uses short inline literals rather than the issue's 38KB hotel.json fixture; the reported document is not directly reproduced, though strict evidence confirms the short literals do fail on the buggy revision via the same alignment-phase branch.",
+        "Traceability rests on fix_commit_to_issue only (no PR); issue_evidence in the case record is null, so issue text is available only through the embedded source_candidate issue_check payload.",
+        "The added backwards scan uses wrapping subtraction with a `searchStart &- 1` sentinel; the diff context alone does not show index types, so termination behavior at searchStart == 0 is unverified by inspection (suite green on the fixed revision is the only signal).",
+        "Escape-parity equivalence between the new alignment-phase loop and the existing SWAR bulk/tail loops is not demonstrated by the evidence; boundary-straddling backslash runs remain untested."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/AnnotationRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/AnnotationRuleTest.kt
+index 524b0acc89..d4dacedfd2 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/AnnotationRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/AnnotationRuleTest.kt
+@@ -1104,4 +1104,15 @@ class AnnotationRuleTest {
+             .withEditorConfigOverride(ANNOTATIONS_WITH_PARAMETERS_NOT_TO_BE_WRAPPED_PROPERTY to "*")
+             .hasNoLintViolations()
+     }
++
++    @Test
++    fun `Issue 2955 - Given an annotated expression followed by an operation reference`() {
++        val code =
++            """
++            fun foo() =
++                @Suppress("DEPRECATION")
++                false != true
++            """.trimIndent()
++        annotationRuleAssertThat(code).hasNoLintViolations()
++    }
+ }

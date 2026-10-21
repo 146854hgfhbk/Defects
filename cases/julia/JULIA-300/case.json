@@ -1,0 +1,121 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-300",
+  "bug_id": "JULIA-300",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "domluna/JuliaFormatter.jl",
+  "repository_url": "https://github.com/domluna/JuliaFormatter.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaEditorSupport/JuliaFormatter.jl/issues/909"
+  ],
+  "issue_id": 909,
+  "buggy_revision": "4ddb9eed064c09e441b6b8cb63a38670ecd253e4",
+  "fixed_revision": "63228badeefebce6fd9165b6ea9a3f5f7245495c",
+  "candidate_sha": "63228badeefebce6fd9165b6ea9a3f5f7245495c",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "4ddb9eed064c09e441b6b8cb63a38670ecd253e4",
+  "changed_production_files": [
+    "src/styles/default/pretty.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-300 preserves standalone block comments"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_issue",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_issue",
+    "timeout_seconds": 1800,
+    "sha256": "ea1e1904f48f2567dd59581e548c49a333e94c76edae6fbfdfd3ecebd33e31e1",
+    "oracle": {
+      "public_api": "JuliaFormatter.format_text",
+      "upstream_issue": 909,
+      "upstream_pull_request": 913,
+      "upstream_test_file": "test/issues.jl",
+      "source_evidence": "Public JuliaFormatter.format_text reproducer from issue #909, fixed directly by commit/PR #913.",
+      "upstream_test_patch_sha256": "6b9cbc3d384637c29ce8c60c403dfdddd731cf409f2d4007607049b3a3e99856"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "63228badeefebce6fd9165b6ea9a3f5f7245495c",
+    "project": "domluna/JuliaFormatter.jl",
+    "input_sha256": "7f206688321c1afbc46c633acbab653270f0665fcd399455f2933ab8699fcca0",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:52:16Z",
+    "usage": {
+      "prompt_tokens": 2062,
+      "completion_tokens": 537,
+      "total_tokens": 2599
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"unknown\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"The commit fixes a bug in comment handling (specifically `#= ... =#` inline comments) by uncommenting previously commented-out code in `p_comment`. The test file changes `@test_broken` to `@test`, confirming that previously broken behavior is now fixed.\",\n  \"evidence\": \"1. The production fix in `src/styles/default/pretty.jl` re-enables handling of `#= ... =#` inline comments that was previously commented out, restoring the `HASHEQCOMMENT` FST node creation. 2. The test changes in `test/issues.jl` convert `@test_broken` to `@test`, demonstrating that the formatter was known to produce incorrect output for these cases and this fix resolves it. 3. The commit message explicitly says 'Fix comments issues (#913)'.\",\n  \"missing_evidence\": \"No linked issue body is available to confirm the exact bug report. The PR body is empty. We rely on the commit message and test evidence to infer the defect.\",\n  \"validation_risks\": \"The version bump in Project.toml is a non-bug change bundled with the fix, but it's trivial and doesn't affect correctness. The fix re-enables previously disabled code rather than writing new logic, which suggests it was a known regression or previously incomplete feature that was disabled.\",\n  \"suggested_tests\": \"Run the existing tests in `test/issues.jl` around the modified lines to confirm the formatter correctly preserves `#= ... =#` inline comments in both default and constrained margin modes.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "The commit fixes a bug in comment handling (specifically `#= ... =#` inline comments) by uncommenting previously commented-out code in `p_comment`. The test file changes `@test_broken` to `@test`, confirming that previously broken behavior is now fixed.",
+    "evidence": "1. The production fix in `src/styles/default/pretty.jl` re-enables handling of `#= ... =#` inline comments that was previously commented out, restoring the `HASHEQCOMMENT` FST node creation. 2. The test changes in `test/issues.jl` convert `@test_broken` to `@test`, demonstrating that the formatter was known to produce incorrect output for these cases and this fix resolves it. 3. The commit message explicitly says 'Fix comments issues (#913)'.",
+    "missing_evidence": "No linked issue body is available to confirm the exact bug report. The PR body is empty. We rely on the commit message and test evidence to infer the defect.",
+    "validation_risks": "The version bump in Project.toml is a non-bug change bundled with the fix, but it's trivial and doesn't affect correctness. The fix re-enables previously disabled code rather than writing new logic, which suggests it was a known regression or previously incomplete feature that was disabled.",
+    "suggested_tests": "Run the existing tests in `test/issues.jl` around the modified lines to confirm the formatter correctly preserves `#= ... =#` inline comments in both default and constrained margin modes."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-300 preserves standalone block comments"
+    ],
+    "exception_types": [
+      "7aa67efc08f9a1ab094002b69b6e88c45ea0bed01a96b57e323bb928639c0b5e"
+    ],
+    "fingerprints": [
+      "7aa67efc08f9a1ab094002b69b6e88c45ea0bed01a96b57e323bb928639c0b5e"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

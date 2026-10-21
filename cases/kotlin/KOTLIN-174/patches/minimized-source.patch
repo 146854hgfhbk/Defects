@@ -1,0 +1,55 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BinaryExpressionWrappingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BinaryExpressionWrappingRule.kt
+index dbed1796..119dc62b 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BinaryExpressionWrappingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BinaryExpressionWrappingRule.kt
+@@ -121,7 +124,16 @@ public class BinaryExpressionWrappingRule :
+                 if (node.isCallExpressionFollowedByLambdaArgument() || cannotBeWrappedAtOperationReference(operationReference)) {
+                     // Wrapping after operation reference might not be the best place in case of a call expression or just won't work as
+                     // the left hand side still does not fit on a single line
+-                    emit(operationReference.startOffset, "Line is exceeding max line length", false)
++                    val offset =
++                        operationReference
++                            .prevLeaf { it.isWhiteSpaceWithNewline() }
++                            ?.let { previousNewlineNode ->
++                                previousNewlineNode.startOffset +
++                                    previousNewlineNode.text.indexOfLast { it == '\n' } +
++                                    1
++                            }
++                            ?: operationReference.startOffset
++                    emit(offset, "Line is exceeding max line length", false)
+                 } else {
+                     operationReference
+                         .nextSibling()
+@@ -146,17 +158,21 @@ public class BinaryExpressionWrappingRule :
+             .let { it?.elementType == LAMBDA_ARGUMENT }
+ 
+     private fun cannotBeWrappedAtOperationReference(operationReference: ASTNode) =
+-        operationReference
+-            .takeUnless { it.nextCodeSibling()?.elementType == BINARY_EXPRESSION }
+-            ?.let {
+-                val stopAtOperationReferenceLeaf = operationReference.firstChildLeafOrSelf()
+-                maxLineLength <=
+-                    it
+-                        .leavesOnLine()
+-                        .takeWhile { leaf -> leaf != stopAtOperationReferenceLeaf }
+-                        .lengthWithoutNewlinePrefix()
+-            }
+-            ?: false
++        if (operationReference.firstChildNode.elementType == ELVIS) {
++            true
++        } else {
++            operationReference
++                .takeUnless { it.nextCodeSibling()?.elementType == BINARY_EXPRESSION }
++                ?.let {
++                    val stopAtOperationReferenceLeaf = operationReference.firstChildLeafOrSelf()
++                    maxLineLength <=
++                        it
++                            .leavesOnLine()
++                            .takeWhile { leaf -> leaf != stopAtOperationReferenceLeaf }
++                            .lengthWithoutNewlinePrefix()
++                }
++                ?: false
++        }
+ 
+     private fun ASTNode.isOnLineExceedingMaxLineLength() = leavesOnLine().lengthWithoutNewlinePrefix() > maxLineLength
+ 

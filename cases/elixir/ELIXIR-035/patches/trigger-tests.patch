@@ -1,0 +1,151 @@
+diff --git a/test/grpc/adapter/gun_test.exs b/test/grpc/adapter/gun_test.exs
+new file mode 100644
+index 0000000..04840eb
+--- /dev/null
++++ b/test/grpc/adapter/gun_test.exs
+@@ -0,0 +1,87 @@
++defmodule GRPC.Client.Adapters.GunTest do
++  use ExUnit.Case, async: true
++
++  import GRPC.Factory
++
++  alias GRPC.Client.Adapters.Gun
++
++  describe "connect/2" do
++    setup do
++      server_credential = build(:credential)
++      {:ok, _, port} = GRPC.Server.start(FeatureServer, 0, cred: server_credential)
++
++      on_exit(fn ->
++        :ok = GRPC.Server.stop(FeatureServer)
++      end)
++
++      %{
++        port: port,
++        credential:
++          build(:credential,
++            ssl: Keyword.take(server_credential.ssl, [:certfile, :keyfile, :versions])
++          )
++      }
++    end
++
++    test "connects insecurely (default options)", %{port: port, credential: credential} do
++      channel = build(:channel, port: port, host: "localhost", cred: credential)
++
++      assert {:ok, result} = Gun.connect(channel)
++
++      assert %{channel | adapter_payload: %{conn_pid: result.adapter_payload.conn_pid}} == result
++    end
++
++    test "connects insecurely (custom options)", %{port: port, credential: credential} do
++      channel = build(:channel, port: port, host: "localhost", cred: credential)
++
++      # Ensure that it works
++      assert {:ok, result} = Gun.connect(channel, %{transport_opts: [ip: :loopback]})
++      assert %{channel | adapter_payload: %{conn_pid: result.adapter_payload.conn_pid}} == result
++
++      # Ensure that changing one of the options breaks things
++      assert {:error, {:down, :badarg}} ==
++               Gun.connect(channel, %{transport_opts: [ip: "256.0.0.0"]})
++    end
++
++    test "connects securely (default options)", %{port: port, credential: credential} do
++      channel =
++        build(:channel,
++          port: port,
++          scheme: "https",
++          host: "localhost",
++          cred: credential
++        )
++
++      assert {:ok, result} = Gun.connect(channel, %{tls_opts: channel.cred.ssl})
++
++      assert %{channel | adapter_payload: %{conn_pid: result.adapter_payload.conn_pid}} == result
++    end
++
++    test "connects securely (custom options)", %{port: port, credential: credential} do
++      channel =
++        build(:channel,
++          port: port,
++          scheme: "https",
++          host: "localhost",
++          cred: credential
++        )
++
++      # Ensure that it works
++      assert {:ok, result} =
++               Gun.connect(channel, %{
++                 transport_opts: [certfile: credential.ssl[:certfile], ip: :loopback]
++               })
++
++      assert %{channel | adapter_payload: %{conn_pid: result.adapter_payload.conn_pid}} == result
++
++      # Ensure that changing one of the options breaks things
++      assert {:error, :timeout} ==
++               Gun.connect(channel, %{
++                 transport_opts: [
++                   certfile: credential.ssl[:certfile] <> "invalidsuffix",
++                   ip: :loopback
++                 ]
++               })
++    end
++  end
++end
+diff --git a/test/support/factory.ex b/test/support/factory.ex
+new file mode 100644
+index 0000000..fceaae0
+--- /dev/null
++++ b/test/support/factory.ex
+@@ -0,0 +1,52 @@
++defmodule GRPC.Factory do
++  @moduledoc false
++
++  alias GRPC.Channel
++  alias GRPC.Credential
++
++  @cert_path Path.expand("./tls/server1.pem", :code.priv_dir(:grpc))
++  @key_path Path.expand("./tls/server1.key", :code.priv_dir(:grpc))
++  @ca_path Path.expand("./tls/ca.pem", :code.priv_dir(:grpc))
++
++  def build(resource, attrs \\ %{}) do
++    name = :"#{resource}_factory"
++
++    data =
++      if function_exported?(__MODULE__, name, 1) do
++        apply(__MODULE__, name, [attrs])
++      else
++        apply(__MODULE__, name, [])
++      end
++
++    Map.merge(data, Map.new(attrs))
++  end
++
++  def channel_factory do
++    %Channel{
++      host: "localhost",
++      port: 1337,
++      scheme: "http",
++      cred: build(:credential),
++      adapter: GRPC.Client.Adapters.Gun,
++      adapter_payload: %{},
++      codec: GRPC.Codec.Proto,
++      interceptors: [],
++      compressor: nil,
++      accepted_compressors: [],
++      headers: []
++    }
++  end
++
++  def credential_factory do
++    %Credential{
++      ssl: [
++        certfile: @cert_path,
++        cacertfile: @ca_path,
++        keyfile: @key_path,
++        verify: :verify_peer,
++        fail_if_no_peer_cert: true,
++        versions: [:"tlsv1.2"]
++      ]
++    }
++  end
++end

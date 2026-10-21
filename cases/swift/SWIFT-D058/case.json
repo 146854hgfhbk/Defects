@@ -1,0 +1,342 @@
+{
+  "schema_version": 3,
+  "case_id": "SWIFT-002",
+  "bug_id": 1,
+  "language": "Swift",
+  "project": "apple/swift-collections",
+  "repository_url": "https://github.com/apple/swift-collections.git",
+  "issue_id": 139,
+  "issue_url": "https://github.com/apple/swift-collections/issues/139",
+  "issue_title": "Inference issue with `OrderedDictionary.init(grouping:by:)`",
+  "buggy_revision": "48254824bb4248676bf7ce56014ff57b142b77eb",
+  "fixed_revision": "50e6a1ac71df96e5cd257c565e9a3299f491ba3e",
+  "revision_mode": "direct_parent_to_upstream_fix",
+  "patch": "patches/minimized-source.patch",
+  "patch_sha256": "edb72b6996a6ecf8e50d55a82cda6ca9df7759e0dd67e537a76e57ca04d58e1d",
+  "patch_minimization": {
+    "status": "minimized",
+    "strategy": "single_hunk_identity",
+    "original_patch_path": "patches/original-source.patch",
+    "minimized_patch_path": "patches/minimized-source.patch",
+    "original_patch_sha256": "edb72b6996a6ecf8e50d55a82cda6ca9df7759e0dd67e537a76e57ca04d58e1d",
+    "minimized_patch_sha256": "edb72b6996a6ecf8e50d55a82cda6ca9df7759e0dd67e537a76e57ca04d58e1d",
+    "original_hunk_count": 1,
+    "retained_hunks": [
+      1
+    ],
+    "removed_hunk_count": 0,
+    "minimality_guarantee": "hunk-level: the only non-empty subset is the validated source patch",
+    "evidence": "validation/minimization-audit.json",
+    "human_signoff": "PENDING"
+  },
+  "triggering_test": "compile::Tests/OrderedCollectionsTests/OrderedDictionary/OrderedDictionary Tests.swift:151:13",
+  "trigger_tests": [
+    "compile::Tests/OrderedCollectionsTests/OrderedDictionary/OrderedDictionary Tests.swift:151:13"
+  ],
+  "trigger_kind": "test_target_compile_failure",
+  "expected_failure": {
+    "kind": "stable fixed test-target compile/pass versus buggy test-target compile failure",
+    "diagnostic_location": "Tests/OrderedCollectionsTests/OrderedDictionary/OrderedDictionary Tests.swift:151:13",
+    "diagnostic_message": "generic parameter 'Value' could not be inferred"
+  },
+  "changed_production_files": [
+    "Sources/OrderedCollections/OrderedDictionary/OrderedDictionary+Initializers.swift"
+  ],
+  "changed_test_files": [
+    "Tests/OrderedCollectionsTests/OrderedDictionary/OrderedDictionary Tests.swift"
+  ],
+  "commit_message": "[OrderedDictionary] Fix type inference issue with `OrderedDictionary.init(grouping:by:)`\n\nThis adds a new overload to help the type checker infer `[S.Element]` as the default `Value` type.\n\nResolves #139.",
+  "commit_url": "https://github.com/apple/swift-collections/commit/50e6a1ac71df96e5cd257c565e9a3299f491ba3e",
+  "build_command": [
+    "swift",
+    "build"
+  ],
+  "test_command": [
+    "swift",
+    "test",
+    "--parallel",
+    "--num-workers",
+    "1"
+  ],
+  "language_version": "5.10.1",
+  "dependency_versions": {
+    "(swift-runtime)": "no external dependencies in restored historical graph"
+  },
+  "operating_system_or_container": "Linux/x86_64 (Ubuntu 26.04 LTS)",
+  "architecture": "x86_64",
+  "verification": {
+    "source": "defects4x_swift_elixir_linux_fast (zhjia)",
+    "protocol": "defects4x-policy-v3-test-target-compile",
+    "accepted": true,
+    "verified_at": "2026-08-18T15:59:24.986370+00:00",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "expected_failure": "stable fixed test-target compile/pass versus buggy test-target compile failure",
+    "reason": "verified_test_target_compile_failure",
+    "transition": {
+      "accepted": true,
+      "buggy_repetitions": 3,
+      "diagnostic": {
+        "buggy_runs": 3,
+        "fixed_runs": 3,
+        "location": "Tests/OrderedCollectionsTests/OrderedDictionary/OrderedDictionary Tests.swift:151:13",
+        "message": "generic parameter 'Value' could not be inferred",
+        "test_id": "compile::Tests/OrderedCollectionsTests/OrderedDictionary/OrderedDictionary Tests.swift:151:13",
+        "trigger_kind": "test_target_compile_failure"
+      },
+      "fixed_repetitions": 3,
+      "reason": "stable_buggy_test_target_compile_failure"
+    },
+    "evidence_source": "source-evidence/logs"
+  },
+  "validation": {
+    "status": "defects4j_semantic_verification",
+    "protocol": "defects4x-policy-v3-test-target-compile",
+    "accepted": true,
+    "accepted_at": "2026-08-18T15:59:24.986370+00:00",
+    "evidence_path": "validation/source-evidence/logs",
+    "revision_mode": "direct_parent_revision",
+    "historical_revision_mode": "base_plus_gold_patch",
+    "revision_mode_evidence": "repair/boundary-verification.json",
+    "revision_mode_metadata_repaired_at": "2026-09-12",
+    "historical_validation_not_rewritten": true,
+    "execution_evidence_revision_mode": "base_plus_gold_patch",
+    "upstream_boundary_mode": "direct_parent_revision"
+  },
+  "source_index_collected_at": "2026-09-07 (wechat index.jsonl)",
+  "trigger_source": "zhjia defects4x dataset trigger_tests/<id> (compile::file:line:col or test-name list)",
+  "timezone": "UTC",
+  "reproducibility_status": "direct_parent_compile_diagnostic_historical_evidence_current_protocol_deferred",
+  "deprecation_reason": null,
+  "metadata_repaired_at": "2026-09-10",
+  "dataset_id": "SWIFT-D058",
+  "buggy_commit": "48254824bb4248676bf7ce56014ff57b142b77eb",
+  "fixed_commit": "50e6a1ac71df96e5cd257c565e9a3299f491ba3e",
+  "changed_source_files": [
+    "Sources/OrderedCollections/OrderedDictionary/OrderedDictionary+Initializers.swift"
+  ],
+  "revision_alias_semantics": "buggy_commit/fixed_commit identify upstream provenance; experimental b/f identities are in artifacts",
+  "upstream_fix": {
+    "commit": "50e6a1ac71df96e5cd257c565e9a3299f491ba3e",
+    "parents": [
+      "48254824bb4248676bf7ce56014ff57b142b77eb"
+    ],
+    "buggy_baseline_is_parent": true,
+    "single_parent_matches_baseline": true,
+    "commit_message": "[OrderedDictionary] Fix type inference issue with `OrderedDictionary.init(grouping:by:)`\n\nThis adds a new overload to help the type checker infer `[S.Element]` as the default `Value` type.\n\nResolves #139.",
+    "boundary_evidence": "repair/boundary-verification.json",
+    "boundary_evidence_sha256": "0aff375a32b1a5b9d8e92427e8a6c7a60d866c84b2d9413464e7ce0df863102d"
+  },
+  "fixed_revision_kind": "upstream_provenance_use_artifacts_for_experiment",
+  "artifacts": {
+    "buggy": {
+      "commit": "32c3f1ed8d930ed4f1cfdf2893992ecc8951f673",
+      "tree": "49851a21446626f5add241a372df519545df6ef2"
+    },
+    "fixed": {
+      "commit": "a64866216bfab6b0da26806c193be78136ac7ce4",
+      "tree": "8afff591682c491633020188c63d026f9205875a",
+      "equals_upstream_tree": true
+    },
+    "construction": "base + compatibility(if present) + trigger; fixed adds production patch",
+    "synthetic_commit_identity_disclosed": true,
+    "upstream_history_not_rewritten": true
+  },
+  "traceability": {
+    "reference_mode": "DIRECT_COMMIT_ISSUE_REF",
+    "direct_commit_issue_reference": true,
+    "source": "authentic_local_git_commit_object",
+    "strict_direct_reference_satisfied": true,
+    "traceability_closed": true,
+    "publication_profile_satisfied": true,
+    "strict_direct_profile_satisfied": true,
+    "pr_mediated_chain_verified": false
+  },
+  "patches": {
+    "trigger_tests": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "b593c3c8ee0039ec70e700120c28314c774d1fc019099ca4bb5586437a50de33",
+      "bytes": 2003
+    },
+    "production_fix": {
+      "path": "patches/original-source.patch",
+      "sha256": "edb72b6996a6ecf8e50d55a82cda6ca9df7759e0dd67e537a76e57ca04d58e1d"
+    }
+  },
+  "minimized_patch": {
+    "path": "patches/minimized-source.patch",
+    "sha256": "edb72b6996a6ecf8e50d55a82cda6ca9df7759e0dd67e537a76e57ca04d58e1d"
+  },
+  "cohort": "compile_diagnostic",
+  "build": {
+    "directory": ".",
+    "analyze_command": [
+      "swift",
+      "build"
+    ],
+    "test_command": [
+      "swift",
+      "test",
+      "--parallel",
+      "--num-workers",
+      "1"
+    ],
+    "dependency_command": [
+      "swift",
+      "package",
+      "resolve",
+      "--skip-update"
+    ],
+    "require_analyze_clean": true
+  },
+  "language_metadata": {
+    "compiler_version": "5.10.1",
+    "package_tools_version": "5.3",
+    "note": "Compiler version is distinct from Package.swift tools/language mode; recovered manifest records may fill package_tools_version"
+  },
+  "auto_baseline_full_suite": false,
+  "test_suite_policy": {
+    "name": "explicitly_filtered_regression_suite",
+    "excluded_selectors": [],
+    "exclusions": [],
+    "failed_process_may_be_waived": false,
+    "fresh_filtered_suite_validation_required": false,
+    "trigger_exclusion_forbidden": true
+  },
+  "fixed_test_result": {
+    "status": "HISTORICAL_RESULTS_RETAINED",
+    "historical_full_suite_exit_codes": [
+      0
+    ],
+    "current_suite_success_required": {
+      "exit_code": 0,
+      "failed_tests": 0,
+      "repetitions": 3
+    },
+    "current_protocol_rerun_performed": false
+  },
+  "current_validation": {
+    "protocol": "explicit-isolated-order-and-filtered-full-suite-v1",
+    "required_repetitions": 3,
+    "full_suite_repetitions": 3,
+    "historical_logs_preserved": true,
+    "historical_reverse_runs_are_order_evidence": false,
+    "same_process_permutation_claimed": false,
+    "new_full_validation_performed": false,
+    "status": "PENDING_CURRENT_PROTOCOL_RERUN",
+    "bound_delivery_reports": [
+      {
+        "path": "delivery-evidence/review/offline-reproduction.json",
+        "sha256": "ab6330a4b66580fb3965dca6b43144ed826ccacc3ee134c1027b4a849065c379",
+        "production_patch_matches": true,
+        "trigger_patch_matches": false,
+        "used_as_current_execution_evidence": false,
+        "trigger_binding": "GIT_TREE_EQUIVALENT",
+        "trigger_equivalence": {
+          "historical_patch_sha256": "3b5db2979e227d6f1f2aa5543e3776ae94a6e5f7c7fbf4e38d35d61d6c55d496",
+          "current_patch_sha256": "b593c3c8ee0039ec70e700120c28314c774d1fc019099ca4bb5586437a50de33",
+          "historical_tree": "49851a21446626f5add241a372df519545df6ef2",
+          "current_tree": "49851a21446626f5add241a372df519545df6ef2",
+          "equal": true,
+          "recovered_from": "delivery-evidence/review/semantic-input.json#trigger-tests.patch"
+        }
+      }
+    ],
+    "raw_log_recovery_waived_by_user": true,
+    "waiver_scope": "historical raw-log recovery only; no metadata upgrade to PASS"
+  },
+  "runtime_release": {
+    "asset_manifest": "../../../runtime-assets.manifest.json",
+    "entrypoint": "../../../benchmark.py",
+    "image_id": "sha256:c45a517d97b7491cf1281f04324684ca1957d5344ea8cecd6aef9c4616314f69",
+    "swift_executable": "/opt/swift510/usr/bin/swift",
+    "external_assets_are_required": true,
+    "artifact_tree_verified": true,
+    "historical_workspace": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/h60-completion-remaining-20260909T1035/SWIFT-002/fixed",
+    "assets": [
+      {
+        "kind": "experiment_bundle",
+        "case_relative_path": "sources/experiment.bundle",
+        "sha256": "2299cc5273618fefbc547d31d9425a9485273af74b01a4a15ea52711e2bc857d",
+        "bytes": 3965353,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/2299cc5273618fefbc547d31d9425a9485273af74b01a4a15ea52711e2bc857d"
+      },
+      {
+        "kind": "dependency_snapshot",
+        "case_relative_path": "environment/dependencies.tar.gz",
+        "sha256": "e352e5a00572c318e22d196aadcdfb2f9df00fbab5d5b4f51234678cf614a64d",
+        "bytes": 432,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/e352e5a00572c318e22d196aadcdfb2f9df00fbab5d5b4f51234678cf614a64d"
+      }
+    ],
+    "wrapper_evidence": [
+      {
+        "path": "environment/wrappers/08b77662f21dfb395bfecc48eb491fd1b5c4d6bf47e80c9e2f41609641a8ad30",
+        "sha256": "08b77662f21dfb395bfecc48eb491fd1b5c4d6bf47e80c9e2f41609641a8ad30",
+        "matches_recorded": true
+      }
+    ]
+  },
+  "human_curation": {
+    "status": "PENDING",
+    "approval_template": "repair/human-review.json",
+    "agent_cannot_sign_as_human": true
+  },
+  "acceptance": {
+    "human_curation": "PENDING",
+    "release_eligible": false,
+    "current_protocol_validation": "PENDING"
+  },
+  "status": "release_candidate",
+  "release": {
+    "state": "RC",
+    "strict_active": false,
+    "blockers": [
+      "separate_compile_diagnostic_cohort"
+    ],
+    "deprecation_reason": null,
+    "deferred_gates": [
+      "human_signoff_pending",
+      "current_protocol_validation_pending"
+    ],
+    "structural_boundary_status": "DIRECT",
+    "publication_profile_traceability": "PASS",
+    "strict_direct_traceability": "PASS",
+    "execution_evidence_policy": "HISTORICAL_EVIDENCE_PRESERVED_CURRENT_PROTOCOL_DEFERRED",
+    "human_signoff_policy": "PENDING_NOT_FABRICATED",
+    "classic_runtime_profile": "EXTENSION_COMPILE_DIAGNOSTIC",
+    "publication_profile_cohort": "VALID_DISCLOSED_EXTENSION",
+    "defects4j_core_validation": "EXTENSION_NOT_RUNTIME_CORE"
+  },
+  "repair": {
+    "date": "2026-09-10",
+    "base_archive_sha256": "21599edfd4c0c560677f781fdd84da40fa22fb14472aaaf7174b7dec81d9df21",
+    "previous_metadata": "repair-history/case.before-repair.json",
+    "code_history": null,
+    "historical_reports_not_rewritten": true,
+    "raw_log_recovery_out_of_scope": true,
+    "stage1_metadata_hardening": {
+      "performed_at": "2026-09-12",
+      "authoritative_boundary": "repair/boundary-verification.json",
+      "historical_execution_evidence_preserved": true,
+      "no_execution_result_invented": true
+    }
+  },
+  "dependency_snapshot": {
+    "lock": "environment/runtime-Package.resolved",
+    "sha256": "d877352e049f582309cc2564535be710c57028ac408ed086230befa191ec188d",
+    "source": "historical SwiftPM workspace",
+    "source_workspace": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/h60-completion-remaining-20260909T1035/SWIFT-002/fixed",
+    "graph_identity_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "archive_format": "build-checkouts-repositories-v1"
+  },
+  "historical_execution_revision_mode": "base_plus_gold_patch",
+  "defects4j_core_validation": {
+    "status": "EXTENSION_NOT_RUNTIME_CORE",
+    "classification": "COMPILE_DIAGNOSTIC_EXTENSION",
+    "report": "validation/defects4j-core-reacceptance.json",
+    "report_sha256": "ce7e2016b8dbd1992b78e3a06f0f0815ba33f4bf991b6c0fb9e7fa1308e76290",
+    "generated_at": "2026-09-12",
+    "does_not_claim_current_protocol_rerun": true
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-028",
+  "bug_id": "JULIA-028",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "aviatesk/JET.jl",
+  "repository_url": "https://github.com/aviatesk/JET.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "c9f3e4185546a862b42cf6820be8781d4185a391",
+  "fixed_revision": "23d7d7cbb44e82abf6dff82ef71b4ee6d46f04e5",
+  "candidate_sha": "23d7d7cbb44e82abf6dff82ef71b4ee6d46f04e5",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "c9f3e4185546a862b42cf6820be8781d4185a391",
+  "changed_production_files": [
+    "src/abstractinterpret/typeinfer.jl",
+    "src/analyzers/optanalyzer.jl"
+  ],
+  "changed_test_files": [
+    "test/abstractinterpret/test_typeinfer.jl"
+  ],
+  "trigger_tests": [
+    "const-prop filtering preserves distinct callsite report"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "39b94789ed85e3ebf7d2ce583083d50f62457854b7bdcef2efa8b3f503027f08",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/abstractinterpret/test_typeinfer.jl",
+        "basis": "public JET report behavior isolated from upstream fix testset"
+      },
+      "upstream_test_patch_sha256": "ed570ec6c4ea64410d92f902af8e5a050d59a508d4367db8366eaa676bc68d75"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.12.7",
+    "julia_version_origin": "project_compat_modern_floor",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.12.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "23d7d7cbb44e82abf6dff82ef71b4ee6d46f04e5",
+    "project": "aviatesk/JET.jl",
+    "input_sha256": "bf1713984f3022ae709be58de6c4c48f28fbfd1429138b53c0061f1187869b5d",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:52:34Z",
+    "usage": {
+      "prompt_tokens": 1312,
+      "completion_tokens": 479,
+      "total_tokens": 1791
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"Fix for a bug where const-prop report filtering by caller MethodInstance alone would incorrectly drop reports from distinct callsites in the same caller method. The fix uses the caller's current virtual frame for more precise filtering.\", \"evidence\": \"Issue #837 clearly describes a defect: filtering const-prop reports only by caller MethodInstance drops valid reports from other callsites in the same caller. The commit modifies production files (typeinfer.jl, optanalyzer.jl) and includes a regression test file. The issue describes an existing behavior violation where valid reports are lost.\", \"missing_evidence\": \"Cannot inspect the actual diff content to verify the exact code changes. PR body is empty, so detailed change description is unavailable beyond the issue description. Cannot confirm the test file content directly.\", \"validation_risks\": \"The issue mentions a 'remaining same-line callsite limitation' documented as a broken test, which suggests the fix is partial. The broken test marker could cause test suite issues depending on the framework's handling.\", \"suggested_tests\": \"Test that calling the same problematic function from two distinct lines in a single caller method preserves both reports. Test that same-line callsites document the known limitation without false passes.\"}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "Fix for a bug where const-prop report filtering by caller MethodInstance alone would incorrectly drop reports from distinct callsites in the same caller method. The fix uses the caller's current virtual frame for more precise filtering.",
+    "evidence": "Issue #837 clearly describes a defect: filtering const-prop reports only by caller MethodInstance drops valid reports from other callsites in the same caller. The commit modifies production files (typeinfer.jl, optanalyzer.jl) and includes a regression test file. The issue describes an existing behavior violation where valid reports are lost.",
+    "missing_evidence": "Cannot inspect the actual diff content to verify the exact code changes. PR body is empty, so detailed change description is unavailable beyond the issue description. Cannot confirm the test file content directly.",
+    "validation_risks": "The issue mentions a 'remaining same-line callsite limitation' documented as a broken test, which suggests the fix is partial. The broken test marker could cause test suite issues depending on the framework's handling.",
+    "suggested_tests": "Test that calling the same problematic function from two distinct lines in a single caller method preserves both reports. Test that same-line callsites document the known limitation without false passes."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "const-prop filtering preserves distinct callsite report"
+    ],
+    "exception_types": [
+      "b1caa1ff8096ee1f7af43fffbaa00ee13b7e29da635feae6803c84b624b6eab1",
+      "f60b1b8b71d243a874516199ad02ffbdddd1333d9ef2dc597e6b6224bd15cdcb"
+    ],
+    "fingerprints": [
+      "b1caa1ff8096ee1f7af43fffbaa00ee13b7e29da635feae6803c84b624b6eab1",
+      "f60b1b8b71d243a874516199ad02ffbdddd1333d9ef2dc597e6b6224bd15cdcb"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "23d7d7cbb44e82abf6dff82ef71b4ee6d46f04e5",
+    "parent_sha": "c9f3e4185546a862b42cf6820be8781d4185a391",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "a9d05d118eaf9d9a89d3238ef89bbb3de94ab4183edc70424e7865e512fb6b33",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

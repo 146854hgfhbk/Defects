@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1403",
+  "technical_evidence_sha256": "df0723f2845d808a9ddab2d2ae458cb0cc722fed6f4513620062e65ace1c5174",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "8d0fef88b7fff1ad28e01f18791a751504e9c12fa0ea27683b0ed8763370ab58",
+  "reviewed_at": "2026-09-09T06:57:57.098675+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-openapi-urlsession#251",
+  "rationale": "The linked issue (apple/swift-openapi-generator#251, 'URLSession and AHC transports double-encode path parameters', closed) names exactly the defect the one-line production change addresses: assigning an already percent-encoded request path to URLComponents.path re-encodes '%' as '%25', so the fix switches to percentEncodedPath. The minimized production patch is a single hunk in Sources/OpenAPIURLSession/URLSessionTransport.swift changing only that assignment; no refactor, formatting, feature, doc, or config edits, and post-minimization validation is PASS with retained_hunks=[1], removed=0. The trigger is the unchanged upstream test portion of the same fixing commit: testRequestConversion now sends path '/hello%20world/Maria' and asserts the resulting URL keeps '%20'. Both the test API (OpenAPIRuntime.Request, URLRequest(_:baseURL:)) and the Foundation URLComponents members already exist on the buggy revision, so this is a genuine behavioral differential rather than a fix-only-API compile error: on the buggy revision the URL becomes '.../hello%2520world/Maria' and the assertion fails. Strict machine evidence confirms build.both_versions PASS, trigger.buggy_differential reproduced on Tests/OpenAPIURLSessionTests/URLSessionTransportTests.swift::testRequestConversion, trigger.fixed_clean PASS, trigger.deterministic across 3 repetitions, and full_suite.fixed_all_green with no failed checks in either strict_original or strict_post_minimization. active_same_project_root_causes is empty, so the root cause is not a duplicate, and the id matches the single entry in allowed_root_cause_ids.\n\nLinked issue apple/swift-openapi-generator#251 reports that the URLSession transport double-encodes path parameters. The minimized production patch is the single line `baseUrlComponents.path += request.path` -> `baseUrlComponents.percentEncodedPath += request.path` in URLSessionTransport.swift, which is precisely the double-encoding root cause: assigning to `path` re-percent-encodes an already-encoded path from the generated client, turning `%20` into `%2520`. The upstream trigger, testRequestConversion, changes only the fixture path to `/hello%20world/Maria` and the expected URL to `http://example.com/api/hello%20world/Maria?greeting=Howdy`, so it observes exactly the reported symptom rather than a new feature. The trigger uses only pre-existing client API (OpenAPIRuntime.Request, URLRequest(_:baseURL:)) and no fix-only symbol, so the same test source compiles and runs on both revisions; strict evidence records build.both_versions PASS, an isolated buggy differential failure on the declared selector, deterministic outcomes across 3 repetitions, buggy full-suite failures limited to the reproduced trigger, and fixed all-green, both pre- and post-minimization. The patch contains no refactor, formatting, docs, config, or test-only content (original_hunk_count 1, retained 1, removed 0; post_minimization_validation PASS). The active same-project root-cause registry is empty, so this URL path double-encoding cause is not a duplicate, and the id matches the sole allowed key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T06:57:37.540158+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "8d0fef88b7fff1ad28e01f18791a751504e9c12fa0ea27683b0ed8763370ab58",
+      "response_sha256": "ccfcc1b7eba7f59babc34c45d67353e456c02470abc04ba55b6a52856cbb8b07",
+      "response_id": "msg_f47894d186824e3a80c8af773232cfbc",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4956522066003317,
+        "input_tokens": 11054,
+        "output_tokens": 684
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-openapi-urlsession#251",
+      "rationale": "The linked issue (apple/swift-openapi-generator#251, 'URLSession and AHC transports double-encode path parameters', closed) names exactly the defect the one-line production change addresses: assigning an already percent-encoded request path to URLComponents.path re-encodes '%' as '%25', so the fix switches to percentEncodedPath. The minimized production patch is a single hunk in Sources/OpenAPIURLSession/URLSessionTransport.swift changing only that assignment; no refactor, formatting, feature, doc, or config edits, and post-minimization validation is PASS with retained_hunks=[1], removed=0. The trigger is the unchanged upstream test portion of the same fixing commit: testRequestConversion now sends path '/hello%20world/Maria' and asserts the resulting URL keeps '%20'. Both the test API (OpenAPIRuntime.Request, URLRequest(_:baseURL:)) and the Foundation URLComponents members already exist on the buggy revision, so this is a genuine behavioral differential rather than a fix-only-API compile error: on the buggy revision the URL becomes '.../hello%2520world/Maria' and the assertion fails. Strict machine evidence confirms build.both_versions PASS, trigger.buggy_differential reproduced on Tests/OpenAPIURLSessionTests/URLSessionTransportTests.swift::testRequestConversion, trigger.fixed_clean PASS, trigger.deterministic across 3 repetitions, and full_suite.fixed_all_green with no failed checks in either strict_original or strict_post_minimization. active_same_project_root_causes is empty, so the root cause is not a duplicate, and the id matches the single entry in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0]",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.build.both_versions",
+        "case.json:minimized_patch_reference.post_minimization_validation",
+        "case.json:trigger_tests[0]"
+      ],
+      "risks": [
+        "issue_evidence is null: only the issue title/state metadata is supplied, not the issue body, so the precise reported reproduction case is inferred from the title plus the patch semantics.",
+        "The public issue lives in apple/swift-openapi-generator while root_cause_id is namespaced to apple/swift-openapi-urlsession#251 per allowed_root_cause_ids; the number is cross-repo and could collide with an unrelated urlsession issue number.",
+        "The trigger mutates an existing test's inputs rather than adding a new case, so the original non-encoded '/hello/Maria' assertion is no longer covered on the fixed revision.",
+        "The issue mentions the AsyncHTTPClient transport as well; this case only covers the URLSession side, so the registry entry does not capture the full reported scope."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T06:57:57.098028+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "8d0fef88b7fff1ad28e01f18791a751504e9c12fa0ea27683b0ed8763370ab58",
+      "response_sha256": "e33b16aa38c52b9cac7ad86c0d1f87f45d97655ccebea7c6150e9276eec1cd91",
+      "response_id": "msg_ad9bc324fe234e839024d122b453b4da",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.41545551101160866,
+        "input_tokens": 10938,
+        "output_tokens": 588
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-openapi-urlsession#251",
+      "rationale": "Linked issue apple/swift-openapi-generator#251 reports that the URLSession transport double-encodes path parameters. The minimized production patch is the single line `baseUrlComponents.path += request.path` -> `baseUrlComponents.percentEncodedPath += request.path` in URLSessionTransport.swift, which is precisely the double-encoding root cause: assigning to `path` re-percent-encodes an already-encoded path from the generated client, turning `%20` into `%2520`. The upstream trigger, testRequestConversion, changes only the fixture path to `/hello%20world/Maria` and the expected URL to `http://example.com/api/hello%20world/Maria?greeting=Howdy`, so it observes exactly the reported symptom rather than a new feature. The trigger uses only pre-existing client API (OpenAPIRuntime.Request, URLRequest(_:baseURL:)) and no fix-only symbol, so the same test source compiles and runs on both revisions; strict evidence records build.both_versions PASS, an isolated buggy differential failure on the declared selector, deterministic outcomes across 3 repetitions, buggy full-suite failures limited to the reproduced trigger, and fixed all-green, both pre- and post-minimization. The patch contains no refactor, formatting, docs, config, or test-only content (original_hunk_count 1, retained 1, removed 0; post_minimization_validation PASS). The active same-project root-cause registry is empty, so this URL path double-encoding cause is not a duplicate, and the id matches the sole allowed key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:source_candidate.issue_check.linked_issues[0].title",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "issue_evidence is null; the defect description is taken from the linked issue title and PR subject rather than full issue body text.",
+        "The verified issue lives in apple/swift-openapi-generator while the root_cause_id is namespaced to apple/swift-openapi-urlsession per the allowed key, so cross-repo numbering must be kept in mind for registry matching.",
+        "Coverage is a single unit assertion on URL construction; it does not exercise end-to-end request transmission with encoded path components."
+      ]
+    }
+  ]
+}

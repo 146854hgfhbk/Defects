@@ -1,0 +1,34 @@
+diff --git a/lib/JSON/PP.pm b/lib/JSON/PP.pm
+index a8051ac64db432d08d789fa8a3dcd8d195b09f19..274d2f29ef2efb3fe181a5eb256689735c201261 100644
+--- a/lib/JSON/PP.pm
++++ b/lib/JSON/PP.pm
+@@ -1405,7 +1405,7 @@ BEGIN {
+ $JSON::PP::true  = do { bless \(my $dummy = 1), "JSON::PP::Boolean" };
+ $JSON::PP::false = do { bless \(my $dummy = 0), "JSON::PP::Boolean" };
+ 
+-sub is_bool { ref $_[0] and $_[0]->isa("JSON::PP::Boolean"); }
++sub is_bool { blessed $_[0] and $_[0]->isa("JSON::PP::Boolean"); }
+ 
+ sub true  { $JSON::PP::true  }
+ sub false { $JSON::PP::false }
+diff --git a/t/003_types.t b/t/003_types.t
+index 9047f02c39d6fe19efbb3abd9933a425c9a1278c..22e0f7ec2e056dfc3aa8ed3275d311716143c133 100644
+--- a/t/003_types.t
++++ b/t/003_types.t
+@@ -2,7 +2,7 @@
+ use strict;
+ use Test::More;
+ 
+-BEGIN { plan tests => 77 };
++BEGIN { plan tests => 78 };
+ 
+ BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
+ 
+@@ -22,6 +22,7 @@ ok (JSON::PP::is_bool $false);
+ ok (++$false == 1);
+ ok (!JSON::PP::is_bool $false);
+ ok (!JSON::PP::is_bool "JSON::PP::Boolean");
++ok (!JSON::PP::is_bool {}); # GH-34
+ 
+ ok (JSON::PP->new->allow_nonref (1)->decode ('5') == 5);
+ ok (JSON::PP->new->allow_nonref (1)->decode ('-5') == -5);

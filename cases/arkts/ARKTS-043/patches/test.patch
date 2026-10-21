@@ -1,0 +1,90 @@
+diff --git a/entry/src/ohosTest/ets/test/ClockBackgroundLifecycle.test.ets b/entry/src/ohosTest/ets/test/ClockBackgroundLifecycle.test.ets
+new file mode 100644
+index 0000000..ec3177a
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/ClockBackgroundLifecycle.test.ets
+@@ -0,0 +1,70 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import UIAbility from '@ohos.app.ability.UIAbility';
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import { describe, expect, it } from '@ohos/hypium';
++import { Driver } from '@ohos.UiTest';
++import hilog from '@ohos.hilog';
++
++const TAG = '[ClockBackgroundLifecycleTest]';
++const DOMAIN = 0xF811;
++const BUNDLE_NAME = 'ohos.samples.etsclock';
++const ABILITY_NAME = 'MainAbility';
++
++async function waitForMainAbility(): Promise<UIAbility> {
++  let delegator = AbilityDelegatorRegistry.getAbilityDelegator();
++  await delegator.startAbility({
++    bundleName: BUNDLE_NAME,
++    abilityName: ABILITY_NAME
++  });
++  let driver = Driver.create();
++  await driver.delayMs(1200);
++  let ability = await delegator.getCurrentTopAbility();
++  expect(ability !== undefined).assertTrue();
++  return ability as UIAbility;
++}
++
++export default function ClockBackgroundLifecycleTest() {
++  describe('ClockBackgroundLifecycleTest', () => {
++    it('MainAbility_BackgroundCanReturn_001', 0, async () => {
++      let delegator = AbilityDelegatorRegistry.getAbilityDelegator();
++      let driver = Driver.create();
++      let ability = await waitForMainAbility();
++      let foregroundState = delegator.getAbilityState(ability);
++      hilog.info(DOMAIN, TAG, 'foreground state=%{public}d', foregroundState);
++
++      await delegator.doAbilityBackground(ability);
++      await driver.delayMs(1500);
++      let backgroundState = delegator.getAbilityState(ability);
++      hilog.info(DOMAIN, TAG, 'background state=%{public}d', backgroundState);
++
++      let foregroundSucceeded = true;
++      try {
++        await delegator.doAbilityForeground(ability);
++      } catch (err) {
++        foregroundSucceeded = false;
++        hilog.error(DOMAIN, TAG, 'doAbilityForeground failed: %{public}s', JSON.stringify(err));
++      }
++      await driver.delayMs(1200);
++      let restoredState = delegator.getAbilityState(ability);
++      hilog.info(DOMAIN, TAG, 'restored state=%{public}d foregroundSucceeded=%{public}s',
++        restoredState, String(foregroundSucceeded));
++
++      expect(foregroundSucceeded).assertTrue();
++      expect(restoredState).assertEqual(foregroundState);
++    });
++  });
++}
+diff --git a/entry/src/ohosTest/ets/test/List.test.ets b/entry/src/ohosTest/ets/test/List.test.ets
+index 7f54fd6..ca676be 100644
+--- a/entry/src/ohosTest/ets/test/List.test.ets
++++ b/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import appTest from './Ability.test';
++import ClockBackgroundLifecycleTest from './ClockBackgroundLifecycle.test';
+ 
+ export default function testsuite() {
+   appTest();
++  ClockBackgroundLifecycleTest();
+ }

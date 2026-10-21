@@ -1,0 +1,371 @@
+diff --git a/.travis.yml b/.travis.yml
+index 6e19c0b..69aa581 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -10,13 +10,22 @@ perl:
+   - "5.18"
+   - "5.20"
+   - "5.22"
+-  - "5.22-thr"
+-  - "5.22-dbg"
+-  - "5.22-thr-dbg"
+-  - "5.22-mb"
++  - "5.24"
++  - "5.24-thr"
++  - "5.24-dbg"
++  - "5.24-thr-dbg"
++  - "5.24-mb"
+   - "dev"
+   - "blead"
+ 
++# slows down already cached versions by 3 (33s => 1m45s)
++# (i.e. cache download: 9s, setup: 45s-130s)
++# but speeds up building the non-cached versions (5.24-*) by 2 (3m50s => 1m45s)
++# overall: 25min => 35min, so disable the perl cache
++#cache:
++#  directories:
++#    - /home/travis/perl5/perlbrew/
++
+ #addons:
+ #  apt:
+ #    packages:
+diff --git a/Changes b/Changes
+index e9191b0..ae4a6a7 100644
+--- a/Changes
++++ b/Changes
+@@ -2,6 +2,17 @@ Revision history for Perl extension Cpanel::JSON::XS
+ 
+ TODO: http://stevehanov.ca/blog/index.php?id=104 compression
+ 
++3.0221 2016-10-30 (rurban)
++        - fixed documentation of decode for unicode noncharacters.
++          added correct code to warn as in core.
++          no replacement, ignore warnings when in relaxed mode.
++          We used a wrong range also, but the wrong code from 3.02220
++          was never executed because of an coding error. #73, #74
++        - Fixed a perl 5.6 compilation regression from 3.0220.
++        - Improve decode_bom for multibyte encoding, but not yet enabled.
++          refcount error.
++        - Add 5.24 to travis tests
++
+ 3.0220 2016-10-28 (rurban)
+ 	- add comprehensive JSON decode spectests from
+           http://seriot.ch/parsing_json.html. #72
+diff --git a/README b/README
+index abbcbb3..85142c7 100644
+--- a/README
++++ b/README
+@@ -250,14 +250,12 @@ A FEW NOTES ON UNICODE AND PERL
+ 
+     5. A string containing "high" (> 255) character values is *not* a UTF-8
+     string.
+-    6. Unicode non-characters fail or are replaced.
+-        Unicode non-characters between U+FFFD and U+10FFFF are decoded
+-        either to the recommended U+FFFD REPLACEMENT CHARACTER (see Unicode
+-        PR #121: Recommended Practice for Replacement Characters), or in the
+-        binary or relaxed mode left as is, keeping the illegal
+-        non-characters as before. Illegal surrogate pairs fail to parse.
+-
+-    7. Raw non-Unicode characters above U+10FFFF is disallowed
++    6. Unicode noncharacters only warn, as in core.
++        The 66 Unicode noncharacters U+FDD0..U+FDEF, and U+*FFFE, U+*FFFF
++        just warn, see <http://www.unicode.org/versions/corrigendum9.html>.
++        But illegal surrogate pairs fail to parse.
++
++    7. Raw non-Unicode characters above U+10FFFF are disallowed.
+         Raw non-Unicode characters outside the valid unicode range fail to
+         parse, because "A string is a sequence of zero or more Unicode
+         characters" RFC 7159 section 1 and "JSON text SHALL be encoded in
+diff --git a/XS.pm b/XS.pm
+index e5ec2a7..81ed08a 100644
+--- a/XS.pm
++++ b/XS.pm
+@@ -1,5 +1,5 @@
+ package Cpanel::JSON::XS;
+-our $VERSION = '3.0220';
++our $VERSION = '3.0221';
+ our $XS_VERSION = $VERSION;
+ $VERSION = eval $VERSION;
+ 
+@@ -309,15 +309,13 @@ Unicode string encoded in UTF-8, giving you a binary string.
+ 
+ =item 5. A string containing "high" (> 255) character values is I<not> a UTF-8 string.
+ 
+-=item 6. Unicode non-characters fail or are replaced.
++=item 6. Unicode noncharacters only warn, as in core.
+ 
+-Unicode non-characters between U+FFFD and U+10FFFF are decoded either
+-to the recommended U+FFFD REPLACEMENT CHARACTER (see Unicode PR #121:
+-Recommended Practice for Replacement Characters), or in the binary or
+-relaxed mode left as is, keeping the illegal non-characters as before.
+-Illegal surrogate pairs fail to parse.
++The 66 Unicode noncharacters U+FDD0..U+FDEF, and U+*FFFE, U+*FFFF just warn,
++see L<http://www.unicode.org/versions/corrigendum9.html>.
++But illegal surrogate pairs fail to parse.
+ 
+-=item 7. Raw non-Unicode characters above U+10FFFF is disallowed
++=item 7. Raw non-Unicode characters above U+10FFFF are disallowed.
+ 
+ Raw non-Unicode characters outside the valid unicode range fail to
+ parse, because "A string is a sequence of zero or more Unicode
+diff --git a/XS.xs b/XS.xs
+index 600a5f5..73b02cb 100644
+--- a/XS.xs
++++ b/XS.xs
+@@ -134,6 +134,24 @@ mingw_modfl(long double x, long double *ip)
+ #ifndef HvNAMEUTF8
+ # define HvNAMEUTF8(hv) 0
+ #endif
++/* since 5.14 check use warnings 'nonchar' */
++#ifdef WARN_NONCHAR
++#define WARNER_NONCHAR(hi)                                      \
++  Perl_ck_warner_d(aTHX_ packWARN(WARN_NONCHAR),                \
++                   "Unicode non-character U+%04"UVXf" is not "  \
++                   "recommended for open interchange", hi)
++/* before check use warnings 'utf8' */
++#elif PERL_VERSION > 10
++#define WARNER_NONCHAR(hi)                                         \
++  Perl_ck_warner_d(aTHX_ packWARN(WARN_UTF8),                      \
++                   "Unicode non-character U+%04"UVXf" is illegal " \
++                   "for interchange", hi)
++#else
++#define WARNER_NONCHAR(hi)                                         \
++  Perl_warner(aTHX_ packWARN(WARN_UTF8),                           \
++              "Unicode non-character U+%04lX is illegal", (unsigned long)hi)
++#endif
++
+ /* since 5.16 */
+ #ifndef GV_NO_SVGMAGIC
+ #define GV_NO_SVGMAGIC 0
+@@ -377,7 +395,7 @@ decode_utf8 (pTHX_ unsigned char *s, STRLEN len, int relaxed, STRLEN *clen)
+ #elif PERL_VERSION >= 8
+     UV c = utf8n_to_uvuni (s, len, clen, UTF8_CHECK_ONLY);
+ #endif
+-#if PERL_VERSION <= 12 && PERL_VERSION >= 8
++#if PERL_VERSION >= 8 && PERL_VERSION <= 12
+     if (c > PERL_UNICODE_MAX && !relaxed)
+       *clen = -1;
+ #endif
+@@ -2239,53 +2257,60 @@ _decode_str (pTHX_ dec_t *dec, char endstr)
+ 
+                       /* possibly a surrogate pair */
+                       if (hi >= 0xd800) {
+-                        if (hi < 0xdc00)
+-                          {
+-                            if (dec_cur [0] != '\\' || dec_cur [1] != 'u')
+-                              ERR ("missing low surrogate character in surrogate pair");
+-
+-                            dec_cur += 2;
+-
+-                            dec->cur = dec_cur;
+-                            lo = decode_4hex (dec);
+-                            dec_cur = dec->cur;
+-                            if (lo == (UV)-1)
+-                              goto fail;
+-
+-                            if (lo < 0xdc00 || lo >= 0xe000)
+-                              ERR ("surrogate pair expected");
+-
+-                            hi = (hi - 0xD800) * 0x400 + (lo - 0xDC00) + 0x10000;
+-
+-           /* nonchars +UFDD0-10FFFF
+-              https://www.rfc-editor.org/errata_search.php?rfc=7159&eid=3984
+-              The WG's consensus was to leave the full range present
+-              in the ABNF and add the interoperability guidance about
+-              values outside the Unicode accepted range.
+-
+-              http://seriot.ch/parsing_json.html#25 According to the
+-              Unicode standard, invalid codepoints should be replaced
+-              by U+FFFD REPLACEMENT CHARACTER. People familiar with
+-              Unicode complexity won't be surprised that this
+-              replacement is not mandatory, and can be done in several
+-              ways (see Unicode PR #121: Recommended Practice for
+-              Replacement Characters). So several parsers use
+-              replacement characters, while other keep the escaped
+-              form or produce an non-Unicode character (see Section 5
+-              - Parsing Contents).
+-              Most parsers accept this.
+-           */
+-                            /* in non-relaxed, non-binary mode replace nonchars
+-                               with U+FFFD */
+-                            if (hi > 0xfdd0 && hi < 0x10ffff
+-                                && !(dec->json.flags & F_RELAXED|F_BINARY))
+-                              hi = 0xFFFD;
++                        if (hi < 0xdc00) {
++                          if (dec_cur [0] != '\\' || dec_cur [1] != 'u')
++                            ERR ("missing low surrogate character in surrogate pair");
++
++                          dec_cur += 2;
++
++                          dec->cur = dec_cur;
++                          lo = decode_4hex (dec);
++                          dec_cur = dec->cur;
++                          if (lo == (UV)-1)
++                            goto fail;
++
++                          if (lo < 0xdc00 || lo >= 0xe000)
++                            ERR ("surrogate pair expected");
++
++                          hi = (hi - 0xD800) * 0x400 + (lo - 0xDC00) + 0x10000;
++                          if (UNLIKELY(
++                                 !(dec->json.flags & F_RELAXED)
++                                 && (((hi & 0xfffe) == 0xfffe)
++                                  || ((hi & 0xffff) == 0xffff)))) {
++                            WARNER_NONCHAR(hi);
+                           }
+-                        else if (hi < 0xe000) {
++                        }
++                        else if (UNLIKELY(hi < 0xe000)) {
+                           ERR ("missing high surrogate character in surrogate pair");
+-			}
++                        }
++                        else
++
++/* check 66 noncharacters U+FDD0..U+FDEF, U+FFFE, U+FFFF
++   and U+1FFFE, U+1FFFF, U+2FFFE, U+2FFFF, ... U+10FFFE, U+10FFFF (issue #74)
++   and warn as in core.
++   See http://www.unicode.org/versions/corrigendum9.html.
++
++   https://www.rfc-editor.org/errata_search.php?rfc=7159&eid=3984
++   The WG's consensus was to leave the full range present
++   in the ABNF and add the interoperability guidance about
++   values outside the Unicode accepted range.
++
++   http://seriot.ch/parsing_json.html#25 According to the Unicode
++   standard, illformed subsequences should be replaced by U+FFFD
++   REPLACEMENT CHARACTER. (See Unicode PR #121: Recommended Practice
++   for Replacement Characters). Several parsers use replacement
++   characters, while other keep the escaped form or produce an
++   non-Unicode character (see Section 5 - Parsing Contents).  This
++   values are not for interchange, only for application internal use.
++   They are different from private use.  Most parsers accept these.
++*/
++                          if (UNLIKELY(
++                                 !(dec->json.flags & F_RELAXED)
++                                 && ((hi >= 0xfdd0 && hi <= 0xfdef)
++                                  || (hi >= 0xfffe && hi <= 0xffff)))) {
++                            WARNER_NONCHAR(hi);
++                          }
+ 		      }
+-
+                       if (hi >= 0x80)
+                         {
+                           utf8 = 1;
+@@ -3122,6 +3147,7 @@ decode_json (pTHX_ SV *string, JSON *json, U8 **offset_return)
+ 
+ #if PERL_VERSION >= 8
+       /* horrible hack to silence warning inside pv_uni_display */
++      /* TODO: Can be omitted with newer perls */
+       COP cop = *PL_curcop;
+       cop.cop_warnings = pWARN_NONE;
+       ENTER;
+diff --git a/t/01_utf8.t b/t/01_utf8.t
+index 9acd5f3..72eef49 100644
+--- a/t/01_utf8.t
++++ b/t/01_utf8.t
+@@ -1,4 +1,4 @@
+-use Test::More tests => 13;
++use Test::More tests => 23;
+ use utf8;
+ use Cpanel::JSON::XS;
+ 
+@@ -41,3 +41,42 @@ is(Cpanel::JSON::XS->new->binary->encode ([$love]), '["I \xe2\x9d\xa4 perl"]', '
+ 
+ # TODO: test utf8 hash keys,
+ # test utf8 strings without any char > 0x80.
++
++# warn on the 66 non-characters as in core
++{
++  my $w;
++  require warnings;
++  warnings->unimport($] < 5.014 ? 'utf8' : 'nonchar');
++  $SIG{__WARN__} = sub { $w = shift };
++  my $d = Cpanel::JSON::XS->new->allow_nonref->decode('"\ufdd0"');
++  my $warn = $w;
++  is ($d, "\x{fdd0}", substr($warn,0,31)."...");
++  like ($warn, qr/^Unicode non-character U\+FDD0 is/);
++  $w = '';
++  # higher planes
++  $d = Cpanel::JSON::XS->new->allow_nonref->decode('"\ud83f\udfff"');
++  $warn = $w;
++  is ($d, "\x{1ffff}", substr($warn,0,31)."...");
++  like ($w, qr/^Unicode non-character U\+1FFFF is/);
++  $w = '';
++  $d = Cpanel::JSON::XS->new->allow_nonref->decode('"\ud87f\udffe"');
++  $warn = $w;
++  is ($d, "\x{2fffe}", substr($warn,0,31)."...");
++  like ($w, qr/^Unicode non-character U\+2FFFE is/);
++
++  $w = '';
++  $d = Cpanel::JSON::XS->new->allow_nonref->decode('"\ud8a4\uddd1"');
++  $warn = $w;
++  is ($d, "\x{391d1}", substr($warn,0,31)."...");
++  is ($w, '');
++}
++{
++  my $w;
++  warnings->unimport($] < 5.014 ? 'utf8' : 'nonchar');
++  $SIG{__WARN__} = sub { $w = shift };
++  # no warning with relaxed
++  my $d = Cpanel::JSON::XS->new->allow_nonref->relaxed->decode('"\ufdd0"');
++  my $warn = $w;
++  is ($d, "\x{fdd0}", "no warning with relaxed");
++  is($w, undef);
++}
+diff --git a/t/30_jsonspec.t b/t/30_jsonspec.t
+index d913c0e..e645276 100644
+--- a/t/30_jsonspec.t
++++ b/t/30_jsonspec.t
+@@ -1,6 +1,6 @@
+ # regressions and differences from the JSON Specs and JSON::PP
+ # detected by http://seriot.ch/json/parsing.html
+-use Test::More tests => 678;
++use Test::More tests => 686;
+ use Cpanel::JSON::XS;
+ my $json    = Cpanel::JSON::XS->new->utf8->allow_nonref;
+ my $relaxed = Cpanel::JSON::XS->new->utf8->allow_nonref->relaxed;
+@@ -111,16 +111,32 @@ sub i_undefined {
+ sub i_pass {
+   my ($str, $name) = @_;
+   $@ = '';
++  my $w;
++  if ($name =~ /nonchar/) { # check the warning
++    require warnings;
++    warnings->import($] < 5.014 ? 'utf8' : 'nonchar');
++    $SIG{__WARN__} = sub { $w = shift };
++  }
+   my $result = $todo{$name} ? eval { $json->decode($str) } : $json->decode($str);
++  my $warn = $w;
+   TODO: {
+     local $TODO = "$name" if exists $todo{$name};
+     is($@, '', "no parsing error with undefined $name ".substr($@,0,40));
+     isnt($result, undef, "valid result with undefined $name");
++    if ($name =~ /nonchar/) {
++      like ($warn, qr/^Unicode non-character U\+[10DFE]+ is/);
++      $w = '';
++    }
+     $@ = '';
+     #diag "$name $str";
+     $result    = eval { $relaxed->decode($str) };
++    $warn = $w;
+     is($@, '', "no parsing error with undefined $name relaxed ".substr($@,0,40));
+     isnt($result, undef, "valid result with undefined $name relaxed");
++    if ($name =~ /nonchar/) {
++      is($warn, '');
++      $w = '';
++    }
+   }
+ }
+ # result undefined, parsing failed
+diff --git a/t/z_pod-spelling.t b/t/z_pod-spelling.t
+index f797b0f..c48dd1e 100644
+--- a/t/z_pod-spelling.t
++++ b/t/z_pod-spelling.t
+@@ -18,6 +18,7 @@ cbor
+ syck
+ interop
+ nonref
++noncharacters
+ Lehmann
+ bencode
+ clzf

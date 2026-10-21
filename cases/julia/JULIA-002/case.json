@@ -1,0 +1,138 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-002",
+  "bug_id": "JULIA-002",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "SciML/LinearSolve.jl",
+  "repository_url": "https://github.com/SciML/LinearSolve.jl.git",
+  "issue_urls": [
+    "https://github.com/SciML/LinearSolve.jl/issues/1159"
+  ],
+  "issue_id": 1159,
+  "buggy_revision": "b883e9a371fa80d3521b9c3237bb29dfae7ea46a",
+  "fixed_revision": "043fa65cc15fb13e819730f9b2a757ba971adfdd",
+  "candidate_sha": "043fa65cc15fb13e819730f9b2a757ba971adfdd",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "b883e9a371fa80d3521b9c3237bb29dfae7ea46a",
+  "changed_production_files": [
+    "src/factorization.jl"
+  ],
+  "changed_test_files": [
+    "test/Core/genericlu_naive_ldiv.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-002 Adjoint/Transpose specialized kernel dispatch"
+  ],
+  "trigger_test_origin": "issue_mwe",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "exact_assertion_from_upstream_fix_test_patch",
+    "timeout_seconds": 1800,
+    "sha256": "4c7b7dfd398b606139e142c8e9ca36d04d9b2d20851e6c6fd21758dc70e24301",
+    "oracle": {
+      "mwe_basis": "exact_dispatch_assertions_from_upstream_fix_test_patch",
+      "metric": "method_dispatch_identity",
+      "deterministic": true,
+      "source_evidence": "trigger/upstream-tests.patch",
+      "upstream_test_patch_sha256": "67f6339ddecaabd23e62c820e3cfdfc7047d92f886c2f99d262a1fd2a69bc301"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "043fa65cc15fb13e819730f9b2a757ba971adfdd",
+    "project": "SciML/LinearSolve.jl",
+    "input_sha256": "6399f15e2066851e2ed569db734c56805fc64c695fab0b095528a2d7c506f5d0",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:14:41Z",
+    "usage": {
+      "prompt_tokens": 3387,
+      "completion_tokens": 700,
+      "total_tokens": 4087
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.72,\n  \"summary\": \"Fix for a performance regression introduced by #1151 where GenericLUFactorization's naive back-solve kernel was up to 2.8x slower than BLAS getrs! on Adjoint/Transpose factors due to stride-N memory access patterns. The commit adds orientation-specialized _naive_lu_ldiv! methods that traverse the parent matrix column-contiguously.\",\n  \"evidence\": \"Issue #1159 clearly documents a performance defect: the #1151 naive scalar kernel walks memory at stride N for Adjoint/Transpose factors, making it slower than the BLAS path it replaced (2.8x slower at N=128). The commit adds specialized methods in src/factorization.jl to fix the memory access pattern. Tests in test/Core/genericlu_naive_ldiv.jl verify correctness on Adjoint/Transpose operators. The commit subject and issue #1162 body confirm this fixes #1159.\",\n  \"missing_evidence\": \"No direct diff is available to verify the exact code change scope. The performance regression is a borderline case between a 'real defect' (correctness is maintained but the path violates the performance contract that motivated #1151) and a performance optimization. However, since the naive kernel was explicitly introduced to be faster than BLAS and is now slower for a common code path (Adjoint/Transpose factors), this qualifies as a defect in the implementation.\",\n  \"validation_risks\": \"This is fundamentally a performance fix, not a correctness fix. The old code produced correct results but was slower than expected. If the dataset requires strict functional correctness defects only, this may not qualify. The test file is new, so there's no pre-existing failing test to demonstrate the bug—tests verify the new specialized kernel works correctly.\",\n  \"suggested_tests\": \"Test that _naive_lu_ldiv! on Adjoint/Transpose wrapped StridedMatrix factors produces results matching A\\\\b to within floating-point tolerance for various sizes and element types (Float32/64, ComplexF32/64). Verify dispatch: ensure Adjoint/Transpose factors hit the specialized kernel rather than the generic fallback.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "Fix for a performance regression introduced by #1151 where GenericLUFactorization's naive back-solve kernel was up to 2.8x slower than BLAS getrs! on Adjoint/Transpose factors due to stride-N memory access patterns. The commit adds orientation-specialized _naive_lu_ldiv! methods that traverse the parent matrix column-contiguously.",
+    "evidence": "Issue #1159 clearly documents a performance defect: the #1151 naive scalar kernel walks memory at stride N for Adjoint/Transpose factors, making it slower than the BLAS path it replaced (2.8x slower at N=128). The commit adds specialized methods in src/factorization.jl to fix the memory access pattern. Tests in test/Core/genericlu_naive_ldiv.jl verify correctness on Adjoint/Transpose operators. The commit subject and issue #1162 body confirm this fixes #1159.",
+    "missing_evidence": "No direct diff is available to verify the exact code change scope. The performance regression is a borderline case between a 'real defect' (correctness is maintained but the path violates the performance contract that motivated #1151) and a performance optimization. However, since the naive kernel was explicitly introduced to be faster than BLAS and is now slower for a common code path (Adjoint/Transpose factors), this qualifies as a defect in the implementation.",
+    "validation_risks": "This is fundamentally a performance fix, not a correctness fix. The old code produced correct results but was slower than expected. If the dataset requires strict functional correctness defects only, this may not qualify. The test file is new, so there's no pre-existing failing test to demonstrate the bug—tests verify the new specialized kernel works correctly.",
+    "suggested_tests": "Test that _naive_lu_ldiv! on Adjoint/Transpose wrapped StridedMatrix factors produces results matching A\\b to within floating-point tolerance for various sizes and element types (Float32/64, ComplexF32/64). Verify dispatch: ensure Adjoint/Transpose factors hit the specialized kernel rather than the generic fallback."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-002 Adjoint/Transpose specialized kernel dispatch"
+    ],
+    "exception_types": [
+      "6fd68dc97400958e0f2f168799540f0642ced85a106b73d53c46ed849e2675bc"
+    ],
+    "fingerprints": [
+      "6fd68dc97400958e0f2f168799540f0642ced85a106b73d53c46ed849e2675bc"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "hardening_closure": {
+    "date": "2026-09-12",
+    "change": "replaced timing oracle with deterministic upstream dispatch assertion",
+    "dynamic_evidence": "validation/validation.json: 3x buggy fail / fixed pass + fixed full suite pass",
+    "rerun_required_after_closure": false
+  },
+  "commit_topology": {
+    "fixed_revision": "043fa65cc15fb13e819730f9b2a757ba971adfdd",
+    "parent_sha": "b883e9a371fa80d3521b9c3237bb29dfae7ea46a",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "157ff96a37490aa82d44bfc9ec8c189abed6e90506f3d6f62b8a9e8b902b91aa",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

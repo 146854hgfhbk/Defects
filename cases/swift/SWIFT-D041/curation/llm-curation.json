@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1660",
+  "technical_evidence_sha256": "a3ce73f9336c075d22d88e6826726b525caf46b076bd2080147b6b0293ef0298",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "d0d9d1b264e8a845580315e6a09a616c34216cc6f44e3e3cbb0dd152a96631fc",
+  "reviewed_at": "2026-09-09T14:17:15.835711+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "stencilproject/stencil#276",
+  "rationale": "Issue #276 (\"Unknown template tag 'else'\", previously working templates breaking) is linked to the fix through the verified path fix_commit_to_merged_pr_to_issue (PR #286, merged_at equals the issue closed_at). PR #286 states the mechanism precisely: Scanner enumerates content.unicodeScalars but sliced and offset with Character-based String APIs, so any grapheme built from multiple scalars shifts token boundaries and yields bogus tag names. The retained hunk in patches/minimized-production.patch is exactly that mismatch (String(content.prefix(index - 1)) / dropFirst / originalContent.index(...) switched to their unicodeScalars counterparts) inside the loop that already iterates content.unicodeScalars.enumerated(), so the defect is intrinsic to the buggy revision rather than introduced by the fix. The three dropped hunks are the range type annotation and the analogous change in the token-end scan; String.UnicodeScalarView.Index is the same type as String.Index, so the retained subset compiles unmodified on both revisions and post_minimization_validation is PASS with no unrelated refactor, formatting, doc, or config content. The trigger is the upstream test testCombiningDiaeresis plus its committed fixture, using only pre-existing public API (Lexer(templateString:), tokenize()); the only build-compatibility edit is a test-local type qualification (Expression -> Stencil.Expression), not a production or semantic change. Runtime evidence is machine-supplied and green in both strict_original and strict_post_minimization: build.both_versions PASS, trigger.buggy_differential reproduced on LexerSpec.swift::testCombiningDiaeresis, trigger.fixed_clean PASS, deterministic over 3 repetitions across a 32-run matrix, buggy full suite fails only on the reproduced trigger and fixed full suite is all green. active_same_project_root_causes is empty, so #276 is not a duplicate and matches allowed_root_cause_ids.\n\nSingle coherent defect: Scanner.scanForTokenEnd-style loops iterate content.unicodeScalars.enumerated() to obtain `index`, then apply that scalar offset to grapheme-based String APIs (content.prefix/dropFirst and originalContent.index(_:offsetBy:)). Whenever a grapheme is composed of multiple scalars (combining diaeresis), the slice boundary lands off the true token start, so a tag body is truncated and the parser reports an unknown tag. That is exactly the symptom in issue #276 ('Unknown template tag else', previously working templates broken), and PR #286 (merged 2020-01-12, closing #276 at the same timestamp) describes the scalar-vs-character index divergence as the cause. The minimized production patch retains only hunk 4 (3 changed lines in Sources/Lexer.swift), switching prefix/dropFirst/index to the unicodeScalars view; the dropped hunks were the `range` type declaration and init/other-loop index conversions, which are compile-compatible since String.Index and String.UnicodeScalarView.Index are the same type. No refactor, formatting, docs, config, or test change remains in the production patch. Trigger is the upstream test from the fixing PR (testCombiningDiaeresis) plus Linux XCTestManifests registration; it uses only Lexer(templateString:) and tokenize(), both present on the buggy revision, and asserts token count/contents rather than any fix-only API, so it builds and runs on both revisions. The only build-compatibility edit qualifies `Stencil.Expression` in an unrelated test file to resolve a name ambiguity and touches no production code. Strict machine evidence for both original and post-minimization runs reports build.both_versions PASS, trigger.buggy_differential reproduced on the single declared selector, trigger.deterministic (3 repetitions, 3 outcome groups), trigger.fixed_clean PASS, and full_suite.fixed_all_green with buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so #276 is not a duplicate and matches allowed_root_cause_ids.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T14:16:39.500017+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "d0d9d1b264e8a845580315e6a09a616c34216cc6f44e3e3cbb0dd152a96631fc",
+      "response_sha256": "9f3720bbd302225b7e9ca0ad43756db81341d2bfb5bc7f630d7e72541b50b31b",
+      "response_id": "msg_7fd001e29bcf4a82b8f72e77f6b898a9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7980515545936981,
+        "input_tokens": 19728,
+        "output_tokens": 720
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "stencilproject/stencil#276",
+      "rationale": "Issue #276 (\"Unknown template tag 'else'\", previously working templates breaking) is linked to the fix through the verified path fix_commit_to_merged_pr_to_issue (PR #286, merged_at equals the issue closed_at). PR #286 states the mechanism precisely: Scanner enumerates content.unicodeScalars but sliced and offset with Character-based String APIs, so any grapheme built from multiple scalars shifts token boundaries and yields bogus tag names. The retained hunk in patches/minimized-production.patch is exactly that mismatch (String(content.prefix(index - 1)) / dropFirst / originalContent.index(...) switched to their unicodeScalars counterparts) inside the loop that already iterates content.unicodeScalars.enumerated(), so the defect is intrinsic to the buggy revision rather than introduced by the fix. The three dropped hunks are the range type annotation and the analogous change in the token-end scan; String.UnicodeScalarView.Index is the same type as String.Index, so the retained subset compiles unmodified on both revisions and post_minimization_validation is PASS with no unrelated refactor, formatting, doc, or config content. The trigger is the upstream test testCombiningDiaeresis plus its committed fixture, using only pre-existing public API (Lexer(templateString:), tokenize()); the only build-compatibility edit is a test-local type qualification (Expression -> Stencil.Expression), not a production or semantic change. Runtime evidence is machine-supplied and green in both strict_original and strict_post_minimization: build.both_versions PASS, trigger.buggy_differential reproduced on LexerSpec.swift::testCombiningDiaeresis, trigger.fixed_clean PASS, deterministic over 3 repetitions across a 32-run matrix, buggy full suite fails only on the reproduced trigger and fixed full suite is all green. active_same_project_root_causes is empty, so #276 is not a duplicate and matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/upstream-trigger.patch",
+        "patches/build-compatibility.patch",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.paths",
+        "case.json:source_candidate.issue_check.linked_issues[0]",
+        "case.json:minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "Issue linkage is asserted as \"Probably fixes #276 (does for my case)\"; the reporter's exact template was never published, so equivalence rests on the shared scalar/character index mechanism rather than a reproduction of the original 'else' failure.",
+        "The minimized subset leaves the analogous character-index arithmetic in the token-end scan unchanged, so the minimized fixed revision still carries a residual scalar/character mismatch not exercised by this trigger.",
+        "The trigger's second check uses plain assert(tokens[1].contents == \"test\"), which is compiled out in release builds; the observed differential therefore rests on the expect(tokens.count) == 3 assertion.",
+        "issue_evidence and semantic_justification are null; issue text was read only from the embedded source_candidate.issue_check payload, which is untrusted repository data."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T14:17:15.834904+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "d0d9d1b264e8a845580315e6a09a616c34216cc6f44e3e3cbb0dd152a96631fc",
+      "response_sha256": "de39ee73db18624f5dc9a83d54f23d321a96d2a3c14f61a4f149682189175864",
+      "response_id": "msg_28965aa033694e99a80a295f6cd1ef07",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7685725075621891,
+        "input_tokens": 19925,
+        "output_tokens": 775
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "stencilproject/stencil#276",
+      "rationale": "Single coherent defect: Scanner.scanForTokenEnd-style loops iterate content.unicodeScalars.enumerated() to obtain `index`, then apply that scalar offset to grapheme-based String APIs (content.prefix/dropFirst and originalContent.index(_:offsetBy:)). Whenever a grapheme is composed of multiple scalars (combining diaeresis), the slice boundary lands off the true token start, so a tag body is truncated and the parser reports an unknown tag. That is exactly the symptom in issue #276 ('Unknown template tag else', previously working templates broken), and PR #286 (merged 2020-01-12, closing #276 at the same timestamp) describes the scalar-vs-character index divergence as the cause. The minimized production patch retains only hunk 4 (3 changed lines in Sources/Lexer.swift), switching prefix/dropFirst/index to the unicodeScalars view; the dropped hunks were the `range` type declaration and init/other-loop index conversions, which are compile-compatible since String.Index and String.UnicodeScalarView.Index are the same type. No refactor, formatting, docs, config, or test change remains in the production patch. Trigger is the upstream test from the fixing PR (testCombiningDiaeresis) plus Linux XCTestManifests registration; it uses only Lexer(templateString:) and tokenize(), both present on the buggy revision, and asserts token count/contents rather than any fix-only API, so it builds and runs on both revisions. The only build-compatibility edit qualifies `Stencil.Expression` in an unrelated test file to resolve a name ambiguity and touches no production code. Strict machine evidence for both original and post-minimization runs reports build.both_versions PASS, trigger.buggy_differential reproduced on the single declared selector, trigger.deterministic (3 repetitions, 3 outcome groups), trigger.fixed_clean PASS, and full_suite.fixed_all_green with buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so #276 is not a duplicate and matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "minimized_patch_reference.post_minimization_validation",
+        "patches/upstream-trigger.patch",
+        "patches/trigger-tests.patch",
+        "patches/build-compatibility.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "source_candidate.issue_check.linked_issues[0]",
+        "source_candidate.issue_check.primary_pull_request.body",
+        "traceability.paths[0]",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "issue_evidence is null and the #276 body is thin (no template or unicode detail); the causal link rests on PR #286's hedged 'Probably fixes #276' plus the issue being closed at the merge timestamp, so the reported 'else' tag report may have had additional contributing causes.",
+        "Trigger comes from later commits in the same PR rather than the fix commit itself, and the fixture-based reproduction (combining diaeresis) is narrower than the originally reported Sourcery template failure.",
+        "The trigger's second check uses plain assert(), which is elided in release builds; the enforced signal is effectively the token-count expectation."
+      ]
+    }
+  ]
+}

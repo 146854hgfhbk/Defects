@@ -1,0 +1,147 @@
+{
+  "candidate_sha": "415cab45c4896c421dacc7a90f05a78d894fb551",
+  "project": "SciML/SciMLBase.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 632,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/632",
+      "state": "closed",
+      "title": "reapply formatting",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Let CI run to completion on this one, as I had to tweak a few things to get the formatter to run."
+    },
+    {
+      "number": 939,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/939",
+      "state": "closed",
+      "title": "Fix summary errors",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Should be actually working now, tested on some ModelingToolkit cases\r\n"
+    },
+    {
+      "number": 957,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/957",
+      "state": "closed",
+      "title": "Add ConstructionBase constructor for ImplicitDiscreteProblem",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "needed to mutate successfully in `initialize_dae`\r\n"
+    },
+    {
+      "number": 1036,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/1036",
+      "state": "closed",
+      "title": "Accumulation for ODEProblem",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "## Checklist\r\n\r\n- [ ] Appropriate tests were added\r\n- [ ] Any code changes were done in a way that does not break public API\r\n- [ ] All documentation related to code changes were updated\r\n- [ ] The new code follows the\r\n  [contributor guidelines](https://github.com/SciML/.github/blob/master/CONTRIBUTING.md), in particular the [SciML Style Guide](https://github.com/SciML/SciMLStyle) and\r\n  [COLPRAC](https://github.com/SciML/COLPRAC).\r\n- [ ] Any new documentation only uses public API\r\n  \r\n## Additional context\r\n\r\nSister PR for https://github.com/FluxML/Zygote.jl/pull/1574 which would have much narrower dispatch for `getfield`. \r\n"
+    },
+    {
+      "number": 1463,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/1463",
+      "state": "closed",
+      "title": "Error cleanly on complex EnsembleSummary; fix SplitFunction ODEProblem cache",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "## Summary\n\nTwo small, independent fixes for long-standing footguns:\n\n1. **`EnsembleSummary` on complex data** ([SciML/DifferentialEquations.jl#632](https://github.com/SciML/DifferentialEquations.jl/issues/632)): quantiles/medians need `isless`, which is undefined on `Complex`. Previously this failed deep inside `Statistics.quantile` with `MethodError: no method matching isless(::ComplexF64, ::ComplexF64)`. Now detects complex eltypes up front and throws `ComplexEnsembleSummaryError` with workarounds (real/imag separately, magnitudes, or mean/var helpers). Semantics of \"quantile on ℂ\" are deliberately *not* invented — clean error matches SciML style (`ComplexSupportError`, etc.).\n\n2. **`ODEProblem(SplitFunction(f1!, f2!), u0, tspan)` for iip**: `SplitODEProblem` allocates `_func_cache` from `u0`, but bare `ODEProblem(sf, u0, tspan)` did not, so `f(du,u,p,t)` called `get_tmp(nothing, du)` → `ndims(::Type{Nothing})`. Mirror the `SplitODEProblem` cache allocation on the bare `ODEProblem` path, and throw a clear `ArgumentError` if an iip `SplitFunction` is evaluated without a cache.\n\nThis PR should be ignored until reviewed by @ChrisRackauckas.\n\n## Tests\n\n- `test/ensemble_tests.jl`: complex ensemble rejects with `ComplexEnsembleSummaryError`; mean/var still works\n- `test/problem_building_test.jl`: bare iip `ODEProblem(SplitFunction, …)` allocates cache and evaluates; bare call without cache errors; oop path unchanged\n- Local e2e with OrdinaryDiffEq: `solve(ODEProblem(SplitFunction(f1!,f2!), u0, tspan), Tsit5())` → Success; complex `EnsembleSummary` throws the new error\n\n## Recommendation notes (not in this PR)\n\n- Observed-variable `save_idxs` (DE #1036): feature request only; `SavedSubsystem` already rejects observed symbols by design\n- ComponentArrays SII (DE #957): needs a real SII extension, not a one-liner (partial `getsyms` exists for plotting only)\n- DE v8 re-exports / Rodas5: intentional scope reduction; documented in OrdinaryDiffEq NEWS\n- Matrix{SVector} (DE #93"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 1463,
+      "pull_request_repository": "SciML/SciMLBase.jl",
+      "pull_request_url": "https://github.com/SciML/SciMLBase.jl/pull/1463",
+      "fix_commit": "415cab45c4896c421dacc7a90f05a78d894fb551",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Error cleanly on complex EnsembleSummary; fix SplitFunction ODEProblem cache (#1463)\n\n- EnsembleSummary: detect complex state eltypes and throw\n  ComplexEnsembleSummaryError instead of isless MethodError (DE #632).\n  Mean/var helpers remain available; quantiles/medians need a total order.\n- ODEProblem(SplitFunction, u0, tspan): allocate `_func_cache` for iip,\n  matching SplitODEProblem, so bare construction no longer fails with\n  ndims(::Type{Nothing}) on solve.\n- In-place SplitFunction call: throw a clear ArgumentError when\n  `_func_cache` is still nothing.\n\nCo-authored-by: ChrisRackauckas-Claude <accounts@chrisrackauckas.com>",
+    "commit_issue_refs": [
+      632,
+      1463
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1463,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Error cleanly on complex EnsembleSummary; fix SplitFunction ODEProblem cache",
+    "pull_request_issue_refs": [
+      939,
+      957,
+      1036
+    ],
+    "pull_request_cross_repository_refs": [
+      [
+        "SciML/DifferentialEquations.jl",
+        632,
+        "issues"
+      ]
+    ],
+    "pull_request_commit_issue_refs": [
+      632
+    ],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "single_defect_construction": {
+    "selected_root_cause": "bare in-place ODEProblem(SplitFunction, u0, tspan) omits _func_cache and crashes on evaluation",
+    "source_files": [
+      "src/problems/ode_problems.jl",
+      "src/scimlfunctions.jl"
+    ],
+    "omitted_independent_upstream_fix": "complex-valued EnsembleSummary error handling",
+    "upstream_commit": "415cab45c4896c421dacc7a90f05a78d894fb551",
+    "issue_number": 1463,
+    "construction_reason": "upstream commit explicitly contains two independent fixes; benchmark state isolates one defect"
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [
+    {
+      "number": 632,
+      "url": "https://github.com/SciML/DifferentialEquations.jl/issues/632",
+      "state": "open",
+      "title": "EnsembleSummary does not work on solution of complex SDE",
+      "closed": false,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "Running\r\n`summ = EnsembleSummary(sol,0.0:0.1:10.0)`\r\nwhere `sol` is a solution of `EnsembleProblem` of `SDEProblem` returns \r\n`MethodError: no method matching isless(::Complex{Float64}, ::Complex{Float64})`",
+      "repository": "SciML/DifferentialEquations.jl",
+      "reference_kind": "issues"
+    }
+  ],
+  "pull_request_record": {
+    "number": 1463,
+    "repository": "SciML/SciMLBase.jl",
+    "url": "https://github.com/SciML/SciMLBase.jl/pull/1463",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-07-24T06:16:24Z",
+    "merge_commit_sha": "415cab45c4896c421dacc7a90f05a78d894fb551",
+    "title": "Error cleanly on complex EnsembleSummary; fix SplitFunction ODEProblem cache",
+    "body_excerpt": "## Summary\n\nTwo small, independent fixes for long-standing footguns:\n\n1. **`EnsembleSummary` on complex data** ([SciML/DifferentialEquations.jl#632](https://github.com/SciML/DifferentialEquations.jl/issues/632)): quantiles/medians need `isless`, which is undefined on `Complex`. Previously this failed deep inside `Statistics.quantile` with `MethodError: no method matching isless(::ComplexF64, ::ComplexF64)`. Now detects complex eltypes up front and throws `ComplexEnsembleSummaryError` with workarounds (real/imag separately, magnitudes, or mean/var helpers). Semantics of \"quantile on ℂ\" are deliberately *not* invented — clean error matches SciML style (`ComplexSupportError`, etc.).\n\n2. **`ODEProblem(SplitFunction(f1!, f2!), u0, tspan)` for iip**: `SplitODEProblem` allocates `_func_cache` from `u0`, but bare `ODEProblem(sf, u0, tspan)` did not, so `f(du,u,p,t)` called `get_tmp(nothing, du)` → `ndims(::Type{Nothing})`. Mirror the `SplitODEProblem` cache allocation on the bare `ODEProblem` path, and throw a clear `ArgumentError` if an iip `SplitFunction` is evaluated without a cache.\n\nThis PR should be ignored until reviewed by @ChrisRackauckas.\n\n## Tests\n\n- `test/ensemble_tests.jl`: complex ensemble rejects with `ComplexEnsembleSummaryError`; mean/var still works\n- `test/problem_building_test.jl`: bare iip `ODEProblem(SplitFunction, …)` allocates cache and evaluates; bare call without cache errors; oop path unchanged\n- Local e2e with OrdinaryDiffEq: `solve(ODEProblem(SplitFunction(f1!,f2!), u0, tspan), Tsit5())` → Success; complex `EnsembleSummary` throws the new error\n\n## Recommendation notes (not in this PR)\n\n- Observed-variable `save_idxs` (DE #1036): feature request only; `SavedSubsystem` already rejects observed symbols by design\n- ComponentArrays SII (DE #957): needs a real SII extension, not a one-liner (partial `getsyms` exists for plotting only)\n- DE v8 re-exports / Rodas5: intentional scope reduction; documented in OrdinaryDiffEq NEWS\n- Matrix{SVector} (DE #93",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

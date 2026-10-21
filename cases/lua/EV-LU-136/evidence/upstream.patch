@@ -1,0 +1,52 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index df79e5507c6531c37528ad98f13e313e2a9b3b22..b89d4eaa58b485d99cceac6a0f7db70a76c06382 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,12 @@
+ # Changelog
+ 
++## unreleased
++
++### Changes
++
++  - `pretty.write`: now also sorts non-string keys [#319](https://github.com/Tieske/Penlight/pull/319)
++
++
+ ## 1.7.0 (2019-10-14)
+ 
+ ### New features
+diff --git a/lua/pl/pretty.lua b/lua/pl/pretty.lua
+index fbf60a9bc4618f7cf78b38351ca68e7149e9b8dd..3ed9a068e3ca844b00b4ac49d19cf3530089dc05 100644
+--- a/lua/pl/pretty.lua
++++ b/lua/pl/pretty.lua
+@@ -254,7 +254,12 @@ function pretty.write (tbl,space,not_clever)
+                   ordered_keys[#ordered_keys + 1] = k
+                end
+             end
+-            table.sort(ordered_keys)
++            table.sort(ordered_keys, function (a, b)
++                if type(a) == type(b)  and type(a) == 'string' then
++                    return a < b
++                end
++                return type(a) == 'boolean' or (type(b) ~= 'boolean' and type(a) == 'table')
++            end)
+             local function write_entry (key, val)
+                 local tkey = type(key)
+                 local numkey = tkey == 'number'
+diff --git a/tests/test-pretty.lua b/tests/test-pretty.lua
+index 9d9277de12174df207de3aebcd748da47a3bf256..093b272093332f39c60d6f0968b51db604a2cffc 100644
+--- a/tests/test-pretty.lua
++++ b/tests/test-pretty.lua
+@@ -84,6 +84,12 @@ t2 = {}
+ t1[1],t1[2] = t2,t2
+ asserteq( pretty.write(t1,""), [[{{},{}}]] )
+ 
++-- Check that write correctly print table with non number or string as keys
++
++t1 = { [true] = "boolean", a = "a", b = "b", [1] = 1, [0] = 0 }
++asserteq( pretty.write(t1,""), [[{1,["true"]="boolean",a="a",b="b",[0]=0}]] )
++
++
+ -- Check number formatting
+ asserteq(pretty.write({1/0, -1/0, 0/0, 1, 1/2}, ""), "{Inf,-Inf,NaN,1,0.5}")
+ 

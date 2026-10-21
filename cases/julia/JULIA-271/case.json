@@ -1,0 +1,132 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-271",
+  "bug_id": "JULIA-271",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "comonicon/Comonicon.jl",
+  "repository_url": "https://github.com/comonicon/Comonicon.jl.git",
+  "issue_urls": [
+    "https://github.com/comonicon/Comonicon.jl/issues/228"
+  ],
+  "issue_id": 228,
+  "buggy_revision": "67c7e6068b233ed4f05dfe7089ee776b9a08b5eb",
+  "fixed_revision": "0ffbdbb86e9e30a1d3e7ab501461917b6419977d",
+  "candidate_sha": "0ffbdbb86e9e30a1d3e7ab501461917b6419977d",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "67c7e6068b233ed4f05dfe7089ee776b9a08b5eb",
+  "changed_production_files": [
+    "src/codegen/julia.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-271 optional Configurations option"
+  ],
+  "trigger_test_origin": "issue_mwe",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "issue_mwe",
+    "timeout_seconds": 1800,
+    "sha256": "2c84a5ce4f6c1940fdd1e13ab2a6b61e98a26b638ea534d96463c42df3327323",
+    "oracle": {
+      "mwe_basis": "upstream defect issue public API reproduction",
+      "source_evidence": "Executable reduction of the public MWE in Comonicon issue #228, closed by PR #229: a default Configurations option must be accepted when the CLI supplies no config argument.",
+      "upstream_test_patch_sha256": "f291adb2558c97697e72507d37be13593e45d75a81b356d41a37fd224e81340f"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "0ffbdbb86e9e30a1d3e7ab501461917b6419977d",
+    "project": "comonicon/Comonicon.jl",
+    "input_sha256": "c3b9932a4b2f5bb1136c2465e9d7d80da0306d089b764b6cae2d0af4b520de52",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:51:54Z",
+    "usage": {
+      "prompt_tokens": 2440,
+      "completion_tokens": 567,
+      "total_tokens": 3007
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"The commit fixes a bug where optional Config parameters (those with defaults) would cause a KeyError when not provided on the command line. The fix adds a guard (`if key in keys(kwargs)`) before attempting to look up and convert the option value from the kwargs dictionary.\",\n  \"evidence\": \"The commit message explicitly states 'Fixed a bug with optional Config parameters (#229)'. The production fix in src/codegen/julia.jl adds a conditional check before accessing kwargs for option types, preventing a KeyError when an optional config parameter is not provided. The test adds a `rundef` function with `config::OptionA=OptionA()` (default value) and tests calling it without providing all config fields, which would have failed before the fix.\",\n  \"missing_evidence\": \"No linked issue body is available (issue #229 is not provided). The traceability_class is UNVERIFIED. We cannot independently confirm the exact error message or stack trace from the bug.\",\n  \"validation_risks\": \"The test file reorganizes existing tests (changing @main to @cast, adding @main separately) which adds some complexity. The whitespace-only change on line 537 is cosmetic but harmless. Test relies on module-level command infrastructure that may need specific package versions.\",\n  \"suggested_tests\": \"1. Test calling a command with an optional Config parameter without providing any config flags (should use defaults). 2. Test calling with partial config flags (some fields specified, others use defaults). 3. Test calling with all config flags specified (should override defaults).\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "The commit fixes a bug where optional Config parameters (those with defaults) would cause a KeyError when not provided on the command line. The fix adds a guard (`if key in keys(kwargs)`) before attempting to look up and convert the option value from the kwargs dictionary.",
+    "evidence": "The commit message explicitly states 'Fixed a bug with optional Config parameters (#229)'. The production fix in src/codegen/julia.jl adds a conditional check before accessing kwargs for option types, preventing a KeyError when an optional config parameter is not provided. The test adds a `rundef` function with `config::OptionA=OptionA()` (default value) and tests calling it without providing all config fields, which would have failed before the fix.",
+    "missing_evidence": "No linked issue body is available (issue #229 is not provided). The traceability_class is UNVERIFIED. We cannot independently confirm the exact error message or stack trace from the bug.",
+    "validation_risks": "The test file reorganizes existing tests (changing @main to @cast, adding @main separately) which adds some complexity. The whitespace-only change on line 537 is cosmetic but harmless. Test relies on module-level command infrastructure that may need specific package versions.",
+    "suggested_tests": "1. Test calling a command with an optional Config parameter without providing any config flags (should use defaults). 2. Test calling with partial config flags (some fields specified, others use defaults). 3. Test calling with all config flags specified (should override defaults)."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-271 optional Configurations option"
+    ],
+    "exception_types": [
+      "TRIGGER_EXIT_1"
+    ],
+    "fingerprints": [
+      "TRIGGER_EXIT_1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "0ffbdbb86e9e30a1d3e7ab501461917b6419977d",
+    "parent_sha": "67c7e6068b233ed4f05dfe7089ee776b9a08b5eb",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "62453db6ce1bf2ffe706fad98fe1f8b7b699f8605d378a5cf9f450307b496ad1",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

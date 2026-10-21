@@ -1,0 +1,32 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt
+index d9a7ef01..8514b8a2 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt
+@@ -21,7 +21,9 @@ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.EditorConfig
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.INDENT_SIZE_PROPERTY
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.INDENT_STYLE_PROPERTY
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.MAX_LINE_LENGTH_PROPERTY
++import com.pinterest.ktlint.rule.engine.core.api.firstChildLeafOrSelf
+ import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpace
++import com.pinterest.ktlint.rule.engine.core.api.leavesIncludingSelf
+ import com.pinterest.ktlint.rule.engine.core.api.nextSibling
+ import com.pinterest.ktlint.rule.engine.core.api.prevSibling
+ import com.pinterest.ktlint.ruleset.standard.StandardRule
+@@ -109,6 +111,7 @@ public class FunctionExpressionBodyRule :
+         require(block.elementType == BLOCK)
+         block
+             .takeIf { it.containingOnly(RETURN) }
++            ?.takeUnless { it.containsMultipleReturns() }
+             ?.findChildByType(RETURN)
+             ?.findChildByType(RETURN_KEYWORD)
+             ?.nextSibling { !it.isWhiteSpace() }
+@@ -161,6 +164,9 @@ public class FunctionExpressionBodyRule :
+                 .singleOrNull()
+                 ?.elementType
+ 
++    private fun ASTNode.containsMultipleReturns() =
++        firstChildLeafOrSelf().leavesIncludingSelf().count { it.elementType == RETURN_KEYWORD } > 1
++
+     private fun ASTNode.createUnitTypeReference() =
+         PsiFileFactory
+             .getInstance(psi.project)

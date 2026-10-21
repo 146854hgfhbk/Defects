@@ -1,0 +1,143 @@
+diff --git a/README b/README
+index 56fc4c9..c20d094 100644
+--- a/README
++++ b/README
+@@ -600,6 +600,15 @@ OBJECT-ORIENTED INTERFACE
+ 
+         This setting has no effect when decoding JSON texts.
+ 
++    $json = $json->unblessed_bool ([$enable])
++    $enabled = $json->get_unblessed_bool
++            $json = $json->unblessed_bool([$enable])
++
++        If $enable is true (or missing), then "decode" will return Perl
++        non-object boolean variables (1 and 0) for JSON booleans ("true" and
++        "false"). If $enable is false, then "decode" will return
++        "Cpanel::JSON::XS::Boolean" objects for JSON booleans.
++
+     $json = $json->allow_singlequote ([$enable])
+     $enabled = $json->get_allow_singlequote
+             $json = $json->allow_singlequote([$enable])
+diff --git a/XS.pm b/XS.pm
+index c8d0d9d..1691741 100644
+--- a/XS.pm
++++ b/XS.pm
+@@ -701,6 +701,18 @@ C<"\/">.
+ This setting has no effect when decoding JSON texts.
+ 
+ 
++=item $json = $json->unblessed_bool ([$enable])
++
++=item $enabled = $json->get_unblessed_bool
++
++    $json = $json->unblessed_bool([$enable])
++
++If C<$enable> is true (or missing), then C<decode> will return
++Perl non-object boolean variables (1 and 0) for JSON booleans
++(C<true> and C<false>). If C<$enable> is false, then C<decode>
++will return C<Cpanel::JSON::XS::Boolean> objects for JSON booleans.
++
++
+ =item $json = $json->allow_singlequote ([$enable])
+ 
+ =item $enabled = $json->get_allow_singlequote
+diff --git a/XS.xs b/XS.xs
+index 73d03c5..b79932a 100644
+--- a/XS.xs
++++ b/XS.xs
+@@ -276,6 +276,7 @@ mingw_modfl(long double x, long double *ip)
+ #define F_ESCAPE_SLASH    0x00080000UL
+ #define F_SORT_BY         0x00100000UL
+ #define F_ALLOW_STRINGIFY 0x00200000UL
++#define F_UNBLESSED_BOOL  0x00400000UL
+ #define F_HOOK            0x80000000UL /* some hooks exist, so slow-path processing */
+ 
+ #define F_PRETTY    F_INDENT | F_SPACE_BEFORE | F_SPACE_AFTER
+@@ -3600,6 +3601,8 @@ decode_sv (pTHX_ dec_t *dec, SV *typesv)
+             dec->cur += 4;
+             if (typesv)
+               sv_setiv_mg (typesv, JSON_TYPE_BOOL);
++            if (dec->json.flags & F_UNBLESSED_BOOL)
++              return &PL_sv_yes;
+             return newSVsv(MY_CXT.json_true);
+           }
+         else
+@@ -3614,6 +3617,8 @@ decode_sv (pTHX_ dec_t *dec, SV *typesv)
+             dec->cur += 5;
+             if (typesv)
+               sv_setiv_mg (typesv, JSON_TYPE_BOOL);
++            if (dec->json.flags & F_UNBLESSED_BOOL)
++              return &PL_sv_no;
+             return newSVsv(MY_CXT.json_false);
+           }
+         else
+@@ -4103,6 +4108,7 @@ void ascii (JSON *self, int enable = 1)
+         allow_bignum    = F_ALLOW_BIGNUM
+         escape_slash    = F_ESCAPE_SLASH
+         allow_stringify = F_ALLOW_STRINGIFY
++        unblessed_bool  = F_UNBLESSED_BOOL
+     PPCODE:
+         if (enable)
+           self->flags |=  ix;
+@@ -4132,6 +4138,7 @@ void get_ascii (JSON *self)
+         get_allow_bignum    = F_ALLOW_BIGNUM
+         get_escape_slash    = F_ESCAPE_SLASH
+         get_allow_stringify  = F_ALLOW_STRINGIFY
++        get_unblessed_bool  = F_UNBLESSED_BOOL
+     PPCODE:
+         XPUSHs (boolSV (self->flags & ix));
+ 
+diff --git a/t/25_boolean.t b/t/25_boolean.t
+index 2ee96d3..d84aba2 100644
+--- a/t/25_boolean.t
++++ b/t/25_boolean.t
+@@ -1,8 +1,16 @@
+ use strict;
+-use Test::More tests => 32;
++use Test::More tests => 40;
+ use Cpanel::JSON::XS ();
+ use Config;
+ 
++my $have_blessed;
++BEGIN {
++  if (eval { require Scalar::Util }) {
++    Scalar::Util->import('blessed');
++    $have_blessed = 1;
++  }
++}
++
+ my $booltrue  = q({"is_true":true});
+ my $boolfalse = q({"is_false":false});
+ my $truefalse = "[true,false]";
+@@ -11,6 +19,7 @@ my $true  = Cpanel::JSON::XS::true;
+ my $false = Cpanel::JSON::XS::false;
+ 
+ my $nonref_cjson = Cpanel::JSON::XS->new->allow_nonref;
++my $unblessed_bool_cjson = Cpanel::JSON::XS->new->unblessed_bool;
+ 
+ # from JSON::MaybeXS
+ my $data = $cjson->decode('{"foo": true, "bar": false, "baz": 1}');
+@@ -86,3 +95,23 @@ ok( Cpanel::JSON::XS::is_bool($js->[1]), "false is_bool");
+ 
+ # GH #53
+ ok( !Cpanel::JSON::XS::is_bool( [] ), "[] !is_bool");
++
++
++$js = $unblessed_bool_cjson->decode($booltrue);
++SKIP: {
++  skip "no Scalar::Util in $]", 1 unless $have_blessed;
++  ok(!blessed($js->{is_true}), "->unblessed_bool for JSON true does not return blessed object");
++}
++cmp_ok($js->{is_true}, "==", 1, "->unblessed_bool for JSON true returns correct Perl bool value");
++cmp_ok($js->{is_true}, "eq", "1", "->unblessed_bool for JSON true returns correct Perl bool value");
++
++$js = $unblessed_bool_cjson->decode($boolfalse);
++SKIP: {
++  skip "no Scalar::Util in $]", 1 unless $have_blessed;
++  ok(!blessed($js->{is_false}), "->unblessed_bool for JSON false does not return blessed object");
++}
++cmp_ok($js->{is_false}, "==", 0, "->unblessed_bool for JSON false returns correct Perl bool value");
++cmp_ok($js->{is_false}, "eq", "", "->unblessed_bool for JSON false returns correct Perl bool value");
++
++is($unblessed_bool_cjson->encode($unblessed_bool_cjson->decode($truefalse)), $truefalse, "encode(decode(boolean)) is identity with ->unblessed_bool");
++is($cjson->encode($unblessed_bool_cjson->decode($truefalse)), $truefalse, "booleans decoded by ->unblessed_bool(1) are encoded by ->unblessed_bool(0) in the same way");

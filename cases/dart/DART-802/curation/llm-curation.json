@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-802",
+  "technical_evidence_sha256": "16f8627fa4bcd9e9ab04115d90b9a494b6f93292e132a926c8bd1421d8a0cbf2",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "24da1c982c6bca60e3d2b074a5383e364a0525c4e869c6ba7dd03b7407722065",
+  "reviewed_at": "2026-08-12T14:16:05.701003+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "intel/rohd#163",
+  "rationale": "Issue #163 (label 'bug') reports that ROHD emits illegal SystemVerilog of the form ({a_b_joined,a_shrunk,a_range,a_rsliced,a_plus_b})[3:0], i.e. a bit slice applied to an in-lined expression. The minimized production patch is a single hunk in BusSubset that stops marking the intermediate signal name as unpreferred (_original = 'original_' + bus.name), which forces an explicit named signal instead of allowing the sliced operand to be in-lined as an expression; the added comment states exactly that rationale. The trigger patch is the unchanged upstream test portion of the same single-commit PR #164: it adds expression_bit_select <= [aBJoined, aShrunk, aRange, aRSliced, aPlusB].swizzle().slice(3, 0) plus a SimCompare/iverilog vector, reproducing the reported pattern with pre-existing APIs (swizzle, slice, addOutput, SimCompare) and no API introduced by the fix. The broader set of 10 reproduced selectors is consistent with the same root cause: all simcompare tests in bus_test.dart elaborate the shared BusTestModule, so the illegal generated SystemVerilog for the new output breaks iverilog compilation for every vector in that group; strict evidence confirms buggy full-suite failures are confined to those reproduced triggers and that all fixed isolated/suite/reversed runs pass. No production-side refactor, formatting-only, feature, doc, or config change is present; the only test-file edits are the trigger itself and the required signalToWidthMap entry. active_same_project_root_causes is empty, so intel/rohd#163 is not a duplicate, and it matches allowed_root_cause_ids.\n\nIssue #163 (labeled bug) reports that ROHD emits illegal SystemVerilog of the form ({a_b_joined,a_shrunk,a_range,a_rsliced,a_plus_b})[3:0], i.e. a bit slice applied to an inlined expression. The minimized production patch is a single hunk in lib/src/modules/bus.dart that stops marking the BusSubset intermediate signal as unpreferred (_original = 'original_' + bus.name), which forces the expression to be materialized into a named signal before slicing; the added comment states exactly that rationale. The trigger is the unchanged upstream test portion of the same single-commit PR #164: it adds expression_bit_select <= [...].swizzle().slice(3, 0) and a SimCompare.iverilogVector check, using only pre-existing APIs (slice, swizzle, SimCompare) — the fix introduces no new production API, so the trigger cannot depend on one. The broader set of 10 declared selectors all live in test/bus_test.dart and share the BusTestModule fixture, so once the illegal slice-on-expression output is present in the generated module every simcompare test in that suite fails on the buggy revision for the same root cause; strict evidence confirms buggy_differential with at least one selector failing alone, deterministic fingerprints (12 groups), fixed_clean, and full-suite green on the fixed revision for both original and post-minimization runs. Patch touches no test-only, docs, config, or formatting concerns beyond the explanatory comment attached to the changed line. Registry of active same-project root causes is empty, so no duplicate; intel/rohd#163 is the verified allowed key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T14:15:42.246495+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "24da1c982c6bca60e3d2b074a5383e364a0525c4e869c6ba7dd03b7407722065",
+      "response_sha256": "7c290ae10f9a4dc8ecb1fb30654fa370d11369833ba814821512c0a75ee1da1c",
+      "response_id": "msg_794da0a8-81e6-40d1-b5",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3232
+        },
+        "cache_creation_input_tokens": 3232,
+        "cache_read_input_tokens": 7811,
+        "input_tokens": 10265,
+        "output_tokens": 1957
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#163",
+      "rationale": "Issue #163 (label 'bug') reports that ROHD emits illegal SystemVerilog of the form ({a_b_joined,a_shrunk,a_range,a_rsliced,a_plus_b})[3:0], i.e. a bit slice applied to an in-lined expression. The minimized production patch is a single hunk in BusSubset that stops marking the intermediate signal name as unpreferred (_original = 'original_' + bus.name), which forces an explicit named signal instead of allowing the sliced operand to be in-lined as an expression; the added comment states exactly that rationale. The trigger patch is the unchanged upstream test portion of the same single-commit PR #164: it adds expression_bit_select <= [aBJoined, aShrunk, aRange, aRSliced, aPlusB].swizzle().slice(3, 0) plus a SimCompare/iverilog vector, reproducing the reported pattern with pre-existing APIs (swizzle, slice, addOutput, SimCompare) and no API introduced by the fix. The broader set of 10 reproduced selectors is consistent with the same root cause: all simcompare tests in bus_test.dart elaborate the shared BusTestModule, so the illegal generated SystemVerilog for the new output breaks iverilog compilation for every vector in that group; strict evidence confirms buggy full-suite failures are confined to those reproduced triggers and that all fixed isolated/suite/reversed runs pass. No production-side refactor, formatting-only, feature, doc, or config change is present; the only test-file edits are the trigger itself and the required signalToWidthMap entry. active_same_project_root_causes is empty, so intel/rohd#163 is not a duplicate, and it matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json issue_urls",
+        "case.json source_candidate.issue_check.linked_issues[0].body",
+        "case.json strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json strict_post_minimization.checks.trigger.fixed_clean",
+        "case.json strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json trigger_reduction.upstream_trigger_patch"
+      ],
+      "risks": [
+        "The defect is a code-generation correctness bug detected through iverilog compilation, so the trigger's sensitivity depends on the external simulator's strictness; a more permissive simulator could mask a partially incomplete fix.",
+        "Nine of the ten declared triggers are pre-existing tests that fail only as collateral of the shared BusTestModule now containing the illegal construct, so they do not independently characterize the defect; only 'simcompare expression bit select' targets it directly.",
+        "The fix relies on ROHD's naming-preference mechanics to prevent in-lining rather than an explicit guard in the SystemVerilog emitter, so future changes to name preference handling could silently regress the behavior."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-12T14:16:05.700791+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "24da1c982c6bca60e3d2b074a5383e364a0525c4e869c6ba7dd03b7407722065",
+      "response_sha256": "a8b57ec8fc4f9b8eae6acaf867ef940d21f00db74e6e5642b0855315d62729db",
+      "response_id": "msg_26c26ee9-3a90-4396-aa",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3329
+        },
+        "cache_creation_input_tokens": 3329,
+        "cache_read_input_tokens": 7787,
+        "input_tokens": 10265,
+        "output_tokens": 1811
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#163",
+      "rationale": "Issue #163 (labeled bug) reports that ROHD emits illegal SystemVerilog of the form ({a_b_joined,a_shrunk,a_range,a_rsliced,a_plus_b})[3:0], i.e. a bit slice applied to an inlined expression. The minimized production patch is a single hunk in lib/src/modules/bus.dart that stops marking the BusSubset intermediate signal as unpreferred (_original = 'original_' + bus.name), which forces the expression to be materialized into a named signal before slicing; the added comment states exactly that rationale. The trigger is the unchanged upstream test portion of the same single-commit PR #164: it adds expression_bit_select <= [...].swizzle().slice(3, 0) and a SimCompare.iverilogVector check, using only pre-existing APIs (slice, swizzle, SimCompare) — the fix introduces no new production API, so the trigger cannot depend on one. The broader set of 10 declared selectors all live in test/bus_test.dart and share the BusTestModule fixture, so once the illegal slice-on-expression output is present in the generated module every simcompare test in that suite fails on the buggy revision for the same root cause; strict evidence confirms buggy_differential with at least one selector failing alone, deterministic fingerprints (12 groups), fixed_clean, and full-suite green on the fixed revision for both original and post-minimization runs. Patch touches no test-only, docs, config, or formatting concerns beyond the explanatory comment attached to the changed line. Registry of active same-project root causes is empty, so no duplicate; intel/rohd#163 is the verified allowed key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "production_files[0] = lib/src/modules/bus.dart",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_original.checks.full_suite.buggy_reproduces_only_triggers"
+      ],
+      "risks": [
+        "The declared trigger set is broad (10 tests) because they share one BusTestModule fixture; isolating the defect to the single 'expression bit select' selector would be a cleaner minimal trigger.",
+        "Correctness of the generated SystemVerilog is judged by iverilog; a simulator that tolerates non-standard slicing could under-detect residual cases outside BusSubset.",
+        "The fix changes signal-naming preference, so generated-netlist naming for existing designs shifts even though behavior is corrected."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "candidate_sha": "e5c7603d6a618a2494d90028d5670b97ffcd7f34",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "merged_pull_request",
+  "instance_id": "julialang__juliasyntax.jl-106",
+  "swe_rebench": {
+    "base_commit": "3906436557880d85f06d1a9464f63a5a1d8764c8",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "Trivia attachment",
+      "Unicode normalization in tree conversion",
+      "Expr conversion",
+      "Parsing values from strings",
+      "Hooks for Core integration",
+      "Parse JuliaSyntax",
+      "Parse Base at /usr/local/julia/bin/../share/julia/base",
+      "Parse Julia stdlib at /usr/local/julia/share/julia/stdlib/v1.10"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 105,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/105",
+      "state": "closed",
+      "title": "Bug parsing exception spec in `catch`",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug",
+        "parser"
+      ],
+      "body_excerpt": "Spotted by @BenChung\r\n\r\n```julia\r\njulia> itest_parse(JuliaSyntax.parse_expr, \"try 3 catch e+3 end\")\r\n# Code:\r\ntry 3 catch e+3 end\r\n\r\n# Green tree:\r\n     1:19     │[try]\r\n     1:3      │  try                        \"try\"\r\n     4:5      │  [block]\r\n     4:4      │    Whitespace               \" \"\r\n     5:5      │    Integer              ✔   \"3\"\r\n     6:6      │  Whitespace                 \" \"\r\n     7:11     │  catch                      \"catch\"\r\n    12:12     │  Whitespace                 \" \"\r\n    13:13     │  Identifier             ✔   \"e\"\r\n    14:15     │  [block]\r\n    14:15     │    Integer              ✔   \"+3\"\r\n    16:16     │  Whitespace                 \" \"\r\n    17:16     │  false                  ✔   \"\"\r\n    17:16     │  false                  ✔   \"\"\r\n    17:19     │  end                        \"end\"\r\n```\r\n\r\nWhereas the reference parser provides the error `invalid syntax \"catch (e + 3)\"`"
+    },
+    {
+      "number": 106,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/106",
+      "state": "closed",
+      "title": "Stricter parsing of exception names in `catch $excname`",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fix #105\r\n"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        105
+      ],
+      "pull_request": 106,
+      "fix_commit": "e5c7603d6a618a2494d90028d5670b97ffcd7f34",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Stricter parsing of exception names in `catch $excname` (#106)",
+    "commit_issue_refs": [
+      106
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 106,
+    "pull_request_title": "Stricter parsing of exception names in `catch $excname`",
+    "pull_request_issue_refs": [
+      105
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    105
+  ],
+  "cross_repository_issue_records": []
+}

@@ -1,0 +1,229 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-720",
+  "bug_id": "JULIA-720",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "PainterQubits/Unitful.jl",
+  "repository_url": "https://github.com/PainterQubits/Unitful.jl.git",
+  "issue_urls": [
+    "https://github.com/PainterQubits/Unitful.jl/issues/457"
+  ],
+  "issue_id": 457,
+  "buggy_revision": "b17b1c54630095b135181baab7436ca72baabdb1",
+  "fixed_revision": "bec43b6ffe782aac5cd49f03e6e1ad4c76433d5a",
+  "candidate_sha": "bec43b6ffe782aac5cd49f03e6e1ad4c76433d5a",
+  "source": "merged_pull_request",
+  "instance_id": "painterqubits__unitful.jl-478",
+  "swe": {
+    "base_commit": "5f68b2b940119b556e9e61561a330046f1dca367",
+    "boundary_type": "RECONSTRUCTED",
+    "pr_url": "https://github.com/JuliaPhysics/Unitful.jl/pull/478",
+    "issue_url": "https://github.com/PainterQubits/Unitful.jl/issues/457",
+    "problem_statement": "incorrect preferred units conversion with atomic units\n```Julia\r\nusing Unitful\r\n\r\nusing Unitful: preferunits\r\nusing UnitfulAtomic: me_au, e_au\r\n\r\npreferunits(u\"cm\", u\"ns\", me_au, e_au / u\"ns\")\r\n\r\n@show dimension(upreferred(u\"V/cm\"))\r\n@show dimension(u\"V/cm\")\r\n\r\n@assert dimension(upreferred(u\"V/cm\")) == dimension(u\"V/cm\")\r\n\r\n```\r\n\r\nresults in\r\n\r\n```Julia\r\ndimension(upreferred(u\"V/cm\")) = 𝐋 𝐌 𝐈⁻¹ 𝐓⁻⁴\r\ndimension(u\"V/cm\") = 𝐋 𝐌 𝐈⁻¹ 𝐓⁻³\r\nERROR: LoadError: AssertionError: dimension(upreferred(u\"V/cm\")) == dimension(u\"V/cm\")\r\n[...]\r\n```\r\n\r\nwith\r\n\r\n```\r\n[1986cc42] Unitful v1.8.0\r\n[a7773ee8] UnitfulAtomic v1.0.0\r\n```",
+    "patch": "diff --git a/src/Unitful.jl b/src/Unitful.jl\nindex 343f49b6..dac82934 100644\n--- a/src/Unitful.jl\n+++ b/src/Unitful.jl\n@@ -53,7 +53,7 @@ end\n const basefactors = _basefactors(Unitful)\n \n include(\"types.jl\")\n-const promotion = Dict{Symbol,Unit}()\n+const promotion = Dict{Symbol,FreeUnits}()\n \n include(\"user.jl\")\n include(\"utils.jl\")\ndiff --git a/src/units.jl b/src/units.jl\nindex d0aed6f9..a66a047d 100644\n--- a/src/units.jl\n+++ b/src/units.jl\n@@ -302,6 +302,6 @@ factory defaults, this function will return a product of powers of base SI units\n (as [`Unitful.FreeUnits`](@ref)).\n \"\"\"\n @generated function upreferred(x::Dimensions{D}) where {D}\n-    u = *(FreeUnits{((Unitful.promotion[name(z)]^z.power for z in D)...,),()}())\n+    u = prod((NoUnits, (promotion[name(z)]^z.power for z in D)...))\n     :($u)\n end\ndiff --git a/src/user.jl b/src/user.jl\nindex 50a62783..e3fb21a2 100644\n--- a/src/user.jl\n+++ b/src/user.jl\n@@ -310,7 +310,28 @@ function preferunits(u0::Units, u::Units...)\n             \"For instance, it should not be used with units of dimension 𝐋^2.\")\n         end\n         y = typeof(dim).parameters[1][1]\n-        promotion[name(y)] = typeof(unit).parameters[1][1]\n+        promotion[name(y)] = unit\n+    end\n+\n+    # Let's run a quick check for anything where, for instance, current was defined is C/ms and time\n+    # was defined in ns. We'll give a warning if this is the case so the user knows they may get\n+    # unexpected (though still correct) results. There may be cases where people would want to do this,\n+    # so we won't stop them, just let them know they're doing it.\n+    ulist = (typeof(i[2]).parameters[1] for i in promotion)\n+    check = Dict{Dimensions, Unit}()\n+    for a in ulist\n+        ulistA = (i^(1/i.power) for i in a)\n+        for i in ulistA\n+            k = dimension(i)\n+            if haskey(check, k)\n+                if i!=check[k]\n+                    @warn \"Preferred units contain complex units based on units of the same dimension but different scales: \"*string(i)*\" and \"*string(check[k])*\n+                    \"\\nThis may be intentional, but otherwise could lead to redundant units, such as ms/s or kg/g\"\n+                end\n+            else\n+                check[k] = i\n+            end\n+        end\n     end\n \n     nothing\n",
+    "test_patch": "diff --git a/test/runtests.jl b/test/runtests.jl\nindex 3e96550c..989aa242 100644\n--- a/test/runtests.jl\n+++ b/test/runtests.jl\n@@ -14,7 +14,8 @@ import Unitful:\n     J, A, N, mol, V,\n     mW, W,\n     dB, dB_rp, dB_p, dBm, dBV, dBSPL, Decibel,\n-    Np, Np_rp, Np_p, Neper\n+    Np, Np_rp, Np_p, Neper,\n+    C\n \n import Unitful: 𝐋, 𝐓, 𝐍, 𝚯\n \n@@ -320,6 +321,16 @@ Unitful.uconvert(U::Unitful.Units, q::QQQ) = uconvert(U, Quantity(q.val, cm))\n \n @testset \"Promotion\" begin\n     @testset \"> Unit preferences\" begin\n+        # Should warn on possible redundant units issue (ms and s)\n+        @test_logs (:warn, r\"^Preferred units contain complex units\") Unitful.preferunits(C/ms)\n+        # Test for wacky prefered units functionality\n+        Unitful.preferunits(C/s)\n+        @test @inferred(upreferred(V/m)) == kg*m*C^-1*s^-2\n+        @test dimension(upreferred(V/m)) == dimension(V/m)\n+        # Reset preferred units to default, except for units of dimension 𝐋*𝐌*𝐈^-1*𝐓^-3,\n+        # because upreferred has already been called for that dimension\n+        Unitful.preferunits(A)\n+\n         # Only because we favor SI, we have the following:\n         @test @inferred(upreferred(N)) === kg*m/s^2\n         @test @inferred(upreferred(dimension(N))) === kg*m/s^2\n",
+    "FAIL_TO_PASS": [
+      "Unit string parsing",
+      "Unit and dimensional analysis",
+      "> Comparisons",
+      "> Addition and subtraction",
+      "> Multiplication",
+      "> Division",
+      "> Trigonometry",
+      "> Exponentials and logarithms",
+      "> Matrix inversion",
+      "> Is functions",
+      "> Floating point tests"
+    ],
+    "PASS_TO_PASS": [
+      "Construction",
+      "Types",
+      "Conversion",
+      "Temperature and affine quantities"
+    ],
+    "instance_id": "painterqubits__unitful.jl-478",
+    "repo": "PainterQubits/Unitful.jl",
+    "pr_description": "Should fix #457. Prior to this change, attempts to use something that looked like `preferunits(u\"C/ms\")` would result in strange behavior, without throwing any sort of errors. Now, that should work nicely. This means that, for example:\r\n\r\n```\r\njulia> Unitful.preferunits(u\"ms\",u\"C/ms\")\r\n\r\njulia> upreferred(50u\"A\")\r\n1//20 C ms^-1\r\n\r\njulia> upreferred(50u\"mA*ns\")\r\n1//20000000000 C\r\n\r\njulia> upreferred(50u\"mA/mC\")\r\n1//20 ms^-1\r\n```\r\n\r\npreferunits still requires units with pure dimensions of power=1.\r\n\r\nI ran all of the tests and looked through the rest of the code for anywhere this could cause issues or incompatibilities, and I couldn't find anything, as upreferred(x::Dimensions) and preferunits seem to be the only things that touch the promotions Dict.",
+    "created_at": "2021-08-22 04:29:22",
+    "image_name": "docker.io/swerebenchv2/painterqubits-unitful.jl:478-5f68b2b",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "license": "custom-check-github",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.94,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "medium",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports that upreferred returns a unit with the wrong dimension when atomic units are involved, and expects the dimensions to match. The added tests assert that dimension(upreferred(V/m)) equals dimension(V/m) and also check for a warning about redundant preferred units, which aligns with fixing the reported bug. No signals of test‑suite coupling, implicit naming, external URLs, ambiguous spec, patch artifacts, or hidden domain knowledge are present, so the task is clearly specified and solvable.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 4,
+      "num_modified_lines": null,
+      "pr_author": "lukebemish",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaPhysics/Unitful.jl/pull/478"
+    }
+  },
+  "parent_sha": "b17b1c54630095b135181baab7436ca72baabdb1",
+  "changed_production_files": [
+    "src/Unitful.jl",
+    "src/units.jl",
+    "src/user.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-720 compound preferred units"
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.6.7",
+    "julia_version_origin": "fixed_revision_era_pre_2022",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test()'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.6.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "bec43b6ffe782aac5cd49f03e6e1ad4c76433d5a",
+    "project": "PainterQubits/Unitful.jl",
+    "input_sha256": "cdbc9f10eea1bc64798c27936811edaa5cf361fbf73854ba21a872f109e7a2b2",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-30T04:01:54Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.6752281814593698,
+      "input_tokens": 5417,
+      "output_tokens": 820
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.62, \"summary\": \"PR 478 fixes issue 457, where calling preferunits with compound (non-pure) units such as e_au/u\\\"ns\\\" or u\\\"C/ms\\\" silently corrupted the promotion table, so upreferred returned quantities with the wrong dimensions (dimension(upreferred(u\\\"V/cm\\\")) yielded 𝐋 𝐌 𝐈⁻¹ 𝐓⁻⁴ instead of 𝐋 𝐌 𝐈⁻¹ 𝐓⁻³). The change is small (3 production hunks across src/Unitful.jl, src/units.jl, src/user.jl) and touches the promotions Dict / upreferred path, with test additions in test/runtests.jl. This is a correctness fix on an already-accepted input form rather than a new API surface, so it qualifies as a production behavior fix.\", \"evidence\": \"Issue 457 provides a self-contained reproducer that ends in an AssertionError, demonstrating a wrong-result (not merely unsupported) behavior: upreferred produced a dimension inconsistent with the input quantity. PR body explicitly states the prior behavior was 'strange behavior, without throwing any sort of errors', confirming silent incorrectness. traceability_class=STRICT_DIRECT links commit bec43b6 to issue 457. Test file test/runtests.jl is modified and trigger tests are enumerated, indicating test-level evidence exists.\", \"missing_evidence\": \"The actual production and test diffs are not shown (file_details and runtime_evidence are empty), so I cannot confirm which lines changed, whether the new tests fail on parent b17b1c5 and pass on bec43b6, or whether new error paths (the retained 'pure dimensions of power=1' requirement) are purely validation additions. No pre/post test log is provided.\", \"validation_risks\": \"The trigger test list spans nearly the entire suite (comparisons, arithmetic, trigonometry, matrix inversion, floating point), which suggests the top-level testset granularity is coarse and/or that the change mutates global promotion state; a failing-test signal may not isolate cleanly to the defect. preferunits mutates a module-global Dict, so test ordering and state leakage between testsets could cause order-dependent or flaky results. There is also mild ambiguity about whether reviewers would classify this as extending preferunits capability rather than fixing a defect; if graded as an extension, the accept condition would not hold.\", \"suggested_tests\": \"1) Regression test mirroring issue 457 without the UnitfulAtomic dependency: preferunits(u\\\"cm\\\", u\\\"ns\\\", u\\\"C/ns\\\") then @test dimension(upreferred(u\\\"V/cm\\\")) == dimension(u\\\"V/cm\\\"). 2) Value-level checks from the PR body: after preferunits(u\\\"ms\\\", u\\\"C/ms\\\"), @test upreferred(50u\\\"A\\\") == (1//20)u\\\"C/ms\\\", @test upreferred(50u\\\"mA*ns\\\") == (1//20000000000)u\\\"C\\\", @test upreferred(50u\\\"mA/mC\\\") == (1//20)u\\\"ms^-1\\\". 3) @test_throws for non-pure-dimension or power != 1 arguments to preferunits. 4) A guard test that saves and restores Unitful.promotion around these cases so global state does not leak into other testsets.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.62,
+    "summary": "PR 478 fixes issue 457, where calling preferunits with compound (non-pure) units such as e_au/u\"ns\" or u\"C/ms\" silently corrupted the promotion table, so upreferred returned quantities with the wrong dimensions (dimension(upreferred(u\"V/cm\")) yielded 𝐋 𝐌 𝐈⁻¹ 𝐓⁻⁴ instead of 𝐋 𝐌 𝐈⁻¹ 𝐓⁻³). The change is small (3 production hunks across src/Unitful.jl, src/units.jl, src/user.jl) and touches the promotions Dict / upreferred path, with test additions in test/runtests.jl. This is a correctness fix on an already-accepted input form rather than a new API surface, so it qualifies as a production behavior fix.",
+    "evidence": "Issue 457 provides a self-contained reproducer that ends in an AssertionError, demonstrating a wrong-result (not merely unsupported) behavior: upreferred produced a dimension inconsistent with the input quantity. PR body explicitly states the prior behavior was 'strange behavior, without throwing any sort of errors', confirming silent incorrectness. traceability_class=STRICT_DIRECT links commit bec43b6 to issue 457. Test file test/runtests.jl is modified and trigger tests are enumerated, indicating test-level evidence exists.",
+    "missing_evidence": "The actual production and test diffs are not shown (file_details and runtime_evidence are empty), so I cannot confirm which lines changed, whether the new tests fail on parent b17b1c5 and pass on bec43b6, or whether new error paths (the retained 'pure dimensions of power=1' requirement) are purely validation additions. No pre/post test log is provided.",
+    "validation_risks": "The trigger test list spans nearly the entire suite (comparisons, arithmetic, trigonometry, matrix inversion, floating point), which suggests the top-level testset granularity is coarse and/or that the change mutates global promotion state; a failing-test signal may not isolate cleanly to the defect. preferunits mutates a module-global Dict, so test ordering and state leakage between testsets could cause order-dependent or flaky results. There is also mild ambiguity about whether reviewers would classify this as extending preferunits capability rather than fixing a defect; if graded as an extension, the accept condition would not hold.",
+    "suggested_tests": "1) Regression test mirroring issue 457 without the UnitfulAtomic dependency: preferunits(u\"cm\", u\"ns\", u\"C/ns\") then @test dimension(upreferred(u\"V/cm\")) == dimension(u\"V/cm\"). 2) Value-level checks from the PR body: after preferunits(u\"ms\", u\"C/ms\"), @test upreferred(50u\"A\") == (1//20)u\"C/ms\", @test upreferred(50u\"mA*ns\") == (1//20000000000)u\"C\", @test upreferred(50u\"mA/mC\") == (1//20)u\"ms^-1\". 3) @test_throws for non-pure-dimension or power != 1 arguments to preferunits. 4) A guard test that saves and restores Unitful.promotion around these cases so global state does not leak into other testsets."
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "9e523e8bd07d89e3351e80886d2fb573ef4b5867b4b010cadf5139d93d4764e3",
+    "oracle": {
+      "public_api": "Unitful.preferunits and upreferred",
+      "upstream_test_file": "test/runtests.jl",
+      "source_evidence": "isolated from the upstream fix assertions in test/runtests.jl",
+      "upstream_test_patch_sha256": "83ac01fb0dbc2983dd003b9dc9625c8d66662419c6252c737156ec86bdc3a3a7"
+    }
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-720 compound preferred units"
+    ],
+    "exception_types": [
+      "964513a5101857486d91fe4e617c5ff38cc5a75ca929e6dd04f029e251d1d930",
+      "c26115b71b69a4c46d55dedb044ced301bf1e0941f1838a539a52efd1692783a"
+    ],
+    "fingerprints": [
+      "964513a5101857486d91fe4e617c5ff38cc5a75ca929e6dd04f029e251d1d930",
+      "c26115b71b69a4c46d55dedb044ced301bf1e0941f1838a539a52efd1692783a"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

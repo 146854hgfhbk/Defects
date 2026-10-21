@@ -1,0 +1,29 @@
+diff --git a/lua/pl/lexer.lua b/lua/pl/lexer.lua
+index 85831e4374384f26eff711e70c9d6f2d89906551..579fa41100ceea4b9fab7eb68efe38b0f6d669d5 100644
+--- a/lua/pl/lexer.lua
++++ b/lua/pl/lexer.lua
+@@ -43,6 +43,9 @@ local WSPACE = '^%s+'
+ local STRING1 = "^(['\"])%1" -- empty string
+ local STRING2 = [[^(['"])(\*)%2%1]]
+ local STRING3 = [[^(['"]).-[^\](\*)%2%1]]
++local CHAR1 = "^''"
++local CHAR2 = [[^'(\*)%1']]
++local CHAR3 = [[^'.-[^\](\*)%1']]
+ local PREPRO = '^#.-[^\\]\n'
+ 
+ local plain_matches,lua_matches,cpp_matches,lua_keyword,cpp_keyword
+@@ -351,9 +354,12 @@ function lexer.cpp(s,filter,options)
+             {IDEN,cpp_vdump},
+             {NUMBER4,ndump},
+             {NUMBER5,ndump},
++            {CHAR1,chdump},
++            {CHAR2,chdump},
++            {CHAR3,chdump},
+             {STRING1,sdump},
+-            {STRING2,chdump},
+-            {STRING3,chdump},
++            {STRING2,sdump},
++            {STRING3,sdump},
+             {'^//.-\n',cdump},
+             {'^/%*.-%*/',cdump},
+             {'^==',tdump},

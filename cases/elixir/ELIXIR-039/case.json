@@ -1,0 +1,241 @@
+{
+  "schema_version": 2,
+  "case_id": "ELIXIR-039",
+  "id": "ELIXIR-039",
+  "upstream_id": "elixir-protobuf__protobuf-387",
+  "language": "Elixir",
+  "project": "elixir-protobuf/protobuf",
+  "repo": "elixir-protobuf/protobuf",
+  "provenance": {
+    "source_dataset": "SWE-rebench-V2",
+    "source_dataset_id": "nebius/SWE-rebench-V2",
+    "source_revision": "475dd5e",
+    "pr_url": "https://github.com/elixir-protobuf/protobuf/pull/387",
+    "issue_id": 380,
+    "issue_url": "https://github.com/elixir-protobuf/protobuf/issues/380",
+    "issue_relation": "PR_DESCRIPTION_ISSUE_REFERENCE",
+    "pr_merge_commit": "914422d0d8e9ad8561b6ef5801155d2a9be10644",
+    "pr_merged": true,
+    "pr_base_sha": "8cf602d1c0eec161bb74d41688d1aaabb0d81776",
+    "pr_head_sha": "fce36295f41cccf3542dcf4a06ea410c28f94728",
+    "pr_commit_count": 2,
+    "fix_commit_relation": "multi_commit_pr(2)"
+  },
+  "buggy_revision": "8cf602d1c0eec161bb74d41688d1aaabb0d81776",
+  "fixed_revision": "914422d0d8e9ad8561b6ef5801155d2a9be10644",
+  "revision_mode": "base_plus_gold_patch",
+  "revisions": {
+    "revision_mode": "base_plus_gold_patch",
+    "buggy": "8cf602d1c0eec161bb74d41688d1aaabb0d81776",
+    "fixed": {
+      "declared_commit": "914422d0d8e9ad8561b6ef5801155d2a9be10644",
+      "base_commit": "8cf602d1c0eec161bb74d41688d1aaabb0d81776",
+      "patch": "patches/minimized-source.patch",
+      "note": "replay is base + canonical patch; the merge commit is the declared upstream reference"
+    }
+  },
+  "patch": {
+    "path": "patches/minimized-source.patch",
+    "upstream_path": "patches/upstream.patch",
+    "sha256": "13aa6a6b188474d544579f34e048253c1777b93e4f8ac4400b17586acadef703",
+    "upstream_sha256": "6ee8b6b9184e96e5f97beb41115914edb6d8b8a7f3fb8b01a2b6d0296a52d7c1",
+    "changed_source_files": [
+      "lib/protobuf/decoder.ex",
+      "lib/protobuf/encoder.ex",
+      "lib/protobuf/json.ex",
+      "lib/protobuf/json/decode.ex",
+      "lib/protobuf/json/encode.ex",
+      "lib/protobuf/protoc/generator/message.ex",
+      "lib/protobuf/protoc/generator/util.ex"
+    ]
+  },
+  "patch_sha256": "13aa6a6b188474d544579f34e048253c1777b93e4f8ac4400b17586acadef703",
+  "trigger_test_patch": "patches/trigger-tests.patch",
+  "trigger_test_patch_sha256": "8da687e74677f4ccc9f9ee9a0cca854d36bad7f0fcff583cadc84e47b2dabde2",
+  "triggering_tests": [
+    "encode_to_iodata variants encode to iodata",
+    "raises correct error for nested protobufs"
+  ],
+  "trigger_tests": [
+    "encode_to_iodata variants encode to iodata",
+    "raises correct error for nested protobufs"
+  ],
+  "expected_failure": {
+    "test_count": 2,
+    "tests": [
+      "encode_to_iodata variants encode to iodata",
+      "raises correct error for nested protobufs"
+    ],
+    "exception_types": [],
+    "fingerprints": []
+  },
+  "minimization": {
+    "status": "HUMAN_REVIEWED_MINIMIZED_V1",
+    "policy": "drop non-production files; production only documentation/comment/format; same-file dangling guard",
+    "removed_hunks": 0,
+    "removed_files": [],
+    "forced_kept": [],
+    "upstream_equals_minimized": true,
+    "report": "patches/minimization.json",
+    "llm_review": "llm-hunk-review.json",
+    "review_status": "human_minimization_signoff_completed",
+    "reviewer_type": "human_dataset_curator",
+    "human_signoff": "completed",
+    "dynamic_revalidation": false,
+    "human_signoff_date": "2026-09-12",
+    "human_signoff_scope": "patch_minimization_only"
+  },
+  "environment": {
+    "backend": "swe_rebench_v2_docker",
+    "image": "docker.io/swerebenchv2/elixir-protobuf-protobuf:387-8cf602d"
+  },
+  "environment_lock": "environment.lock.json",
+  "commands": {
+    "test": "mix test --trace --max-cases 1"
+  },
+  "validation": {
+    "status": "PASS",
+    "report": "validation/phase-d.json",
+    "report_sha256": "5afb8fe0e319d1ba2e6e1e424abf6748f343693ab927e333f8583fcba6828961",
+    "protocol": "v5-f2p",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "result": "PASS"
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "elixir",
+    "reason_code": null,
+    "reason": null,
+    "llm_semantic_decision": "BUG_FIX",
+    "human_confirmation": false
+  },
+  "release_integrity": "release-integrity.json",
+  "status": "ACTIVE",
+  "fixed_revision_kind": "upstream_pr_merge_commit",
+  "fixed_revision_parents": [
+    "2653f609ce293bb9c9c1fa396248808d3a1131c5"
+  ],
+  "artifacts": {
+    "curation_decision": "curation-decision.json",
+    "llm_hunk_review": "llm-hunk-review.json",
+    "llm_semantic_review": "llm-semantic-review.json",
+    "minimization_decisions": "minimization-decisions.json",
+    "manual_minimization_confirmation": "manual-minimization-confirmation.json",
+    "minimization_report": "patches/minimization.json"
+  },
+  "execution_validation": {
+    "status": "PASS",
+    "protocol": "v5-f2p",
+    "evidence": "validation/phase-d.json",
+    "evidence_sha256": "5afb8fe0e319d1ba2e6e1e424abf6748f343693ab927e333f8583fcba6828961",
+    "validated_at": "2026-09-11T14:26:22Z",
+    "b_failures": [
+      2,
+      2,
+      2
+    ],
+    "f_failures": [
+      0,
+      0,
+      0
+    ],
+    "gold_failures": [
+      0
+    ],
+    "dyn_dropped": 9
+  },
+  "bug_id": "ELIXIR-039",
+  "fixed_test_result": "pass",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "build_command": [
+    "export HOME=/root",
+    "apt-get update && apt-get install -y --no-install-recommends protobuf-compiler",
+    "mix deps.get",
+    "mix compile"
+  ],
+  "test_command": "mix test --trace --max-cases 1",
+  "language_version": {
+    "elixir": "1.16.3",
+    "otp": "26"
+  },
+  "dependency_versions": {
+    "mix_lock_md5": "edeed28c91beb9dae50174e0db2fe9d7"
+  },
+  "operating_system_or_container": {
+    "container_image": "docker.io/swerebenchv2/elixir-protobuf-protobuf:387-8cf602d",
+    "image_id": "sha256:d03f4c536ed00eed9c69391a8a8974892bb622e33ff73e62715ada9815b410c8",
+    "platform": "linux/amd64"
+  },
+  "traceability": {
+    "issue_id": 380,
+    "issue_url": "https://github.com/elixir-protobuf/protobuf/issues/380",
+    "pr_url": "https://github.com/elixir-protobuf/protobuf/pull/387",
+    "issue_closed": true,
+    "pr_merged": true,
+    "issue_referenced_in": "pull_request_body",
+    "fix_commit": "914422d0d8e9ad8561b6ef5801155d2a9be10644",
+    "fix_commit_count": 1,
+    "single_parent_fix": true,
+    "upstream_fix_parents": [
+      "2653f609ce293bb9c9c1fa396248808d3a1131c5"
+    ],
+    "upstream_fix_parent": "2653f609ce293bb9c9c1fa396248808d3a1131c5",
+    "fix_commit_is_merge": false,
+    "provenance_strength": "PR_BODY_REFERENCE"
+  },
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "DONE",
+    "full_suite_validation": "PASS",
+    "protocol": "v4-goldsuite"
+  },
+  "upstream": {
+    "fix_commit": "914422d0d8e9ad8561b6ef5801155d2a9be10644",
+    "fix_parent": "2653f609ce293bb9c9c1fa396248808d3a1131c5",
+    "issue_url": "https://github.com/elixir-protobuf/protobuf/issues/380",
+    "pr_url": "https://github.com/elixir-protobuf/protobuf/pull/387"
+  },
+  "benchmark_revision": {
+    "mode": "base_plus_gold_patch",
+    "base_revision": "8cf602d1c0eec161bb74d41688d1aaabb0d81776",
+    "declared_fixed_revision": "914422d0d8e9ad8561b6ef5801155d2a9be10644",
+    "fixed_construction": "base_plus_minimized_patch"
+  },
+  "trigger_metadata_repair": {
+    "performed_at": "2026-09-11T23:54:24Z",
+    "source_of_truth": "validation/phase-d.json b_runs/f_runs/gold_runs failure_names",
+    "original_declared_tests": [
+      "JSON Required.Proto2.ProtobufInput.ValidDataMap.INT32.INT32.MissingDefault.JsonOutput",
+      "JSON Required.Proto3.JsonInput.Int32FieldQuotedExponentialValue.JsonOutput",
+      "encode_to_iodata variants encode to iodata",
+      "generate/2 returns a list of Google.Protobuf.Compiler.CodeGeneratorResponse.File structs",
+      "raises correct error for nested protobufs"
+    ],
+    "validated_triggering_tests": [
+      "encode_to_iodata variants encode to iodata",
+      "raises correct error for nested protobufs"
+    ],
+    "removed_stale_declarations": [
+      "JSON Required.Proto2.ProtobufInput.ValidDataMap.INT32.INT32.MissingDefault.JsonOutput",
+      "JSON Required.Proto3.JsonInput.Int32FieldQuotedExponentialValue.JsonOutput",
+      "generate/2 returns a list of Google.Protobuf.Compiler.CodeGeneratorResponse.File structs"
+    ],
+    "execution_logs_modified": false
+  },
+  "upstream_revision": {
+    "fix_commit": "914422d0d8e9ad8561b6ef5801155d2a9be10644",
+    "fix_parent": "2653f609ce293bb9c9c1fa396248808d3a1131c5",
+    "issue_url": "https://github.com/elixir-protobuf/protobuf/issues/380",
+    "pr_url": "https://github.com/elixir-protobuf/protobuf/pull/387"
+  },
+  "excluded_tests_manifest": "validation/excluded-tests.json",
+  "canonical_test_policy": {
+    "raw_test_command": "mix test --trace --max-cases 1",
+    "canonical_runner": "python3 tools/defects4x test --bug 39 --version <b|f> --workdir <checkout> --canonical --execute",
+    "fixed_acceptance": "PASS only after a normal, non-empty ExUnit completion with a valid summary and no infrastructure/process error; a non-zero raw exit may be normalized only when the summary failure count matches parsed failure identities and every identity is explicitly listed in validation/excluded-tests.json and reproduced in upstream GOLD."
+  },
+  "canonical_test_command": "python3 tools/defects4x test --bug 39 --version f --workdir <checkout> --canonical --execute"
+}

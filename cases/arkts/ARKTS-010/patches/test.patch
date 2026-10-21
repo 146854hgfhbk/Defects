@@ -1,0 +1,109 @@
+diff --git a/code/SystemFeature/Telephony/Message/entry/src/ohosTest/ets/test/List.test.ets b/code/SystemFeature/Telephony/Message/entry/src/ohosTest/ets/test/List.test.ets
+index b00d0ae8a..726fdfd56 100644
+--- a/code/SystemFeature/Telephony/Message/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/SystemFeature/Telephony/Message/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Ability.test';
++import messageDeleteRegressionTest from './MessageDeleteRegression.test';
+ 
+ export default function testsuite() {
+   abilityTest();
+-}
+\ No newline at end of file
++  messageDeleteRegressionTest();
++}
+diff --git a/code/SystemFeature/Telephony/Message/entry/src/ohosTest/ets/test/MessageDeleteRegression.test.ets b/code/SystemFeature/Telephony/Message/entry/src/ohosTest/ets/test/MessageDeleteRegression.test.ets
+new file mode 100644
+index 000000000..4e8480d9b
+--- /dev/null
++++ b/code/SystemFeature/Telephony/Message/entry/src/ohosTest/ets/test/MessageDeleteRegression.test.ets
+@@ -0,0 +1,87 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import { Driver, ON } from '@ohos.UiTest';
++import { describe, expect, it } from '@ohos/hypium';
++import inputMethod from '@ohos.inputMethod';
++
++const DRIVER = Driver.create();
++const FIRST_NAME = 'row27FirstContact';
++const FIRST_PHONE = '18800000001';
++const SECOND_NAME = 'row27SecondContact';
++const SECOND_PHONE = '18800000002';
++
++async function startMessageAbility(): Promise<void> {
++  let abilityDelegatorRegistry = AbilityDelegatorRegistry.getAbilityDelegator();
++  await abilityDelegatorRegistry.startAbility({
++    bundleName: 'ohos.samples.message',
++    abilityName: 'EntryAbility'
++  });
++  await DRIVER.delayMs(1000);
++  await DRIVER.assertComponentExist(ON.id('newContact'));
++}
++
++async function addContact(name: string, phone: string): Promise<void> {
++  let addBtn = await DRIVER.findComponent(ON.id('newContact'));
++  await addBtn.click();
++  await DRIVER.delayMs(800);
++
++  let nameInput = await DRIVER.findComponent(ON.id('nameInput'));
++  await nameInput.inputText(name);
++  inputMethod.getController().stopInputSession();
++  await DRIVER.delayMs(500);
++
++  let telInput = await DRIVER.findComponent(ON.id('telInput'));
++  await telInput.inputText(phone);
++  inputMethod.getController().stopInputSession();
++  await DRIVER.delayMs(500);
++
++  let confirm = await DRIVER.findComponent(ON.id('confirm'));
++  await confirm.click();
++  await DRIVER.delayMs(1000);
++  await DRIVER.assertComponentExist(ON.id(name));
++  await DRIVER.assertComponentExist(ON.text(phone));
++}
++
++async function countText(text: string): Promise<number> {
++  let components = await DRIVER.findComponents(ON.text(text));
++  if (components === undefined || components === null) {
++    return 0;
++  }
++  return components.length;
++}
++
++export default function messageDeleteRegressionTest() {
++  describe('MessageDeleteRegressionTest', function () {
++    it('DeleteShouldRemoveClickedContactAfterListInsert_001', 0, async function () {
++      await startMessageAbility();
++
++      await addContact(FIRST_NAME, FIRST_PHONE);
++      await addContact(SECOND_NAME, SECOND_PHONE);
++
++      let manageBtn = await DRIVER.findComponent(ON.id('manage'));
++      await manageBtn.click();
++      await DRIVER.delayMs(1000);
++
++      let deleteFirst = await DRIVER.findComponent(ON.id('delete_' + FIRST_NAME));
++      await deleteFirst.click();
++      await DRIVER.delayMs(1000);
++
++      expect(await countText(FIRST_PHONE)).assertEqual(0);
++      expect(await countText(SECOND_PHONE)).assertEqual(1);
++    })
++  })
++}

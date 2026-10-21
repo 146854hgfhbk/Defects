@@ -1,0 +1,32 @@
+diff --git a/t/06_pc_pretty.t b/t/06_pc_pretty.t
+index 91ef319..446df39 100644
+--- a/t/06_pc_pretty.t
++++ b/t/06_pc_pretty.t
+@@ -4,7 +4,7 @@
+ 
+ use strict;
+ use Test::More;
+-BEGIN { plan tests => 9 };
++BEGIN { plan tests => 10 };
+ 
+ use Cpanel::JSON::XS;
+ 
+@@ -64,3 +64,18 @@ is($pc->encode($obj), qq|{\n   "foo" : "bar"\n}\n|, "both");
+ $pc->space_after(0);
+ is($pc->encode($obj), qq|{\n   "foo" :"bar"\n}\n|, "before");
+ 
++$obj = { foo => [ {a=>"b"}, 0, 1, 2 ] };
++$pc->pretty(1)->indent_length(1);
++$js = $pc->encode($obj);
++is($js,q|{
++ "foo" : [
++  {
++   "a" : "b"
++  },
++  0,
++  1,
++  2
++ ]
++}
++|);
++

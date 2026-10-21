@@ -1,0 +1,52 @@
+diff --git a/Changes b/Changes
+index 84350b44a..a427e8e81 100644
+--- a/Changes
++++ b/Changes
+@@ -1,6 +1,7 @@
+ {{$NEXT}}
+ 
+     - Fix #817 (local $TODO bug)
++    - Fix #812 (Another local $TODO bug)
+     - Fix #815 (shm read warning)
+ 
+ 1.302141  2018-11-30 14:27:19-08:00 America/Los_Angeles
+diff --git a/lib/Test/Builder.pm b/lib/Test/Builder.pm
+index 6e08bf460..cab873149 100644
+--- a/lib/Test/Builder.pm
++++ b/lib/Test/Builder.pm
+@@ -64,7 +64,7 @@ sub _add_ts_hooks {
+         $todo = ${"$cpkg\::TODO"} if $cpkg;
+         $todo = ${"$epkg\::TODO"} if $epkg && !$todo;
+ 
+-        return $e unless $todo;
++        return $e unless defined $todo;
+ 
+         # Turn a diag into a todo diag
+         return Test::Builder::TodoDiag->new(%$e) if ref($e) eq 'Test2::Event::Diag';
+diff --git a/t/regression/812-todo.t b/t/regression/812-todo.t
+new file mode 100644
+index 000000000..dd4e0b464
+--- /dev/null
++++ b/t/regression/812-todo.t
+@@ -0,0 +1,21 @@
++use strict;
++use warnings;
++
++use Test2::API qw/intercept/;
++use Test::More;
++
++my @values = (
++    "",               # false but defined -> inconsistent
++    0,                # false but defined -> inconsistent
++    0.0,              # false but defined -> inconsistent
++    "0.0",            # true -> TODO
++    "this is why",    # as expected
++);
++
++for my $value (@values) {
++    local $TODO = $value;
++    my $x = defined($value) ? "\"$value\"" : 'UNDEF';
++    fail "Testing: $x";
++}
++
++done_testing;

@@ -1,0 +1,19 @@
+diff --git a/Sources/SwiftDocC/Indexing/Navigator/RenderNode+NavigatorIndex.swift b/Sources/SwiftDocC/Indexing/Navigator/RenderNode+NavigatorIndex.swift
+index 85e5c44e83a68d80bac4d6283e3d58c47e727b0a..4ca20d9d5484d29e1a6e92262820d31a0e7fbeb2 100644
+--- a/Sources/SwiftDocC/Indexing/Navigator/RenderNode+NavigatorIndex.swift
++++ b/Sources/SwiftDocC/Indexing/Navigator/RenderNode+NavigatorIndex.swift
+@@ -146,7 +146,13 @@ extension NavigatorIndexableRenderMetadataRepresentation {
+ 
+ extension NavigatorIndexableRenderNodeRepresentation {
+     var isPlatformDeprecated: Bool {
+-        metadata.platforms?.contains { $0.deprecated != nil } == true
++        metadata.platforms?.contains {
++            // @available(*, deprecated: "1.2.3)
++            $0.deprecated != nil ||
++                // or without a specific version/string for "deprecated:", like so:
++                // @available(*, deprecated, renamed: "Sendable")
++                $0.unconditionallyDeprecated == true
++        } == true
+     }
+     var isDeprecated: Bool {
+         isPlatformDeprecated

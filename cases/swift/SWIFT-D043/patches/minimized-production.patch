@@ -1,0 +1,65 @@
+diff --git a/Sources/OpenAPIRuntime/Base/OpenAPIValue.swift b/Sources/OpenAPIRuntime/Base/OpenAPIValue.swift
+--- a/Sources/OpenAPIRuntime/Base/OpenAPIValue.swift
++++ b/Sources/OpenAPIRuntime/Base/OpenAPIValue.swift
+@@ -357,36 +384,29 @@ public struct OpenAPIObjectContainer: Codable, Hashable, Sendable {
+ 
+     // MARK: Decodable
+ 
+-    /// Creates an `OpenAPIValueContainer` by decoding it from a single-value container in a given decoder.
+-    ///
+-    /// - Parameter decoder: The decoder used to decode the container.
+-    /// - Throws: An error if the decoding process encounters an issue or if the data does not match the expected format.
++    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
+     public init(from decoder: any Decoder) throws {
+-        let container = try decoder.singleValueContainer()
+-        let item = try container.decode([String: OpenAPIValueContainer].self)
+-        self.init(validatedValue: item.mapValues(\.value))
++        let container = try decoder.container(keyedBy: StringKey.self)
++        let keyValuePairs = try container.allKeys.map { key -> (String, (any Sendable)?) in
++            let item = try container.decode(OpenAPIValueContainer.self, forKey: key)
++            return (key.stringValue, item.value)
++        }
++        self.init(validatedValue: Dictionary(uniqueKeysWithValues: keyValuePairs))
+     }
+ 
+     // MARK: Encodable
+ 
+-    /// Encodes the `OpenAPIValueContainer` into a format that can be stored or transmitted via the given encoder.
+-    ///
+-    /// - Parameter encoder: The encoder used to perform the encoding.
+-    /// - Throws: An error if the encoding process encounters an issue or if the data does not match the expected format.
++    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
+     public func encode(to encoder: any Encoder) throws {
+-        var container = encoder.singleValueContainer()
+-        try container.encode(value.mapValues(OpenAPIValueContainer.init(validatedValue:)))
++        var container = encoder.container(keyedBy: StringKey.self)
++        for (itemKey, itemValue) in value {
++            try container.encode(OpenAPIValueContainer(validatedValue: itemValue), forKey: StringKey(itemKey))
++        }
+     }
+ 
+     // MARK: Equatable
+ 
+-    /// Compares two `OpenAPIObjectContainer` instances for equality by comparing their inner key-value dictionaries.
+-    ///
+-    /// - Parameters:
+-    ///   - lhs: The left-hand side `OpenAPIObjectContainer` to compare.
+-    ///   - rhs: The right-hand side `OpenAPIObjectContainer` to compare.
+-    ///
+-    /// - Returns: `true` if the `OpenAPIObjectContainer` instances are equal, `false` otherwise.
++    // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
+     public static func == (lhs: OpenAPIObjectContainer, rhs: OpenAPIObjectContainer) -> Bool {
+         let lv = lhs.value
+         let rv = rhs.value
+diff --git a/Sources/OpenAPIRuntime/Conversion/CodableExtensions.swift b/Sources/OpenAPIRuntime/Conversion/CodableExtensions.swift
+--- a/Sources/OpenAPIRuntime/Conversion/CodableExtensions.swift
++++ b/Sources/OpenAPIRuntime/Conversion/CodableExtensions.swift
+@@ -142,7 +142,7 @@
+ }
+ 
+ /// A freeform String coding key for decoding undocumented values.
+-private struct StringKey: CodingKey, Hashable, Comparable {
++internal struct StringKey: CodingKey, Hashable, Comparable {
+ 
+     var stringValue: String
+     var intValue: Int? { Int(stringValue) }

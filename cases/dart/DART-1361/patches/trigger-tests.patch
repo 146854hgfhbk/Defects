@@ -1,0 +1,67 @@
+diff --git a/test/verify_test.dart b/test/verify_test.dart
+index 3c513317c156d06da45537a28a8c99b506fea4e0..568c1d22a726ba1c8954ea6205f5fa241c00ece0 100644
+--- a/test/verify_test.dart
++++ b/test/verify_test.dart
+@@ -27,6 +27,62 @@ final edKey = EdDSAPublicKey(
+ 
+ void main() {
+   group('Verify a JWT', () {
++    group('Claims', () {
++      group('iat', () {
++        final oneMinuteAgo = DateTime.now().subtract(Duration(minutes: 1));
++        test('exact issueAt passes validation', () {
++          final jwt = JWT(
++            {
++              'foo': 'bar',
++              'iat': oneMinuteAgo.millisecondsSinceEpoch ~/ 1000,
++            },
++          );
++          final verified = JWT.tryVerify(
++            jwt.sign(hsKey, noIssueAt: true),
++            hsKey,
++            issueAt:
++                Duration(seconds: oneMinuteAgo.millisecondsSinceEpoch ~/ 1000),
++          );
++          expect(verified, isNotNull);
++        });
++        test('expired issueAt fails validation', () {
++          final jwt = JWT(
++            {
++              'foo': 'bar',
++              'iat': oneMinuteAgo
++                      .subtract(Duration(seconds: 1))
++                      .millisecondsSinceEpoch ~/
++                  1000,
++            },
++          );
++          final verified = JWT.tryVerify(
++            jwt.sign(hsKey, noIssueAt: true),
++            hsKey,
++            issueAt:
++                Duration(seconds: oneMinuteAgo.millisecondsSinceEpoch ~/ 1000),
++          );
++          expect(verified, isNull);
++        });
++        test('fresher issueAt passes validation', () {
++          final jwt = JWT(
++            {
++              'foo': 'bar',
++              'iat': oneMinuteAgo
++                      .add(Duration(seconds: 1))
++                      .millisecondsSinceEpoch ~/
++                  1000,
++            },
++          );
++          final verified = JWT.tryVerify(
++            jwt.sign(hsKey, noIssueAt: true),
++            hsKey,
++            issueAt:
++                Duration(seconds: oneMinuteAgo.millisecondsSinceEpoch ~/ 1000),
++          );
++          expect(verified, isNotNull);
++        });
++      });
++    });
+     //------//
+     // HMAC //
+     //------//

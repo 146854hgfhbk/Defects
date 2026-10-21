@@ -1,0 +1,1638 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-450",
+  "generated_at": "2026-09-05T16:03:07.278682+00:00",
+  "algorithm": "exhaustive_nonempty_hunk_subsets",
+  "minimality_guarantee": "global_minimum_over_hunk_subsets",
+  "original_patch_sha256": "b7cc99ba761fd08e706e49843930a349fb037e30b7dfb410d53386a1a1cf4fe4",
+  "original_hunk_count": 2,
+  "candidate_subset_count": 3,
+  "evaluations": [
+    {
+      "subset": [
+        1
+      ],
+      "hunk_count": 1,
+      "changed_lines": 2,
+      "patch_sha256": "4731dbb2fc77157e3ef427feab27ec4fe371f9afa87ae7fe74a464afa50a6c95",
+      "trigger_patch_state": "applied",
+      "build_compatibility_patch_state": null,
+      "outcome": "BEHAVIOR_NOT_FIXED",
+      "runs": [
+        {
+          "scope": "dependency",
+          "command": [
+            "/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/spm-cache-SWIFT-450",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 2.32,
+          "stdout_log": "logs/minimization/subset-001/001-unknown-attempt-unknown-dependency/stdout.log",
+          "stderr_log": "logs/minimization/subset-001/001-unknown-attempt-unknown-dependency/stderr.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "011a128fc3ae5767efd31c89b5229e3c50df6f77529f9543238214c983ae349d",
+          "infrastructure_error": false,
+          "dependency_network_mode": "offline",
+          "package_config_format": "workspace_state",
+          "package_manifest_lock_synthetic": false,
+          "locked_dependency_versions": {},
+          "package_manifest_lock_artifact": "logs/minimization/subset-001/001-unknown-attempt-unknown-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "4251812d62bfdbaf0f51befd3236d3d549e544b840ea9e26a93788ad438c5133",
+          "package_config_artifact": "logs/minimization/subset-001/001-unknown-attempt-unknown-dependency/workspace-state.json",
+          "package_config_sha256": "8ca0221ee7d782f094ffda83a50f27915c296552220c9e70d3f62e968559c69b"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 7.722,
+          "stdout_log": "logs/minimization/subset-001/002-unknown-attempt-unknown-analyze/stdout.log",
+          "stderr_log": "logs/minimization/subset-001/002-unknown-attempt-unknown-analyze/stderr.log",
+          "stdout_sha256": "d29b42a5297ec0ab33fab2e160cf4c890005769c9789714c31d6e8d719c542db",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_paths": [],
+          "infrastructure_error": false,
+          "analyzer_command": [
+            "/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ]
+        },
+        {
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "testDistinctCount"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 1.145,
+          "stdout_log": "logs/minimization/subset-001/003-unknown-attempt-1-isolated-trigger/stdout.log",
+          "stderr_log": "logs/minimization/subset-001/003-unknown-attempt-1-isolated-trigger/stderr.log",
+          "stdout_sha256": "bf19d2cac24f69e2ead9bc0edb2922fbb93a9800ff59b3b44db61e079049bb7b",
+          "stderr_sha256": "f262fe83f4e3fc9a296e022bb802264f8e607c49253b4c67c6efab07f1cfc546",
+          "attempt": 1,
+          "scope": "isolated-trigger",
+          "test_paths": [
+            "Tests/FluentTests/SQLSerializerTests.swift"
+          ],
+          "selector": "testDistinctCount",
+          "selector_mode": "filter",
+          "ordering_seed": null,
+          "toolchain_mode": "swift_test",
+          "test_timeout": null,
+          "test_runner_mode": "swift_test",
+          "infrastructure_error": false,
+          "output_format": "swift_test_text",
+          "final_success": false,
+          "counts": {
+            "started": 1,
+            "passed": 0,
+            "failed": 1,
+            "skipped": 0
+          },
+          "unfinished_tests": [],
+          "failed_tests": [
+            {
+              "test_id": "Tests/FluentTests/SQLSerializerTests.swift::SQLSerializerTests/testDistinctCount",
+              "test_path": "Tests/FluentTests/SQLSerializerTests.swift",
+              "test_name": "SQLSerializerTests/testDistinctCount",
+              "test_local_name": "testDistinctCount",
+              "error": "Tests/FluentTests/SQLSerializerTests.swift:88: SQLSerializerTests.testDistinctCount : XCTAssertEqual failed: (\"SELECT DISTINCT COUNT(*) as _fluent_aggregate FROM `users`\") is not equal to (\"SELECT COUNT(DISTINCT *) as _fluent_aggregate FROM `users`\")",
+              "stack_trace": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/advance40-repairwave-SWIFT-450/SWIFT-450/validation/SWIFT-450/minimization/SWIFT-450/subset-1/Tests/FluentTests/SQLSerializerTests.swift",
+              "normalized_error": "Tests/FluentTests/SQLSerializerTests.swift:88: SQLSerializerTests.testDistinctCount : XCTAssertEqual failed: (\"SELECT DISTINCT COUNT(*) as _fluent_aggregate FROM `users`\") is not equal to (\"SELECT COUNT(DISTINCT *) as _fluent_aggregate FROM `users`\")",
+              "normalized_stack": "<WORKTREE>/Tests/FluentTests/SQLSerializerTests.swift",
+              "is_failure": true,
+              "failure_fingerprint": "ba82e2acbe84078068546b9a395073e64a0af02595a5fceecaa6163bae2c2a81"
+            }
+          ],
+          "failure_fingerprint": "94cb5c874371d0f19f11f429bdb06edc10a8db14544a718efdd26d53128d9554",
+          "invalid_output_lines": [],
+          "selected_progress": [
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctCount"
+            ]
+          ]
+        },
+        {
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 3.434,
+          "stdout_log": "logs/minimization/subset-001/004-unknown-attempt-1-trigger-suite/stdout.log",
+          "stderr_log": "logs/minimization/subset-001/004-unknown-attempt-1-trigger-suite/stderr.log",
+          "stdout_sha256": "f7d4f8c0c1021bc00f52ff1348aa62dadb0b18fbf9b5e5ca4bef53c0d8f9ee30",
+          "stderr_sha256": "4ed90d8adfbd3afa1ed295c30088a8c514299c1740614960205e0e282a04a430",
+          "attempt": 1,
+          "scope": "trigger-suite",
+          "test_paths": [
+            "Tests/FluentTests/SQLSerializerTests.swift"
+          ],
+          "selector": null,
+          "selector_mode": null,
+          "ordering_seed": null,
+          "toolchain_mode": "swift_test",
+          "test_timeout": null,
+          "test_runner_mode": "swift_test",
+          "infrastructure_error": false,
+          "output_format": "swift_test_text",
+          "final_success": false,
+          "counts": {
+            "started": 1,
+            "passed": 0,
+            "failed": 1,
+            "skipped": 0
+          },
+          "unfinished_tests": [],
+          "failed_tests": [
+            {
+              "test_id": "Tests/FluentTests/SQLSerializerTests.swift::SQLSerializerTests/testDistinctCount",
+              "test_path": "Tests/FluentTests/SQLSerializerTests.swift",
+              "test_name": "SQLSerializerTests/testDistinctCount",
+              "test_local_name": "testDistinctCount",
+              "error": "Tests/FluentTests/SQLSerializerTests.swift:88: SQLSerializerTests.testDistinctCount : XCTAssertEqual failed: (\"SELECT DISTINCT COUNT(*) as _fluent_aggregate FROM `users`\") is not equal to (\"SELECT COUNT(DISTINCT *) as _fluent_aggregate FROM `users`\")",
+              "stack_trace": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/advance40-repairwave-SWIFT-450/SWIFT-450/validation/SWIFT-450/minimization/SWIFT-450/subset-1/Tests/FluentTests/SQLSerializerTests.swift",
+              "normalized_error": "Tests/FluentTests/SQLSerializerTests.swift:88: SQLSerializerTests.testDistinctCount : XCTAssertEqual failed: (\"SELECT DISTINCT COUNT(*) as _fluent_aggregate FROM `users`\") is not equal to (\"SELECT COUNT(DISTINCT *) as _fluent_aggregate FROM `users`\")",
+              "normalized_stack": "<WORKTREE>/Tests/FluentTests/SQLSerializerTests.swift",
+              "is_failure": true,
+              "failure_fingerprint": "ba82e2acbe84078068546b9a395073e64a0af02595a5fceecaa6163bae2c2a81"
+            }
+          ],
+          "failure_fingerprint": "94cb5c874371d0f19f11f429bdb06edc10a8db14544a718efdd26d53128d9554",
+          "invalid_output_lines": [],
+          "selected_progress": [
+            [
+              "FluentTests.ModelFindTests",
+              "testFindFailing"
+            ],
+            [
+              "FluentTests.ModelFindTests",
+              "testFindSucceeding"
+            ],
+            [
+              "FluentTests.ModelFindTests",
+              "testFindErroring"
+            ],
+            [
+              "FluentTests.PreparationTests",
+              "testManualPreparation"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testBasalQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testBasicQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testLikeQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testCountQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testDeleteQuery"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testBasic"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testWithValues"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawFilter"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawJoinsAndFilters"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawSet"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawGet"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawLimit"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawSort"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testHasMany"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testBelongsToMany"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testCustomForeignKey"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testPivotDatabase"
+            ],
+            [
+              "FluentTests.RowTests",
+              "testFuzzyRowArray"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testCreate"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testStringDefault"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testModify"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testBasicSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testRegularSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testOffsetSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterLikeSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testBasicCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testRegularCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterLikeCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testReqularSum"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testcustomAggregate"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterEqualsNullSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterNotEqualsNullSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareUpdate"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterGroup"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testSort"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testSortMultiple"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testJoinedDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNotNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNodeNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testPlainNil"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testEmptyIn"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testEmptyNotIn"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDirty"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testBasic"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testSQLFilters"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testSiblings"
+            ],
+            [
+              "FluentTesterTests.MemoryBenchmarkTests",
+              "testSuite"
+            ],
+            [
+              "FluentTests.SQLiteTests",
+              "testMultipleColumnModify"
+            ],
+            [
+              "FluentTests.SQLiteTests",
+              "testBlobColumnType"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testCompare"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testSubset"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testCustomFromString"
+            ]
+          ]
+        },
+        {
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 3.349,
+          "stdout_log": "logs/minimization/subset-001/005-unknown-attempt-1-full-suite/stdout.log",
+          "stderr_log": "logs/minimization/subset-001/005-unknown-attempt-1-full-suite/stderr.log",
+          "stdout_sha256": "e5aabc8b6d76a0a835ac1b3597291aadc8ca52faeb32916afb9a4e06cf203741",
+          "stderr_sha256": "e0eefdcb43e856e35f2090f905a71b8c3433f12169a497e48c3274550a62bccd",
+          "attempt": 1,
+          "scope": "full-suite",
+          "test_paths": [],
+          "selector": null,
+          "selector_mode": null,
+          "ordering_seed": null,
+          "toolchain_mode": "swift_test",
+          "test_timeout": null,
+          "test_runner_mode": "swift_test",
+          "infrastructure_error": false,
+          "output_format": "swift_test_text",
+          "final_success": false,
+          "counts": {
+            "started": 1,
+            "passed": 0,
+            "failed": 1,
+            "skipped": 0
+          },
+          "unfinished_tests": [],
+          "failed_tests": [
+            {
+              "test_id": "Tests/FluentTests/SQLSerializerTests.swift::SQLSerializerTests/testDistinctCount",
+              "test_path": "Tests/FluentTests/SQLSerializerTests.swift",
+              "test_name": "SQLSerializerTests/testDistinctCount",
+              "test_local_name": "testDistinctCount",
+              "error": "Tests/FluentTests/SQLSerializerTests.swift:88: SQLSerializerTests.testDistinctCount : XCTAssertEqual failed: (\"SELECT DISTINCT COUNT(*) as _fluent_aggregate FROM `users`\") is not equal to (\"SELECT COUNT(DISTINCT *) as _fluent_aggregate FROM `users`\")",
+              "stack_trace": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/advance40-repairwave-SWIFT-450/SWIFT-450/validation/SWIFT-450/minimization/SWIFT-450/subset-1/Tests/FluentTests/SQLSerializerTests.swift",
+              "normalized_error": "Tests/FluentTests/SQLSerializerTests.swift:88: SQLSerializerTests.testDistinctCount : XCTAssertEqual failed: (\"SELECT DISTINCT COUNT(*) as _fluent_aggregate FROM `users`\") is not equal to (\"SELECT COUNT(DISTINCT *) as _fluent_aggregate FROM `users`\")",
+              "normalized_stack": "<WORKTREE>/Tests/FluentTests/SQLSerializerTests.swift",
+              "is_failure": true,
+              "failure_fingerprint": "ba82e2acbe84078068546b9a395073e64a0af02595a5fceecaa6163bae2c2a81"
+            }
+          ],
+          "failure_fingerprint": "94cb5c874371d0f19f11f429bdb06edc10a8db14544a718efdd26d53128d9554",
+          "invalid_output_lines": [],
+          "selected_progress": [
+            [
+              "FluentTests.ModelFindTests",
+              "testFindFailing"
+            ],
+            [
+              "FluentTests.ModelFindTests",
+              "testFindSucceeding"
+            ],
+            [
+              "FluentTests.ModelFindTests",
+              "testFindErroring"
+            ],
+            [
+              "FluentTests.PreparationTests",
+              "testManualPreparation"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testBasalQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testBasicQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testLikeQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testCountQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testDeleteQuery"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testBasic"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testWithValues"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawFilter"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawJoinsAndFilters"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawSet"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawGet"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawLimit"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawSort"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testHasMany"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testBelongsToMany"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testCustomForeignKey"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testPivotDatabase"
+            ],
+            [
+              "FluentTests.RowTests",
+              "testFuzzyRowArray"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testCreate"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testStringDefault"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testModify"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testBasicSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testRegularSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testOffsetSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterLikeSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testBasicCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testRegularCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterLikeCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testReqularSum"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testcustomAggregate"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterEqualsNullSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterNotEqualsNullSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareUpdate"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterGroup"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testSort"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testSortMultiple"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testJoinedDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNotNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNodeNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testPlainNil"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testEmptyIn"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testEmptyNotIn"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDirty"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testBasic"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testSQLFilters"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testSiblings"
+            ],
+            [
+              "FluentTesterTests.MemoryBenchmarkTests",
+              "testSuite"
+            ],
+            [
+              "FluentTests.SQLiteTests",
+              "testMultipleColumnModify"
+            ],
+            [
+              "FluentTests.SQLiteTests",
+              "testBlobColumnType"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testCompare"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testSubset"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testCustomFromString"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "subset": [
+        2
+      ],
+      "hunk_count": 1,
+      "changed_lines": 2,
+      "patch_sha256": "8e539eda1ff7bd9a72281c3f5473febd6aab9f22847bb4f04ec3589ed4737290",
+      "trigger_patch_state": "applied",
+      "build_compatibility_patch_state": null,
+      "outcome": "INFRASTRUCTURE_ERROR",
+      "runs": [
+        {
+          "scope": "dependency",
+          "command": [
+            "/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/spm-cache-SWIFT-450",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.519,
+          "stdout_log": "logs/minimization/subset-002/001-unknown-attempt-unknown-dependency/stdout.log",
+          "stderr_log": "logs/minimization/subset-002/001-unknown-attempt-unknown-dependency/stderr.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "fe8e18a250c371169498a7dff6c86705116392cec35dcec5b4c5df5e86d31fd7",
+          "infrastructure_error": false,
+          "dependency_network_mode": "offline",
+          "package_config_format": "workspace_state",
+          "package_manifest_lock_synthetic": false,
+          "locked_dependency_versions": {},
+          "package_manifest_lock_artifact": "logs/minimization/subset-002/001-unknown-attempt-unknown-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "4251812d62bfdbaf0f51befd3236d3d549e544b840ea9e26a93788ad438c5133",
+          "package_config_artifact": "logs/minimization/subset-002/001-unknown-attempt-unknown-dependency/workspace-state.json",
+          "package_config_sha256": "8ca0221ee7d782f094ffda83a50f27915c296552220c9e70d3f62e968559c69b"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 5.624,
+          "stdout_log": "logs/minimization/subset-002/002-unknown-attempt-unknown-analyze/stdout.log",
+          "stderr_log": "logs/minimization/subset-002/002-unknown-attempt-unknown-analyze/stderr.log",
+          "stdout_sha256": "a44e7e43e664710028c56c7c422d5b445186dddb38e66d77b58fe1b95ea94110",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_paths": [],
+          "infrastructure_error": false,
+          "analyzer_command": [
+            "/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ]
+        },
+        {
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "testDistinctCount"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 1.652,
+          "stdout_log": "logs/minimization/subset-002/003-unknown-attempt-1-isolated-trigger/stdout.log",
+          "stderr_log": "logs/minimization/subset-002/003-unknown-attempt-1-isolated-trigger/stderr.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e8972473956686097a61c9b17416038af83f1b168afec23ab8ffccfc2bd6421a",
+          "attempt": 1,
+          "scope": "isolated-trigger",
+          "test_paths": [
+            "Tests/FluentTests/SQLSerializerTests.swift"
+          ],
+          "selector": "testDistinctCount",
+          "selector_mode": "filter",
+          "ordering_seed": null,
+          "toolchain_mode": "swift_test",
+          "test_timeout": null,
+          "test_runner_mode": "swift_test",
+          "infrastructure_error": true,
+          "output_format": "swift_test_text",
+          "final_success": false,
+          "counts": {
+            "started": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "unfinished_tests": [],
+          "failed_tests": [],
+          "failure_fingerprint": null,
+          "invalid_output_lines": [],
+          "selected_progress": []
+        },
+        {
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.708,
+          "stdout_log": "logs/minimization/subset-002/004-unknown-attempt-1-trigger-suite/stdout.log",
+          "stderr_log": "logs/minimization/subset-002/004-unknown-attempt-1-trigger-suite/stderr.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "d0f8232304704d90ebecf942c1f91f2be8564f74a54de9ee5fb5777cc57110e3",
+          "attempt": 1,
+          "scope": "trigger-suite",
+          "test_paths": [
+            "Tests/FluentTests/SQLSerializerTests.swift"
+          ],
+          "selector": null,
+          "selector_mode": null,
+          "ordering_seed": null,
+          "toolchain_mode": "swift_test",
+          "test_timeout": null,
+          "test_runner_mode": "swift_test",
+          "infrastructure_error": true,
+          "output_format": "swift_test_text",
+          "final_success": false,
+          "counts": {
+            "started": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "unfinished_tests": [],
+          "failed_tests": [],
+          "failure_fingerprint": null,
+          "invalid_output_lines": [],
+          "selected_progress": []
+        },
+        {
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 1,
+          "timed_out": false,
+          "duration_seconds": 0.795,
+          "stdout_log": "logs/minimization/subset-002/005-unknown-attempt-1-full-suite/stdout.log",
+          "stderr_log": "logs/minimization/subset-002/005-unknown-attempt-1-full-suite/stderr.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "d93ae6e17ff0a813960866a9c4862593ee808374a7744e8396e0a3a3da730f8e",
+          "attempt": 1,
+          "scope": "full-suite",
+          "test_paths": [],
+          "selector": null,
+          "selector_mode": null,
+          "ordering_seed": null,
+          "toolchain_mode": "swift_test",
+          "test_timeout": null,
+          "test_runner_mode": "swift_test",
+          "infrastructure_error": true,
+          "output_format": "swift_test_text",
+          "final_success": false,
+          "counts": {
+            "started": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "unfinished_tests": [],
+          "failed_tests": [],
+          "failure_fingerprint": null,
+          "invalid_output_lines": [],
+          "selected_progress": []
+        }
+      ]
+    },
+    {
+      "subset": [
+        1,
+        2
+      ],
+      "hunk_count": 2,
+      "changed_lines": 4,
+      "patch_sha256": "89f9578d020ff48baf0e520b765c28767ba4c916d9664c3061501035af25a562",
+      "trigger_patch_state": "applied",
+      "build_compatibility_patch_state": null,
+      "outcome": "PASS",
+      "runs": [
+        {
+          "scope": "dependency",
+          "command": [
+            "/usr/bin/swift",
+            "package",
+            "--cache-path",
+            "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/spm-cache-SWIFT-450",
+            "resolve",
+            "--skip-update"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.717,
+          "stdout_log": "logs/minimization/subset-003/001-unknown-attempt-unknown-dependency/stdout.log",
+          "stderr_log": "logs/minimization/subset-003/001-unknown-attempt-unknown-dependency/stderr.log",
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "a41735d81480739b3944fd2e62fd3b923402d3507cea1dfafc2bce3ca29c0ef8",
+          "infrastructure_error": false,
+          "dependency_network_mode": "offline",
+          "package_config_format": "workspace_state",
+          "package_manifest_lock_synthetic": false,
+          "locked_dependency_versions": {},
+          "package_manifest_lock_artifact": "logs/minimization/subset-003/001-unknown-attempt-unknown-dependency/Package.resolved",
+          "package_manifest_lock_sha256": "4251812d62bfdbaf0f51befd3236d3d549e544b840ea9e26a93788ad438c5133",
+          "package_config_artifact": "logs/minimization/subset-003/001-unknown-attempt-unknown-dependency/workspace-state.json",
+          "package_config_sha256": "8ca0221ee7d782f094ffda83a50f27915c296552220c9e70d3f62e968559c69b"
+        },
+        {
+          "scope": "analyze",
+          "command": [
+            "/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 7.108,
+          "stdout_log": "logs/minimization/subset-003/002-unknown-attempt-unknown-analyze/stdout.log",
+          "stderr_log": "logs/minimization/subset-003/002-unknown-attempt-unknown-analyze/stderr.log",
+          "stdout_sha256": "3d29f45e46133a97977836c6be22173f0c2601a37c0553dd3acc22fb561ada25",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "analyze_paths": [],
+          "infrastructure_error": false,
+          "analyzer_command": [
+            "/usr/bin/swift",
+            "build",
+            "--build-tests"
+          ]
+        },
+        {
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1",
+            "--filter",
+            "testDistinctCount"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 0.764,
+          "stdout_log": "logs/minimization/subset-003/003-unknown-attempt-1-isolated-trigger/stdout.log",
+          "stderr_log": "logs/minimization/subset-003/003-unknown-attempt-1-isolated-trigger/stderr.log",
+          "stdout_sha256": "54712fae1ca5819301dfeda06b8cc8212bdb6ab64cd83e15d750fcbf3bdb0f76",
+          "stderr_sha256": "4f23a7837b7a0588729b5085da628fdff80d41c48bf7e98194e99051ad75d691",
+          "attempt": 1,
+          "scope": "isolated-trigger",
+          "test_paths": [
+            "Tests/FluentTests/SQLSerializerTests.swift"
+          ],
+          "selector": "testDistinctCount",
+          "selector_mode": "filter",
+          "ordering_seed": null,
+          "toolchain_mode": "swift_test",
+          "test_timeout": null,
+          "test_runner_mode": "swift_test",
+          "infrastructure_error": false,
+          "output_format": "swift_test_text",
+          "final_success": true,
+          "counts": {
+            "started": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "unfinished_tests": [],
+          "failed_tests": [],
+          "failure_fingerprint": null,
+          "invalid_output_lines": [],
+          "selected_progress": [
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctCount"
+            ]
+          ]
+        },
+        {
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 3.274,
+          "stdout_log": "logs/minimization/subset-003/004-unknown-attempt-1-trigger-suite/stdout.log",
+          "stderr_log": "logs/minimization/subset-003/004-unknown-attempt-1-trigger-suite/stderr.log",
+          "stdout_sha256": "1610dc30a5ea3e8395e969a2e7653a4da2d8114685bc09b8ffe25152a9d6ef02",
+          "stderr_sha256": "e0eefdcb43e856e35f2090f905a71b8c3433f12169a497e48c3274550a62bccd",
+          "attempt": 1,
+          "scope": "trigger-suite",
+          "test_paths": [
+            "Tests/FluentTests/SQLSerializerTests.swift"
+          ],
+          "selector": null,
+          "selector_mode": null,
+          "ordering_seed": null,
+          "toolchain_mode": "swift_test",
+          "test_timeout": null,
+          "test_runner_mode": "swift_test",
+          "infrastructure_error": false,
+          "output_format": "swift_test_text",
+          "final_success": true,
+          "counts": {
+            "started": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "unfinished_tests": [],
+          "failed_tests": [],
+          "failure_fingerprint": null,
+          "invalid_output_lines": [],
+          "selected_progress": [
+            [
+              "FluentTests.ModelFindTests",
+              "testFindFailing"
+            ],
+            [
+              "FluentTests.ModelFindTests",
+              "testFindSucceeding"
+            ],
+            [
+              "FluentTests.ModelFindTests",
+              "testFindErroring"
+            ],
+            [
+              "FluentTests.PreparationTests",
+              "testManualPreparation"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testBasalQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testBasicQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testLikeQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testCountQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testDeleteQuery"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testBasic"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testWithValues"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawFilter"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawJoinsAndFilters"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawSet"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawGet"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawLimit"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawSort"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testHasMany"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testBelongsToMany"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testCustomForeignKey"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testPivotDatabase"
+            ],
+            [
+              "FluentTests.RowTests",
+              "testFuzzyRowArray"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testCreate"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testStringDefault"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testModify"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testBasicSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testRegularSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testOffsetSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterLikeSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testBasicCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testRegularCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterLikeCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testReqularSum"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testcustomAggregate"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterEqualsNullSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterNotEqualsNullSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareUpdate"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterGroup"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testSort"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testSortMultiple"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testJoinedDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNotNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNodeNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testPlainNil"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testEmptyIn"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testEmptyNotIn"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDirty"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testBasic"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testSQLFilters"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testSiblings"
+            ],
+            [
+              "FluentTesterTests.MemoryBenchmarkTests",
+              "testSuite"
+            ],
+            [
+              "FluentTests.SQLiteTests",
+              "testMultipleColumnModify"
+            ],
+            [
+              "FluentTests.SQLiteTests",
+              "testBlobColumnType"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testCompare"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testSubset"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testCustomFromString"
+            ]
+          ]
+        },
+        {
+          "command": [
+            "/usr/bin/swift",
+            "test",
+            "--parallel",
+            "--num-workers",
+            "1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "duration_seconds": 3.207,
+          "stdout_log": "logs/minimization/subset-003/005-unknown-attempt-1-full-suite/stdout.log",
+          "stderr_log": "logs/minimization/subset-003/005-unknown-attempt-1-full-suite/stderr.log",
+          "stdout_sha256": "1610dc30a5ea3e8395e969a2e7653a4da2d8114685bc09b8ffe25152a9d6ef02",
+          "stderr_sha256": "c038b89b9e21a154aacd40c033858d89e69f54091eb4821481ff95e8215b8333",
+          "attempt": 1,
+          "scope": "full-suite",
+          "test_paths": [],
+          "selector": null,
+          "selector_mode": null,
+          "ordering_seed": null,
+          "toolchain_mode": "swift_test",
+          "test_timeout": null,
+          "test_runner_mode": "swift_test",
+          "infrastructure_error": false,
+          "output_format": "swift_test_text",
+          "final_success": true,
+          "counts": {
+            "started": 0,
+            "passed": 0,
+            "failed": 0,
+            "skipped": 0
+          },
+          "unfinished_tests": [],
+          "failed_tests": [],
+          "failure_fingerprint": null,
+          "invalid_output_lines": [],
+          "selected_progress": [
+            [
+              "FluentTests.ModelFindTests",
+              "testFindFailing"
+            ],
+            [
+              "FluentTests.ModelFindTests",
+              "testFindSucceeding"
+            ],
+            [
+              "FluentTests.ModelFindTests",
+              "testFindErroring"
+            ],
+            [
+              "FluentTests.PreparationTests",
+              "testManualPreparation"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testBasalQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testBasicQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testLikeQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testCountQuery"
+            ],
+            [
+              "FluentTests.QueryFiltersTests",
+              "testDeleteQuery"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testBasic"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testWithValues"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawFilter"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawJoinsAndFilters"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawSet"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawGet"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawLimit"
+            ],
+            [
+              "FluentTests.RawTests",
+              "testRawSort"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testHasMany"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testBelongsToMany"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testCustomForeignKey"
+            ],
+            [
+              "FluentTests.RelationTests",
+              "testPivotDatabase"
+            ],
+            [
+              "FluentTests.RowTests",
+              "testFuzzyRowArray"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testCreate"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testStringDefault"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testModify"
+            ],
+            [
+              "FluentTests.SchemaCreateTests",
+              "testDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testBasicSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testRegularSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testOffsetSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterLikeSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testBasicCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDistinctCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testRegularCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterLikeCount"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testReqularSum"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testcustomAggregate"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterEqualsNullSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterNotEqualsNullSelect"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareUpdate"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterCompareDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testFilterGroup"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testSort"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testSortMultiple"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testJoinedDelete"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNotNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testNodeNull"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testPlainNil"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testEmptyIn"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testEmptyNotIn"
+            ],
+            [
+              "FluentTests.SQLSerializerTests",
+              "testDirty"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testBasic"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testSQLFilters"
+            ],
+            [
+              "FluentTests.JoinTests",
+              "testSiblings"
+            ],
+            [
+              "FluentTesterTests.MemoryBenchmarkTests",
+              "testSuite"
+            ],
+            [
+              "FluentTests.SQLiteTests",
+              "testMultipleColumnModify"
+            ],
+            [
+              "FluentTests.SQLiteTests",
+              "testBlobColumnType"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testCompare"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testSubset"
+            ],
+            [
+              "FluentTests.FilterNodeConvertibleTests",
+              "testCustomFromString"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "chosen_subset": [
+    1,
+    2
+  ],
+  "conclusive": true,
+  "status": "PASS",
+  "execution_environment": "portable_release_environment",
+  "release_evidence_grade": "portable_release_evidence",
+  "post_minimization_validation_generated_at": "2026-09-05T16:04:15.919885+00:00"
+}

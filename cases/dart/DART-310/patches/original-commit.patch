@@ -1,0 +1,41 @@
+diff --git a/lib/src/ast_extensions.dart b/lib/src/ast_extensions.dart
+index ac54ed8..9c82eca 100644
+--- a/lib/src/ast_extensions.dart
++++ b/lib/src/ast_extensions.dart
+@@ -26,11 +26,19 @@ extension AstNodeExtensions on AstNode {
+   /// (if there is any), or the beginning of the code.
+   Token get firstNonCommentToken {
+     return switch (this) {
++      // If the node is annotated, skip past the doc comments, but not the
++      // metadata.
+       AnnotatedNode(metadata: [var annotation, ...]) => annotation.beginToken,
+       AnnotatedNode(firstTokenAfterCommentAndMetadata: var token) => token,
++
+       // DefaultFormalParameter is not an AnnotatedNode, but its first child
+       // (parameter) *is* an AnnotatedNode, so we can't just use beginToken.
+       DefaultFormalParameter(:var parameter) => parameter.firstNonCommentToken,
++
++      // A pattern variable statement isn't itself an AnnotatedNode, but the
++      // [PatternVariableDeclaration] that it wraps is.
++      PatternVariableDeclarationStatement(:var declaration) =>
++        declaration.firstNonCommentToken,
+       _ => beginToken
+     };
+   }
+diff --git a/test/tall/regression/1500/1586.unit b/test/tall/regression/1500/1586.unit
+new file mode 100644
+index 0000000..4f1d36e
+--- /dev/null
++++ b/test/tall/regression/1500/1586.unit
+@@ -0,0 +1,10 @@
++>>>
++main() {
++  /// Doc comment.
++  final (a, b) = c;
++}
++<<<
++main() {
++  /// Doc comment.
++  final (a, b) = c;
++}
+\ No newline at end of file

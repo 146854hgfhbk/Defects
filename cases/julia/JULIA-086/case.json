@@ -1,0 +1,120 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-086",
+  "bug_id": "JULIA-086",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaNLSolvers/Optim.jl",
+  "repository_url": "https://github.com/JuliaNLSolvers/Optim.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "b0b79128b4ff4ef404d0a631e71eee20ce153cbb",
+  "fixed_revision": "73729e39e406392b6fb8cace6250b761ad003549",
+  "candidate_sha": "73729e39e406392b6fb8cace6250b761ad003549",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "b0b79128b4ff4ef404d0a631e71eee20ce153cbb",
+  "changed_production_files": [
+    "src/multivariate/solvers/second_order/newton_trust_region.jl"
+  ],
+  "changed_test_files": [
+    "test/multivariate/solvers/second_order/newton_trust_region.jl"
+  ],
+  "trigger_tests": [
+    "trust-region hard-case KKT step"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "013eb9064e0dbb2ef7f4277007b7a355668ecbbd52a70c17a4f0f8377ede3199",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/multivariate/solvers/second_order/newton_trust_region.jl",
+        "basis": "analytic hard-case assertions copied from upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "7a3df8fc6d5a48c6a1e42a31e6d45ec7015538d61f7bd07e09131f031caa8e8b"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "73729e39e406392b6fb8cace6250b761ad003549",
+    "project": "JuliaNLSolvers/Optim.jl",
+    "input_sha256": "feebb4474d4cec26954626909248c181f45c1fae701e8b60cddb7fa2c172ad4b",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:54:10Z",
+    "usage": {
+      "prompt_tokens": 1945,
+      "completion_tokens": 581,
+      "total_tokens": 2526
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.95,\n  \"summary\": \"Fix for a sign error in the hard-case trust region step computation in solve_tr_subproblem!. The step was assembled as τz - p instead of p + τz, producing an incorrect subproblem solution that happened to pass existing norm-based tests but violated the KKT optimality condition.\",\n  \"evidence\": \"The issue provides a detailed mathematical analysis showing the bug: `axpby!(tau, z, -1, s)` computes `τz - p` instead of the correct `p + τz`. The bug is demonstrated with a concrete analytic instance (H = diag(-2, 1), g = [0, 1], Δ = 1) where the model value was -1/2 instead of the correct -7/6. The fix changes to `axpy!(tau, z, s)` to correctly compute `s = p + τz`. Tests are added/updated to verify the KKT residual `(H + λI)s = -g`, which the buggy code failed.\",\n  \"missing_evidence\": \"The actual diff is not provided, only the issue description and file paths. However the issue description is extremely detailed and clearly maps to the production file change.\",\n  \"validation_risks\": \"The fix also removes a redundant `calc_p!` call and moves `initial_safeguards` into the non-hard-case branch, which are secondary changes that could have side effects in edge cases. These should be verified by running the full test suite.\",\n  \"suggested_tests\": \"1. Verify the 2x2 analytic hard case (H = diag(-2, 1), g = [0, 1], Δ = 1) returns model value -7/6 and satisfies (H + λI)s = -g. 2. Verify the existing hard-case test still passes with the additional KKT residual check. 3. Run an end-to-end optimization problem known to trigger the hard case to confirm convergence behavior is correct.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.95,
+    "summary": "Fix for a sign error in the hard-case trust region step computation in solve_tr_subproblem!. The step was assembled as τz - p instead of p + τz, producing an incorrect subproblem solution that happened to pass existing norm-based tests but violated the KKT optimality condition.",
+    "evidence": "The issue provides a detailed mathematical analysis showing the bug: `axpby!(tau, z, -1, s)` computes `τz - p` instead of the correct `p + τz`. The bug is demonstrated with a concrete analytic instance (H = diag(-2, 1), g = [0, 1], Δ = 1) where the model value was -1/2 instead of the correct -7/6. The fix changes to `axpy!(tau, z, s)` to correctly compute `s = p + τz`. Tests are added/updated to verify the KKT residual `(H + λI)s = -g`, which the buggy code failed.",
+    "missing_evidence": "The actual diff is not provided, only the issue description and file paths. However the issue description is extremely detailed and clearly maps to the production file change.",
+    "validation_risks": "The fix also removes a redundant `calc_p!` call and moves `initial_safeguards` into the non-hard-case branch, which are secondary changes that could have side effects in edge cases. These should be verified by running the full test suite.",
+    "suggested_tests": "1. Verify the 2x2 analytic hard case (H = diag(-2, 1), g = [0, 1], Δ = 1) returns model value -7/6 and satisfies (H + λI)s = -g. 2. Verify the existing hard-case test still passes with the additional KKT residual check. 3. Run an end-to-end optimization problem known to trigger the hard case to confirm convergence behavior is correct."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "trust-region hard-case KKT step"
+    ],
+    "exception_types": [
+      "03b457908047490c0e310945914e49fd81365db04fbb1a138e8698b348ba684d",
+      "2f9e573cc941db94595a82c2ea28d221d5dd0ef9f53b414194c5e98428b604ba",
+      "5db8e625ffbc2d9ac918b1fb4693190f9df23a6012efadedfeabc82395524d2e"
+    ],
+    "fingerprints": [
+      "03b457908047490c0e310945914e49fd81365db04fbb1a138e8698b348ba684d",
+      "2f9e573cc941db94595a82c2ea28d221d5dd0ef9f53b414194c5e98428b604ba",
+      "5db8e625ffbc2d9ac918b1fb4693190f9df23a6012efadedfeabc82395524d2e"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

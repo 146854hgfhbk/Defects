@@ -1,0 +1,121 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-214",
+  "bug_id": "JULIA-214",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaIntervals/IntervalArithmetic.jl",
+  "repository_url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaIntervals/IntervalArithmetic.jl/issues/618"
+  ],
+  "issue_id": 618,
+  "buggy_revision": "719bc91c6e4b10e8c7cdd9c71c0256753e69f864",
+  "fixed_revision": "d44f607639e6bf313bd1f73fe788c240d832750d",
+  "candidate_sha": "d44f607639e6bf313bd1f73fe788c240d832750d",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "719bc91c6e4b10e8c7cdd9c71c0256753e69f864",
+  "changed_production_files": [
+    "src/intervals/arithmetic/power.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-214 literal powers preserve guarantees"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "e4cb0c4fe32b4b774975e1634150cacba6342eead489134433db819751bfb809",
+    "oracle": {
+      "public_api": "IntervalArithmetic.interval, exponentiation, and isguaranteed",
+      "upstream_issue": 618,
+      "upstream_pull_request": 619,
+      "upstream_test_file": "test/interval_tests/power.jl",
+      "source_evidence": "Exact public-API assertion isolated from the upstream Literal powers test added by PR #619 for issue #618.",
+      "upstream_test_patch_sha256": "5c7f37e6df55033b4b5222ac165e7782d7d5c3e72c6414c8611e1eef2761e17e"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "d44f607639e6bf313bd1f73fe788c240d832750d",
+    "project": "JuliaIntervals/IntervalArithmetic.jl",
+    "input_sha256": "c9c088d382eedda7d29103a9109411b65f38d039e5aaa9d0f8df82397719caf5",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:51:19Z",
+    "usage": {
+      "prompt_tokens": 1961,
+      "completion_tokens": 539,
+      "total_tokens": 2500
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"unknown\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.78,\n  \"summary\": \"The fix corrects `Base.literal_pow` for `Interval` types so that literal integer powers (e.g., `x^2`) route through `_select_pown(power_mode(), x, n)` instead of falling back to the generic `x^n` path which calls `convert`. This ensures the `isguaranteed` property is preserved and correct interval results (e.g., `(-1,1)^2 == (0,1)`) are produced for literal powers.\",\n  \"evidence\": \"The commit message references PR #619 titled 'Avoid `convert` in `^` for literal powers'. The test explicitly checks that `isguaranteed(x^2)` holds (literal power) while `!isguaranteed(x^n)` (variable power) does not, and that `x^2` yields the correct interval `(0,1)` for `x = interval(-1,1)`. The old code `x^n` would not route through the correct `_select_pown` logic, producing incorrect behavior for literal powers.\",\n  \"missing_evidence\": \"No linked issue body is available. We cannot directly observe test failures on the parent commit, only infer from the fix and test structure.\",\n  \"validation_risks\": \"The fix relies on `_select_pown` and `power_mode()` being correctly defined elsewhere. If those functions have issues, validation tests could fail for reasons unrelated to this fix.\",\n  \"suggested_tests\": \"Run the 'Literal powers' testset. Additionally verify `interval(-2,3)^2 == interval(0,9)`, `interval(-2,3)^3 == interval(-8,27)`, and confirm `isguaranteed` is true for all literal power results on decorated intervals.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.78,
+    "summary": "The fix corrects `Base.literal_pow` for `Interval` types so that literal integer powers (e.g., `x^2`) route through `_select_pown(power_mode(), x, n)` instead of falling back to the generic `x^n` path which calls `convert`. This ensures the `isguaranteed` property is preserved and correct interval results (e.g., `(-1,1)^2 == (0,1)`) are produced for literal powers.",
+    "evidence": "The commit message references PR #619 titled 'Avoid `convert` in `^` for literal powers'. The test explicitly checks that `isguaranteed(x^2)` holds (literal power) while `!isguaranteed(x^n)` (variable power) does not, and that `x^2` yields the correct interval `(0,1)` for `x = interval(-1,1)`. The old code `x^n` would not route through the correct `_select_pown` logic, producing incorrect behavior for literal powers.",
+    "missing_evidence": "No linked issue body is available. We cannot directly observe test failures on the parent commit, only infer from the fix and test structure.",
+    "validation_risks": "The fix relies on `_select_pown` and `power_mode()` being correctly defined elsewhere. If those functions have issues, validation tests could fail for reasons unrelated to this fix.",
+    "suggested_tests": "Run the 'Literal powers' testset. Additionally verify `interval(-2,3)^2 == interval(0,9)`, `interval(-2,3)^3 == interval(-8,27)`, and confirm `isguaranteed` is true for all literal power results on decorated intervals."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-214 literal powers preserve guarantees"
+    ],
+    "exception_types": [
+      "be4cd7cf2db879f6c8c6a5c364a206dae0a15a888985f3fa327912154e41b3f9"
+    ],
+    "fingerprints": [
+      "be4cd7cf2db879f6c8c6a5c364a206dae0a15a888985f3fa327912154e41b3f9"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

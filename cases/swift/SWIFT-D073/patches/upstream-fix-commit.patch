@@ -1,0 +1,54 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index e653168..56c4aa8 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -10,7 +10,10 @@
+ 
+ ##### Bug Fixes
+ 
+-* None.
++* Empty dictionaries can be now represented, regardless of its key or element
++  type information.  
++  [JP Simard](https://github.com/jpsim)
++  [#393](https://github.com/jpsim/Yams/issues/393)
+ 
+ ## 5.0.5
+ 
+diff --git a/Sources/Yams/Representer.swift b/Sources/Yams/Representer.swift
+index 759335b..a749c52 100644
+--- a/Sources/Yams/Representer.swift
++++ b/Sources/Yams/Representer.swift
+@@ -64,6 +64,8 @@ extension Dictionary: NodeRepresentable {
+ private func represent(_ value: Any) throws -> Node {
+     if let representable = value as? NodeRepresentable {
+         return try representable.represented()
++    } else if (value as? NSDictionary)?.count == 0 {
++        return .mapping(Node.Mapping([]))
+     }
+     throw YamlError.representer(problem: "Failed to represent \(value)")
+ }
+diff --git a/Tests/YamsTests/RepresenterTests.swift b/Tests/YamsTests/RepresenterTests.swift
+index 4829b47..fa0f4ce 100644
+--- a/Tests/YamsTests/RepresenterTests.swift
++++ b/Tests/YamsTests/RepresenterTests.swift
+@@ -134,6 +134,10 @@ class RepresenterTests: XCTestCase {
+         let intToInt = [1: 2]
+         XCTAssertEqual(try Node(intToInt), [1: 2])
+     }
++
++    func testEmptyDictionary() throws {
++        XCTAssertEqual(try Yams.dump(object: NSDictionary()), "{}\n")
++    }
+ }
+ 
+ extension RepresenterTests {
+@@ -149,7 +153,8 @@ extension RepresenterTests {
+             ("testUUID", testUUID),
+             ("testOptional", testOptional),
+             ("testArray", testArray),
+-            ("testDictionary", testDictionary)
++            ("testDictionary", testDictionary),
++            ("testEmptyDictionary", testEmptyDictionary)
+         ]
+     }
+ }

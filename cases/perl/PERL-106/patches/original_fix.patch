@@ -1,0 +1,61 @@
+diff --git a/Changes b/Changes
+index 2e428987..8292c494 100644
+--- a/Changes
++++ b/Changes
+@@ -1,6 +1,8 @@
+ Revision history for HTTP-Message
+ 
+ {{$NEXT}}
++    - We now don't consider the Content-Location header when asked
++      for the base URI. RFC 7231 says we shouldn't. (GH#51) (Neil Bowers)
+ 
+ 6.40      2022-10-12 15:45:52Z
+     - Fixed two typos in the doc, originally reported by FatherC
+diff --git a/lib/HTTP/Response.pm b/lib/HTTP/Response.pm
+index 02a79340..d3fe4196 100644
+--- a/lib/HTTP/Response.pm
++++ b/lib/HTTP/Response.pm
+@@ -84,7 +84,6 @@ sub base
+     my $self = shift;
+     my $base = (
+ 	$self->header('Content-Base'),        # used to be HTTP/1.1
+-	$self->header('Content-Location'),    # HTTP/1.1
+ 	$self->header('Base'),                # HTTP/1.0
+     )[0];
+     if ($base && $base =~ /^$URI::scheme_re:/o) {
+@@ -475,7 +474,7 @@ in HTML documents.
+ 
+ =item 2.
+ 
+-A "Content-Base:" or a "Content-Location:" header in the response.
++A "Content-Base:" header in the response.
+ 
+ For backwards compatibility with older HTTP implementations we will
+ also look for the "Base:" header.
+@@ -490,6 +489,13 @@ received some redirect responses first.
+ 
+ If none of these sources provide an absolute URI, undef is returned.
+ 
++B<Note>: previous versions of HTTP::Response would also consider
++a "Content-Location:" header,
++as L<RFC 2616|https://www.rfc-editor.org/rfc/rfc2616> said it should be.
++But this was never widely implemented by browsers,
++and now L<RFC 7231|https://www.rfc-editor.org/rfc/rfc7231>
++says it should no longer be considered.
++
+ When the LWP protocol modules produce the HTTP::Response object, then any base
+ URI embedded in the document (step 1) will already have initialized the
+ "Content-Base:" header. (See L<LWP::UserAgent/parse_head>).  This means that
+diff --git a/t/response.t b/t/response.t
+index a656ace5..213ac8f0 100644
+--- a/t/response.t
++++ b/t/response.t
+@@ -105,7 +105,7 @@ for ($r->redirects) {
+ 
+ is($r->base, $r->request->uri);
+ $r->push_header("Content-Location", "/1/A/a");
+-is($r->base, "http://www.sn.no/1/A/a");
++is($r->base, $r->request->uri); # we no longer consider Content-Location
+ $r->push_header("Content-Base", "/2/;a=/foo/bar");
+ is($r->base, "http://www.sn.no/2/;a=/foo/bar");
+ $r->push_header("Content-Base", "/3/");

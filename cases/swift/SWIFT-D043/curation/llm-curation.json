@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1401",
+  "technical_evidence_sha256": "4d5ccf43e1d6f7fddeeb20febf6b5dd196b3e4a17dbb9a200480d52db52e4fe1",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "38ca94a2b69da56d0678db13a43f956286a9a1c6763ab4928b575fa2fa6d3297",
+  "reviewed_at": "2026-09-09T10:55:00.452973+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-openapi-runtime#808",
+  "rationale": "The linked issue (apple/swift-openapi-generator#808, 'Unable to encode multiple OpenAPIObjectContainer values into a single anyOf', closed via merged PR apple/swift-openapi-runtime#156, single commit 7722cf8) describes exactly the defect exercised by the trigger: OpenAPIObjectContainer.encode(to:) requested encoder.singleValueContainer(), so a generated anyOf wrapper that encodes two object containers into the same encoder could not produce a merged object. The minimized patch retains only the two hunks that fix that behavior: OpenAPIObjectContainer's init(from:)/encode(to:) switched from a single-value container to a keyed container over StringKey, plus the StringKey visibility change from private to internal that the new call site requires. Remaining changes to OpenAPIValueContainer and OpenAPIArrayContainer were removed by minimization, and post-minimization validation is PASS. The curator trigger testEncoding_anyOfObjects_success is a reduction of the upstream test diff: it uses only API that already existed on the buggy revision (OpenAPIObjectContainer(unvalidatedValue:), _testPrettyEncoded, DecodingError.verifyAtLeastOneSchemaIsNotNil) with a local MyAnyOf2 helper mirroring generated anyOf encode/decode, and the strict matrix records build.both_versions PASS with a genuine runtime differential (buggy fails only on that selector, fixed all-green over 3 repetitions and 32 matrix runs), so the buggy failure is not a fix-only-API compile error. No active same-project root causes are registered, and the root cause id matches the single allowed verified issue key.\n\nThe linked issue (apple/swift-openapi-generator#808, 'Unable to encode multiple OpenAPIObjectContainer values into a single anyOf', closed) matches the fix commit subject 'Fix encoding of OpenAPI{Object,Value}Container to allow multiple encodings in anyOf/allOf' and the raw commit message 'encoder object container crash'. Traceability is fix_commit -> merged PR #156 -> issue 808, and the fix commit is the unique commit in that PR. Root cause: OpenAPIObjectContainer.encode(to:) requested encoder.singleValueContainer() and encoded the whole dictionary as one value, so a second encode into the same encoder (the anyOf/allOf pattern where each member encodes to the shared encoder) traps/fails; the fix switches to a keyed container keyed by StringKey so multiple members merge into one JSON object. The minimized patch retains exactly the two hunks needed for that: the OpenAPIObjectContainer init(from:)/encode(to:) rewrite and the private->internal visibility bump on StringKey in CodableExtensions.swift, which is a compilation prerequisite for referencing StringKey from OpenAPIValue.swift rather than an independent refactor. No test, config, or feature-extension content remains in the production patch; the only non-functional content is the swap of doc comments for swift-format-ignore markers inside the same retained declarations, which has no semantic effect and is not separable at hunk granularity. The curator trigger is a verbatim subset of the upstream test diff: testEncoding_anyOfObjects_success plus the MyAnyOf2 helper, which relies only on Swift.DecodingError.verifyAtLeastOneSchemaIsNotNil and OpenAPIObjectContainer(unvalidatedValue:), both pre-existing APIs (build.both_versions PASS confirms the same trigger source compiles on both revisions, so this is not a fix-only-API compile artifact). Strict evidence, both original and post-minimization, shows selectors present and unique, deterministic 3-repetition differential FAIL on buggy and PASS on fixed in isolated, suite, and reversed runs, buggy full suite failing only on the declared trigger, and fixed full suite all green. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and the chosen key is the sole allowed id.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T10:54:23.159336+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "38ca94a2b69da56d0678db13a43f956286a9a1c6763ab4928b575fa2fa6d3297",
+      "response_sha256": "42bfc88dde58288ac1c3f73cc035adea852b293d80ff60ccea5cb46575e20776",
+      "response_id": "msg_90bf0046c8034ec8ba97383c3cc0c426",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8446131776782753,
+        "input_tokens": 32986,
+        "output_tokens": 645
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-openapi-runtime#808",
+      "rationale": "The linked issue (apple/swift-openapi-generator#808, 'Unable to encode multiple OpenAPIObjectContainer values into a single anyOf', closed via merged PR apple/swift-openapi-runtime#156, single commit 7722cf8) describes exactly the defect exercised by the trigger: OpenAPIObjectContainer.encode(to:) requested encoder.singleValueContainer(), so a generated anyOf wrapper that encodes two object containers into the same encoder could not produce a merged object. The minimized patch retains only the two hunks that fix that behavior: OpenAPIObjectContainer's init(from:)/encode(to:) switched from a single-value container to a keyed container over StringKey, plus the StringKey visibility change from private to internal that the new call site requires. Remaining changes to OpenAPIValueContainer and OpenAPIArrayContainer were removed by minimization, and post-minimization validation is PASS. The curator trigger testEncoding_anyOfObjects_success is a reduction of the upstream test diff: it uses only API that already existed on the buggy revision (OpenAPIObjectContainer(unvalidatedValue:), _testPrettyEncoded, DecodingError.verifyAtLeastOneSchemaIsNotNil) with a local MyAnyOf2 helper mirroring generated anyOf encode/decode, and the strict matrix records build.both_versions PASS with a genuine runtime differential (buggy fails only on that selector, fixed all-green over 3 repetitions and 32 matrix runs), so the buggy failure is not a fix-only-API compile error. No active same-project root causes are registered, and the root cause id matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/upstream-trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0]",
+        "traceability.paths[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "Retained hunk 3 carries incidental non-behavioral noise: doc comments on the unchanged == operator (and on the changed init/encode) are replaced by swift-format-ignore comments. This is hunk-granularity artifact with no semantic effect, but it is documentation/formatting churn inside the minimized patch.",
+        "Minimized scope covers only OpenAPIObjectContainer; the same root cause in OpenAPIValueContainer and OpenAPIArrayContainer is fixed upstream but not represented in the benchmark patch or trigger.",
+        "issue_evidence is null; issue title/state come from source_candidate metadata rather than fetched issue body, so the reported symptom text was not independently read."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T10:55:00.452285+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "38ca94a2b69da56d0678db13a43f956286a9a1c6763ab4928b575fa2fa6d3297",
+      "response_sha256": "ca49d451e343a8f86fcff885e09b6b21b32564b52d55dd11b800fa996ebc56d2",
+      "response_id": "msg_15598cc5dd1f4669bab2e3abed8001f9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8596890213598674,
+        "input_tokens": 33547,
+        "output_tokens": 827
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-openapi-runtime#808",
+      "rationale": "The linked issue (apple/swift-openapi-generator#808, 'Unable to encode multiple OpenAPIObjectContainer values into a single anyOf', closed) matches the fix commit subject 'Fix encoding of OpenAPI{Object,Value}Container to allow multiple encodings in anyOf/allOf' and the raw commit message 'encoder object container crash'. Traceability is fix_commit -> merged PR #156 -> issue 808, and the fix commit is the unique commit in that PR. Root cause: OpenAPIObjectContainer.encode(to:) requested encoder.singleValueContainer() and encoded the whole dictionary as one value, so a second encode into the same encoder (the anyOf/allOf pattern where each member encodes to the shared encoder) traps/fails; the fix switches to a keyed container keyed by StringKey so multiple members merge into one JSON object. The minimized patch retains exactly the two hunks needed for that: the OpenAPIObjectContainer init(from:)/encode(to:) rewrite and the private->internal visibility bump on StringKey in CodableExtensions.swift, which is a compilation prerequisite for referencing StringKey from OpenAPIValue.swift rather than an independent refactor. No test, config, or feature-extension content remains in the production patch; the only non-functional content is the swap of doc comments for swift-format-ignore markers inside the same retained declarations, which has no semantic effect and is not separable at hunk granularity. The curator trigger is a verbatim subset of the upstream test diff: testEncoding_anyOfObjects_success plus the MyAnyOf2 helper, which relies only on Swift.DecodingError.verifyAtLeastOneSchemaIsNotNil and OpenAPIObjectContainer(unvalidatedValue:), both pre-existing APIs (build.both_versions PASS confirms the same trigger source compiles on both revisions, so this is not a fix-only-API compile artifact). Strict evidence, both original and post-minimization, shows selectors present and unique, deterministic 3-repetition differential FAIL on buggy and PASS on fixed in isolated, suite, and reversed runs, buggy full suite failing only on the declared trigger, and fixed full suite all green. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry, and the chosen key is the sole allowed id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/upstream-trigger-tests.patch",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.build.both_versions",
+        "case.json:strict_original.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:source_candidate.issue_check.linked_issues[0]",
+        "case.json:traceability.paths[0]",
+        "Sources/OpenAPIRuntime/Base/OpenAPIValue.swift",
+        "Sources/OpenAPIRuntime/Conversion/CodableExtensions.swift"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue text itself was not supplied, so the semantic match rests on the issue title, PR title, and commit message rather than the full report body.",
+        "Retained hunk 3 also replaces doc comments with swift-format-ignore markers, including on the untouched == operator; non-functional but not strictly part of the fix.",
+        "The minimized patch fixes only OpenAPIObjectContainer, so the benchmark covers a narrower slice than the upstream commit, which also fixed OpenAPIValueContainer and OpenAPIArrayContainer.",
+        "Availability of verifyAtLeastOneSchemaIsNotNil on the buggy revision is inferred from the passing both-revisions build gate, not from direct inspection of the buggy source."
+      ]
+    }
+  ]
+}

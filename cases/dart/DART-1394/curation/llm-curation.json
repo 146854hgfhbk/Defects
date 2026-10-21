@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1394",
+  "technical_evidence_sha256": "fb8d1fd85b73b9b2c888c17fc22c40d62b53147fa3b7949dac41c494730a6bc5",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "d5f6feaf4d48cc2aa9557a6fd5976f5b43adecb345ec85cba75d00fd89b62a73",
+  "reviewed_at": "2026-08-15T13:37:48.660822+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/collection#286",
+  "rationale": "Traceability resolves the fix commit a37bd51 (PR #290, 'Fix bugs in ListExtensions.slice and ListSlice.slice.') to issue dart-lang/collection#286 via fix_commit_to_issue, and verified_fix_issue_numbers contains 286. The minimized production patch touches only lib/src/list_extensions.dart with two one-line changes that are both facets of the same slice defect: (a) `self is ListSlice` -> `self is ListSlice<E>` restores type promotion so the extension method dispatches to the instance method instead of recursing into itself, and (b) `start + start` -> `this.start + start` fixes the offset computation in ListSlice.slice that the promotion bug was masking. The single trigger test 'regression #286, bug in slice' exercises exactly this path: l1.slice(1, 5) then l2.slice(2, 4) expecting [4, 5], which fails on the buggy revision via the self-recursion/offset error and passes after the fix. The trigger is the unchanged upstream test from the fixing commit and calls only pre-existing public API (ListExtensions.slice, ListSlice.slice); no API is introduced by the patch. CHANGELOG.md, the only non-production/non-test file in the original commit, is correctly excluded from the minimized patch, so there is no documentation-only, configuration-only, refactor, or feature-extension content. Strict evidence (original and post-minimization) reports all gates passed: build on both versions, buggy differential with the declared selector failing alone, deterministic fingerprints across 3 repetitions, fixed clean isolated/suite/reversed, and fixed full suite green. active_same_project_root_causes is empty, so #286 is not a duplicate, and it matches the single allowed_root_cause_ids entry.\n\nThe two production edits in lib/src/list_extensions.dart are both behavioral fixes to the same slicing defect: `self is ListSlice` -> `self is ListSlice<E>` restores type promotion so ListExtensions.slice dispatches to the ListSlice instance method instead of recursing into itself, and `start + start` -> `this.start + start` fixes the offset computation in ListSlice.slice, where the parameter shadowed the field. The trigger test 'regression #286, bug in slice' exercises exactly these two failure modes through the pre-existing public API (List.slice / ListSlice.slice, both present at the buggy revision f949b09): calling l1.slice(1,5).slice(2,4) exposes the unbounded self-recursion, and expecting [4, 5] rather than the value produced by the doubled start offset pins the arithmetic bug. No new production API is introduced by the fix, so the trigger does not depend on one. The minimized patch drops the CHANGELOG entry and the test file from the original commit, leaving only the two one-line semantic changes; no formatting, refactor, feature, doc, or config content remains. Traceability resolves the fixing commit a37bd51 (PR #290) to issue 286, which matches the sole allowed_root_cause_id, and active_same_project_root_causes is empty, so this root cause is not a duplicate. Strict evidence, both original and post-minimization, reports all gates passed with a unique selector, deterministic fingerprints across 3 repetitions, a buggy differential on the declared selector, and an all-green fixed suite; I am relying on those machine-generated results as supplied and have not independently executed anything.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T13:37:27.026276+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "d5f6feaf4d48cc2aa9557a6fd5976f5b43adecb345ec85cba75d00fd89b62a73",
+      "response_sha256": "081812c9e14b522f5a681204ee1c67d0b92f9a4aeccebb92d1072d266ea92b2e",
+      "response_id": "msg_360650e3a5b446a7a0cfbd07fc696d3b",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4536166778109452,
+        "input_tokens": 7680,
+        "output_tokens": 686
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/collection#286",
+      "rationale": "Traceability resolves the fix commit a37bd51 (PR #290, 'Fix bugs in ListExtensions.slice and ListSlice.slice.') to issue dart-lang/collection#286 via fix_commit_to_issue, and verified_fix_issue_numbers contains 286. The minimized production patch touches only lib/src/list_extensions.dart with two one-line changes that are both facets of the same slice defect: (a) `self is ListSlice` -> `self is ListSlice<E>` restores type promotion so the extension method dispatches to the instance method instead of recursing into itself, and (b) `start + start` -> `this.start + start` fixes the offset computation in ListSlice.slice that the promotion bug was masking. The single trigger test 'regression #286, bug in slice' exercises exactly this path: l1.slice(1, 5) then l2.slice(2, 4) expecting [4, 5], which fails on the buggy revision via the self-recursion/offset error and passes after the fix. The trigger is the unchanged upstream test from the fixing commit and calls only pre-existing public API (ListExtensions.slice, ListSlice.slice); no API is introduced by the patch. CHANGELOG.md, the only non-production/non-test file in the original commit, is correctly excluded from the minimized patch, so there is no documentation-only, configuration-only, refactor, or feature-extension content. Strict evidence (original and post-minimization) reports all gates passed: build on both versions, buggy differential with the declared selector failing alone, deterministic fingerprints across 3 repetitions, fixed clean isolated/suite/reversed, and fixed full suite green. active_same_project_root_causes is empty, so #286 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/list_extensions.dart",
+        "patches/trigger-tests.patch",
+        "test/extensions_test.dart",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "issue_urls"
+      ],
+      "risks": [
+        "The commit bundles two logically separable one-line corrections (type promotion and offset arithmetic); the single trigger covers both together, so a benchmark consumer cannot isolate them independently.",
+        "Reproduction of the self-recursion half of the defect depends on Dart's type-promotion/dispatch semantics for the SDK version in the harness; a different SDK could alter the failure mode (stack overflow vs. wrong offset).",
+        "The issue body itself was not supplied inline; the issue-to-defect link rests on the commit/PR reference and the regression test's explicit '#286' annotation rather than on read issue text.",
+        "Analyzer cleanliness was diagnostic only (require_analyze_clean=false), so static-analysis state on the buggy revision is unverified."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T13:37:48.660298+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "d5f6feaf4d48cc2aa9557a6fd5976f5b43adecb345ec85cba75d00fd89b62a73",
+      "response_sha256": "b8a2386878339ea64d6c93c4e2e0f4417072d077579906382e0489fd4e92b75e",
+      "response_id": "msg_4c2ba0ad25fe4c438b7302c98f1c18a4",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4068403978441128,
+        "input_tokens": 7657,
+        "output_tokens": 663
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/collection#286",
+      "rationale": "The two production edits in lib/src/list_extensions.dart are both behavioral fixes to the same slicing defect: `self is ListSlice` -> `self is ListSlice<E>` restores type promotion so ListExtensions.slice dispatches to the ListSlice instance method instead of recursing into itself, and `start + start` -> `this.start + start` fixes the offset computation in ListSlice.slice, where the parameter shadowed the field. The trigger test 'regression #286, bug in slice' exercises exactly these two failure modes through the pre-existing public API (List.slice / ListSlice.slice, both present at the buggy revision f949b09): calling l1.slice(1,5).slice(2,4) exposes the unbounded self-recursion, and expecting [4, 5] rather than the value produced by the doubled start offset pins the arithmetic bug. No new production API is introduced by the fix, so the trigger does not depend on one. The minimized patch drops the CHANGELOG entry and the test file from the original commit, leaving only the two one-line semantic changes; no formatting, refactor, feature, doc, or config content remains. Traceability resolves the fixing commit a37bd51 (PR #290) to issue 286, which matches the sole allowed_root_cause_id, and active_same_project_root_causes is empty, so this root cause is not a duplicate. Strict evidence, both original and post-minimization, reports all gates passed with a unique selector, deterministic fingerprints across 3 repetitions, a buggy differential on the declared selector, and an all-green fixed suite; I am relying on those machine-generated results as supplied and have not independently executed anything.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The body of issue dart-lang/collection#286 is not supplied verbatim; the issue-to-defect link rests on the traceability record (fix_commit_to_issue), the commit subject 'Fix bugs in ListExtensions.slice and ListSlice.slice', and the test name referencing #286.",
+        "The commit fixes two distinct code errors under one issue key; if the upstream report described only the stack overflow, the offset fix is a same-function co-defect rather than a separately reported one.",
+        "The trigger asserts the corrected offset only through expect(l3, [4, 5]); it does not separately isolate the recursion bug from the arithmetic bug, so a partial fix could still be distinguishable only by failure mode, not by a separate test."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+diff --git a/code/Solutions/IM/Chat/features/chatlist/src/main/ets/view/OptLayoutChatView.ets b/code/Solutions/IM/Chat/features/chatlist/src/main/ets/view/OptLayoutChatView.ets
+index d899067f1c..c78f01cca8 100644
+--- a/code/Solutions/IM/Chat/features/chatlist/src/main/ets/view/OptLayoutChatView.ets
++++ b/code/Solutions/IM/Chat/features/chatlist/src/main/ets/view/OptLayoutChatView.ets
+@@ -44,9 +44,13 @@ struct ReusableOptLayoutChatView {
+ @Preview
+ @Component
+ struct OptLayoutChatView {
+-  private chatItem: ChatModel = new ChatModel(new ChatContact('', ''), '', '', 0);
++  @State chatItem: ChatModel = new ChatModel(new ChatContact('', ''), '', '', 0);
+   @StorageLink('image_sync_load') imageSyncLoad: boolean | undefined = AppStorage.get('image_sync_load');
+ 
++  aboutToReuse(params: Record<string, Object>): void {
++    this.chatItem = params.chatItem as ChatModel;
++  }
++
+   build() {
+     RelativeContainer() {
+       Image(this.chatItem.user.userImage)

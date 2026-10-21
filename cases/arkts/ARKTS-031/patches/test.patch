@@ -1,0 +1,78 @@
+diff --git a/code/BasicFeature/Media/VideoShow/entry/src/ohosTest/ets/test/FullPageReturnState.test.ets b/code/BasicFeature/Media/VideoShow/entry/src/ohosTest/ets/test/FullPageReturnState.test.ets
+new file mode 100644
+index 000000000..d77ad5f43
+--- /dev/null
++++ b/code/BasicFeature/Media/VideoShow/entry/src/ohosTest/ets/test/FullPageReturnState.test.ets
+@@ -0,0 +1,56 @@
++/*
++ * Copyright (c) 2024 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import { describe, it, expect } from '@ohos/hypium';
++import { Driver, ON } from '@ohos.UiTest';
++import Logger from '../utils/Logger';
++
++const TAG = '[Sample_VideoShow]';
++
++export default function fullPageReturnStateTest(): void {
++  describe('FullPageReturnStateTest', () => {
++    it('FullPageBackShouldReopenFreshMainPage_001', 0, async () => {
++      Logger.info(TAG, 'FullPageBackShouldReopenFreshMainPage_001 start');
++      let abilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator();
++      await abilityDelegator.startAbility({
++        bundleName: 'com.example.videoshow',
++        abilityName: 'MainAbility'
++      });
++
++      let driver = await Driver.create();
++      await driver.delayMs(1000);
++
++      let firstPlayBtn = await driver.waitForComponent(ON.id('playBtn'), 13000);
++      expect(firstPlayBtn === null).assertFalse();
++      await firstPlayBtn.click();
++      await driver.delayMs(500);
++
++      let videoPage = await driver.findComponent(ON.id('VideoPage'));
++      expect(videoPage === null).assertFalse();
++      await videoPage.click();
++      await driver.delayMs(1000);
++
++      await driver.assertComponentExist(ON.id('fullVideo'));
++      await driver.pressBack();
++      await driver.delayMs(1200);
++
++      await driver.assertComponentExist(ON.id('VideoPage'));
++      let returnedPlayBtn = await driver.findComponent(ON.id('playBtn'));
++      expect(returnedPlayBtn === null).assertFalse();
++      Logger.info(TAG, 'FullPageBackShouldReopenFreshMainPage_001 end');
++    })
++  })
++}
+diff --git a/code/BasicFeature/Media/VideoShow/entry/src/ohosTest/ets/test/List.test.ets b/code/BasicFeature/Media/VideoShow/entry/src/ohosTest/ets/test/List.test.ets
+index f97ef3a5e..95d67f1c0 100644
+--- a/code/BasicFeature/Media/VideoShow/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/BasicFeature/Media/VideoShow/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,7 +13,9 @@
+  * limitations under the License.
+  */
+ import appTest from './App.test'
++import fullPageReturnStateTest from './FullPageReturnState.test'
+ 
+ export default function testsuite() {
+   appTest()
+-}
+\ No newline at end of file
++  fullPageReturnStateTest()
++}

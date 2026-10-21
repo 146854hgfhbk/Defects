@@ -1,0 +1,61 @@
+{
+  "candidate_sha": "e211986fd446d98f772d6abb66bdfd589fa73c22",
+  "project": "meggart/DiskArrays.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 168,
+      "url": "https://github.com/JuliaIO/DiskArrays.jl/issues/168",
+      "state": "closed",
+      "title": "copyto! fails when one of the axes has a zero length index ",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "Using copyto! with a zero length axis breaks with a DiskArray but succeeds with a normal Array.\r\nThis breaks the show method of DimArrays with a DiskArray in some circumstances see https://github.com/rafaqz/DimensionalData.jl/issues/670.\r\n\r\n\r\n```julia\r\n    a = collect(reshape(1:90, 10, 9))\r\n    a_disk = AccessCountDiskArray(a; chunksize=(5, 3))\r\n        x_empty = Matrix{Int64}(undef, 0,2)\r\n        copyto!(x_empty, CartesianIndices((1:0, 1:2)), a_disk, CartesianIndices((8:7, 8:9))) # This fails\r\n        copyto!(x_empty, CartesianIndices((1:0, 1:2)), a, CartesianIndices((8:7, 8:9))) # This works\r\n```\r\n"
+    },
+    {
+      "number": 169,
+      "url": "https://github.com/JuliaIO/DiskArrays.jl/pull/169",
+      "state": "closed",
+      "title": "Check for zero length index in copyto! and same length of the indices",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "This checks for an index of length zero in the copyto! call so that it does not run into chunking issues further down the code. \r\nI am not entirely sure, whether this is the best spot to introduce this, but it seems to work. \r\n\r\n\r\nThe check for the same length of the indices is copied from the behaviour of copyto! on normal arrays.\r\nThis will fix #168."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        168
+      ],
+      "pull_request": 169,
+      "fix_commit": "e211986fd446d98f772d6abb66bdfd589fa73c22",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Check for zero length index in copyto! and same length of the indices (#169)\n\n* Check for zero length index in copyto! and same length of the indices\r\n\r\nThe check for the same length of the indices is copied from the behaviour of copyto! on normal arrays.\r\n\r\n* Remove println\r\n\r\n* Replace any(==(0)) with isempty\r\n\r\nCo-authored-by: Fabian Gans <fabiancoding@gmail.com>\r\n\r\n---------\r\n\r\nCo-authored-by: Fabian Gans <fabiancoding@gmail.com>",
+    "commit_issue_refs": [
+      169
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 169,
+    "pull_request_title": "Check for zero length index in copyto! and same length of the indices",
+    "pull_request_issue_refs": [
+      168
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    168
+  ],
+  "cross_repository_issue_records": []
+}

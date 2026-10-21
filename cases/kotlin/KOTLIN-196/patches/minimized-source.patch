@@ -1,0 +1,34 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/StringTemplateIndentRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/StringTemplateIndentRule.kt
+index f07c4923..3eb12370 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/StringTemplateIndentRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/StringTemplateIndentRule.kt
+@@ -240,20 +240,26 @@ public class StringTemplateIndentRule :
+                         } else {
+                             it.text.splitIndentAt(prefixLength)
+                         }
++                    val expectedIndent =
++                        if (it.isIndentBeforeClosingQuote() || prefixLength > 0) {
++                            newIndent
++                        } else {
++                            ""
++                        }
+                     if (currentIndent.contains(wrongIndentChar)) {
+                         checkAndFixWrongIndentationChar(
+                             node = it,
+                             oldIndent = currentIndent,
+-                            newIndent = newIndent,
++                            newIndent = expectedIndent,
+                             newContent = currentContent,
+                             emit = emit,
+                             autoCorrect = autoCorrect,
+                         )
+-                    } else if (currentIndent != newIndent) {
++                    } else if (currentIndent != expectedIndent) {
+                         checkAndFixIndent(
+                             node = it,
+                             oldIndentLength = currentIndent.length,
+-                            newIndent = newIndent,
++                            newIndent = expectedIndent,
+                             newContent = currentContent,
+                             autoCorrect = autoCorrect,
+                             emit = emit,

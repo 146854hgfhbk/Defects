@@ -1,0 +1,22 @@
+diff --git a/Tests/IkigaJSONTests/JSONTests.swift b/Tests/IkigaJSONTests/JSONTests.swift
+index a76ecdbf344cabd9a08660e2e244fa27eeeb7aec..f7d22e1e49b30d18e11cedc943fb5094b2451c24 100644
+--- a/Tests/IkigaJSONTests/JSONTests.swift
++++ b/Tests/IkigaJSONTests/JSONTests.swift
+@@ -684,10 +684,13 @@ final class IkigaJSONTests: XCTestCase {
+       let yes: String
+     }
+ 
+-    let test = Test(yes: "\n")
+-    let json = try IkigaJSONEncoder().encode(test)
+-    let test2 = try JSONDecoder().decode(Test.self, from: json)
+-    XCTAssertEqual(test, test2)
++    let test1 = Test(yes: "Hello\n %0F".removingPercentEncoding!)
++    let json1 = try IkigaJSONEncoder().encode(test1)
++    let json2 = try JSONEncoder().encode(test1)
++    let test2 = try JSONDecoder().decode(Test.self, from: json1)
++    XCTAssertEqual(test1, test2)
++    XCTAssertEqual(json1, json2)
++    XCTAssertTrue(String(data: json1, encoding: .utf8)?.contains("\\u000f") ?? false)
+   }
+ 
+   func testEncodeJSONArray() throws {

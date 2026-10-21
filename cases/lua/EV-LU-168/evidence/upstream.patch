@@ -1,0 +1,76 @@
+diff --git a/inspect.lua b/inspect.lua
+index 39f43af9c7a5b967897089616b43513c97387112..96194eabb99f6511bcb886b401c2a901cbb71a2a 100644
+--- a/inspect.lua
++++ b/inspect.lua
+@@ -165,28 +165,37 @@ local function makePath(path, ...)
+ end
+ 
+ local function processRecursive(process, item, path)
+-  if item == nil then return nil end
+-
+-  local processed = process(item, path)
+-  if type(processed) == 'table' then
+-    local processedCopy = {}
+-    local processedKey
+-
+-    for k,v in pairs(processed) do
+-      processedKey = processRecursive(process, k, makePath(path, k, inspect.KEY))
+-      if processedKey ~= nil then
+-        processedCopy[processedKey] = processRecursive(process, v, makePath(path, processedKey))
++    local visited = {}
++    
++    local function processRecursive2(item, path)
++      if item == nil then return nil end
++      if visited[item] then return visited[item] end
++    
++      local processed = process(item, path)
++      if type(processed) == 'table' then
++        local processedCopy = {}
++        visited[item] = processedCopy
++        local processedKey
++
++        for k,v in pairs(processed) do
++          processedKey = processRecursive2(k, makePath(path, k, inspect.KEY))
++          if processedKey ~= nil then
++            processedCopy[processedKey] = processRecursive2(v, makePath(path, processedKey))
++          end
++        end
++
++        local mt  = processRecursive2(getmetatable(processed), makePath(path, inspect.METATABLE))
++        setmetatable(processedCopy, mt)
++        processed = processedCopy
+       end
++      return processed
+     end
+-
+-    local mt  = processRecursive(process, getmetatable(processed), makePath(path, inspect.METATABLE))
+-    setmetatable(processedCopy, mt)
+-    processed = processedCopy
+-  end
+-  return processed
++    
++    return processRecursive2(item, path)
+ end
+ 
+ 
++
+ -------------------------------------------------------------------
+ 
+ local Inspector = {}
+diff --git a/spec/inspect_spec.lua b/spec/inspect_spec.lua
+index 9a8164207f85f7f325af27a8466faf30d7ae57f7..78b0a7b544465d82f9dc8b2c4b3bbde300c7f320 100644
+--- a/spec/inspect_spec.lua
++++ b/spec/inspect_spec.lua
+@@ -315,6 +315,12 @@ describe( 'inspect', function()
+         }, items)
+ 
+       end)
++  
++      it('handles recursive tables correctly', function()
++          local tbl = { 1,2,3}
++          tbl.loop = tbl
++          inspect(tbl, { process=function(x) return x end})
++      end)
+     end)
+ 
+     describe('metatables', function()

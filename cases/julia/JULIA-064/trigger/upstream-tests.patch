@@ -1,0 +1,23 @@
+diff --git a/test/misc.jl b/test/misc.jl
+index a60a65e..288a76f 100644
+--- a/test/misc.jl
++++ b/test/misc.jl
+@@ -9,6 +9,7 @@ z = [1, 1, 2, 2, 2, 3, 1, 2, 2, 3, 3, 3, 3]
+ @test lens == [2, 3, 1, 1, 2, 4]
+ @test inverse_rle(vals, lens) == z
+ @test_throws ArgumentError inverse_rle(vals, fill(-1, length(lens)))
++@test_throws DimensionMismatch inverse_rle(vals, [1])
+ 
+ z = [true, true, false, false, true, false, true, true, true]
+ vals, lens = rle(z)
+diff --git a/test/ranking.jl b/test/ranking.jl
+index 8745f73..fea0a48 100644
+--- a/test/ranking.jl
++++ b/test/ranking.jl
+@@ -37,3 +37,6 @@ s = ["c", "a", "b", "d", "d", "b", "e", "d"] # s is a vector of strings ordered
+ @test tiedrank(s) == tiedrank(x)
+ @test tiedrank(x, rev = true) == tiedrank(-x)
+ @test tiedrank(x, lt = (x, y) -> isless(y, x)) == tiedrank(-x)
++
++
++@test_throws DimensionMismatch StatsBase._check_randparams([1,2], [1,2], [1])

@@ -1,0 +1,59 @@
+diff --git a/test/lua/api_test.exs b/test/lua/api_test.exs
+index a1227e8..37019fc 100644
+--- a/test/lua/api_test.exs
++++ b/test/lua/api_test.exs
+@@ -219,6 +219,26 @@ defmodule Lua.APITest do
+              ]
+     end
+ 
++    test "variadic functions can have state" do
++      assert [{module, _}] =
++               Code.compile_string("""
++               defmodule VariadicWithState do
++                 use Lua.API
++
++                 @variadic true
++                 deflua foo(args), state do
++                   {args, state}
++                 end
++               end
++               """)
++
++      assert module.foo(["a", "b", "c"], :state) == {["a", "b", "c"], :state}
++
++      assert module.__lua_functions__() == [
++               {:foo, true, true}
++             ]
++    end
++
+     test "if there is mixed usage of state for a function, it raises an error" do
+       error = "Five.foo() is inconsistently using state. Please make all clauses consistent"
+ 
+diff --git a/test/lua_test.exs b/test/lua_test.exs
+index 12a53c7..5074ebf 100644
+--- a/test/lua_test.exs
++++ b/test/lua_test.exs
+@@ -544,6 +544,11 @@ defmodule LuaTest do
+       deflua test(a, b \\ "default") do
+         "#{a} #{b}"
+       end
++
++      @variadic true
++      deflua with_state(args), state do
++        {args, state}
++      end
+     end
+ 
+     setup do
+@@ -565,6 +570,11 @@ defmodule LuaTest do
+       assert {["a-b-c"], _} = Lua.eval!(lua, "return scope.bar('a', 'b', 'c')")
+     end
+ 
++    test "inject a variadic function with state", %{lua: lua} do
++      lua = Lua.load_api(lua, TestModule, ["scope"])
++      assert {["a", "b", "c"], _} = Lua.eval!(lua, "return scope.with_state('a', 'b', 'c')")
++    end
++
+     test "injects Elixir functions that have multiple arities", %{lua: lua} do
+       lua = Lua.load_api(lua, TestModule, ["scope"])
+ 

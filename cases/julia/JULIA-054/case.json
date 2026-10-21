@@ -1,0 +1,130 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-054",
+  "bug_id": "JULIA-054",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "jump-dev/MathOptInterface.jl",
+  "repository_url": "https://github.com/jump-dev/MathOptInterface.jl.git",
+  "issue_urls": [
+    "https://github.com/jump-dev/MathOptInterface.jl/issues/2979"
+  ],
+  "issue_id": 2979,
+  "buggy_revision": "b5778d01ec690e5514630ff2a2fe51ae0bd480f0",
+  "fixed_revision": "3e3e9989c0eb1beb8c1fcb33da155275d37dcea9",
+  "candidate_sha": "3e3e9989c0eb1beb8c1fcb33da155275d37dcea9",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "b5778d01ec690e5514630ff2a2fe51ae0bd480f0",
+  "changed_production_files": [
+    "src/FileFormats/NL/read.jl"
+  ],
+  "changed_test_files": [
+    "test/FileFormats/NL/test_read.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-054 NL defined variables"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "1166b310bb5c58a60b48dd1f47f9cebf62926e86e3a7fe09d971d5e0d5adbe17",
+    "oracle": {
+      "mwe_basis": "upstream NL parser regression tests",
+      "source_evidence": "Assertions copied from MathOptInterface PR #2980 for issue #2979: NL V sections may define constants or variable references, not only Expr values.",
+      "upstream_test_patch_sha256": "c3bf9173c05a2f6aa9dd327b0235758658b7c49bc031b8bf5b2a7a4590efcd35"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "3e3e9989c0eb1beb8c1fcb33da155275d37dcea9",
+    "project": "jump-dev/MathOptInterface.jl",
+    "input_sha256": "bb4964307f0505c65f12683ea6642bf565977a95177464325c78436642fc6cfb",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:53:12Z",
+    "usage": {
+      "prompt_tokens": 1718,
+      "completion_tokens": 476,
+      "total_tokens": 2194
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"unknown\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"Fix for a MethodError (convert(Expr, Float64)) when parsing the V section of NL files where defined variables are not expressions. The issue is clearly documented with reproducible examples, and the fix targets a single production file.\", \"evidence\": \"Issue #2979 reports a concrete MethodError thrown at a specific line in src/FileFormats/NL/read.jl when parsing certain NL files. The PR #2980 explicitly closes #2979 with the explanation that defined variables might be something other than an expression. The commit modifies only the production file src/FileFormats/NL/read.jl and the corresponding test file, indicating an isolated bug fix.\", \"missing_evidence\": \"The actual diff content is not provided, so we cannot inspect exactly what changed in the production and test files. We cannot verify the specific test assertions added.\", \"validation_risks\": \"Without seeing the actual code changes, there's a small risk the fix could be more extensive than expected or introduce edge cases. The test file is listed but its content is not visible.\", \"suggested_tests\": \"Test parsing of NL files where defined variables are numeric constants (Float64) rather than expressions. Use the referenced deconvc.nl, deconvu.nl, deconvb.nl files or minimal reproductions to verify no MethodError is thrown.\"}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "unknown"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for a MethodError (convert(Expr, Float64)) when parsing the V section of NL files where defined variables are not expressions. The issue is clearly documented with reproducible examples, and the fix targets a single production file.",
+    "evidence": "Issue #2979 reports a concrete MethodError thrown at a specific line in src/FileFormats/NL/read.jl when parsing certain NL files. The PR #2980 explicitly closes #2979 with the explanation that defined variables might be something other than an expression. The commit modifies only the production file src/FileFormats/NL/read.jl and the corresponding test file, indicating an isolated bug fix.",
+    "missing_evidence": "The actual diff content is not provided, so we cannot inspect exactly what changed in the production and test files. We cannot verify the specific test assertions added.",
+    "validation_risks": "Without seeing the actual code changes, there's a small risk the fix could be more extensive than expected or introduce edge cases. The test file is listed but its content is not visible.",
+    "suggested_tests": "Test parsing of NL files where defined variables are numeric constants (Float64) rather than expressions. Use the referenced deconvc.nl, deconvu.nl, deconvb.nl files or minimal reproductions to verify no MethodError is thrown."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-054 NL defined variables"
+    ],
+    "exception_types": [
+      "915b6af76c62263f47a630908dd99eeb6d1119ebf49c4bbd86d86b869554ee99"
+    ],
+    "fingerprints": [
+      "915b6af76c62263f47a630908dd99eeb6d1119ebf49c4bbd86d86b869554ee99"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "3e3e9989c0eb1beb8c1fcb33da155275d37dcea9",
+    "parent_sha": "b5778d01ec690e5514630ff2a2fe51ae0bd480f0",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "1e9ce878065d7d94e1b473be596cfc5b000bfb4b516c00a936ab1d8cd1a2a9b9",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

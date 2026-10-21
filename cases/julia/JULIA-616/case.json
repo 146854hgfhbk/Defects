@@ -1,0 +1,158 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-616",
+  "bug_id": "JULIA-616",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaIO/JLD2.jl",
+  "repository_url": "https://github.com/JuliaIO/JLD2.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "c7d8717e7d5b9868dd5f4a38230ba4be63335641",
+  "fixed_revision": "57af9a0a2645c7bcc9fe456e0e0fb746a46722f6",
+  "candidate_sha": "57af9a0a2645c7bcc9fe456e0e0fb746a46722f6",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "c7d8717e7d5b9868dd5f4a38230ba4be63335641",
+  "changed_production_files": [
+    "src/Filters.jl",
+    "src/datasets.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-616 shared Shuffle configuration is not mutated"
+  ],
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "57af9a0a2645c7bcc9fe456e0e0fb746a46722f6",
+    "project": "JuliaIO/JLD2.jl",
+    "input_sha256": "cbe51b105c4fda9e9674f3e6910e2a122f8821ed36e731995ed39e056b72a9ed",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T11:52:41Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.5611293417578772,
+      "input_tokens": 7725,
+      "output_tokens": 852
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.76, \"summary\": \"The commit stops JLD2 from mutating caller-owned filter objects during dataset writes. Previously `set_local!(::Shuffle, ...)` wrote `element_size` back into the user's `Shuffle` instance, so a filter pipeline passed via `jldopen(...; compress=[Shuffle(), Deflate()])` was silently altered and unsafe to reuse or share between writers. The fix makes `Shuffle` immutable, replaces the in-place hook with a value-returning `set_local`, and builds a local pipeline inside `write_dataset` that is used for the layout decision, message sizing, compression, and pipeline message writing. This is a state-corruption/thread-safety defect fix in production write behavior, not a feature or refactor-only change.\", \"evidence\": \"Upstream record #669 (\\\"Avoid mutating filters.\\\") explicitly frames the change as fixing a race condition caused by the mutating `set_local!` for `Shuffle`, matching the diff exactly. The patch removes `fil.element_size = odr_sizeof(odr)` and the `foreach(filters) do filter; set_local!(...)` loop, substituting a locally constructed `FilterPipeline`. The dedicated trigger asserts `filters[1].element_size == 0` after a write plus a successful round-trip; runtime evidence reports a stable differential over 3 repetitions with the full suite passing on the fixed side. Minimization reports all 6 hunks necessary and globally minimal, confined to src/Filters.jl and src/datasets.jl.\", \"missing_evidence\": \"No upstream test patch is present, so the oracle is a hand-written MWE rather than a maintainer-authored regression test. The PR number/title/body fields are empty and traceability is marked UNVERIFIED, so the linkage rests on the issue record excerpt alone. No failure log or stack trace from the buggy revision is included, and there is no direct evidence of an observed concurrency failure (the race is argued, not demonstrated).\", \"validation_risks\": \"The trigger asserts on the internal field `filters[1].element_size`, which is not documented public API; it happens to be readable in both revisions (mutable struct before, immutable after) but is coupling the oracle to internals. The layout branch now evaluates `iscompressed(local_filters)` instead of `iscompressed(filters)`, so any filter whose `set_local` alters compressibility would change layout selection; behavior for stock Deflate/Shuffle should be unchanged, but this is a semantic shift beyond pure non-mutation. The `set_local!` -> `set_local` rename is a breaking change for any out-of-tree custom filter, so downstream-extension tests could behave differently across revisions. The trigger also depends on the 20,000-element UInt32 array exceeding the 8192-byte compact threshold to reach the chunked path; keep that size to stay on the LcChunked branch.\", \"suggested_tests\": \"1) Reuse the same caller-owned pipeline across two sequential writes to different files and assert both files round-trip and that `element_size` stays 0. 2) Write two arrays with different element types (UInt8 vs UInt64) using one shared pipeline and verify each file decodes correctly, catching stale element_size leakage. 3) Concurrent writes from multiple tasks sharing one `[Shuffle(), Deflate()]` vector, asserting all files round-trip. 4) Verify the on-disk filter pipeline message records the correct per-dataset element size while the in-memory filter is untouched. 5) Small-array case that takes the LcCompact path to confirm no filter mutation and no behavior change there.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.76,
+    "summary": "The commit stops JLD2 from mutating caller-owned filter objects during dataset writes. Previously `set_local!(::Shuffle, ...)` wrote `element_size` back into the user's `Shuffle` instance, so a filter pipeline passed via `jldopen(...; compress=[Shuffle(), Deflate()])` was silently altered and unsafe to reuse or share between writers. The fix makes `Shuffle` immutable, replaces the in-place hook with a value-returning `set_local`, and builds a local pipeline inside `write_dataset` that is used for the layout decision, message sizing, compression, and pipeline message writing. This is a state-corruption/thread-safety defect fix in production write behavior, not a feature or refactor-only change.",
+    "evidence": "Upstream record #669 (\"Avoid mutating filters.\") explicitly frames the change as fixing a race condition caused by the mutating `set_local!` for `Shuffle`, matching the diff exactly. The patch removes `fil.element_size = odr_sizeof(odr)` and the `foreach(filters) do filter; set_local!(...)` loop, substituting a locally constructed `FilterPipeline`. The dedicated trigger asserts `filters[1].element_size == 0` after a write plus a successful round-trip; runtime evidence reports a stable differential over 3 repetitions with the full suite passing on the fixed side. Minimization reports all 6 hunks necessary and globally minimal, confined to src/Filters.jl and src/datasets.jl.",
+    "missing_evidence": "No upstream test patch is present, so the oracle is a hand-written MWE rather than a maintainer-authored regression test. The PR number/title/body fields are empty and traceability is marked UNVERIFIED, so the linkage rests on the issue record excerpt alone. No failure log or stack trace from the buggy revision is included, and there is no direct evidence of an observed concurrency failure (the race is argued, not demonstrated).",
+    "validation_risks": "The trigger asserts on the internal field `filters[1].element_size`, which is not documented public API; it happens to be readable in both revisions (mutable struct before, immutable after) but is coupling the oracle to internals. The layout branch now evaluates `iscompressed(local_filters)` instead of `iscompressed(filters)`, so any filter whose `set_local` alters compressibility would change layout selection; behavior for stock Deflate/Shuffle should be unchanged, but this is a semantic shift beyond pure non-mutation. The `set_local!` -> `set_local` rename is a breaking change for any out-of-tree custom filter, so downstream-extension tests could behave differently across revisions. The trigger also depends on the 20,000-element UInt32 array exceeding the 8192-byte compact threshold to reach the chunked path; keep that size to stay on the LcChunked branch.",
+    "suggested_tests": "1) Reuse the same caller-owned pipeline across two sequential writes to different files and assert both files round-trip and that `element_size` stays 0. 2) Write two arrays with different element types (UInt8 vs UInt64) using one shared pipeline and verify each file decodes correctly, catching stale element_size leakage. 3) Concurrent writes from multiple tasks sharing one `[Shuffle(), Deflate()]` vector, asserting all files round-trip. 4) Verify the on-disk filter pipeline message records the correct per-dataset element size while the in-memory filter is untouched. 5) Small-array case that takes the LcCompact path to confirm no filter mutation and no behavior change there."
+  },
+  "source_candidate_evidence": {
+    "source_index": "output/source_candidates.json",
+    "commit_sha": "57af9a0a2645c7bcc9fe456e0e0fb746a46722f6",
+    "production_files": [
+      "src/Filters.jl",
+      "src/datasets.jl"
+    ],
+    "test_files": [],
+    "file_details": {
+      "src/Filters.jl": {
+        "status": "modified",
+        "hunks": 2,
+        "changes": 11
+      },
+      "src/datasets.jl": {
+        "status": "modified",
+        "hunks": 2,
+        "changes": 16
+      }
+    }
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "8d9d9e2b26a5c970b10720b73f3d579781cb42d9f21afa846c10bd62ec1c6417",
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "JULIA-616 shared Shuffle configuration is not mutated"
+      ],
+      "added_testsets": [
+        "JULIA-616 shared Shuffle configuration is not mutated"
+      ],
+      "assertion_expression_sha256": [],
+      "mwe_basis": {
+        "upstream_pull_request": 669,
+        "upstream_test_files": [],
+        "defect": "Writing with a caller-owned Shuffle filter pipeline mutates the shared filter configuration, making reuse unsafe and creating a race when shared across writers.",
+        "public_api": "JLD2.jldopen(filename, \"w\"; compress=[JLD2.Shuffle(), JLD2.Deflate()])",
+        "source_evidence": {
+          "origin_pull_request_title": "Avoid mutating filters.",
+          "origin_pull_request_excerpt": "With the current set_local! function for Shuffle, this would be a race condition. This PR fixes that issue.",
+          "extraction": "Behavioral MWE uses the same compression pipeline API exercised by the repository compression tests; it asserts caller-owned configuration remains unchanged and file round-trip succeeds."
+        }
+      }
+    }
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-616 shared Shuffle configuration is not mutated"
+    ],
+    "exception_types": [
+      "8d86eca27182347689812d8634e27f2cb1398016542610d2a443603983e387d9"
+    ],
+    "fingerprints": [
+      "8d86eca27182347689812d8634e27f2cb1398016542610d2a443603983e387d9"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

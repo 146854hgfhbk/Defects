@@ -1,0 +1,24 @@
+diff --git a/Sources/ParseSwift/API/API+Commands.swift b/Sources/ParseSwift/API/API+Commands.swift
+--- a/Sources/ParseSwift/API/API+Commands.swift
++++ b/Sources/ParseSwift/API/API+Commands.swift
+@@ -392,7 +392,7 @@ internal extension API.Command {
+ 
+     // MARK: Fetching
+     static func fetchCommand<T>(_ object: T, include: [String]?) throws -> API.Command<T, T> where T: ParseObject {
+-        guard object.isSaved else {
++        guard object.objectId != nil else {
+             throw ParseError(code: .unknownError, message: "Cannot Fetch an object without id")
+         }
+ 
+diff --git a/Sources/ParseSwift/Objects/ParseUser.swift b/Sources/ParseSwift/Objects/ParseUser.swift
+--- a/Sources/ParseSwift/Objects/ParseUser.swift
++++ b/Sources/ParseSwift/Objects/ParseUser.swift
+@@ -755,7 +755,7 @@ extension ParseUser {
+     }
+ 
+     func fetchCommand(include: [String]?) throws -> API.Command<Self, Self> {
+-        guard isSaved else {
++        guard objectId != nil else {
+             throw ParseError(code: .unknownError, message: "Cannot fetch an object without id")
+         }
+ 

@@ -1,0 +1,47 @@
+diff --git a/test/protobuf/application_test.exs b/test/protobuf/application_test.exs
+new file mode 100644
+index 0000000..a3f5667
+--- /dev/null
++++ b/test/protobuf/application_test.exs
+@@ -0,0 +1,17 @@
++defmodule Protobuf.ApplicationTest do
++  use ExUnit.Case, async: false
++
++  test "unloads all extensions on shutdown and reloads upon start" do
++    assert loaded_extensions() > 0
++
++    assert :ok = Application.stop(:protobuf)
++    assert loaded_extensions() == 0
++
++    assert :ok = Application.start(:protobuf)
++    assert loaded_extensions() > 0
++  end
++
++  defp loaded_extensions do
++    Enum.count(:persistent_term.get(), &match?({{Protobuf.Extension, _, _}, _}, &1))
++  end
++end
+diff --git a/test/protobuf/extension_test.exs b/test/protobuf/extension_test.exs
+index ec1c252..606c404 100644
+--- a/test/protobuf/extension_test.exs
++++ b/test/protobuf/extension_test.exs
+@@ -1,15 +1,13 @@
+ defmodule Protobuf.ExtensionTest do
+   use ExUnit.Case, async: true
+ 
+-  alias Protobuf.GlobalStore
+-
+   alias TestMsg.Ext
+ 
+   test "extension persistent works" do
+-    assert Ext.PbExtension = GlobalStore.get({Protobuf.Extension, Ext.Foo1, 1047}, nil)
+-    assert Ext.PbExtension = GlobalStore.get({Protobuf.Extension, Ext.Foo1, 1048}, nil)
+-    assert Ext.PbExtension = GlobalStore.get({Protobuf.Extension, Ext.Foo1, 1049}, nil)
+-    assert Ext.PbExtension = GlobalStore.get({Protobuf.Extension, Ext.Foo2, 1047}, nil)
++    assert Ext.PbExtension == :persistent_term.get({Protobuf.Extension, Ext.Foo1, 1047})
++    assert Ext.PbExtension == :persistent_term.get({Protobuf.Extension, Ext.Foo1, 1048})
++    assert Ext.PbExtension == :persistent_term.get({Protobuf.Extension, Ext.Foo1, 1049})
++    assert Ext.PbExtension == :persistent_term.get({Protobuf.Extension, Ext.Foo2, 1047})
+   end
+ 
+   test "extension get/put work" do

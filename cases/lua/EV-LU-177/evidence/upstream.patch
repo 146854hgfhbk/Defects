@@ -1,0 +1,132 @@
+diff --git a/lua/pl/Map.lua b/lua/pl/Map.lua
+index f585111..9755e0e 100644
+--- a/lua/pl/Map.lua
++++ b/lua/pl/Map.lua
+@@ -11,13 +11,13 @@
+ 
+ local tablex = require 'pl.tablex'
+ local utils = require 'pl.utils'
++local List = require 'pl.List'
+ local stdmt = utils.stdmt
+ local tmakeset,deepcompare,merge,keys,difference,tupdate = tablex.makeset,tablex.deepcompare,tablex.merge,tablex.keys,tablex.difference,tablex.update
+ 
+ local pretty_write = require 'pl.pretty' . write
+ local Map = stdmt.Map
+ local Set = stdmt.Set
+-local List = stdmt.List
+ 
+ local class = require 'pl.class'
+ 
+diff --git a/tests/test-class.lua b/tests/test-class.lua
+index 2ae7146..43dc4dc 100644
+--- a/tests/test-class.lua
++++ b/tests/test-class.lua
+@@ -1,4 +1,5 @@
+-require 'pl'
++local class = require 'pl.class'
++local test = require 'pl.test'
+ asserteq = test.asserteq
+ T = test.tuple
+ 
+diff --git a/tests/test-config.lua b/tests/test-config.lua
+index c88fe5d..13fc1ac 100644
+--- a/tests/test-config.lua
++++ b/tests/test-config.lua
+@@ -1,4 +1,5 @@
+-require 'pl'
++local config = require 'pl.config'
++local stringio = require 'pl.stringio'
+ asserteq = require 'pl.test'.asserteq
+ 
+ function testconfig(test,tbl,cfg)
+diff --git a/tests/test-func.lua b/tests/test-func.lua
+index 5e775cd..c8606d0 100644
+--- a/tests/test-func.lua
++++ b/tests/test-func.lua
+@@ -1,4 +1,6 @@
+-require 'pl'
++local utils = require 'pl.utils'
++local List = require 'pl.List'
++local tablex = require 'pl.tablex'
+ asserteq = require('pl.test').asserteq
+ utils.import('pl.func')
+ 
+diff --git a/tests/test-job-query.lua b/tests/test-job-query.lua
+index e8834df..e246ebc 100644
+--- a/tests/test-job-query.lua
++++ b/tests/test-job-query.lua
+@@ -1,4 +1,7 @@
+-require 'pl'
++local utils = require 'pl.utils'
++local stringio = require 'pl.stringio'
++local data = require 'pl.data'
++local test = require 'pl.test'
+ 
+ utils.on_error 'quit'
+ 
+diff --git a/tests/test-map.lua b/tests/test-map.lua
+index da919f0..793c9c1 100644
+--- a/tests/test-map.lua
++++ b/tests/test-map.lua
+@@ -1,6 +1,8 @@
+ -- testing Map functionality
+ 
+-require 'pl'
++local test = require 'pl.test'
++local Map = require 'pl.Map'
++local tablex = require 'pl.tablex'
+ 
+ local asserteq = test.asserteq
+ 
+diff --git a/tests/test-pretty-number.lua b/tests/test-pretty-number.lua
+index ab49d16..347a5cf 100644
+--- a/tests/test-pretty-number.lua
++++ b/tests/test-pretty-number.lua
+@@ -1,4 +1,6 @@
+-require 'pl'
++local test = require 'pl.test'
++local pretty = require 'pl.pretty'
++
+ function testm(x,s)
+   test.asserteq(pretty.number(x,'M'),s)
+ end
+diff --git a/tests/test-relpath.lua b/tests/test-relpath.lua
+index 2fc2a54..78d1ad3 100644
+--- a/tests/test-relpath.lua
++++ b/tests/test-relpath.lua
+@@ -1,4 +1,6 @@
+-require 'pl'
++local path = require 'pl.path'
++local test = require 'pl.test'
++
+ relpath = path.relpath
+ 
+ path = '/a/b/c'
+diff --git a/tests/test-tzone.lua b/tests/test-tzone.lua
+index eb38cb3..230fb18 100644
+--- a/tests/test-tzone.lua
++++ b/tests/test-tzone.lua
+@@ -1,4 +1,5 @@
+-require 'pl'
++local Date = require 'pl.Date'
++local test = require 'pl.test'
+ local df = Date.Format()
+ local dl = df:parse '2008-07-05'
+ local du = dl:toUTC()
+diff --git a/tests/test-vector.lua b/tests/test-vector.lua
+index 501de9e..e040564 100644
+--- a/tests/test-vector.lua
++++ b/tests/test-vector.lua
+@@ -1,6 +1,11 @@
+ ---- deriving specialized classes from List
+ -- illustrating covariance of List methods
+-require 'pl'
++local test = require 'pl.test'
++local class = require 'pl.class'
++local types = require 'pl.types'
++local operator = require 'pl.operator'
++local List = require 'pl.List'
++
+ local asserteq = test.asserteq
+ 
+ class.Vector(List)

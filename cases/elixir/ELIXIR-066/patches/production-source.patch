@@ -1,0 +1,280 @@
+diff --git a/installer/templates/phx_web/components/core_components.ex b/installer/templates/phx_web/components/core_components.ex
+index b686599bc..465482005 100644
+--- a/installer/templates/phx_web/components/core_components.ex
++++ b/installer/templates/phx_web/components/core_components.ex
+@@ -2,9 +2,9 @@ defmodule <%= @web_namespace %>.CoreComponents do
+   @moduledoc """
+   Provides core UI components.
+ 
+-  At the first glance, this module may seem daunting, but its goal is
+-  to provide some core building blocks in your application, such as modals,
+-  tables, and forms. The components are mostly markup and well documented
++  At first glance, this module may seem daunting, but its goal is to provide
++  core building blocks for your application, such as modals, tables, and
++  forms. The components consist mostly of markup and are well-documented
+   with doc strings and declarative assigns. You may customize and style
+   them in any way you want, based on your application growth and needs.
+ 
+@@ -97,7 +97,7 @@ defmodule <%= @web_namespace %>.CoreComponents do
+       <.flash kind={:info} flash={@flash} />
+       <.flash kind={:info} phx-mounted={show("#flash")}>Welcome Back!</.flash>
+   """
+-  attr :id, :string, default: "flash", doc: "the optional id of flash container"
++  attr :id, :string, default: nil, doc: "the optional id of flash container"
+   attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
+   attr :title, :string, default: nil
+   attr :kind, :atom, values: [:info, :error], doc: "used for styling and flash lookup"
+@@ -109,7 +109,7 @@ defmodule <%= @web_namespace %>.CoreComponents do
+     ~H"""
+     <div
+       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
+-      id={@id}
++      id={@id || "flash-#{@kind}"}
+       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
+       role="alert"
+       class={[
+diff --git a/lib/mix/tasks/phx.gen.release.ex b/lib/mix/tasks/phx.gen.release.ex
+index dc97c567e..d1b09db61 100644
+--- a/lib/mix/tasks/phx.gen.release.ex
++++ b/lib/mix/tasks/phx.gen.release.ex
+@@ -232,12 +232,19 @@ defmodule Mix.Tasks.Phx.Gen.Release do
+     end
+   end
+ 
++  defp ensure_app!(app) do
++    if function_exported?(Mix, :ensure_application!, 1) do
++      apply(Mix, :ensure_application!, [app])
++    else
++      {:ok, _} = Application.ensure_all_started(app)
++    end
++  end
++
+   defp fetch_body!(url) do
+     url = String.to_charlist(url)
+     Logger.debug("Fetching latest image information from #{url}")
+-
+-    {:ok, _} = Application.ensure_all_started(:inets)
+-    {:ok, _} = Application.ensure_all_started(:ssl)
++    ensure_app!(:inets)
++    ensure_app!(:ssl)
+ 
+     if proxy = System.get_env("HTTP_PROXY") || System.get_env("http_proxy") do
+       Logger.debug("Using HTTP_PROXY: #{proxy}")
+diff --git a/lib/mix/tasks/phx.routes.ex b/lib/mix/tasks/phx.routes.ex
+index d3d090400..d12348c4a 100644
+--- a/lib/mix/tasks/phx.routes.ex
++++ b/lib/mix/tasks/phx.routes.ex
+@@ -34,6 +34,7 @@ defmodule Mix.Tasks.Phx.Routes do
+   ## Options
+ 
+     * `--info` - locate the controller function definition called by the given url
++    * `--method` - what HTTP method to use with the given url, only works when used with `--info` and defaults to `get`
+ 
+   ## Examples
+ 
+@@ -51,6 +52,13 @@ defmodule Mix.Tasks.Phx.Routes do
+         Module: RouteInfoTestWeb.PageController
+         Function: :index
+         /home/my_app/controllers/page_controller.ex:4
++
++  Print information about the controller function called by a specified url and HTTP method:
++
++      $ mix phx.routes --info http://0.0.0.0:4000/users --method post
++        Module: RouteInfoTestWeb.UserController
++        Function: :create
++        /home/my_app/controllers/user_controller.ex:24
+   """
+ 
+   @doc false
+@@ -78,10 +86,11 @@ defmodule Mix.Tasks.Phx.Routes do
+     end
+   end
+ 
+-  def get_url_info(url, {router_mod, _opts}) do
++  def get_url_info(url, {router_mod, opts}) do
+     %{path: path} = URI.parse(url)
+ 
+-    meta = Phoenix.Router.route_info(router_mod, "GET", path, "")
++    method = opts |> Keyword.get(:method, "get") |> String.upcase()
++    meta = Phoenix.Router.route_info(router_mod, method, path, "")
+     %{plug: plug, plug_opts: plug_opts} = meta
+ 
+     {module, func_name} =
+diff --git a/lib/phoenix/channel.ex b/lib/phoenix/channel.ex
+index 8080aff3c..48ac52850 100644
+--- a/lib/phoenix/channel.ex
++++ b/lib/phoenix/channel.ex
+@@ -347,7 +347,7 @@ defmodule Phoenix.Channel do
+   alias Phoenix.Socket
+   alias Phoenix.Channel.Server
+ 
+-  @type payload :: map | {:binary, binary}
++  @type payload :: map | term | {:binary, binary}
+   @type reply :: status :: atom | {status :: atom, response :: payload}
+   @type socket_ref ::
+           {transport_pid :: Pid, serializer :: module, topic :: binary, ref :: binary,
+@@ -359,6 +359,8 @@ defmodule Phoenix.Channel do
+   To authorize a socket, return `{:ok, socket}` or `{:ok, reply, socket}`. To
+   refuse authorization, return `{:error, reason}`.
+ 
++  Payloads are serialized before sending with the configured serializer.
++
+   ## Example
+ 
+       def join("room:lobby", payload, socket) do
+@@ -378,12 +380,13 @@ defmodule Phoenix.Channel do
+   @doc """
+   Handle incoming `event`s.
+ 
++  Payloads are serialized before sending with the configured serializer.
++
+   ## Example
+ 
+       def handle_in("ping", payload, socket) do
+         {:reply, {:ok, payload}, socket}
+       end
+-
+   """
+   @callback handle_in(event :: String.t(), payload :: payload, socket :: Socket.t()) ::
+               {:noreply, Socket.t()}
+@@ -663,6 +666,8 @@ defmodule Phoenix.Channel do
+   client may expect only one reply; in that case, `push/3` would be preferable
+   for the additional messages.
+ 
++  Payloads are serialized before sending with the configured serializer.
++
+   ## Examples
+ 
+       def handle_in("work", payload, socket) do
+diff --git a/lib/phoenix/channel/server.ex b/lib/phoenix/channel/server.ex
+index e3f2ff686..b5b4906d6 100644
+--- a/lib/phoenix/channel/server.ex
++++ b/lib/phoenix/channel/server.ex
+@@ -235,6 +235,8 @@ defmodule Phoenix.Channel.Server do
+   @doc """
+   Pushes a message with the given topic, event and payload
+   to the given process.
++
++  Payloads are serialized before sending with the configured serializer.
+   """
+   def push(pid, join_ref, topic, event, payload, serializer)
+       when is_binary(topic) and is_binary(event) do
+@@ -245,6 +247,8 @@ defmodule Phoenix.Channel.Server do
+ 
+   @doc """
+   Replies to a given ref to the transport process.
++
++  Payloads are serialized before sending with the configured serializer.
+   """
+   def reply(pid, join_ref, ref, topic, {status, payload}, serializer)
+       when is_binary(topic) do
+diff --git a/lib/phoenix/code_reloader/proxy.ex b/lib/phoenix/code_reloader/proxy.ex
+index 2ada872bf..c6a6b0fd0 100644
+--- a/lib/phoenix/code_reloader/proxy.ex
++++ b/lib/phoenix/code_reloader/proxy.ex
+@@ -62,10 +62,14 @@ defmodule Phoenix.CodeReloader.Proxy do
+     "\n#{message}\n"
+   end
+ 
+-  defp diagnostic_to_chars(%{severity: severity, message: message, file: file, position: position}) do
++  defp diagnostic_to_chars(%{severity: severity, message: message, file: file, position: position}) when is_binary(file) do
+     "\n#{severity}: #{message}\n  #{Path.relative_to_cwd(file)}#{position(position)}\n"
+   end
+ 
++  defp diagnostic_to_chars(%{severity: severity, message: message}) do
++    "\n#{severity}: #{message}\n"
++  end
++
+   defp position({line, col}), do: ":#{line}:#{col}"
+   defp position(line) when is_integer(line) and line > 0, do: ":#{line}"
+   defp position(_), do: ""
+diff --git a/lib/phoenix/endpoint.ex b/lib/phoenix/endpoint.ex
+index 7af9c3991..551456970 100644
+--- a/lib/phoenix/endpoint.ex
++++ b/lib/phoenix/endpoint.ex
+@@ -578,7 +578,20 @@ defmodule Phoenix.Endpoint do
+       @doc """
+       Generates a route to a static file in `priv/static`.
+       """
+-      def static_path(path), do: persistent!().static_path <> elem(static_lookup(path), 0)
++      def static_path(path) do
++        {path, fragment} = path_and_fragment(path)
++
++        persistent!().static_path <> elem(static_lookup(path), 0) <> fragment
++      end
++
++      defp path_and_fragment(path_incl_fragment) do
++        path_incl_fragment
++        |> String.split("#", parts: 2)
++        |> case do
++          [path, fragment] -> {path, "#" <> fragment}
++          [path | _] -> {path, ""}
++        end
++      end
+ 
+       @doc """
+       Generates a base64-encoded cryptographic hash (sha512) to a static file
+diff --git a/lib/phoenix/socket.ex b/lib/phoenix/socket.ex
+index e30e665e3..468c0c043 100644
+--- a/lib/phoenix/socket.ex
++++ b/lib/phoenix/socket.ex
+@@ -555,13 +555,13 @@ defmodule Phoenix.Socket do
+             {:ok, serializer}
+ 
+           :error ->
+-            Logger.error "The client's requested transport version \"#{vsn}\" " <>
++            Logger.warning "The client's requested transport version \"#{vsn}\" " <>
+                           "does not match server's version requirements of #{inspect serializers}"
+             :error
+         end
+ 
+       :error ->
+-        Logger.error "Client sent invalid transport version \"#{vsn}\""
++        Logger.warning "Client sent invalid transport version \"#{vsn}\""
+         :error
+     end
+   end
+@@ -599,7 +599,7 @@ defmodule Phoenix.Socket do
+             {:ok, {state, %{socket | id: id}}}
+ 
+           invalid ->
+-            Logger.error "#{inspect handler}.id/1 returned invalid identifier " <>
++            Logger.warning "#{inspect handler}.id/1 returned invalid identifier " <>
+                            "#{inspect invalid}. Expected nil or a string."
+             :error
+         end
+diff --git a/priv/templates/phx.gen.live/core_components.ex b/priv/templates/phx.gen.live/core_components.ex
+index b686599bc..465482005 100644
+--- a/priv/templates/phx.gen.live/core_components.ex
++++ b/priv/templates/phx.gen.live/core_components.ex
+@@ -2,9 +2,9 @@ defmodule <%= @web_namespace %>.CoreComponents do
+   @moduledoc """
+   Provides core UI components.
+ 
+-  At the first glance, this module may seem daunting, but its goal is
+-  to provide some core building blocks in your application, such as modals,
+-  tables, and forms. The components are mostly markup and well documented
++  At first glance, this module may seem daunting, but its goal is to provide
++  core building blocks for your application, such as modals, tables, and
++  forms. The components consist mostly of markup and are well-documented
+   with doc strings and declarative assigns. You may customize and style
+   them in any way you want, based on your application growth and needs.
+ 
+@@ -97,7 +97,7 @@ defmodule <%= @web_namespace %>.CoreComponents do
+       <.flash kind={:info} flash={@flash} />
+       <.flash kind={:info} phx-mounted={show("#flash")}>Welcome Back!</.flash>
+   """
+-  attr :id, :string, default: "flash", doc: "the optional id of flash container"
++  attr :id, :string, default: nil, doc: "the optional id of flash container"
+   attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
+   attr :title, :string, default: nil
+   attr :kind, :atom, values: [:info, :error], doc: "used for styling and flash lookup"
+@@ -109,7 +109,7 @@ defmodule <%= @web_namespace %>.CoreComponents do
+     ~H"""
+     <div
+       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
+-      id={@id}
++      id={@id || "flash-#{@kind}"}
+       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
+       role="alert"
+       class={[

@@ -1,0 +1,91 @@
+diff --git a/test/fika/erl_translate_test.exs b/test/fika/erl_translate_test.exs
+index cab5f4e..a9e998f 100644
+--- a/test/fika/erl_translate_test.exs
++++ b/test/fika/erl_translate_test.exs
+@@ -104,8 +104,12 @@ defmodule Fika.ErlTranslateTest do
+     ast = TestParser.expression!(str)
+     result = ErlTranslate.translate_expression(ast)
+ 
+-    assert result ==
+-             {:map, 1, [{:map_field_assoc, 1, {:string, 1, 'foo'}, {:integer, 1, 1}}]}
++    assert {:map, 1,
++            [
++              {:map_field_assoc, 1,
++               {:bin, 1, [{:bin_element, 1, {:string, 1, 'foo'}, :default, :default}]},
++               {:integer, 1, 1}}
++            ]} = result
+   end
+ 
+   describe "function reference" do
+@@ -169,8 +173,10 @@ defmodule Fika.ErlTranslateTest do
+ 
+     assert {:case, 5, {:atom, 1, true},
+             [
+-              {:clause, 5, [{:atom, 5, true}], [], [{:string, 2, 'foo'}]},
+-              {:clause, 5, [{:atom, 5, false}], [], [{:string, 4, 'bar'}]}
++              {:clause, 5, [{:atom, 5, true}], '',
++               [{:bin, 2, [{:bin_element, 2, {:string, 2, 'foo'}, :default, :default}]}]},
++              {:clause, 5, [{:atom, 5, false}], '',
++               [{:bin, 4, [{:bin_element, 4, {:string, 4, 'bar'}, :default, :default}]}]}
+             ]} = result
+   end
+ 
+@@ -183,15 +189,16 @@ defmodule Fika.ErlTranslateTest do
+       ast = TestParser.expression!(str)
+       result = ErlTranslate.translate_expression(ast)
+ 
+-      assert {
+-               :bin,
+-               1,
+-               [
+-                 {:bin_element, 1, {:string, 1, 'Hello'}, :default, :default},
+-                 {:bin_element, 1, {:string, 1, ' '}, :default, :default},
+-                 {:bin_element, 1, {:string, 1, 'World'}, :default, :default}
+-               ]
+-             } = result
++      assert {:bin, 1,
++              [
++                {:bin_element, 1,
++                 {:bin, 1, [{:bin_element, 1, {:string, 1, 'Hello'}, :default, :default}]},
++                 :default, [:binary]},
++                {:bin_element, 1, {:string, 1, ' '}, :default, :default},
++                {:bin_element, 1,
++                 {:bin, 1, [{:bin_element, 1, {:string, 1, 'World'}, :default, :default}]},
++                 :default, [:binary]}
++              ]} = result
+     end
+ 
+     test "parses known variable in string interpolation" do
+@@ -204,7 +211,7 @@ defmodule Fika.ErlTranslateTest do
+ 
+       result = ErlTranslate.translate_expression(interpolation)
+ 
+-      assert {:bin, 2, [{:bin_element, 2, {:var, 2, :hello}, :default, :default}]} = result
++      assert {:bin, 2, [{:bin_element, 2, {:var, 2, :hello}, :default, [:binary]}]} = result
+     end
+   end
+ 
+diff --git a/test/fika/type_checker_test.exs b/test/fika/type_checker_test.exs
+index c4ead9a..42774b5 100644
+--- a/test/fika/type_checker_test.exs
++++ b/test/fika/type_checker_test.exs
+@@ -210,6 +210,19 @@ defmodule Fika.TypeCheckerTest do
+       assert {:ok, :String, _} = TypeChecker.infer_block(env, ast)
+     end
+ 
++    test "parses multiple string interpolation with expressions" do
++      str = ~S"""
++      hello = "Hello#{"!"}"
++      "#{hello} Greetings to the #{"world!"}"
++      """
++
++      {:ok, ast, _, _, _, _} = TestParser.exps(str)
++
++      env = Env.init_module_env(Env.init(), "test", ast)
++
++      assert {:ok, :String, _} = TypeChecker.infer_block(env, ast)
++    end
++
+     test "accepts only strings in interpolation" do
+       str = ~S"""
+       "#{1}"

@@ -1,0 +1,88 @@
+diff --git a/Sources/NIOHTTP2/HTTP2ChannelHandler.swift b/Sources/NIOHTTP2/HTTP2ChannelHandler.swift
+index d263ee5..7649ba2 100644
+--- a/Sources/NIOHTTP2/HTTP2ChannelHandler.swift
++++ b/Sources/NIOHTTP2/HTTP2ChannelHandler.swift
+@@ -330,7 +330,7 @@ extension NIOHTTP2Handler {
+         // The user may choose to fire a more specific error if they wish.
+         let goAwayFrame = HTTP2Frame(streamID: .rootStream, payload: .goAway(lastStreamID: .maxID, errorCode: reason, opaqueData: nil))
+         self.writeUnbufferedFrame(context: context, frame: goAwayFrame)
+-        context.flush()
++        self.flushIfNecessary(context: context)
+         context.fireErrorCaught(underlyingError)
+     }
+ 
+@@ -341,7 +341,7 @@ extension NIOHTTP2Handler {
+         // the user's issue.
+         let rstStreamFrame = HTTP2Frame(streamID: streamID, payload: .rstStream(reason))
+         self.writeBufferedFrame(context: context, frame: rstStreamFrame, promise: nil)
+-        context.flush()
++        self.flushIfNecessary(context: context)
+         context.fireErrorCaught(underlyingError)
+     }
+ 
+@@ -379,7 +379,7 @@ extension NIOHTTP2Handler {
+ 
+         let initialSettingsFrame = HTTP2Frame(streamID: .rootStream, payload: .settings(.settings(self.initialSettings)))
+         self.writeUnbufferedFrame(context: context, frame: initialSettingsFrame)
+-        context.flush()
++        self.flushIfNecessary(context: context)
+     }
+ 
+     /// Write a frame that is allowed to be buffered (that is, that participates in the outbound frame buffer).
+@@ -591,8 +591,13 @@ extension NIOHTTP2Handler {
+         }
+         
+         self.isUnbufferingAndFlushingAutomaticFrames = false
++        self.flushIfNecessary(context: context)
++    }
+ 
++    /// Emits a flush if a frame has been written.
++    private func flushIfNecessary(context: ChannelHandlerContext) {
+         if self.wroteFrame {
++            self.wroteFrame = false
+             context.flush()
+         }
+     }
+diff --git a/Tests/NIOHTTP2Tests/SimpleClientServerFramePayloadStreamTests+XCTest.swift b/Tests/NIOHTTP2Tests/SimpleClientServerFramePayloadStreamTests+XCTest.swift
+index 86c5604..6dbbb53 100644
+--- a/Tests/NIOHTTP2Tests/SimpleClientServerFramePayloadStreamTests+XCTest.swift
++++ b/Tests/NIOHTTP2Tests/SimpleClientServerFramePayloadStreamTests+XCTest.swift
+@@ -75,6 +75,7 @@ extension SimpleClientServerFramePayloadStreamTests {
+                 ("testGreasedSettingsAreTolerated", testGreasedSettingsAreTolerated),
+                 ("testStreamCreationOrder", testStreamCreationOrder),
+                 ("testStreamClosedInvalidRequestHeaders", testStreamClosedInvalidRequestHeaders),
++                ("testHTTP2HandlerDoesNotFlushExcessively", testHTTP2HandlerDoesNotFlushExcessively),
+            ]
+    }
+ }
+diff --git a/Tests/NIOHTTP2Tests/SimpleClientServerFramePayloadStreamTests.swift b/Tests/NIOHTTP2Tests/SimpleClientServerFramePayloadStreamTests.swift
+index ed9bb2f..55d4ab7 100644
+--- a/Tests/NIOHTTP2Tests/SimpleClientServerFramePayloadStreamTests.swift
++++ b/Tests/NIOHTTP2Tests/SimpleClientServerFramePayloadStreamTests.swift
+@@ -1960,4 +1960,26 @@ class SimpleClientServerFramePayloadStreamTests: XCTestCase {
+         XCTAssertNoThrow(try self.clientChannel.finish())
+         XCTAssertNoThrow(try self.serverChannel.finish())
+     }
++
++    func testHTTP2HandlerDoesNotFlushExcessively() throws {
++        try self.basicHTTP2Connection()
++
++        class FlushCounter: ChannelOutboundHandler {
++            typealias OutboundIn = Never
++            var flushCount = 0
++
++            func flush(context: ChannelHandlerContext) {
++                self.flushCount += 1
++                context.flush()
++            }
++        }
++
++        let counter = FlushCounter()
++        XCTAssertNoThrow(try self.clientChannel.pipeline.syncOperations.addHandler(counter, position: .first))
++
++        // 'channelReadComplete' should cause the HTTP2Handler to emit a flush if any frames have
++        // been written. No frames have been written, so no flush should be emitted.
++        self.clientChannel.pipeline.fireChannelReadComplete()
++        XCTAssertEqual(counter.flushCount, 0)
++    }
+ }

@@ -1,0 +1,17 @@
+diff --git a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/io/html.kt b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/io/html.kt
+index 432eab2c0..956fd99aa 100644
+--- a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/io/html.kt
++++ b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/io/html.kt
+@@ -899,6 +905,12 @@ internal class DataFrameFormatter(
+ 
+             is DataFrameHtmlData -> RenderedContent.text(value.body)
+ 
++            is IMG -> RenderedContent.media(value.toString())
++
++            is IFRAME -> RenderedContent.media(value.toString())
++
++            is RenderedContent -> value
++
+             else -> renderer.content(value, configuration)
+         }
+         if (result != null && result.textLength > configuration.cellContentLimit) return null

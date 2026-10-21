@@ -1,0 +1,23 @@
+diff --git a/detekt-rules-documentation/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/OutdatedDocumentationSpec.kt b/detekt-rules-documentation/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/OutdatedDocumentationSpec.kt
+index c36753b159af..feb78e40e859 100644
+--- a/detekt-rules-documentation/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/OutdatedDocumentationSpec.kt
++++ b/detekt-rules-documentation/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/OutdatedDocumentationSpec.kt
+@@ -171,6 +171,18 @@ class OutdatedDocumentationSpec {
+                 assertThat(subject.compileAndLint(correctTypeParam)).isEmpty()
+             }
+
++            @Test
++            fun `should not report when doc match class params and no primary constructor`() {
++                val correctTypeParam = """
++                /**
++                 * Some description
++                 * @param T Description of type param
++                 */
++                class MyClass<T>
++                """
++                assertThat(subject.compileAndLint(correctTypeParam)).isEmpty()
++            }
++
+             @Test
+             fun `should report when doc misses type param`() {
+                 val missingTypeParam = """

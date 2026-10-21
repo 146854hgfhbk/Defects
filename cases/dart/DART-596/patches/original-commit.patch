@@ -1,0 +1,81 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 132f227..e4fe753 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++# 6.0.0
++If inside an unquoted string, text-delimiters are ignored instead of swallowed.  
++This (partially?) fixes issue #70.  
++Example: `"A B", "C, D"` will now produce `[["A B",' "C',' D"']]` instead of `[["A B",' C',' D']]`.
++
+ # 5.1.1
+ Fix warnings.  (Thanks https://github.com/thumbert for the bug report)
+ 
+diff --git a/lib/src/csv_parser.dart b/lib/src/csv_parser.dart
+index 1d5fcdb..c5c3870 100644
+--- a/lib/src/csv_parser.dart
++++ b/lib/src/csv_parser.dart
+@@ -89,7 +89,7 @@ part 'csv_argument_errors.dart';
+ //
+ // We have a counter for every delimiter.  Before adding a character _c_ to the
+ // StringBuffer which represents the current field, we find out if _c_ is part
+-// a delimiter.
++// of a delimiter.
+ // Assume all counters are 0 (the start condition).  If any delimiter starts
+ // with _c_ we increment the corresponding counter:
+ // if (delim[delimCounter] == _c_) delimCounter++;
+@@ -199,7 +199,8 @@ class CsvParser {
+   /// non 0 counter and take a substring of the corresponding string.
+   late StringBuffer _matchedChars;
+ 
+-  /// If [allowInvalid] is true we only use the user supplied value if it isn't null.
++  /// If [allowInvalid] is true we only use the user supplied value if it isn't
++  /// null.
+   static String? _argValue(
+       bool? allowInvalid, String? userValue, String defaultValue,
+       {String? userValue2}) {
+@@ -297,10 +298,10 @@ class CsvParser {
+     final onlyTextEndDelimiterMatches =
+         _insideQuotedString && !_previousWasTextEndDelimiter;
+ 
+-    // never look for a start text delimiter inside a quoted string.
++    // never look for a start text delimiter inside a string.
+     // (even if _previousWasTextEndDelimiter)
+     final matchTextDelimiters =
+-        !_insideQuotedString && (!matching || _matchingTextDelimiter > 0);
++        !_insideString && (!matching || _matchingTextDelimiter > 0);
+ 
+     final matchTextEndDelimiters =
+         _insideQuotedString && (!matching || _matchingTextEndDelimiter > 0);
+diff --git a/pubspec.yaml b/pubspec.yaml
+index ff98998..7dc877b 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,5 +1,5 @@
+ name: csv
+-version: 5.1.1
++version: 6.0.0
+ description: |-
+   A codec to transform between a string and a list of values.
+ 
+diff --git a/test/csv_to_list_test.dart b/test/csv_to_list_test.dart
+index 0bed060..07943e7 100644
+--- a/test/csv_to_list_test.dart
++++ b/test/csv_to_list_test.dart
+@@ -601,4 +601,16 @@ void main_converter() {
+           ['', 'faa4aag', 'haa5.6']
+         ]));
+   });
++
++  test('Issue #70', () {
++    final input = '"A B", "C, D"\r\n';
++    final parsed = CsvToListConverter().convert(input);
++    expect(parsed, equals([["A B",' "C',' D"']]));
++  });
++
++  test('Quotes inside', () {
++    final input = 'A"B,C"D';
++    final parsed = CsvToListConverter().convert(input);
++    expect(parsed, equals([['A"B', 'C"D']]));
++  });
+ }

@@ -1,0 +1,81 @@
+diff --git a/entry/src/ohosTest/ets/test/List.test.ets b/entry/src/ohosTest/ets/test/List.test.ets
+index 5f84f51..c802d10 100644
+--- a/entry/src/ohosTest/ets/test/List.test.ets
++++ b/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Ability.test';
++import { TimeConversionTest } from './TimeConversion.test';
+ 
+ export default function testsuite() {
+   abilityTest();
+-}
+\ No newline at end of file
++  TimeConversionTest();
++}
+diff --git a/entry/src/ohosTest/ets/test/TimeConversion.test.ets b/entry/src/ohosTest/ets/test/TimeConversion.test.ets
+new file mode 100644
+index 0000000..5acf229
+--- /dev/null
++++ b/entry/src/ohosTest/ets/test/TimeConversion.test.ets
+@@ -0,0 +1,39 @@
++/*
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, expect, it } from '@ohos/hypium';
++import TimeConversion from '../../../main/ets/util/TimeConversion';
++
++const MINUTE_SECONDS = 60;
++const TARGET_OFFSET_MS = 2 * MINUTE_SECONDS * 1000;
++const ACCEPTABLE_DRIFT_SECONDS = 30;
++
++export function TimeConversionTest() {
++  describe('TimeConversionTest', () => {
++    it('Date_to_millisecond_uses_calendar_month_and_day_of_month', 0, () => {
++      const targetDate = new Date(Date.now() + TARGET_OFFSET_MS);
++      const delaySeconds = TimeConversion.dateToMillisecond(
++        targetDate.getFullYear(),
++        targetDate.getMonth() + 1,
++        targetDate.getDate(),
++        targetDate.getHours(),
++        targetDate.getMinutes()
++      );
++
++      expect(delaySeconds >= MINUTE_SECONDS).assertTrue();
++      expect(delaySeconds <= (2 * MINUTE_SECONDS + ACCEPTABLE_DRIFT_SECONDS)).assertTrue();
++    });
++  });
++}
+diff --git a/entry/src/ohosTest/ets/testability/TestAbility.ets b/entry/src/ohosTest/ets/testability/TestAbility.ets
+index 96b851a..e5dfb95 100644
+--- a/entry/src/ohosTest/ets/testability/TestAbility.ets
++++ b/entry/src/ohosTest/ets/testability/TestAbility.ets
+@@ -19,7 +19,7 @@ import AbilityDelegatorRegistry from '@ohos.application.abilityDelegatorRegistry
+ import { Hypium } from '@ohos/hypium'
+ import testsuite from '../test/List.test'
+ import Window from '@ohos.window'
+-import { AbilityConstant } from '@kit.AbilityKit';
++import { AbilityConstant, Want } from '@kit.AbilityKit';
+ 
+ export default class TestAbility extends UIAbility {
+   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam) {
+@@ -68,4 +68,4 @@ export default class TestAbility extends UIAbility {
+     hilog.isLoggable(0x0000, 'testTag', hilog.LogLevel.INFO);
+     hilog.info(0x0000, 'testTag', '%{public}s', 'TestAbility onBackground');
+   }
+-}
+\ No newline at end of file
++}

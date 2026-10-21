@@ -1,0 +1,96 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 820067edd2760c987e53c9c741ef51850cd78911..048c3142760a435244d00f6df661a0c1009a38b9 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -27,6 +27,8 @@
+     available the original coroutine functions are now used [#329](https://github.com/Tieske/Penlight/pull/329)
+   - Fix: in `pl.strict` also predefine global `_PROMPT2`
+   - Fix: in `pl.strict` apply `tostring` to the given name, in case it is not a string.
++  - Fix: the lexer would not recognize numbers without leading zero; "-.123".
++    See [#315](https://github.com/Tieske/Penlight/issues/315)
+ 
+ ## 1.7.0 (2019-10-14)
+ 
+diff --git a/docs_topics/06-data.md b/docs_topics/06-data.md
+index 8c759d783d3c34e5c14c496ee0e24956c63c1669..e067b6badc9d3e10d7ef69bcfb54eab84cb93f6e 100644
+--- a/docs_topics/06-data.md
++++ b/docs_topics/06-data.md
+@@ -665,7 +665,7 @@ nicely delimited by newlines. For example, here is a snippet of a in-house file
+ format which it was my task to maintain:
+ 
+     points
+-(818344.1,-20389.7,-0.1),(818337.9,-20389.3,-0.1),(818332.5,-20387.8,-0.1)
++        (818344.1,-20389.7,-0.1),(818337.9,-20389.3,-0.1),(818332.5,-20387.8,-0.1)
+         ,(818327.4,-20388,-0.1),(818322,-20387.7,-0.1),(818316.3,-20388.6,-0.1)
+         ,(818309.7,-20389.4,-0.1),(818303.5,-20390.6,-0.1),(818295.8,-20388.3,-0.1)
+         ,(818290.5,-20386.9,-0.1),(818285.2,-20386.1,-0.1),(818279.3,-20383.6,-0.1)
+diff --git a/lua/pl/lexer.lua b/lua/pl/lexer.lua
+index b7289a9ea6eb316188e649a3787b8c13a0041d5f..ca8c765ee8b72390ec0d013cc96911476bf9c2ef 100644
+--- a/lua/pl/lexer.lua
++++ b/lua/pl/lexer.lua
+@@ -37,11 +37,15 @@ end
+ 
+ local lexer = {}
+ 
+-local NUMBER1 = '^[%+%-]?%d+%.?%d*[eE][%+%-]?%d+'
+-local NUMBER2 = '^[%+%-]?%d+%.?%d*'
+-local NUMBER3 = '^0x[%da-fA-F]+'
+-local NUMBER4 = '^%d+%.?%d*[eE][%+%-]?%d+'
+-local NUMBER5 = '^%d+%.?%d*'
++local NUMBER1  = '^[%+%-]?%d+%.?%d*[eE][%+%-]?%d+'
++local NUMBER1a = '^[%+%-]?%d*%.%d+[eE][%+%-]?%d+'
++local NUMBER2  = '^[%+%-]?%d+%.?%d*'
++local NUMBER2a = '^[%+%-]?%d*%.%d+'
++local NUMBER3  = '^0x[%da-fA-F]+'
++local NUMBER4  = '^%d+%.?%d*[eE][%+%-]?%d+'
++local NUMBER4a = '^%d*%.%d+[eE][%+%-]?%d+'
++local NUMBER5  = '^%d+%.?%d*'
++local NUMBER5a = '^%d*%.%d+'
+ local IDEN = '^[%a_][%w_]*'
+ local WSPACE = '^%s+'
+ local STRING1 = "^(['\"])%1" -- empty string
+@@ -153,7 +157,9 @@ function lexer.scan(s,matches,filter,options)
+                 {NUMBER3,ndump},
+                 {IDEN,plain_vdump},
+                 {NUMBER1,ndump},
++                {NUMBER1a,ndump},
+                 {NUMBER2,ndump},
++                {NUMBER2a,ndump},
+                 {STRING1,sdump},
+                 {STRING2,sdump},
+                 {STRING3,sdump},
+@@ -325,7 +331,9 @@ function lexer.lua(s,filter,options)
+             {NUMBER3,ndump},
+             {IDEN,lua_vdump},
+             {NUMBER4,ndump},
++            {NUMBER4a,ndump},
+             {NUMBER5,ndump},
++            {NUMBER5a,ndump},
+             {STRING1,sdump},
+             {STRING2,sdump},
+             {STRING3,sdump},
+@@ -375,7 +383,9 @@ function lexer.cpp(s,filter,options)
+             {NUMBER3,ndump},
+             {IDEN,cpp_vdump},
+             {NUMBER4,ndump},
++            {NUMBER4a,ndump},
+             {NUMBER5,ndump},
++            {NUMBER5a,ndump},
+             {CHAR1,chdump},
+             {CHAR2,chdump},
+             {CHAR3,chdump},
+diff --git a/tests/test-lexer.lua b/tests/test-lexer.lua
+index 20a86a186dab1b0cf046752ad1897c7150882f28..1c09b85d26e710eb1a07d2d97e8788a6442a8a28 100644
+--- a/tests/test-lexer.lua
++++ b/tests/test-lexer.lua
+@@ -137,3 +137,10 @@ asserteq(lexer.lineno(iter), 3)
+ iter()
+ iter()
+ asserteq(lexer.lineno(iter), 3)
++
++do  -- numbers without leading zero; ".123"
++  local s = 'hello = +.234'
++  test_scan(s, {space=true}, {number=true}, {
++    {'iden', 'hello'}, {'=', '='}, {'number', .234}
++  })
++end

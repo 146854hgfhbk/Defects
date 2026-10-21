@@ -1,0 +1,14 @@
+diff --git a/projects/core/koin-core-viewmodel/src/commonMain/kotlin/org/koin/viewmodel/factory/KoinViewModelFactory.kt b/projects/core/koin-core-viewmodel/src/commonMain/kotlin/org/koin/viewmodel/factory/KoinViewModelFactory.kt
+index f20fc7b80..4b858c6d0 100644
+--- a/projects/core/koin-core-viewmodel/src/commonMain/kotlin/org/koin/viewmodel/factory/KoinViewModelFactory.kt
++++ b/projects/core/koin-core-viewmodel/src/commonMain/kotlin/org/koin/viewmodel/factory/KoinViewModelFactory.kt
+@@ -50,6 +50,9 @@ class KoinViewModelFactory(
+         } else {
+             val scopeId = getViewModelScopeId(modelClass)
+             val vmScope = koin.createScope(scopeId, TypeQualifier(modelClass), null, ViewModelScopeArchetype)
++            if (!scope.isRoot) {
++                vmScope.linkTo(scope)
++            }
+             val vm : T = vmScope.getWithParameters(kClass, qualifier, androidParams)
+             vm.addCloseable(ViewModelScopeAutoCloseable(scopeId,koin))
+             vm

@@ -1,0 +1,16 @@
+diff --git a/lib/JSON/PP.pm b/lib/JSON/PP.pm
+index 8761905f445ae443bc2ddcc31a75ce35011f72fc..cc62edfdc70df7ced06214891c2eceadbbcd47da 100644
+--- a/lib/JSON/PP.pm
++++ b/lib/JSON/PP.pm
+@@ -704,9 +704,8 @@ BEGIN {
+         white(); # remove tail white space
+ 
+         return ( $result, $consumed ) if $want_offset; # all right if decode_prefix
+-        if ( $ch ) {
+-            decode_error("garbage after JSON object");
+-        }
++
++        decode_error("garbage after JSON object") if defined $ch;
+ 
+         $result;
+     }

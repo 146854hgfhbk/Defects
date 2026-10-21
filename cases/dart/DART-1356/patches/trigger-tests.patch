@@ -1,0 +1,27 @@
+diff --git a/test/cache/map_cache_test.dart b/test/cache/map_cache_test.dart
+index cc4d67933b639346460be69bfaa514c66de362b2..657da9576ee28b20aa7a329320b57e0f2eaa832f 100644
+--- a/test/cache/map_cache_test.dart
++++ b/test/cache/map_cache_test.dart
+@@ -64,5 +64,22 @@ main() {
+         expect(value, 'foofoo');
+       });
+     });
++
++    test("should not make multiple requests for the same key", () async {
++      int count = 0;
++
++      Future<String> loader(String key) {
++        count += 1;
++        return new Future.delayed(
++            const Duration(milliseconds: 1), () => "test");
++      }
++
++      await Future.wait([
++        cache.get("test", ifAbsent: loader),
++        cache.get("test", ifAbsent: loader),
++      ]);
++
++      expect(count, equals(1));
++    });
+   });
+ }

@@ -1,0 +1,61 @@
+diff --git a/Changes b/Changes
+index 3ea782b01088abdd5436852cdd076b7373fd1446..ed8acb1f9e2b5215c320a2122f4ad605c78ab9f8 100644
+--- a/Changes
++++ b/Changes
+@@ -2,6 +2,10 @@ Revision history for Path-Tiny
+ 
+ {{$NEXT}}
+ 
++    [Bug fixes]
++
++    - mkdir no longer fails when applied to an existing directory.
++
+ 0.128     2022-10-19 15:32:39-04:00 America/New_York
+ 
+     - No changes from 0.127-TRIAL.
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index ea3d30ec466787841f4535fab88458f11b5c9c1c..f5ba012d061e02d58608734139731465cf552a01 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -1399,7 +1399,8 @@ is passed through to C<make_path>.  Errors will be trapped and an exception
+ thrown.  Returns the the path object to facilitate chaining.
+ 
+ B<NOTE>: unlike Perl's builtin C<mkdir>, this will create intermediate paths
+-similar to the Unix C<mkdir -p> command.
++similar to the Unix C<mkdir -p> command.  It will not error if applied to an
++existing directory.
+ 
+ Current API available since 0.125.
+ 
+@@ -1413,7 +1414,7 @@ sub mkdir {
+     require File::Path;
+     my @dirs;
+     my $ok = eval {
+-        @dirs = File::Path::make_path( $self->[PATH], $args );
++        File::Path::make_path( $self->[PATH], $args );
+         1;
+     };
+     if (!$ok) {
+@@ -1423,10 +1424,6 @@ sub mkdir {
+         my ( $file, $message ) = %{ $err->[0] };
+         $self->_throw('mkdir', $file, $message);
+     }
+-    if (!@dirs) {
+-        $self->_throw('mkdir', $self->[PATH], "directories not created: reason unknown");
+-    }
+-
+     return $self;
+ }
+ 
+diff --git a/t/mkdir.t b/t/mkdir.t
+index 2a9afac19f2944dc8c20e75e6d08632528f9efb6..8b8bbaf2220b49b50d3afa2f0e69c930d7cadda0 100644
+--- a/t/mkdir.t
++++ b/t/mkdir.t
+@@ -16,6 +16,7 @@ my $path = path($tempdir)->child("foo");
+ ok( !-e $path,     "target directory not created yet" );
+ ok( $path->mkdir, "mkdir on directory returned true" );
+ ok( -d $path,      "target directory created" );
++ok( $path->mkdir, "mkdir on existing directory returned true" );
+ 
+ if ( $^O ne 'MSWin32' ) {
+     my $path2 = path($tempdir)->child("bar");

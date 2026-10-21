@@ -1,0 +1,71 @@
+{
+  "candidate_sha": "b73f7606e434e969c7703f5d2b35d7a87e2fc426",
+  "project": "SciML/SciMLBase.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1471,
+      "url": "https://github.com/SciML/SciMLBase.jl/pull/1471",
+      "state": "closed",
+      "title": "Remove the migrated controller kwargs from allowedkeywords",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "**Please ignore until reviewed by @ChrisRackauckas.**\n\nFixes https://github.com/SciML/OrdinaryDiffEq.jl/issues/4027.\n\n`gamma`, `beta1`, `beta2`, `qmax`, `qmin`, `qsteady_min`, `qsteady_max`, and `qoldinit` moved onto the controller objects in the v7 controller refactor, but were never taken out of `allowedkeywords`. `solve` therefore accepted them and silently dropped them — the worst possible migration outcome, since code that tuned a controller kept running and quietly reverted to defaults.\n\nMeasured before the fix (OrdinaryDiffEq v7.1.3, SciMLBase v3.39.1), Lorenz at `abstol=reltol=1e-8`:\n\n```\ngamma=0.1  -> nsteps=5597\ngamma=0.5  -> nsteps=5597\ngamma=0.9  -> nsteps=5597\ngamma=0.99 -> nsteps=5597\n```\n\n`:controller` and `:failfactor` are untouched.\n\n### Verified there is no remaining consumer\n\nThis is a global list shared by every SciML solver, so I checked each consumer rather than assuming:\n\n- **OrdinaryDiffEqCore** — `__init` no longer takes any of them; only `controller = nothing` remains. Fully migrated. The `qsteady_min`/`qmax` hits in that package are controller struct fields and `*_default(alg)` traits, not solve kwargs.\n- **StochasticDiffEqCore** — `_sde_init` still lists all eight in its keyword signature with real defaults (`solve.jl:132-141`), which looked alarming, but they are **never read again in the file**; only `controller` is threaded through to the options. Confirmed empirically: sweeping `gamma`/`qmax`/`qoldinit` on an adaptive `SRIW1` solve at a fixed seed gives byte-identical step counts and endpoints. So they are dead defaults on the SDE side too. Removing them from that signature is worth a follow-up but is not needed for this fix.\n- **Sundials** — has its own `warnkeywords` tuple listing these as explicitly unsupported-and-ignored. Those now become a hard error at the SciMLBase keyword check instead of a warning, which is the intended behavior.\n- **BoundaryValueDiffEq / JumpProcesses / DelayDiffEq** — no references.\n\n### Better error than "
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "cross_repository_issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        4027
+      ],
+      "issue_repository": "SciML/OrdinaryDiffEq.jl",
+      "pull_request": 1471,
+      "pull_request_repository": "SciML/SciMLBase.jl",
+      "fix_commit": "b73f7606e434e969c7703f5d2b35d7a87e2fc426",
+      "evidence_source": "qualified_issue_url_in_fix_commit_or_pull_request"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Remove the migrated controller kwargs from allowedkeywords (#1471)\n\ngamma, beta1, beta2, qmax, qmin, qsteady_min, qsteady_max, and qoldinit moved\nonto the controller objects in the v7 controller refactor, but were left in\nallowedkeywords. solve therefore accepted them and silently dropped them:\nsweeping gamma over 0.1-0.99 on a Lorenz solve at abstol=reltol=1e-8 gave\n5597 steps every time. Anyone who had tuned a controller was silently running\ndefaults. Fixes SciML/OrdinaryDiffEq.jl#4027.\n\nPassing one now throws CommonKwargError with a targeted message pointing at\ncontroller = PIController(...) rather than only dumping the allowed-keyword\nlist. controller and failfactor are unaffected.\n\nVerified no consumer remains: OrdinaryDiffEqCore's __init keeps only\ncontroller; StochasticDiffEqCore's _sde_init still lists these in its\nsignature but never reads them (dead defaults); Sundials lists them in its\nown warnkeywords as explicitly-ignored, so those become a hard error instead\nof a warning, which is the intended behavior.\n\nCo-authored-by: Chris Rackauckas - Beep Boop Edition <accounts@chrisrackauckas.com>",
+    "commit_issue_refs": [
+      1471
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1471,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Remove the migrated controller kwargs from allowedkeywords",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [
+      [
+        "SciML/OrdinaryDiffEq.jl",
+        4027,
+        "issues"
+      ]
+    ],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    4027
+  ],
+  "cross_repository_issue_records": [
+    {
+      "number": 4027,
+      "url": "https://github.com/SciML/OrdinaryDiffEq.jl/issues/4027",
+      "state": "closed",
+      "title": "Controller kwargs (gamma, qmin, qmax, beta1, beta2, qoldinit) are accepted by solve but silently ignored on v7",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "## Summary\n\n`NEWS.md` documents the controller keyword arguments as removed from `solve`/`init` in v7, moved onto the `PIController`/`PIDController`/`IController` objects. In the released version they are **still in `DiffEqBase.allowedkeywords`**, so `solve` accepts them without error and then ignores them.\n\nThis is the worst outcome for migration: code that tuned the step size controller keeps running, raises nothing, and silently uses default controller settings.\n\n## Reproduction\n\nVerified on OrdinaryDiffEq v7.1.3, SciMLBase v3.39.1, OrdinaryDiffEqCore v4.8.0, DiffEqBase v7.7.0, Julia 1.11.9.\n\n```julia\nusing OrdinaryDiffEq\n\nlorenz(du,u,p,t) = (du[1]=10(u[2]-u[1]); du[2]=u[1]*(28-u[3])-u[2]; du[3]=u[1]*u[2]-(8/3)u[3])\nprob = ODEProblem(lorenz, [1.0,0.0,0.0], (0.0,50.0))\n\nfor g in (0.1, 0.5, 0.9, 0.99)\n    s = solve(prob, Tsit5(); gamma = g, abstol = 1e-8, reltol = 1e-8)\n    println(\"gamma=$g -> nsteps=\", length(s.t), \" naccept=\", s.stats.naccept, \" nreject=\", s.stats.nreject)\nend\n```\n\nOutput:\n\n```\ngamma=0.1 -> nsteps=5597 naccept=5596 nreject=0\ngamma=0.5 -> nsteps=5597 naccept=5596 nreject=0\ngamma=0.9 -> nsteps=5597 naccept=5596 nreject=0\ngamma=0.99 -> nsteps=5597 naccept=5596 nreject=0\n```\n\nIdentical across a 10x range of `gamma`. On v6 these differ substantially.\n\n## Which keywords are affected\n\n```julia\nusing DiffEqBase\nfor k in (:gamma, :qmin, :qmax, :beta1, :beta2, :qoldinit, :controller)\n    println(\"  :$k allowed? \", k in DiffEqBase.allowedkeywords)\nend\n```\n\n```\n  :gamma allowed? true\n  :qmin allowed? true\n  :qmax allowed? true\n  :beta1 allowed? true\n  :beta2 allowed? true\n  :qoldinit allowed? true\n  :controller allowed? true\n```\n\nAll accepted; only `controller` has an effect. For contrast, a genuinely unknown keyword errors correctly:\n\n```julia\nsolve(prob, Tsit5(); totally_bogus_kwarg = 1)\n# ERROR: Unrecognized keyword arguments found.\n```\n\nSo the kwarg-validation machinery works — these specific names were just left in the allowlist after the controller re",
+      "repository": "SciML/OrdinaryDiffEq.jl",
+      "reference_kind": "issues"
+    }
+  ]
+}

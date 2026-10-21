@@ -1,0 +1,221 @@
+{
+  "schema_version": 2,
+  "case_id": "KOTLIN-175",
+  "status": "candidate_validated",
+  "candidate_source": "Kotlin/kotlin-swe-bench",
+  "source_task_id": "pinterest_ktlint-2141",
+  "revision_mode": "base_plus_gold_patch",
+  "project": "pinterest/ktlint",
+  "license": "MIT",
+  "pull_request_number": 2141,
+  "pr_url": "https://github.com/pinterest/ktlint/pull/2141",
+  "issue_urls": [
+    "https://github.com/pinterest/ktlint/issues/2140"
+  ],
+  "buggy_revision": "b139c14dcf4c9b97d063b55a33504872da860cc8",
+  "fixed_revision": "cbc9e4d5129b6b3fbe93db31eacf8b77549db035",
+  "upstream_head_revision": "26aa552af42b7e7a16e4d5d4ff651f7644e71a35",
+  "patch": "patches/minimized-source.patch",
+  "patch_sha256": "71375ee6a10413ae73c46c42343ae463108da3fdd1585f3644310453204665b6",
+  "changed_production_files": [
+    "ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRule.kt"
+  ],
+  "trigger_tests": [
+    "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Ktlint allowed examples*",
+    "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given an object val property name not having a custom get function and not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable*",
+    "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given a top level val property name not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable*"
+  ],
+  "trigger_test_filters": {},
+  "trigger_test_patch": "trigger-tests.patch",
+  "environment_lock": "environment.lock.json",
+  "build": {
+    "system": "Gradle Wrapper",
+    "gradle_version": "8.2.1",
+    "java_version": 17,
+    "android_sdk_required": false,
+    "compile_task": ":ktlint-ruleset-standard:testClasses",
+    "test_task": ":ktlint-ruleset-standard:test",
+    "test_results_glob": "ktlint-ruleset-standard/build/test-results/**/TEST-*.xml",
+    "build_command": ".\\gradlew.bat :ktlint-ruleset-standard:testClasses",
+    "test_command": ".\\gradlew.bat :ktlint-ruleset-standard:test"
+  },
+  "validation": {
+    "bug_id": "KOTLIN-175",
+    "issue_id": null,
+    "issue_url": "https://github.com/pinterest/ktlint/issues/2140",
+    "buggy_commit": "b139c14dcf4c9b97d063b55a33504872da860cc8",
+    "fixed_commit": "cbc9e4d5129b6b3fbe93db31eacf8b77549db035",
+    "patch": "patches/original-source.patch",
+    "changed_source_files": [
+      "ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRule.kt"
+    ],
+    "triggering_test": [
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Ktlint allowed examples*",
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given an object val property name not having a custom get function and not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable*",
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given a top level val property name not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable*"
+    ],
+    "expected_failure": {
+      "test_count": 3,
+      "tests": [
+        "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given a top level val property name not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable()",
+        "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given an object val property name not having a custom get function and not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable()",
+        "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Ktlint allowed examples()"
+      ],
+      "exception_types": [
+        "java.lang.AssertionError"
+      ],
+      "fingerprints": [
+        "4ffdab0fe8006cb62acddffd70cdeb5696c28dbb403575b22c2b1b9c5e8602ff"
+      ]
+    },
+    "fixed_test_result": "pass",
+    "build_command": [
+      ".\\gradlew",
+      ":ktlint-ruleset-standard:testClasses",
+      "--no-daemon",
+      "--console=plain",
+      "--no-build-cache",
+      "--no-configuration-cache",
+      "--max-workers=1",
+      "--stacktrace",
+      "--rerun-tasks",
+      "--offline"
+    ],
+    "test_command": [
+      ".\\gradlew",
+      ":ktlint-ruleset-standard:cleanTest",
+      ":ktlint-ruleset-standard:test",
+      "--no-daemon",
+      "--console=plain",
+      "--no-build-cache",
+      "--no-configuration-cache",
+      "--max-workers=1",
+      "--stacktrace",
+      "--offline",
+      "--tests",
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Ktlint allowed examples*",
+      "--tests",
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given an object val property name not having a custom get function and not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable*",
+      "--tests",
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given a top level val property name not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable*"
+    ],
+    "language_version": null,
+    "dependency_versions": {},
+    "operating_system_or_container": "Linux/x86_64",
+    "timezone": "UTC",
+    "reproducibility_status": "stable_differential",
+    "deprecation_reason": null,
+    "status": "stable_differential",
+    "generated_by": "validation_engine.py",
+    "generator_sha256": "8b0c95115e0d7d6457765bb9094ba12db106dd2b1f584de27491ace819bccac6",
+    "report": "validation/validation.json",
+    "report_sha256": "1aec84f0da915910cdf8c441d7d48dc0f7ba8fdd201d0920a27f636469f4a013",
+    "repetitions": 3,
+    "fresh_worktree_per_repetition": true,
+    "individual_trigger_processes": true,
+    "full_suite_valid": true,
+    "buggy_failed_test_count": 3,
+    "buggy_failed_tests": [
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given a top level val property name not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable()",
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given an object val property name not having a custom get function and not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable()",
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Ktlint allowed examples()"
+    ],
+    "buggy_failure_type": "java.lang.AssertionError",
+    "failure_fingerprints": [
+      "4ffdab0fe8006cb62acddffd70cdeb5696c28dbb403575b22c2b1b9c5e8602ff"
+    ],
+    "broken_tests": [],
+    "flaky_tests": [],
+    "order_dependent_tests": [],
+    "compile_valid": true,
+    "validated_at": "2026-08-10T21:46:37.411639+00:00",
+    "source": "validation_engine.py",
+    "manual_claims_removed": true
+  },
+  "provenance": {
+    "swe_bench_gold_patch_sha256": "6a876bb933321769ac14717a6f10fedbc5037397cf875b5e096bb522d60277e6",
+    "swe_bench_trigger_patch_sha256": "6ef30aefaf000cdd25fcc5c16abdf73e889313e91564d673ad54150023bfe252",
+    "gold_patch_sha256": "12d1d6593741d81b0c2cf25bd64d093b69b620b7bb4f085d26efce6a8644f907",
+    "trigger_patch_sha256": "6c5eaf331b58b2d46177646cfb0a668be4e30a788f716b8b12b139420ff6ec10",
+    "line_endings_normalized_for_git": true,
+    "release_remediation": {
+      "remediated_at": "2026-08-15T11:41:43Z",
+      "canonical_tree": "cases",
+      "previous_status": "swe_bench_staging_unvalidated",
+      "previous_patch_path": "patches/original-source.patch",
+      "previous_patch_sha256": "12d1d6593741d81b0c2cf25bd64d093b69b620b7bb4f085d26efce6a8644f907",
+      "legacy_provenance_trigger_patch_sha256": "6c5eaf331b58b2d46177646cfb0a668be4e30a788f716b8b12b139420ff6ec10",
+      "release_trigger_patch_sha256": "6c5eaf331b58b2d46177646cfb0a668be4e30a788f716b8b12b139420ff6ec10",
+      "trigger_historical_binding": "historically_bound",
+      "source_patch_evidence": "minimization_evidence",
+      "source_patch_evidence_file": "patches/minimization.json",
+      "package_dynamic_replayed": false,
+      "raw_run_artifacts_bundled": false,
+      "historical_snapshot": true,
+      "superseded_by_final_dynamic_acceptance": true,
+      "note_on_package_dynamic_replayed": "false records the 2026-08-15 remediation snapshot; final_dynamic_acceptance is authoritative for the 2026-08-17 replay."
+    }
+  },
+  "expected_failure": {
+    "test_count": 3,
+    "tests": [
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given a top level val property name not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable()",
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Issue 2140 - Given an object val property name not having a custom get function and not in screaming case notation then do not emit as it can not be reliably be determined whether the value is (deeply) immutable()",
+      "com.pinterest.ktlint.ruleset.standard.rules.PropertyNamingRuleTest.Ktlint allowed examples()"
+    ],
+    "exception_types": [
+      "java.lang.AssertionError"
+    ],
+    "fingerprints": [
+      "4ffdab0fe8006cb62acddffd70cdeb5696c28dbb403575b22c2b1b9c5e8602ff"
+    ]
+  },
+  "fixed_test_result": "pass",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "issue_id": 2140,
+  "original_source_patch": "patches/original-source.patch",
+  "original_source_patch_sha256": "71375ee6a10413ae73c46c42343ae463108da3fdd1585f3644310453204665b6",
+  "trigger_test_patch_sha256": "6c5eaf331b58b2d46177646cfb0a668be4e30a788f716b8b12b139420ff6ec10",
+  "test_identity": {
+    "scheme": "base-revision-plus-trigger-overlay-sha256-v1",
+    "trigger_overlay_sha256": "6c5eaf331b58b2d46177646cfb0a668be4e30a788f716b8b12b139420ff6ec10",
+    "buggy_base_revision": "b139c14dcf4c9b97d063b55a33504872da860cc8",
+    "fixed_base_revision": "cbc9e4d5129b6b3fbe93db31eacf8b77549db035",
+    "note": "Final release identity: trigger overlay bytes are bound by SHA-256 and base revisions are the final published buggy/fixed identities."
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "jvm",
+    "reason_code": null,
+    "reason": "Final dynamic acceptance pass completed from clean reconstruction; fixed passed and buggy reproduced the declared trigger differential."
+  },
+  "release_integrity": "release-integrity.json",
+  "final_dynamic_acceptance": {
+    "status": "PASS_STRICT",
+    "fresh_replay_completed": true,
+    "accepted_at": "2026-08-17T00:44:00Z",
+    "fixed_result": "PASS",
+    "buggy_trigger_result": "FAIL_AS_EXPECTED",
+    "raw_run_artifacts_bundled": false,
+    "evidence_location": "external validation server (not included in supplied archive)",
+    "repair_note": null
+  },
+  "patch_direction": "buggy_to_fixed",
+  "patch_semantics": {
+    "canonical_direction": "buggy_to_fixed",
+    "official_defects4j_reference_convention": "reverse_patch_applied_to_fixed_to_reintroduce_bug",
+    "note": "Direction is explicitly declared because this Defects4J-style Kotlin release is not byte-format-identical to the Defects4J internal patch store."
+  },
+  "defects4j_style_alignment": {
+    "dynamic_reproduction": "PASS_STRICT",
+    "patch_direction_declared": true,
+    "manual_review_adaptation": "LLM-assisted curation may replace the original Defects4J human-review stage for this dataset task"
+  },
+  "language": "Kotlin",
+  "benchmark_tier": "constructed-fixed",
+  "upstream_boundary_strict_eligible": false
+}

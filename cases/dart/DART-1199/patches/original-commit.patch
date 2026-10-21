@@ -1,0 +1,48 @@
+diff --git a/pkgs/matcher/CHANGELOG.md b/pkgs/matcher/CHANGELOG.md
+index 249b143a60e79be4378e9c7c4fd889509937d3d4..1d37aea256003767ca2957e6ad60a6485b367857 100644
+--- a/pkgs/matcher/CHANGELOG.md
++++ b/pkgs/matcher/CHANGELOG.md
+@@ -1,6 +1,7 @@
+ ## 0.12.19-wip
+ 
+ * Improve speed of pretty printing for large collections.
++* Improve output of pairwiseCompare with mismatched types.
+ 
+ ## 0.12.18
+ 
+diff --git a/pkgs/matcher/lib/src/iterable_matchers.dart b/pkgs/matcher/lib/src/iterable_matchers.dart
+index 0fbdb5c877f3c89cc26c84e95415afacd5668cb2..21bf73c01f4c59b353e93aade7a560d0aa6cb07d 100644
+--- a/pkgs/matcher/lib/src/iterable_matchers.dart
++++ b/pkgs/matcher/lib/src/iterable_matchers.dart
+@@ -297,7 +297,8 @@ class _PairwiseCompare<S, T> extends _IterableMatcher {
+     var i = 0;
+     for (var e in _expected) {
+       iterator.moveNext();
+-      if (!_comparator(e, iterator.current as T)) {
++      var current = iterator.current;
++      if (current is! T || !_comparator(e, current)) {
+         addStateInfo(matchState, {
+           'index': i,
+           'expected': e,
+diff --git a/pkgs/matcher/test/iterable_matchers_test.dart b/pkgs/matcher/test/iterable_matchers_test.dart
+index d66e9f9c4c045719d49d5ab544edfbb79c8e4c6a..2471cdb210e99fadea94fc5e4a23b67c13dceb37 100644
+--- a/pkgs/matcher/test/iterable_matchers_test.dart
++++ b/pkgs/matcher/test/iterable_matchers_test.dart
+@@ -422,6 +422,17 @@ void main() {
+     );
+   });
+ 
++  test('pairwiseCompare with mismatched types', () async {
++    final notInts = ['notInt'];
++    shouldFail(
++      notInts,
++      pairwiseCompare([1], (int e, int a) => a <= e, 'less than or equal'),
++      'Expected: pairwise less than or equal [1] '
++      "Actual: ['notInt'] "
++      "Which: has 'notInt' which is not less than or equal <1> at index 0",
++    );
++  });
++
+   test('isEmpty', () {
+     var d = SimpleIterable(0);
+     var e = SimpleIterable(1);

@@ -1,0 +1,49 @@
+diff --git a/lib/JSON/PP.pm b/lib/JSON/PP.pm
+index 0507921..a631623 100644
+--- a/lib/JSON/PP.pm
++++ b/lib/JSON/PP.pm
+@@ -201,12 +201,11 @@ sub boolean_values {
+         my ($false, $true) = @_;
+         $self->{false} = $false;
+         $self->{true} = $true;
+-        return ($false, $true);
+     } else {
+         delete $self->{false};
+         delete $self->{true};
+-        return;
+     }
++    return $self;
+ }
+ 
+ sub get_boolean_values {
+diff --git a/t/118_boolean_values.t b/t/118_boolean_values.t
+index 5a2c2b3..f575b72 100644
+--- a/t/118_boolean_values.t
++++ b/t/118_boolean_values.t
+@@ -37,13 +37,14 @@ if (eval "require Types::Serialiser; 1") {
+     push @tests, [Types::Serialiser::true(), Types::Serialiser::false(), 'Types::Serialiser::BooleanBase', 'Types::Serialiser::BooleanBase'];
+ }
+ 
+-plan tests => 13 * @tests;
++plan tests => 15 * @tests;
+ 
+ my $json = JSON::PP->new;
+ for my $test (@tests) {
+     my ($true, $false, $true_class, $false_class, $incompat) = @$test;
+ 
+-    $json->boolean_values($false, $true);
++    my $ret = $json->boolean_values($false, $true);
++    is $ret => $json, "returns the same object";
+     my ($new_false, $new_true) = $json->get_boolean_values;
+     ok defined $new_true, "new true class is defined";
+     ok defined $new_false, "new false class is defined";
+@@ -70,7 +71,8 @@ for my $test (@tests) {
+         is $should_false_json => 'false', "A $false_class object turns into JSON false";
+     }
+ 
+-    $json->boolean_values();
++    $ret = $json->boolean_values();
++    is $ret => $json, "returns the same object";
+     ok !$json->get_boolean_values, "reset boolean values";
+ 
+     $should_true = $json->allow_nonref(1)->decode('true');

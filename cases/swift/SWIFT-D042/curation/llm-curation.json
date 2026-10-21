@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1770",
+  "technical_evidence_sha256": "3883a1168454aabffee068a860cc529335e886136502894c9da56b7c8d13c2f4",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "7c861984ffb78d2c281186e93e48261a49822d91b0c2d46c35dd02b623f3304a",
+  "reviewed_at": "2026-09-10T01:29:03.153035+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "nicklockwood/swiftformat#1709",
+  "rationale": "Issue 1709 ('named tuple in closure argument destructuring breaks after formatting') reports that preferForLoop rewrote `dict.forEach { (header: (key: String, value: String)) in ... }` into `for (header, value) in dict`, producing code that no longer compiles. PR 1712 body states 'This PR fixes #1709' and reproduces the same input/output pair, and traceability resolves fix_commit_to_merged_pr_to_issue for verified issue 1709. The root cause is visible in the single production hunk: the buggy code split the entire argument-list token range on `.delimiter(\",\")`, so the comma nested inside the tuple type was treated as an argument separator and yielded two argument names for one argument; the fix walks top-level identifier labels, appending only labels that follow a top-level comma. The minimized patch retains 1 of 1 hunk in Sources/ParsingHelpers.swift with post-minimization validation PASS; it is behavior-only, adds no options, rule, or public API, and the single added comment line is explanatory text inside the replacement logic rather than a documentation-only change. The trigger is the unchanged upstream test testForEachOverDictionary from the same fixing commit, using the pre-existing testFormatting(for:output:rule:) helper and pre-existing FormatRules.preferForLoop, so no fix-only API is referenced; strict evidence confirms build.both_versions PASS, trigger.buggy_differential reproducing exactly ['Tests/RulesTests+Syntax.swift::testForEachOverDictionary'], trigger.deterministic over 3 repetitions, trigger.fixed_clean, and full_suite.fixed_all_green, in both strict_original and strict_post_minimization with no failed checks. The expected `for header in dict` output matches one of the acceptable outcomes described in the issue (single-argument semantics preserved) rather than new behavior introduced by the fix. active_same_project_root_causes is empty and nicklockwood/swiftformat#1709 is the sole allowed verified key, so no duplicate exists.\n\nIssue 1709 reports that `dict.forEach { (header: (key: String, value: String)) in ... }` was rewritten by preferForLoop into `for (header, value) in dict`, breaking compilation. The single production hunk in Sources/ParsingHelpers.swift replaces the naive `split(separator: .delimiter(\",\"))` over the whole argument-list token range (which also split on commas nested inside the tuple type, yielding two argument names for one argument) with a scan that only collects top-level argument labels. That is exactly the parse error described in the issue and in PR 1712 ('This PR fixes #1709'), which is linked to the fix commit via fix_commit_to_merged_pr_to_issue. The minimized patch is one behavioral hunk with no refactor, formatting, docs, config, or test content; the only added comment describes the new loop. The trigger is the unchanged upstream test testForEachOverDictionary from the same fixing commit, using the pre-existing testFormatting(for:output:rule:) helper and pre-existing FormatRules.preferForLoop, and it asserts the exact reproducer from the issue body, so it builds and runs on both revisions with no fix-only API. Strict evidence shows build.both_versions PASS, trigger.buggy_differential reproducing Tests/RulesTests+Syntax.swift::testForEachOverDictionary, trigger.fixed_clean PASS, deterministic across 3 repetitions and a 32-run matrix, and full_suite.fixed_all_green PASS both originally and post-minimization. No active same-project root causes are registered, so this is not a duplicate. The assertion expecting `for header in dict` (rather than the issue author's alternative suggestion of `for (key, value) in dict`) is a correct resolution of the same mis-parse, not a feature extension.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-10T01:28:42.839588+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "7c861984ffb78d2c281186e93e48261a49822d91b0c2d46c35dd02b623f3304a",
+      "response_sha256": "4f86e005def256ae561fff2745e7c95aa00c672a79a463b6efe9140d9a7620f0",
+      "response_id": "msg_8ed5a87c8ce9423fb334b2041813ad2a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6173417460696518,
+        "input_tokens": 16856,
+        "output_tokens": 767
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nicklockwood/swiftformat#1709",
+      "rationale": "Issue 1709 ('named tuple in closure argument destructuring breaks after formatting') reports that preferForLoop rewrote `dict.forEach { (header: (key: String, value: String)) in ... }` into `for (header, value) in dict`, producing code that no longer compiles. PR 1712 body states 'This PR fixes #1709' and reproduces the same input/output pair, and traceability resolves fix_commit_to_merged_pr_to_issue for verified issue 1709. The root cause is visible in the single production hunk: the buggy code split the entire argument-list token range on `.delimiter(\",\")`, so the comma nested inside the tuple type was treated as an argument separator and yielded two argument names for one argument; the fix walks top-level identifier labels, appending only labels that follow a top-level comma. The minimized patch retains 1 of 1 hunk in Sources/ParsingHelpers.swift with post-minimization validation PASS; it is behavior-only, adds no options, rule, or public API, and the single added comment line is explanatory text inside the replacement logic rather than a documentation-only change. The trigger is the unchanged upstream test testForEachOverDictionary from the same fixing commit, using the pre-existing testFormatting(for:output:rule:) helper and pre-existing FormatRules.preferForLoop, so no fix-only API is referenced; strict evidence confirms build.both_versions PASS, trigger.buggy_differential reproducing exactly ['Tests/RulesTests+Syntax.swift::testForEachOverDictionary'], trigger.deterministic over 3 repetitions, trigger.fixed_clean, and full_suite.fixed_all_green, in both strict_original and strict_post_minimization with no failed checks. The expected `for header in dict` output matches one of the acceptable outcomes described in the issue (single-argument semantics preserved) rather than new behavior introduced by the fix. active_same_project_root_causes is empty and nicklockwood/swiftformat#1709 is the sole allowed verified key, so no duplicate exists.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "traceability.paths[0]",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "The rewritten loop changes closure argument-name extraction globally, so unusual argument lists (wildcards `_`, trailing commas, keyword labels) may parse differently than the old split-based logic; only the dictionary tuple case is covered by the added test, though full_suite.fixed_all_green bounds the regression risk to existing coverage.",
+        "issue_evidence is null; issue text was read from the embedded source_candidate.issue_check payload rather than an independently fetched record.",
+        "The full-suite gate relies on one resolved baseline exclusion (Tests/RulesTests+Indentation.swift::testTruncateBlankLineBeforeIndenting), a pre-existing unrelated failure with a stable fingerprint.",
+        "The trigger asserts `for header in dict`, which is the maintainer-chosen resolution among the two outcomes the reporter deemed acceptable; a differently-shaped correct fix would not satisfy this assertion."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-10T01:29:03.152238+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "7c861984ffb78d2c281186e93e48261a49822d91b0c2d46c35dd02b623f3304a",
+      "response_sha256": "92a29d38b85c8df0e98deaacad70a393153380ad95cea6bbbb02c1da7ab14fcc",
+      "response_id": "msg_03a3d5052bc04f8c86bcad542093b7f7",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4557853958540631,
+        "input_tokens": 16479,
+        "output_tokens": 673
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nicklockwood/swiftformat#1709",
+      "rationale": "Issue 1709 reports that `dict.forEach { (header: (key: String, value: String)) in ... }` was rewritten by preferForLoop into `for (header, value) in dict`, breaking compilation. The single production hunk in Sources/ParsingHelpers.swift replaces the naive `split(separator: .delimiter(\",\"))` over the whole argument-list token range (which also split on commas nested inside the tuple type, yielding two argument names for one argument) with a scan that only collects top-level argument labels. That is exactly the parse error described in the issue and in PR 1712 ('This PR fixes #1709'), which is linked to the fix commit via fix_commit_to_merged_pr_to_issue. The minimized patch is one behavioral hunk with no refactor, formatting, docs, config, or test content; the only added comment describes the new loop. The trigger is the unchanged upstream test testForEachOverDictionary from the same fixing commit, using the pre-existing testFormatting(for:output:rule:) helper and pre-existing FormatRules.preferForLoop, and it asserts the exact reproducer from the issue body, so it builds and runs on both revisions with no fix-only API. Strict evidence shows build.both_versions PASS, trigger.buggy_differential reproducing Tests/RulesTests+Syntax.swift::testForEachOverDictionary, trigger.fixed_clean PASS, deterministic across 3 repetitions and a 32-run matrix, and full_suite.fixed_all_green PASS both originally and post-minimization. No active same-project root causes are registered, so this is not a duplicate. The assertion expecting `for header in dict` (rather than the issue author's alternative suggestion of `for (key, value) in dict`) is a correct resolution of the same mis-parse, not a feature extension.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "traceability.paths"
+      ],
+      "risks": [
+        "The rewritten loop changes top-level label extraction for all closure argument lists, so unusual forms (wildcards `_`, trailing commas, multiple tuple-typed arguments) are not directly covered by the single added test, though the full suite was green on the fixed revision.",
+        "Strict evidence carries a baseline full-suite exclusion for the unrelated Tests/RulesTests+Indentation.swift::testTruncateBlankLineBeforeIndenting; it is fingerprint-stable and outside the changed code path, but the full-suite gate is therefore not fully unfiltered.",
+        "Full-suite verification was run with a single repetition, so a rare nondeterministic interaction outside the trigger would not be caught."
+      ]
+    }
+  ]
+}

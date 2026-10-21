@@ -1,0 +1,103 @@
+diff --git a/README b/README
+index ca370b5..95ec4bd 100644
+--- a/README
++++ b/README
+@@ -1206,6 +1206,9 @@ BOM
+     Detect all unicode Byte Order Marks on decode. Which are UTF-8,
+     UTF-16LE, UTF-16BE, UTF-32LE and UTF-32BE.
+ 
++    The BOM encoding is set only for one specific decode call, it does not
++    change the state of the JSON object.
++
+     Warning: With perls older than 5.20 you need load the Encode module
+     before loading a multibyte BOM, i.e. >= UTF-16. Otherwise an error is
+     thrown. This is an implementation limitation and might get fixed later.
+diff --git a/XS.xs b/XS.xs
+index f0cf526..9191a63 100644
+--- a/XS.xs
++++ b/XS.xs
+@@ -3745,12 +3745,12 @@ decode_json (pTHX_ SV *string, JSON *json, STRLEN *offset_return, SV *typesv)
+      NOT add a byte order mark to the beginning of a JSON text",
+      "implementations (...) MAY ignore the presence of a byte order
+      mark rather than treating it as an error". */
+-  if (UNLIKELY(len > 2 && SvPOK(string))) {
++  if (UNLIKELY(len > 2 && SvPOK(string) && !json->incr_pos)) {
+     U8 *s = (U8*)SvPVX (string);
+     if (*s >= 0xEF) {
+       if (len >= 3 && memEQc(s, UTF8BOM)) {
++        converted = 1 + (json->flags & F_UTF8);
+         json->flags |= F_UTF8;
+-        converted++;
+         offset = 3;
+         SvPV_set(string, SvPVX_mutable (string) + 3);
+         SvCUR_set(string, len - 3);
+@@ -3758,22 +3758,22 @@ decode_json (pTHX_ SV *string, JSON *json, STRLEN *offset_return, SV *typesv)
+         /* omitting the endian name will skip the BOM in the result */
+       } else if (len >= 4 && memEQc(s, UTF32BOM)) {
+         string = decode_bom(aTHX_ "UTF-32", string, 4);
++        converted = 1 + (json->flags & F_UTF8);
+         json->flags |= F_UTF8;
+-        converted++;
+       } else if (memEQc(s, UTF16BOM)) {
+         string = decode_bom(aTHX_ "UTF-16", string, 2);
++        converted = 1 + (json->flags & F_UTF8);
+         json->flags |= F_UTF8;
+-        converted++;
+       } else if (memEQc(s, UTF16BOM_BE)) {
+         string = decode_bom(aTHX_ "UTF-16", string, 2);
++        converted = 1 + (json->flags & F_UTF8);
+         json->flags |= F_UTF8;
+-        converted++;
+       }
+     } else if (UNLIKELY(len >= 4 && !*s && memEQc(s, UTF32BOM_BE))) {
+         string = decode_bom(aTHX_ "UTF-32", string, 4);
++        converted = 1 + (json->flags & F_UTF8);
+         json->flags |= F_UTF8;
+-        converted++;
+-    }
++   }
+   }
+ 
+   if (LIKELY(!converted)) {
+@@ -3850,6 +3850,8 @@ decode_json (pTHX_ SV *string, JSON *json, STRLEN *offset_return, SV *typesv)
+   if (!(dec.json.flags & F_ALLOW_NONREF) && json_nonref(aTHX_ sv))
+     croak ("JSON text must be an object or array (but found number, string, true, false or null, use allow_nonref to allow this)");
+ 
++  if (UNLIKELY(converted && !(converted - 1))) /* with BOM, and UTF8 was not set */
++    json->flags &= ~F_UTF8;
+   return sv_2mortal (sv);
+ }
+ 
+diff --git a/t/31_bom.t b/t/31_bom.t
+index ad3ec94..de174b5 100644
+--- a/t/31_bom.t
++++ b/t/31_bom.t
+@@ -2,10 +2,12 @@
+ #
+ # https://tools.ietf.org/html/rfc7159#section-8.1
+ # JSON text SHALL be encoded in UTF-8, UTF-16, or UTF-32.
+-use Test::More ($] >= 5.008) ? (tests => 5) : (skip_all => "needs 5.8");;
++use Test::More ($] >= 5.008) ? (tests => 9) : (skip_all => "needs 5.8");;
+ use Cpanel::JSON::XS;
+ use Encode; # Currently required for <5.20
++use charnames qw(:short);
+ use utf8;
++
+ my $json = Cpanel::JSON::XS->new->utf8->allow_nonref;
+ 
+ # parser need to succeed, result should be valid
+@@ -28,3 +30,14 @@ my @bom =
+ for my $bom (@bom) {
+   y_pass(@$bom);
+ }
++
++# [GH #125] BOM in the middle corrupts state, sets utf8 flag
++my $j = Cpanel::JSON::XS->new;
++
++ok(my $as_json = eval {
++    $j->encode({ example => "data with non-ASCII characters",
++                 unicode => "\N{greek:Sigma}" })
++}, 'can encode a basic structure');
++ok(eval { $j->decode($as_json) }, 'can decode again');
++ok(eval { $j->decode("\x{feff}" . $as_json) }, 'can decode with BOM');
++ok(eval { $j->decode($as_json) }, 'can decode original');

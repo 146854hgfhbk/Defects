@@ -1,0 +1,96 @@
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ClassNamingRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ClassNamingRuleTest.kt
+index 16c79dce52..bd382cc0cd 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ClassNamingRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ClassNamingRuleTest.kt
+@@ -139,4 +139,25 @@ class ClassNamingRuleTest {
+             """.trimIndent()
+         classNamingRuleAssertThat(code).hasNoLintViolations()
+     }
++
++    @ParameterizedTest(name = "Keyword: {0}")
++    @Suppress("ktlint:standard:argument-list-wrapping")
++    @ValueSource(
++        strings = [
++            "abstract", "actual", "annotation", "as", "break", "by", "catch", "class", "companion", "const", "constructor", "context",
++            "continue", "contract", "crossinline", "data", "delegate", "do", "dynamic", "else", "enum", "expect", "external", "false",
++            "field", "file", "final", "finally", "for", "fun", "get", "header", "if", "impl", "import", "in", "infix", "init", "inline",
++            "inner", "interface", "internal", "is", "lateinit", "noinline", "null", "object", "open", "operator", "out", "override",
++            "package", "param", "private", "property", "protected", "public", "receiver", "reified", "return", "sealed", "set", "setparam",
++            "super", "suspend", "tailrec", "this", "throw", "true", "try", "typealias", "typeof", "val", "value", "var", "vararg", "when",
++            "where", "while",
++        ],
++    )
++    fun `Issue 2352 - Given a keyword then allow it to be wrapped between backticks`(keyword: String) {
++        val code =
++            """
++            class `$keyword`
++            """.trimIndent()
++        classNamingRuleAssertThat(code).hasNoLintViolations()
++    }
+ }
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt
+index aabb1fb59e..ec426d08d1 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt
+@@ -271,4 +271,25 @@ class FunctionNamingRuleTest {
+             """.trimIndent()
+         functionNamingRuleAssertThat(code).hasNoLintViolations()
+     }
++
++    @ParameterizedTest(name = "Keyword: {0}")
++    @Suppress("ktlint:standard:argument-list-wrapping")
++    @ValueSource(
++        strings = [
++            "abstract", "actual", "annotation", "as", "break", "by", "catch", "class", "companion", "const", "constructor", "context",
++            "continue", "contract", "crossinline", "data", "delegate", "do", "dynamic", "else", "enum", "expect", "external", "false",
++            "field", "file", "final", "finally", "for", "fun", "get", "header", "if", "impl", "import", "in", "infix", "init", "inline",
++            "inner", "interface", "internal", "is", "lateinit", "noinline", "null", "object", "open", "operator", "out", "override",
++            "package", "param", "private", "property", "protected", "public", "receiver", "reified", "return", "sealed", "set", "setparam",
++            "super", "suspend", "tailrec", "this", "throw", "true", "try", "typealias", "typeof", "val", "value", "var", "vararg", "when",
++            "where", "while",
++        ],
++    )
++    fun `Issue 2352 - Given a keyword then allow it to be wrapped between backticks`(keyword: String) {
++        val code =
++            """
++            fun `$keyword`() = "foo"
++            """.trimIndent()
++        functionNamingRuleAssertThat(code).hasNoLintViolations()
++    }
+ }
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRuleTest.kt
+index 204c70e116..16c7f10ad4 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRuleTest.kt
+@@ -329,6 +329,31 @@ class PropertyNamingRuleTest {
+         }
+     }
+
++    @ParameterizedTest(name = "Keyword: {0}")
++    @Suppress("ktlint:standard:argument-list-wrapping")
++    @ValueSource(
++        strings = [
++            "abstract", "actual", "annotation", "as", "break", "by", "catch", "class", "companion", "const", "constructor", "context",
++            "continue", "contract", "crossinline", "data", "delegate", "do", "dynamic", "else", "enum", "expect", "external", "false",
++            "field", "file", "final", "finally", "for", "fun", "get", "header", "if", "impl", "import", "in", "infix", "init", "inline",
++            "inner", "interface", "internal", "is", "lateinit", "noinline", "null", "object", "open", "operator", "out", "override",
++            "package", "param", "private", "property", "protected", "public", "receiver", "reified", "return", "sealed", "set", "setparam",
++            "super", "suspend", "tailrec", "this", "throw", "true", "try", "typealias", "typeof", "val", "value", "var", "vararg", "when",
++            "where", "while",
++        ],
++    )
++    fun `Issue 2352 - Given a keyword then allow it to be wrapped between backticks`(keyword: String) {
++        val code =
++            """
++            var `$keyword` = "some-value"
++            fun foo() {
++                var `$keyword` = "some-value"
++                val `$keyword` = "some-value"
++            }
++            """.trimIndent()
++        propertyNamingRuleAssertThat(code).hasNoLintViolations()
++    }
++
+     @KtlintDocumentationTest
+     fun `Ktlint allowed examples`() {
+         val code =

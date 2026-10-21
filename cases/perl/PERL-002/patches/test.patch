@@ -1,0 +1,27 @@
+diff --git a/t/Liblist_Kid.t b/t/Liblist_Kid.t
+index 49105fb0116c3295b68d1e4b6b8f34a6d2c9f4f3..c5f044911542b1c2baca65f8a0d4f31ba7f63e05 100644
+--- a/t/Liblist_Kid.t
++++ b/t/Liblist_Kid.t
+@@ -149,6 +149,22 @@ sub test_kid_unix_os2 {
+       my @got = _ext( '-ldir_test' );
+       is_deeply \@got, [ '-ldir_test', '', '-ldir_test', 'di r' ], 'Config.libpth directories with spaces work' or diag explain \@got;
+     }
++    {
++      my $abs = File::Spec->rel2abs('.');
++      local $ENV{LIBRARY_PATH} = $abs;
++      local $Config{libpth} = '';
++      my @got = _ext( '-lfoo' );
++      like $got[0], qr/-lfoo/, '$ENV{LIBRARY_PATH} adds search paths for extralibs' or diag explain \@got;
++      like $got[2], qr/-lfoo/, '$ENV{LIBRARY_PATH} adds search paths for ldloadlibs' or diag explain \@got;
++      ok $got[3], '$ENV{LIBRARY_PATH} results in non-empty LD_RUN_PATH' or diag explain \@got;
++    }
++    {
++      my $abs = File::Spec->rel2abs('.');
++      local $ENV{LIBRARY_PATH} = "/nonexistent:$abs";
++      local $Config{libpth} = '';
++      my @got = _ext( '-lfoo' );
++      like $got[0], qr/-lfoo/, '$ENV{LIBRARY_PATH} with multiple colon-separated entries finds lib in second path' or diag explain \@got;
++    }
+     my $mm = WriteMakefile(
+         NAME            => 'Big::Dummy',
+         VERSION    => '1.00',

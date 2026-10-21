@@ -1,0 +1,58 @@
+diff --git a/spec/parser_spec.lua b/spec/parser_spec.lua
+index 0bbe45682fdbcbffc891f604a539bce276fa77b0..6f285814aec6c9a8f5698c25cffd76963b721390 100644
+--- a/spec/parser_spec.lua
++++ b/spec/parser_spec.lua
+@@ -395,7 +395,7 @@ describe("parser", function()
+          assert.same({line = 1, column = 2, end_column = 2, msg = "expected '=' near <eof>"}, get_error("a"))
+          assert.same({line = 1, column = 5, end_column = 5, msg = "expected expression near <eof>"}, get_error("a = "))
+          assert.same({line = 1, column = 5, end_column = 5, msg = "expected statement near '='"}, get_error("a() = b"))
+-         assert.same({line = 1, column = 5, end_column = 5, msg = "syntax error near '='"}, get_error("(a) = b"))
++         assert.same({line = 1, column = 1, end_column = 1, msg = "expected statement near '('"}, get_error("(a) = b"))
+          assert.same({line = 1, column = 1, end_column = 1, msg = "expected statement near '1'"}, get_error("1 = b"))
+       end)
+ 
+@@ -412,8 +412,8 @@ describe("parser", function()
+          assert.same({line = 1, column = 4, end_column = 4, msg = "expected identifier or field near '='"}, get_error("a, = b"))
+          assert.same({line = 1, column = 8, end_column = 8, msg = "expected expression near <eof>"}, get_error("a, b = "))
+          assert.same({line = 1, column = 10, end_column = 10, msg = "expected expression near <eof>"}, get_error("a, b = c,"))
+-         assert.same({line = 1, column = 8, end_column = 8, msg = "syntax error near '='"}, get_error("a, b() = c"))
+-         assert.same({line = 1, column = 8, end_column = 8, msg = "syntax error near '='"}, get_error("a, (b) = c"))
++         assert.same({line = 1, column = 8, end_column = 8, msg = "expected call or indexing near '='"}, get_error("a, b() = c"))
++         assert.same({line = 1, column = 4, end_column = 4, msg = "expected identifier or field near '('"}, get_error("a, (b) = c"))
+       end)
+    end)
+ 
+diff --git a/src/luacheck/parser.lua b/src/luacheck/parser.lua
+index 34ffaf4146a999a90cf2d17194dacef137d59b57..a6a6e45c20ab28c276e11eb366fdc9bccd22f2c2 100644
+--- a/src/luacheck/parser.lua
++++ b/src/luacheck/parser.lua
+@@ -68,7 +68,6 @@ local function token_name(token)
+ end
+ 
+ local function parse_error(state, msg)
+-   msg = msg or "syntax error"
+    local token_repr, end_column
+ 
+    if state.token == "eof" then
+@@ -626,18 +625,19 @@ local function parse_expression_statement(state, loc)
+ 
+    repeat
+       local first_token = state.token
++      local first_loc = lhs and location(state) or loc
+       local expected = lhs and "identifier or field" or "statement"
+       local primary_expression, is_prefix = parse_primary_expression(state, expected)
+ 
+       if is_prefix and first_token == "(" then
+          -- (expr) is invalid.
+-         parse_error(state)
++         lexer.syntax_error(first_loc, first_loc.column, "expected " .. expected .. " near '('")
+       end
+ 
+       if primary_expression.tag == "Call" or primary_expression.tag == "Invoke" then
+          if lhs then
+             -- This is an assingment, and a call is not a valid lvalue.
+-            parse_error(state)
++            parse_error(state, "expected call or indexing")
+          else
+             -- It is a call.
+             primary_expression.location = loc

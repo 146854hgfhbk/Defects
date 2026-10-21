@@ -1,0 +1,73 @@
+{
+  "candidate_sha": "e0342c086014719c2ac818262fc4bcde2bcfd39a",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 518,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/518",
+      "state": "closed",
+      "title": "Fix `incomplete_tag` generation with trailing whitespace",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Previously we relied on the last SyntaxNode consuming all trailing whitespace when detecting incomplete syntax. However this assumption was broken by #397 and is generally fragile with respect to any extra bump_trivia() calls. Fix this by just comparing to the stream position before any bumping of remaining trivia.\r\n\r\nShould fix #512"
+    },
+    {
+      "number": 519,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/519",
+      "state": "closed",
+      "title": "ParseError when typing multi-line input with comment",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug"
+      ],
+      "body_excerpt": "Since the backport of #397 to `release-0.4` (julia nightly since https://github.com/JuliaLang/julia/pull/56110) and also on `main`, I cannot enter multi-line input which contains comments. Once I press return after the comment it directly aborts with a `ParseError` instead of letting me continue the input in the next line:\n```julia\njulia> function bla()\n       a=1\n       b=2 #a comment\nERROR: ParseError:\n# Error @ REPL[2]:3:4\na=1\nb=2 #a comment\n#  └ ── Expected `end`\nStacktrace:\n [1] top-level scope\n   @ REPL:1\n```\nThe same happens when entering an array in multiple lines:\n```julia\njulia> arr = [\n       1,\n       2,\n       3, # i like this number\nERROR: ParseError:\n# Error @ REPL[3]:4:3\n2,\n3, # i like this number\n# └ ── Expected `]` or `,`\nStacktrace:\n [1] top-level scope\n   @ REPL:1\n```\nNote that this applies only to entering this manually line by line, pasting multi-line strings with comments works fine.\n\nWith previous julia nightly (or JuliaSyntax.jl) versions the error appears only on the second consecutive empty line:\n```julia\njulia> arr = [\n       1,\n       2,\n       3, # i like this number\n       \n       \nERROR: ParseError:\n# Error @ REPL[33]:5:2\n3, # i like this number\n\n#└ ── Expected `]`\nStacktrace:\n [1] top-level scope\n   @ REPL:1\n```"
+    },
+    {
+      "number": 538,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/538",
+      "state": "closed",
+      "title": "Make `Expr(:incomplete)` detection more robust to whitespace",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Rework incomplete expression detection so that trailing whitespace is always ignored, regardless of how the parser itself decides to attach it to other nodes of the tree.\r\n\r\nTo do this, we walk back from the end of the parse stream and look for the byte offset of the last non-whitespace token. We then use that to determine whether the error node is \"at the end of the parse\".\r\n\r\nImprove testing by\r\n* Extracting the incomplete expressions which are part of the REPL stdlib tests and ensuring these match the incomplete tag generation of the flisp parser. Fix some divergences for `var\"\"` syntax and invalid escape sequences in strings.\r\n* Ensuring that we test both `:statement` and `:all` level parsing - the REPL uses `:all` to allow parsing of multiple top level statements, so we need to test this.\r\n\r\nAlso fix a minor bug where `enable_in_core!(false)` would result in the flisp parser being used, regardless of whether `VERSION` ships with JuliaSyntax enabled by default.\r\n\r\nFixes #519. See also #518."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "fix_commit_to_issue",
+      "issue_numbers": [
+        519
+      ],
+      "fix_commit": "e0342c086014719c2ac818262fc4bcde2bcfd39a",
+      "evidence_source": "fix_commit_message"
+    }
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Make `Expr(:incomplete)` detection more robust to whitespace (#538)\n\nRework incomplete expression detection so that trailing whitespace is\r\nalways ignored, regardless of how the parser itself decides to attach it\r\nto other nodes of the tree.\r\n\r\nTo do this, we walk back from the end of the parse stream and look for\r\nthe byte offset of the last non-whitespace token. We then use that to\r\ndetermine whether the error node is \"at the end of the parse\".\r\n\r\nImprove testing by\r\n* Extracting the incomplete expressions which are part of the REPL\r\n  stdlib tests and ensuring these match the incomplete tag generation of\r\n  the flisp parser. Fix some divergences for `var\"\"` syntax and invalid\r\n  escape sequences in strings.\r\n* Ensuring that we test both `:statement` and `:all` level parsing - the\r\n  REPL uses `:all` to allow parsing of multiple top level statements, so\r\n  we need to test this.\r\n\r\nAlso fix a minor bug where `enable_in_core!(false)` would result in the\r\nflisp parser being used, regardless of whether `VERSION` ships with\r\nJuliaSyntax enabled by default.\r\n\r\nFixes #519. See also #518.",
+    "commit_issue_refs": [
+      518,
+      519,
+      538
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": null,
+    "pull_request_title": "",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    519
+  ],
+  "cross_repository_issue_records": []
+}

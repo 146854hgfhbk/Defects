@@ -1,0 +1,28 @@
+diff --git a/src/LinearSolve.jl b/src/LinearSolve.jl
+--- a/src/LinearSolve.jl
++++ b/src/LinearSolve.jl
+@@ -21,7 +21,7 @@ using LinearAlgebra: LinearAlgebra, BlasInt, LU, Adjoint, BLAS, Bidiagonal, Bunc
+ using SciMLBase: SciMLBase, LinearAliasSpecifier,
+     init, solve!, reinit!, solve, ReturnCode, LinearProblem
+ using SciMLOperators: SciMLOperators, AbstractSciMLOperator, IdentityOperator,
+-    MatrixOperator, WOperator, jacobian_stale, mark_jacobian_updated!,
++    MatrixOperator, WOperator, jacobian_stale,
+     mark_jacobian_current!,
+     has_ldiv!, issquare
+ using SciMLStructures: SciMLStructures
+diff --git a/src/default.jl b/src/default.jl
+--- a/src/default.jl
++++ b/src/default.jl
+@@ -252,6 +252,12 @@ function defaultalg(A::WOperator, b, assump::OperatorAssumptions{Bool})
+     return @invoke defaultalg(A::SciMLOperators.AbstractSciMLOperator, b, assump)
+ end
+ 
++function defaultalg(
++        A::WOperator, b::GPUArraysCore.AnyGPUArray, assump::OperatorAssumptions{Bool}
++    )
++    return @invoke defaultalg(A::WOperator, b::Any, assump::OperatorAssumptions{Bool})
++end
++
+ _lhl_scalar_massmatrix(::UniformScaling) = true
+ _lhl_scalar_massmatrix(::Number) = true
+ _lhl_scalar_massmatrix(::Any) = false

@@ -1,0 +1,150 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-661",
+  "bug_id": "JULIA-661",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaStats/StatsFuns.jl",
+  "repository_url": "https://github.com/JuliaStats/StatsFuns.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "53dc1887283c5d9182dfdbfd79e4188570343c4e",
+  "fixed_revision": "21903f7ba8de0bb1e9a38e8a5ff799ccd8df420f",
+  "candidate_sha": "21903f7ba8de0bb1e9a38e8a5ff799ccd8df420f",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "53dc1887283c5d9182dfdbfd79e4188570343c4e",
+  "changed_production_files": [
+    "src/distrs/srdist.jl"
+  ],
+  "changed_test_files": [
+    "test/rmath.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-661 srdist boundary behaviour"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "3d47c72da1243d4964fb36a43fae9bb4753b4c0f7f9231544752f62bc20b0415",
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "JULIA-661 srdist boundary behaviour"
+      ],
+      "added_testsets": [
+        "JULIA-661 srdist boundary behaviour"
+      ],
+      "assertion_expression_sha256": [],
+      "mwe_basis": {
+        "upstream_pull_request": 211,
+        "upstream_issue": 211,
+        "upstream_test_files": [
+          "test/rmath.jl"
+        ],
+        "defect": "srdist passed lower_tail/log_p Bool flags into Rmath.ptukey/qtukey nranges positional slot, breaking CDF/CCDF boundary behavior",
+        "public_api": "StatsFuns.srdistcdf, srdistccdf, srdistlogcdf, srdistlogccdf",
+        "source_evidence": {
+          "upstream_tests_patch_sha256": "3255616f3cbe7d6ca5838acd2e27f91c9bb2e89af16a4e33700caf3721ab7859",
+          "extraction": "eight assertions copied verbatim from upstream srdist boundary behaviour testset"
+        }
+      }
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "21903f7ba8de0bb1e9a38e8a5ff799ccd8df420f",
+    "project": "JuliaStats/StatsFuns.jl",
+    "input_sha256": "d3a2a7122831544d3d0a433a94baf6323e08377e8e748a54512675e0f08e9fc8",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:36:56Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.4099695085572139,
+      "input_tokens": 4316,
+      "output_tokens": 748
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.84, \"summary\": \"The patch fixes incorrect argument passing to the Rmath studentized-range functions: `Rmath.ptukey`/`qtukey` take `nranges` as a positional argument in the Julia wrapper, so the existing calls silently shifted the `lower_tail`/`log_p` Bool flags into the `nranges` slot. All eight srdist wrappers (cdf, ccdf, logcdf, logccdf and their inverses) return wrong values before the fix. Adding the explicit `1` restores the documented semantics without changing any public signature.\", \"evidence\": \"Single-file, single-hunk production change in src/distrs/srdist.jl inserting the missing `nranges` positional argument in 8 call sites; no API surface change, no new exports, no refactor. Accompanying test change in test/rmath.jl indicates behavior is asserted against Rmath reference values. Runtime evidence reports strict_differential=stable_differential over 3 repetitions with a dedicated trigger script, and the full suite passing at the fixed revision, which is consistent with a genuine pre-existing wrong-answer bug rather than a flaky or environment-dependent difference. Minimization reports all hunks necessary and globally minimal, so the fix is isolated. The added source comment is explanatory only and rides along with the behavioral change.\", \"missing_evidence\": \"No PR title/body, commit subject, or linked issue, so traceability is UNVERIFIED and issue_commit_match cannot be assessed. The `trigger_tests` array is empty and the raw production patch text is blank, so the specific failing test names at the parent revision are not visible; only the aggregated differential result is provided. The diff of test/rmath.jl is not included, so it is unclear whether the tests were newly added or already existed and were previously loosened/skipped.\", \"validation_risks\": \"Because trigger test identifiers are not listed, the harness must derive them from test/rmath.jl, which may exercise many distributions and could produce broader failures than the srdist functions alone. Behavior depends on the Rmath_jll binary and the Rmath.jl wrapper signature, so results are toolchain-version sensitive: a different Rmath.jl version with keyword or defaulted `nranges` could make the pre-fix code pass and break the differential. Comparisons against reference quantiles may also be tolerance-sensitive, particularly for the log-scale inverse functions.\", \"suggested_tests\": \"Assert srdistcdf/srdistccdf sum to 1 and that srdistlogcdf/srdistlogccdf equal log of the corresponding non-log values for several (k, nu, x) combinations. Round-trip srdistinvcdf(srdistcdf(k, nu, x)) approx x and the ccdf/log variants likewise. Pin at least one hardcoded R-derived reference value for ptukey and qtukey (for example k=3, nu=10) so an argument shift is caught directly. Add a monotonicity check in x for the cdf and confirm output type promotion for mixed Int/Float32/Float64 inputs.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.84,
+    "summary": "The patch fixes incorrect argument passing to the Rmath studentized-range functions: `Rmath.ptukey`/`qtukey` take `nranges` as a positional argument in the Julia wrapper, so the existing calls silently shifted the `lower_tail`/`log_p` Bool flags into the `nranges` slot. All eight srdist wrappers (cdf, ccdf, logcdf, logccdf and their inverses) return wrong values before the fix. Adding the explicit `1` restores the documented semantics without changing any public signature.",
+    "evidence": "Single-file, single-hunk production change in src/distrs/srdist.jl inserting the missing `nranges` positional argument in 8 call sites; no API surface change, no new exports, no refactor. Accompanying test change in test/rmath.jl indicates behavior is asserted against Rmath reference values. Runtime evidence reports strict_differential=stable_differential over 3 repetitions with a dedicated trigger script, and the full suite passing at the fixed revision, which is consistent with a genuine pre-existing wrong-answer bug rather than a flaky or environment-dependent difference. Minimization reports all hunks necessary and globally minimal, so the fix is isolated. The added source comment is explanatory only and rides along with the behavioral change.",
+    "missing_evidence": "No PR title/body, commit subject, or linked issue, so traceability is UNVERIFIED and issue_commit_match cannot be assessed. The `trigger_tests` array is empty and the raw production patch text is blank, so the specific failing test names at the parent revision are not visible; only the aggregated differential result is provided. The diff of test/rmath.jl is not included, so it is unclear whether the tests were newly added or already existed and were previously loosened/skipped.",
+    "validation_risks": "Because trigger test identifiers are not listed, the harness must derive them from test/rmath.jl, which may exercise many distributions and could produce broader failures than the srdist functions alone. Behavior depends on the Rmath_jll binary and the Rmath.jl wrapper signature, so results are toolchain-version sensitive: a different Rmath.jl version with keyword or defaulted `nranges` could make the pre-fix code pass and break the differential. Comparisons against reference quantiles may also be tolerance-sensitive, particularly for the log-scale inverse functions.",
+    "suggested_tests": "Assert srdistcdf/srdistccdf sum to 1 and that srdistlogcdf/srdistlogccdf equal log of the corresponding non-log values for several (k, nu, x) combinations. Round-trip srdistinvcdf(srdistcdf(k, nu, x)) approx x and the ccdf/log variants likewise. Pin at least one hardcoded R-derived reference value for ptukey and qtukey (for example k=3, nu=10) so an argument shift is caught directly. Add a monotonicity check in x for the cdf and confirm output type promotion for mixed Int/Float32/Float64 inputs."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-661 srdist boundary behaviour"
+    ],
+    "exception_types": [
+      "12dcd4228267bdde349af4c7bdefc05263279045341def9f342a2c91ee87a24c",
+      "605c20ea830e210a6e367312cb39f45813337052c1608233fcaf3541de999d4b",
+      "9cc6630901258cd8ffa80667d3b1f20d7802b94a8165d5e54a2a19834e437d59",
+      "a64ed4835c09b3bd0c0c9c619bec13446c012d3136cdd8e8b1dd85025e9641f0",
+      "b56f9afda5db851750086a55bcc6a4165426e6e41a21aff935fd23a251abf82f",
+      "b74471b0f0d67cb7eaa586f57fd11fb8c19d33e0818ab229cbe9fba969cde983"
+    ],
+    "fingerprints": [
+      "12dcd4228267bdde349af4c7bdefc05263279045341def9f342a2c91ee87a24c",
+      "605c20ea830e210a6e367312cb39f45813337052c1608233fcaf3541de999d4b",
+      "9cc6630901258cd8ffa80667d3b1f20d7802b94a8165d5e54a2a19834e437d59",
+      "a64ed4835c09b3bd0c0c9c619bec13446c012d3136cdd8e8b1dd85025e9641f0",
+      "b56f9afda5db851750086a55bcc6a4165426e6e41a21aff935fd23a251abf82f",
+      "b74471b0f0d67cb7eaa586f57fd11fb8c19d33e0818ab229cbe9fba969cde983"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

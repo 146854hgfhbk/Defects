@@ -1,0 +1,68 @@
+From 5b11a3f7a2e0a4eb8d37bce2fe2996c09e0eba5c Mon Sep 17 00:00:00 2001
+From: nathanrpage97 <33010515+nathanrpage97@users.noreply.github.com>
+Date: Thu, 21 Jul 2022 06:51:23 -0700
+Subject: [PATCH] fix(lapp) support positional args with numbers (#428)
+
+Co-authored-by: nathanrpage97 <nathanrpage97@gmail.com>
+---
+ CHANGELOG.md        |  3 +++
+ lua/pl/lapp.lua     |  3 ++-
+ tests/test-lapp.lua | 12 +++++++++++-
+ 3 files changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 18709397..3549bfef 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -21,6 +21,9 @@ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) fo
+    [#413](https://github.com/lunarmodules/Penlight/pull/413)
+  - fix: `lapp` provides the file name when using the default argument
+    [#427](https://github.com/lunarmodules/Penlight/pull/427)
++ - fix: `lapp` positional arguments now allow digits after the first character
++   [#428](https://github.com/lunarmodules/Penlight/pull/428)
++
+ 
+ ## 1.12.0 (2022-Jan-10)
+  - deprecate: module `pl.text` the contents have moved to `pl.stringx` (removal later)
+diff --git a/lua/pl/lapp.lua b/lua/pl/lapp.lua
+index d7ad0627..3bd752d4 100644
+--- a/lua/pl/lapp.lua
++++ b/lua/pl/lapp.lua
+@@ -237,7 +237,8 @@ function lapp.process_options_string(str,args)
+         elseif check '$<{name} $'  then -- is it <parameter_name>?
+             -- so <input file...> becomes input_file ...
+             optparm,rest = res.name:match '([^%.]+)(.*)'
+-            optparm = optparm:gsub('%A','_')
++            -- follow lua legal variable names
++            optparm = optparm:sub(1,1):gsub('%A','_') .. optparm:sub(2):gsub('%W', '_')
+             varargs = rest == '...'
+             append(parmlist,optparm)
+         end
+diff --git a/tests/test-lapp.lua b/tests/test-lapp.lua
+index 2794577b..40ef7ceb 100644
+--- a/tests/test-lapp.lua
++++ b/tests/test-lapp.lua
+@@ -157,12 +157,22 @@ check (false_flag,{'-g','--'},{f=true,g=true})
+ check (false_flag,{'-g','--','-a','frodo'},{f=true,g=true; '-a','frodo'})
+ 
+ 
++
+ local default_file_flag = [[
+     -f (file-out default stdout)
+ ]]
+-
+ check (default_file_flag,{},{f="<file>", f_name = "stdout"})
+ 
++
++
++local numbered_pos_args = [[
++    <arg1>     (string)
++    <arg2>     (string)
++    <3arg3>    (string)
++]]
++check (numbered_pos_args,{"1", "2", "3"},{arg1="1", arg2 = "2", _arg3 = "3"})
++
++
+ local addtype = [[
+   -l (intlist) List of items
+ ]]

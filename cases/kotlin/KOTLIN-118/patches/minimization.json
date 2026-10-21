@@ -1,0 +1,508 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-22T01:41:40.626452+00:00",
+  "generated_by": "minimize_patch.py",
+  "patch_direction": "buggy_to_fixed",
+  "application_direction": "fixed_to_buggy_via_reverse_apply",
+  "policy": {
+    "granularity": "unified_diff_hunk",
+    "safe_automatic_categories": [
+      "comment",
+      "documentation",
+      "format",
+      "unrelated"
+    ],
+    "semantic_hunks_default": "KEEP",
+    "uncertain_hunks_default": "UNCERTAIN_AND_KEEP",
+    "llm_remove_requires_explicit_decision": true,
+    "removal_requires_differential_validation": true,
+    "batch_safe_candidates_first": true,
+    "verify_all_hunks": true,
+    "signature_fields": [
+      "trigger_set",
+      "exception_type",
+      "normalized_message",
+      "normalized_stack_hash"
+    ],
+    "necessity_evidence": [
+      "bug_not_reproduced with three complete compile and full-suite runs, repeat consistency, and no infrastructure errors",
+      "candidate source compilation fails in three isolated runs with an identical Kotlin compiler diagnostic fingerprint while fixed compile and full-suite runs pass"
+    ]
+  },
+  "original_patch": "original-source.patch",
+  "original_patch_sha256": "183ca2ab8281a29cfe8f1282a2df81ba095cac635902e4576174a773a5287aab",
+  "minimized_patch": "minimized-source.patch",
+  "minimized_patch_sha256": "183ca2ab8281a29cfe8f1282a2df81ba095cac635902e4576174a773a5287aab",
+  "original_hunk_count": 1,
+  "retained_hunk_count": 1,
+  "removed_hunk_count": 0,
+  "baseline_validation": {
+    "acceptable": true,
+    "status": "stable_differential",
+    "repeat_consistent": true,
+    "signature_complete": true,
+    "signature": {
+      "trigger_set": [
+        "com.squareup.kotlinpoet.LineWrappingTest.fileCommentKeepsPrefixOnWrappedLines"
+      ],
+      "failures": [
+        {
+          "test_id": "com.squareup.kotlinpoet.LineWrappingTest.fileCommentKeepsPrefixOnWrappedLines",
+          "exception_type": "org.opentest4j.AssertionFailedError",
+          "normalized_message": "org.opentest4j.AssertionFailedError: expected:<... wrapped when it is [<PATH> used in a comment b...> but was:<... wrapped when it is [ ] used in a comment b...>",
+          "normalized_stack_hash": "7a34978ef881e089cb965285b544b29afcb2d27f87eda49a42ed6a77388f73c8"
+        }
+      ]
+    },
+    "fixed_passed_all_runs": true,
+    "buggy_failed_all_runs": true,
+    "full_suite_valid": true,
+    "compile_valid": true,
+    "compile_fixed_runs": 3,
+    "compile_buggy_runs": 3,
+    "full_fixed_runs": 3,
+    "full_buggy_runs": 3,
+    "infrastructure_error_count": 0
+  },
+  "baseline_validation_source": {
+    "kind": "existing_validation_report",
+    "case_id": "KOTLIN-118",
+    "file": "baseline-validation.json",
+    "sha256": "18937934059774cec0e93105dbc028eeccad5e9b420b33caab67bccf4791018e"
+  },
+  "hunks": [
+    {
+      "hunk_id": "F001-H001",
+      "file": "kotlinpoet/src/jvmMain/kotlin/com/squareup/kotlinpoet/CodeWriter.kt",
+      "header": "@@ -644,8 +644,8 @@ internal class CodeWriter(",
+      "category": "semantic",
+      "initial_decision": "REMOVE_CANDIDATE_FOR_NECESSITY_CHECK",
+      "source": "exhaustive_differential_check",
+      "eligible_for_automatic_removal": true,
+      "reason": "Production-code semantics may change; retained by default; removal is tested to establish that this retained hunk is necessary; retained because removal changes the differential evidence; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation; retained because removal consistently eliminates the defect under complete three-run differential validation",
+      "validation_evidence": {
+        "attempted": true,
+        "mode": "individual_exhaustive",
+        "accepted": false,
+        "reason": "removal consistently eliminates the defect under complete three-run differential validation",
+        "candidate_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "candidate": {
+          "acceptable": false,
+          "status": "bug_not_reproduced",
+          "repeat_consistent": true,
+          "signature_complete": false,
+          "signature": {
+            "trigger_set": [],
+            "failures": []
+          },
+          "fixed_passed_all_runs": true,
+          "buggy_failed_all_runs": false,
+          "full_suite_valid": true,
+          "compile_valid": true,
+          "compile_fixed_runs": 3,
+          "compile_buggy_runs": 3,
+          "full_fixed_runs": 3,
+          "full_buggy_runs": 3,
+          "infrastructure_error_count": 0,
+          "validation_provenance": {
+            "case_id": "KOTLIN-118",
+            "generated_by": "validation_engine.py",
+            "schema_version": 2,
+            "policy": {
+              "repetitions": 3,
+              "timeout_seconds": 1800,
+              "fresh_worktree_per_repetition": true,
+              "individual_trigger_processes": true,
+              "compile_before_tests": true,
+              "full_suite_run_per_version": 3,
+              "offline": true,
+              "environment_lock_sha256": "4ac30887733e2399b7439ff558d33e92987e82e45da65363c6793a8f8845297f",
+              "trigger_patch_states": [
+                {
+                  "attempt": 1,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 1,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "buggy",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 2,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "fixed",
+                  "state": "already_present"
+                },
+                {
+                  "attempt": 3,
+                  "version": "buggy",
+                  "state": "already_present"
+                }
+              ],
+              "buggy_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+            },
+            "run_matrix": [
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 983,
+                "junit_file_count": 36,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 1,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 983,
+                "junit_file_count": 36,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 983,
+                "junit_file_count": 36,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 2,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 983,
+                "junit_file_count": 36,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "fixed",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 983,
+                "junit_file_count": 36,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "compile",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 0,
+                "junit_file_count": 0,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "isolated-trigger",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "trigger-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [
+                  "com.squareup.kotlinpoet.LineWrappingTest"
+                ],
+                "tests": 8,
+                "junit_file_count": 1,
+                "failure_fingerprint": null
+              },
+              {
+                "attempt": 3,
+                "version": "buggy",
+                "scope": "full-suite",
+                "exit_code": 0,
+                "timed_out": false,
+                "infrastructure_error": false,
+                "filters": [],
+                "tests": 983,
+                "junit_file_count": 36,
+                "failure_fingerprint": null
+              }
+            ],
+            "derived": {
+              "status": "bug_not_reproduced",
+              "stable": false,
+              "fixed_passed_all_runs": true,
+              "buggy_failed_all_runs": false,
+              "full_suite_valid": true,
+              "compile_valid": true,
+              "compile_fixed_runs": 3,
+              "compile_buggy_runs": 3,
+              "full_fixed_runs": 3,
+              "full_buggy_runs": 3,
+              "full_buggy_failed": false,
+              "buggy_failed_test_count": 0,
+              "buggy_failed_tests": [],
+              "buggy_failure_types": [],
+              "failure_fingerprints": [],
+              "broken_tests": [],
+              "flaky_tests": [],
+              "order_dependent_tests": [],
+              "infrastructure_error_count": 0
+            },
+            "source_report_sha256": "50018288b28b6f93fe4db39fe4d67b2fbcaf52aed55b9537e9e5274fda648fc2",
+            "embedded_report": "minimization-evidence/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855-50018288b28b6f93fe4db39fe4d67b2fbcaf52aed55b9537e9e5274fda648fc2.evidence.json",
+            "embedded_report_sha256": "1f9877216092f112ed1de02002bf68158f1bf4f60c485655b06b88c97afe03c5"
+          }
+        },
+        "source_validation_report": "D:\\Desktop\\综述试验方案\\kotlin-defects-miner-review\\output\\exhaustive-minimization\\KOTLIN-118\\validation-artifacts\\candidate-001\\validation.json",
+        "source_validation_sha256": "50018288b28b6f93fe4db39fe4d67b2fbcaf52aed55b9537e9e5274fda648fc2"
+      },
+      "decision": "KEEP"
+    }
+  ],
+  "manual_confirmation_required": false,
+  "evidence_confirmation": {
+    "decision": "CONFIRMED_BY_EXHAUSTIVE_DIFFERENTIAL_EVIDENCE",
+    "confirmed_at": "2026-07-24T14:46:46.693280+00:00",
+    "method": "exact cardinality subset search with decisive differential evidence for every retained and removed hunk",
+    "human_review_claimed": false
+  },
+  "evidence_reclassified_at": "2026-07-24T14:46:46.676734+00:00"
+}

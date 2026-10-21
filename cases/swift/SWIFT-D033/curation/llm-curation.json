@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-208",
+  "technical_evidence_sha256": "0bb8532bad66c5664890d9ca3cc0db16124f43b3916636e7c48cda84b336e145",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "3621ba5cd76a2af3e6a845e3fa2fd2eaf322a2886b91c5845b091f829230248c",
+  "reviewed_at": "2026-09-09T06:35:46.307830+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "swiftlang/swift-format#1183",
+  "rationale": "Issue #1183 reports that swift-format emits `for unsafex in xs {}` for the valid input `for unsafe x in xs {}`, i.e. the pretty printer drops the separator after an `unsafe` modifier in a for-in statement. The single retained production hunk in TokenStreamCreator.visit(ForStmtSyntax) is precisely the cause: the old code only inspected node.awaitKeyword/node.tryKeyword, so a statement carrying only `unsafe` fell into the else branch and never received a break/space token after the modifier. The fix collects [tryKeyword, awaitKeyword, unsafeKeyword] and emits break tokens for whichever are present, reducing to the identical token sequence for the pre-existing try+await path. All four triggers are unmodified upstream tests from the same fixing commit, added to the pre-existing ForInStmtTests suite using the pre-existing assertPrettyPrintEqual helper with inline string fixtures, and every one exercises `unsafe` in a for-in header, so they are semantically the reported defect rather than a new feature. Strict evidence confirms build.both_versions PASS (so ForStmtSyntax.unsafeKeyword and the `for unsafe` syntax already existed in the buggy revision's pinned swift-syntax; the failures are assertion differentials, not unavailable-symbol compile errors), trigger.buggy_differential reproduced all four selectors, trigger.fixed_clean and full_suite.fixed_all_green PASS, full_suite.buggy_reproduces_only_triggers PASS (no collateral regressions such as a changed `for try` without `await` expectation), and determinism over 3 repetitions with a 50-run matrix. Minimization retained 1 of 1 hunk with post_minimization_validation PASS and identical strict gates before and after. The patch touches only Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift with no formatting-only, config, docs, or test-only content; the comment edit is inside the rewritten block and describes the new modifier handling. active_same_project_root_causes is empty, so swiftlang/swift-format#1183 is not a duplicate and matches allowed_root_cause_ids.\n\nIssue #1183 reports that swift-format emits `for unsafex in xs {}` for the valid input `for unsafe x in xs {}` (dropped separator after the `unsafe` modifier). The single retained production hunk in Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift changes exactly the code responsible: visit(ForStmtSyntax) previously only inspected node.tryKeyword/node.awaitKeyword, so an `unsafe` keyword fell through to the no-break/no-space path; the fix collects [tryKeyword, awaitKeyword, unsafeKeyword] and emits break/open/close tokens for whichever modifiers are present, reducing to the prior token sequence for the existing try+await case. The only other content in the hunk is the adjacent comment describing the very logic being rewritten, so there is no unrelated refactor, formatting, feature, docs, or config change (production_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger is the unmodified upstream test portion of the same fixing commit, confined to the pre-existing Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift and using the existing assertPrettyPrintEqual helper with inline fixtures; the additional try/await/unsafe and wrap-pattern cases exercise the same modifier-token defect rather than a different behavior. Strict machine evidence shows build.both_versions PASS, so `for unsafe ...` parses and ForStmtSyntax.unsafeKeyword exists on the buggy revision (no fix-only-API compile failure); all four declared selectors reproduce as genuine assertion failures on the buggy revision, fixed runs are clean isolated/suite/reversed, buggy full-suite failures are limited to the reproduced triggers, and results are deterministic over 3 repetitions across 50 matrix runs. active_same_project_root_causes is empty and #1183 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T06:35:24.028627+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "3621ba5cd76a2af3e6a845e3fa2fd2eaf322a2886b91c5845b091f829230248c",
+      "response_sha256": "93deac6afb7ceb76cec2099baf8106db791a008e328f50be8001675b9339d3ba",
+      "response_id": "msg_a1150ff45aeb43c08bdd11e5a90c8df2",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5925024461359868,
+        "input_tokens": 19371,
+        "output_tokens": 801
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#1183",
+      "rationale": "Issue #1183 reports that swift-format emits `for unsafex in xs {}` for the valid input `for unsafe x in xs {}`, i.e. the pretty printer drops the separator after an `unsafe` modifier in a for-in statement. The single retained production hunk in TokenStreamCreator.visit(ForStmtSyntax) is precisely the cause: the old code only inspected node.awaitKeyword/node.tryKeyword, so a statement carrying only `unsafe` fell into the else branch and never received a break/space token after the modifier. The fix collects [tryKeyword, awaitKeyword, unsafeKeyword] and emits break tokens for whichever are present, reducing to the identical token sequence for the pre-existing try+await path. All four triggers are unmodified upstream tests from the same fixing commit, added to the pre-existing ForInStmtTests suite using the pre-existing assertPrettyPrintEqual helper with inline string fixtures, and every one exercises `unsafe` in a for-in header, so they are semantically the reported defect rather than a new feature. Strict evidence confirms build.both_versions PASS (so ForStmtSyntax.unsafeKeyword and the `for unsafe` syntax already existed in the buggy revision's pinned swift-syntax; the failures are assertion differentials, not unavailable-symbol compile errors), trigger.buggy_differential reproduced all four selectors, trigger.fixed_clean and full_suite.fixed_all_green PASS, full_suite.buggy_reproduces_only_triggers PASS (no collateral regressions such as a changed `for try` without `await` expectation), and determinism over 3 repetitions with a 50-run matrix. Minimization retained 1 of 1 hunk with post_minimization_validation PASS and identical strict gates before and after. The patch touches only Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift with no formatting-only, config, docs, or test-only content; the comment edit is inside the rewritten block and describes the new modifier handling. active_same_project_root_causes is empty, so swiftlang/swift-format#1183 is not a duplicate and matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.origin_pull_request.body",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:strict_post_minimization.checks.build.both_versions",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:strict_post_minimization.checks.trigger.fixed_clean",
+        "case.json:minimized_patch_reference.post_minimization_validation",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue text is available only through source_candidate.issue_check.linked_issues rather than a separately captured artifact.",
+        "The two multi-modifier triggers (testForTryAwaitUnsafe, testForTryAwaitUnsafeWrapPattern) assert whitespace-exact layouts at narrow line lengths, so they are brittle to unrelated pretty-printer changes; testForUnsafe at linelength 80 is the closest match to the reported symptom.",
+        "The fixing PR #1189 had a second commit (cc7ab93, 'Address reviewer feedback') that is excluded here, so the benchmarked fix is the pre-review form of the final upstream logic."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T06:35:46.307032+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "3621ba5cd76a2af3e6a845e3fa2fd2eaf322a2886b91c5845b091f829230248c",
+      "response_sha256": "076378089b3d8c74d8dd794943705b450b41930ca42cdf379a5e10957824bfad",
+      "response_id": "msg_24e1dbeedfff4f8dad86079012347e5c",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4967218925704809,
+        "input_tokens": 19301,
+        "output_tokens": 730
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-format#1183",
+      "rationale": "Issue #1183 reports that swift-format emits `for unsafex in xs {}` for the valid input `for unsafe x in xs {}` (dropped separator after the `unsafe` modifier). The single retained production hunk in Sources/SwiftFormat/PrettyPrint/TokenStreamCreator.swift changes exactly the code responsible: visit(ForStmtSyntax) previously only inspected node.tryKeyword/node.awaitKeyword, so an `unsafe` keyword fell through to the no-break/no-space path; the fix collects [tryKeyword, awaitKeyword, unsafeKeyword] and emits break/open/close tokens for whichever modifiers are present, reducing to the prior token sequence for the existing try+await case. The only other content in the hunk is the adjacent comment describing the very logic being rewritten, so there is no unrelated refactor, formatting, feature, docs, or config change (production_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger is the unmodified upstream test portion of the same fixing commit, confined to the pre-existing Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift and using the existing assertPrettyPrintEqual helper with inline fixtures; the additional try/await/unsafe and wrap-pattern cases exercise the same modifier-token defect rather than a different behavior. Strict machine evidence shows build.both_versions PASS, so `for unsafe ...` parses and ForStmtSyntax.unsafeKeyword exists on the buggy revision (no fix-only-API compile failure); all four declared selectors reproduce as genuine assertion failures on the buggy revision, fixed runs are clean isolated/suite/reversed, buggy full-suite failures are limited to the reproduced triggers, and results are deterministic over 3 repetitions across 50 matrix runs. active_same_project_root_causes is empty and #1183 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "minimized_patch_reference.post_minimization_validation",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue body is available only through the embedded source_candidate record rather than an independently supplied issue artifact.",
+        "testForTryAwaitUnsafe and testForTryAwaitUnsafeWrapPattern pin multi-modifier line-break layouts at short line lengths that were chosen by the fix; they share the root cause but are broader than the minimal reproduction (testForUnsafe at linelength 80).",
+        "Whitespace-exact expected strings make these triggers brittle to unrelated pretty-printer changes.",
+        "The generalized modifier logic now routes `for try x in` (try without await) through the break path instead of the space path; the full suite is green on the fixed revision, but no explicit control assertion for that case is included."
+      ]
+    }
+  ]
+}

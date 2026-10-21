@@ -1,0 +1,26 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRule.kt
+index 79f1e477..0e5d2f71 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/PropertyNamingRule.kt
+@@ -45,17 +45,15 @@ public class PropertyNamingRule :
+             .findChildByType(IDENTIFIER)
+             ?.let { identifier ->
+                 when {
+-                    property.hasCustomGetter() -> {
++                    property.hasConstModifier() -> {
++                        visitConstProperty(identifier, emit)
++                    }
++                    property.hasCustomGetter() || property.isTopLevelValue() || property.isObjectValue() -> {
+                         // Can not reliably determine whether the value is immutable or not
+                     }
+                     property.isBackingProperty() -> {
+                         visitBackingProperty(identifier, emit)
+                     }
+-                    property.hasConstModifier() ||
+-                        property.isTopLevelValue() ||
+-                        property.isObjectValue() -> {
+-                        visitConstProperty(identifier, emit)
+-                    }
+                     else -> {
+                         visitNonConstProperty(identifier, emit)
+                     }

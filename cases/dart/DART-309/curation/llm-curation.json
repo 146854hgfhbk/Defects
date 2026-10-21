@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-309",
+  "technical_evidence_sha256": "f1963b08b8a0ee0ba579e21a7e4bee558ba2012ab9e4bc2134c41bb6554892ba",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "a358f39e7de0d2001cab9b795002ed6ccfbda6cfbb085ebdb2e22a27fb1b90d3",
+  "reviewed_at": "2026-08-11T11:57:20.805065+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1584",
+  "rationale": "Issue #1584 ('Formatter drops comment before comma in collection literal') gives a minimal reproducer where `1 // Comment 1.` followed by a newline and a comma loses the comment when a second comment is present. The minimized production patch addresses exactly that mechanism: DelimitedListBuilder.addLineBuilder builds the inner per-line builder and then carries over `_commentsBeforeComma`, and piece_factory.dart's newline-preserving collection path replaces both `builder.add(lineBuilder.build())` call sites with `builder.addLineBuilder(lineBuilder)`, so pending comments on a finished line are hoisted to the outer builder instead of being discarded. This matches the PR #1587 description of the root cause. The minimized patch is confined to the two production files and 3 hunks (19 changed lines); the unrelated pubspec.yaml min-SDK bump to ^3.4.0 present in the original commit is excluded from patches/minimized-production.patch, and no test, doc, or formatting-only edits remain. Triggers are upstream fixture data from the merge commit 9a8a34241acfb5656e3a85948a73d843f0ab26a9 for the same PR, run through the pre-existing runner test/tall_format_test.dart, so they depend on no API introduced by the fix (addLineBuilder is private to lib/src and is never named by the fixtures). The added case in list_comment.stmt is the issue's reproducer verbatim, and every case in the new 1584.unit fixture is a comment-immediately-before-comma shape in a collection literal (plus one block-comment map case whose output is unchanged, acting as a control), so the trigger set is semantically the reported defect. Strict evidence for both the original and post-minimization runs reports all gates passed: build on both revisions, buggy differential with both selectors reproduced, fixed clean on isolated/suite/reversed runs, deterministic across 3 repetitions (4 fingerprint groups), and buggy full-suite failures limited to the declared triggers with the fixed full suite green. active_same_project_root_causes is empty, so #1584 is not a duplicate, and it is the single entry in allowed_root_cause_ids.\n\nIssue #1584 reports that the dart_style formatter silently drops a line comment placed before a comma in a collection literal with preserved newlines (minimal reproducer shows 'Comment 1.' disappearing). The production fix adds a new internal method `addLineBuilder` to preserve `_commentsBeforeComma` from the inner line builder when hoisting elements to the outer builder, preventing comment loss. The minimized production patch contains only the fix logic (14-line new method + 2 call-site replacements) with no formatting, refactor, or feature changes. The trigger tests come from the same fix commit (later merged as 9a8a342) and exercise the exact defect scenario—comments before commas in collection literals—using dart_style's existing fixture-based test infrastructure; these fixtures require no new production API and apply cleanly to both buggy and fixed revisions. Strict runtime validation confirms differential behavior: both triggers fail deterministically on buggy (89577e7), pass on fixed (914d1d6), with clean full-suite results. No active same-project root causes supplied, so no duplication possible.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T11:57:00.674289+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a358f39e7de0d2001cab9b795002ed6ccfbda6cfbb085ebdb2e22a27fb1b90d3",
+      "response_sha256": "f93d1d59ae8fc10cce11d69a49e008f3064869b1943c17894d12431097d9f18e",
+      "response_id": "msg_1786449420484",
+      "attempts": 1,
+      "usage": {
+        "input_tokens": 34665,
+        "output_tokens": 1326,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1584",
+      "rationale": "Issue #1584 ('Formatter drops comment before comma in collection literal') gives a minimal reproducer where `1 // Comment 1.` followed by a newline and a comma loses the comment when a second comment is present. The minimized production patch addresses exactly that mechanism: DelimitedListBuilder.addLineBuilder builds the inner per-line builder and then carries over `_commentsBeforeComma`, and piece_factory.dart's newline-preserving collection path replaces both `builder.add(lineBuilder.build())` call sites with `builder.addLineBuilder(lineBuilder)`, so pending comments on a finished line are hoisted to the outer builder instead of being discarded. This matches the PR #1587 description of the root cause. The minimized patch is confined to the two production files and 3 hunks (19 changed lines); the unrelated pubspec.yaml min-SDK bump to ^3.4.0 present in the original commit is excluded from patches/minimized-production.patch, and no test, doc, or formatting-only edits remain. Triggers are upstream fixture data from the merge commit 9a8a34241acfb5656e3a85948a73d843f0ab26a9 for the same PR, run through the pre-existing runner test/tall_format_test.dart, so they depend on no API introduced by the fix (addLineBuilder is private to lib/src and is never named by the fixtures). The added case in list_comment.stmt is the issue's reproducer verbatim, and every case in the new 1584.unit fixture is a comment-immediately-before-comma shape in a collection literal (plus one block-comment map case whose output is unchanged, acting as a control), so the trigger set is semantically the reported defect. Strict evidence for both the original and post-minimization runs reports all gates passed: build on both revisions, buggy differential with both selectors reproduced, fixed clean on isolated/suite/reversed runs, deterministic across 3 repetitions (4 fingerprint groups), and buggy full-suite failures limited to the declared triggers with the fixed full suite green. active_same_project_root_causes is empty, so #1584 is not a duplicate, and it is the single entry in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/front_end/delimited_list_builder.dart",
+        "lib/src/front_end/piece_factory.dart",
+        "patches/trigger-tests.patch",
+        "test/tall/expression/list_comment.stmt",
+        "test/tall/regression/1500/1584.unit",
+        "strict_post_minimization.checks",
+        "source_candidate.candidate.issue_check.linked_issues[0].body",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "Both trigger selectors are whole-file golden fixtures compared by exact output; unrelated future formatter output changes could shift them even though the strict gates show non-trigger cases currently pass.",
+        "test/tall/regression/1500/1584.unit is 450 lines and bundles several reproducer shapes, so the failure signal is broader than the single minimal repro even though each case exercises the comment-before-comma path.",
+        "The minimized patch keeps the parent pubspec SDK constraint (^3.0.0) rather than the ^3.4.0 bump from the original commit; the build gate passed on both revisions in this environment, but resolution could differ on other toolchains."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T11:57:20.804856+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a358f39e7de0d2001cab9b795002ed6ccfbda6cfbb085ebdb2e22a27fb1b90d3",
+      "response_sha256": "c26dfabbcc76f7683ea06475dc6b99fb7148770d95e076acf04413533be4a082",
+      "response_id": "msg_3e04c676-4cb6-4593-80",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 8994
+        },
+        "cache_creation_input_tokens": 8994,
+        "cache_read_input_tokens": 21711,
+        "input_tokens": 29812,
+        "output_tokens": 1226
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1584",
+      "rationale": "Issue #1584 reports that the dart_style formatter silently drops a line comment placed before a comma in a collection literal with preserved newlines (minimal reproducer shows 'Comment 1.' disappearing). The production fix adds a new internal method `addLineBuilder` to preserve `_commentsBeforeComma` from the inner line builder when hoisting elements to the outer builder, preventing comment loss. The minimized production patch contains only the fix logic (14-line new method + 2 call-site replacements) with no formatting, refactor, or feature changes. The trigger tests come from the same fix commit (later merged as 9a8a342) and exercise the exact defect scenario—comments before commas in collection literals—using dart_style's existing fixture-based test infrastructure; these fixtures require no new production API and apply cleanly to both buggy and fixed revisions. Strict runtime validation confirms differential behavior: both triggers fail deterministically on buggy (89577e7), pass on fixed (914d1d6), with clean full-suite results. No active same-project root causes supplied, so no duplication possible.",
+      "evidence_paths": [
+        "issue_urls[0]: https://github.com/dart-lang/dart_style/issues/1584",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_original.checks.trigger.buggy_differential.passed=true",
+        "strict_original.checks.trigger.fixed_clean.passed=true",
+        "trigger_tests[0].name=tall/expression/list_comment.stmt",
+        "trigger_tests[1].name=tall/regression/1500/1584.unit",
+        "traceability.verified_fix_issue_numbers=[1584]",
+        "active_same_project_root_causes=[]"
+      ],
+      "risks": [
+        "The trigger-tests.patch bundles the fix commit's SDK constraint bump (pubspec.yaml ^3.4.0) which is unrelated to the defect; validation must normalize or ignore pubspec differences.",
+        "The 1584.unit fixture is large (450 lines) and may contain multiple formatting cases; if any case is unrelated to comment-before-comma, it could introduce noise, though strict validation already confirmed deterministic differential behavior.",
+        "Trigger tests use dart_style's custom .stmt/.unit fixture format; the validation harness must correctly parse and execute these via test/tall_format_test.dart rather than treating them as standalone Dart files."
+      ]
+    }
+  ]
+}

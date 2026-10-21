@@ -1,0 +1,12 @@
+diff --git a/Sources/OpenAI/Private/Client/AsyncClient.swift b/Sources/OpenAI/Private/Client/AsyncClient.swift
+index ec4bc656c461a96ee147e8984fe2539e00086e39..a0ee9ce0ea9266f79c38e30b61756013a0357000 100644
+--- a/Sources/OpenAI/Private/Client/AsyncClient.swift
++++ b/Sources/OpenAI/Private/Client/AsyncClient.swift
+@@ -40,6 +40,7 @@ actor AsyncClient {
+                 middleware.intercept(response: current.response, request: urlRequest, data: current.data)
+             }
+             let decoder = JSONDecoder()
++            decoder.userInfo[.parsingOptions] = configuration.parsingOptions
+             do {
+                 return try decoder.decode(ResultType.self, from: interceptedData ?? data)
+             } catch {

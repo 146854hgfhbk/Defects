@@ -1,0 +1,116 @@
+diff --git a/Sources/OpenCombine/CurrentValueSubject.swift b/Sources/OpenCombine/CurrentValueSubject.swift
+index 4e10132..d069077 100644
+--- a/Sources/OpenCombine/CurrentValueSubject.swift
++++ b/Sources/OpenCombine/CurrentValueSubject.swift
+@@ -14,6 +14,8 @@ public final class CurrentValueSubject<Output, Failure: Error>: Subject {
+     // TODO: Combine uses bag data structure
+     private var _subscriptions: [Conduit] = []
+ 
++    private var _value: Output
++
+     private var _completion: Subscribers.Completion<Failure>?
+ 
+     internal var upstreamSubscriptions: [Subscription] = []
+@@ -22,8 +24,11 @@ public final class CurrentValueSubject<Output, Failure: Error>: Subject {
+ 
+     /// The value wrapped by this subject, published as a new element whenever it changes.
+     public var value: Output {
+-        didSet {
+-            send(value)
++        get {
++            return _value
++        }
++        set {
++            send(newValue)
+         }
+     }
+ 
+@@ -31,7 +36,7 @@ public final class CurrentValueSubject<Output, Failure: Error>: Subject {
+     ///
+     /// - Parameter value: The initial value to publish.
+     public init(_ value: Output) {
+-        self.value = value
++        self._value = value
+     }
+ 
+     deinit {
+@@ -68,6 +73,7 @@ public final class CurrentValueSubject<Output, Failure: Error>: Subject {
+ 
+     public func send(_ input: Output) {
+         _lock.do {
++            _value = input
+             for subscription in _subscriptions where !subscription.isCompleted {
+                 if subscription._demand > 0 {
+                     subscription._offer(input)
+diff --git a/Tests/OpenCombineTests/CurrentValueSubjectTests.swift b/Tests/OpenCombineTests/CurrentValueSubjectTests.swift
+index d974349..2f9b806 100644
+--- a/Tests/OpenCombineTests/CurrentValueSubjectTests.swift
++++ b/Tests/OpenCombineTests/CurrentValueSubjectTests.swift
+@@ -26,6 +26,8 @@ final class CurrentValueSubjectTests: XCTestCase {
+         ("testMultipleCompletions", testMultipleCompletions),
+         ("testValuesAfterCompletion", testValuesAfterCompletion),
+         ("testSubscriptionAfterCompletion", testSubscriptionAfterCompletion),
++        ("testSubscriptionAfterSend", testSubscriptionAfterSend),
++        ("testSubscriptionAfterSet", testSubscriptionAfterSet),
+         ("testSendSubscription", testSendSubscription),
+         ("testLifecycle", testLifecycle),
+         ("testSynchronization", testSynchronization),
+@@ -322,6 +324,39 @@ final class CurrentValueSubjectTests: XCTestCase {
+                                             .completion(.finished)])
+     }
+ 
++    func testSubscriptionAfterSend() {
++        // Given
++        let passthrough = Sut(0)
++        let subscriber = TrackingSubscriber(
++            receiveSubscription: { subscription in
++                subscription.request(.unlimited)
++            })
++
++        // When
++        passthrough.send(2)
++        passthrough.subscribe(subscriber)
++
++        // Then
++        XCTAssertEqual(subscriber.history, [.subscription("CurrentValueSubject"),
++                                            .value(2)])
++    }
++
++    func testSubscriptionAfterSet() {
++        // Given
++        let passthrough = Sut(0)
++        let subscriber = TrackingSubscriber(receiveSubscription: { subscription in
++            subscription.request(.unlimited)
++        })
++
++        // When
++        passthrough.value = 3
++        passthrough.subscribe(subscriber)
++
++        // Then
++        XCTAssertEqual(subscriber.history, [.subscription("CurrentValueSubject"),
++                                            .value(3)])
++    }
++
+     func testSendSubscription() {
+         let subscription1 = CustomSubscription()
+         let cvs = Sut(1)
+@@ -441,15 +476,15 @@ final class CurrentValueSubjectTests: XCTestCase {
+ 
+         race(
+             {
+-                cvs.value += 1
++                cvs.value = 42
+             },
+             {
+-                cvs.value -= 1
++                cvs.value = 42
+             }
+         )
+ 
+         XCTAssertEqual(inputs.value.count, 40200)
+-        XCTAssertEqual(cvs.value, 112)
++        XCTAssertEqual(cvs.value, 42)
+ 
+         race(
+             {

@@ -1,0 +1,147 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-640",
+  "bug_id": "JULIA-640",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "a72d68c5120e2eab5afe44e731c2aa43cb3b4067",
+  "fixed_revision": "55e3d69f4fd8b552002fee8db23c7880bc3a5961",
+  "candidate_sha": "55e3d69f4fd8b552002fee8db23c7880bc3a5961",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "a72d68c5120e2eab5afe44e731c2aa43cb3b4067",
+  "changed_production_files": [
+    "src/expr.jl"
+  ],
+  "changed_test_files": [
+    "test/expr.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-640 SubString SyntaxNode Expr MWE"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "c976ea0e7794d65d28ea4f4d45e057d2483e1f83b8520176c856245fc42a7f8e",
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "JULIA-640 SubString SyntaxNode Expr MWE"
+      ],
+      "added_testsets": [],
+      "assertion_expression_sha256": [],
+      "mwe_basis": {
+        "upstream_pull_request": 528,
+        "upstream_test_file": "test/expr.jl",
+        "defect": "SyntaxNode to Expr conversion used source offsets incorrectly for SubString input",
+        "public_api": "JuliaSyntax.parsestmt, SyntaxNode, and Expr conversion"
+      }
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "55e3d69f4fd8b552002fee8db23c7880bc3a5961",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "0bdfc2c5e6c7c48893fc2b1f1e64718d93b34bf6661f5b0b4fd7eca37b599eca",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:37:56Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.5267494795024875,
+      "input_tokens": 4162,
+      "output_tokens": 701
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.68, \"summary\": \"The change threads a separate `txtbuf_offset` argument through `_leaf_to_Expr` instead of folding the substring offset into `srcrange`. In `_to_expr`, `byte_range(node) .+ offset` previously conflated buffer-relative indices with source-relative indices, so any code path that indexes the SourceFile (e.g. `view(source, srcrange)` for the `@__dot__` MacroName check) got wrong positions when the source text is a SubString. Splitting the offset from the range corrects leaf Expr conversion for substring-backed sources. This reads as a behavior-correcting fix in production code, not a feature or refactor.\", \"evidence\": \"Production change limited to src/expr.jl (3 minimized hunks, reported globally minimal with all hunks necessary). Accompanying test change in test/expr.jl. Runtime evidence reports a stable differential across 3 repetitions via a dedicated trigger script, with the full suite passing at the fixed commit, which is consistent with a genuine parent-fails/fixed-passes defect. The semantic delta is visible in the diff: srcrange is no longer pre-offset and the offset is passed separately, so source-relative indexing (view(source, srcrange)) and buffer-relative indexing are no longer conflated; the non-substring call site passes 0, preserving prior behavior there.\", \"missing_evidence\": \"No PR title/body, commit subject, or linked issue, so intent is inferred from the diff alone (traceability_class UNVERIFIED). The full production patch and the test diff are empty in the payload, so I cannot see the added assertions. trigger_tests is empty, so the specific failing test name is unknown. One original hunk was dropped during minimization and its content is not shown, so I cannot confirm how txtbuf_offset is consumed inside _leaf_to_Expr.\", \"validation_risks\": \"The trigger relies on a dedicated script rather than a named test, so mapping it into a Defects4J-style trigger test may need work. Because the parameter addition changes an internal signature, an incorrectly minimized patch could leave txtbuf_offset unused and still compile in Julia, producing a fix that only accidentally works via the srcrange change. Reproduction likely requires parsing from a SubString source; if the trigger constructs input differently the differential may not reproduce.\", \"suggested_tests\": \"Parse expressions from a SubString-backed source (e.g. a code string embedded with a leading prefix, wrapped via a SubString/offset SourceFile) and compare the resulting Expr to parsing the same code from a plain String. Specifically cover a leaf whose conversion inspects the source text: the `.` MacroName mapping to `@__dot__` (broadcast fusion like `@. x + y`) at a nonzero substring offset, plus numeric and string literal leaves at nonzero offsets to confirm values and positions match the offset-free baseline.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.68,
+    "summary": "The change threads a separate `txtbuf_offset` argument through `_leaf_to_Expr` instead of folding the substring offset into `srcrange`. In `_to_expr`, `byte_range(node) .+ offset` previously conflated buffer-relative indices with source-relative indices, so any code path that indexes the SourceFile (e.g. `view(source, srcrange)` for the `@__dot__` MacroName check) got wrong positions when the source text is a SubString. Splitting the offset from the range corrects leaf Expr conversion for substring-backed sources. This reads as a behavior-correcting fix in production code, not a feature or refactor.",
+    "evidence": "Production change limited to src/expr.jl (3 minimized hunks, reported globally minimal with all hunks necessary). Accompanying test change in test/expr.jl. Runtime evidence reports a stable differential across 3 repetitions via a dedicated trigger script, with the full suite passing at the fixed commit, which is consistent with a genuine parent-fails/fixed-passes defect. The semantic delta is visible in the diff: srcrange is no longer pre-offset and the offset is passed separately, so source-relative indexing (view(source, srcrange)) and buffer-relative indexing are no longer conflated; the non-substring call site passes 0, preserving prior behavior there.",
+    "missing_evidence": "No PR title/body, commit subject, or linked issue, so intent is inferred from the diff alone (traceability_class UNVERIFIED). The full production patch and the test diff are empty in the payload, so I cannot see the added assertions. trigger_tests is empty, so the specific failing test name is unknown. One original hunk was dropped during minimization and its content is not shown, so I cannot confirm how txtbuf_offset is consumed inside _leaf_to_Expr.",
+    "validation_risks": "The trigger relies on a dedicated script rather than a named test, so mapping it into a Defects4J-style trigger test may need work. Because the parameter addition changes an internal signature, an incorrectly minimized patch could leave txtbuf_offset unused and still compile in Julia, producing a fix that only accidentally works via the srcrange change. Reproduction likely requires parsing from a SubString source; if the trigger constructs input differently the differential may not reproduce.",
+    "suggested_tests": "Parse expressions from a SubString-backed source (e.g. a code string embedded with a leading prefix, wrapped via a SubString/offset SourceFile) and compare the resulting Expr to parsing the same code from a plain String. Specifically cover a leaf whose conversion inspects the source text: the `.` MacroName mapping to `@__dot__` (broadcast fusion like `@. x + y`) at a nonzero substring offset, plus numeric and string literal leaves at nonzero offsets to confirm values and positions match the offset-free baseline."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-640 SubString SyntaxNode Expr MWE"
+    ],
+    "exception_types": [
+      "TRIGGER_EXIT_1"
+    ],
+    "fingerprints": [
+      "TRIGGER_EXIT_1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "hardening_closure": {
+    "date": "2026-09-12",
+    "decision": "retain_literal_upstream_pair",
+    "reason": "fixed-minus-trigger-minimized-patch created a synthetic state that fails during Pkg.precompile because an omitted fix hunk is structurally coupled to the retained hunks",
+    "dynamic_basis": "validation/upstream-pair-validation.json: 3x buggy fail / fixed pass + fixed full suite pass",
+    "synthetic_attempt": "output/rerun-640.json and logs/rerun-640.log in rerun handoff",
+    "defects4j_alignment": "prefer compilable/testable historical pre-fix and post-fix revisions over an artificial non-buildable constructed revision"
+  },
+  "commit_topology": {
+    "fixed_revision": "55e3d69f4fd8b552002fee8db23c7880bc3a5961",
+    "parent_sha": "a72d68c5120e2eab5afe44e731c2aa43cb3b4067",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "c470b81ba579531b41a67dc98ba59267f3b9284e530342a95030814c33a00768",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

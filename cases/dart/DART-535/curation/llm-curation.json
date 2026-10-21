@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-535",
+  "technical_evidence_sha256": "acbfcd8e1a4a77bab249bbbaaeea0c60ba0577d8cf3b4f7775c95fbbd436f53d",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "b329d6e97c74c4dac7cb591857154b8e539e8e2b6a12d4ff4059b7e3866865e0",
+  "reviewed_at": "2026-08-11T15:27:35.199667+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "nikosportolos/ansix#189",
+  "rationale": "Issue #189 (\"AnsiTreeView: Fix header issues\") explicitly lists \"Fix issue with vertical padding\"; the minimized production patch is a single semantic hunk in lib/src/widgets/tree_view/tree_view.dart replacing hardcoded header row indices (headerRows[2], headerRows[0]/[1]) with headerRows.last and headerRows.sublist(0, length - 1), which is precisely the pre-existing assumption of a fixed three-line header that breaks once vertical padding adds rows. The trigger test 'header with vertical padding' in test/widgets/tree_view/tree_view_test.dart constructs an AnsiTreeView with AnsiTextTheme(padding: AnsiPadding.vertical(1)) and asserts exact output, exercising exactly that path. The trigger is the unchanged upstream test portion of the single fixing commit (trigger_reduction.rationale) and references only pre-existing symbols (AnsiTreeView, AnsiTreeViewTheme, AnsiTextTheme, AnsiPadding); it does not use AnsiOutlinedText or any API added by the fix, and the AnsiOutlinedText/hasBorder changes were dropped during minimization rather than being required by the trigger. Minimization removed no behavior needed by the trigger per strict_post_minimization, which reports all gates passed: build.both_versions, trigger.buggy_differential (reproduced selector 'header with vertical padding'), trigger.deterministic (3 fingerprint groups), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green over a complete 32-run matrix with 3 repetitions. The minimized patch contains no refactor, formatting, docs, config, or test-only content. active_same_project_root_causes is empty, so nikosportolos/ansix#189 is not a duplicate, and it matches allowed_root_cause_ids.\n\nIssue #189 (\"AnsiTreeView: Fix header issues\") lists \"Fix issue with vertical padding\" as a defect in existing rendering behavior; the fix commit 0b55e3e is linked via fix_commit_to_issue with verified_fix_issue_numbers=[189] and PR #190. The minimized production patch is a single behavioral hunk in lib/src/widgets/tree_view/tree_view.dart that replaces hardcoded header row indices (headerRows[2], headerRows[0], headerRows[1]) with headerRows.last and headerRows.sublist(0, length-1), which is exactly the wrong-index root cause when vertical padding produces more than three header lines. Minimization dropped the AnsiGrid-to-AnsiOutlinedText header construction rewrite and the hasBorder tightening in theme.dart, so no refactor, feature extension, doc, config, or test-only content remains in the production patch. The trigger is the unchanged upstream test portion of the same fixing commit (patches/trigger-tests.patch, sha256 afbc852e...), exercising AnsiTreeView with headerTheme.textTheme padding AnsiPadding.vertical(1); every symbol it uses (AnsiTreeView, AnsiTreeViewTheme.$default().copyWith, AnsiTextTheme, AnsiPadding) pre-exists in the buggy revision, and no API introduced by the fix is referenced (AnsiOutlinedText appears only in production code and is not part of the minimized patch). Strict evidence post-minimization reports all gates passed with no failed checks: build on both versions, unique selector, deterministic buggy differential on test/widgets/tree_view/tree_view_test.dart::header with vertical padding over 3 repetitions and a 32-run matrix, fixed isolated/suite/reversed clean, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so nikosportolos/ansix#189 is not a duplicate, and it matches allowed_root_cause_ids.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T15:27:06.061085+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "b329d6e97c74c4dac7cb591857154b8e539e8e2b6a12d4ff4059b7e3866865e0",
+      "response_sha256": "2ad0074cf068f0018821a86560d0b036b8ada1a67640bd948b3ba36444f5256f",
+      "response_id": "msg_31bf5657-cca8-4814-bf",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3992
+        },
+        "cache_creation_input_tokens": 3992,
+        "cache_read_input_tokens": 8899,
+        "input_tokens": 11892,
+        "output_tokens": 2013
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nikosportolos/ansix#189",
+      "rationale": "Issue #189 (\"AnsiTreeView: Fix header issues\") explicitly lists \"Fix issue with vertical padding\"; the minimized production patch is a single semantic hunk in lib/src/widgets/tree_view/tree_view.dart replacing hardcoded header row indices (headerRows[2], headerRows[0]/[1]) with headerRows.last and headerRows.sublist(0, length - 1), which is precisely the pre-existing assumption of a fixed three-line header that breaks once vertical padding adds rows. The trigger test 'header with vertical padding' in test/widgets/tree_view/tree_view_test.dart constructs an AnsiTreeView with AnsiTextTheme(padding: AnsiPadding.vertical(1)) and asserts exact output, exercising exactly that path. The trigger is the unchanged upstream test portion of the single fixing commit (trigger_reduction.rationale) and references only pre-existing symbols (AnsiTreeView, AnsiTreeViewTheme, AnsiTextTheme, AnsiPadding); it does not use AnsiOutlinedText or any API added by the fix, and the AnsiOutlinedText/hasBorder changes were dropped during minimization rather than being required by the trigger. Minimization removed no behavior needed by the trigger per strict_post_minimization, which reports all gates passed: build.both_versions, trigger.buggy_differential (reproduced selector 'header with vertical padding'), trigger.deterministic (3 fingerprint groups), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green over a complete 32-run matrix with 3 repetitions. The minimized patch contains no refactor, formatting, docs, config, or test-only content. active_same_project_root_causes is empty, so nikosportolos/ansix#189 is not a duplicate, and it matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:trigger_reduction.rationale",
+        "lib/src/widgets/tree_view/tree_view.dart"
+      ],
+      "risks": [
+        "The minimized patch addresses only the vertical-padding half of issue #189; the empty-border half (hasBorder requiring border.type != AnsiBorderType.none in lib/src/widgets/tree_view/theme.dart) is excluded and therefore unvalidated by any trigger.",
+        "The trigger asserts an exact ANSI/whitespace expected string (treeviewWithVerticalPaddedHeaderMock), so it is sensitive to trailing-space or line-ending normalization across environments.",
+        "Runtime status rests entirely on the supplied strict evidence; the buggy-side failure mode (wrong output vs RangeError) is not disclosed in the provided check details."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T15:27:35.199418+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "b329d6e97c74c4dac7cb591857154b8e539e8e2b6a12d4ff4059b7e3866865e0",
+      "response_sha256": "2299406a6029ba09e158335d34a03d67d0abe3701c72927ac08d4f5d5597e202",
+      "response_id": "msg_1767ff37-bd16-49d9-97",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3744
+        },
+        "cache_creation_input_tokens": 3744,
+        "cache_read_input_tokens": 8960,
+        "input_tokens": 11892,
+        "output_tokens": 2077
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "nikosportolos/ansix#189",
+      "rationale": "Issue #189 (\"AnsiTreeView: Fix header issues\") lists \"Fix issue with vertical padding\" as a defect in existing rendering behavior; the fix commit 0b55e3e is linked via fix_commit_to_issue with verified_fix_issue_numbers=[189] and PR #190. The minimized production patch is a single behavioral hunk in lib/src/widgets/tree_view/tree_view.dart that replaces hardcoded header row indices (headerRows[2], headerRows[0], headerRows[1]) with headerRows.last and headerRows.sublist(0, length-1), which is exactly the wrong-index root cause when vertical padding produces more than three header lines. Minimization dropped the AnsiGrid-to-AnsiOutlinedText header construction rewrite and the hasBorder tightening in theme.dart, so no refactor, feature extension, doc, config, or test-only content remains in the production patch. The trigger is the unchanged upstream test portion of the same fixing commit (patches/trigger-tests.patch, sha256 afbc852e...), exercising AnsiTreeView with headerTheme.textTheme padding AnsiPadding.vertical(1); every symbol it uses (AnsiTreeView, AnsiTreeViewTheme.$default().copyWith, AnsiTextTheme, AnsiPadding) pre-exists in the buggy revision, and no API introduced by the fix is referenced (AnsiOutlinedText appears only in production code and is not part of the minimized patch). Strict evidence post-minimization reports all gates passed with no failed checks: build on both versions, unique selector, deterministic buggy differential on test/widgets/tree_view/tree_view_test.dart::header with vertical padding over 3 repetitions and a 32-run matrix, fixed isolated/suite/reversed clean, and buggy full-suite failures limited to the reproduced trigger. active_same_project_root_causes is empty, so nikosportolos/ansix#189 is not a duplicate, and it matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:source_candidate.issue_check.linked_issues[0].body"
+      ],
+      "risks": [
+        "Only the vertical-padding half of issue #189 is captured; the empty-border half (hasBorder requiring border.type != AnsiBorderType.none) was removed during minimization and is unvalidated by the trigger.",
+        "The expected value treeviewWithVerticalPaddedHeaderMock is an exact ANSI/whitespace string, so the trigger is sensitive to trailing-space or line-ending normalization in future tooling changes.",
+        "The minimized patch retains hunk offsets from the original two-hunk diff (@@ -68,14 +69,12 @@) even though the first hunk was dropped; it applied under the strict post-minimization gate, but it relies on offset-tolerant application rather than exact line numbers."
+      ]
+    }
+  ]
+}

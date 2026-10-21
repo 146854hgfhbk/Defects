@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "CASES-SWIFT-101",
+  "technical_evidence_sha256": "9e15bb17b6af23dfc3efb15a32dbf14f778e5c9a25f741a9be94ad24fa56d8bf",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "0cbdddf9298f2fcc1ba66382cdd2e21ef2869ef2cc876806b89f15e5ca50f4a2",
+  "reviewed_at": "2026-09-07T12:13:03.998461+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-collections#608",
+  "rationale": "Issue 608 ('OrderedSet: reserving negative capacity causes crash', labeled 'bug') reports a runtime trap for OrderedSet<Int>(minimumCapacity: -1) and reserveCapacity(-1), with expected behavior matching stdlib Set. The single production hunk in OrderedSet+ReserveCapacity.swift replaces `precondition(minimumCapacity >= 0, ...)` in the internal _reserveCapacity(_:persistent:) with `let minimumCapacity = Swift.max(minimumCapacity, 0)`, which is exactly the clamping behavior the issue asks for; commit message and PR 622 both cite issue 608. The minimized patch is byte-identical to the production fix (sha256 7713bea2...), one hunk, one file, no formatting, refactor, docs, config, or test content mixed in. The trigger is the unchanged upstream test test_negative_capacity from the same fixing commit; it exercises the two reported entry points (init with negative minimumCapacity, both default and persistent, plus reserveCapacity(-1) on a populated set) and uses only pre-existing surfaces (init(minimumCapacity:persistent:), reserveCapacity, __unstable.scale/reservedScale/minimumCapacity), none introduced by the fix. That the test compiles and runs on the buggy revision is confirmed by machine evidence rather than inference: build.both_versions passed and trigger.buggy_differential reproduced the selector on the parent, so no dependency on new production API. Strict gates pass identically before and after minimization (32-run matrix, 3 repetitions, deterministic fingerprint_groups=3, fixed isolated/suite/reversed clean, buggy full suite fails only on the declared trigger, fixed full suite all green). active_same_project_root_causes is empty and apple/swift-collections#608 is in allowed_root_cause_ids, so the root cause is not a registry duplicate.\n\nIssue 608 (labeled 'bug', closed by this fix) reports a runtime trap for `OrderedSet<Int>(minimumCapacity: -1)` and `a.reserveCapacity(-1)`, with expected behavior matching stdlib Set (negative values ignored). The production fix is a single one-line hunk in OrderedSet+ReserveCapacity.swift inside the internal `_reserveCapacity(_:persistent:)`, replacing `precondition(minimumCapacity >= 0, ...)` with `let minimumCapacity = Swift.max(minimumCapacity, 0)`; no signature, API, formatting, docs, or config changes accompany it, and the minimized patch is byte-identical (sha256 7713bea2...) to the production fix with the single hunk retained and post-minimization validation PASS. The trigger is the unchanged upstream test `test_negative_capacity` from the same commit, exercising exactly the issue's reproduction steps (both init overloads plus mutating reserveCapacity on a populated set) and using only pre-existing surfaces (`init(minimumCapacity:persistent:)`, `reserveCapacity`, `__unstable.scale/reservedScale/minimumCapacity`) — the fix adds no new production API, so the trigger cannot depend on one. Machine-generated strict evidence passes on both the original and post-minimization matrices: build.both_versions PASS (so the test compiles against the buggy revision), trigger.buggy_differential reproduces exactly the declared selector, trigger.deterministic 3/3 fingerprint groups, trigger.fixed_clean and full_suite.fixed_all_green PASS, full_suite.buggy_reproduces_only_triggers PASS with no baseline exclusions. active_same_project_root_causes is empty and apple/swift-collections#608 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T12:12:32.241435+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "0cbdddf9298f2fcc1ba66382cdd2e21ef2869ef2cc876806b89f15e5ca50f4a2",
+      "response_sha256": "5bc0a63a659c83d54517c0d341e026d59b38da36e93f7c0648e85581866eeb8c",
+      "response_id": "msg_26cb5d722b374beb8a1718597e495049",
+      "attempts": 2,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5240995061691542,
+        "input_tokens": 16962,
+        "output_tokens": 723
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-collections#608",
+      "rationale": "Issue 608 ('OrderedSet: reserving negative capacity causes crash', labeled 'bug') reports a runtime trap for OrderedSet<Int>(minimumCapacity: -1) and reserveCapacity(-1), with expected behavior matching stdlib Set. The single production hunk in OrderedSet+ReserveCapacity.swift replaces `precondition(minimumCapacity >= 0, ...)` in the internal _reserveCapacity(_:persistent:) with `let minimumCapacity = Swift.max(minimumCapacity, 0)`, which is exactly the clamping behavior the issue asks for; commit message and PR 622 both cite issue 608. The minimized patch is byte-identical to the production fix (sha256 7713bea2...), one hunk, one file, no formatting, refactor, docs, config, or test content mixed in. The trigger is the unchanged upstream test test_negative_capacity from the same fixing commit; it exercises the two reported entry points (init with negative minimumCapacity, both default and persistent, plus reserveCapacity(-1) on a populated set) and uses only pre-existing surfaces (init(minimumCapacity:persistent:), reserveCapacity, __unstable.scale/reservedScale/minimumCapacity), none introduced by the fix. That the test compiles and runs on the buggy revision is confirmed by machine evidence rather than inference: build.both_versions passed and trigger.buggy_differential reproduced the selector on the parent, so no dependency on new production API. Strict gates pass identically before and after minimization (32-run matrix, 3 repetitions, deterministic fingerprint_groups=3, fixed isolated/suite/reversed clean, buggy full suite fails only on the declared trigger, fixed full suite all green). active_same_project_root_causes is empty and apple/swift-collections#608 is in allowed_root_cause_ids, so the root cause is not a registry duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0]",
+        "source_candidate.origin_pull_request.title",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "minimized_patch_reference.semantic_selection",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The pre-fix failure is a precondition trap, not a clean assertion failure; a build configuration that elides preconditions (-Ounchecked) would mask the defect, and the harness must keep treating a trap as a failing outcome.",
+        "The fix relaxes an input contract that was previously enforced by precondition, so it could alternatively be read as intentional contract widening; maintainer 'bug' label and the stdlib Set parity argument are what settle it as a defect.",
+        "The trigger asserts on __unstable internal debugging views (scale, reservedScale, minimumCapacity), which are implementation-detail surfaces and could drift across revisions even though they resolve on both revisions here.",
+        "issue_evidence and semantic_justification are null in the case record; issue text is only available via the embedded source_candidate.issue_check payload."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T12:13:03.997772+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "0cbdddf9298f2fcc1ba66382cdd2e21ef2869ef2cc876806b89f15e5ca50f4a2",
+      "response_sha256": "306c19bd12258b697c75d477edac686ca616336da93bf55513bcba91b29b3507",
+      "response_id": "msg_88fed65da2b8403b8e09d72cee397817",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5104883170480928,
+        "input_tokens": 16906,
+        "output_tokens": 776
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-collections#608",
+      "rationale": "Issue 608 (labeled 'bug', closed by this fix) reports a runtime trap for `OrderedSet<Int>(minimumCapacity: -1)` and `a.reserveCapacity(-1)`, with expected behavior matching stdlib Set (negative values ignored). The production fix is a single one-line hunk in OrderedSet+ReserveCapacity.swift inside the internal `_reserveCapacity(_:persistent:)`, replacing `precondition(minimumCapacity >= 0, ...)` with `let minimumCapacity = Swift.max(minimumCapacity, 0)`; no signature, API, formatting, docs, or config changes accompany it, and the minimized patch is byte-identical (sha256 7713bea2...) to the production fix with the single hunk retained and post-minimization validation PASS. The trigger is the unchanged upstream test `test_negative_capacity` from the same commit, exercising exactly the issue's reproduction steps (both init overloads plus mutating reserveCapacity on a populated set) and using only pre-existing surfaces (`init(minimumCapacity:persistent:)`, `reserveCapacity`, `__unstable.scale/reservedScale/minimumCapacity`) — the fix adds no new production API, so the trigger cannot depend on one. Machine-generated strict evidence passes on both the original and post-minimization matrices: build.both_versions PASS (so the test compiles against the buggy revision), trigger.buggy_differential reproduces exactly the declared selector, trigger.deterministic 3/3 fingerprint groups, trigger.fixed_clean and full_suite.fixed_all_green PASS, full_suite.buggy_reproduces_only_triggers PASS with no baseline exclusions. active_same_project_root_causes is empty and apple/swift-collections#608 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0]",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "minimized_patch_reference.post_minimization_validation",
+        "trigger_tests[0]"
+      ],
+      "risks": [
+        "The pre-fix failure is a precondition trap rather than a clean XCTest assertion failure; harness attribution depends on treating the abort as a failure of the isolated selector (strict evidence indicates it did, with full-suite failures limited to the reproduced trigger).",
+        "Preconditions can be elided under -Ounchecked, so reproduction is build-configuration sensitive; the strict matrix result is only portable for the configuration it ran under (evidence_grade: portable_release_evidence).",
+        "The fix relaxes an input contract that was previously enforced by a precondition; a stricter reading could class this as intentional contract widening rather than a defect, though the maintainer bug label, commit message, and merged PR 622 all frame it as a crash fix.",
+        "Assertions on `__unstable` debugging internals are version-sensitive and would need revisiting if that view changes, and issue_evidence/semantic_justification are null so all issue text is taken from the embedded source_candidate snapshot rather than an independent fetch.",
+        "Whether other capacity paths (e.g., OrderedDictionary) route through the same internal function and are also behaviorally affected by the clamp was not verified."
+      ]
+    }
+  ]
+}

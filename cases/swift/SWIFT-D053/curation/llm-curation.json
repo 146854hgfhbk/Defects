@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1000",
+  "technical_evidence_sha256": "74993cdbd019faf0b875eb996934d3cf4da24bc9f84ae15dda835aa7e36f54bc",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "02f8b8e3d441b0198589aa236feb2e3d8bb84764a957dc54da2de344f1bd9164",
+  "reviewed_at": "2026-09-08T09:38:12.944740+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "jpsim/yams#116",
+  "rationale": "Issue #116 reports that Yams resolved quoted scalars (`version: \"10.10\"`) to Float instead of String, which is a spec-conformance defect: YAML requires non-plain (quoted/literal/folded) scalars to resolve to tag:yaml.org,2002:str. Although the reporter phrased it as a configuration request, the maintainer treated it as a bug (commit message 'Parse quoted values as strings / Fix #116', CHANGELOG entry placed under 'Bug Fixes' in patches/original-commit.patch) and fixed the default resolution rather than adding any option or new API. The minimized production patch is a single hunk in Sources/Yams/Parser.swift replacing the guard that returned nil for implicit scalars with `if event.data.scalar.quoted_implicit == 1 { return Tag.Name.str.rawValue }`, which is exactly the tag-resolution path responsible for the reported mis-typing; the patch is byte-identical to the production fix (sha256 8781ef9d...), touches no other file, and contains no refactor, formatting, docs, or config change (CHANGELOG is excluded from the production/minimized patch). Triggers come from the same upstream commit and use only pre-existing public APIs: testQuotationMark calls Yams.load and compares against PyYAML reference output for plain/single/double/literal/folded scalars, directly reproducing the issue reproducer; testNextRootThrowsOnInvalidYaml changes the expected tag of an empty literal scalar from Tag(.null) to Tag(.str), an existing API and the same root cause (non-plain scalars must resolve to str). Strict evidence for both the original and post-minimization matrices reports all gates passing, including buggy differential reproduction of both selectors, deterministic outcomes over 3 repetitions, and a green fixed full suite. active_same_project_root_causes is empty and jpsim/yams#116 is the sole allowed verified issue key, so no duplicate root cause exists.\n\nIssue #116 reports that Yams resolves quoted scalars (`version: \"10.10\"`) to Float instead of String, which is a YAML spec conformance defect rather than a new capability: quoted and block scalars are never subject to implicit type resolution. The fix commit (message 'Parse quoted values as strings\\n\\nFix #116', PR #117, verified traceability path fix_commit_to_issue) changes exactly one production location, `Event.scalarTag` in Sources/Yams/Parser.swift, to return `Tag.Name.str` when `quoted_implicit == 1` instead of returning nil. For plain implicit scalars the new `string(from: event.data.scalar.tag)` path still yields nil because libyaml supplies no tag, so no behavior outside the defect is altered and no new public API is introduced. The minimized patch is byte-identical to the production fix (sha256 8781ef9d..., single hunk, retained_hunks=[1]); the CHANGELOG entry and test files are excluded, so no documentation-, config-, or test-only content remains. Trigger testQuotationMark is the upstream test from the same commit and encodes the issue's exact reproducer (plain 10.10 stays Double while single-quoted, double-quoted, literal, and folded 10.10 become Strings), cross-checked against PyYAML reference output. The second trigger, testNextRootThrowsOnInvalidYaml, is an existing test whose assertion changes from `Node(\"\", Tag(.null), .literal)` to `Node(\"\", Tag(.str), .literal)`; that is the same root cause (a non-plain scalar being left untagged and resolved as null) and uses only pre-existing `Node`/`Tag` APIs. Strict machine evidence for both the original and post-minimization runs reports passed=true with no failed checks: both revisions build, both selectors fail on the buggy revision and pass on the fixed revision across 3 repetitions and 38 matrix runs, buggy full-suite failures are limited to the reproduced triggers, and the fixed full suite is green. active_same_project_root_causes is empty and jpsim/yams#116 is in allowed_root_cause_ids, so this root cause is not a registry duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-08T09:37:27.824719+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "02f8b8e3d441b0198589aa236feb2e3d8bb84764a957dc54da2de344f1bd9164",
+      "response_sha256": "24a3b247a80d4b82586c8fad7ce982ad5f33b0251c3a57a94c9ab2f58b01506f",
+      "response_id": "msg_86c23939349a4783b15926b6d5d48c49",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7514997957545605,
+        "input_tokens": 15977,
+        "output_tokens": 718
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "jpsim/yams#116",
+      "rationale": "Issue #116 reports that Yams resolved quoted scalars (`version: \"10.10\"`) to Float instead of String, which is a spec-conformance defect: YAML requires non-plain (quoted/literal/folded) scalars to resolve to tag:yaml.org,2002:str. Although the reporter phrased it as a configuration request, the maintainer treated it as a bug (commit message 'Parse quoted values as strings / Fix #116', CHANGELOG entry placed under 'Bug Fixes' in patches/original-commit.patch) and fixed the default resolution rather than adding any option or new API. The minimized production patch is a single hunk in Sources/Yams/Parser.swift replacing the guard that returned nil for implicit scalars with `if event.data.scalar.quoted_implicit == 1 { return Tag.Name.str.rawValue }`, which is exactly the tag-resolution path responsible for the reported mis-typing; the patch is byte-identical to the production fix (sha256 8781ef9d...), touches no other file, and contains no refactor, formatting, docs, or config change (CHANGELOG is excluded from the production/minimized patch). Triggers come from the same upstream commit and use only pre-existing public APIs: testQuotationMark calls Yams.load and compares against PyYAML reference output for plain/single/double/literal/folded scalars, directly reproducing the issue reproducer; testNextRootThrowsOnInvalidYaml changes the expected tag of an empty literal scalar from Tag(.null) to Tag(.str), an existing API and the same root cause (non-plain scalars must resolve to str). Strict evidence for both the original and post-minimization matrices reports all gates passing, including buggy differential reproduction of both selectors, deterministic outcomes over 3 repetitions, and a green fixed full suite. active_same_project_root_causes is empty and jpsim/yams#116 is the sole allowed verified issue key, so no duplicate root cause exists.",
+      "evidence_paths": [
+        "issue_evidence.body",
+        "issue_evidence.fix_message",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.checks",
+        "minimized_patch_reference.semantic_selection"
+      ],
+      "risks": [
+        "The public issue is labelled feature_request_with_reproducer and asks for a configuration option; acceptance relies on the spec-conformance reading plus the maintainer's 'Fix'/'Bug Fixes' classification rather than an explicit bug label.",
+        "The second trigger (testNextRootThrowsOnInvalidYaml) is an assertion update on a pre-existing test rather than a new reproducer; it is same-root-cause but weaker as a standalone defect witness.",
+        "The fix changes default scalar resolution for all non-plain scalars, so downstream code relying on the old implicit-typing behavior would observe a behavior change beyond the quoted-float case named in the issue."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-08T09:38:12.944078+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "02f8b8e3d441b0198589aa236feb2e3d8bb84764a957dc54da2de344f1bd9164",
+      "response_sha256": "2d6bf5b0f58ffcef38084413b955337296b0af3e20e92b696308ec840b680e36",
+      "response_id": "msg_a04375e9bff14dd29d05bf0aad506f1c",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.7680830498839138,
+        "input_tokens": 16312,
+        "output_tokens": 839
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "jpsim/yams#116",
+      "rationale": "Issue #116 reports that Yams resolves quoted scalars (`version: \"10.10\"`) to Float instead of String, which is a YAML spec conformance defect rather than a new capability: quoted and block scalars are never subject to implicit type resolution. The fix commit (message 'Parse quoted values as strings\\n\\nFix #116', PR #117, verified traceability path fix_commit_to_issue) changes exactly one production location, `Event.scalarTag` in Sources/Yams/Parser.swift, to return `Tag.Name.str` when `quoted_implicit == 1` instead of returning nil. For plain implicit scalars the new `string(from: event.data.scalar.tag)` path still yields nil because libyaml supplies no tag, so no behavior outside the defect is altered and no new public API is introduced. The minimized patch is byte-identical to the production fix (sha256 8781ef9d..., single hunk, retained_hunks=[1]); the CHANGELOG entry and test files are excluded, so no documentation-, config-, or test-only content remains. Trigger testQuotationMark is the upstream test from the same commit and encodes the issue's exact reproducer (plain 10.10 stays Double while single-quoted, double-quoted, literal, and folded 10.10 become Strings), cross-checked against PyYAML reference output. The second trigger, testNextRootThrowsOnInvalidYaml, is an existing test whose assertion changes from `Node(\"\", Tag(.null), .literal)` to `Node(\"\", Tag(.str), .literal)`; that is the same root cause (a non-plain scalar being left untagged and resolved as null) and uses only pre-existing `Node`/`Tag` APIs. Strict machine evidence for both the original and post-minimization runs reports passed=true with no failed checks: both revisions build, both selectors fail on the buggy revision and pass on the fixed revision across 3 repetitions and 38 matrix runs, buggy full-suite failures are limited to the reproduced triggers, and the fixed full suite is green. active_same_project_root_causes is empty and jpsim/yams#116 is in allowed_root_cause_ids, so this root cause is not a registry duplicate.",
+      "evidence_paths": [
+        "issue_evidence.body",
+        "issue_evidence.fix_message",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "minimized_patch_reference.semantic_selection",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "traceability.verified_fix_issue_numbers",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The issue is phrased as a configuration question and classified issue_type=feature_request_with_reproducer; acceptance rests on the spec-conformance reading (quoted/block scalars must not be implicitly resolved), corroborated by the PyYAML reference output in the trigger and the commit's 'Fix #116' wording.",
+        "The YamlErrorTests trigger is an updated expectation on a pre-existing test rather than a purpose-written reproducer, so its failure on the buggy revision reflects the changed tag resolution rather than an independently reported symptom.",
+        "The fix intentionally changes resolution for all non-plain scalars (literal and folded blocks, not just quotes), so downstream consumers relying on the previous null/implicit typing of empty block scalars would see a behavior change; no evidence here covers that wider blast radius.",
+        "Runtime claims are taken solely from the supplied strict evidence blocks; no independent build or test execution was performed as part of this curation."
+      ]
+    }
+  ]
+}

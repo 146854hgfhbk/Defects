@@ -1,0 +1,21 @@
+diff --git a/Sources/JWTKit/JWTSigner+RSA.swift b/Sources/JWTKit/JWTSigner+RSA.swift
+--- a/Sources/JWTKit/JWTSigner+RSA.swift
++++ b/Sources/JWTKit/JWTSigner+RSA.swift
+@@ -102,7 +102,7 @@ private struct RSASigner: JWTAlgorithm, OpenSSLSigner {
+ 
+         let digest = try self.digest(plaintext)
+         guard RSA_sign(
+-            EVP_MD_type(convert(self.algorithm)),
++            EVP_MD_get_type(convert(self.algorithm)),
+             digest,
+             numericCast(digest.count),
+             &signature,
+@@ -124,7 +124,7 @@ private struct RSASigner: JWTAlgorithm, OpenSSLSigner {
+         let digest = try self.digest(plaintext)
+         let signature = signature.copyBytes()
+         return RSA_verify(
+-            EVP_MD_type(convert(self.algorithm)),
++            EVP_MD_get_type(convert(self.algorithm)),
+             digest,
+             numericCast(digest.count),
+             signature,

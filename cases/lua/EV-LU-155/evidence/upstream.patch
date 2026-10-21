@@ -1,0 +1,41 @@
+diff --git a/lua/pl/stringx.lua b/lua/pl/stringx.lua
+index cb9f824b93304f0845003382efb81d8b4981063a..807b4bbc6ce3026c5ff753764e80298c80085038 100644
+--- a/lua/pl/stringx.lua
++++ b/lua/pl/stringx.lua
+@@ -254,8 +254,8 @@ local function _just(s,w,ch,left,right)
+         if not ch then ch = ' ' end
+         local f1,f2
+         if left and right then
+-            local ln = ceil((w-n)/2)
+-            local rn = w - n - ln
++            local rn = ceil((w-n)/2)
++            local ln = w - n - rn
+             f1 = rep(ch,ln)
+             f2 = rep(ch,rn)
+         elseif right then
+diff --git a/tests/test-pylib.lua b/tests/test-pylib.lua
+index 165fe8a9b754a6b2e5a799f982d90f982d9df2bd..c90a9555a819843a500ff8e4dd1fc1f1ac1dc43a 100644
+--- a/tests/test-pylib.lua
++++ b/tests/test-pylib.lua
+@@ -56,7 +56,7 @@ s = '  here we go    '
+ asserteq (s:lstrip() , 'here we go    ')
+ asserteq (s:rstrip() , '  here we go')
+ asserteq (s:strip() , 'here we go')
+-asserteq (('hello'):center(20,'+') , '++++++++hello+++++++')
++asserteq (('hello'):center(20,'+') , '+++++++hello++++++++')
+ 
+ t = Template('${here} is the $answer')
+ asserteq(t:substitute {here = 'one', answer = 'two'} , 'one is the two')
+diff --git a/tests/test-stringx.lua b/tests/test-stringx.lua
+index b2aa0cd7493fef4f78f7eb34221aedfcbc3b7ca8..01d676b609bada7ec759ac46adda894d85f456d4 100644
+--- a/tests/test-stringx.lua
++++ b/tests/test-stringx.lua
+@@ -177,7 +177,7 @@ asserteq(T(stringx.center('', 0)), T(''))
+ asserteq(T(stringx.center('', 1)), T(' '))
+ asserteq(T(stringx.center('', 2)), T('  '))
+ asserteq(T(stringx.center('a', 1)), T('a'))
+-asserteq(T(stringx.center('a', 2)), T(' a'))
++asserteq(T(stringx.center('a', 2)), T('a '))
+ asserteq(T(stringx.center('a', 3)), T(' a '))
+ 
+ 

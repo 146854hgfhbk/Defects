@@ -1,0 +1,103 @@
+{
+  "candidate_sha": "55e1268944fdcfb66beba9c42f87d83251f36cf7",
+  "project": "jump-dev/MathOptInterface.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 2943,
+      "url": "https://github.com/jump-dev/MathOptInterface.jl/pull/2943",
+      "state": "closed",
+      "title": "[Bridges] fix print_active_bridges for some constrained variable cases",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Tried to debug https://github.com/jump-dev/ParametricOptInterface.jl/issues/201\r\nRan into https://github.com/jump-dev/Ipopt.jl/pull/528\r\n\r\nFound these.\r\n\r\nWith this\r\n```Julia\r\njulia> import MathOptInterface as MOI\r\n\r\njulia> import ParametricOptInterface as POI\r\n\r\njulia> import SCS\r\n\r\njulia> begin\r\n           inner = POI.Optimizer(SCS.Optimizer)\r\n           model = MOI.Bridges.full_bridge_optimizer(inner, Float64)\r\n           p, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))\r\n           MOI.Bridges.print_active_bridges(model)\r\n       end\r\n * Supported objective: MOI.ScalarAffineFunction{Float64}\r\n * Supported variable: MOI.Parameter{Float64}\r\n```\r\n\r\nwhere previously\r\n```julia\r\njulia> import MathOptInterface as MOI\r\n\r\njulia> import ParametricOptInterface as POI\r\n\r\njulia> import SCS\r\n\r\njulia> begin\r\n           inner = POI.Optimizer(SCS.Optimizer)\r\n           model = MOI.Bridges.full_bridge_optimizer(inner, Float64)\r\n           p, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))\r\n           MOI.Bridges.print_active_bridges(model)\r\n       end\r\n * Supported objective: MOI.ScalarAffineFunction{Float64}\r\nERROR: KeyError: key (MathOptInterface.Parameter{Float64},) not found\r\nStacktrace:\r\n [1] getindex\r\n   @ ~/.julia/packages/OrderedCollections/Xihhq/src/ordered_dict.jl:387 [inlined]\r\n [2] print_active_bridges(io::Base.TTY, b::MathOptInterface.Bridges.LazyBridgeOptimizer{…}, ::Type{…}, ::Type{…}, offset::String)\r\n   @ MathOptInterface.Bridges ~/git/jump-dev/MathOptInterface/src/Bridges/debug.jl:664\r\n [3] print_active_bridges(io::Base.TTY, b::MathOptInterface.Bridges.LazyBridgeOptimizer{…}, ::Type{…}, ::Type{…})\r\n   @ MathOptInterface.Bridges ~/git/jump-dev/MathOptInterface/src/Bridges/debug.jl:641\r\n [4] print_active_bridges(io::Base.TTY, b::MathOptInterface.Bridges.LazyBridgeOptimizer{ParametricOptInterface.Optimizer{…}})\r\n   @ MathOptInterface.Bridges ~/git/jump-dev/MathOptInterface/src/Bridges/debug.jl:550\r\n [5] print_active_bridges(::MathOptInterfac"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 2943,
+      "pull_request_repository": "jump-dev/MathOptInterface.jl",
+      "pull_request_url": "https://github.com/jump-dev/MathOptInterface.jl/pull/2943",
+      "fix_commit": "55e1268944fdcfb66beba9c42f87d83251f36cf7",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "[Bridges] fix print_active_bridges for some constrained variable cases (#2943)",
+    "commit_issue_refs": [
+      2943
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 2943,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "[Bridges] fix print_active_bridges for some constrained variable cases",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [
+      [
+        "jump-dev/Ipopt.jl",
+        528,
+        "pull"
+      ],
+      [
+        "jump-dev/ParametricOptInterface.jl",
+        201,
+        "issues"
+      ]
+    ],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [
+    {
+      "number": 528,
+      "url": "https://github.com/jump-dev/Ipopt.jl/pull/528",
+      "state": "closed",
+      "title": "Fix support for MOI.Parameter constraints",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "",
+      "repository": "jump-dev/Ipopt.jl",
+      "reference_kind": "pull"
+    },
+    {
+      "number": 201,
+      "url": "https://github.com/jump-dev/ParametricOptInterface.jl/issues/201",
+      "state": "open",
+      "title": "POI failing with Clarabel",
+      "closed": false,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "\nObserved in this environment:\n\nJulia=1.10.1\nPOI=0.14.2\nMOI=1.49.0\nSCS=2.6.1\n\n```julia\nimport MathOptInterface as MOI\nimport ParametricOptInterface as POI\nusing SCS\n\ninner = MOI.instantiate(SCS.Optimizer; with_bridge_type = Float64, with_cache_type = Float64)\nmodel = POI.Optimizer(inner)\nMOI.set(model, MOI.Silent(), true)\n\nx = MOI.add_variable(model)\np, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))\n\nf = MOI.ScalarAffineFunction(\n    [MOI.ScalarAffineTerm(1.0, x), MOI.ScalarAffineTerm(-1.0, p)],\n    0.0,\n)\nMOI.add_constraint(model, f, MOI.EqualTo(0.0))\n\nMOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)\nMOI.set(\n    model,\n    MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),\n    MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),\n)\n\nprintln(\"first optimize\")\nMOI.optimize!(model)\nprintln(\"x=\", MOI.get(model, MOI.VariablePrimal(), x), \" p=\", MOI.get(model, POI.ParameterValue(), p))\n\nMOI.set(model, POI.ParameterValue(), p, 2.0)\nprintln(\"second optimize\")\nMOI.optimize!(model)  # Fails here with ModifyConstraintNotAllowed + modify_constants(::SCS._SetConstants, ...)\n\n```",
+      "repository": "jump-dev/ParametricOptInterface.jl",
+      "reference_kind": "issues"
+    }
+  ],
+  "pull_request_record": {
+    "number": 2943,
+    "repository": "jump-dev/MathOptInterface.jl",
+    "url": "https://github.com/jump-dev/MathOptInterface.jl/pull/2943",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-02-19T03:31:57Z",
+    "merge_commit_sha": "55e1268944fdcfb66beba9c42f87d83251f36cf7",
+    "title": "[Bridges] fix print_active_bridges for some constrained variable cases",
+    "body_excerpt": "Tried to debug https://github.com/jump-dev/ParametricOptInterface.jl/issues/201\r\nRan into https://github.com/jump-dev/Ipopt.jl/pull/528\r\n\r\nFound these.\r\n\r\nWith this\r\n```Julia\r\njulia> import MathOptInterface as MOI\r\n\r\njulia> import ParametricOptInterface as POI\r\n\r\njulia> import SCS\r\n\r\njulia> begin\r\n           inner = POI.Optimizer(SCS.Optimizer)\r\n           model = MOI.Bridges.full_bridge_optimizer(inner, Float64)\r\n           p, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))\r\n           MOI.Bridges.print_active_bridges(model)\r\n       end\r\n * Supported objective: MOI.ScalarAffineFunction{Float64}\r\n * Supported variable: MOI.Parameter{Float64}\r\n```\r\n\r\nwhere previously\r\n```julia\r\njulia> import MathOptInterface as MOI\r\n\r\njulia> import ParametricOptInterface as POI\r\n\r\njulia> import SCS\r\n\r\njulia> begin\r\n           inner = POI.Optimizer(SCS.Optimizer)\r\n           model = MOI.Bridges.full_bridge_optimizer(inner, Float64)\r\n           p, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))\r\n           MOI.Bridges.print_active_bridges(model)\r\n       end\r\n * Supported objective: MOI.ScalarAffineFunction{Float64}\r\nERROR: KeyError: key (MathOptInterface.Parameter{Float64},) not found\r\nStacktrace:\r\n [1] getindex\r\n   @ ~/.julia/packages/OrderedCollections/Xihhq/src/ordered_dict.jl:387 [inlined]\r\n [2] print_active_bridges(io::Base.TTY, b::MathOptInterface.Bridges.LazyBridgeOptimizer{…}, ::Type{…}, ::Type{…}, offset::String)\r\n   @ MathOptInterface.Bridges ~/git/jump-dev/MathOptInterface/src/Bridges/debug.jl:664\r\n [3] print_active_bridges(io::Base.TTY, b::MathOptInterface.Bridges.LazyBridgeOptimizer{…}, ::Type{…}, ::Type{…})\r\n   @ MathOptInterface.Bridges ~/git/jump-dev/MathOptInterface/src/Bridges/debug.jl:641\r\n [4] print_active_bridges(io::Base.TTY, b::MathOptInterface.Bridges.LazyBridgeOptimizer{ParametricOptInterface.Optimizer{…}})\r\n   @ MathOptInterface.Bridges ~/git/jump-dev/MathOptInterface/src/Bridges/debug.jl:550\r\n [5] print_active_bridges(::MathOptInterfac",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

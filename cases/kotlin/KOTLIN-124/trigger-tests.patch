@@ -1,0 +1,33 @@
+diff --git a/detekt-rules-style/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/ForbiddenMethodCallSpec.kt b/detekt-rules-style/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/ForbiddenMethodCallSpec.kt
+index aa6d063c28..353a14298c 100644
+--- a/detekt-rules-style/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/ForbiddenMethodCallSpec.kt
++++ b/detekt-rules-style/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/style/ForbiddenMethodCallSpec.kt
+@@ -279,5 +279,28 @@ class ForbiddenMethodCallSpec : Spek({
+             assertThat(findings).hasSize(1)
+             assertThat(findings).hasSourceLocation(6, 13)
+         }
++
++        it("should report overriding method calls") {
++            val code = """
++                package org.example.com
++                
++                interface I {
++                    fun f()
++                }
++                
++                class C : I {
++                    override fun f() {}
++                }
++                
++                fun foo(i: I, c: C) {
++                    i.f()
++                    c.f()
++                }
++            """
++            val findings = ForbiddenMethodCall(
++                TestConfig(mapOf(METHODS to listOf("org.example.com.I.f")))
++            ).compileAndLintWithContext(env, code)
++            assertThat(findings).hasSize(2)
++        }
+     }
+ })

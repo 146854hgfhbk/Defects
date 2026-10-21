@@ -1,0 +1,67 @@
+diff --git a/lib/application.ex b/lib/application.ex
+--- a/lib/application.ex
++++ b/lib/application.ex
+@@ -9,20 +9,27 @@ defmodule Protobuf.Application do
+   """
+ 
+   @doc false
++  @impl true
+   def start(_type, _args) do
+     if Application.get_env(:protobuf, :extensions, :disabled) == :enabled do
+       mods = get_all_modules()
+-      Protobuf.Extension.cal_extensions(mods)
++      Protobuf.Extension.__cal_extensions__(mods)
+     else
+       # Extensions in Protobuf should always be calculated for generating code
+       {:ok, mods} = :application.get_key(:protobuf, :modules)
+-      Protobuf.Extension.cal_extensions(mods)
++      Protobuf.Extension.__cal_extensions__(mods)
+     end
+ 
+     children = []
+     Supervisor.start_link(children, strategy: :one_for_one)
+   end
+ 
++  @impl true
++  def stop(_state) do
++    Protobuf.Extension.__unload_extensions__()
++    :ok
++  end
++
+   defp get_all_modules() do
+     case :code.get_mode() do
+       :embedded ->
+diff --git a/lib/protobuf/extension.ex b/lib/protobuf/extension.ex
+--- a/lib/protobuf/extension.ex
++++ b/lib/protobuf/extension.ex
+@@ -115,7 +113,7 @@ defmodule Protobuf.Extension do
+   end
+ 
+   @doc false
+-  def cal_extensions(mods) do
++  def __cal_extensions__(mods) do
+     mods
+     |> Enum.filter(fn mod ->
+       if to_string(mod) =~ ~r/\.PbExtension$/ && Code.ensure_loaded?(mod) do
+@@ -131,12 +129,19 @@ defmodule Protobuf.Extension do
+         fnum = ext.field_props.fnum
+         fnum_key = {Protobuf.Extension, ext.extendee, fnum}
+ 
+-        if GlobalStore.get(fnum_key, nil) do
++        if :persistent_term.get(fnum_key, nil) do
+           raise "Extension #{inspect(ext.extendee)}##{fnum} already exists"
+         end
+ 
+-        GlobalStore.put(fnum_key, mod)
++        :persistent_term.put(fnum_key, mod)
+       end)
+     end)
+   end
++
++  @doc false
++  def __unload_extensions__ do
++    for {{Protobuf.Extension, _extendee, _tag} = key, _mod} <- :persistent_term.get() do
++      :persistent_term.erase(key)
++    end
++  end
+ end

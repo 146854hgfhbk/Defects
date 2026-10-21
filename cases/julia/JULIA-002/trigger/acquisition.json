@@ -1,0 +1,109 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-002",
+  "status": "trigger_ready",
+  "mode": "dedicated_script",
+  "origin": "exact_assertion_from_upstream_fix_test_patch",
+  "trigger_sha256": "4c7b7dfd398b606139e142c8e9ca36d04d9b2d20851e6c6fd21758dc70e24301",
+  "trigger_name": "JULIA-002 Adjoint/Transpose specialized kernel dispatch",
+  "oracle": {
+    "mwe_basis": "exact_dispatch_assertions_from_upstream_fix_test_patch",
+    "metric": "method_dispatch_identity",
+    "deterministic": true,
+    "source_evidence": "trigger/upstream-tests.patch",
+    "upstream_test_patch_sha256": "67f6339ddecaabd23e62c820e3cfdfc7047d92f886c2f99d262a1fd2a69bc301"
+  },
+  "superseded_acquisition": {
+    "schema_version": 2,
+    "case_id": "JULIA-002",
+    "status": "trigger_ready",
+    "mode": "dedicated_script",
+    "origin": "issue_mwe",
+    "trigger_sha256": "588970d319df07e5c724e7dc1f5b6049868fd150e49a5fd3e8677200114a7681",
+    "trigger_name": "JULIA-002 Adjoint GenericLU relative performance",
+    "oracle": {
+      "mwe_basis": "upstream performance issue benchmark",
+      "metric": "median adjoint-kernel time / matrix-kernel time",
+      "threshold": 1.9,
+      "rounds": 9,
+      "repetitions_per_round": 400,
+      "source_evidence": "Deterministic relative form of the interleaved kernel benchmark in LinearSolve issue #1159 and PR #1162: at n=128 the Adjoint GenericLU kernel must remain within 1.9x of the same-version Matrix kernel. Three independent locked-environment probes observed buggy medians 2.481-2.565 and fixed medians 1.325-1.402.",
+      "upstream_test_patch_sha256": "67f6339ddecaabd23e62c820e3cfdfc7047d92f886c2f99d262a1fd2a69bc301"
+    },
+    "superseded_acquisition": {
+      "schema_version": 2,
+      "case_id": "JULIA-002",
+      "status": "trigger_ready",
+      "mode": "dedicated_script",
+      "origin": "manual_mwe_from_upstream_fix",
+      "trigger_sha256": "4c132328dfc5721e8b73d0aec010f66cb5471cce25a2bc5fcf521d8395886668",
+      "trigger_name": "JULIA-002 GenericLU adjoint solve",
+      "oracle": {
+        "public_api": "LinearSolve.solve with GenericLUFactorization on Adjoint",
+        "upstream_test_file": "test/Core/genericlu_naive_ldiv.jl",
+        "source_evidence": "isolated from the upstream fix assertions in test/Core/genericlu_naive_ldiv.jl",
+        "upstream_test_patch_sha256": "67f6339ddecaabd23e62c820e3cfdfc7047d92f886c2f99d262a1fd2a69bc301"
+      },
+      "superseded_acquisition": {
+        "schema_version": 2,
+        "case_id": "JULIA-002",
+        "status": "trigger_ready",
+        "mode": "dedicated_script",
+        "origin": "manual_mwe_from_upstream_fix",
+        "trigger_sha256": "4c132328dfc5721e8b73d0aec010f66cb5471cce25a2bc5fcf521d8395886668",
+        "trigger_name": "JULIA-002 GenericLU adjoint solve",
+        "oracle": {
+          "public_api": "LinearSolve.solve with GenericLUFactorization on Adjoint",
+          "upstream_test_file": "test/Core/genericlu_naive_ldiv.jl",
+          "source_evidence": "isolated from the upstream fix assertions in test/Core/genericlu_naive_ldiv.jl",
+          "upstream_test_patch_sha256": "67f6339ddecaabd23e62c820e3cfdfc7047d92f886c2f99d262a1fd2a69bc301"
+        },
+        "superseded_acquisition": {
+          "schema_version": 2,
+          "case_id": "JULIA-002",
+          "status": "trigger_ready",
+          "mode": "dedicated_script",
+          "origin": "isolated_mwe_from_upstream_fix_test",
+          "trigger_sha256": "4c132328dfc5721e8b73d0aec010f66cb5471cce25a2bc5fcf521d8395886668",
+          "trigger_name": "JULIA-002 GenericLU adjoint solve",
+          "oracle": {
+            "public_api": "LinearSolve.solve with GenericLUFactorization on Adjoint",
+            "upstream_test_file": "test/Core/genericlu_naive_ldiv.jl",
+            "upstream_test_patch_sha256": "67f6339ddecaabd23e62c820e3cfdfc7047d92f886c2f99d262a1fd2a69bc301"
+          },
+          "superseded_acquisition": {
+            "schema_version": 1,
+            "case_id": "JULIA-002",
+            "status": "trigger_ready",
+            "mode": "test_patch_suite",
+            "origin": "upstream_fix_test_patch",
+            "patch_sha256": "67f6339ddecaabd23e62c820e3cfdfc7047d92f886c2f99d262a1fd2a69bc301",
+            "test_files": [
+              "test/Core/genericlu_naive_ldiv.jl"
+            ],
+            "test_files_sha256": {
+              "test/Core/genericlu_naive_ldiv.jl": "ba78750f1cf5aa0b1c2bdbcac88406492f67853f7ae22b3bc56b2f87fdd6a617"
+            },
+            "added_testsets": [
+              "GenericLU back-solve on Adjoint/Transpose operators",
+              "$wrap $T",
+              "Adjoint/Transpose strided factors dispatch to the specialized kernel"
+            ],
+            "assertion_expression_sha256": [
+              "e38b1ee2ef7dc2bf55ece9e09f2cbccbc3c0fa9e4b272d7d135f4d3c2bf78ce8",
+              "bd29b164d7058e11a372c251d1acea74862419e639694527ff9466d70c92c13f",
+              "dbe1f0a52cec634995531237417314082eb2f110c617bd0ceb5e0d41af56b1ad",
+              "3d3589b33740676b222f431def0ef5bf11167cad21f65aab0d15e8beea2b11c0",
+              "315a4ff7a1639107f83b3123da2a78f6c7a6c8340985ff777b677fc6ac2361a9",
+              "c4490b2240cfbecbc3cbd31e3f442414c33aad9ec049482cc7f97e4ec5580a63",
+              "32568913dda241ea59052ee10940b3f5a3ce0edddb33dd5fbe4305881716576e",
+              "f59fba494cac4a5d83cf33a15ac9bfd67fc57eb1602ec8e9a61b92d96990fabc"
+            ],
+            "f2p_tests": [],
+            "manual_review_required": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,64 @@
+diff --git a/lib/HTTP/Tiny.pm b/lib/HTTP/Tiny.pm
+index fbbe00b8bb1a46dbfb407aa8b833748e245bb9b1..087083801576186af19e5d8fca0712657b4cc972 100644
+--- a/lib/HTTP/Tiny.pm
++++ b/lib/HTTP/Tiny.pm
+@@ -332,7 +332,10 @@ sub mirror {
+     sysopen my $fh, $tempfile, Fcntl::O_CREAT()|Fcntl::O_EXCL()|Fcntl::O_WRONLY()
+        or _croak(qq/Error: Could not create temporary file $tempfile for downloading: $!\n/);
+     binmode $fh;
+-    $args->{data_callback} = sub { print {$fh} $_[0] };
++    my $user_cb = $args->{data_callback};
++    $args->{data_callback} = $user_cb
++        ? sub { print {$fh} $_[0]; $user_cb->(@_) }
++        : sub { print {$fh} $_[0] };
+     my $response = $self->request('GET', $url, $args);
+     close $fh
+         or _croak(qq/Error: Caught error closing temporary file $tempfile: $!\n/);
+diff --git a/t/110_mirror.t b/t/110_mirror.t
+index 30a8b352e820360e650a13870c72d0a93ca92d28..890b6c9cd9c83d173192aa48f05558001e46568e 100644
+--- a/t/110_mirror.t
++++ b/t/110_mirror.t
+@@ -95,4 +95,43 @@ for my $file ( dir_list("corpus", qr/^mirror/ ) ) {
+   }
+ }
+ 
++# Test that user-supplied data_callback is invoked alongside file writing
++{
++  my $corpus_file = "corpus/mirror-01.txt";
++  1 while unlink $tempfile;
++  my $data = do { local (@ARGV,$/) = $corpus_file; <> };
++  my ($params, $expect_req, $give_res) = split /--+\n/, $data;
++  my $version = HTTP::Tiny->VERSION || 0;
++  $expect_req =~ s{VERSION}{$version};
++  s{\n}{$CRLF}g for ($expect_req, $give_res);
++
++  my $case = parse_case($params);
++  my $url = $case->{url}->[0];
++
++  # Pre-create the file so If-Modified-Since is set (same as mirror-01 scenario)
++  my $known_epoch = 760233600;
++  my $mtime = $known_epoch - 2 * 24 * 3600;
++  open my $fh, ">", $tempfile; close $fh;
++  utime $mtime, $mtime, $tempfile;
++
++  my $res_fh = tmpfile($give_res);
++  my $req_fh = tmpfile();
++
++  my $http = HTTP::Tiny->new( keep_alive => 0 );
++  clear_socket_source();
++  set_socket_source($req_fh, $res_fh);
++
++  my @chunks;
++  my $response = $http->mirror($url, $tempfile, {
++    data_callback => sub { push @chunks, $_[0] },
++  });
++
++  ok( $response->{success}, "data_callback: success flag true" );
++  ok( -e $tempfile,         "data_callback: file created" );
++  ok( scalar @chunks > 0,   "data_callback: user callback was invoked" );
++  my $cb_data = join('', @chunks);
++  my $file_data = do { local (@ARGV,$/) = $tempfile; <> };
++  is( $cb_data, $file_data, "data_callback: callback received same data written to file" );
++}
++
+ done_testing;

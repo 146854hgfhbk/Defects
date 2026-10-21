@@ -1,0 +1,34 @@
+diff --git a/tests/test-xml.lua b/tests/test-xml.lua
+index a279a63..e278d28 100644
+--- a/tests/test-xml.lua
++++ b/tests/test-xml.lua
+@@ -491,7 +491,8 @@ xml.tostring(test_attrlist),
+ "<AttrList Attr1='Value1' Attr2='Value2' Attr3='Value3'/>"
+ )
+ 
+----- commments ----
++
++-- commments
+ str = [[
+ <hello>
+ <!-- any <i>momentous</i> stuff here -->
+@@ -505,3 +506,19 @@ dolly
+ </hello>]])
+ 
+ 
++-- underscores and dashes in attributes
++
++str = [[
++<hello>
++    <tag my_attribute='my_value'>dolly</tag>
++</hello>
++]]
++doc = parse(str)
++
++print(doc)
++print(xml.tostring(doc))
++
++asserteq(xml.tostring(doc),[[
++<hello><tag my_attribute='my_value'>dolly</tag></hello>]])
++
++

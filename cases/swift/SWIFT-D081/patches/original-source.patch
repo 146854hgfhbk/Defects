@@ -1,0 +1,64 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 580a63978..358c52e9f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,9 @@
+ [Full Changelog](https://github.com/parse-community/Parse-Swift/compare/1.9.10...main)
+ * _Contributing to this repo? Add info about your change here to be included in the next release_
+ 
++__Fixes__
++- ParseUser shouldn't send email if it hasn't been modified or else email verification is resent ([#241](https://github.com/parse-community/Parse-Swift/pull/241)), thanks to [Corey Baker](https://github.com/cbaker6).
++
+ ### 1.9.10
+ [Full Changelog](https://github.com/parse-community/Parse-Swift/compare/1.9.9...1.9.10)
+ __Fixes__
+diff --git a/Sources/ParseSwift/Objects/ParseUser.swift b/Sources/ParseSwift/Objects/ParseUser.swift
+index cd157ee2d..42ed4f8f0 100644
+--- a/Sources/ParseSwift/Objects/ParseUser.swift
++++ b/Sources/ParseSwift/Objects/ParseUser.swift
+@@ -944,12 +944,18 @@ extension ParseUser {
+     }
+ 
+     private func updateCommand() -> API.Command<Self, Self> {
++        var mutableSelf = self
++        if let currentUser = Self.current,
++           currentUser.hasSameObjectId(as: mutableSelf) == true,
++           currentUser.email == mutableSelf.email {
++            mutableSelf.email = nil
++        }
+         let mapper = { (data) -> Self in
+             try ParseCoding.jsonDecoder().decode(UpdateResponse.self, from: data).apply(to: self)
+         }
+         return API.Command<Self, Self>(method: .PUT,
+                                  path: endpoint,
+-                                 body: self,
++                                 body: mutableSelf,
+                                  mapper: mapper)
+     }
+ }
+diff --git a/Sources/ParseSwift/Types/CloudViewModel.swift b/Sources/ParseSwift/Types/CloudViewModel.swift
+index 5d2b97959..d04bb7b0b 100644
+--- a/Sources/ParseSwift/Types/CloudViewModel.swift
++++ b/Sources/ParseSwift/Types/CloudViewModel.swift
+@@ -29,7 +29,7 @@ open class CloudViewModel<T: ParseCloud>: CloudObservable {
+     }
+ 
+     /// Updates and notifies when there is an error retrieving the results.
+-    open var error: ParseError? = nil {
++    open var error: ParseError? {
+         willSet {
+             if newValue != nil {
+                 self.results = nil
+diff --git a/Sources/ParseSwift/Types/QueryViewModel.swift b/Sources/ParseSwift/Types/QueryViewModel.swift
+index 381e083e3..a3ba9cd1c 100644
+--- a/Sources/ParseSwift/Types/QueryViewModel.swift
++++ b/Sources/ParseSwift/Types/QueryViewModel.swift
+@@ -38,7 +38,7 @@ open class QueryViewModel<T: ParseObject>: QueryObservable {
+     }
+ 
+     /// Updates and notifies when there is an error retrieving the results.
+-    open var error: ParseError? = nil {
++    open var error: ParseError? {
+         willSet {
+             if newValue != nil {
+                 results.removeAll()

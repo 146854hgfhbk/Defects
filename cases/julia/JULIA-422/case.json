@@ -1,0 +1,238 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-422",
+  "bug_id": "JULIA-422",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaSymbolics/SymbolicUtils.jl",
+  "repository_url": "https://github.com/JuliaSymbolics/SymbolicUtils.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaSymbolics/Symbolics.jl/issues/1476"
+  ],
+  "issue_id": 1476,
+  "buggy_revision": "81e0c485e1c49e2543672d484e303e29f77d5714",
+  "fixed_revision": "ffc06db9799c4018f2e8c4a2c7c6545a7e03fe27",
+  "candidate_sha": "ffc06db9799c4018f2e8c4a2c7c6545a7e03fe27",
+  "source": "SWE-rebench-V2",
+  "instance_id": "juliasymbolics__symbolicutils.jl-715",
+  "swe": {
+    "base_commit": "81e0c485e1c49e2543672d484e303e29f77d5714",
+    "boundary_type": "MERGE_COMMIT",
+    "pr_url": "https://github.com/JuliaSymbolics/SymbolicUtils.jl/pull/715",
+    "pr_number": 715,
+    "merge_commit": "54c4689a5a5f3114daee4166d1dc3d78df1402cf",
+    "issue_url": null,
+    "merged_at": "2025-03-18T17:15:31Z",
+    "pr_title": "fix: ensure numbers have the same type in `isequal_with_metadata`",
+    "patch": "diff --git a/src/types.jl b/src/types.jl\nindex 874e36681..152a97290 100644\n--- a/src/types.jl\n+++ b/src/types.jl\n@@ -406,6 +406,8 @@ function isequal_with_metadata(a::Union{AbstractArray, Tuple}, b::Union{Abstract\n     return true\n end\n \n+isequal_with_metadata(a::Number, b::Number) = typeof(a) == typeof(b) && isequal(a, b)\n+\n Base.one( s::Symbolic) = one( symtype(s))\n Base.zero(s::Symbolic) = zero(symtype(s))\n \n",
+    "test_patch": "diff --git a/test/hash_consing.jl b/test/hash_consing.jl\nindex c35d2a3d1..c76401b80 100644\n--- a/test/hash_consing.jl\n+++ b/test/hash_consing.jl\n@@ -188,3 +188,17 @@ Base.isequal(a::MySymbolic, b::MySymbolic) = isequal(a.sym, b.sym)\n     @test isequal(myt, mytt)\n     @test !isequal_with_metadata(myt, mytt)\n end\n+\n+@testset \"`isequal_with_metadata` ensures numbers have the same type\" begin\n+    @syms x\n+    tmp1 = x ^ 3.0\n+    tmp2 = x ^ 3\n+    @test !SymbolicUtils.isequal_with_metadata(tmp1, tmp2)\n+    @test arguments(tmp1)[2] isa Float64\n+    @test arguments(tmp2)[2] isa Int\n+    tmp1 = 2tmp1\n+    tmp2 = 2tmp2\n+    @test !SymbolicUtils.isequal_with_metadata(tmp1, tmp2)\n+    @test arguments(arguments(tmp1)[2])[2] isa Float64\n+    @test arguments(arguments(tmp2)[2])[2] isa Int\n+end\n",
+    "FAIL_TO_PASS": [
+      "Hash Consing"
+    ],
+    "PASS_TO_PASS": [
+      "Doc",
+      "Order",
+      "Rewrite",
+      "Rulesets",
+      "Code",
+      "CSE",
+      "Adjoints"
+    ],
+    "problem_statement": "Some change in `Rewriters.Postwalk` or `Rewriters.PassThrough` causes bug crashing Catalyst steady state solving\nThis is kind of weird, but something has happened. I was enabling a Catalyst test (which had been disabled due to other reasons). However, it now catches some new error which seems to originate in Symbolics.\n\nHere is a minimal example:\n```julia\nusing Symbolics\nimport Symbolics: unwrap, wrap\n\n# Parses and expression and return a version where any exponents that are Float64 (but an int, like 2.0) are turned into Int64s.\nfunction make_int_exps(expr)\n    wrap(Rewriters.Postwalk(Rewriters.PassThrough(___make_int_exps))(unwrap(expr))).val\nend\nfunction ___make_int_exps(expr)\n    !iscall(expr) && return expr\n    if (operation(expr) == ^)\n        if isinteger(sorted_arguments(expr)[2])\n            return sorted_arguments(expr)[1]^Int64(sorted_arguments(expr)[2])\n        else\n            error(\"An non integer ($(sorted_arguments(expr)[2])) was found as a variable exponent. Non-integer exponents are not supported for homotopy continuation based steady state finding.\")\n        end\n    end\nend\n\n@variables t X(t)\neq = 2.0*X^3.0\nmake_int_exps(eq) # returns `2.0(X(t)^3.0)`, should be `2.0(X(t)^3)`\n```\n\nPreviously this converted the exponential to an integer (`3`), but that behaviour does not work any more. I got some help with this code from Shashi, so not really sure exactly how `Rewriters.Postwalk` and `Rewriters.PassThrough` works, so not sure what exactly is going wrong. However, on previous versions, this did use to work.",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'",
+        "julia --project=. -e 'using Pkg; for pkg in [\"SafeTestsets\", \"Test\", \"BenchmarkTools\", \"Documenter\", \"LabelledArrays\", \"Pkg\", \"PkgBenchmark\", \"Random\", \"ReferenceTests\", \"ReverseDiff\", \"Zygote\"]; Pkg.add(pkg); end'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. test/runtests.jl"
+    },
+    "license": "custom-check-github",
+    "image_name": "docker.io/swerebenchv2/juliasymbolics-symbolicutils.jl:715-81e0c48",
+    "instance_id": "juliasymbolics__symbolicutils.jl-715",
+    "repo": "JuliaSymbolics/SymbolicUtils.jl",
+    "pr_description": "Close https://github.com/JuliaSymbolics/Symbolics.jl/issues/1476",
+    "created_at": "2025-03-18 12:08:29",
+    "language": "julia",
+    "interface": "Method: isequal_with_metadata(a::Number, b::Number)\nLocation: src/types.jl\nInputs: Two values `a` and `b` both of type `Number`. The method first checks that the concrete types of `a` and `b` are identical (`typeof(a) == typeof(b)`) and then uses `isequal` to compare their numeric values.\nOutputs: Returns `Bool` – `true` if the numbers have the same concrete type **and** are equal; otherwise `false`.\nDescription: Provides a metadata‑aware equality check for numeric literals, ensuring that values like `3` (`Int`) and `3.0` (`Float64`) are considered different, which is required by tests that verify `isequal_with_metadata` distinguishes number types.\n",
+    "meta": {
+      "llm_metadata": {
+        "code": "B4",
+        "confidence": 0.84,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": true,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [],
+        "intent_completeness": "partial",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue describes a regression in `Rewriters.Postwalk`/`PassThrough` that stopped converting Float64 exponents that are integral to Int64, but the provided test patch adds assertions about `isequal_with_metadata` distinguishing numbers of different concrete types, which is unrelated to the described symptom. The tests therefore verify a behavior not specified in the issue, indicating an ambiguous specification. This misalignment points to a B4 (AMBIGUOUS_SPEC) problem.",
+        "test_alignment_issues": [
+          "`isequal_with_metadata` numeric‑type distinction is asserted in the tests but never mentioned in the issue description."
+        ]
+      },
+      "num_modified_files": 2,
+      "num_modified_lines": null,
+      "pr_author": "AayushSabharwal",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaSymbolics/SymbolicUtils.jl/pull/715"
+    },
+    "recovered_fix_commit": "ffc06db9799c4018f2e8c4a2c7c6545a7e03fe27"
+  },
+  "parent_sha": "81e0c485e1c49e2543672d484e303e29f77d5714",
+  "changed_production_files": [
+    "src/types.jl"
+  ],
+  "changed_test_files": [
+    "test/hash_consing.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-422 preserves numeric types in metadata equality"
+  ],
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "sha256": "bc3da408b24a87f39affc73d2b55074d1a9f4450511ddd98db9905d9611857f1",
+    "oracle": {
+      "upstream_testset": "`isequal_with_metadata` ensures numbers have the same type",
+      "behavior": "numeric literal types remain distinct during metadata-aware equality and hash consing",
+      "source_evidence": "SymbolicUtils PR #715 test/hash_consing.jl added this exact public behavior testset",
+      "upstream_test_patch_sha256": "99c8b0b049a6645d8ea3fa1137240272b5f1cc4dbb4ab8a998e2f2d110111ef4"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "swe_rebench_julia_base_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "54c4689a5a5f3114daee4166d1dc3d78df1402cf",
+    "project": "JuliaSymbolics/SymbolicUtils.jl",
+    "input_sha256": "ab9bb4a68290e8f675e960ef769a0f51fbbcda3e5705d8dc5a1a8320778434f2",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:52:38Z",
+    "usage": {
+      "prompt_tokens": 1927,
+      "completion_tokens": 493,
+      "total_tokens": 2420
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"unknown\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"Fix for `isequal_with_metadata` incorrectly treating numbers of different types (e.g., `3.0::Float64` and `3::Int`) as equal during hash consing, which could cause expressions like `x^3.0` and `x^3` to be conflated.\",\n  \"evidence\": \"The production fix adds a new method `isequal_with_metadata(a::Number, b::Number)` that checks `typeof(a) == typeof(b) && isequal(a, b)`, ensuring that numbers of different types are not considered metadata-equal. The test demonstrates that without this fix, `x^3.0` and `x^3` would be incorrectly treated as equal by `isequal_with_metadata`, which is a real defect in hash consing behavior where semantically distinct expressions could be conflated.\",\n  \"missing_evidence\": \"No linked issue body is available to confirm the exact bug report or user-facing symptoms. The traceability is UNVERIFIED.\",\n  \"validation_risks\": \"The fix is minimal (a single method addition) and the test directly exercises the corrected behavior. Low risk of false positives. The main risk is ensuring no downstream code relied on the previous (incorrect) type-erasing equality behavior.\",\n  \"suggested_tests\": \"Additional tests could verify hash consing doesn't merge `2.0*x` with `2*x`, or that `x^(1//2)` is distinct from `x^0.5` under `isequal_with_metadata`.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "Fix for `isequal_with_metadata` incorrectly treating numbers of different types (e.g., `3.0::Float64` and `3::Int`) as equal during hash consing, which could cause expressions like `x^3.0` and `x^3` to be conflated.",
+    "evidence": "The production fix adds a new method `isequal_with_metadata(a::Number, b::Number)` that checks `typeof(a) == typeof(b) && isequal(a, b)`, ensuring that numbers of different types are not considered metadata-equal. The test demonstrates that without this fix, `x^3.0` and `x^3` would be incorrectly treated as equal by `isequal_with_metadata`, which is a real defect in hash consing behavior where semantically distinct expressions could be conflated.",
+    "missing_evidence": "No linked issue body is available to confirm the exact bug report or user-facing symptoms. The traceability is UNVERIFIED.",
+    "validation_risks": "The fix is minimal (a single method addition) and the test directly exercises the corrected behavior. Low risk of false positives. The main risk is ensuring no downstream code relied on the previous (incorrect) type-erasing equality behavior.",
+    "suggested_tests": "Additional tests could verify hash consing doesn't merge `2.0*x` with `2*x`, or that `x^(1//2)` is distinct from `x^0.5` under `isequal_with_metadata`.",
+    "revision_equivalence": {
+      "status": "TREE_AND_PATCH_BYTE_IDENTICAL",
+      "old_merge_commit": "54c4689a5a5f3114daee4166d1dc3d78df1402cf",
+      "recovered_single_parent_fix_commit": "ffc06db9799c4018f2e8c4a2c7c6545a7e03fe27",
+      "buggy_parent": "81e0c485e1c49e2543672d484e303e29f77d5714",
+      "tree_sha": "a2e1480112477dff22b92b9cdcb8bab48ede162a",
+      "full_diff_sha256": "822a345f4d06ae427862770249a92991e4ec43a4994499d1cf2025620335362f",
+      "method": "merge_second_parent_with_exact_tree_and_git_diff_bytes"
+    }
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_boundary_recovery": {
+    "status": "TREE_AND_PATCH_BYTE_IDENTICAL",
+    "old_merge_commit": "54c4689a5a5f3114daee4166d1dc3d78df1402cf",
+    "recovered_single_parent_fix_commit": "ffc06db9799c4018f2e8c4a2c7c6545a7e03fe27",
+    "buggy_parent": "81e0c485e1c49e2543672d484e303e29f77d5714",
+    "tree_sha": "a2e1480112477dff22b92b9cdcb8bab48ede162a",
+    "full_diff_sha256": "822a345f4d06ae427862770249a92991e4ec43a4994499d1cf2025620335362f",
+    "method": "merge_second_parent_with_exact_tree_and_git_diff_bytes"
+  },
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-422 preserves numeric types in metadata equality"
+    ],
+    "exception_types": [
+      "359db251cc672082932385ff7ef72703f7e4e1896f7177812bf2008f0c77711d",
+      "d7aa0ddb91c2aaa1b057759b81afbfa87e8031c9a4747c093c536dcdeb209029"
+    ],
+    "fingerprints": [
+      "359db251cc672082932385ff7ef72703f7e4e1896f7177812bf2008f0c77711d",
+      "d7aa0ddb91c2aaa1b057759b81afbfa87e8031c9a4747c093c536dcdeb209029"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

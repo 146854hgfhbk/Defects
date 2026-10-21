@@ -1,0 +1,44 @@
+diff --git a/CSV_XS.xs b/CSV_XS.xs
+index 93b5d889628f561bdfac6b8801fc38786eb4a508..9b4f2f6fa07ba164628dc4c8af2c3ef7bb4f3b0d 100644
+--- a/CSV_XS.xs
++++ b/CSV_XS.xs
+@@ -2403,7 +2403,7 @@ static int cx_c_xsParse (pTHX_ csv_t csv, HV *hv, AV *av, AV *avf, SV *src, bool
+     (void)hv_store (hv, "_EOF",   4, &PL_sv_no,             0);
+ 
+     if (csv.strict) {
+-	STRLEN nf = csv.is_bound ? csv.fld_idx : av_len (av);
++	STRLEN nf = csv.is_bound ? csv.fld_idx ? csv.fld_idx - 1 : 0 : av_len (av);
+ #if MAINT_DEBUG > 6
+ 	(void)fprintf (stderr, "# %04d Strict nf = %2d, n = %2d, idx = %2d, recno = %2d, res = %d\n",
+ 	    __LINE__, nf, csv.strict_n, csv.fld_idx, csv.recno, result);
+diff --git a/sandbox/issue-62.pl b/sandbox/issue-62.pl
+new file mode 100644
+index 0000000000000000000000000000000000000000..253f534ee744d5a12c6f83c8c8630e6d1726c6f9
+--- /dev/null
++++ b/sandbox/issue-62.pl
+@@ -0,0 +1,25 @@
++#!/pro/bin/perl
++
++use 5.026002;
++use warnings;
++
++use Data::Peek;
++use Text::CSV_XS;
++
++my $csv_file = "issue-62.csv";
++-d "sandbox" and substr $csv_file, 0, 0, "sandbox/";
++
++my $csv = Text::CSV_XS->new ({ strict => 1, auto_diag => 1 });
++open my $fh, "<:encoding(utf8)", $csv_file or die "$csv_file: $!";
++
++my @input_colnames = @{$csv->getline ($fh)};
++say "CSV Header : (@input_colnames)";
++my $col_val_of_    = {};
++
++DDumper $csv->{_BOUND_COLUMNS};
++$csv->bind_columns (\@{$col_val_of_}{@input_colnames});
++
++DDumper $csv->{_BOUND_COLUMNS};
++$csv->getline ($fh);
++
++DDumper $csv->{_BOUND_COLUMNS};

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1384",
+  "technical_evidence_sha256": "3030e57667fb1c786a777128ef7eec6c8f09f87e1aeb6b3244846cb651b75368",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "15223a810231e0135a08928f936521e7e5963e88c76a68b0f36b009761e5ecd5",
+  "reviewed_at": "2026-08-15T10:11:15.780847+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/code_builder#300",
+  "rationale": "The defect is a keyword-ordering bug in DartEmitter.visitConstructor: the buggy revision writes 'factory ' before 'const ', producing invalid Dart ('factory const Foo() = _Foo;') for a constructor with both factory and constant set. The minimized production patch in patches/minimized-production.patch does exactly one thing: it moves the 'if (spec.constant)' block ahead of the 'if (spec.factory)' block in lib/src/emitter.dart, so emission is 'const factory'. No renames, reformatting, feature additions, config, or doc changes remain in the minimized patch (the CHANGELOG line and the test addition present in patches/original-commit.patch are correctly split out into the original-commit and trigger-tests patches). The trigger test 'should create a class with a const factory constructor' is the unchanged upstream test from the same fixing commit (patches/trigger-tests.patch) and exercises only pre-existing builder APIs (Constructor.factory, Constructor.constant, Constructor.redirect, refer, equalsDart); the fix introduces no new production API, so the trigger is valid against the buggy revision. Its expected output 'const factory Foo() = _Foo;' matches the reported defect semantics precisely. Machine-generated strict gates pass both pre- and post-minimization: trigger.buffgy_differential reproduces exactly the one declared selector, trigger.deterministic shows 3/3 fingerprint groups, full_suite.buggy_reproduces_only_triggers confirms no collateral failures, full_suite.fixed_all_green and trigger.fixed_clean are green, and build.both_versions passes. Traceability verifies fix commit a436e5b -> issue/PR 300, which matches the single entry in allowed_root_cause_ids; active_same_project_root_causes is empty, so this root cause is not a duplicate.\n\nAll three artifacts describe one defect: DartEmitter.visitConstructor emitted keywords in the order `factory` then `const`, producing the invalid Dart `factory const Foo() = _Foo;`. The minimized production patch in lib/src/emitter.dart does nothing but swap the two guarded write blocks so `const` precedes `factory`, matching Dart grammar. The trigger test 'should create a class with a const factory constructor' builds a Constructor with factory=true, constant=true, redirect=refer('_Foo') and asserts the emitted source is `const factory Foo() = _Foo;` — it exercises exactly that ordering and uses only pre-existing builder fields (factory, constant, redirect), none introduced by the fix, which is why it compiles and fails on the buggy revision rather than erroring. The upstream trigger patch is byte-identical to the test portion of the single fixing commit (sha256 4b5137e1...), so no curator rewriting is involved. The original commit's only extra file is a CHANGELOG line ('Fix keyword ordering for `const factory` constructors'), which minimization correctly excluded; the minimized and production-fix patches are identical and touch one hunk in one production file, with no refactor, rename, feature extension, or config change. Strict evidence for both original and post-minimization states passes every gate: build.both_versions, trigger.buggy_differential with reproduced selector test/specs/class_test.dart::should create a class with a const factory constructor, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32 matrix runs), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no failed checks. active_same_project_root_causes is empty, so the const-factory keyword-ordering root cause duplicates no registry entry, and dart-lang/code_builder#300 is the sole allowed verified key (traceability path fix_commit_to_issue, verified_fix_issue_numbers [300]).",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T10:10:52.167937+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "15223a810231e0135a08928f936521e7e5963e88c76a68b0f36b009761e5ecd5",
+      "response_sha256": "ff580271eea8cdb474e71dc35bbc8a81fbf12f137d526882efc769ffbb6d488f",
+      "response_id": "msg_a20abd085d4743c5a7eacfaf3dee3aa1",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.47584195270315094,
+        "input_tokens": 7004,
+        "output_tokens": 709
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/code_builder#300",
+      "rationale": "The defect is a keyword-ordering bug in DartEmitter.visitConstructor: the buggy revision writes 'factory ' before 'const ', producing invalid Dart ('factory const Foo() = _Foo;') for a constructor with both factory and constant set. The minimized production patch in patches/minimized-production.patch does exactly one thing: it moves the 'if (spec.constant)' block ahead of the 'if (spec.factory)' block in lib/src/emitter.dart, so emission is 'const factory'. No renames, reformatting, feature additions, config, or doc changes remain in the minimized patch (the CHANGELOG line and the test addition present in patches/original-commit.patch are correctly split out into the original-commit and trigger-tests patches). The trigger test 'should create a class with a const factory constructor' is the unchanged upstream test from the same fixing commit (patches/trigger-tests.patch) and exercises only pre-existing builder APIs (Constructor.factory, Constructor.constant, Constructor.redirect, refer, equalsDart); the fix introduces no new production API, so the trigger is valid against the buggy revision. Its expected output 'const factory Foo() = _Foo;' matches the reported defect semantics precisely. Machine-generated strict gates pass both pre- and post-minimization: trigger.buffgy_differential reproduces exactly the one declared selector, trigger.deterministic shows 3/3 fingerprint groups, full_suite.buggy_reproduces_only_triggers confirms no collateral failures, full_suite.fixed_all_green and trigger.fixed_clean are green, and build.both_versions passes. Traceability verifies fix commit a436e5b -> issue/PR 300, which matches the single entry in allowed_root_cause_ids; active_same_project_root_causes is empty, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The referenced 'issue' 300 is the fixing pull request itself rather than an independently filed bug report, so the defect description comes from the fix author's own title/CHANGELOG line rather than a third-party reproduction; issue body text was not supplied for direct inspection.",
+        "The fault is a single statement reorder within one method, so the case has a very small and localized fix space and may be trivially solvable by ordering heuristics.",
+        "Correctness of the expected emitted string relies on the project's equalsDart matcher and its formatter behavior, which was not independently inspected here.",
+        "Analyzer cleanliness was not required (require_analyze_clean=false), so static-analysis-level regressions in the fixed revision would not have been caught by the gates."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T10:11:15.780507+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "15223a810231e0135a08928f936521e7e5963e88c76a68b0f36b009761e5ecd5",
+      "response_sha256": "33535d82fa7c3d5f39b001d87de654da63688959ee3943e6fd0f04a208eeb682",
+      "response_id": "msg_327c0fc7c36a46b78ce2d4c84c85377c",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4627742755887231,
+        "input_tokens": 7109,
+        "output_tokens": 711
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/code_builder#300",
+      "rationale": "All three artifacts describe one defect: DartEmitter.visitConstructor emitted keywords in the order `factory` then `const`, producing the invalid Dart `factory const Foo() = _Foo;`. The minimized production patch in lib/src/emitter.dart does nothing but swap the two guarded write blocks so `const` precedes `factory`, matching Dart grammar. The trigger test 'should create a class with a const factory constructor' builds a Constructor with factory=true, constant=true, redirect=refer('_Foo') and asserts the emitted source is `const factory Foo() = _Foo;` — it exercises exactly that ordering and uses only pre-existing builder fields (factory, constant, redirect), none introduced by the fix, which is why it compiles and fails on the buggy revision rather than erroring. The upstream trigger patch is byte-identical to the test portion of the single fixing commit (sha256 4b5137e1...), so no curator rewriting is involved. The original commit's only extra file is a CHANGELOG line ('Fix keyword ordering for `const factory` constructors'), which minimization correctly excluded; the minimized and production-fix patches are identical and touch one hunk in one production file, with no refactor, rename, feature extension, or config change. Strict evidence for both original and post-minimization states passes every gate: build.both_versions, trigger.buggy_differential with reproduced selector test/specs/class_test.dart::should create a class with a const factory constructor, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32 matrix runs), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no failed checks. active_same_project_root_causes is empty, so the const-factory keyword-ordering root cause duplicates no registry entry, and dart-lang/code_builder#300 is the sole allowed verified key (traceability path fix_commit_to_issue, verified_fix_issue_numbers [300]).",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "traceability.verified_fix_issue_numbers",
+        "trigger_tests"
+      ],
+      "risks": [
+        "The referenced issue URL (#300) resolves to the fixing pull request itself, so the defect report is the PR title and CHANGELOG note rather than an independent user-filed bug; intent is inferred from patch and test semantics, not from a separate reporter narrative.",
+        "The defect is an output-string ordering bug, so the trigger asserts on emitted text via equalsDart; no gate confirms the buggy output is rejected by the Dart analyzer (require_analyze_clean=false, analyzer treated as diagnostic only).",
+        "Correctness of the reordering relies on Dart grammar knowledge rather than on evidence in the case; the patch does not cover interaction with `external const factory`, which remains untested."
+      ]
+    }
+  ]
+}

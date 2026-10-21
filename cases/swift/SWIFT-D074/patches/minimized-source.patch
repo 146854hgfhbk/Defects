@@ -1,0 +1,23 @@
+diff --git a/PhoneNumberKit/ParseManager.swift b/PhoneNumberKit/ParseManager.swift
+index b90f5a9..3968e4c 100644
+--- a/PhoneNumberKit/ParseManager.swift
++++ b/PhoneNumberKit/ParseManager.swift
+@@ -57,7 +57,17 @@ final class ParseManager {
+         if countryCode == 0 {
+             if nationalNumber.hasPrefix(String(regionMetadata.countryCode)) {
+                 let potentialNationalNumber = String(nationalNumber.dropFirst(String(regionMetadata.countryCode).count))
+-                if let result = try? parse(potentialNationalNumber, withRegion: regionMetadata.codeID, ignoreType: ignoreType) {
++                if let generalNumberDesc = regionMetadata.generalDesc,
++                   regexManager.hasValue(generalNumberDesc.nationalNumberPattern),
++                   parser.isNumberMatchingDesc(potentialNationalNumber, numberDesc: generalNumberDesc),
++                   let result = try validPhoneNumber(
++                       from: potentialNationalNumber,
++                       using: regionMetadata,
++                       countryCode: regionMetadata.countryCode,
++                       ignoreType: ignoreType,
++                       numberString: potentialNationalNumber,
++                       numberExtension: numberExtension
++                   ) {
+                     return result
+                 }
+             }

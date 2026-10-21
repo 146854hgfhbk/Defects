@@ -1,0 +1,15 @@
+diff --git a/kotlinpoet/src/jvmMain/kotlin/com/squareup/kotlinpoet/CodeWriter.kt b/kotlinpoet/src/jvmMain/kotlin/com/squareup/kotlinpoet/CodeWriter.kt
+index ce1a0ac8..87bc3c68 100644
+--- a/kotlinpoet/src/jvmMain/kotlin/com/squareup/kotlinpoet/CodeWriter.kt
++++ b/kotlinpoet/src/jvmMain/kotlin/com/squareup/kotlinpoet/CodeWriter.kt
+@@ -644,8 +644,8 @@ internal class CodeWriter(
+       } else {
+         out.append(
+           line,
+-          indentLevel = if (kdoc) indentLevel else indentLevel + 2,
+-          linePrefix = if (kdoc) " * " else "",
++          indentLevel = if (kdoc || comment) indentLevel else indentLevel + 2,
++          linePrefix = if (kdoc) " * " else if (comment) "// " else "",
+         )
+       }
+       trailingNewline = false

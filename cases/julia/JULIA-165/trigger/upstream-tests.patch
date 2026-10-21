@@ -1,0 +1,63 @@
+diff --git a/test/toplevel/test_toplevel_inference.jl b/test/toplevel/test_toplevel_inference.jl
+index e37966c5..4c69cb28 100644
+--- a/test/toplevel/test_toplevel_inference.jl
++++ b/test/toplevel/test_toplevel_inference.jl
+@@ -289,6 +289,24 @@ let res = @analyze_toplevel begin
+     @test isempty(res.res.inference_error_reports)
+ end
+ 
++@testset "top-level closure in abstract loop (aviatesk/JETLS.jl#555)" begin
++    res = @analyze_toplevel begin
++        function calc_kite_pos(turn_angle)
++            return [cos(turn_angle), sin(turn_angle), 0.0]
++        end
++
++        const THETA = [30, 45, 60, 75]
++        turn_angles = 0:1:360
++        ys_all = Vector{Vector{Float64}}()
++
++        for θ in THETA
++            push!(ys_all, [calc_kite_pos(deg2rad(ta))[2] for ta in turn_angles])
++        end
++    end
++    @test isempty(res.res.toplevel_error_reports)
++    @test isempty(res.res.inference_error_reports)
++end
++
+ @testset "MissingConcretizationErrorReport" begin
+     let res = @analyze_toplevel begin
+             RandomType = rand((Bool,Int))
+diff --git a/test/toplevel/test_virtualprocess.jl b/test/toplevel/test_virtualprocess.jl
+index 5cf38846..7a01c225 100644
+--- a/test/toplevel/test_virtualprocess.jl
++++ b/test/toplevel/test_virtualprocess.jl
+@@ -1884,6 +1884,29 @@ end
+             @test isconcrete(res, vmod, :isbar)
+             @test isconcrete(res, vmod, :isbaz)
+         end
++
++        # xref: https://github.com/aviatesk/JETLS.jl/issues/555
++        # An in-loop `:latestworld` (here emitted into the comprehension closure's `for` body)
++        # must not, on its own, force the loop's control flow (and thus `THETA`'s value)
++        # to be concretized. E2E counterpart in test/toplevel/test_toplevel_inference.jl.
++        let src = @src for θ in THETA
++                push!(ys_all, [calc_kite_pos(deg2rad(ta))[2] for ta in turn_angles])
++            end
++            slice = JET.select_statements(@__MODULE__, src)
++            found_def = found_iterate = false
++            for (i, stmt) in enumerate(src.code)
++                rhs = JET.isexpr(stmt, :(=)) ? stmt.args[2] : stmt
++                if JET.LoweredCodeUtils.ismethod(stmt) || JET.LoweredCodeUtils.istypedef(stmt)
++                    found_def = true
++                    @test slice[i]  # closure definition is concretized
++                elseif JET.is_known_call(rhs, :iterate, src.code)
++                    found_iterate = true
++                    @test !slice[i] # loop control flow stays abstract
++                end
++            end
++            @test found_def
++            @test found_iterate
++        end
+     end
+ 
+     @testset "concretize inplace operations" begin

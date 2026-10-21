@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-475",
+  "technical_evidence_sha256": "1218ab21a364091726db74d9306e57ef14047e4232c2424a392de03a5a60f9ca",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "55dba9ad0dbf2fbbe1c8fa38a94a4a4a3031c2733ff34c0f9d86efa8b56014cb",
+  "reviewed_at": "2026-09-05T23:52:08.126928+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "graphqlswift/graphiti#106",
+  "rationale": "Issue #106 ('Renaming ConnectionTypes isn't working') reports that when a Type has a field returning Connection<MessageObject> and the ConnectionType is renamed via `as:`, schema construction fails with 'Type \"MessageObjectConnection\" was referenced but not defined', or the unrenamed name leaks into the schema. The minimized production patch is a single hunk in Sources/Graphiti/Component/Component.swift that only moves .connection ahead of .type in the ComponentType processing priority (.connection 8->5, .type/.types/.union shifted to 6/7/8), which directly addresses that ordering-dependent resolution failure; PR #109 and the commit message state exactly this intent. Traceability is fix_commit -> merged PR #109 -> issue #106, matching the verified issue key. The patch touches no other file, adds no enum cases, signatures, features, docs, or configuration, and contains no formatting or refactor noise; retained_hunks=[1] with removed_hunk_count=0 and post_minimization_validation PASS. The trigger is the unchanged upstream test appended to the pre-existing Tests/GraphitiTests/ConnectionTests.swift and reproduces the reported scenario literally (Type(ChatObject.self, as: \"Chat\") with a Connection field, Type(MessageObject.self, as: \"Message\"), ConnectionType(MessageObject.self, as: \"Message\")). It relies only on APIs already present at the buggy parent revision, which is confirmed by strict evidence: build.both_versions passed and testNaming fails on the buggy revision in isolation and in the full suite while all fixed runs are green over 3 repetitions and 32 matrix runs, so the test compiles and runs pre-fix rather than depending on any API introduced by the fix. active_same_project_root_causes is empty, so this component-ordering root cause duplicates no active registry entry.\n\nIssue #106 ('Renaming ConnectionTypes isn't working') reports that with Type(ChatObject.self, as: \"Chat\") holding a Connection<MessageObject> field plus ConnectionType(MessageObject.self, as: \"Message\"), schema construction fails with 'Type \"MessageObjectConnection\" was referenced but not defined', or the renamed connection name is ignored. The minimized production patch is a single hunk in Sources/Graphiti/Component/Component.swift that only moves .connection ahead of .type in the ComponentType ordering (.connection 8->5, .type/.types/.union shift to 6/7/8), which is exactly the mechanism described in commit message and PR #109 ('orders Connection in front of Type, which avoids errors when types have a field with a Connection object'). No signatures, cases, APIs, formatting-only, docs, or config changes are present; original_hunk_count=1, retained=1, removed=0. The trigger is the unchanged upstream test testNaming appended to the pre-existing Tests/GraphitiTests/ConnectionTests.swift and mirrors the issue's reproduction snippet almost verbatim; it uses only Type(as:), ConnectionType(as:), Connection<MessageObject>, PaginationArguments, and Array.connection(from:), all of which exist at the buggy parent b17c86b since the fix touches only enum ordinals and adds no API. Strict machine evidence supports the differential: build.both_versions passed, trigger.buggy_differential reproduced ConnectionTests.swift::testNaming, trigger.fixed_clean and full_suite.fixed_all_green passed, full_suite.buggy_reproduces_only_triggers passed, and trigger.deterministic gave 3 matching fingerprint groups over 3 repetitions with a complete 32-run matrix; the same gate set passed post-minimization. Traceability is fix_commit -> merged PR #109 -> issue #106, and #106 is the sole allowed verified root cause key. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T23:51:45.376391+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "55dba9ad0dbf2fbbe1c8fa38a94a4a4a3031c2733ff34c0f9d86efa8b56014cb",
+      "response_sha256": "c3605464b69dcaf4fc9a4980bed44089caeb4b630c750218732eda1c1725f2f5",
+      "response_id": "msg_a66740e08db24955ac14031e5bc2c5f9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5550108754228856,
+        "input_tokens": 16381,
+        "output_tokens": 731
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "graphqlswift/graphiti#106",
+      "rationale": "Issue #106 ('Renaming ConnectionTypes isn't working') reports that when a Type has a field returning Connection<MessageObject> and the ConnectionType is renamed via `as:`, schema construction fails with 'Type \"MessageObjectConnection\" was referenced but not defined', or the unrenamed name leaks into the schema. The minimized production patch is a single hunk in Sources/Graphiti/Component/Component.swift that only moves .connection ahead of .type in the ComponentType processing priority (.connection 8->5, .type/.types/.union shifted to 6/7/8), which directly addresses that ordering-dependent resolution failure; PR #109 and the commit message state exactly this intent. Traceability is fix_commit -> merged PR #109 -> issue #106, matching the verified issue key. The patch touches no other file, adds no enum cases, signatures, features, docs, or configuration, and contains no formatting or refactor noise; retained_hunks=[1] with removed_hunk_count=0 and post_minimization_validation PASS. The trigger is the unchanged upstream test appended to the pre-existing Tests/GraphitiTests/ConnectionTests.swift and reproduces the reported scenario literally (Type(ChatObject.self, as: \"Chat\") with a Connection field, Type(MessageObject.self, as: \"Message\"), ConnectionType(MessageObject.self, as: \"Message\")). It relies only on APIs already present at the buggy parent revision, which is confirmed by strict evidence: build.both_versions passed and testNaming fails on the buggy revision in isolation and in the full suite while all fixed runs are green over 3 repetitions and 32 matrix runs, so the test compiles and runs pre-fix rather than depending on any API introduced by the fix. active_same_project_root_causes is empty, so this component-ordering root cause duplicates no active registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "traceability.paths[0]",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_tests[0]",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The fix changes a global component-processing priority, so behavior effects can reach schema assembly paths beyond connections; only the project's own suite (green at the fixed revision) bounds that risk.",
+        "issue_evidence is null; the issue text was read from the embedded source_candidate.issue_check payload rather than an independently captured issue snapshot.",
+        "The pre-fix failure surfaces during Schema construction, so the trigger's failure signature is a thrown/fatal schema-build error rather than a value assertion mismatch, which makes the reproduction coarser-grained than a behavioral diff.",
+        "The trigger depends on an eventLoopGroup fixture defined elsewhere in ConnectionTests and on .wait() over a NIO future, introducing async execution despite deterministic inputs (deterministic across 3 fingerprint groups in the supplied evidence)."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T23:52:08.126697+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "55dba9ad0dbf2fbbe1c8fa38a94a4a4a3031c2733ff34c0f9d86efa8b56014cb",
+      "response_sha256": "6c69c1d9a30368299bf2c08aad75437e1c9292ae7edafb07fdf0c7fb7155ec31",
+      "response_id": "msg_90f4ad30c6484e3ba87e21f2bc62a023",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4885027108126036,
+        "input_tokens": 16391,
+        "output_tokens": 732
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "graphqlswift/graphiti#106",
+      "rationale": "Issue #106 ('Renaming ConnectionTypes isn't working') reports that with Type(ChatObject.self, as: \"Chat\") holding a Connection<MessageObject> field plus ConnectionType(MessageObject.self, as: \"Message\"), schema construction fails with 'Type \"MessageObjectConnection\" was referenced but not defined', or the renamed connection name is ignored. The minimized production patch is a single hunk in Sources/Graphiti/Component/Component.swift that only moves .connection ahead of .type in the ComponentType ordering (.connection 8->5, .type/.types/.union shift to 6/7/8), which is exactly the mechanism described in commit message and PR #109 ('orders Connection in front of Type, which avoids errors when types have a field with a Connection object'). No signatures, cases, APIs, formatting-only, docs, or config changes are present; original_hunk_count=1, retained=1, removed=0. The trigger is the unchanged upstream test testNaming appended to the pre-existing Tests/GraphitiTests/ConnectionTests.swift and mirrors the issue's reproduction snippet almost verbatim; it uses only Type(as:), ConnectionType(as:), Connection<MessageObject>, PaginationArguments, and Array.connection(from:), all of which exist at the buggy parent b17c86b since the fix touches only enum ordinals and adds no API. Strict machine evidence supports the differential: build.both_versions passed, trigger.buggy_differential reproduced ConnectionTests.swift::testNaming, trigger.fixed_clean and full_suite.fixed_all_green passed, full_suite.buggy_reproduces_only_triggers passed, and trigger.deterministic gave 3 matching fingerprint groups over 3 repetitions with a complete 32-run matrix; the same gate set passed post-minimization. Traceability is fix_commit -> merged PR #109 -> issue #106, and #106 is the sole allowed verified root cause key. active_same_project_root_causes is empty, so this root cause duplicates no active registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "traceability.paths[0]"
+      ],
+      "risks": [
+        "issue_evidence is null at the top level; the issue text was read from source_candidate.issue_check.linked_issues rather than an independently captured issue record.",
+        "Changing ComponentType ordinals affects schema assembly globally, so latent ordering assumptions elsewhere are only covered to the extent of the existing suite (full_suite.fixed_all_green ran with 1 repetition).",
+        "The pre-fix failure surfaces during Schema construction, so the buggy-side signal is a thrown/fatal schema-build error rather than a value assertion mismatch; fingerprint determinism is evidenced but the failure category is coarse.",
+        "The trigger relies on the class-level eventLoopGroup fixture and .wait() on a NIO future, introducing async execution despite deterministic inputs."
+      ]
+    }
+  ]
+}

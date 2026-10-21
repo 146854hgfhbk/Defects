@@ -1,0 +1,30 @@
+diff --git a/Tests/SwiftAlgorithmsTests/ChunkedTests.swift b/Tests/SwiftAlgorithmsTests/ChunkedTests.swift
+index 77a285bcfe1166739362d4960ba3a3bb8a7f38da..56a7a6faf94975fdbb2397dbfe340b0ebe3716d3 100644
+--- a/Tests/SwiftAlgorithmsTests/ChunkedTests.swift
++++ b/Tests/SwiftAlgorithmsTests/ChunkedTests.swift
+@@ -78,6 +78,25 @@ final class ChunkedTests: XCTestCase {
+     validateIndexTraversals(lazyChunks)
+   }
+   
++  func testChunkedByComparesConsecutiveElements() {
++    XCTAssertEqualSequences(
++      [1, 2, 3, 4, 6, 7, 8, 9].chunked(by: { $1 - $0 == 1 }),
++      [[1, 2, 3, 4], [6, 7, 8, 9]])
++    
++    XCTAssertEqualSequences(
++      [1, 2, 3, 4, 6, 7, 8, 9].lazy.chunked(by: { $1 - $0 == 1 }),
++      [[1, 2, 3, 4], [6, 7, 8, 9]])
++    
++    print(Array([1, 2, 3].lazy.chunked(by: { $1 - $0 == 1 })))
++    print(Array([1, 2, 3].lazy.chunked(by: { $1 - $0 == 1 }).reversed()))
++    
++    XCTAssertEqualSequences(
++      [1, 2, 3, 4, 6, 7, 8, 9].lazy.chunked(by: { $1 - $0 == 1 }).reversed(),
++      [[6, 7, 8, 9], [1, 2, 3, 4]])
++    
++    validateIndexTraversals([1, 2, 3].lazy.chunked(by: { $1 - $0 == 1 }))
++  }
++  
+   func testChunkedLazy() {
+     XCTAssertLazySequence(fruits.lazy.chunked(by: { $0.first == $1.first }))
+     XCTAssertLazySequence(fruits.lazy.chunked(on: { $0.first }))

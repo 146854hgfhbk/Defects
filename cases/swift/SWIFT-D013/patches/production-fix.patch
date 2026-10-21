@@ -1,0 +1,20 @@
+diff --git a/Sources/MarkCodable/Encoder/MarkKeyedEncoding.swift b/Sources/MarkCodable/Encoder/MarkKeyedEncoding.swift
+index 87e466f3b7e4c423cf858cba508bfe4a91f5e853..56dce3c84784235701839224b70dc081bf97f529 100644
+--- a/Sources/MarkCodable/Encoder/MarkKeyedEncoding.swift
++++ b/Sources/MarkCodable/Encoder/MarkKeyedEncoding.swift
+@@ -14,6 +14,15 @@ struct MarkKeyedEncoding<Key: CodingKey>: KeyedEncodingContainerProtocol {
+         self.data = data
+     }
+ 
++    // TODO: This is likely needed for all other primitives and requires testing.
++    mutating func encodeIfPresent(_ value: String?, forKey key: Key) throws {
++        if let value = value {
++            try encode(value, forKey: key)
++        } else {
++            try encodeNil(forKey: key)
++        }
++    }
++
+     mutating func encodeIfPresent<T>(_ value: T?, forKey key: Key) throws where T : Encodable {
+         if let value = value {
+             try encode(value, forKey: key)

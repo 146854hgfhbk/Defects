@@ -1,0 +1,87 @@
+diff --git a/lib/src/emitter.dart b/lib/src/emitter.dart
+index 95e13106c84cc6263577d6efe3b4daca22f50411..d7a688f237519952978913c2d28b5950384f0ce7 100644
+--- a/lib/src/emitter.dart
++++ b/lib/src/emitter.dart
+@@ -338,8 +338,9 @@ class DartEmitter extends Object
+     visitAll<Reference>(spec.requiredParameters, output, (spec) {
+       spec.accept(this, output);
+     });
+-    if (spec.optionalParameters.isNotEmpty ||
+-        spec.namedParameters.isNotEmpty && spec.requiredParameters.isNotEmpty) {
++    if (spec.requiredParameters.isNotEmpty &&
++        (spec.optionalParameters.isNotEmpty ||
++            spec.namedParameters.isNotEmpty)) {
+       output.write(', ');
+     }
+     if (spec.optionalParameters.isNotEmpty) {
+diff --git a/test/specs/method_test.dart b/test/specs/method_test.dart
+index cc6de2b5b3f01e7e16390a43958c4b13d9e8d430..4d2f87690454113956ecb366a217b70763f21568 100644
+--- a/test/specs/method_test.dart
++++ b/test/specs/method_test.dart
+@@ -140,6 +140,66 @@ void main() {
+     );
+   });
+ 
++  test('should create a function type with an optional positional parameter',
++      () {
++    expect(
++      FunctionType((b) => b
++        ..returnType = refer('String')
++        ..optionalParameters.add(refer('int'))),
++      equalsDart(r'''
++        String Function([int])
++      '''),
++    );
++  });
++
++  test(
++      'should create a function type with a required '
++      'and an optional positional parameter', () {
++    expect(
++      FunctionType((b) => b
++        ..returnType = refer('String')
++        ..requiredParameters.add(refer('int'))
++        ..optionalParameters.add(refer('int'))),
++      equalsDart(r'''
++        String Function(int, [int])
++      '''),
++    );
++  });
++
++  test('should create a function type without parameters', () {
++    expect(
++      FunctionType((b) => b..returnType = refer('String')),
++      equalsDart(r'''
++        String Function()
++      '''),
++    );
++  });
++
++  test('should create a function type with an optional named parameter', () {
++    expect(
++      FunctionType((b) => b
++        ..returnType = refer('String')
++        ..namedParameters['named'] = refer('int')),
++      equalsDart(r'''
++        String Function({int named})
++      '''),
++    );
++  });
++
++  test(
++      'should create a function type with a required '
++      'and an optional named parameter', () {
++    expect(
++      FunctionType((b) => b
++        ..returnType = refer('String')
++        ..requiredParameters.add(refer('int'))
++        ..namedParameters['named'] = refer('int')),
++      equalsDart(r'''
++        String Function(int, {int named})
++      '''),
++    );
++  });
++
+   test('should create a method with a nested function type return type', () {
+     expect(
+       Method((b) => b

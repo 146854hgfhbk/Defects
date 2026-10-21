@@ -1,0 +1,30 @@
+diff --git a/lib/kino/test/group_leader.ex b/lib/kino/test/group_leader.ex
+index 6cc6257..5d30d12 100644
+--- a/lib/kino/test/group_leader.ex
++++ b/lib/kino/test/group_leader.ex
+@@ -43,6 +43,10 @@ defmodule Kino.Test.GroupLeader do
+     {:ok, state.target}
+   end
+ 
++  defp io_request(:livebook_get_evaluation_file, _state) do
++    {:ok, "#cell:xyz"}
++  end
++
+   defp io_request(_request, _state) do
+     # Forward everything else to the default group leader
+     :forward
+diff --git a/test/kino/debug_test.exs b/test/kino/debug_test.exs
+index 1751f3f..436f2d6 100644
+--- a/test/kino/debug_test.exs
++++ b/test/kino/debug_test.exs
+@@ -190,4 +190,10 @@ defmodule Kino.Debug.Test do
+       %{call_count: 5} = connect(kino)
+     end
+   end
++
++  test "falls back to the default dbg implementation when outside livebook context" do
++    # Capturing IO switches the group leader, so the function effectively
++    # runs outside the livebook context
++    assert ExUnit.CaptureIO.capture_io(fn -> call_dbg(:ok) end) =~ ":ok"
++  end
+ end

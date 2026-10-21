@@ -1,0 +1,16 @@
+diff --git a/lib/src/emitter.dart b/lib/src/emitter.dart
+index 95e13106c84cc6263577d6efe3b4daca22f50411..d7a688f237519952978913c2d28b5950384f0ce7 100644
+--- a/lib/src/emitter.dart
++++ b/lib/src/emitter.dart
+@@ -338,8 +338,9 @@ class DartEmitter extends Object
+     visitAll<Reference>(spec.requiredParameters, output, (spec) {
+       spec.accept(this, output);
+     });
+-    if (spec.optionalParameters.isNotEmpty ||
+-        spec.namedParameters.isNotEmpty && spec.requiredParameters.isNotEmpty) {
++    if (spec.requiredParameters.isNotEmpty &&
++        (spec.optionalParameters.isNotEmpty ||
++            spec.namedParameters.isNotEmpty)) {
+       output.write(', ');
+     }
+     if (spec.optionalParameters.isNotEmpty) {

@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1401",
+  "technical_evidence_sha256": "e2c1f8160cb12c3e6738cade7e20ceb3e67b5bc3725a2d6c5a9db36d5a292aed",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "45511de7098a113c3b0eed6620c807eaa91d81cf1a2d8581e50395e3bdafd667",
+  "reviewed_at": "2026-08-15T15:13:06.133120+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/collection#317",
+  "rationale": "Issue #317, PR #320 (\"Avoid setRange with potentially incompatible types\"), and the trigger test all describe one pre-existing defect: mergeSort allocated its scratch space via `List<E>.filled(secondLength, elements[start])`, which produces a list whose runtime element type is the static type parameter E rather than the runtime element type of `elements`. When E is a supertype of the actual runtime element type (e.g. mergeSort<num> over a List<int>), the later copy back into `elements` via setRange throws a runtime type error. The fix replaces the allocation with `elements.sublist(0, secondLength)`, which inherits the receiver's runtime element type, addressing exactly that mismatch. The minimized production patch is a single one-line change inside mergeSort in lib/src/algorithms.dart, with no formatting, refactor, feature, docs, config, or test content; the CHANGELOG entry and the mergeSortBy hunk present in the original commit are correctly excluded from the minimized patch. The trigger is the unchanged upstream test from the same fixing commit: it builds a 1000-element out-of-order List<int> (above _mergeSortLimit so the scratch-space path is exercised, with the first half guaranteed to drain first during merge) and asserts `mergeSort<num>(list)` returns normally. It calls only the pre-existing public mergeSort API and introduces no API added by the fix. Runtime evidence in strict_original and strict_post_minimization shows all gates passed: build on both revisions, unique selector, buggy differential reproduction of the single declared trigger, deterministic fingerprints across 3 repetitions with a complete 32-run matrix, buggy full suite failing only on the reproduced trigger, and fixed isolated/suite/reversed runs all green. active_same_project_root_causes is empty and root_cause_id matches the sole verified key in allowed_root_cause_ids.\n\nIssue 317, PR 320 ('Avoid setRange with potentially incompatible types'), and the fix hunk all describe one pre-existing defect: mergeSort allocated its scratch buffer as List<E>.filled(...), which produces a list with static element type E rather than the list's runtime element type, so the subsequent setRange/copy back into a more specific runtime list (e.g. mergeSort<num> on a List<int>) threw at runtime. The fix replaces the allocation with elements.sublist(0, secondLength), which inherits the receiver's runtime type. The minimized production patch is a single one-line change in lib/src/algorithms.dart mergeSort with no formatting, refactor, doc, or config content; the CHANGELOG entry present in the original commit was correctly excluded, and the mergeSortBy hunk was dropped as not needed for the trigger. The trigger is the unchanged upstream regression test from the same fixing commit; it calls the pre-existing public mergeSort<num> API on a 1000-element (> _mergeSortLimit) list ordered so the first half exhausts first during merge, exercising exactly the reported type mismatch and introducing no API added by the fix. Strict evidence for both the original and post-minimization states shows all gates passed: build on both revisions, deterministic buggy differential with the single declared selector (fingerprint_groups=3, 3 repetitions, 32 matrix runs), buggy full suite failing only on the reproduced trigger, and fixed runs all green including reversed. No active same-project root causes are registered, and dart-archive/collection#317 is in allowed_root_cause_ids and in traceability.verified_fix_issue_numbers.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T15:12:41.205254+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "45511de7098a113c3b0eed6620c807eaa91d81cf1a2d8581e50395e3bdafd667",
+      "response_sha256": "cca3aa5da20a3b8f018e4be87cd824a53e2bf56c491bdd0553e2184ad349a70f",
+      "response_id": "msg_a8ab605afefc49d3b6f06829dbd39948",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6151243357877281,
+        "input_tokens": 8361,
+        "output_tokens": 753
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/collection#317",
+      "rationale": "Issue #317, PR #320 (\"Avoid setRange with potentially incompatible types\"), and the trigger test all describe one pre-existing defect: mergeSort allocated its scratch space via `List<E>.filled(secondLength, elements[start])`, which produces a list whose runtime element type is the static type parameter E rather than the runtime element type of `elements`. When E is a supertype of the actual runtime element type (e.g. mergeSort<num> over a List<int>), the later copy back into `elements` via setRange throws a runtime type error. The fix replaces the allocation with `elements.sublist(0, secondLength)`, which inherits the receiver's runtime element type, addressing exactly that mismatch. The minimized production patch is a single one-line change inside mergeSort in lib/src/algorithms.dart, with no formatting, refactor, feature, docs, config, or test content; the CHANGELOG entry and the mergeSortBy hunk present in the original commit are correctly excluded from the minimized patch. The trigger is the unchanged upstream test from the same fixing commit: it builds a 1000-element out-of-order List<int> (above _mergeSortLimit so the scratch-space path is exercised, with the first half guaranteed to drain first during merge) and asserts `mergeSort<num>(list)` returns normally. It calls only the pre-existing public mergeSort API and introduces no API added by the fix. Runtime evidence in strict_original and strict_post_minimization shows all gates passed: build on both revisions, unique selector, buggy differential reproduction of the single declared trigger, deterministic fingerprints across 3 repetitions with a complete 32-run matrix, buggy full suite failing only on the reproduced trigger, and fixed isolated/suite/reversed runs all green. active_same_project_root_causes is empty and root_cause_id matches the sole verified key in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "issue_urls[0]",
+        "pull_request_url",
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "trigger_tests[0]",
+        "traceability.verified_fix_issue_numbers",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The minimized patch fixes only mergeSort; the identical latent bug in mergeSortBy remains at the minimized fixed revision, so a repair that generalizes across both functions is scored only against the mergeSort site.",
+        "The trigger asserts `returnsNormally` rather than checking sort correctness, so a patch that suppresses the type error without preserving sort order could pass the trigger; the rest of the algorithms suite provides only indirect ordering coverage.",
+        "The one-line fix is narrow enough that a plausible alternative repair (e.g. casting or a differently typed allocation) may pass all gates without matching the upstream approach.",
+        "Issue body text was not supplied directly; defect identity rests on the issue link in the regression test, the commit subject, and the CHANGELOG wording rather than on the original report's full contents."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T15:13:06.132850+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "45511de7098a113c3b0eed6620c807eaa91d81cf1a2d8581e50395e3bdafd667",
+      "response_sha256": "9a2a9a9116a33b3ec40aa9b97ebe40683bf8e1ed91e6d121c3a56bb4858cc55d",
+      "response_id": "msg_6b69874241054e7aa8cc38538c8ba344",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4530832412935324,
+        "input_tokens": 7865,
+        "output_tokens": 655
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/collection#317",
+      "rationale": "Issue 317, PR 320 ('Avoid setRange with potentially incompatible types'), and the fix hunk all describe one pre-existing defect: mergeSort allocated its scratch buffer as List<E>.filled(...), which produces a list with static element type E rather than the list's runtime element type, so the subsequent setRange/copy back into a more specific runtime list (e.g. mergeSort<num> on a List<int>) threw at runtime. The fix replaces the allocation with elements.sublist(0, secondLength), which inherits the receiver's runtime type. The minimized production patch is a single one-line change in lib/src/algorithms.dart mergeSort with no formatting, refactor, doc, or config content; the CHANGELOG entry present in the original commit was correctly excluded, and the mergeSortBy hunk was dropped as not needed for the trigger. The trigger is the unchanged upstream regression test from the same fixing commit; it calls the pre-existing public mergeSort<num> API on a 1000-element (> _mergeSortLimit) list ordered so the first half exhausts first during merge, exercising exactly the reported type mismatch and introducing no API added by the fix. Strict evidence for both the original and post-minimization states shows all gates passed: build on both revisions, deterministic buggy differential with the single declared selector (fingerprint_groups=3, 3 repetitions, 32 matrix runs), buggy full suite failing only on the reproduced trigger, and fixed runs all green including reversed. No active same-project root causes are registered, and dart-archive/collection#317 is in allowed_root_cause_ids and in traceability.verified_fix_issue_numbers.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "case.json:strict_post_minimization.checks",
+        "case.json:strict_original.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:issue_urls",
+        "case.json:pull_request_url",
+        "case.json:trigger_tests"
+      ],
+      "risks": [
+        "The minimized patch fixes only mergeSort; the identical latent defect in mergeSortBy remains in the minimized version, so the benchmark instance covers a narrower slice than the upstream fix.",
+        "The trigger oracle is returnsNormally, which detects the crash but not any silent ordering regression; it would pass for any change that merely avoids the type error.",
+        "Issue 317 body text was not supplied directly; the issue-to-defect link rests on the commit/PR subject, the CHANGELOG wording, and the regression test comment referencing issue 317.",
+        "Reproduction depends on runtime type-check behavior of the Dart backend used; a different compilation mode could alter whether the type error surfaces."
+      ]
+    }
+  ]
+}

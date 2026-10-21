@@ -1,0 +1,61 @@
+{
+  "candidate_sha": "5c33d9e872981ecff34c83fba98f80ba8f238cd7",
+  "project": "JuliaStats/GLM.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 509,
+      "url": "https://github.com/JuliaStats/GLM.jl/issues/509",
+      "state": "closed",
+      "title": "About `dof_residual` ",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "I noticed something odd about `dof_residual`. In few words, when the `family` does not have a `dispersion_parameter`, `dof_residual`  is bumped by 1which is inconsistent with other software (R, Stata, etc.) and with statistics more generally :smile:. \r\n\r\n```julia\r\nusing DataFrames\r\nusing StableRNGs\r\nusing RCall\r\n\r\nrng = StableRNG(123);\r\n\r\nx1 = rand(rng, 25);\r\nx2 = ifelse.(randn(rng, 25) .> 0, 1, 0);\r\ny = ifelse.(0.004 .- 0.01 .* x1 .+ 1.5 .* x2 .+ randn(rng, 25) .> 0, 1, 0);\r\ndf = DataFrame(y=y, x1=x1, x2=x2);\r\n\r\n## Julia\r\nl = glm(@formula(y~x1+x2), df, Binomial());\r\n\r\n## R\r\n@rput df;\r\nR\"rl <- glm(y~x1+x2, df, family='binomial')\";\r\n@rget rl;\r\n\r\nprintln(\"Julia dof_residual:\", dof_residual(l))\r\nprintln(\"R dof_residual: \", rl[:df_residual])\r\n\r\n```\r\nwhich gives \r\n```julia\r\nJulia dof_residual: 23\r\nR dof_residual: 22\r\n```\r\n\r\nThe families without a `dispersion_parameter` are `Bernoulli, Binomial, Poisson`:\r\n```\r\ndispersion_parameter(D) = true\r\ndispersion_parameter(::Union{Bernoulli, Binomial, Poisson}) = false\r\n```\r\n\r\nFortunately, `dof_residuals` is not used to scale the `vcov` and so this bug does not have important ramifications.  I also noted that we are not testing `dof_residual` for these families.\r\n\r\nThe fix is relatively simple: change \r\n\r\n```julia\r\ndof_residual(obj::LinPredModel) = nobs(obj) - dof(obj) + 1\r\n```\r\n\r\nto\r\n\r\n```julia\r\ndof_residual(obj::LinPredModel) = nobs(obj) - dof(obj) + dispersion_parameter(obj.rr.d)\r\n```\r\n\r\n\r\n\r\n\r\n\r\n\r\n"
+    },
+    {
+      "number": 560,
+      "url": "https://github.com/JuliaStats/GLM.jl/pull/560",
+      "state": "closed",
+      "title": "Change dof_residual definition to not depend on dispersion parameter",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fixes https://github.com/JuliaStats/GLM.jl/issues/509\r\n\r\nThere was actually already a test of a model affected by this but the reference value was wrong. I checked the value in R. \r\n\r\n@nalimilan how do you feel about `dof` after all these years? After preparing this, I think we might be better of from deprecating `dof` (which would have to happen in `StatsAPI`). I tend to think that it brings more confusion than convenience."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        509
+      ],
+      "pull_request": 560,
+      "fix_commit": "5c33d9e872981ecff34c83fba98f80ba8f238cd7",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Change dof_residual definition to not depend on dispersion parameter (#560)",
+    "commit_issue_refs": [
+      560
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 560,
+    "pull_request_title": "Change dof_residual definition to not depend on dispersion parameter",
+    "pull_request_issue_refs": [
+      509
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    509
+  ],
+  "cross_repository_issue_records": []
+}

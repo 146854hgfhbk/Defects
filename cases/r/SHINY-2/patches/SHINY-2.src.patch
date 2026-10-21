@@ -1,0 +1,37 @@
+diff --git a/R/input-select.R b/R/input-select.R
+index 239d81e3f..1ba64fe73 100644
+--- a/R/input-select.R
++++ b/R/input-select.R
+@@ -204,16 +204,17 @@ selectizeIt <- function(inputId, select, options, nonempty = FALSE) {
+ 
+   res <- checkAsIs(options)
+ 
+-  deps <- list(selectizeDependency())
++  selectizeDep <- selectizeDependency()
+ 
+   if ('drag_drop' %in% options$plugins) {
+-    deps <- c(
+-      deps,
+-      list(htmlDependency(
+-        'jqueryui', '1.12.1',
++    selectizeDep <- c(
++      selectizeDep,
++      htmlDependency(
++        'jqueryui',
++        '1.12.1',
+         c(href = 'shared/jqueryui'),
+         script = 'jquery-ui.min.js'
+-      ))
++      )
+     )
+   }
+ 
+@@ -228,7 +229,7 @@ selectizeIt <- function(inputId, select, options, nonempty = FALSE) {
+     )
+   )
+ 
+-  attachDependencies(select, deps)
++  attachDependencies(select, selectizeDep)
+ }
+ 
+ 

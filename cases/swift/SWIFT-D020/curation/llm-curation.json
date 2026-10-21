@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-601",
+  "technical_evidence_sha256": "290d4b1a63bfd8e6a3e64828512ecb1de0326e31dd4f513e81228510bf31082d",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "a14ad94c6a4a05f8f16d1f1ec786d1d5231f530b31ad7a7fb9a4d8a598088d5e",
+  "reviewed_at": "2026-09-05T16:20:04.410454+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "graphqlswift/graphql#152",
+  "rationale": "Issue #152 (labeled 'bug', closed by PR #153) reports that standard scalars fail on default-value/introspection paths with 'Serialize expected type ID but got Map' and 'Cannot convert value to AST: 0'/'1' for Bool and Int, and explicitly notes Bool worked before 2.10.1, so this is a pre-existing regression rather than a missing feature. The single production file changed, Sources/GraphQL/Type/Scalars.swift, replaces the uniformly lossy 'serialize: { try map(from: $0) }' and 'parseValue: { try .x($0.xValue(converting: true)) }' closures on GraphQLInt/Float/String/Boolean/ID with explicit coercion that accepts Map-wrapped inputs (e.g. GraphQLID.serialize now returns .string for Map .string/.number), which is the direct cause of the reported 'got Map' failure. All five retained hunks are the same edit applied to the five built-in scalars; the only added declarations are the internal GRAPHQL_MAX_INT/GRAPHQL_MIN_INT bounds used by the new Int coercion, and their doc comments are part of that added code, not a documentation-only change. There is no formatting-only, config, or test change in the minimized production patch (retained 5 of 5, removed 0, post_minimization_validation PASS). The triggers are the unmodified test file from the same fixing commit and exercise only pre-existing members (GraphQLInt/Float/String/Boolean/ID .serialize and .parseValue) with literal Map fixtures; they do not reference GRAPHQL_MAX_INT/GRAPHQL_MIN_INT or any new production API, and strict evidence confirms they compile and fail at afbad07 and pass at 2a17bfc. Machine strict gates pass on both the original and post-minimization matrices: build.both_versions, selectors.present_and_unique (10/10), trigger.buggy_differential with all 10 selectors reproduced, trigger.fixed_clean, trigger.deterministic (12/12 fingerprint groups), full_suite.fixed_all_green, and full_suite.buggy_reproduces_only_triggers, at 3 repetitions over 86 runs. active_same_project_root_causes is empty, so #152 is not a duplicate, and it is the sole entry in allowed_root_cause_ids.\n\nIssue #152 (labeled 'bug', closed by this work) reports that introspection of default values fails with 'Serialize expected type ID but got Map', 'Cannot convert value to AST: 0' for Bool, and 'Cannot convert value to AST: 1' for Int, and notes Bool worked before 2.10.1, so this is a pre-existing regression in built-in scalar coercion rather than a missing feature. The fix commit 2a17bfc replaces the uniform `serialize: { try map(from: $0) }` and lossy `parseValue` closures in Sources/GraphQL/Type/Scalars.swift with explicit case handling that accepts Map-wrapped inputs (GraphQLID now returns .string for both .string and .number Map cases; GraphQLBoolean handles .bool/.number Map cases; GraphQLInt handles .number), directly addressing the reported failure mode. Commit message and PR #153 both state 'Fixes .../issues/152', and traceability records path fix_commit_to_issue with verified issue 152. Scope: exactly one production file, five hunks, all in the same serialize/parseValue coercion logic for the five built-in scalars. The only added declarations are internal constants GRAPHQL_MAX_INT/GRAPHQL_MIN_INT, consumed by the changed Int logic, so no public API extension, no formatting-only, docs-only, config-only, or test-only content in the production patch. Automatic minimization retained all 5 of 5 hunks with post_minimization_validation PASS, consistent with the ten triggers spanning all five scalars in both directions. The trigger is the unchanged upstream test file Tests/GraphQLTests/TypeTests/ScalarTests.swift from the same single fixing commit (not curator-written, not from a later commit), and it exercises only pre-existing members (GraphQLInt/Float/String/Boolean/ID .serialize and .parseValue) that exist at parent afbad07, so it does not depend on any API introduced by the fix; strict evidence confirms build.both_versions passed and all ten selectors compiled and reproduced on the buggy revision. Machine-generated strict gates pass in both the original and post-minimization matrices: trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic (12/12 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete (86 runs), 3 repetitions, zero failed checks. active_same_project_root_causes is empty, so #152 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T16:19:26.601452+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "a14ad94c6a4a05f8f16d1f1ec786d1d5231f530b31ad7a7fb9a4d8a598088d5e",
+      "response_sha256": "0e2cc5b85ddd4b3e2f4f15762d8c0003eb6c1ca841bb65e151fa6634d24f84e1",
+      "response_id": "msg_d5be7271a18740e49a69a4cf34ca6b44",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.1172620168822556,
+        "input_tokens": 55081,
+        "output_tokens": 908
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "graphqlswift/graphql#152",
+      "rationale": "Issue #152 (labeled 'bug', closed by PR #153) reports that standard scalars fail on default-value/introspection paths with 'Serialize expected type ID but got Map' and 'Cannot convert value to AST: 0'/'1' for Bool and Int, and explicitly notes Bool worked before 2.10.1, so this is a pre-existing regression rather than a missing feature. The single production file changed, Sources/GraphQL/Type/Scalars.swift, replaces the uniformly lossy 'serialize: { try map(from: $0) }' and 'parseValue: { try .x($0.xValue(converting: true)) }' closures on GraphQLInt/Float/String/Boolean/ID with explicit coercion that accepts Map-wrapped inputs (e.g. GraphQLID.serialize now returns .string for Map .string/.number), which is the direct cause of the reported 'got Map' failure. All five retained hunks are the same edit applied to the five built-in scalars; the only added declarations are the internal GRAPHQL_MAX_INT/GRAPHQL_MIN_INT bounds used by the new Int coercion, and their doc comments are part of that added code, not a documentation-only change. There is no formatting-only, config, or test change in the minimized production patch (retained 5 of 5, removed 0, post_minimization_validation PASS). The triggers are the unmodified test file from the same fixing commit and exercise only pre-existing members (GraphQLInt/Float/String/Boolean/ID .serialize and .parseValue) with literal Map fixtures; they do not reference GRAPHQL_MAX_INT/GRAPHQL_MIN_INT or any new production API, and strict evidence confirms they compile and fail at afbad07 and pass at 2a17bfc. Machine strict gates pass on both the original and post-minimization matrices: build.both_versions, selectors.present_and_unique (10/10), trigger.buggy_differential with all 10 selectors reproduced, trigger.fixed_clean, trigger.deterministic (12/12 fingerprint groups), full_suite.fixed_all_green, and full_suite.buggy_reproduces_only_triggers, at 3 repetitions over 86 runs. active_same_project_root_causes is empty, so #152 is not a duplicate, and it is the sole entry in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "minimized_patch_reference.post_minimization_validation",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_reduction.rationale",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The fix is broader than the three scalars named in the issue: Float and String coercion, and stricter parseValue rejection (Int rejecting \"123\", Boolean rejecting 0/1, String rejecting numbers), are included. These share the single root cause (blanket map(from:)/converting coercion) but the trigger set asserts behavior beyond the exact symptoms reported.",
+        "The new Int serialize branch throws a message reading 'Float cannot represent non numeric value' for non-number Map inputs, a copy-paste defect carried into the fixed revision; it does not affect the differential outcome but leaves an incorrect diagnostic string in the accepted fixed state.",
+        "The upstream test file contains commented-out TODO assertions and expected-message strings ported from graphql-js that do not always match the messages this implementation throws, so the differential signal rests on throw/no-throw and value equality rather than message text.",
+        "All 10 declared selectors live in one new file, so the case offers no independent trigger outside ScalarTests.swift.",
+        "issue_evidence is null; the issue text was read from source_candidate.issue_check.linked_issues rather than a dedicated fetched-issue record."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-05T16:20:04.409398+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "a14ad94c6a4a05f8f16d1f1ec786d1d5231f530b31ad7a7fb9a4d8a598088d5e",
+      "response_sha256": "5e6b2fc257dfa6c7488e5d82770359d89c33b12c6b70d4677d5bfaaadc9f85aa",
+      "response_id": "msg_6ca696bf465242db8885cfc1eb6813de",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.8883887758540632,
+        "input_tokens": 54931,
+        "output_tokens": 934
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "graphqlswift/graphql#152",
+      "rationale": "Issue #152 (labeled 'bug', closed by this work) reports that introspection of default values fails with 'Serialize expected type ID but got Map', 'Cannot convert value to AST: 0' for Bool, and 'Cannot convert value to AST: 1' for Int, and notes Bool worked before 2.10.1, so this is a pre-existing regression in built-in scalar coercion rather than a missing feature. The fix commit 2a17bfc replaces the uniform `serialize: { try map(from: $0) }` and lossy `parseValue` closures in Sources/GraphQL/Type/Scalars.swift with explicit case handling that accepts Map-wrapped inputs (GraphQLID now returns .string for both .string and .number Map cases; GraphQLBoolean handles .bool/.number Map cases; GraphQLInt handles .number), directly addressing the reported failure mode. Commit message and PR #153 both state 'Fixes .../issues/152', and traceability records path fix_commit_to_issue with verified issue 152. Scope: exactly one production file, five hunks, all in the same serialize/parseValue coercion logic for the five built-in scalars. The only added declarations are internal constants GRAPHQL_MAX_INT/GRAPHQL_MIN_INT, consumed by the changed Int logic, so no public API extension, no formatting-only, docs-only, config-only, or test-only content in the production patch. Automatic minimization retained all 5 of 5 hunks with post_minimization_validation PASS, consistent with the ten triggers spanning all five scalars in both directions. The trigger is the unchanged upstream test file Tests/GraphQLTests/TypeTests/ScalarTests.swift from the same single fixing commit (not curator-written, not from a later commit), and it exercises only pre-existing members (GraphQLInt/Float/String/Boolean/ID .serialize and .parseValue) that exist at parent afbad07, so it does not depend on any API introduced by the fix; strict evidence confirms build.both_versions passed and all ten selectors compiled and reproduced on the buggy revision. Machine-generated strict gates pass in both the original and post-minimization matrices: trigger.buggy_differential, trigger.fixed_clean, trigger.deterministic (12/12 fingerprint groups), full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete (86 runs), 3 repetitions, zero failed checks. active_same_project_root_causes is empty, so #152 is not a duplicate, and it matches the single allowed_root_cause_ids entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.issue_check.traceability_paths",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "minimized_patch_reference.post_minimization_validation",
+        "trigger_reduction.upstream_trigger_patch"
+      ],
+      "risks": [
+        "The fix also tightens parseValue semantics beyond the three scalars named in the issue (Int now rejects string '123', Boolean rejects 0/1, String rejects numbers). This is the same coercion logic in the same closures and all five hunks are required by the validated triggers, but the behavioral change is broader than the literal issue text.",
+        "The ported graphql-js test expectations pass message strings to XCTAssertThrowsError that do not match the messages the new production code throws, so those assertions verify only throw/no-throw, not error text.",
+        "issue_evidence is null; the issue body was read from the embedded source_candidate snapshot rather than a separately fetched artifact, so it is untrusted repository text and was treated as data only.",
+        "Two Int test cases are commented out with a TODO about rounding, so the fixed behavior still rounds non-integer Int values; the accepted defect does not cover that residual gap.",
+        "Ten triggers all live in one new test file, so the case offers no independently authored fault localization signal."
+      ]
+    }
+  ]
+}

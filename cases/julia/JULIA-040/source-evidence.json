@@ -1,0 +1,64 @@
+{
+  "candidate_sha": "30109d49a4fc1ea553ea1108f24ea40bf8b77e3b",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 407,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/407",
+      "state": "closed",
+      "title": "Parsing of generators allows skipping a comma",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug",
+        "parser"
+      ],
+      "body_excerpt": "JuliaSyntax allows skipping a separator after a generator. In Julia 1.10 you have: \r\n\r\n```julia\r\n:(x for x in xs a, b) == :((x for x in xs), a, b)\r\n```\r\n\r\nEven more strangely, depending on the separator that comes after the expression may be parsed as a block or as a tuple:\r\n\r\n```julia\r\njulia> parsestmt(SyntaxNode, \"(x for x = xs a; b)\")\r\nline:col│ tree                                   │ file_name\r\n   1:1  │[block-p]\r\n   1:2  │  [generator]\r\n   1:2  │    x\r\n   1:7  │    [=]\r\n   1:8  │      x\r\n   1:12 │      xs\r\n   1:15 │  a\r\n   1:18 │  b\r\n\r\n\r\njulia> parsestmt(SyntaxNode, \"(x for x = xs a, b)\")\r\nline:col│ tree                                   │ file_name\r\n   1:1  │[tuple-p]\r\n   1:2  │  [generator]\r\n   1:2  │    x\r\n   1:7  │    [=]\r\n   1:8  │      x\r\n   1:12 │      xs\r\n   1:15 │  a\r\n   1:18 │  b\r\n```\r\n\r\n~~This error isn't present in the flisp parser.~~ The error is present in the flisp parser, but only in certain contexts. In Julia 1.9, we have:\r\n```julia\r\njulia> :(x for x = xs a) # plain generator\r\nERROR: syntax: expected \")\"\r\nStacktrace:\r\n [1] top-level scope\r\n   @ none:1\r\n\r\njulia> :(f(x for x = xs a)) # Generator inside call\r\n:(f((x for x = in), a))\r\n```"
+    },
+    {
+      "number": 497,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/497",
+      "state": "closed",
+      "title": "Disallow trailing junk in generators",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Disallow generator syntax with trailing non-delimited expressions\r\n\r\n    (y for x in xs a)\r\n    (y for x in xs a, b)\r\n\r\nAllow parameter syntax such as\r\n\r\n    f(y for x in xs; a)\r\n\r\nbecause the flisp parser allowed this it's used in Base in at least one location.\r\n\r\nDisallow the almost-equivalent block syntax for now:\r\n\r\n    (y for x in xs; a)\r\n\r\nbecause the flisp parser disallowed it and users can always get the same thing with some extra parentheses.\r\n\r\nFixes #407 "
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        407
+      ],
+      "pull_request": 497,
+      "fix_commit": "30109d49a4fc1ea553ea1108f24ea40bf8b77e3b",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Disallow trailing junk in generators (#497)\n\nDisallow generator syntax with trailing non-delimited expressions\r\n\r\n    (y for x in xs a)\r\n    (y for x in xs a, b)\r\n\r\nAllow parameter syntax such as\r\n\r\n    f(y for x in xs; a)\r\n\r\nbecause the flisp parser allowed this it's used in Base in at least one\r\nlocation.\r\n\r\nDisallow the almost-equivalent block syntax for now:\r\n\r\n    (y for x in xs; a)\r\n\r\nbecause the flisp parser disallowed it and users can always get the same\r\nthing with some extra parentheses.",
+    "commit_issue_refs": [
+      497
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 497,
+    "pull_request_title": "Disallow trailing junk in generators",
+    "pull_request_issue_refs": [
+      407
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    407
+  ],
+  "cross_repository_issue_records": []
+}

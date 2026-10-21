@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-760",
+  "technical_evidence_sha256": "3903c1411a3dec88730f281577f3789cae9ccaa0564a8689e9eb54cbe781462f",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "b0840493f42d8205406c2cffedf229384df4a70e10aa201fc616e403e7a56e71",
+  "reviewed_at": "2026-09-06T00:18:53.676887+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "vapor-community/htmlkit#152",
+  "rationale": "Issue #152 (\"Incorrect interpolation\") reports that when a localization string repeats a placeholder of the same type, every occurrence is filled with the first argument: Paragraph(\"personal.intro\", interpolation: \"John Doe\", \"Mozart\") renders \"John Doe\" twice. The minimized production patch touches only Sources/HTMLKit/Framework/Localization/Localization.swift and replaces the global translation.replacingOccurrences(of: \"%st\"/\"%dt\"/\"%do\"/\"%in\") calls with translation.range(of:) plus replacingCharacters(in:with:), so each argument consumes only the first remaining placeholder. Both retained hunks are the identical correction applied to the two duplicated argument-substitution switches (default table and named table) in the same function region; nothing else is modified, and no API, config, or documentation is touched. The trigger is the upstream commit's own test change plus its en-GB/web.strings fixture, exercising multiple same-type placeholders (\"John Doe\", 31, \"Mozart\", 5, 21.5) through both the default-table and tableName: \"web\" paths, and relies only on pre-existing APIs (Paragraph, interpolation:, tableName:, renderer.render) rather than anything the fix introduced. Strict machine evidence reports build.both_versions PASS, trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean and full_suite.fixed_all_green PASS, full_suite.buggy_reproduces_only_triggers PASS, and trigger.deterministic across 3 repetitions, both before and after minimization; because the fixture is applied on both revisions and the fixed revision is fully green, the buggy failure cannot be a missing-key artifact. active_same_project_root_causes is empty and vapor-community/htmlkit#152 is the supplied allowed key.\n\nIssue #152 (\"Incorrect interpolation\", body quoted in source_candidate.issue_check.linked_issues) reports that when a localization string contains multiple placeholders of the same type, every occurrence is filled with the first matching argument: Paragraph(\"personal.intro\", interpolation: \"John Doe\", \"Mozart\") rendering \"John Doe\" twice. The minimized production patch touches only Sources/HTMLKit/Framework/Localization/Localization.swift and, in both duplicated interpolation switches (default-table path at ~line 130 and named-table path at ~line 203), replaces the global translation.replacingOccurrences(of: \"%st\"/\"%dt\"/\"%do\"/\"%in\") with translation.range(of:) + replacingCharacters(in:with:), i.e. first-occurrence-only substitution per argument. That is exactly the reported root cause; the two hunks are the same one-line semantic change applied to two copies of the same logic, with no refactor, rename, feature extension, doc, or config change. Traceability is fix_commit_to_merged_pr_to_issue via merged PR #153 (\"Fix incorrect interpolation\", single commit d9c3e10, base a142bc5 matching buggy_revision). The trigger extends two pre-existing LocalizationTests cases to pass multiple same-type arguments (\"John Doe\", 31, \"Mozart\", 5, 21.5) plus the upstream en-GB/web.strings fixture update; it uses only pre-existing public API (Paragraph, interpolation:, tableName:, renderer.render) and introduces no API added by the fix, so it is semantically equivalent to the reported defect. The fixture is applied to both revisions by trigger-tests-compatible.patch, so the buggy failure is the interpolation mismatch rather than a missing key, and this is corroborated by the strict gates: both strict_original and strict_post_minimization report passed=true with trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers, determinism over 3 repetitions, and post_minimization_validation PASS with 0 hunks removed. active_same_project_root_causes is empty and vapor-community/htmlkit#152 is the sole allowed key, so no duplicate root cause.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T00:18:23.994345+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "b0840493f42d8205406c2cffedf229384df4a70e10aa201fc616e403e7a56e71",
+      "response_sha256": "f3adc37393fe5ed890f7ace921a1611fdb0358cee153c642b07b76e18625abbe",
+      "response_id": "msg_456891c7002541efb78c02c8cf6b8401",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6840017865671641,
+        "input_tokens": 20920,
+        "output_tokens": 695
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "vapor-community/htmlkit#152",
+      "rationale": "Issue #152 (\"Incorrect interpolation\") reports that when a localization string repeats a placeholder of the same type, every occurrence is filled with the first argument: Paragraph(\"personal.intro\", interpolation: \"John Doe\", \"Mozart\") renders \"John Doe\" twice. The minimized production patch touches only Sources/HTMLKit/Framework/Localization/Localization.swift and replaces the global translation.replacingOccurrences(of: \"%st\"/\"%dt\"/\"%do\"/\"%in\") calls with translation.range(of:) plus replacingCharacters(in:with:), so each argument consumes only the first remaining placeholder. Both retained hunks are the identical correction applied to the two duplicated argument-substitution switches (default table and named table) in the same function region; nothing else is modified, and no API, config, or documentation is touched. The trigger is the upstream commit's own test change plus its en-GB/web.strings fixture, exercising multiple same-type placeholders (\"John Doe\", 31, \"Mozart\", 5, 21.5) through both the default-table and tableName: \"web\" paths, and relies only on pre-existing APIs (Paragraph, interpolation:, tableName:, renderer.render) rather than anything the fix introduced. Strict machine evidence reports build.both_versions PASS, trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean and full_suite.fixed_all_green PASS, full_suite.buggy_reproduces_only_triggers PASS, and trigger.deterministic across 3 repetitions, both before and after minimization; because the fixture is applied on both revisions and the fixed revision is fully green, the buggy failure cannot be a missing-key artifact. active_same_project_root_causes is empty and vapor-community/htmlkit#152 is the supplied allowed key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "Sources/HTMLKit/Framework/Localization/Localization.swift",
+        "patches/trigger-tests-compatible.patch",
+        "Tests/HTMLKitTests/LocalizationTests.swift",
+        "Tests/HTMLKitTests/Localization/en-GB/web.strings",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks",
+        "traceability.paths"
+      ],
+      "risks": [
+        "The fix makes substitution positional and order-dependent: arguments are matched to the first remaining placeholder of their type, so a mismatch between argument order and placeholder order still yields wrong output silently.",
+        "The trigger modifies existing tests and the shared web.strings fixture rather than adding isolated ones, so the buggy revision must be run with the post-fix fixture; correctness here rests on the reported strict gates rather than an independently added test.",
+        "The Date (%dt) branch is changed by the patch but not covered by the triggering tests, which exercise only String, Int, and Double.",
+        "Placeholder tokens share a '%d' prefix (%dt vs %do); the tests do not probe whether sequential range matching can mis-target across those two tokens."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T00:18:53.676185+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "b0840493f42d8205406c2cffedf229384df4a70e10aa201fc616e403e7a56e71",
+      "response_sha256": "cc217980bec99c4cb636413bf6f2db25967418c3fe594af3fd26643c8788105e",
+      "response_id": "msg_8f78564699624acf8dedaf39df0e369f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6194979233830846,
+        "input_tokens": 20996,
+        "output_tokens": 802
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "vapor-community/htmlkit#152",
+      "rationale": "Issue #152 (\"Incorrect interpolation\", body quoted in source_candidate.issue_check.linked_issues) reports that when a localization string contains multiple placeholders of the same type, every occurrence is filled with the first matching argument: Paragraph(\"personal.intro\", interpolation: \"John Doe\", \"Mozart\") rendering \"John Doe\" twice. The minimized production patch touches only Sources/HTMLKit/Framework/Localization/Localization.swift and, in both duplicated interpolation switches (default-table path at ~line 130 and named-table path at ~line 203), replaces the global translation.replacingOccurrences(of: \"%st\"/\"%dt\"/\"%do\"/\"%in\") with translation.range(of:) + replacingCharacters(in:with:), i.e. first-occurrence-only substitution per argument. That is exactly the reported root cause; the two hunks are the same one-line semantic change applied to two copies of the same logic, with no refactor, rename, feature extension, doc, or config change. Traceability is fix_commit_to_merged_pr_to_issue via merged PR #153 (\"Fix incorrect interpolation\", single commit d9c3e10, base a142bc5 matching buggy_revision). The trigger extends two pre-existing LocalizationTests cases to pass multiple same-type arguments (\"John Doe\", 31, \"Mozart\", 5, 21.5) plus the upstream en-GB/web.strings fixture update; it uses only pre-existing public API (Paragraph, interpolation:, tableName:, renderer.render) and introduces no API added by the fix, so it is semantically equivalent to the reported defect. The fixture is applied to both revisions by trigger-tests-compatible.patch, so the buggy failure is the interpolation mismatch rather than a missing key, and this is corroborated by the strict gates: both strict_original and strict_post_minimization report passed=true with trigger.buggy_differential reproducing both declared selectors, trigger.fixed_clean, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers, determinism over 3 repetitions, and post_minimization_validation PASS with 0 hunks removed. active_same_project_root_causes is empty and vapor-community/htmlkit#152 is the sole allowed key, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests-compatible.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.paths[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "issue_evidence and semantic_justification are null in case.json; the issue text relied on comes from the embedded source_candidate.issue_check payload rather than an independently captured issue record.",
+        "The fix makes substitution sequential and order-dependent (each argument consumes the first remaining matching token), so the trigger passes partly because fixture placeholder order matches argument order; out-of-order placeholder handling is not exercised.",
+        "Only the String, Int, and Double branches are covered by the trigger; the parallel %dt/Date change is unverified at runtime.",
+        "The trigger modifies existing tests and renames the fixture key (personal.introduction to personal.intro), so the case depends on the post-fix test fixture being applied to the buggy revision; correctness here rests on the strict differential gate rather than on an added, self-contained test."
+      ]
+    }
+  ]
+}

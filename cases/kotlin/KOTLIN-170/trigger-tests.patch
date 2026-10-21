@@ -1,0 +1,197 @@
+diff --git a/model/src/test/kotlin/FileFormatTest.kt b/model/src/test/kotlin/FileFormatTest.kt
+index 33c17da50d71c..fe64179250efb 100644
+--- a/model/src/test/kotlin/FileFormatTest.kt
++++ b/model/src/test/kotlin/FileFormatTest.kt
+@@ -22,24 +22,28 @@ package org.ossreviewtoolkit.model
+ import com.fasterxml.jackson.core.JsonParseException
+ 
+ import io.kotest.assertions.throwables.shouldThrow
++import io.kotest.assertions.throwables.shouldThrowWithMessage
+ import io.kotest.core.spec.style.WordSpec
+ import io.kotest.engine.spec.tempfile
++import io.kotest.matchers.collections.shouldBeEmpty
+ import io.kotest.matchers.file.shouldHaveFileSize
+ import io.kotest.matchers.nulls.beNull
+ import io.kotest.matchers.should
+ import io.kotest.matchers.shouldBe
+ 
++import java.io.IOException
++
+ class FileFormatTest : WordSpec({
+     "File.readTree()" should {
+-        "return and empty node for empty files" {
+-            val file = tempfile(null, ".json")
++        "return and empty node for zero size files" {
++            val file = tempfile(suffix = ".json")
+ 
+             file shouldHaveFileSize 0
+             file.readTree() shouldBe EMPTY_JSON_NODE
+         }
+ 
+         "throw for invalid files" {
+-            val file = tempfile(null, ".json").apply { writeText("foo") }
++            val file = tempfile(suffix = ".json").apply { writeText("foo") }
+ 
+             shouldThrow<JsonParseException> {
+                 file.readTree()
+@@ -47,20 +51,87 @@ class FileFormatTest : WordSpec({
+         }
+     }
+ 
++    "File.readValue()" should {
++        "throw for zero size files" {
++            val file = tempfile(suffix = ".yml")
++
++            file shouldHaveFileSize 0
++            shouldThrow<IOException> {
++                file.readValue()
++            }
++        }
++
++        "refuse to read multiple documents per file" {
++            val file = tempfile(null, ".yml").apply {
++                @Suppress("MaxLineLength")
++                writeText(
++                    """
++                    ---
++                    id: "Maven:dom4j:dom4j:1.6.1"
++                    source_artifact_url: "https://repo.maven.apache.org/maven2/dom4j/dom4j/1.6.1/dom4j-1.6.1-sources.jar"
++                    ---
++                    id: "Maven:dom4j:dom4j:1.6.1"
++                    source_artifact_url: "<INTERNAL_ARTIFACTORY>/dom4j-1.6.1-sources.jar"
++                    """.trimIndent()
++                )
++            }
++
++            shouldThrowWithMessage<IOException>(
++                "Multiple top-level objects found in file '$file'."
++            ) {
++                file.readValue()
++            }
++        }
++    }
++
+     "File.readValueOrNull()" should {
+-        "return null for empty files" {
+-            val file = tempfile(null, ".json")
++        "return null for zero size files" {
++            val file = tempfile(suffix = ".json")
+ 
+             file shouldHaveFileSize 0
+             file.readValueOrNull<Any>() should beNull()
+         }
+ 
++        "be able to deserialize empty JSON arrays" {
++            val file = tempfile(suffix = ".json").apply { writeText("[]") }
++
++            file.readValueOrNull<List<PackageCuration>>().shouldBeEmpty()
++        }
++
++        "be able to deserialize empty YAML sequences" {
++            val file = tempfile(suffix = ".yml").apply { writeText("[]") }
++
++            file.readValueOrNull<List<PackageCuration>>().shouldBeEmpty()
++        }
++
+         "throw for invalid files" {
+-            val file = tempfile(null, ".json").apply { writeText("foo") }
++            val file = tempfile(suffix = ".json").apply { writeText("foo") }
+ 
+             shouldThrow<JsonParseException> {
+                 file.readValueOrNull()
+             }
+         }
++
++        "refuse to read multiple documents per file" {
++            val file = tempfile(null, ".yml").apply {
++                @Suppress("MaxLineLength")
++                writeText(
++                    """
++                    ---
++                    id: "Maven:dom4j:dom4j:1.6.1"
++                    source_artifact_url: "https://repo.maven.apache.org/maven2/dom4j/dom4j/1.6.1/dom4j-1.6.1-sources.jar"
++                    ---
++                    id: "Maven:dom4j:dom4j:1.6.1"
++                    source_artifact_url: "<INTERNAL_ARTIFACTORY>/dom4j-1.6.1-sources.jar"
++                    """.trimIndent()
++                )
++            }
++
++            shouldThrowWithMessage<IOException>(
++                "Multiple top-level objects found in file '$file'."
++            ) {
++                file.readValueOrNull()
++            }
++        }
+     }
+ })
+diff --git a/buildSrc/src/main/kotlin/GitValueSources.kt b/buildSrc/src/main/kotlin/GitValueSources.kt
+--- a/buildSrc/src/main/kotlin/GitValueSources.kt
++++ b/buildSrc/src/main/kotlin/GitValueSources.kt
+@@ -37,22 +37,26 @@
+         val filePaths = mutableListOf<File>()
+         val workingDir = parameters.workingDir.get().asFile
+ 
+-        Git.open(workingDir).use { git ->
+-            TreeWalk(git.repository).use { treeWalk ->
+-                val headCommit = RevWalk(git.repository).use {
+-                    val head = git.repository.resolve(Constants.HEAD)
+-                    it.parseCommit(head)
+-                }
++        try {
++            Git.open(workingDir).use { git ->
++                TreeWalk(git.repository).use { treeWalk ->
++                    val headCommit = RevWalk(git.repository).use {
++                        val head = git.repository.resolve(Constants.HEAD)
++                        it.parseCommit(head)
++                    }
+ 
+-                with(treeWalk) {
+-                    addTree(headCommit.tree)
+-                    isRecursive = true
+-                }
++                    with(treeWalk) {
++                        addTree(headCommit.tree)
++                        isRecursive = true
++                    }
+ 
+-                while (treeWalk.next()) {
+-                    filePaths += workingDir.resolve(treeWalk.pathString)
++                    while (treeWalk.next()) {
++                        filePaths += workingDir.resolve(treeWalk.pathString)
++                    }
+                 }
+             }
++        } catch (e: Exception) {
++            // Fall back to an empty file list.
+         }
+ 
+         return filePaths
+diff --git a/build.gradle.kts b/build.gradle.kts
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -33,22 +33,10 @@
+     alias(libs.plugins.versions)
+ }
+ 
+-semver {
+-    // Do not create an empty release commit when running the "releaseVersion" task.
+-    createReleaseCommit = false
+-
+-    // Do not let untracked files bump the version or add a "-SNAPSHOT" suffix.
+-    noDirtyCheck = true
+-}
+ 
+ // Only override a default version (which usually is "unspecified"), but not a custom version.
+ if (version == Project.DEFAULT_VERSION) {
+-    version = semver.semVersion.takeIf { it.isPreRelease }
+-        // To get rid of a build part's "+" prefix because Docker tags do not support it, use only the original "build"
+-        // part as the "pre-release" part.
+-        ?.toString()?.replace("${semver.defaultPreRelease}+", "")
+-        // Fall back to a plain version without pre-release or build parts.
+-        ?: semver.version
++    version = "1.0.0"
+ }
+ 
+ logger.lifecycle("Building ORT version $version.")
+

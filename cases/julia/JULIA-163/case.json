@@ -1,0 +1,134 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-163",
+  "bug_id": "JULIA-163",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/519"
+  ],
+  "issue_id": 519,
+  "buggy_revision": "86bc4331eaa08e08bf2af1ba7b50bbbf4af70cdb",
+  "fixed_revision": "e0342c086014719c2ac818262fc4bcde2bcfd39a",
+  "candidate_sha": "e0342c086014719c2ac818262fc4bcde2bcfd39a",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "86bc4331eaa08e08bf2af1ba7b50bbbf4af70cdb",
+  "changed_production_files": [
+    "src/hooks.jl",
+    "src/parse_stream.jl"
+  ],
+  "changed_test_files": [
+    "test/hooks.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-163 incomplete multiline comments"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "67fe400bc36d5d22e787fe1d216191f6921172c59573d25556457cf15a6ef988",
+    "oracle": {
+      "public_api": "JuliaSyntax.core_parser_hook",
+      "upstream_test_file": "test/hooks.jl",
+      "source_evidence": "isolated from the upstream fix regression cases in test/hooks.jl",
+      "upstream_test_patch_sha256": "1792cf39db94788fde8c084f2322314bfc4a5ee4b14dd80b42469f00909c27b6"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "e0342c086014719c2ac818262fc4bcde2bcfd39a",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "fe8c276496d5acb411dfa2c4aa90836ffbf8b84f35927681cff873d6cf221e27",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:55:01Z",
+    "usage": {
+      "prompt_tokens": 2272,
+      "completion_tokens": 655,
+      "total_tokens": 2927
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.82,\n  \"summary\": \"This commit fixes a real defect in incomplete expression detection where trailing whitespace (including comments) caused incorrect ParseError generation in the REPL. Issue #519 demonstrates clear user-facing breakage: entering multi-line input with comments would abort with a ParseError instead of allowing continued input. The fix modifies production files (hooks.jl, parse_stream.jl) and includes test evidence (test/hooks.jl).\",\n  \"evidence\": \"Issue #519 provides clear reproduction steps showing broken REPL behavior after a previous change (#397). The commit message (from issue #538) explains the root cause: the incomplete_tag generation relied on fragile assumptions about trailing whitespace consumption that were broken. The fix reworks incomplete expression detection to be robust to whitespace by walking back from the end of the parse stream. Production files (src/hooks.jl, src/parse_stream.jl) are modified alongside test files (test/hooks.jl).\",\n  \"missing_evidence\": \"The actual diff content is not available to verify the exact code changes. Cannot confirm the test file contents directly. Cannot verify build/test pass status.\",\n  \"validation_risks\": \"The fix touches parse_stream.jl which is core infrastructure, so regressions in other parsing scenarios are possible. The fix also addresses enable_in_core!(false) behavior which is a secondary change that may complicate isolation. Multiple issues are addressed (#518, #519) which slightly reduces isolation.\",\n  \"suggested_tests\": \"Test multi-line REPL input with trailing comments (the exact reproduction from #519). Test incomplete expression detection with various trailing whitespace patterns. Test that `function bla()\\\\n a=1\\\\n b=2 #comment` is correctly detected as incomplete rather than erroring. Test array literals split across lines with trailing comments.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "This commit fixes a real defect in incomplete expression detection where trailing whitespace (including comments) caused incorrect ParseError generation in the REPL. Issue #519 demonstrates clear user-facing breakage: entering multi-line input with comments would abort with a ParseError instead of allowing continued input. The fix modifies production files (hooks.jl, parse_stream.jl) and includes test evidence (test/hooks.jl).",
+    "evidence": "Issue #519 provides clear reproduction steps showing broken REPL behavior after a previous change (#397). The commit message (from issue #538) explains the root cause: the incomplete_tag generation relied on fragile assumptions about trailing whitespace consumption that were broken. The fix reworks incomplete expression detection to be robust to whitespace by walking back from the end of the parse stream. Production files (src/hooks.jl, src/parse_stream.jl) are modified alongside test files (test/hooks.jl).",
+    "missing_evidence": "The actual diff content is not available to verify the exact code changes. Cannot confirm the test file contents directly. Cannot verify build/test pass status.",
+    "validation_risks": "The fix touches parse_stream.jl which is core infrastructure, so regressions in other parsing scenarios are possible. The fix also addresses enable_in_core!(false) behavior which is a secondary change that may complicate isolation. Multiple issues are addressed (#518, #519) which slightly reduces isolation.",
+    "suggested_tests": "Test multi-line REPL input with trailing comments (the exact reproduction from #519). Test incomplete expression detection with various trailing whitespace patterns. Test that `function bla()\\n a=1\\n b=2 #comment` is correctly detected as incomplete rather than erroring. Test array literals split across lines with trailing comments."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-163 incomplete multiline comments"
+    ],
+    "exception_types": [
+      "673293bea404eaddc0c0eadedc5bf517f1b3a674c03dd799e63e961ae12fbcc6",
+      "80f928562a7c515c678e42a3379bdaa5702a9f0d1c78038540dc1cc7cc1fb30e"
+    ],
+    "fingerprints": [
+      "673293bea404eaddc0c0eadedc5bf517f1b3a674c03dd799e63e961ae12fbcc6",
+      "80f928562a7c515c678e42a3379bdaa5702a9f0d1c78038540dc1cc7cc1fb30e"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "e0342c086014719c2ac818262fc4bcde2bcfd39a",
+    "parent_sha": "86bc4331eaa08e08bf2af1ba7b50bbbf4af70cdb",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "89607247cdaae03bd6929c64f1f821beff08fd58409d7ca99309da0884e20db6",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

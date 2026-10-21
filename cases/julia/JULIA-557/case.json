@@ -1,0 +1,146 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-557",
+  "bug_id": "JULIA-557",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "aviatesk/JET.jl",
+  "repository_url": "https://github.com/aviatesk/JET.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "9c1f0d84f74f0679dbb99a4dde1a929da06a59bb",
+  "fixed_revision": "589b0cdb810e7c42b60653403dd388e973aa3805",
+  "candidate_sha": "589b0cdb810e7c42b60653403dd388e973aa3805",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "9c1f0d84f74f0679dbb99a4dde1a929da06a59bb",
+  "changed_production_files": [
+    "src/toplevel/virtualprocess.jl"
+  ],
+  "changed_test_files": [
+    "test/toplevel/test_virtualprocess.jl"
+  ],
+  "trigger_tests": [
+    "conditional closure analysis remains non-top-level"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "64a8f760590f2704a714763146717e4fa28f584b2b32cd6cfbf5cd33d6bf0858",
+    "oracle": {
+      "mwe_basis": "public JET analysis result",
+      "defect": "Conditional closures in rewritten test expressions were concretized at top level, producing an incorrect analysis phase.",
+      "source_evidence": {
+        "upstream_test_file": "test/toplevel/test_virtualprocess.jl",
+        "basis": "End-to-end conditional-closure regression test derived from the upstream fix patch; excludes internal helper assertions."
+      },
+      "upstream_test_patch_sha256": "f7ed03b31b3a6d3adf012cf8abd37e4e95a8d80317c386fce9c812a219c035d7"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.12.7",
+    "julia_version_origin": "project_compat_modern_floor",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.12.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "589b0cdb810e7c42b60653403dd388e973aa3805",
+    "project": "aviatesk/JET.jl",
+    "input_sha256": "b02110ada38e1e70364a1111cec966cf63a27e2d50ad4b3235998e72e0d3327a",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:38:13Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.5988448717412936,
+      "input_tokens": 6796,
+      "output_tokens": 844
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.7, \"summary\": \"The commit changes JET's `@test`/`@test_*` expression rewriting in the virtual top-level process so that test expressions containing anonymous functions defined under conditional (`&&`, `||`, `if`, `comparison`) positions are outlined into a zero-argument thunk before value-discarding transformation. Per the inline rationale, the prior behavior forced concrete execution of the branch condition because virtual processing concretizes top-level closure definitions; the fix keeps such closures inside a method body so inference analyzes the control flow instead of concretely evaluating the condition. That is a correctness fix to analysis behavior on already-supported input, not a new user-facing capability.\", \"evidence\": \"Production change is confined to one file (src/toplevel/virtualprocess.jl) touching `replace_test` and `replace_test_macrocall`, with new internal-only predicates (`is_test_expression_thunk_safe`, `has_conditionally_defined_test_function`, `should_wrap_test_expression_in_thunk`, `wrap_test_expression_in_thunk`). A matching test file is modified (test/toplevel/test_virtualprocess.jl). Runtime evidence reports strict_differential = stable_differential over 3 repetitions with the fixed full suite passing, trigger_mode = test_patch_suite, indicating reproducible fail-before/pass-after behavior. Minimization kept 3 of 5 hunks and reports globally_minimal with all kept hunks necessary, consistent with a single coherent fix rather than bundled unrelated edits.\", \"missing_evidence\": \"No PR title/body, no commit subject, and no linked issue records, so intent and traceability cannot be confirmed (traceability_class = UNVERIFIED); issue_commit_match stays unknown. The full production patch text and the test diff are not provided, and trigger_tests is empty, so the exact failing test name(s) and their assertions are not visible. No pre-fix failure output (error message, false-positive report, or concretization side effect) is included to characterize the original defect directly.\", \"validation_risks\": \"The fix is heuristic and driven by allow-lists of expression heads; a validating test may assert on internals of the rewritten expression or on JET report counts, which are sensitive to Julia version and Test stdlib macro expansion, raising version-coupling risk. Because the guard depends on syntactic shape, a minimized trigger test could pass for reasons unrelated to the concretization bug. Behavior also depends on `Base.remove_linenums!` and gensym-based thunks, so any test comparing expressions structurally could be brittle.\", \"suggested_tests\": \"Add focused tests that (1) run virtual top-level processing on `@test cond && (x -> f(x))(1)` and `@test if cond; y -> g(y); else; z -> h(z); end`, asserting the branch condition is not concretely executed (e.g., a side-effecting condition that would mutate a flag or throw if run) while inference still analyzes both branches; (2) cover `@test skip=<expr>` with a conditionally defined closure to exercise the `conditionally_evaluated = true` path; (3) cover `@test_throws`/`@test_broken` variants through `replace_test_macrocall`; (4) negative cases that must stay inline, such as expressions containing assignments, `local`/`global`, named function definitions, `return`/`break`, and unrecognized macro calls, verifying no thunk wrapping occurs; (5) `do`-block form `@test f(x) do a; ...; end` under a conditional. Run each repeatedly to confirm determinism.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.7,
+    "summary": "The commit changes JET's `@test`/`@test_*` expression rewriting in the virtual top-level process so that test expressions containing anonymous functions defined under conditional (`&&`, `||`, `if`, `comparison`) positions are outlined into a zero-argument thunk before value-discarding transformation. Per the inline rationale, the prior behavior forced concrete execution of the branch condition because virtual processing concretizes top-level closure definitions; the fix keeps such closures inside a method body so inference analyzes the control flow instead of concretely evaluating the condition. That is a correctness fix to analysis behavior on already-supported input, not a new user-facing capability.",
+    "evidence": "Production change is confined to one file (src/toplevel/virtualprocess.jl) touching `replace_test` and `replace_test_macrocall`, with new internal-only predicates (`is_test_expression_thunk_safe`, `has_conditionally_defined_test_function`, `should_wrap_test_expression_in_thunk`, `wrap_test_expression_in_thunk`). A matching test file is modified (test/toplevel/test_virtualprocess.jl). Runtime evidence reports strict_differential = stable_differential over 3 repetitions with the fixed full suite passing, trigger_mode = test_patch_suite, indicating reproducible fail-before/pass-after behavior. Minimization kept 3 of 5 hunks and reports globally_minimal with all kept hunks necessary, consistent with a single coherent fix rather than bundled unrelated edits.",
+    "missing_evidence": "No PR title/body, no commit subject, and no linked issue records, so intent and traceability cannot be confirmed (traceability_class = UNVERIFIED); issue_commit_match stays unknown. The full production patch text and the test diff are not provided, and trigger_tests is empty, so the exact failing test name(s) and their assertions are not visible. No pre-fix failure output (error message, false-positive report, or concretization side effect) is included to characterize the original defect directly.",
+    "validation_risks": "The fix is heuristic and driven by allow-lists of expression heads; a validating test may assert on internals of the rewritten expression or on JET report counts, which are sensitive to Julia version and Test stdlib macro expansion, raising version-coupling risk. Because the guard depends on syntactic shape, a minimized trigger test could pass for reasons unrelated to the concretization bug. Behavior also depends on `Base.remove_linenums!` and gensym-based thunks, so any test comparing expressions structurally could be brittle.",
+    "suggested_tests": "Add focused tests that (1) run virtual top-level processing on `@test cond && (x -> f(x))(1)` and `@test if cond; y -> g(y); else; z -> h(z); end`, asserting the branch condition is not concretely executed (e.g., a side-effecting condition that would mutate a flag or throw if run) while inference still analyzes both branches; (2) cover `@test skip=<expr>` with a conditionally defined closure to exercise the `conditionally_evaluated = true` path; (3) cover `@test_throws`/`@test_broken` variants through `replace_test_macrocall`; (4) negative cases that must stay inline, such as expressions containing assignments, `local`/`global`, named function definitions, `return`/`break`, and unrecognized macro calls, verifying no thunk wrapping occurs; (5) `do`-block form `@test f(x) do a; ...; end` under a conditional. Run each repeatedly to confirm determinism."
+  },
+  "metadata_recovery": {
+    "production_files_source": "git diff --name-only buggy_revision..fixed_revision filtered src/ext",
+    "recovered_at": "2026-08-28T22:25:06.413840+00:00"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "conditional closure analysis remains non-top-level"
+    ],
+    "exception_types": [
+      "8792b8af112b16fb66b69035cf4c263db2e98107f4ca6de14a0c5bd3fc80a30a",
+      "ae71685ffe5bb2daea48dbb4788d9d11d149c84bd1768ebdfc0c54b29863e5ef"
+    ],
+    "fingerprints": [
+      "8792b8af112b16fb66b69035cf4c263db2e98107f4ca6de14a0c5bd3fc80a30a",
+      "ae71685ffe5bb2daea48dbb4788d9d11d149c84bd1768ebdfc0c54b29863e5ef"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "589b0cdb810e7c42b60653403dd388e973aa3805",
+    "parent_sha": "9c1f0d84f74f0679dbb99a4dde1a929da06a59bb",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "f1e86323e8cfacdc8fefeb0da150ba9c6a00def0586220992406a547a9751a10",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

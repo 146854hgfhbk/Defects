@@ -1,0 +1,50 @@
+diff --git a/.github/workflows/main.yml b/.github/workflows/main.yml
+index dc62a5d..ebbc4c0 100644
+--- a/.github/workflows/main.yml
++++ b/.github/workflows/main.yml
+@@ -12,8 +12,8 @@ jobs:
+       - name: Install OTP and Elixir
+         uses: erlef/setup-elixir@v1
+         with:
+-          otp-version: 23.1.1
+-          elixir-version: 1.11.2
++          otp-version: 24.3
++          elixir-version: 1.13.3
+ 
+       - name: Install dependencies
+         run: mix deps.get
+@@ -37,8 +37,6 @@ jobs:
+           - otp: 24.3
+             elixir: 1.13.3
+             coverage: true
+-          - otp: 23.1.1
+-            elixir: 1.11.3
+           - otp: 24.3
+             elixir: 1.12.3
+     env:
+diff --git a/lib/mimic.ex b/lib/mimic.ex
+index 52bf548..7326297 100644
+--- a/lib/mimic.ex
++++ b/lib/mimic.ex
+@@ -182,6 +182,8 @@ defmodule Mimic do
+   """
+   @spec stub_with(module(), module()) :: module()
+   def stub_with(module, mocking_module) do
++    raise_if_module_not_defined!(mocking_module)
++
+     module
+     |> Server.stub_with(mocking_module)
+     |> validate_server_response(:stub)
+@@ -468,6 +470,12 @@ defmodule Mimic do
+     end
+   end
+ 
++  defp raise_if_module_not_defined!(module) do
++    unless Code.ensure_loaded?(module) do
++      raise ArgumentError, "Module #{inspect(module)} not defined"
++    end
++  end
++
+   defp validate_server_response({:ok, module}, _action), do: module
+ 
+   defp validate_server_response({:error, :not_global_owner}, :reject) do

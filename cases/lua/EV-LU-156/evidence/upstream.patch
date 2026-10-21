@@ -1,0 +1,70 @@
+diff --git a/lua/pl/dir.lua b/lua/pl/dir.lua
+index f4a117b..3cf3b60 100755
+--- a/lua/pl/dir.lua
++++ b/lua/pl/dir.lua
+@@ -208,10 +208,11 @@ local function file_op (is_copy,src,dest,flag)
+             dest = path.normcase(dest)
+             local cmd = is_copy and 'copy' or 'rename'
+             local res, err = execute_command('copy',two_arguments(src,dest))
+-            if not res then return nil,err end
++            if not res then return false,err end
+             if not is_copy then
+                 return execute_command('del',quote_argument(src))
+             end
++            return true
+         else
+             if path.isdir(dest) then
+                 dest = path.join(dest,path.basename(src))
+diff --git a/tests/test-dir.lua b/tests/test-dir.lua
+index 07687c8..2f4bfd6 100644
+--- a/tests/test-dir.lua
++++ b/tests/test-dir.lua
+@@ -27,15 +27,46 @@ local err, msg = dir.movefile( fileName, newFileName )
+ assert( err, msg )
+ 
+ -- Check to make sure the original file is gone
+-
+ asserteq( path.exists( fileName ), false )
+ 
+ -- Check to make sure the new file is there
+-asserteq (path.exists( newFileName ) , newFileName)
++asserteq( path.exists( newFileName ) , newFileName )
++
++-- Try to move the original file again (which should fail)
++local newFileName2 = path.tmpname()
++local err, msg = dir.movefile( fileName, newFileName2 )
++asserteq( err, false )
+ 
+ -- Clean up
+ file.delete( newFileName )
+ 
++
++-- Test copy files -----------------------------------------
++
++-- Create a dummy file
++local fileName = path.tmpname()
++file.write( fileName, string.rep( "poot ", 1000 ) )
++
++local newFileName = path.tmpname()
++local err, msg = dir.copyfile( fileName, newFileName )
++
++-- Make sure the move is successful
++assert( err, msg )
++
++-- Check to make sure the new file is there
++asserteq( path.exists( newFileName ) , newFileName )
++
++-- Try to move a non-existant file (which should fail)
++local fileName2 = path.tmpname()
++local newFileName2 = path.tmpname()
++local err, msg = dir.copyfile( fileName2, newFileName2 )
++asserteq( err, false )
++
++-- Clean up the files
++file.delete( fileName )
++file.delete( newFileName )
++
++
+ -- have NO idea why forcing the return code is necessary here (Windows 7 64-bit)
+ os.exit(0)
+ 

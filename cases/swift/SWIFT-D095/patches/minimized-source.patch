@@ -1,0 +1,138 @@
+diff --git a/Sources/SwiftParser/Lexer/Cursor.swift b/Sources/SwiftParser/Lexer/Cursor.swift
+index 40a645af..ab755c22 100644
+--- a/Sources/SwiftParser/Lexer/Cursor.swift
++++ b/Sources/SwiftParser/Lexer/Cursor.swift
+@@ -684,7 +684,7 @@ extension Lexer.Cursor {
+ 
+   /// Returns `true` if the comment spaned multiple lines and `false` otherwise.
+   /// Assumes that the curser is currently pointing at the `*` of the opening `/*`.
+-  mutating func advanceToEndOfSlashStarComment() -> Bool {
++  mutating func advanceToEndOfSlashStarComment(slashPosition: Lexer.Cursor) -> TriviaResult {
+     precondition(self.previous == UInt8(ascii: "/"))
+     // Make sure to advance over the * so that we don't incorrectly handle /*/ as
+     // the beginning and end of the comment.
+@@ -692,16 +692,17 @@ extension Lexer.Cursor {
+     precondition(consumedStar)
+ 
+     var depth = 1
+-    var isMultiline = false
++    var newlinePresence = NewlinePresence.absent
++    var error: LexingDiagnostic? = nil
+ 
+-    while true {
++    LOOP: while true {
+       switch self.advance() {
+       case UInt8(ascii: "*"):
+         // Check for a '*/'
+         if self.advance(matching: "/") {
+           depth -= 1
+           if depth == 0 {
+-            return isMultiline
++            break LOOP
+           }
+         }
+       case UInt8(ascii: "/"):
+@@ -711,14 +712,17 @@ extension Lexer.Cursor {
+         }
+ 
+       case UInt8(ascii: "\n"), UInt8(ascii: "\r"):
+-        isMultiline = true
++        newlinePresence = .present
+         continue
+       case nil:
+-        return isMultiline
++        error = LexingDiagnostic(.unterminatedBlockComment, position: slashPosition)
++        break LOOP
+       case .some:
+         continue
+       }
+     }
++
++    return TriviaResult(newlinePresence: newlinePresence, error: error)
+   }
+ 
+   /// If this is the opening delimiter of a raw string literal, return the number
+@@ -1063,7 +1067,7 @@ extension Lexer.Cursor {
+ // MARK: - Trivia
+ 
+ extension Lexer.Cursor {
+-  fileprivate enum NewlinePresence {
++  enum NewlinePresence {
+     case absent
+     case present
+   }
+@@ -1080,7 +1084,7 @@ extension Lexer.Cursor {
+     case escapedNewlineInMultiLineStringLiteral
+   }
+ 
+-  fileprivate struct TriviaResult {
++  struct TriviaResult {
+     let newlinePresence: NewlinePresence
+     let error: LexingDiagnostic?
+   }
+@@ -1137,7 +1141,11 @@ extension Lexer.Cursor {
+           self.advanceToEndOfLine()
+           continue
+         case UInt8(ascii: "*"):
+-          _ = self.advanceToEndOfSlashStarComment()
++          let starSlashResult = self.advanceToEndOfSlashStarComment(slashPosition: start)
++          if starSlashResult.newlinePresence == .present {
++            newlinePresence = .present
++          }
++          error = error ?? starSlashResult.error
+           continue
+         default:
+           break
+diff --git a/Sources/SwiftParser/TriviaParser.swift b/Sources/SwiftParser/TriviaParser.swift
+index b3a1ab5b..28dbec44 100644
+--- a/Sources/SwiftParser/TriviaParser.swift
++++ b/Sources/SwiftParser/TriviaParser.swift
+@@ -191,7 +191,7 @@ extension Lexer.Cursor {
+     // "/**/": .blockComment.
+     precondition(self.previous == UInt8(ascii: "/") && self.is(at: "*"))
+     let isDocComment = self.input.count > 2 && self.is(offset: 1, at: "*") && self.is(offset: 2, notAt: "/")
+-    _ = self.advanceToEndOfSlashStarComment()
++    _ = self.advanceToEndOfSlashStarComment(slashPosition: start)
+     let contents = start.text(upTo: self)
+     return isDocComment ? .docBlockComment(contents) : .blockComment(contents)
+   }
+diff --git a/Sources/SwiftParserDiagnostics/LexerDiagnosticMessages.swift b/Sources/SwiftParserDiagnostics/LexerDiagnosticMessages.swift
+index 52958b40..495a3105 100644
+--- a/Sources/SwiftParserDiagnostics/LexerDiagnosticMessages.swift
++++ b/Sources/SwiftParserDiagnostics/LexerDiagnosticMessages.swift
+@@ -58,6 +58,7 @@ public enum StaticTokenError: String, DiagnosticMessage {
+   case spaceAtEndOfRegexLiteral = "bare slash regex literal may not end with space"
+   case multilineRegexClosingNotOnNewline = "multi-line regex closing delimiter must appear on new line"
+   case unprintableAsciiCharacter = "unprintable ASCII character found in source file"
++  case unterminatedBlockComment = "unterminated '/*' comment"
+ 
+   public var message: String { self.rawValue }
+ 
+@@ -170,6 +171,7 @@ public extension SwiftSyntax.TokenDiagnostic {
+     case .spaceAtEndOfRegexLiteral: return StaticTokenError.spaceAtEndOfRegexLiteral
+     case .multilineRegexClosingNotOnNewline: return StaticTokenError.multilineRegexClosingNotOnNewline
+     case .unprintableAsciiCharacter: return StaticTokenError.unprintableAsciiCharacter
++    case .unterminatedBlockComment: return StaticTokenError.unterminatedBlockComment
+     }
+   }
+ 
+diff --git a/Sources/SwiftSyntax/TokenDiagnostic.swift b/Sources/SwiftSyntax/TokenDiagnostic.swift
+index 64ab846e..02d80d92 100644
+--- a/Sources/SwiftSyntax/TokenDiagnostic.swift
++++ b/Sources/SwiftSyntax/TokenDiagnostic.swift
+@@ -49,6 +49,7 @@ public struct TokenDiagnostic: Hashable {
+     case unexpectedBlockCommentEnd
+     case unicodeCurlyQuote
+     case unprintableAsciiCharacter
++    case unterminatedBlockComment
+     case spaceAtStartOfRegexLiteral
+     case spaceAtEndOfRegexLiteral
+     case multilineRegexClosingNotOnNewline
+@@ -125,6 +126,7 @@ public struct TokenDiagnostic: Hashable {
+     case .unexpectedBlockCommentEnd: return .error
+     case .unicodeCurlyQuote: return .error
+     case .unprintableAsciiCharacter: return .error
++    case .unterminatedBlockComment: return .error
+     case .spaceAtStartOfRegexLiteral: return .error
+     case .spaceAtEndOfRegexLiteral: return .error
+     case .multilineRegexClosingNotOnNewline: return .error

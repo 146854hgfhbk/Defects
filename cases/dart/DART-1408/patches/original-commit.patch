@@ -1,0 +1,33 @@
+diff --git a/lib/src/codepage.dart b/lib/src/codepage.dart
+index 2cc5fbd36feaf56571b22b31a46a14936e418b62..296a116402aca105f645ad644c7d6f0f85e24ed2 100644
+--- a/lib/src/codepage.dart
++++ b/lib/src/codepage.dart
+@@ -256,7 +256,7 @@ CodePageDecoder _createDecoder(String characters) {
+       throw ArgumentError.value(
+           characters, "characters", "Must contain 256 characters");
+     }
+-    result[i] = char;
++    result[i++] = char;
+     allChars |= char;
+   }
+   if (i < 256) {
+diff --git a/test/codepage_test.dart b/test/codepage_test.dart
+index 2105f27a459b17370b0d2b650b31ad9f6c0f5637..e93ef30b9b4ed63245ce5fcd9d6134c1ce221167 100644
+--- a/test/codepage_test.dart
++++ b/test/codepage_test.dart
+@@ -60,4 +60,15 @@ void main() {
+     var decoded = latin3.decode(encoded, allowInvalid: true);
+     expect(decoded, latin2text);
+   });
++
++  test("Custom code page", () {
++    var cp = CodePage("custom", "ABCDEF" + "\uFFFD" * 250);
++    var result = cp.encode("BADCAFE");
++    expect(result, [1, 0, 3, 2, 0, 5, 4]);
++    expect(() => cp.encode("GAD"), throwsFormatException);
++    expect(cp.encode("GAD", invalidCharacter: 0x3F), [0x3F, 0, 3]);
++    expect(cp.decode([1, 0, 3, 2, 0, 5, 4]), "BADCAFE");
++    expect(() => cp.decode([6, 1, 255]), throwsFormatException);
++    expect(cp.decode([6, 1, 255], allowInvalid: true), "\u{FFFD}B\u{FFFD}");
++  });
+ }

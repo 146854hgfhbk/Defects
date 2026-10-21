@@ -1,0 +1,264 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-433",
+  "bug_id": "JULIA-433",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaDiff/TaylorSeries.jl",
+  "repository_url": "https://github.com/JuliaDiff/TaylorSeries.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaDiff/TaylorSeries.jl/issues/342"
+  ],
+  "issue_id": 342,
+  "buggy_revision": "5895948554c7161bf93aaa9f59543d8bbbbae236",
+  "fixed_revision": "9a16131fd1ba6a7616c99be084b5142b90b2ed77",
+  "candidate_sha": "9a16131fd1ba6a7616c99be084b5142b90b2ed77",
+  "source": "SWE-rebench-V2",
+  "instance_id": "juliadiff__taylorseries.jl-343",
+  "swe": {
+    "base_commit": "5895948554c7161bf93aaa9f59543d8bbbbae236",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/JuliaDiff/TaylorSeries.jl/pull/343",
+    "pr_number": 343,
+    "merge_commit": "9a16131fd1ba6a7616c99be084b5142b90b2ed77",
+    "issue_url": "https://github.com/JuliaDiff/TaylorSeries.jl/issues/342",
+    "merged_at": "2023-12-01T00:57:54Z",
+    "pr_title": "Fix bug in Taylor1 constructor for mixtures and add tests",
+    "patch": "diff --git a/Project.toml b/Project.toml\nindex 591a5759..2075eeed 100644\n--- a/Project.toml\n+++ b/Project.toml\n@@ -1,7 +1,7 @@\n name = \"TaylorSeries\"\n uuid = \"6aa5eb33-94cf-58f4-a9d0-e4b2c4fc25ea\"\n repo = \"https://github.com/JuliaDiff/TaylorSeries.jl.git\"\n-version = \"0.15.2\"\n+version = \"0.15.3\"\n \n [deps]\n LinearAlgebra = \"37e2e46d-f89d-539d-b4ee-838fcccc9c8e\"\ndiff --git a/src/constructors.jl b/src/constructors.jl\nindex a4953aaf..2c40aa71 100644\n--- a/src/constructors.jl\n+++ b/src/constructors.jl\n@@ -48,7 +48,7 @@ Taylor1(x::Taylor1{T}) where {T<:Number} = x\n Taylor1(coeffs::Array{T,1}, order::Int) where {T<:Number} = Taylor1{T}(coeffs, order)\n Taylor1(coeffs::Array{T,1}) where {T<:Number} = Taylor1(coeffs, length(coeffs)-1)\n function Taylor1(x::T, order::Int) where {T<:Number}\n-    v = fill(zero(x), order+1)\n+    v = [zero(x) for _ in 1:order+1]\n     v[1] = x\n     return Taylor1(v, order)\n end\n",
+    "test_patch": "diff --git a/test/mixtures.jl b/test/mixtures.jl\nindex dfb26ac6..374de8dd 100644\n--- a/test/mixtures.jl\n+++ b/test/mixtures.jl\n@@ -347,6 +347,26 @@ using Test\n     @test_throws ArgumentError Taylor1(2) - TaylorN(1)\n     @test_throws ArgumentError Taylor1(2) * TaylorN(1)\n     @test_throws ArgumentError TaylorN(2) / Taylor1(1)\n+\n+    # Issue #342 and PR #343\n+    z0N = -1.333+get_variables()[1]\n+    z = Taylor1(z0N,20)\n+    z[20][1][1] = 5.0\n+    @test z[0][0][1] == -1.333\n+    @test z[20][1][1] == 5.0\n+    for i in 1:19\n+        for j in eachindex(z[i].coeffs)\n+            @test all(z[i].coeffs[j][:] .== 0.0)\n+        end\n+    end\n+    @test all(z[20][1][2:end] .== 0.0)\n+    intz = integrate(z)\n+    intz[20] = z[0]\n+    @test intz[1] == z[0]\n+    @test intz[20] == z[0]\n+    for i in 2:19\n+        @test iszero(intz[i])\n+    end\n end\n \n @testset \"Tests with nested Taylor1s\" begin\n",
+    "FAIL_TO_PASS": [
+      "Tests with mixtures of Taylor1 and TaylorN",
+      "Tests with nested Taylor1s",
+      "Mutating functions",
+      "Tests Taylor1 and TaylorN expansions over Intervals",
+      "Broadcasting with Taylor1 expansions",
+      "Broadcasting with HomogeneousPolynomial and TaylorN",
+      "Broadcasting with mixtures Taylor1{TalorN{T}}",
+      "Broadcasting with mixtures TaylorN{Talor1{T}}",
+      "Testing an identity proved by Euler (8 variables)",
+      "Test inspired by Fateman (takes a few seconds)"
+    ],
+    "PASS_TO_PASS": [
+      "Aqua tests (performance)",
+      "Aqua tests (additional)",
+      "Tests for Taylor1 expansions",
+      "Test inv for Matrix{Taylor1{Float64}}",
+      "Matrix multiplication for Taylor1",
+      "Test hash tables",
+      "Tests for HomogeneousPolynomial and TaylorN",
+      "Integrate for several variables",
+      "Consistency of coeff_table (differentiate)"
+    ],
+    "problem_statement": "Bug in Taylor1 constructor for mixtures\nWhen modifying in-place a single coefficient of a `Taylor1{TaylorN{Float64}}`, the value is copied almost everywhere:\r\n```julia\r\njulia> using TaylorSeries\r\n\r\njulia> set_variables(\"x\", numvars=2, order=6)\r\n2-element Vector{TaylorN{Float64}}:\r\n  1.0 x₁ + 𝒪(‖x‖⁷)\r\n  1.0 x₂ + 𝒪(‖x‖⁷)\r\n\r\njulia> z0N = -1.333+get_variables()[1]\r\n - 1.333 + 1.0 x₁ + 𝒪(‖x‖⁷)\r\n\r\njulia> z = Taylor1(z0N,5)\r\n  - 1.333 + 1.0 x₁ + 𝒪(‖x‖⁷) + 𝒪(t⁶)\r\n\r\njulia> z[5][1][1] = 5.0\r\n5.0\r\n\r\njulia> z\r\n  - 1.333 + 1.0 x₁ + 𝒪(‖x‖⁷) + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t² + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t³ + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t⁴ + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t⁵ + 𝒪(t⁶)\r\n```\r\n\r\nThe expected output is simply:\r\n```julia\r\njulia> z\r\n  - 1.333 + 1.0 x₁ + 𝒪(‖x‖⁷) + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t⁵ + 𝒪(t⁶)\r\n```\r\n\r\nUpdate: while writing this issue I found the culprit and will submit a PR soon!",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()' 2>&1"
+    },
+    "license": "custom-check-github",
+    "image_name": "docker.io/swerebenchv2/juliadiff-taylorseries.jl:343-5895948",
+    "instance_id": "juliadiff__taylorseries.jl-343",
+    "repo": "JuliaDiff/TaylorSeries.jl",
+    "pr_description": "Fixes #342. Essentially, `fill` was used in a `Taylor1` constructor around here\r\nhttps://github.com/JuliaDiff/TaylorSeries.jl/blob/5895948554c7161bf93aaa9f59543d8bbbbae236/src/constructors.jl#L51\r\nwhich [according to the docs](https://docs.julialang.org/en/v1/base/arrays/#Base.fill) works fine when the underlying type is immutable, but causes issues for mutable types, such as `Array`.",
+    "created_at": "2023-11-29 18:51:57",
+    "language": "julia",
+    "interface": "No new interfaces are introduced.",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.95,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports that in-place modification of a nested Taylor1 coefficient propagates incorrectly, and expects only the targeted term to change. The added test reproduces this scenario, checks that only the highest-order term is non‑zero, and validates integration behavior, directly matching the described bug. No test‑suite coupling, hidden naming expectations, external dependencies, ambiguous specs, unrelated patch artifacts, or domain‑specific knowledge beyond the library are present. Therefore the task is clearly specified and test‑aligned, making it a solvable (A) case.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 3,
+      "num_modified_lines": null,
+      "pr_author": "PerezHz",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaDiff/TaylorSeries.jl/pull/343"
+    }
+  },
+  "parent_sha": "5895948554c7161bf93aaa9f59543d8bbbbae236",
+  "changed_production_files": [
+    "src/constructors.jl"
+  ],
+  "changed_test_files": [
+    "test/mixtures.jl"
+  ],
+  "trigger_tests": [
+    "Tests with mixtures of Taylor1 and TaylorN",
+    "Tests with nested Taylor1s",
+    "Mutating functions",
+    "Tests Taylor1 and TaylorN expansions over Intervals",
+    "Broadcasting with Taylor1 expansions",
+    "Broadcasting with HomogeneousPolynomial and TaylorN",
+    "Broadcasting with mixtures Taylor1{TalorN{T}}",
+    "Broadcasting with mixtures TaylorN{Talor1{T}}",
+    "Testing an identity proved by Euler (8 variables)",
+    "Test inspired by Fateman (takes a few seconds)"
+  ],
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "Tests with mixtures of Taylor1 and TaylorN",
+        "Tests with nested Taylor1s",
+        "Mutating functions",
+        "Tests Taylor1 and TaylorN expansions over Intervals",
+        "Broadcasting with Taylor1 expansions",
+        "Broadcasting with HomogeneousPolynomial and TaylorN",
+        "Broadcasting with mixtures Taylor1{TalorN{T}}",
+        "Broadcasting with mixtures TaylorN{Talor1{T}}",
+        "Testing an identity proved by Euler (8 variables)",
+        "Test inspired by Fateman (takes a few seconds)"
+      ],
+      "added_testsets": [],
+      "assertion_expression_sha256": [
+        "f704ec07afae96502b37f89c2e7804f415b22a6e1de35493192b12c9ba7b23c2",
+        "6ccd457c51e2c3286138c7734d6d78545ab687b177ca54df47416bf48ee21429",
+        "e03f288653280aeeb5c8c8674d2419358ab08186ff035c1315ac9cb4479282eb",
+        "a68e1c0d96dabf0f66c8fa7d528023b918b41dc8085f361f1355716bbbb6fc53",
+        "4fdbf6db1242fc42cf092fc86de3387021e6e9fda01c62f8f4f3adf468aa7136",
+        "16ac68c780a52b1f86ecf33814b2ad17eb9502e1d092efea58f4b931c293e824",
+        "eb553b73eac5c58c9ac8fb432148108cb6ef4ddf585e0b4a113ec8ee606808f4"
+      ]
+    },
+    "sha256": "00d1cb72eb1b895bfb48d25e536e87d9a96503334dc865804c1faf2605e3cdc0"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "swe_rebench_julia_base_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "9a16131fd1ba6a7616c99be084b5142b90b2ed77",
+    "project": "JuliaDiff/TaylorSeries.jl",
+    "input_sha256": "1d64e1e5265afebfa87e24b0ea9ed60b164622b810c2cbd9c279f07f1400b32d",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:52:51Z",
+    "usage": {
+      "prompt_tokens": 2148,
+      "completion_tokens": 550,
+      "total_tokens": 2698
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.93,\n  \"summary\": \"Fix for a bug in the Taylor1 constructor when used with mutable element types (mixtures of Taylor1 and TaylorN). The `fill` function was sharing the same object reference across all array elements, causing mutations to one coefficient to inadvertently affect others. Replaced with a comprehension that creates independent zero elements.\",\n  \"evidence\": \"The commit message explicitly references 'Fix bug in Taylor1 constructor for mixtures' and issue #342 / PR #343. The production change is a single-line fix replacing `fill(zero(x), order+1)` with `[zero(x) for _ in 1:order+1]`. This is a well-known Julia pitfall: `fill` reuses the same object for mutable types, so modifying one element modifies all. The test verifies that setting `z[20][1][1] = 5.0` does not affect other coefficients, which would fail with the old `fill`-based implementation.\",\n  \"missing_evidence\": \"No linked issue body is available (issue #342 not provided), but the commit message and test comments clearly reference it. No CI logs showing the test failure before the fix.\",\n  \"validation_risks\": \"Low risk. The fix is minimal and well-understood. The test directly exercises the aliasing bug by mutating one element and checking others remain zero.\",\n  \"suggested_tests\": \"1. Construct a Taylor1 with a mutable TaylorN coefficient, mutate one coefficient element, verify all others remain unchanged. 2. Verify that `Taylor1(TaylorN(...), order)` coefficients are independent objects using `===` identity checks.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.93,
+    "summary": "Fix for a bug in the Taylor1 constructor when used with mutable element types (mixtures of Taylor1 and TaylorN). The `fill` function was sharing the same object reference across all array elements, causing mutations to one coefficient to inadvertently affect others. Replaced with a comprehension that creates independent zero elements.",
+    "evidence": "The commit message explicitly references 'Fix bug in Taylor1 constructor for mixtures' and issue #342 / PR #343. The production change is a single-line fix replacing `fill(zero(x), order+1)` with `[zero(x) for _ in 1:order+1]`. This is a well-known Julia pitfall: `fill` reuses the same object for mutable types, so modifying one element modifies all. The test verifies that setting `z[20][1][1] = 5.0` does not affect other coefficients, which would fail with the old `fill`-based implementation.",
+    "missing_evidence": "No linked issue body is available (issue #342 not provided), but the commit message and test comments clearly reference it. No CI logs showing the test failure before the fix.",
+    "validation_risks": "Low risk. The fix is minimal and well-understood. The test directly exercises the aliasing bug by mutating one element and checking others remain zero.",
+    "suggested_tests": "1. Construct a Taylor1 with a mutable TaylorN coefficient, mutate one coefficient element, verify all others remain unchanged. 2. Verify that `Taylor1(TaylorN(...), order)` coefficients are independent objects using `===` identity checks."
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 10,
+    "tests": [
+      "Tests with mixtures of Taylor1 and TaylorN",
+      "Tests with nested Taylor1s",
+      "Mutating functions",
+      "Tests Taylor1 and TaylorN expansions over Intervals",
+      "Broadcasting with Taylor1 expansions",
+      "Broadcasting with HomogeneousPolynomial and TaylorN",
+      "Broadcasting with mixtures Taylor1{TalorN{T}}",
+      "Broadcasting with mixtures TaylorN{Talor1{T}}",
+      "Testing an identity proved by Euler (8 variables)",
+      "Test inspired by Fateman (takes a few seconds)"
+    ],
+    "exception_types": [
+      "4dde4ef55ac837d2627b5151048655d725677e3a7036bd5fdabd77444d3fee2c",
+      "a490e7f71f7be50ee3b6b6d1faffdc2a4ef0d9f2d9689944dd4bf94c661513d2"
+    ],
+    "fingerprints": [
+      "4dde4ef55ac837d2627b5151048655d725677e3a7036bd5fdabd77444d3fee2c",
+      "a490e7f71f7be50ee3b6b6d1faffdc2a4ef0d9f2d9689944dd4bf94c661513d2"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

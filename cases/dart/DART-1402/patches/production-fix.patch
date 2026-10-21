@@ -1,0 +1,15 @@
+diff --git a/lib/src/frame.dart b/lib/src/frame.dart
+index 3225efd261930ac09cb143ee2ed90ef515620ad2..7ffc05f0890a160e330ab2169d38e7c7dcd9ea69 100644
+--- a/lib/src/frame.dart
++++ b/lib/src/frame.dart
+@@ -149,7 +149,9 @@ class Frame {
+         var member = match[1]
+             .replaceAll(_asyncBody, '<async>')
+             .replaceAll('<anonymous closure>', '<fn>');
+-        var uri = Uri.parse(match[2]);
++        var uri = match[2].startsWith('<data:')
++            ? Uri.dataFromString('')
++            : Uri.parse(match[2]);
+ 
+         var lineAndColumn = match[3].split(':');
+         var line =

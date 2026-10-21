@@ -1,0 +1,240 @@
+diff --git a/test/comments/classes.unit b/test/comments/classes.unit
+index 0f6c4a5f..fdf38360 100644
+--- a/test/comments/classes.unit
++++ b/test/comments/classes.unit
+@@ -33,9 +33,7 @@ class A {
+ class A {
+   /* comment */}
+ <<<
+-class A {
+-  /* comment */
+-}
++class A {/* comment */}
+ >>> inline block comment
+ class A {  /* comment */  }
+ <<<
+diff --git a/test/comments/extensions.unit b/test/comments/extensions.unit
+index 67123f31..2b34b9ab 100644
+--- a/test/comments/extensions.unit
++++ b/test/comments/extensions.unit
+@@ -33,9 +33,7 @@ extension A on B {
+ extension A on B {
+   /* comment */}
+ <<<
+-extension A on B {
+-  /* comment */
+-}
++extension A on B {/* comment */}
+ >>> inline block comment
+ extension A on B {  /* comment */  }
+ <<<
+diff --git a/test/comments/functions.unit b/test/comments/functions.unit
+index 00c235b2..45ac999a 100644
+--- a/test/comments/functions.unit
++++ b/test/comments/functions.unit
+@@ -143,4 +143,36 @@ function([
+   parameter,
+ ] /* c */) {
+   ;
++}
++>>>
++function(
++    /* comment */ int a, int b, int c,
++    [direction]) {
++  ;
++}
++<<<
++function(
++    /* comment */ int a, int b, int c,
++    [direction]) {
++  ;
++}
++>>>
++function(
++    /* comment */ int a, int b, int c) {
++  ;
++}
++<<<
++function(
++    /* comment */ int a, int b, int c) {
++  ;
++}
++>>>
++function(
++    /* comment */ int a, int b, int c, int d) {
++  ;
++}
++<<<
++function(/* comment */ int a, int b,
++    int c, int d) {
++  ;
+ }
+\ No newline at end of file
+diff --git a/test/comments/statements.stmt b/test/comments/statements.stmt
+index d56ad602..6cc22372 100644
+--- a/test/comments/statements.stmt
++++ b/test/comments/statements.stmt
+@@ -54,4 +54,33 @@ while (true) {
+ <<<
+ while (true) {
+   // comment
++}
++>>>
++main() {
++  /* comment */ statement;
++}
++<<<
++main() {
++  /* comment */ statement;
++}
++>>>
++main() {
++  code;
++
++  /* comment */ statement;
++}
++<<<
++main() {
++  code;
++
++  /* comment */ statement;
++}
++>>>
++main() {
++  while (b)
++  /*unreachable*/ {}
++}
++<<<
++main() {
++  while (b) /*unreachable*/ {}
+ }
+\ No newline at end of file
+diff --git a/test/comments/top_level.unit b/test/comments/top_level.unit
+index d1fe80f6..74a269a4 100644
+--- a/test/comments/top_level.unit
++++ b/test/comments/top_level.unit
+@@ -190,14 +190,12 @@ library a; /* comment */ import 'b.dart';
+ <<<
+ library a;
+ 
+-/* comment */
+-import 'b.dart';
++/* comment */ import 'b.dart';
+ >>> inline block comment between directives
+ import 'a.dart'; /* comment */ import 'b.dart';
+ <<<
+ import 'a.dart';
+-/* comment */
+-import 'b.dart';
++/* comment */ import 'b.dart';
+ >>> block comment between directives
+ import 'a.dart'; /* comment */
+ import 'b.dart';
+diff --git a/test/regression/0100/0178.unit b/test/regression/0100/0178.unit
+index 863284e4..ca2a2a22 100644
+--- a/test/regression/0100/0178.unit
++++ b/test/regression/0100/0178.unit
+@@ -6,8 +6,7 @@ void main() {
+ }
+ <<<
+ import 'dart:async';
+-/* soup */
+-import 'dart:io';
++/* soup */ import 'dart:io';
+ 
+ void main() {
+   print('hi');
+diff --git a/test/regression/0800/0837.unit b/test/regression/0800/0837.unit
+new file mode 100644
+index 00000000..16fad4e8
+--- /dev/null
++++ b/test/regression/0800/0837.unit
+@@ -0,0 +1,45 @@
++>>>
++String var80 = () => ('Ss\u2665\u26659d').replanullceRange( {  }, var3,/* aaaaaaaaaaaaaaaaaaaaaaaaaaexportaaa */-9223372036854775807, -64, arexternalg3: '\u26650P'..[(var2 << var5..ff8[var2aoeu])] = {  });
++<<<
++String var80 = () => ('Ss\u2665\u26659d').replanullceRange({}, var3,
++    /* aaaaaaaaaaaaaaaaaaaaaaaaaaexportaaa */ -9223372036854775807, -64,
++    arexternalg3: '\u26650P'
++      ..[(var2 << var5
++        ..ff8[var2aoeu])] = {});
++>>>
++String var80 = () => ('Ss\u2665\u26659d').replanullceRange({}, var3,
++    /* aaaaaaaaaaaaaaaaaaaaaaaaaaexportaaa */ -9223372036854775807, -64,
++    arexternalg3: '\u26650P'
++      ..[(var2 << var5
++        ..ff8[var2aoeu])] = {});
++<<<
++String var80 = () => ('Ss\u2665\u26659d').replanullceRange({}, var3,
++    /* aaaaaaaaaaaaaaaaaaaaaaaaaaexportaaa */ -9223372036854775807, -64,
++    arexternalg3: '\u26650P'
++      ..[(var2 << var5
++        ..ff8[var2aoeu])] = {});
++>>>
++doString var80 = ('Ss\u2665\u26659d').replaceRange( {  }, var3,/* aaaaaaaaaaaaaaaaaaaaaaaaaaaaa static*/-9223372036854775807, -64, arg3: '\u26650P');
++<<<
++doString var80 = ('Ss\u2665\u26659d').replaceRange({}, var3,
++    /* aaaaaaaaaaaaaaaaaaaaaaaaaaaaa static*/ -9223372036854775807, -64,
++    arg3: '\u26650P');
++>>>
++doString var80 = ('Ss\u2665\u26659d').replaceRange({}, var3,
++    /* aaaaaaaaaaaaaaaaaaaaaaaaaaaaa static*/ -9223372036854775807, -64,
++    arg3: '\u26650P');
++<<<
++doString var80 = ('Ss\u2665\u26659d').replaceRange({}, var3,
++    /* aaaaaaaaaaaaaaaaaaaaaaaaaaaaa static*/ -9223372036854775807, -64,
++    arg3: '\u26650P');
++>>>
++doubnullle var70 = foooooooooooooooooooooooooooooo( /* aaaaaaaaaaaaaaaaaaaaaaaaaaaa */var8, var8);
++<<<
++doubnullle var70 = foooooooooooooooooooooooooooooo(
++    /* aaaaaaaaaaaaaaaaaaaaaaaaaaaa */ var8, var8);
++>>>
++doubnullle var70 = foooooooooooooooooooooooooooooo(
++    /* aaaaaaaaaaaaaaaaaaaaaaaaaaaa */ var8, var8);
++<<<
++doubnullle var70 = foooooooooooooooooooooooooooooo(
++    /* aaaaaaaaaaaaaaaaaaaaaaaaaaaa */ var8, var8);
+\ No newline at end of file
+diff --git a/test/regression/other/block_comment.unit b/test/regression/other/block_comment.unit
+new file mode 100644
+index 00000000..9c183272
+--- /dev/null
++++ b/test/regression/other/block_comment.unit
+@@ -0,0 +1,35 @@
++>>>
++setSelectionRange(
++    /* TextInputElement | TextAreaElement */ Element input, int start, int end,
++    [direction]) {
++  ;
++}
++<<<
++setSelectionRange(
++    /* TextInputElement | TextAreaElement */ Element input, int start, int end,
++    [direction]) {
++  ;
++}
++>>>
++setSelectionRange(/* TextInputElement | TextAreaElement */ Element input, int start, int end,
++    [direction]) {
++  ;
++}
++<<<
++setSelectionRange(
++    /* TextInputElement | TextAreaElement */ Element input, int start, int end,
++    [direction]) {
++  ;
++}
++>>>
++Future<void> signOutGoogle() async {}
++
++/*Future <FirebaseUser> signUp(email, password) async {
++  ;
++}*/
++<<<
++Future<void> signOutGoogle() async {}
++
++/*Future <FirebaseUser> signUp(email, password) async {
++  ;
++}*/
+\ No newline at end of file

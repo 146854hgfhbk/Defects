@@ -1,0 +1,92 @@
+{
+  "candidate_sha": "fec9dfe403e512710fb46398eb9880a65cc8d9d9",
+  "project": "JuliaSmoothOptimizers/Krylov.jl",
+  "source": "SWE-rebench-V2",
+  "instance_id": "juliasmoothoptimizers__krylov.jl-467",
+  "swe_rebench": {
+    "base_commit": "3d9200420140d116a8441f1ae9cdb373e921ed27",
+    "environment_setup_commit": null,
+    "image_name": "docker.io/swerebenchv2/juliasmoothoptimizers-krylov.jl:467-3d92004",
+    "license": "custom-check-github",
+    "fail_to_pass": [
+      "gpmr",
+      "fom",
+      "gmres",
+      "bicgstab",
+      "usymlq",
+      "tricg",
+      "bilqr",
+      "trimr",
+      "trilqr",
+      "usymqr",
+      "qmr",
+      "lnlq",
+      "diom",
+      "cgs",
+      "dqgmres",
+      "cg",
+      "cg_lanczos",
+      "minres",
+      "minres_qlp",
+      "symmlq",
+      "bilq",
+      "cgls",
+      "crls",
+      "cgne",
+      "crmr",
+      "lslq",
+      "lsqr",
+      "lsmr",
+      "craig",
+      "craigmr",
+      "cr",
+      "alloc",
+      "mp",
+      "solvers"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 466,
+      "url": "https://github.com/JuliaSmoothOptimizers/Krylov.jl/issues/466",
+      "state": "closed",
+      "title": "NaN with GPMR on certain systems",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "[bug gpmr.zip](https://github.com/JuliaSmoothOptimizers/Krylov.jl/files/7677986/bug.gpmr.zip)\r\n\r\nHi, I have an issue with GPMR when solving some systems (I provided one in the above zip file with the code to read it):\r\n\r\n```julia\r\nusing SparseArrays, LinearAlgebra, Krylov, DelimitedFiles, MatrixMarket\r\nread_path = raw\"C:\\Users\\Geoffroy Leconte\\Documents\\doctorat\\code\\bugs\\bug gpmr\"\r\nA = MatrixMarket.mmread(string(read_path, \"/A.mtx\"))\r\nE = readdlm(string(read_path, \"/E.rhs\"), Float64)[:]\r\nδ = readdlm(string(read_path, \"/delta.rhs\"), Float64)[:][1]\r\nξ1 = readdlm(string(read_path, \"/xi1.rhs\"), Float64)[:]\r\nξ2 = readdlm(string(read_path, \"/xi2.rhs\"), Float64)[:]\r\n\r\n(x, y, stats) = gpmr(A', A, ξ1, ξ2, \r\n                      C = inv(Diagonal(sqrt.(E))), E = inv(Diagonal(sqrt.(E))), \r\n                      D = (1.0 / sqrt(δ)) .* I,  F = (1.0 / sqrt(δ)) .* I, λ = -1.0)\r\n```\r\nThis leads to `NaN`. I don't know if it is supposed to fail on such a system but if it is, it would be convenient to have something that terminates the algorithm and returns an error.\r\n\r\nSince this is a saddle-point system I can solve it with TRIMR or TRICG (and it works):\r\n```julia\r\n(x, y, stats) = tricg(A', ξ1, ξ2, M = inv(Diagonal(E)), N = (1.0 / δ) .* I, flip=true)\r\n```"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        466
+      ],
+      "pull_request": 467,
+      "fix_commit": "fec9dfe403e512710fb46398eb9880a65cc8d9d9",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "[GPMR] Improve the solution for inconsistent linear systems",
+    "commit_issue_refs": [],
+    "commit_cross_repository_refs": [],
+    "pull_request": 467,
+    "pull_request_title": "Hotfix for breakdowns in GPMR",
+    "pull_request_issue_refs": [
+      466
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    466
+  ],
+  "cross_repository_issue_records": []
+}

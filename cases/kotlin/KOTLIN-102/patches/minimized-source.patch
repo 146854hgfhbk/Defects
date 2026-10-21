@@ -1,0 +1,23 @@
+diff --git a/projects/core/koin-core/src/commonMain/kotlin/org/koin/core/resolution/CoreResolverV2.kt b/projects/core/koin-core/src/commonMain/kotlin/org/koin/core/resolution/CoreResolverV2.kt
+index af3343933..e5392b549 100644
+--- a/projects/core/koin-core/src/commonMain/kotlin/org/koin/core/resolution/CoreResolverV2.kt
++++ b/projects/core/koin-core/src/commonMain/kotlin/org/koin/core/resolution/CoreResolverV2.kt
+@@ -21,6 +21,7 @@ import org.koin.core.annotation.KoinInternalApi
+ import org.koin.core.error.NoDefinitionFoundException
+ import org.koin.core.instance.InstanceFactory
+ import org.koin.core.instance.ResolutionContext
++import org.koin.core.instance.SingleInstanceFactory
+ import org.koin.core.scope.Scope
+ import org.koin.ext.getFullName
+ 
+@@ -86,6 +87,10 @@ class CoreResolverV2(
+             // 1. Registry on this linked scope
+             val factory = findDefinitionInScope(linkedScope, ctx)
+             if (factory != null) {
++                if (linkedScope.isRoot && factory !is SingleInstanceFactory<*>) {
++                    return factory.get(ctx) as T?
++                }
++
+                 // we will loose parameters from parent context
+                 val newCtx = ctx.newContextForScope(linkedScope)
+                 if (linkedScope.scopeArchetype != null && !linkedScope.isRoot) {

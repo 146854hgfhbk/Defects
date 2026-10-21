@@ -1,0 +1,83 @@
+diff --git a/Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift b/Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift
+index bdcbf760d9107b498910b1203e8b57203b49f3d3..6cdd7e52b75c59baa15654eabba94401cab891e2 100644
+--- a/Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift
++++ b/Tests/SwiftFormatTests/PrettyPrint/ForInStmtTests.swift
+@@ -390,4 +390,78 @@ final class ForInStmtTests: PrettyPrintTestCase {
+ 
+     assertPrettyPrintEqual(input: input, expected: expected, linelength: 14)
+   }
++
++  func testForUnsafe() {
++    let input = """
++      for unsafe x in xs {}
++      """
++
++    let expected80 = """
++      for unsafe x in xs {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected80, linelength: 80)
++
++    let expected10 = """
++      for unsafe
++        x in xs
++      {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected10, linelength: 10)
++  }
++
++  func testForTryAwaitUnsafe() {
++    let input = """
++      for try await unsafe x in xs {}
++      """
++
++    let expected80 = """
++      for try await unsafe x in xs {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected80, linelength: 80)
++
++    let expected10 = """
++      for
++        try
++        await
++        unsafe x
++        in xs
++      {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected10, linelength: 10)
++  }
++
++  func testForUnsafeWrapPattern() {
++    let input = """
++      for unsafe (aVeryLongVariableNameThatWillForceAWrap, anotherVeryLongVariableName) in someCollection {}
++      """
++    let expected = """
++      for unsafe (
++        aVeryLongVariableNameThatWillForceAWrap,
++        anotherVeryLongVariableName
++      ) in someCollection {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected, linelength: 40)
++  }
++
++  func testForTryAwaitUnsafeWrapPattern() {
++    let input = """
++      for try await unsafe (aVeryLongVariableNameThatWillForceAWrap, anotherVeryLongVariableName) in someCollection {}
++      """
++    let expected = """
++      for try await unsafe
++        (
++          aVeryLongVariableNameThatWillForceAWrap,
++          anotherVeryLongVariableName
++        )
++        in someCollection
++      {}
++
++      """
++    assertPrettyPrintEqual(input: input, expected: expected, linelength: 20)
++  }
+ }

@@ -1,0 +1,64 @@
+diff --git a/Sources/_JSONCore/Parser/JSONParser+Parsing.swift b/Sources/_JSONCore/Parser/JSONParser+Parsing.swift
+index aab95bea9253c9fd77412d625ac1016d991874db..a999461b30c1377b763f3097d7af6db70cd899ef 100644
+--- a/Sources/_JSONCore/Parser/JSONParser+Parsing.swift
++++ b/Sources/_JSONCore/Parser/JSONParser+Parsing.swift
+@@ -139,7 +139,7 @@ extension JSONTokenizer {
+     case .squareLeft:
+       try scanArray()
+     case .f:  // false
+-      guard count > 5 else {
++      guard count >= 5 else {
+         throw JSONParserError.missingData(line: line, column: column)
+       }
+ 
+@@ -150,7 +150,7 @@ extension JSONTokenizer {
+       advance(5)
+       destination.booleanFalseFound(.init(start: .init(byteIndex: currentOffset)))
+     case .t:  // true
+-      guard count > 4 else {
++      guard count >= 4 else {
+         throw JSONParserError.missingData(line: line, column: column)
+       }
+ 
+@@ -161,7 +161,7 @@ extension JSONTokenizer {
+       advance(4)
+       destination.booleanTrueFound(.init(start: .init(byteIndex: currentOffset)))
+     case .n:  // null
+-      guard count > 4 else {
++      guard count >= 4 else {
+         throw JSONParserError.missingData(line: line, column: column)
+       }
+ 
+diff --git a/Tests/IkigaJSONTests/JSONTests.swift b/Tests/IkigaJSONTests/JSONTests.swift
+index c71ff278a5f842f37b84e22439ad285f51c629f8..68cc60ff6e84a7aedd65a26a66e79eb56fa6c78e 100644
+--- a/Tests/IkigaJSONTests/JSONTests.swift
++++ b/Tests/IkigaJSONTests/JSONTests.swift
+@@ -1718,4 +1718,28 @@ final class IkigaJSONTests: XCTestCase {
+     XCTAssertThrowsError(
+       try decoder.decode(Foo.self, from: ByteBuffer(string: #"{"foo1":0,"foo2":0}"#)))
+   }
++
++  func testRootLevelPrimitiveDecoding() throws {
++    let decoder = IkigaJSONDecoder()
++
++    // Test root-level null decoding
++    let nullValue = try decoder.decode(String?.self, from: "null".data(using: .utf8)!)
++    XCTAssertNil(nullValue)
++
++    // Test root-level true decoding
++    let trueValue = try decoder.decode(Bool.self, from: "true".data(using: .utf8)!)
++    XCTAssertTrue(trueValue)
++
++    // Test root-level false decoding
++    let falseValue = try decoder.decode(Bool.self, from: "false".data(using: .utf8)!)
++    XCTAssertFalse(falseValue)
++
++    // Test root-level integer decoding
++    let intValue = try decoder.decode(Int.self, from: "42".data(using: .utf8)!)
++    XCTAssertEqual(intValue, 42)
++
++    // Test root-level string decoding
++    let stringValue = try decoder.decode(String.self, from: "\"hello\"".data(using: .utf8)!)
++    XCTAssertEqual(stringValue, "hello")
++  }
+ }

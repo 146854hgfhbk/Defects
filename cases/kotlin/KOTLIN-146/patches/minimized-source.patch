@@ -1,0 +1,40 @@
+diff --git a/detekt-rules-documentation/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/UndocumentedPublicClass.kt b/detekt-rules-documentation/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/UndocumentedPublicClass.kt
+index 02d40349ee..e1c07d2b4c 100644
+--- a/detekt-rules-documentation/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/UndocumentedPublicClass.kt
++++ b/detekt-rules-documentation/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/UndocumentedPublicClass.kt
+@@ -50,14 +53,15 @@ class UndocumentedPublicClass(config: Config) : Rule(
+     }
+ 
+     private fun requiresDocumentation(
+-        klass: KtClass
+-    ) =
+-        klass.isTopLevel() || klass.isInnerClass() || klass.isNestedClass() || klass.isInnerInterface()
++        klass: KtClass,
++    ) = klass.isTopLevel() || klass.isInnerClass() || klass.isNestedClass() || klass.isInnerInterface()
+ 
+-    @Suppress("ComplexCondition")
+     override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
++        val isNonPublicCompanionWithoutNameOrDisabled = declaration.isDefaultCompanionObject() &&
++            (!declaration.isPublic || ignoreDefaultCompanionObject)
++
+         if (
+-            (declaration.isCompanionWithoutName() && !declaration.isPublic) ||
++            isNonPublicCompanionWithoutNameOrDisabled ||
+             declaration.isLocal ||
+             !searchInInnerObject
+         ) {
+@@ -88,8 +92,12 @@ class UndocumentedPublicClass(config: Config) : Rule(
+                 searchInProtectedClass
+             )
+ 
+-    private fun KtObjectDeclaration.isCompanionWithoutName() =
+-        isCompanion() && nameAsSafeName.asString() == "Companion"
++    private fun KtObjectDeclaration.isDefaultCompanionObject() =
++        isCompanion() &&
++            nameAsSafeName.asString() == "Companion" &&
++            // For companions _named_ `Companion`, we treat this as a "non-default" companion object. It simplifies
++            // the expected logic and narrows an edge-case.
++            nameIdentifier?.text != "Companion"
+ 
+     private fun KtClass.isNestedClass() =
+         !isInterface() && !isTopLevel() && !isInner() && searchInNestedClass

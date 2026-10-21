@@ -1,0 +1,127 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-231",
+  "bug_id": "JULIA-231",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "Ferrite-FEM/Ferrite.jl",
+  "repository_url": "https://github.com/Ferrite-FEM/Ferrite.jl.git",
+  "issue_urls": [
+    "https://github.com/Ferrite-FEM/Ferrite.jl/issues/1226"
+  ],
+  "issue_id": 1226,
+  "buggy_revision": "1abc08713850582e1d75feaf6e9dbbe93999fd74",
+  "fixed_revision": "b099103eb40047015f10657b95845fc25fd2823a",
+  "candidate_sha": "b099103eb40047015f10657b95845fc25fd2823a",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "1abc08713850582e1d75feaf6e9dbbe93999fd74",
+  "changed_production_files": [
+    "src/FEValues/facet_integrals.jl"
+  ],
+  "changed_test_files": [
+    "test/test_facevalues.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-231 embedded line weighted normal"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "3eecba86ea414859cd537c26441d970908ab6ed6389b0e933f458d266677998f",
+    "oracle": {
+      "mwe_basis": {
+        "upstream_test_file": "test/test_facevalues.jl",
+        "public_api": "Ferrite weighted normal for embedded lines",
+        "defect": "embedded RefLine lacked a weighted-normal implementation"
+      },
+      "source_evidence": "minimal behavior MWE derived from the fixed commit test hunk"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "b099103eb40047015f10657b95845fc25fd2823a",
+    "project": "Ferrite-FEM/Ferrite.jl",
+    "input_sha256": "0986f594313ebc6f4e1e2f4ef426c23160038c50d6e4a9bd3e425b741fb307d1",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T12:24:45Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.4731775527694858,
+      "input_tokens": 5733,
+      "output_tokens": 803
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.74, \"summary\": \"The commit adds a missing `weighted_normal` method for embedded lines (SMatrix{dim,1} Jacobian, RefLine), fixing a MethodError raised when `reinit!` is called on FacetValues for an embedded line element. Issue #1226 documents the crash with a public-API MWE and PR #1235 states it fixes that issue. The change is a single hunk in src/FEValues/facet_integrals.jl, with an upstream test added in test/test_facevalues.jl covering both 2D and 3D embedded lines plus the error path for an invalid facet number.\", \"evidence\": \"Issue #1226: `MethodError: no method matching weighted_normal(::SMatrix{2,1,Float64,2}, ::Type{RefLine}, ::Int64)` from a public FacetValues reinit! call, so pre-fix behavior is a hard crash on an already-supported code path (embedded interpolations are supported elsewhere, e.g. CellValues). PR #1235 body: 'Fixes #1226 for 2D lines'. Minimization reports 1 of 1 hunk kept, globally minimal, all hunks necessary. Runtime evidence: stable_differential over 3 repetitions, full suite passes on the fixed revision. Upstream test asserts normals match finite-difference tangent directions for facets 1 and 2 at orders 1 and 2 in dim 2 and 3, and asserts ArgumentError for facet 3.\", \"missing_evidence\": \"PR number/title/body and commit stats are empty in the record, so the exact upstream commit message is unverified beyond the issue linkage. No pre-fix failure log text is included, only the classification 'stable_differential'. It is not shown whether other embedded reference shapes (e.g. embedded RefTriangle facets) remain unimplemented, which would indicate this is one slice of a broader incomplete feature.\", \"validation_risks\": \"The dedicated trigger calls the internal, unexported `Ferrite.weighted_normal` with a hand-built SMatrix rather than exercising the public FacetValues path from the issue MWE; this couples the trigger to an internal signature and could pass/fail for reasons unrelated to user-visible behavior. Interpretation risk: the issue title says 'not fully implemented', so a reviewer could classify this as completing an unimplemented capability rather than repairing regressed behavior; I treat it as a defect because the failure is a crash on an existing public API. The upstream test relies on atol=1.0e-6 finite-difference comparisons, a mild flakiness/tolerance sensitivity, though the trigger script avoids that by using exact equality.\", \"suggested_tests\": \"Reproduce the issue MWE directly: build a Line/QuadraticLine grid embedded in 2D and 3D, construct FacetValues with Lagrange{RefLine,order}() and a vector geometry interpolation, call reinit! for facets 1 and 2, and assert no exception plus getnormal equals the outward unit tangent. Assert the normal is unit-length and opposite in sign between facet 1 and facet 2. Verify getdetJdV on the facet is positive and finite. Keep the ArgumentError check for facet numbers outside 1:2. Optionally confirm normals are consistent with a curved (nonlinear) geometry via a finite-difference tangent at the endpoints.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.74,
+    "summary": "The commit adds a missing `weighted_normal` method for embedded lines (SMatrix{dim,1} Jacobian, RefLine), fixing a MethodError raised when `reinit!` is called on FacetValues for an embedded line element. Issue #1226 documents the crash with a public-API MWE and PR #1235 states it fixes that issue. The change is a single hunk in src/FEValues/facet_integrals.jl, with an upstream test added in test/test_facevalues.jl covering both 2D and 3D embedded lines plus the error path for an invalid facet number.",
+    "evidence": "Issue #1226: `MethodError: no method matching weighted_normal(::SMatrix{2,1,Float64,2}, ::Type{RefLine}, ::Int64)` from a public FacetValues reinit! call, so pre-fix behavior is a hard crash on an already-supported code path (embedded interpolations are supported elsewhere, e.g. CellValues). PR #1235 body: 'Fixes #1226 for 2D lines'. Minimization reports 1 of 1 hunk kept, globally minimal, all hunks necessary. Runtime evidence: stable_differential over 3 repetitions, full suite passes on the fixed revision. Upstream test asserts normals match finite-difference tangent directions for facets 1 and 2 at orders 1 and 2 in dim 2 and 3, and asserts ArgumentError for facet 3.",
+    "missing_evidence": "PR number/title/body and commit stats are empty in the record, so the exact upstream commit message is unverified beyond the issue linkage. No pre-fix failure log text is included, only the classification 'stable_differential'. It is not shown whether other embedded reference shapes (e.g. embedded RefTriangle facets) remain unimplemented, which would indicate this is one slice of a broader incomplete feature.",
+    "validation_risks": "The dedicated trigger calls the internal, unexported `Ferrite.weighted_normal` with a hand-built SMatrix rather than exercising the public FacetValues path from the issue MWE; this couples the trigger to an internal signature and could pass/fail for reasons unrelated to user-visible behavior. Interpretation risk: the issue title says 'not fully implemented', so a reviewer could classify this as completing an unimplemented capability rather than repairing regressed behavior; I treat it as a defect because the failure is a crash on an existing public API. The upstream test relies on atol=1.0e-6 finite-difference comparisons, a mild flakiness/tolerance sensitivity, though the trigger script avoids that by using exact equality.",
+    "suggested_tests": "Reproduce the issue MWE directly: build a Line/QuadraticLine grid embedded in 2D and 3D, construct FacetValues with Lagrange{RefLine,order}() and a vector geometry interpolation, call reinit! for facets 1 and 2, and assert no exception plus getnormal equals the outward unit tangent. Assert the normal is unit-length and opposite in sign between facet 1 and facet 2. Verify getdetJdV on the facet is positive and finite. Keep the ArgumentError check for facet numbers outside 1:2. Optionally confirm normals are consistent with a curved (nonlinear) geometry via a finite-difference tangent at the endpoints."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-231 embedded line weighted normal"
+    ],
+    "exception_types": [
+      "915b6af76c62263f47a630908dd99eeb6d1119ebf49c4bbd86d86b869554ee99"
+    ],
+    "fingerprints": [
+      "915b6af76c62263f47a630908dd99eeb6d1119ebf49c4bbd86d86b869554ee99"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-981",
+  "technical_evidence_sha256": "7f6dfa6f6f771742df84c604779286990bcec7956bf2047987fe0da4eea75935",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "aab821ff81cec40879c4c0658ca171783d816e56ac7a06e2d807a0804a7453ba",
+  "reviewed_at": "2026-08-14T07:47:28.847172+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1029",
+  "rationale": "Issue #1029 reports that the formatter collapses an empty catch clause onto the same line as a following finally (`} on Exception catch (e) {} finally {`), producing misleading output. The minimized production patch touches only lib/src/source_visitor.dart: it extracts the pre-existing empty-block split rule into `_splitEmptyBlock(Block)` and adds the missing CatchClause-with-finallyBlock case, so the same invariant already applied to `if`/`else` empty then-blocks now also covers catch/finally. The helper extraction is intrinsic to the fix (same call site, same behavior for the if/else path), not an independent refactor. Critically, the minimization dropped the three unrelated changes present in the original commit: the `blockRule` null-assertion cleanup in argument_list_visitor.dart, the `final _parent` change in nesting_level.dart, the stray `@override` removal on the local `visitClause` function, and the CHANGELOG edit. The triggers are the unchanged upstream project-native fixtures from the fixing commit (test/regression/1000/1029.unit reproduces the exact snippet from the issue body; three cases appended to test/splitting/statements.stmt cover catch, `on`, and multiple catches with finally), executed through the existing test/formatter_test.dart harness; they depend only on the public formatter entry point, not on any API introduced by the fix. Strict evidence for both the original and post-minimization revisions passes every gate (build both versions, buggy differential with both selectors reproduced, fixed isolated/suite/reversed clean, full suite green on fixed, 3 repetitions, deterministic fingerprints). active_same_project_root_causes is empty, so #1029 is not a duplicate, and it matches allowed_root_cause_ids.\n\nIssue #1029 ('Formatting of empty catch blocks can appear misleading') reports that dart_style collapses an empty catch body onto the same line as a following `finally`, producing `} on Exception catch (e) {} finally {`. The minimized production patch touches only lib/src/source_visitor.dart: it moves the pre-existing empty-block split condition into a new private helper `_splitEmptyBlock(Block)` and adds the missing case where the empty block is a CatchClause body of a TryStatement that has a finallyBlock. That is exactly the reported behavior gap in the pre-existing empty-block handling path, not a new capability layered on top of unrelated work. The two unrelated null-safety/style cleanups present in the original commit (argument_list_visitor.dart `Rule? get blockRule` -> `Rule get blockRule`, nesting_level.dart `_parent` made final, and the stray `@override` removal on the local `visitClause` function) are excluded from patches/minimized-production.patch, so the minimized patch is behavior-only for this defect; no CHANGELOG or config change is included. The trigger is upstream project-native fixture data from the same fixing commit: test/regression/1000/1029.unit reproduces the issue's exact snippet, and the three added cases in test/splitting/statements.stmt cover `catch (err) {} finally`, `on Exception {} finally`, and multiple empty catches with a finally — all the same root cause, all driven through the existing test/formatter_test.dart harness, with no dependency on any API introduced by the fix (`_splitEmptyBlock` is private and never referenced by the fixtures). Machine-generated strict gates pass both pre- and post-minimization: build on both revisions, unique selectors (2/2), buggy differential reproducing both declared selectors, deterministic fingerprints (4/4 groups), fixed isolated/suite/reversed runs clean, and buggy full suite failing only on the reproduced triggers. active_same_project_root_causes is empty and dart-lang/dart_style#1029 is the single allowed verified issue key, so this root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T07:47:01.383479+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "aab821ff81cec40879c4c0658ca171783d816e56ac7a06e2d807a0804a7453ba",
+      "response_sha256": "e54d021a4dc40952c8831dc17e03ee1798c1c6cf1f46abd096c2c2d3193629de",
+      "response_id": "msg_d0a85f6b09bb4271a758eedbcc126341",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.6992075035820896,
+        "input_tokens": 19571,
+        "output_tokens": 691
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1029",
+      "rationale": "Issue #1029 reports that the formatter collapses an empty catch clause onto the same line as a following finally (`} on Exception catch (e) {} finally {`), producing misleading output. The minimized production patch touches only lib/src/source_visitor.dart: it extracts the pre-existing empty-block split rule into `_splitEmptyBlock(Block)` and adds the missing CatchClause-with-finallyBlock case, so the same invariant already applied to `if`/`else` empty then-blocks now also covers catch/finally. The helper extraction is intrinsic to the fix (same call site, same behavior for the if/else path), not an independent refactor. Critically, the minimization dropped the three unrelated changes present in the original commit: the `blockRule` null-assertion cleanup in argument_list_visitor.dart, the `final _parent` change in nesting_level.dart, the stray `@override` removal on the local `visitClause` function, and the CHANGELOG edit. The triggers are the unchanged upstream project-native fixtures from the fixing commit (test/regression/1000/1029.unit reproduces the exact snippet from the issue body; three cases appended to test/splitting/statements.stmt cover catch, `on`, and multiple catches with finally), executed through the existing test/formatter_test.dart harness; they depend only on the public formatter entry point, not on any API introduced by the fix. Strict evidence for both the original and post-minimization revisions passes every gate (build both versions, buggy differential with both selectors reproduced, fixed isolated/suite/reversed clean, full suite green on fixed, 3 repetitions, deterministic fingerprints). active_same_project_root_causes is empty, so #1029 is not a duplicate, and it matches allowed_root_cause_ids.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "trigger_tests"
+      ],
+      "risks": [
+        "The issue is phrased as a formatting preference (\"I think that it would be better not to do that\") rather than a crash or wrong-result bug; classifying it as a defect rests on the inconsistency with the already-implemented empty-then-block-before-else rule, which the fix's own doc comment states as the intended invariant.",
+        "The minimized patch necessarily keeps the helper extraction, so a repair tool must reproduce both the new predicate and the relocated if/else logic rather than a single-line condition change.",
+        "Triggers are golden-output fixtures, so any unrelated change to formatter output for the same snippets would also flip them; the differential gate confirms only these two selectors fail on the buggy revision."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T07:47:28.846904+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "aab821ff81cec40879c4c0658ca171783d816e56ac7a06e2d807a0804a7453ba",
+      "response_sha256": "36498c8abba6cd12562dac08e70ea547358f2b87078dfef47083a7a436ae80ab",
+      "response_id": "msg_9255d68decab472592cca8146fe8603a",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5804118466666666,
+        "input_tokens": 19404,
+        "output_tokens": 841
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1029",
+      "rationale": "Issue #1029 ('Formatting of empty catch blocks can appear misleading') reports that dart_style collapses an empty catch body onto the same line as a following `finally`, producing `} on Exception catch (e) {} finally {`. The minimized production patch touches only lib/src/source_visitor.dart: it moves the pre-existing empty-block split condition into a new private helper `_splitEmptyBlock(Block)` and adds the missing case where the empty block is a CatchClause body of a TryStatement that has a finallyBlock. That is exactly the reported behavior gap in the pre-existing empty-block handling path, not a new capability layered on top of unrelated work. The two unrelated null-safety/style cleanups present in the original commit (argument_list_visitor.dart `Rule? get blockRule` -> `Rule get blockRule`, nesting_level.dart `_parent` made final, and the stray `@override` removal on the local `visitClause` function) are excluded from patches/minimized-production.patch, so the minimized patch is behavior-only for this defect; no CHANGELOG or config change is included. The trigger is upstream project-native fixture data from the same fixing commit: test/regression/1000/1029.unit reproduces the issue's exact snippet, and the three added cases in test/splitting/statements.stmt cover `catch (err) {} finally`, `on Exception {} finally`, and multiple empty catches with a finally — all the same root cause, all driven through the existing test/formatter_test.dart harness, with no dependency on any API introduced by the fix (`_splitEmptyBlock` is private and never referenced by the fixtures). Machine-generated strict gates pass both pre- and post-minimization: build on both revisions, unique selectors (2/2), buggy differential reproducing both declared selectors, deterministic fingerprints (4/4 groups), fixed isolated/suite/reversed runs clean, and buggy full suite failing only on the reproduced triggers. active_same_project_root_causes is empty and dart-lang/dart_style#1029 is the single allowed verified issue key, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/1000/1029.unit",
+        "test/splitting/statements.stmt",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks",
+        "strict_original.checks",
+        "trigger_reduction.upstream_trigger_patch",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The `splitting statements.stmt` selector is a fixture-file-level trigger that also contains pre-existing unrelated cases, so a future failure under that selector would not by itself localize to this defect; the `regression 1029.unit` selector is the precise trigger.",
+        "The trigger fixtures assert exact formatter output text, making them sensitive to any future intentional change in dart_style's empty-block or try/catch formatting policy rather than to this defect alone.",
+        "The minimized patch intentionally retains the invalid `@override` annotation on the local `visitClause` function that upstream removed in the same commit; strict evidence marks the analyzer as diagnostic-only (require_analyze_clean=false), so the buggy and fixed revisions may not be analyzer-clean even though both build and run.",
+        "Trigger coverage extends slightly beyond the issue's single example (multiple catch clauses, `on Exception` without a catch binding); these are the same root cause but were not individually reported by the issue author.",
+        "Runtime conclusions rest entirely on the supplied machine-generated strict evidence; no formatter output was independently re-executed here."
+      ]
+    }
+  ]
+}

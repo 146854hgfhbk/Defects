@@ -1,0 +1,81 @@
+{
+  "candidate_sha": "9a16131fd1ba6a7616c99be084b5142b90b2ed77",
+  "project": "JuliaDiff/TaylorSeries.jl",
+  "source": "SWE-rebench-V2",
+  "instance_id": "juliadiff__taylorseries.jl-343",
+  "swe_rebench": {
+    "base_commit": "5895948554c7161bf93aaa9f59543d8bbbbae236",
+    "environment_setup_commit": null,
+    "image_name": "docker.io/swerebenchv2/juliadiff-taylorseries.jl:343-5895948",
+    "license": "custom-check-github",
+    "fail_to_pass": [
+      "Tests with mixtures of Taylor1 and TaylorN",
+      "Tests with nested Taylor1s",
+      "Mutating functions",
+      "Tests Taylor1 and TaylorN expansions over Intervals",
+      "Broadcasting with Taylor1 expansions",
+      "Broadcasting with HomogeneousPolynomial and TaylorN",
+      "Broadcasting with mixtures Taylor1{TalorN{T}}",
+      "Broadcasting with mixtures TaylorN{Talor1{T}}",
+      "Testing an identity proved by Euler (8 variables)",
+      "Test inspired by Fateman (takes a few seconds)"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 342,
+      "url": "https://github.com/JuliaDiff/TaylorSeries.jl/issues/342",
+      "state": "closed",
+      "title": "Bug in Taylor1 constructor for mixtures",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "When modifying in-place a single coefficient of a `Taylor1{TaylorN{Float64}}`, the value is copied almost everywhere:\r\n```julia\r\njulia> using TaylorSeries\r\n\r\njulia> set_variables(\"x\", numvars=2, order=6)\r\n2-element Vector{TaylorN{Float64}}:\r\n  1.0 x₁ + 𝒪(‖x‖⁷)\r\n  1.0 x₂ + 𝒪(‖x‖⁷)\r\n\r\njulia> z0N = -1.333+get_variables()[1]\r\n - 1.333 + 1.0 x₁ + 𝒪(‖x‖⁷)\r\n\r\njulia> z = Taylor1(z0N,5)\r\n  - 1.333 + 1.0 x₁ + 𝒪(‖x‖⁷) + 𝒪(t⁶)\r\n\r\njulia> z[5][1][1] = 5.0\r\n5.0\r\n\r\njulia> z\r\n  - 1.333 + 1.0 x₁ + 𝒪(‖x‖⁷) + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t² + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t³ + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t⁴ + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t⁵ + 𝒪(t⁶)\r\n```\r\n\r\nThe expected output is simply:\r\n```julia\r\njulia> z\r\n  - 1.333 + 1.0 x₁ + 𝒪(‖x‖⁷) + ( 5.0 x₁ + 𝒪(‖x‖⁷)) t⁵ + 𝒪(t⁶)\r\n```\r\n\r\nUpdate: while writing this issue I found the culprit and will submit a PR soon!"
+    },
+    {
+      "number": 343,
+      "url": "https://github.com/JuliaDiff/TaylorSeries.jl/pull/343",
+      "state": "closed",
+      "title": "Fix bug in Taylor1 constructor for mixtures and add tests",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fixes #342. Essentially, `fill` was used in a `Taylor1` constructor around here\r\nhttps://github.com/JuliaDiff/TaylorSeries.jl/blob/5895948554c7161bf93aaa9f59543d8bbbbae236/src/constructors.jl#L51\r\nwhich [according to the docs](https://docs.julialang.org/en/v1/base/arrays/#Base.fill) works fine when the underlying type is immutable, but causes issues for mutable types, such as `Array`."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        342
+      ],
+      "pull_request": 343,
+      "fix_commit": "9a16131fd1ba6a7616c99be084b5142b90b2ed77",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Fix bug in Taylor1 constructor for mixtures and add tests (#343)\n\n* Fix bug in Taylor1 constructor for mixtures and add tests\r\n\r\n* Remove show in tests",
+    "commit_issue_refs": [
+      343
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 343,
+    "pull_request_title": "Fix bug in Taylor1 constructor for mixtures and add tests",
+    "pull_request_issue_refs": [
+      342
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    342
+  ],
+  "cross_repository_issue_records": []
+}

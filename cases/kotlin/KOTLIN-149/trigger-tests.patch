@@ -1,0 +1,112 @@
+diff --git a/detekt-report-sarif/src/test/kotlin/io/github/detekt/report/sarif/SarifOutputReportSpec.kt b/detekt-report-sarif/src/test/kotlin/io/github/detekt/report/sarif/SarifOutputReportSpec.kt
+index 715d59a85dee..c6ecbde0738f 100644
+--- a/detekt-report-sarif/src/test/kotlin/io/github/detekt/report/sarif/SarifOutputReportSpec.kt
++++ b/detekt-report-sarif/src/test/kotlin/io/github/detekt/report/sarif/SarifOutputReportSpec.kt
+@@ -26,23 +26,35 @@ class SarifOutputReportSpec {
+         val result = TestDetektion(
+             createIssue(
+                 ruleInstance = createRuleInstance("TestSmellA/id", "RuleSet1"),
+-                entity = createEntity(location = createLocation(position = 1 to 1, endPosition = 2 to 3)),
++                entity = createEntity(
++                    signature = "one",
++                    location = createLocation(position = 1 to 1, endPosition = 2 to 3),
++                ),
+                 severity = Severity.Error
+             ),
+             createIssue(
+                 ruleInstance = createRuleInstance("TestSmellD/id", "RuleSet1"),
+-                entity = createEntity(location = createLocation(position = 1 to 1, endPosition = 2 to 3)),
++                entity = createEntity(
++                    signature = "two",
++                    location = createLocation(position = 1 to 1, endPosition = 2 to 3),
++                ),
+                 severity = Severity.Error,
+                 suppressReasons = listOf("suppress")
+             ),
+             createIssue(
+                 ruleInstance = createRuleInstance("TestSmellB/id", "RuleSet2"),
+-                entity = createEntity(location = createLocation(position = 3 to 5, endPosition = 3 to 5)),
++                entity = createEntity(
++                    signature = "three",
++                    location = createLocation(position = 3 to 5, endPosition = 3 to 5),
++                ),
+                 severity = Severity.Warning
+             ),
+             createIssue(
+                 ruleInstance = createRuleInstance("TestSmellC/id", "RuleSet2"),
+-                entity = createEntity(location = createLocation(position = 2 to 1, endPosition = 3 to 1)),
++                entity = createEntity(
++                    signature = "four",
++                    location = createLocation(position = 2 to 1, endPosition = 3 to 1),
++                ),
+                 severity = Severity.Info
+             )
+         )
+diff --git a/detekt-report-sarif/src/test/resources/rule_warning.sarif.json b/detekt-report-sarif/src/test/resources/rule_warning.sarif.json
+index fa700c8eb734..af9ba5d2e868 100644
+--- a/detekt-report-sarif/src/test/resources/rule_warning.sarif.json
++++ b/detekt-report-sarif/src/test/resources/rule_warning.sarif.json
+@@ -25,6 +25,9 @@
+           "message": {
+             "text": "TestMessage"
+           },
++          "partialFingerprints": {
++            "signature/v1": "8bf90cc9da5c16a3f305920231c90a373b9dc0b3"
++          },
+           "ruleId": "detekt.RuleSet1.TestSmellA/id"
+         },
+         {
+@@ -48,6 +51,9 @@
+           "message": {
+             "text": "TestMessage"
+           },
++          "partialFingerprints": {
++            "signature/v1": "8bf90cc9da5c16a3f305920231c90a373b9dc0b3"
++          },
+           "ruleId": "detekt.RuleSet2.TestSmellB/id"
+         },
+         {
+@@ -71,6 +77,9 @@
+           "message": {
+             "text": "TestMessage"
+           },
++          "partialFingerprints": {
++            "signature/v1": "8bf90cc9da5c16a3f305920231c90a373b9dc0b3"
++          },
+           "ruleId": "detekt.RuleSet2.TestSmellC/id"
+         }
+       ],
+diff --git a/detekt-report-sarif/src/test/resources/vanilla.sarif.json b/detekt-report-sarif/src/test/resources/vanilla.sarif.json
+index a2452c6c217e..0df6be460698 100644
+--- a/detekt-report-sarif/src/test/resources/vanilla.sarif.json
++++ b/detekt-report-sarif/src/test/resources/vanilla.sarif.json
+@@ -25,6 +25,9 @@
+           "message": {
+             "text": "TestMessage"
+           },
++          "partialFingerprints": {
++            "signature/v1": "fe05bcdcdc4928012781a5f1a2a77cbb5398e106"
++          },
+           "ruleId": "detekt.RuleSet1.TestSmellA/id"
+         },
+         {
+@@ -48,6 +51,9 @@
+           "message": {
+             "text": "TestMessage"
+           },
++          "partialFingerprints": {
++            "signature/v1": "b802f384302cb24fbab0a44997e820bf2e8507bb"
++          },
+           "ruleId": "detekt.RuleSet2.TestSmellB/id"
+         },
+         {
+@@ -71,6 +77,9 @@
+           "message": {
+             "text": "TestMessage"
+           },
++          "partialFingerprints": {
++            "signature/v1": "9f8f7eec5dea5ac43738721939c120318cbff1df"
++          },
+           "ruleId": "detekt.RuleSet2.TestSmellC/id"
+         }
+       ],

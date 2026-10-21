@@ -1,0 +1,105 @@
+{
+  "candidate_sha": "33831d19f54629b1c1eee5577ac93e007b8a878b",
+  "project": "jump-dev/MathOptInterface.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1810,
+      "url": "https://github.com/jump-dev/MathOptInterface.jl/pull/1810",
+      "state": "closed",
+      "title": "[FileFormats] fix default lower bound in LP reader",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [
+        "Type: Bug",
+        "Submodule: FileFormats"
+      ],
+      "body_excerpt": "Closes #1809. The LP reader is still immature compared to the other formats."
+    },
+    {
+      "number": 2994,
+      "url": "https://github.com/jump-dev/MathOptInterface.jl/pull/2994",
+      "state": "closed",
+      "title": "[FileFormats.LP] fix reading variable with negative upper bound",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "x-ref https://github.com/NVIDIA/cuopt/pull/1120/changes#r3127185613\r\n\r\nI think this is a dumb rule, but indeed:\r\n```\r\n(base) odow@Mac /tmp % cat bug.lp \r\nmaximize x\r\nsubject to\r\nbounds\r\nx <= -1.0\r\nend\r\n(base) odow@Mac /tmp % gurobi_cl bug.lp \r\nSet parameter WLSAccessID\r\nSet parameter WLSSecret\r\nSet parameter LicenseID to value 722777\r\nSet parameter LogFile to value \"gurobi.log\"\r\nUsing license file /Users/odow/gurobi.lic\r\nWLS license 722777 - registered to JuMP Development\r\n\r\nGurobi Optimizer version 12.0.3 build v12.0.3rc0 (mac64[arm] - Darwin 24.6.0 24G419)\r\nCopyright (c) 2025, Gurobi Optimization, LLC\r\n\r\nRead LP format model from file bug.lp\r\nReading time = 0.00 seconds\r\n: 0 rows, 1 columns, 0 nonzeros\r\n\r\nUsing Gurobi shared library /Library/gurobi1203/macos_universal2/lib/libgurobi120.dylib\r\n\r\nCPU model: Apple M4\r\nThread count: 10 physical cores, 10 logical processors, using up to 10 threads\r\n\r\nWLS license 722777 - registered to JuMP Development\r\nOptimize a model with 0 rows, 1 columns and 0 nonzeros\r\nModel fingerprint: 0xd939e866\r\nCoefficient statistics:\r\n  Matrix range     [0e+00, 0e+00]\r\n  Objective range  [1e+00, 1e+00]\r\n  Bounds range     [1e+00, 1e+00]\r\n  RHS range        [0e+00, 0e+00]\r\nPresolve time: 0.00s\r\n\r\nSolved in 0 iterations and 0.00 seconds (0.00 work units)\r\nInfeasible model\r\n```\r\n\r\nTraced to https://github.com/jump-dev/MathOptInterface.jl/pull/1810. I guess I just assumed what the correct behaviour was instead of looking into it in more detail."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 2994,
+      "pull_request_repository": "jump-dev/MathOptInterface.jl",
+      "pull_request_url": "https://github.com/jump-dev/MathOptInterface.jl/pull/2994",
+      "fix_commit": "33831d19f54629b1c1eee5577ac93e007b8a878b",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "[FileFormats.LP] fix reading variable with negative upper bound (#2994)",
+    "commit_issue_refs": [
+      2994
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 2994,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "[FileFormats.LP] fix reading variable with negative upper bound",
+    "pull_request_issue_refs": [
+      1810
+    ],
+    "pull_request_cross_repository_refs": [
+      [
+        "NVIDIA/cuopt",
+        1120,
+        "pull"
+      ]
+    ],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [
+    {
+      "number": 1120,
+      "url": "https://github.com/NVIDIA/cuopt/pull/1120",
+      "state": "closed",
+      "title": "Add LP format reader; accept .lp wherever .mps is accepted",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [
+        "feature request",
+        "non-breaking",
+        "P0"
+      ],
+      "body_excerpt": "### What\r\n\r\nA new LP-format parser sits alongside the existing MPS parser. Every\r\ncuOpt entry point that takes an input file (the `cuopt_cli` CLI,\r\n`cuOptReadProblem` in the C API, the Python `ParseLp` / `ParseMps`\r\nwrappers, and the self-hosted client) now accepts LP files via a\r\ncase-insensitive extension dispatcher:\r\n\r\n| Extension | Parser |\r\n|---|---|\r\n| `.lp`, `.lp.gz`, `.lp.bz2` | LP |\r\n| `.mps`, `.mps.gz`, `.mps.bz2`, `.qps`, `.qps.gz`, `.qps.bz2` | MPS / QPS |\r\n| anything else | rejected |\r\n\r\nThe unified entry point is `parse_problem<i_t, f_t>(path)` in\r\n`cuopt/linear_programming/io/parser.hpp`. `parse_lp` and\r\n`parse_lp_from_string` (string-input counterpart, mirroring\r\n`parse_mps_from_string`) are exposed alongside their MPS siblings.\r\n\r\n### LP format scope\r\n\r\nThe parser accepts the conventional LP dialect implemented by most\r\ncommercial optimization solvers (not the lpsolve variant):\r\n\r\n- **LP, MIP, QP**.\r\n- **Semi-continuous variables** via a `Semi-Continuous` section; each\r\n  listed variable requires a finite upper bound.\r\n- **Quadratic constraints (QCQP)**, `<=` only. Quadratic terms appear\r\n  inside `[ ... ]`. The convention differs between objective and\r\n  constraint:\r\n  - Objective bracket **must** be followed by `/ 2` (LP file uses the\r\n    `0.5 x^T Q x` convention).\r\n  - Constraint bracket **must not** be followed by `/ 2` (coefficients\r\n    at face value, `x^T Q x`).\r\n\r\nSOS constraints, piecewise-linear objectives, general constraints, and\r\nuser cuts raise a clear `ValidationError`.\r\n\r\nCompressed inputs (`.lp.gz`, `.lp.bz2`) are handled by the same\r\ndlopen-based zlib / libbz2 path that already serves `.mps.gz` /\r\n`.mps.bz2`; the helper was extracted to `cpp/src/io/file_to_string.{hpp,cpp}`.\r\n\r\n ### Python API changes (no release impact)\r\n\r\n  The Python subpackage previously located at\r\n  `cuopt.linear_programming.mps_parser` has been renamed to\r\n  `cuopt.linear_programming.io` (mirroring the C++ `cpp/include/cuopt/linear_programming/io/` layout).",
+      "repository": "NVIDIA/cuopt",
+      "reference_kind": "pull"
+    }
+  ],
+  "pull_request_record": {
+    "number": 2994,
+    "repository": "jump-dev/MathOptInterface.jl",
+    "url": "https://github.com/jump-dev/MathOptInterface.jl/pull/2994",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-04-23T01:34:26Z",
+    "merge_commit_sha": "33831d19f54629b1c1eee5577ac93e007b8a878b",
+    "title": "[FileFormats.LP] fix reading variable with negative upper bound",
+    "body_excerpt": "x-ref https://github.com/NVIDIA/cuopt/pull/1120/changes#r3127185613\r\n\r\nI think this is a dumb rule, but indeed:\r\n```\r\n(base) odow@Mac /tmp % cat bug.lp \r\nmaximize x\r\nsubject to\r\nbounds\r\nx <= -1.0\r\nend\r\n(base) odow@Mac /tmp % gurobi_cl bug.lp \r\nSet parameter WLSAccessID\r\nSet parameter WLSSecret\r\nSet parameter LicenseID to value 722777\r\nSet parameter LogFile to value \"gurobi.log\"\r\nUsing license file /Users/odow/gurobi.lic\r\nWLS license 722777 - registered to JuMP Development\r\n\r\nGurobi Optimizer version 12.0.3 build v12.0.3rc0 (mac64[arm] - Darwin 24.6.0 24G419)\r\nCopyright (c) 2025, Gurobi Optimization, LLC\r\n\r\nRead LP format model from file bug.lp\r\nReading time = 0.00 seconds\r\n: 0 rows, 1 columns, 0 nonzeros\r\n\r\nUsing Gurobi shared library /Library/gurobi1203/macos_universal2/lib/libgurobi120.dylib\r\n\r\nCPU model: Apple M4\r\nThread count: 10 physical cores, 10 logical processors, using up to 10 threads\r\n\r\nWLS license 722777 - registered to JuMP Development\r\nOptimize a model with 0 rows, 1 columns and 0 nonzeros\r\nModel fingerprint: 0xd939e866\r\nCoefficient statistics:\r\n  Matrix range     [0e+00, 0e+00]\r\n  Objective range  [1e+00, 1e+00]\r\n  Bounds range     [1e+00, 1e+00]\r\n  RHS range        [0e+00, 0e+00]\r\nPresolve time: 0.00s\r\n\r\nSolved in 0 iterations and 0.00 seconds (0.00 work units)\r\nInfeasible model\r\n```\r\n\r\nTraced to https://github.com/jump-dev/MathOptInterface.jl/pull/1810. I guess I just assumed what the correct behaviour was instead of looking into it in more detail.",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

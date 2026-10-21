@@ -1,0 +1,248 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-341",
+  "bug_id": "JULIA-341",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+  "repository_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/100"
+  ],
+  "issue_id": 100,
+  "buggy_revision": "10b5265b75e123f236ee50b03c845c642462c30e",
+  "fixed_revision": "dd434ca3fe14ca073ab33bdf71393190810dac51",
+  "candidate_sha": "dd434ca3fe14ca073ab33bdf71393190810dac51",
+  "source": "SWE-rebench-V2",
+  "instance_id": "julialinearalgebra__genericlinearalgebra.jl-101",
+  "swe": {
+    "base_commit": "10b5265b75e123f236ee50b03c845c642462c30e",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/101",
+    "pr_number": 101,
+    "merge_commit": "dd434ca3fe14ca073ab33bdf71393190810dac51",
+    "issue_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/issues/100",
+    "merged_at": "2023-02-24T10:40:44Z",
+    "pr_title": "Fix size of Householder",
+    "patch": "diff --git a/src/householder.jl b/src/householder.jl\nindex 65cfd51..34913c4 100644\n--- a/src/householder.jl\n+++ b/src/householder.jl\n@@ -10,8 +10,8 @@ struct HouseholderBlock{T,S<:StridedMatrix,U<:StridedMatrix}\n     T::UpperTriangular{T,U}\n end\n \n-size(H::Householder) = (length(H.v), length(H.v))\n-size(H::Householder, i::Integer) = i <= 2 ? length(H.v) : 1\n+size(H::Householder) = (length(H.v) + 1, length(H.v) + 1)\n+size(H::Householder, i::Integer) = i <= 2 ? length(H.v) + 1 : 1\n \n eltype(H::Householder{T})      where T = T\n eltype(H::HouseholderBlock{T}) where T = T\n@@ -21,7 +21,7 @@ adjoint(H::HouseholderBlock{T}) where {T} = Adjoint{T,typeof(H)}(H)\n \n function lmul!(H::Householder, A::StridedMatrix)\n     m, n = size(A)\n-    length(H.v) == m - 1 || throw(DimensionMismatch(\"\"))\n+    length(H.v) == m - 1 || throw(DimensionMismatch(\"size of reflector is $(length(H.v) + 1) but first dimension of matrix is $(size(A, 1))\"))\n     v = view(H.v, 1:m - 1)\n     τ = H.τ\n     for j = 1:n\n@@ -37,7 +37,7 @@ end\n \n function rmul!(A::StridedMatrix, H::Householder)\n     m, n = size(A)\n-    length(H.v) == n - 1 || throw(DimensionMismatch(\"\"))\n+    length(H.v) == n - 1 || throw(DimensionMismatch(\"size of reflector is $(length(H.v) + 1) but second dimension of matrix is $(size(A, 2))\"))\n     v = view(H.v, :)\n     τ = H.τ\n     a1 = view(A, :, 1)\n@@ -52,7 +52,7 @@ end\n function lmul!(adjH::Adjoint{<:Any,<:Householder}, A::StridedMatrix)\n     H = parent(adjH)\n     m, n = size(A)\n-    length(H.v) == m - 1 || throw(DimensionMismatch(\"\"))\n+    length(H.v) == m - 1 || throw(DimensionMismatch(\"size of reflector is $(length(H.v) + 1) but first dimension of matrix is $(size(A, 1))\"))\n     v = view(H.v, 1:m - 1)\n     τ = H.τ\n     for j = 1:n\n@@ -142,5 +142,5 @@ end\n (*)(adjH::Adjoint{T,<:HouseholderBlock{T}}, A::StridedMatrix{T}) where {T} =\n         lmul!(adjH, copy(A), similar(A, (min(size(parent(adjH).V)...), size(A, 2))))\n \n-convert(::Type{Matrix}, H::Householder{T}) where {T} = lmul!(H, Matrix{T}(I, size(H, 1), size(H, 1)))\n-convert(::Type{Matrix{T}}, H::Householder{T}) where {T} = lmul!(H, Matrix{T}(I, size(H, 1), size(H, 1)))\n+Base.convert(::Type{Matrix}, H::Householder{T}) where {T} = convert(Matrix{T}, H)\n+Base.convert(::Type{Matrix{T}}, H::Householder) where {T} = lmul!(H, Matrix{T}(I, size(H, 1), size(H, 1)))\n",
+    "test_patch": "diff --git a/test/eigengeneral.jl b/test/eigengeneral.jl\nindex 5668029..12e4ab6 100644\n--- a/test/eigengeneral.jl\n+++ b/test/eigengeneral.jl\n@@ -144,4 +144,16 @@ end\n     @test sort(imag(vals)) ≈ sort(imag(λs)) atol=1e-25\n end\n \n+@testset \"_hessenberg! and Hessenberg\" begin\n+    n = 10\n+    A = randn(n, n)\n+    HF = GenericLinearAlgebra._hessenberg!(copy(A))\n+    for i in 1:length(HF.τ)\n+        HM = convert(Matrix, HF.τ[i])\n+        A[(i + 1):end, :] = HM * A[(i + 1):end, :]\n+        A[:, (i + 1):end] = A[:, (i + 1):end] * HM'\n+    end\n+    @test tril(A, -2) ≈ zeros(n, n) atol = 1e-14\n+end\n+\n end\n\\ No newline at end of file\n",
+    "FAIL_TO_PASS": [
+      "The General eigenvalue problem",
+      "Test sign of eigenvalues",
+      "Singular value decomposition",
+      "LAPACK wrappers"
+    ],
+    "PASS_TO_PASS": [
+      "rankUpdate!",
+      "triangular multiplication: UpperTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "triangular multiplication: UnitUpperTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "triangular multiplication: LowerTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "triangular multiplication: UnitLowerTriangular{ComplexF64, Matrix{ComplexF64}}",
+      "Cholesky",
+      "The QR decomposition"
+    ],
+    "problem_statement": "`convert` extended but not imported from Base\nThis package defines `convert` without importing `Base.convert`, is that intended?\r\n\r\nhttps://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/blob/10b5265b75e123f236ee50b03c845c642462c30e/src/householder.jl#L145\r\n\r\nWhen trying to use it, I also get an error\r\n```julia\r\njulia> GenericLinearAlgebra.convert(Matrix, h2.τ[1])\r\nERROR: DimensionMismatch: \r\nStacktrace:\r\n [1] lmul!(H::GenericLinearAlgebra.Householder{BigFloat, SubArray{BigFloat, 1, Matrix{BigFloat}, Tuple{UnitRange{Int64}, Int64}, true}}, A::Matrix{BigFloat})\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/w5JSi/src/householder.jl:24\r\n [2] convert(#unused#::Type{Matrix}, H::GenericLinearAlgebra.Householder{BigFloat, SubArray{BigFloat, 1, Matrix{BigFloat}, Tuple{UnitRange{Int64}, Int64}, true}})\r\n   @ GenericLinearAlgebra ~/.julia/packages/GenericLinearAlgebra/w5JSi/src/householder.jl:145\r\n [3] top-level scope\r\n   @ REPL[27]:1\r\n```",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()' 2>&1"
+    },
+    "license": "MIT",
+    "image_name": "docker.io/swerebenchv2/julialinearalgebra-genericlinearalgebra.jl:101-10b5265",
+    "instance_id": "julialinearalgebra__genericlinearalgebra.jl-101",
+    "repo": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+    "pr_description": "Also improve error messages and extend Base's convert instead of defining a new one\r\n\r\nFixes #100",
+    "created_at": "2023-02-24 10:29:14",
+    "language": "julia",
+    "interface": "Function: _hessenberg!(A::StridedMatrix{T}) where T\nLocation: GenericLinearAlgebra._hessenberg!\nInputs: A – a mutable square matrix (StridedMatrix) whose Hessenberg reduction will be performed in‑place.\nOutputs: A Hessenberg factorization object (commonly a struct with fields `τ`, `H`, etc.) that stores the elementary Householder reflectors (`τ`) needed to reconstruct the Hessenberg form. The original matrix `A` is overwritten with the Hessenberg matrix.\nDescription: Reduces a square matrix to upper Hessenberg form using Householder transformations, returning a lightweight object that holds the reflectors for later application. Used when the test calls `HF = GenericLinearAlgebra._hessenberg!(copy(A))`.\n\nFunction: Base.convert(::Type{Matrix}, H::Householder{T}) where T\nLocation: GenericLinearAlgebra (method extension of Base.convert)\nInputs: `Matrix` – the target abstract type indicating a generic dense matrix; `H` – a `Householder{T}` reflector where `T` is the element type.\nOutputs: A dense `Matrix{T}` equal to the matrix representation of the Householder reflector (i.e., `I - τ*v*v'`).\nDescription: Provides a conversion from a `Householder` reflector to a full dense matrix. The test invokes `HM = convert(Matrix, HF.τ[i])` to obtain the explicit reflector matrix for multiplication.\n\nFunction: Base.convert(::Type{Matrix{T}}, H::Householder) where T\nLocation: GenericLinearAlgebra (method extension of Base.convert)\nInputs: `Matrix{T}` – the concrete matrix type to convert into; `H` – a `Householder` whose element type is compatible with `T`.\nOutputs: A dense `Matrix{T}` representing the reflector (`I - τ*v*v'`), constructed with the appropriate element type.\nDescription: Alias overload that forwards to the generic `convert(Matrix, H)` implementation, ensuring type‑stable conversion to a specific element type. Also exercised indirectly by the test when `HM` is used in matrix multiplications.\n",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.98,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [
+          "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/blob/10b5265b75e123f236ee50b03c845c642462c30e/src/householder.jl#L145"
+        ],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports that GenericLinearAlgebra defines its own `convert` without qualifying it with `Base`, causing a DimensionMismatch when users call `convert(Matrix, ...)`. The added test expects `convert(Matrix, ...)` to work and the reflector size to be length(v)+1. The current implementation returns the wrong size and defines `convert` in the wrong namespace, so the test fails. No test‑suite coupling, hidden naming, external dependencies, ambiguous specs, unrelated patch artifacts, or required domain knowledge are present, making the problem clearly specified and solvable.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 2,
+      "num_modified_lines": null,
+      "pr_author": "andreasnoack",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaLinearAlgebra/GenericLinearAlgebra.jl/pull/101"
+    }
+  },
+  "parent_sha": "10b5265b75e123f236ee50b03c845c642462c30e",
+  "changed_production_files": [
+    "src/householder.jl"
+  ],
+  "changed_test_files": [
+    "test/eigengeneral.jl"
+  ],
+  "trigger_tests": [
+    "The General eigenvalue problem",
+    "Test sign of eigenvalues",
+    "Singular value decomposition",
+    "LAPACK wrappers"
+  ],
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "The General eigenvalue problem",
+        "Test sign of eigenvalues",
+        "Singular value decomposition",
+        "LAPACK wrappers"
+      ],
+      "added_testsets": [
+        "_hessenberg! and Hessenberg"
+      ],
+      "assertion_expression_sha256": [
+        "df3b7fa58b8ce8df037b444f9c1745cf51b16df17d0834c05e1a9466795e98db"
+      ]
+    },
+    "sha256": "9a62955fac76746faa7e4cc430d1e409c550c956990c8290fe950ea4ea51bf06"
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "swe_rebench_julia_base_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "dd434ca3fe14ca073ab33bdf71393190810dac51",
+    "project": "JuliaLinearAlgebra/GenericLinearAlgebra.jl",
+    "input_sha256": "b58e43a547f8f0fb4673582d22800b87ea6466359bb31242bcf81b0ba660cd42",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:52:28Z",
+    "usage": {
+      "prompt_tokens": 2834,
+      "completion_tokens": 629,
+      "total_tokens": 3463
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.90,\n  \"summary\": \"The commit fixes an incorrect `size` implementation for the `Householder` type. The Householder reflector represents an (n+1)×(n+1) matrix but `size` was returning (n, n) where n = length(H.v). This caused dimension mismatches and incorrect behavior when converting to a dense matrix or using the reflector in eigenvalue/SVD computations.\",\n  \"evidence\": \"The `size(H::Householder)` was returning `(length(H.v), length(H.v))` but should return `(length(H.v) + 1, length(H.v) + 1)` since the Householder reflector acts on a space one dimension larger than its stored vector. The `lmul!` function already assumed `length(H.v) == m - 1` (i.e., the matrix dimension is one larger than the vector), confirming the off-by-one in `size`. The PR #101 title 'Fix size of Householder' and new test `_hessenberg! and Hessenberg` that converts individual Householder reflectors to matrices and verifies Hessenberg reduction confirm the bug. Multiple trigger tests (eigenvalue, SVD) also validate the fix.\",\n  \"missing_evidence\": \"No linked issue body is available to confirm the original bug report details. The trigger tests are listed but their actual pass/fail results pre/post fix are not shown.\",\n  \"validation_risks\": \"The test uses random matrices so there's a small floating-point tolerance risk, but atol=1e-14 for Float64 is reasonable. The `convert` signature change (adding `Base.` prefix and relaxing type parameter) could theoretically affect method dispatch in edge cases.\",\n  \"suggested_tests\": \"1. Test that `size(Householder(...))` returns the correct dimensions. 2. Test that `convert(Matrix, H)` produces an orthogonal matrix of the correct size. 3. Test round-trip: apply Householder via lmul! and verify result matches dense matrix multiplication.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.9,
+    "summary": "The commit fixes an incorrect `size` implementation for the `Householder` type. The Householder reflector represents an (n+1)×(n+1) matrix but `size` was returning (n, n) where n = length(H.v). This caused dimension mismatches and incorrect behavior when converting to a dense matrix or using the reflector in eigenvalue/SVD computations.",
+    "evidence": "The `size(H::Householder)` was returning `(length(H.v), length(H.v))` but should return `(length(H.v) + 1, length(H.v) + 1)` since the Householder reflector acts on a space one dimension larger than its stored vector. The `lmul!` function already assumed `length(H.v) == m - 1` (i.e., the matrix dimension is one larger than the vector), confirming the off-by-one in `size`. The PR #101 title 'Fix size of Householder' and new test `_hessenberg! and Hessenberg` that converts individual Householder reflectors to matrices and verifies Hessenberg reduction confirm the bug. Multiple trigger tests (eigenvalue, SVD) also validate the fix.",
+    "missing_evidence": "No linked issue body is available to confirm the original bug report details. The trigger tests are listed but their actual pass/fail results pre/post fix are not shown.",
+    "validation_risks": "The test uses random matrices so there's a small floating-point tolerance risk, but atol=1e-14 for Float64 is reasonable. The `convert` signature change (adding `Base.` prefix and relaxing type parameter) could theoretically affect method dispatch in edge cases.",
+    "suggested_tests": "1. Test that `size(Householder(...))` returns the correct dimensions. 2. Test that `convert(Matrix, H)` produces an orthogonal matrix of the correct size. 3. Test round-trip: apply Householder via lmul! and verify result matches dense matrix multiplication."
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 4,
+    "tests": [
+      "The General eigenvalue problem",
+      "Test sign of eigenvalues",
+      "Singular value decomposition",
+      "LAPACK wrappers"
+    ],
+    "exception_types": [
+      "915b6af76c62263f47a630908dd99eeb6d1119ebf49c4bbd86d86b869554ee99"
+    ],
+    "fingerprints": [
+      "915b6af76c62263f47a630908dd99eeb6d1119ebf49c4bbd86d86b869554ee99"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "dd434ca3fe14ca073ab33bdf71393190810dac51",
+    "parent_sha": "10b5265b75e123f236ee50b03c845c642462c30e",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "80d0ef9a8b5985ac3cfddf4baadfd9043fe8aefb8423b3b9ca44d1909b1a521a",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

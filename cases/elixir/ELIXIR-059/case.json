@@ -1,0 +1,234 @@
+{
+  "schema_version": 2,
+  "case_id": "ELIXIR-059",
+  "id": "ELIXIR-059",
+  "bug_id": "ELIXIR-059",
+  "language": "Elixir",
+  "project": "phoenixframework/phoenix",
+  "repo": "phoenixframework/phoenix",
+  "buggy_revision": "270446e7177b6b68076d299af91f9d45bf42cce4",
+  "fixed_revision": "a9a501d04f8b9caada1de0a20f049b3266829ba2",
+  "fixed_revision_kind": "upstream_pr_merge_commit",
+  "fixed_revision_parents": null,
+  "revision_mode": "base_plus_gold_patch",
+  "upstream_id": "phoenixframework__phoenix-5579",
+  "patch": {
+    "path": "patches/minimized-source.patch",
+    "upstream_path": "patches/upstream.patch",
+    "sha256": "7091154aaaf595d1f95794e897510d5c27a08869c55cf31bd240a3e803f06f67",
+    "upstream_sha256": "66774fc63b8f3d6b6b30d2b067d79b0043d62be7bf8356f0fda9b211e6a99b8e",
+    "changed_source_files": [
+      "lib/phoenix/controller.ex"
+    ]
+  },
+  "patch_sha256": "7091154aaaf595d1f95794e897510d5c27a08869c55cf31bd240a3e803f06f67",
+  "trigger_test_patch": "patches/trigger-tests.patch",
+  "trigger_test_patch_sha256": "12e61b933c42690687adf9ae3fd6d54433189807a595578a37cefba51556d6fe",
+  "trigger_tests": [
+    "send_download/3 sends file supports UTF-8",
+    "send_download/3 sends file for download with custom :filename"
+  ],
+  "triggering_tests": [
+    "send_download/3 sends file supports UTF-8",
+    "send_download/3 sends file for download with custom :filename"
+  ],
+  "expected_failure": {
+    "test_count": 2,
+    "tests": [
+      "send_download/3 sends file supports UTF-8",
+      "send_download/3 sends file for download with custom :filename"
+    ],
+    "exception_types": [],
+    "fingerprints": [],
+    "source": "SWE-rebench-V2 FAIL_TO_PASS"
+  },
+  "trigger_test_filters": {},
+  "validation": {
+    "status": "PASS",
+    "report": "validation/phase-d.json",
+    "report_sha256": "bef96aa96acfbeea8151bc0a3d3f63381376a2484c923421e6d62ff0468355c5",
+    "protocol": "v5-f2p",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "result": "PASS"
+  },
+  "environment_lock": "environment.lock.json",
+  "environment": {
+    "backend": "swe_rebench_v2_docker",
+    "image": "docker.io/swerebenchv2/phoenixframework-phoenix:5579-270446e"
+  },
+  "commands": {
+    "test": "mix test --trace"
+  },
+  "minimization": {
+    "status": "HUMAN_REVIEWED_MINIMIZED_V1",
+    "policy": "execution-verified hunk removal; suite-repair post-pass",
+    "removed_hunks": 0,
+    "trials": 0,
+    "report": "patches/minimization.json",
+    "llm_review": "llm-hunk-review.json",
+    "review_status": "human_minimization_signoff_completed",
+    "reviewer_type": "human_dataset_curator",
+    "human_signoff": "completed",
+    "dynamic_revalidation": true,
+    "human_signoff_date": "2026-09-12",
+    "human_signoff_scope": "patch_minimization_only"
+  },
+  "artifacts": {
+    "curation_decision": "curation-decision.json",
+    "llm_hunk_review": "llm-hunk-review.json",
+    "llm_semantic_review": "llm-semantic-review.json",
+    "minimization_decisions": "minimization-decisions.json",
+    "manual_minimization_confirmation": "manual-minimization-confirmation.json",
+    "minimization_report": "patches/minimization.json"
+  },
+  "provenance": {
+    "source_dataset": "SWE-rebench-V2",
+    "source_dataset_id": "nebius/SWE-rebench-V2",
+    "source_revision": "475dd5e",
+    "instance_id": "phoenixframework__phoenix-5579",
+    "pr_url": "https://github.com/phoenixframework/phoenix/pull/5579",
+    "replacement": {
+      "replaces_case": "ELIXIR-059",
+      "replaced_repo": "newrelic/elixir_agent",
+      "replaced_reason": "QUARANTINED",
+      "candidate_work_id": "PR-052"
+    },
+    "issue_id": 5478,
+    "issue_url": "https://github.com/phoenixframework/phoenix/issues/5478",
+    "issue_relation": "PR_BODY_CLOSES"
+  },
+  "status": "ACTIVE",
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "elixir",
+    "reason_code": null,
+    "reason": null,
+    "llm_semantic_decision": "BUG_FIX",
+    "human_confirmation": false
+  },
+  "release_integrity": "release-integrity.json",
+  "execution_validation": {
+    "status": "PASS",
+    "protocol": "v5-f2p",
+    "evidence": "validation/phase-d.json",
+    "evidence_sha256": "bef96aa96acfbeea8151bc0a3d3f63381376a2484c923421e6d62ff0468355c5",
+    "validated_at": "2026-09-11T14:26:22Z",
+    "b_failures": [
+      2,
+      2,
+      2
+    ],
+    "f_failures": [
+      0,
+      0,
+      0
+    ],
+    "gold_failures": [
+      0
+    ],
+    "dyn_dropped": 0
+  },
+  "fixed_test_result": "pass",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "build_command": [
+    "export HOME=/workspace",
+    "mix deps.get",
+    "mix compile"
+  ],
+  "test_command": "mix test --trace",
+  "language_version": {
+    "elixir": "1.16.3",
+    "otp": "26"
+  },
+  "dependency_versions": {
+    "mix_lock_md5": "aa65fb4337b5a0adffeb19ef63af94e6"
+  },
+  "operating_system_or_container": {
+    "container_image": "docker.io/swerebenchv2/phoenixframework-phoenix:5579-270446e",
+    "image_id": "sha256:04a4f982b7471cefd8d688829e15fbaee52d96146074d99dd726bf34a075ccac",
+    "platform": "linux/amd64"
+  },
+  "traceability": {
+    "issue_id": 5478,
+    "issue_url": "https://github.com/phoenixframework/phoenix/issues/5478",
+    "pr_url": "https://github.com/phoenixframework/phoenix/pull/5579",
+    "issue_closed": true,
+    "pr_merged": true,
+    "issue_referenced_in": "pull_request_body",
+    "fix_commit": "a9a501d04f8b9caada1de0a20f049b3266829ba2",
+    "fix_commit_count": 1,
+    "single_parent_fix": true,
+    "audit": {
+      "method": "GitHub API commit-file superset check",
+      "verdict": "SINGLE_COMMIT_FIX"
+    },
+    "issue_title": "`Phoenix.Controller.send_download/3` incorrectly escapes spaces in filenames",
+    "upstream_fix_parents": [
+      "270446e7177b6b68076d299af91f9d45bf42cce4"
+    ],
+    "upstream_fix_parent": "270446e7177b6b68076d299af91f9d45bf42cce4",
+    "fix_commit_is_merge": false,
+    "provenance_strength": "PR_BODY_REFERENCE"
+  },
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "DONE",
+    "full_suite_validation": "PASS",
+    "protocol": "v5-f2p"
+  },
+  "upstream": {
+    "fix_commit": "a9a501d04f8b9caada1de0a20f049b3266829ba2",
+    "fix_parent": "270446e7177b6b68076d299af91f9d45bf42cce4",
+    "issue_url": "https://github.com/phoenixframework/phoenix/issues/5478",
+    "pr_url": "https://github.com/phoenixframework/phoenix/pull/5579"
+  },
+  "benchmark_revision": {
+    "mode": "base_plus_gold_patch",
+    "base_revision": "270446e7177b6b68076d299af91f9d45bf42cce4",
+    "declared_fixed_revision": "a9a501d04f8b9caada1de0a20f049b3266829ba2",
+    "fixed_construction": "base_plus_minimized_patch"
+  },
+  "trigger_metadata_repair": {
+    "performed_at": "2026-09-11T23:54:24Z",
+    "source_of_truth": "validation/phase-d.json b_runs/f_runs/gold_runs failure_names",
+    "original_declared_tests": [
+      "send_download/3 sends file supports UTF-8",
+      "send_download/3 sends file for download with custom :filename",
+      "with 2.0.0 serializer Phoenix.Socket.V2.JSONSerializer logs user socket connect when enabled",
+      "with 1.0.0 serializer Phoenix.Socket.V1.JSONSerializer logs and filter params on join and handle_in",
+      "with 2.0.0 serializer Phoenix.Socket.V2.JSONSerializer logs and filter params on join and handle_in",
+      "with 1.0.0 serializer Phoenix.Socket.V1.JSONSerializer logs user socket connect when enabled",
+      "with 1.0.0 serializer Phoenix.Socket.V1.JSONSerializer filter params on join",
+      "with 2.0.0 serializer Phoenix.Socket.V2.JSONSerializer filter params on join"
+    ],
+    "validated_triggering_tests": [
+      "send_download/3 sends file supports UTF-8",
+      "send_download/3 sends file for download with custom :filename"
+    ],
+    "removed_stale_declarations": [
+      "with 2.0.0 serializer Phoenix.Socket.V2.JSONSerializer logs user socket connect when enabled",
+      "with 1.0.0 serializer Phoenix.Socket.V1.JSONSerializer logs and filter params on join and handle_in",
+      "with 2.0.0 serializer Phoenix.Socket.V2.JSONSerializer logs and filter params on join and handle_in",
+      "with 1.0.0 serializer Phoenix.Socket.V1.JSONSerializer logs user socket connect when enabled",
+      "with 1.0.0 serializer Phoenix.Socket.V1.JSONSerializer filter params on join",
+      "with 2.0.0 serializer Phoenix.Socket.V2.JSONSerializer filter params on join"
+    ],
+    "execution_logs_modified": false
+  },
+  "upstream_revision": {
+    "fix_commit": "a9a501d04f8b9caada1de0a20f049b3266829ba2",
+    "fix_parent": "270446e7177b6b68076d299af91f9d45bf42cce4",
+    "issue_url": "https://github.com/phoenixframework/phoenix/issues/5478",
+    "pr_url": "https://github.com/phoenixframework/phoenix/pull/5579"
+  },
+  "excluded_tests_manifest": "validation/excluded-tests.json",
+  "canonical_test_policy": {
+    "raw_test_command": "mix test --trace",
+    "canonical_runner": "python3 tools/defects4x test --bug 59 --version <b|f> --workdir <checkout> --canonical --execute",
+    "fixed_acceptance": "PASS only after a normal, non-empty ExUnit completion with a valid summary and no infrastructure/process error; a non-zero raw exit may be normalized only when the summary failure count matches parsed failure identities and every identity is explicitly listed in validation/excluded-tests.json and reproduced in upstream GOLD."
+  },
+  "canonical_test_command": "python3 tools/defects4x test --bug 59 --version f --workdir <checkout> --canonical --execute"
+}

@@ -1,0 +1,62 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index d242b55a5914587c84ab80099540ec28136503b4..dcba812aac2e5cb474938517e75cb61d0d37cc2d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -11,6 +11,8 @@ see [CONTRIBUTING.md](CONTRIBUTING.md#release-instructions-for-a-new-version) fo
+    [#448](https://github.com/lunarmodules/Penlight/pull/448)
+  - fix(utils) `nil` values in `utils.choose(cond, val1, val2)`
+    [#447](https://github.com/lunarmodules/Penlight/pull/447)
++ - fix(template) using `%` as an escape character caused the expression to not be recognized
++   [#452](https://github.com/lunarmodules/Penlight/pull/452)
+ 
+ ## 1.13.1 (2022-Jul-22)
+  - fix: `warn` unquoted argument
+diff --git a/lua/pl/template.lua b/lua/pl/template.lua
+index 9961a1bdfebf7acfd4a52a9e25a94fd117fadc74..3bc7ee6fc578de88d95fff60616876ecbdf6eeff 100644
+--- a/lua/pl/template.lua
++++ b/lua/pl/template.lua
+@@ -54,6 +54,10 @@ local function parseDollarParen(pieces, chunk, exec_pat, newline)
+ end
+ 
+ local function parseHashLines(chunk,inline_escape,brackets,esc,newline)
++    -- Escape special characters to avoid invalid expressions
++    inline_escape = utils.escape(inline_escape)
++    esc = utils.escape(esc)
++
+     local exec_pat = "()"..inline_escape.."(%b"..brackets..")()"
+ 
+     local esc_pat = esc.."+([^\n]*\n?)"
+diff --git a/tests/test-template.lua b/tests/test-template.lua
+index fb13108651161b95cb9134a304013ebabf73128b..eb3470b74923cd2efed74d2e610466a1891f53f3 100644
+--- a/tests/test-template.lua
++++ b/tests/test-template.lua
+@@ -46,6 +46,29 @@ asserteq(subst([[
+ ]])
+ 
+ 
++--------------------------------------------------------------------------------
++-- Regression tests for issue #451 (can't use % for escapes)
++asserteq(subst([[
++% for i = 1,3 do
++    $(text[i])
++% end
++]],{_parent=_G,_escape='%',text={'foo','bar','baz'}}),[[
++    foo
++    bar
++    baz
++]])
++
++asserteq(subst([[
++? for i = 1,3 do
++    %(text[i])
++? end
++]],{_parent=_G,_escape='?',_inline_escape='%',text={'foo','bar','baz'}}),[[
++    foo
++    bar
++    baz
++]])
++--------------------------------------------------------------------------------
++
+ 
+ -- handle templates with a lot of substitutions
+ asserteq(subst(("$(x)\n"):rep(300), {x = "y"}), ("y\n"):rep(300))

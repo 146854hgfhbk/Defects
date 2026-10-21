@@ -1,0 +1,112 @@
+diff --git a/analysis_options.yaml b/analysis_options.yaml
+index 8e0e70e..f0fb86f 100644
+--- a/analysis_options.yaml
++++ b/analysis_options.yaml
+@@ -34,7 +34,7 @@ linter:
+     - avoid_function_literals_in_foreach_calls
+     - avoid_implementing_value_types
+     - avoid_init_to_null
+-    - avoid_js_rounded_ints
++    # - avoid_js_rounded_ints
+     - avoid_multiple_declarations_per_line
+     - avoid_null_checks_in_equality_operators
+     - avoid_positional_boolean_parameters
+diff --git a/lib/src/values/big_logic_value.dart b/lib/src/values/big_logic_value.dart
+index 1984e0c..5c024e1 100644
+--- a/lib/src/values/big_logic_value.dart
++++ b/lib/src/values/big_logic_value.dart
+@@ -10,6 +10,25 @@
+ 
+ part of values;
+ 
++/// Extends [BigInt] with utility functions that are useful for dealing with
++/// large bit vectors and conversion between types.
++extension BigLogicValueBigIntUtilities on BigInt {
++  /// Returns this [BigInt] as an [int].
++  ///
++  /// Always interprets the number as unsigned, and thus never clamps to fit.
++  int toIntUnsigned(int width) {
++    if (width > LogicValue._INT_BITS) {
++      throw Exception('Cannot convert to BigInt when width $width'
++          ' is greater than ${LogicValue._INT_BITS}');
++    } else if (width == LogicValue._INT_BITS) {
++      // With `0x` in front of a hex literal, it will be interpreted as unsigned.
++      return int.parse('0x${toRadixString(16)}');
++    } else {
++      return toInt();
++    }
++  }
++}
++
+ /// A [LogicValue] whose number of bits is greater than the size of an [int].
+ ///
+ /// The implementation is similar to [_SmallLogicValue], except it uses
+@@ -64,8 +83,9 @@ class _BigLogicValue extends LogicValue {
+           (_invalid >> start) & _maskOfWidth(newWidth), newWidth);
+     } else {
+       return _SmallLogicValue(
+-          ((_value >> start) & _maskOfWidth(newWidth)).toInt(),
+-          ((_invalid >> start) & _maskOfWidth(newWidth)).toInt(),
++          ((_value >> start) & _maskOfWidth(newWidth)).toIntUnsigned(newWidth),
++          ((_invalid >> start) & _maskOfWidth(newWidth))
++              .toIntUnsigned(newWidth),
+           newWidth);
+     }
+   }
+diff --git a/lib/src/values/logic_value.dart b/lib/src/values/logic_value.dart
+index b589800..9d01be4 100644
+--- a/lib/src/values/logic_value.dart
++++ b/lib/src/values/logic_value.dart
+@@ -79,7 +79,7 @@ abstract class LogicValue {
+   /// [width] must be greater than or equal to 0.
+   static LogicValue ofBigInt(BigInt value, int width) => width > _INT_BITS
+       ? _BigLogicValue(value, BigInt.zero, width)
+-      : _SmallLogicValue(value.toInt(), 0, width);
++      : _SmallLogicValue(value.toIntUnsigned(width), 0, width);
+ 
+   /// Converts `BigInt` [value] to a valid [LogicValue] with [width]
+   /// number of bits.
+@@ -803,10 +803,7 @@ int _unsignedBinaryParse(String source) {
+   if (val != null) {
+     return val;
+   } else {
+-    final hex = BigInt.parse(source, radix: 2).toRadixString(16);
+-
+-    // With `0x` in front of a hex literal, it will be interpreted as unsigned.
+-    return int.parse('0x$hex');
++    return BigInt.parse(source, radix: 2).toIntUnsigned(source.length);
+   }
+ }
+ 
+diff --git a/test/logic_value_test.dart b/test/logic_value_test.dart
+index 23dec96..1047ba4 100644
+--- a/test/logic_value_test.dart
++++ b/test/logic_value_test.dart
+@@ -838,4 +838,27 @@ void main() {
+           equals(LogicValue.x));
+     });
+   });
++
++  group('64-bit conversions', () {
++    test(
++        '64-bit LogicValues larger than maximum positive value on integer'
++        ' are properly converted when converted from BigInt', () {
++      final extraWide = LogicValue.ofBigInt(
++        BigInt.parse('f' * 16 + 'f0' * 8, radix: 16),
++        128,
++      );
++      final smaller = extraWide.getRange(0, 64);
++      expect(smaller.toInt(), equals(0xf0f0f0f0f0f0f0f0));
++    });
++    test(
++        '64-bit BigInts larger than max pos int value constructing'
++        ' a LogicValue is correct', () {
++      final bigInt64Lv =
++          LogicValue.ofBigInt(BigInt.parse('fa' * 8, radix: 16), 64);
++      expect(bigInt64Lv.toInt(), equals(0xfafafafafafafafa));
++    });
++    test('64-bit binary negatives are converted properly with bin', () {
++      expect(bin('1110' * 16), equals(0xeeeeeeeeeeeeeeee));
++    });
++  });
+ }

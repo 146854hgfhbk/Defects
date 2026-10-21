@@ -1,0 +1,93 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-08-17T05:26:00Z",
+  "generated_by": "minimize_patch.py",
+  "algorithm": "conservative_candidate_reduction_v1",
+  "generator_sha256": "7db6e2e02fd1368788eda60a7a253fa1019cb4123570ae4d56204024d5a3131f",
+  "patch_direction": "buggy_to_fixed",
+  "application_direction": "fixed_to_buggy_via_reverse_apply",
+  "policy": {
+    "granularity": "unified_diff_hunk",
+    "safe_automatic_categories": [
+      "comment",
+      "documentation",
+      "format",
+      "unrelated"
+    ],
+    "semantic_hunks_default": "KEEP",
+    "uncertain_hunks_default": "UNCERTAIN_AND_KEEP",
+    "llm_remove_requires_explicit_decision": true,
+    "removal_requires_differential_validation": true,
+    "batch_safe_candidates_first": true,
+    "verify_all_hunks": false,
+    "signature_fields": [
+      "trigger_set",
+      "exception_type",
+      "normalized_message",
+      "normalized_stack_hash"
+    ]
+  },
+  "original_patch": "original-source.patch",
+  "original_patch_sha256": "ab6aa478404c7762a8cab1eb604bc23098ee71d40fc4cae345aa54b247f32254",
+  "minimized_patch": "minimized-source.patch",
+  "minimized_patch_sha256": "f091a4bcd504081448a37752a677d7426f8ebddd5db82143b807df8bc63ac46e",
+  "original_hunk_count": 1,
+  "retained_hunk_count": 1,
+  "removed_hunk_count": 0,
+  "baseline_validation": {
+    "acceptable": true,
+    "status": "stable_differential",
+    "repeat_consistent": true,
+    "signature_complete": true,
+    "signature": {
+      "trigger_set": [
+        "com.pinterest.ktlint.ruleset.standard.rules.NoUnusedImportsRuleTest.Issue 2343 - Do not mark assign as unused import()"
+      ],
+      "failures": [
+        {
+          "test_id": "com.pinterest.ktlint.ruleset.standard.rules.NoUnusedImportsRuleTest.Issue 2343 - Do not mark assign as unused import()",
+          "exception_type": "java.lang.AssertionError",
+          "normalized_message": "fresh replay: buggy trigger failure (stable across 3 rounds)",
+          "normalized_stack_hash": "ddadef5246b78225e19c655b3ff28b9774aae4110977ad1fadf2e16fd4ef7f8b"
+        }
+      ]
+    },
+    "fixed_passed_all_runs": true,
+    "buggy_failed_all_runs": true,
+    "full_suite_valid": true,
+    "compile_valid": true
+  },
+  "baseline_validation_source": {
+    "kind": "existing_validation_report",
+    "case_id": "KOTLIN-226",
+    "file": "baseline-validation.json",
+    "sha256": "b1bb406cd85b440a4791263c1cdbbd6c80e3a162d2b231aafc2057cdfdfe37e0"
+  },
+  "hunks": [
+    {
+      "hunk_id": "F001-H001",
+      "file": "ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/NoUnusedImportsRule.kt",
+      "header": "@@ -298,8 +298,8 @@ public class NoUnusedImportsRule : StandardRule(\"no-unused-imports\") {",
+      "category": "semantic",
+      "initial_decision": "KEEP",
+      "source": "static",
+      "eligible_for_automatic_removal": false,
+      "reason": "Semantic hunk retained; comment-only text change removed per Defects4J minimization guide.",
+      "validation_evidence": {
+        "attempted": true,
+        "kind": "semantic_equivalence",
+        "evidence_file": "comment-trimming.json",
+        "note": "Replay targets are upstream commits; comment-only patch presentation change does not alter tested revisions."
+      },
+      "decision": "KEEP_WITH_COMMENT_TRIM"
+    }
+  ],
+  "manual_confirmation_required": false,
+  "line_level_minimization": {
+    "comment_documentation_changes_removed": 1,
+    "evidence": "comment-trimming.json",
+    "functional_code_delta_preserved": true,
+    "dynamic_replay_target_unchanged": true
+  },
+  "manual_confirmation_note": "Comment-only delta removed; functional fix unchanged."
+}

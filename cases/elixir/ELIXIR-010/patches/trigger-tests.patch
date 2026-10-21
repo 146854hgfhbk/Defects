@@ -1,0 +1,27 @@
+diff --git a/test/cachex/router/ring_test.exs b/test/cachex/router/ring_test.exs
+index c35fbf6..86e889c 100644
+--- a/test/cachex/router/ring_test.exs
++++ b/test/cachex/router/ring_test.exs
+@@ -124,7 +124,7 @@ defmodule Cachex.Router.RingTest do
+   @tag distributed: true
+   test "routing keys via a ring router with excluded nodes" do
+     # create a test cache cluster for nodes
+-    {cache, _nodes, _cluster} =
++    {cache, _nodes, cluster} =
+       TestUtils.create_cache_cluster(3,
+         router:
+           router(
+@@ -143,6 +143,13 @@ defmodule Cachex.Router.RingTest do
+ 
+     # verify that only the manage was attached to the ring
+     assert Cachex.Router.nodes(cache) == {:ok, [node()]}
++
++    {:ok, [_member1]} = LocalCluster.start(cluster, 1)
++
++    :timer.sleep(250)
++
++    # make sure that the exclusion applies on newly detected nodes
++    assert Cachex.Router.nodes(cache) == {:ok, [node()]}
+   end
+ 
+   test "matching node names against include/exclude params" do

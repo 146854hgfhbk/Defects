@@ -1,0 +1,93 @@
+diff --git a/pkgs/shelf/CHANGELOG.md b/pkgs/shelf/CHANGELOG.md
+index 4f6aca7..2466256 100644
+--- a/pkgs/shelf/CHANGELOG.md
++++ b/pkgs/shelf/CHANGELOG.md
+@@ -1,6 +1,9 @@
+ ## 1.4.3-wip
+ 
+ * Require `sdk: ^3.9.0`.
++* Join multiple `Cookie` request-header values with `'; '` instead of `','`
++  in the single-value `headers` map, following the cookie-string grammar of
++  [RFC 6265 section 5.4](https://datatracker.ietf.org/doc/html/rfc6265#section-5.4).
+ 
+ ## 1.4.2
+ 
+diff --git a/pkgs/shelf/lib/src/headers.dart b/pkgs/shelf/lib/src/headers.dart
+index 65c560c..1360a5e 100644
+--- a/pkgs/shelf/lib/src/headers.dart
++++ b/pkgs/shelf/lib/src/headers.dart
+@@ -14,7 +14,7 @@ final _emptyHeaders = Headers._empty();
+ class Headers extends UnmodifiableMapView<String, List<String>> {
+   late final Map<String, String> singleValues = UnmodifiableMapView(
+     CaseInsensitiveMap.from(
+-      map((key, value) => MapEntry(key, joinHeaderValues(value)!)),
++      map((key, value) => MapEntry(key, joinHeaderValues(value, name: key)!)),
+     ),
+   );
+ 
+diff --git a/pkgs/shelf/lib/src/util.dart b/pkgs/shelf/lib/src/util.dart
+index b5d87c1..75eb5b7 100644
+--- a/pkgs/shelf/lib/src/util.dart
++++ b/pkgs/shelf/lib/src/util.dart
+@@ -76,12 +76,12 @@ Map<String, Object> removeHeader(Map<String, Object>? headers, String name) {
+ String? findHeader(Map<String, List<String>?>? headers, String name) {
+   if (headers == null) return null;
+   if (headers is ShelfUnmodifiableMap) {
+-    return joinHeaderValues(headers[name]);
++    return joinHeaderValues(headers[name], name: name);
+   }
+ 
+   for (var key in headers.keys) {
+     if (equalsIgnoreAsciiCase(key, name)) {
+-      return joinHeaderValues(headers[key]);
++      return joinHeaderValues(headers[key], name: name);
+     }
+   }
+   return null;
+@@ -138,9 +138,17 @@ List<String> expandHeaderValue(Object v) {
+ 
+ /// Multiple header values are joined with commas.
+ /// See https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-p1-messaging-21#page-22
+-String? joinHeaderValues(List<String>? values) {
++///
++/// The `Cookie` header is the one exception: the cookie-string grammar of
++/// RFC 6265 separates cookie-pairs with `; ` and does not allow commas, so
++/// when [name] is `cookie` multiple values are recombined with `; ` as
++/// specified in https://datatracker.ietf.org/doc/html/rfc9113#section-8.2.3
++String? joinHeaderValues(List<String>? values, {String? name}) {
+   if (values == null) return null;
+   if (values.isEmpty) return '';
+   if (values.length == 1) return values.single;
+-  return values.join(',');
++  final separator = name != null && equalsIgnoreAsciiCase(name, 'cookie')
++      ? '; '
++      : ',';
++  return values.join(separator);
+ }
+diff --git a/pkgs/shelf/test/message_test.dart b/pkgs/shelf/test/message_test.dart
+index 25e51e2..8252aef 100644
+--- a/pkgs/shelf/test/message_test.dart
++++ b/pkgs/shelf/test/message_test.dart
+@@ -95,6 +95,22 @@ void main() {
+         'content-length': ['0'],
+       });
+     });
++
++    test('multiple cookie header values are joined with "; "', () {
++      final message = _createMessage(
++        headers: {
++          'Cookie': ['session=123', 'theme=dark'],
++        },
++      );
++      expect(
++        message.headers,
++        containsPair('cookie', 'session=123; theme=dark'),
++      );
++      expect(
++        message.headersAll,
++        containsPair('cookie', ['session=123', 'theme=dark']),
++      );
++    });
+   });
+ 
+   group('context', () {

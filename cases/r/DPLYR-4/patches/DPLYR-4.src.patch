@@ -1,0 +1,27 @@
+diff --git a/R/relocate.R b/R/relocate.R
+index 37eed4388..676db56ae 100644
+--- a/R/relocate.R
++++ b/R/relocate.R
+@@ -59,19 +59,13 @@ relocate.data.frame <- function(.data, ..., .before = NULL, .after = NULL) {
+     abort("Must supply only one of `.before` and `.after`.")
+   } else if (has_before) {
+     where <- min(unname(tidyselect::eval_select(.before, .data)))
+-    if (!where %in% to_move) {
+-      to_move <- c(to_move, where)
+-    }
++    to_move <- c(setdiff(to_move, where), where)
+   } else if (has_after) {
+     where <- max(unname(tidyselect::eval_select(.after, .data)))
+-    if (!where %in% to_move) {
+-      to_move <- c(where, to_move)
+-    }
++    to_move <- c(where, setdiff(to_move, where))
+   } else {
+     where <- 1L
+-    if (!where %in% to_move) {
+-      to_move <- union(to_move, where)
+-    }
++    to_move <- union(to_move, where)
+   }
+ 
+   lhs <- setdiff(seq2(1, where - 1), to_move)

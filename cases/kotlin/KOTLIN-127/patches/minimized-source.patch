@@ -1,0 +1,15 @@
+diff --git a/detekt-rules-documentation/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/OutdatedDocumentation.kt b/detekt-rules-documentation/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/OutdatedDocumentation.kt
+index 71a8f66531..f6fd27d969 100644
+--- a/detekt-rules-documentation/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/OutdatedDocumentation.kt
++++ b/detekt-rules-documentation/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/documentation/OutdatedDocumentation.kt
+@@ -95,8 +95,8 @@ class OutdatedDocumentation(config: Config = Config.empty) : Rule(config) {
+     }
+ 
+     private fun getClassDeclarations(klass: KtClass): List<Declaration> {
+-        val ctor = klass.primaryConstructor ?: return emptyList()
+-        val constructorDeclarations = getPrimaryConstructorDeclarations(ctor)
++        val ctor = klass.primaryConstructor
++        val constructorDeclarations = if (ctor != null) getPrimaryConstructorDeclarations(ctor) else emptyList()
+         val typeParams = if (matchTypeParameters) {
+             klass.typeParameters.mapNotNull { it.name.toParamOrNull() }
+         } else emptyList()

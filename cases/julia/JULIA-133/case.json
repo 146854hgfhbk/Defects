@@ -1,0 +1,157 @@
+{
+  "bug_id": "JULIA-133",
+  "buggy_revision": "e2faaf83a77d368151de1db0703c740514283bce",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "b1888e6e9e6f07b03529340216fc07ba95f91fd5",
+  "case_id": "JULIA-133",
+  "changed_production_files": [
+    "src/Containers/DenseAxisArray.jl",
+    "src/Containers/SparseAxisArray.jl"
+  ],
+  "changed_test_files": [
+    "test/Containers/test_DenseAxisArray.jl",
+    "test/Containers/test_SparseAxisArray.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "b1888e6e9e6f07b03529340216fc07ba95f91fd5",
+  "instance_id": null,
+  "issue_id": 4213,
+  "issue_urls": [
+    "https://github.com/jump-dev/JuMP.jl/issues/4213"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": null,
+  "parent_sha": "e2faaf83a77d368151de1db0703c740514283bce",
+  "project": "jump-dev/JuMP.jl",
+  "repository_url": "https://github.com/jump-dev/JuMP.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-4-6",
+    "api_version": null,
+    "candidate_sha": "b1888e6e9e6f07b03529340216fc07ba95f91fd5",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.72,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Issue #4213 clearly documents the defect: indexing `x[:a, :b]` on a 1-dimensional DenseAxisArray throws `MethodError: no method matching one(::Symbol)` instead of a useful error. PR #4215 closes this issue. The commit modifies production files (DenseAxisArray.jl, SparseAxisArray.jl) and adds corresponding tests. The fix addresses existing broken behavior (incorrect/confusing error) rather than adding new functionality.",
+    "input_sha256": "4f32ddacd967135d096b32af2ce5265508534989e5e69800b98399fd06f4d087",
+    "missing_evidence": "The actual diff content is not provided, so the exact nature of the fix (whether it throws a better error or handles the indexing differently) cannot be inspected directly. However, issue context and file changes strongly suggest a targeted bug fix.",
+    "project": "jump-dev/JuMP.jl",
+    "provider": "openai_compatible",
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"Fix for a confusing MethodError when indexing a DenseAxisArray/SparseAxisArray with the wrong number of dimensions. Instead of an opaque 'no method matching one(::Symbol)' error, a more useful error message is provided. This is a bug fix per the 'method error principle' — the original behavior produced an unhelpful internal error rather than a meaningful user-facing error.\", \"evidence\": \"Issue #4213 clearly documents the defect: indexing `x[:a, :b]` on a 1-dimensional DenseAxisArray throws `MethodError: no method matching one(::Symbol)` instead of a useful error. PR #4215 closes this issue. The commit modifies production files (DenseAxisArray.jl, SparseAxisArray.jl) and adds corresponding tests. The fix addresses existing broken behavior (incorrect/confusing error) rather than adding new functionality.\", \"missing_evidence\": \"The actual diff content is not provided, so the exact nature of the fix (whether it throws a better error or handles the indexing differently) cannot be inspected directly. However, issue context and file changes strongly suggest a targeted bug fix.\", \"validation_risks\": \"The fix may be primarily an improved error message rather than a change in computational behavior, which borders on diagnostic-only. However, since the original behavior was a confusing internal MethodError (effectively a crash with wrong error type), converting it to a proper bounds/dimension error is a legitimate behavior fix.\", \"suggested_tests\": [\"Test that indexing a 1-D DenseAxisArray with multiple indices throws a clear DimensionMismatch or BoundsError rather than MethodError\", \"Test that indexing a SparseAxisArray with wrong number of dimensions gives a useful error\", \"Test that correct indexing with tuple keys still works as expected\"]}\n```",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-28T02:54:27Z",
+    "suggested_tests": [
+      "Test that indexing a 1-D DenseAxisArray with multiple indices throws a clear DimensionMismatch or BoundsError rather than MethodError",
+      "Test that indexing a SparseAxisArray with wrong number of dimensions gives a useful error",
+      "Test that correct indexing with tuple keys still works as expected"
+    ],
+    "summary": "Fix for a confusing MethodError when indexing a DenseAxisArray/SparseAxisArray with the wrong number of dimensions. Instead of an opaque 'no method matching one(::Symbol)' error, a more useful error message is provided. This is a bug fix per the 'method error principle' — the original behavior produced an unhelpful internal error rather than a meaningful user-facing error.",
+    "usage": {
+      "completion_tokens": 616,
+      "prompt_tokens": 1520,
+      "total_tokens": 2136
+    },
+    "validation_risks": "The fix may be primarily an improved error message rather than a change in computational behavior, which borders on diagnostic-only. However, since the original behavior was a confusing internal MethodError (effectively a crash with wrong error type), converting it to a proper bounds/dimension error is a legitimate behavior fix."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": null,
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [],
+      "assertion_expression_sha256": [
+        "72aee8a9ef55a9d71770a2a6f4e937f6909c635b94a420b0e6cc44db3bef35cf",
+        "95aea5c76b401a29e729d93388dce0be664a684817cd71da2d9b540f1ea5c55d",
+        "72244413c58e9ddab102e809c403b2fcd76d6319244dddd092b649aacff7db37",
+        "bc03c0cf410121d214eca85af65639c43b150ac0142dc8e7da165e3ec8cdecdd"
+      ],
+      "f2p_tests": [
+        "MathOptInterface"
+      ],
+      "mwe_basis": "exact_assertions_from_upstream_fix_test_patch",
+      "schema_version": 1,
+      "source_evidence": {
+        "path": "trigger/upstream-tests.patch",
+        "sha256": "b6fd0c4fc99a5d70135bd9efbfd3972e6c5e7db2ae345abacc836afc62d87ae1",
+        "test_files": [
+          "test/Containers/test_DenseAxisArray.jl",
+          "test/Containers/test_SparseAxisArray.jl"
+        ],
+        "test_files_sha256": {
+          "test/Containers/test_DenseAxisArray.jl": "e88dfeca93fd8cb90bd331cd8ee5ebd52a08605cb3c4ea46dc4ae93fc1fe2626",
+          "test/Containers/test_SparseAxisArray.jl": "cbc8ec8d38872c944799a432b4d42af0ca58f90a9af7d8f435668e14dfcdb6b9"
+        }
+      }
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "838088b0f172ee7df79fae0620a89076aceffca357a5dadf7d8415a5ea7927a3",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "Issue 4213 tuple keys"
+  ],
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "Issue 4213 tuple keys"
+    ],
+    "exception_types": [
+      "bc433b00a75c348b3605b90e8556b58846d83f9740010ab8f849225364370d7d"
+    ],
+    "fingerprints": [
+      "bc433b00a75c348b3605b90e8556b58846d83f9740010ab8f849225364370d7d"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "b1888e6e9e6f07b03529340216fc07ba95f91fd5",
+    "parent_sha": "e2faaf83a77d368151de1db0703c740514283bce",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "6362f94803886f79f8fea64abf4abaed172ad700581ad20ef2da12b66974a560",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

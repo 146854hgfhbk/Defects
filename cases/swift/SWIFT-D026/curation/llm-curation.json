@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-832",
+  "technical_evidence_sha256": "44b0c09cc667fd8cda7cb4b4cd2f94e40890532a6a86aa405a50fc8a75baa5c9",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "efb3b91d0704aad0103baeb6c0f6403cba2039784de9c2877edd5583ffbc1078",
+  "reviewed_at": "2026-09-06T07:09:19.839182+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "lighter-swift/lighter#32",
+  "rationale": "Issue #32 (labeled bug, closed by PR #36) reports that Enlighten generates ambiguous symbols when a table name equals the database name, a pre-existing generator defect with a manual rename workaround. The minimized production patch is confined to Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift and consists of exactly the two behavior-carrying hunks: computing dbName via schema.tables.contains(where: { $0.name == name }) ? \"\\(name)DB\" : name, and passing dbName instead of name to self.init. There is no refactor, formatting, feature, documentation, configuration, or test content in the production patch, and both hunks are load-bearing (removing either leaves the collision unresolved or the computed value unused). The trigger is the unchanged upstream test from the same fixing commit, testResolveConflictedDatabaseName, which drives the pre-existing DatabaseInfo(name:schema:) initializer with the in-repo Fixtures.addressSchema; the fix introduces no new production API, so the test compiles and executes on the buggy revision and observes the unsuffixed name. Machine-generated strict evidence passes on both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential reproducing ASTDatabaseStructGenerationTests::testResolveConflictedDatabaseName, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32-run matrix), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no failed checks. active_same_project_root_causes is empty and lighter-swift/lighter#32 is in allowed_root_cause_ids, so this root cause is not a duplicate of any active registry entry.\n\nIssue #32 ('Enlighten generates ambigous symbols if `Table` shares name of `Database`', labeled bug, opened 2024-08-31, closed by the merge of PR #36) reports a pre-existing generator defect: when a schema table name equals the database name, the emitted code contains ambiguous references and the workaround is manually renaming the table. The single fixing commit b4fff57 (parent cc09c1d, traceability path fix_commit_to_merged_pr_to_issue, verified_fix_issue_numbers=[32]) addresses exactly that condition in one production file, Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift: hunk 1 computes `dbName` from `schema.tables.contains(where: { $0.name == name })` and hunk 2 passes `dbName` instead of `name` into `self.init`. Both hunks are behavioral and both are retained by minimization (original_hunk_count=2, retained=[1,2], removed=0, post_minimization_validation=PASS); there is no formatting, documentation, configuration, dependency, or unrelated-refactor content, and commit_stats confirms 2 files / 10 changed lines with 0 other_files. The trigger is the unchanged upstream test from the same fixing commit (testResolveConflictedDatabaseName), a single added method that calls the pre-existing initializer DatabaseInfo(name:schema:) with the pre-existing in-repo Fixtures.addressSchema and asserts the collision is resolved; no production API introduced by the fix is referenced, which the strict trigger.buddy_differential gate corroborates because the selector compiles and fails alone on the buggy revision and passes on the fixed revision. Runtime gates are machine-supplied and all green in both strict_original and strict_post_minimization (build.both_versions, selectors.present_and_unique 1/1/1, trigger.buggy_differential, trigger.deterministic 3/3 fingerprint groups, trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete 32 runs, 3 repetitions; failed_checks empty). Duplicate check: active_same_project_root_causes is empty and lighter-swift/lighter#32 is the sole entry in allowed_root_cause_ids.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T07:08:49.832669+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "efb3b91d0704aad0103baeb6c0f6403cba2039784de9c2877edd5583ffbc1078",
+      "response_sha256": "a1d95ff31cb55ec8f2715a22fc422da0d42deb677d5a4ebba83537091fbdf858",
+      "response_id": "msg_eabd05a025034216a6dfa519b7779aec",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5764495062023218,
+        "input_tokens": 14228,
+        "output_tokens": 651
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "lighter-swift/lighter#32",
+      "rationale": "Issue #32 (labeled bug, closed by PR #36) reports that Enlighten generates ambiguous symbols when a table name equals the database name, a pre-existing generator defect with a manual rename workaround. The minimized production patch is confined to Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift and consists of exactly the two behavior-carrying hunks: computing dbName via schema.tables.contains(where: { $0.name == name }) ? \"\\(name)DB\" : name, and passing dbName instead of name to self.init. There is no refactor, formatting, feature, documentation, configuration, or test content in the production patch, and both hunks are load-bearing (removing either leaves the collision unresolved or the computed value unused). The trigger is the unchanged upstream test from the same fixing commit, testResolveConflictedDatabaseName, which drives the pre-existing DatabaseInfo(name:schema:) initializer with the in-repo Fixtures.addressSchema; the fix introduces no new production API, so the test compiles and executes on the buggy revision and observes the unsuffixed name. Machine-generated strict evidence passes on both the original and post-minimization runs: build.both_versions, selectors.present_and_unique (1 unique selector), trigger.buggy_differential reproducing ASTDatabaseStructGenerationTests::testResolveConflictedDatabaseName, trigger.deterministic (3 fingerprint groups over 3 repetitions, 32-run matrix), trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green with no failed checks. active_same_project_root_causes is empty and lighter-swift/lighter#32 is in allowed_root_cause_ids, so this root cause is not a duplicate of any active registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:strict_original.checks.trigger.buggy_differential",
+        "case.json:strict_post_minimization.checks.full_suite.fixed_all_green",
+        "case.json:source_candidate.issue_check.linked_issues[0]",
+        "case.json:traceability.paths[0]"
+      ],
+      "risks": [
+        "The trigger asserts the fix's chosen naming convention (dbInfo.name == \"<name>DB\") rather than the user-visible symptom of ambiguous symbols in fully generated Swift source, so it is a proxy for the reported defect.",
+        "The suffix strategy is itself unguarded against a schema that already contains a table literally named \"<name>DB\"; this residual edge case is untested and unfixed.",
+        "issue_evidence and semantic_justification are null in the case record; issue content was read only through source_candidate.issue_check, so no independent snapshot of the issue text is archived alongside the case."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T07:09:19.838368+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "efb3b91d0704aad0103baeb6c0f6403cba2039784de9c2877edd5583ffbc1078",
+      "response_sha256": "749988f1744e1da816493cc2b3ceebe46627e02e831d1dad452f20f3fd0b3476",
+      "response_id": "msg_be5b7172ff694034b3bbfef8307ff5e6",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.649496488557214,
+        "input_tokens": 14781,
+        "output_tokens": 981
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "lighter-swift/lighter#32",
+      "rationale": "Issue #32 ('Enlighten generates ambigous symbols if `Table` shares name of `Database`', labeled bug, opened 2024-08-31, closed by the merge of PR #36) reports a pre-existing generator defect: when a schema table name equals the database name, the emitted code contains ambiguous references and the workaround is manually renaming the table. The single fixing commit b4fff57 (parent cc09c1d, traceability path fix_commit_to_merged_pr_to_issue, verified_fix_issue_numbers=[32]) addresses exactly that condition in one production file, Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift: hunk 1 computes `dbName` from `schema.tables.contains(where: { $0.name == name })` and hunk 2 passes `dbName` instead of `name` into `self.init`. Both hunks are behavioral and both are retained by minimization (original_hunk_count=2, retained=[1,2], removed=0, post_minimization_validation=PASS); there is no formatting, documentation, configuration, dependency, or unrelated-refactor content, and commit_stats confirms 2 files / 10 changed lines with 0 other_files. The trigger is the unchanged upstream test from the same fixing commit (testResolveConflictedDatabaseName), a single added method that calls the pre-existing initializer DatabaseInfo(name:schema:) with the pre-existing in-repo Fixtures.addressSchema and asserts the collision is resolved; no production API introduced by the fix is referenced, which the strict trigger.buddy_differential gate corroborates because the selector compiles and fails alone on the buggy revision and passes on the fixed revision. Runtime gates are machine-supplied and all green in both strict_original and strict_post_minimization (build.both_versions, selectors.present_and_unique 1/1/1, trigger.buggy_differential, trigger.deterministic 3/3 fingerprint groups, trigger.fixed_clean, full_suite.buggy_reproduces_only_triggers, full_suite.fixed_all_green, matrix.complete 32 runs, 3 repetitions; failed_checks empty). Duplicate check: active_same_project_root_causes is empty and lighter-swift/lighter#32 is the sole entry in allowed_root_cause_ids.",
+      "evidence_paths": [
+        "case.json:issue_check.linked_issues[0] (issue #32, labels ['bug','good first issue','help wanted'], body describing ambiguous references and rename workaround)",
+        "case.json:traceability.paths[0] (fix_commit_to_merged_pr_to_issue) and traceability.verified_fix_issue_numbers",
+        "patches/minimized-production.patch (Plugins/Libraries/LighterGeneration/GenModel/SchemaInit.swift, hunks 1-2)",
+        "case.json:minimized_patch_reference (original_hunk_count=2, retained_hunks=[1,2], removed_hunk_count=0, post_minimization_validation=PASS)",
+        "patches/trigger-tests.patch (Tests/EntityGenTests/ASTDatabaseStructGenerationTests.swift::testResolveConflictedDatabaseName)",
+        "case.json:strict_original.checks and case.json:strict_post_minimization.checks (all passed, failed_checks=[])",
+        "case.json:allowed_root_cause_ids and case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "The trigger asserts the fix's chosen naming convention (dbInfo.name == \"<name>DB\") rather than the user-visible symptom of ambiguous symbols in generated Swift source; it is a proxy assertion that would not be satisfied by an alternative, equally valid disambiguation strategy.",
+        "No supplied evidence ties the corrected DatabaseInfo.name through to the full generated output for the schema in the issue report (Shiragame), so end-to-end resolution of the ambiguity is inferred from the code path, not observed.",
+        "The suffix strategy is itself unguarded against a schema that already contains a table literally named '<name>DB'; this residual edge case is untested and unaddressed by the patch.",
+        "No negative-path trigger exists for the non-conflicting case, so preservation of the unsuffixed name relies on the full-suite green result rather than a dedicated assertion.",
+        "Duplicate screening rests on an empty active registry for this project; if the registry supplied was incomplete, the non-duplicate conclusion would need revisiting."
+      ]
+    }
+  ]
+}

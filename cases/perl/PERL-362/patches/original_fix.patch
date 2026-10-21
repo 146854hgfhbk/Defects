@@ -1,0 +1,97 @@
+diff --git a/Changes b/Changes
+index cc36efd..0e66e20 100644
+--- a/Changes
++++ b/Changes
+@@ -9,6 +9,8 @@ TODO: http://stevehanov.ca/blog/index.php?id=104 compression
+          and numbers are now not mishandled anymore by dual-vars, temp. string representations.
+          Add prompt for it.
+          Add t/117_numbers.t from JSON::PP, PR#10 by kraih.
++       - Change stringification of false and true to 0 and 1, matching upstream JSON and JSON::XS, #29.
++         This didn't affect string comparisons, just e.g. print decode_json("false").
+        - Tolerate literal ASCII TABs in strings in relaxed mode #22 (from JSON::XS)
+        - Revise pod, merge updates from JSON::XS.
+        - Fix pod typo #30 (Colin Kuskie)
+diff --git a/XS.pm b/XS.pm
+index dbb14f5..e282873 100644
+--- a/XS.pm
++++ b/XS.pm
+@@ -1738,16 +1738,16 @@ use overload
+    "0+"     => sub { ${$_[0]} },
+    "++"     => sub { $_[0] = ${$_[0]} + 1 },
+    "--"     => sub { $_[0] = ${$_[0]} - 1 },
+-  '""'      => sub { ${$_[0]} == 1 ? 'true' : 'false' },
+-  'eq'      => sub {
+-    my ($obj, $op) = ref ($_[0]) ? ($_[0], $_[1]) : ($_[1], $_[0]);
+-    if ($op eq 'true' or $op eq 'false') {
+-      return "$obj" eq 'true' ? 'true' eq $op : 'false' eq $op;
+-    }
+-    else {
+-      return $obj ? 1 == $op : 0 == $op;
+-    }
+-   },
++  # '""'    => sub { ${$_[0]} == 1 ? 'true' : 'false' },
++  #'eq'      => sub {
++  #  my ($obj, $op) = ref ($_[0]) ? ($_[0], $_[1]) : ($_[1], $_[0]);
++  #  if ($op eq 'true' or $op eq 'false') {
++  #    return "$obj" eq 'true' ? 'true' eq $op : 'false' eq $op;
++  #  }
++  #  else {
++  #    return $obj ? 1 == $op : 0 == $op;
++  #  }
++  # },
+    fallback => 1;
+ 
+ 1;
+diff --git a/XS.xs b/XS.xs
+index a7f1b21..057082a 100644
+--- a/XS.xs
++++ b/XS.xs
+@@ -176,8 +176,8 @@ json_init (JSON *json)
+ static void
+ init_MY_CXT(pTHX_ my_cxt_t * cxt)
+ {
+-  cxt->json_stash         = gv_stashpv ("Cpanel::JSON::XS", 1);
+-  cxt->json_boolean_stash = gv_stashpv ("JSON::XS::Boolean", 1);
++  cxt->json_stash          = gv_stashpv ("Cpanel::JSON::XS", 1);
++  cxt->json_boolean_stash  = gv_stashpv ("JSON::XS::Boolean", 1);
+   cxt->json_boolean_stash3 = gv_stashpv ("JSON::PP::Boolean", 1);
+ 
+   cxt->json_true  = get_bool (aTHX_ "Cpanel::JSON::XS::true");
+diff --git a/t/03_types.t b/t/03_types.t
+index 2a90e47..1a00c6a 100644
+--- a/t/03_types.t
++++ b/t/03_types.t
+@@ -1,4 +1,4 @@
+-BEGIN { $| = 1; print "1..76\n"; }
++BEGIN { $| = 1; print "1..79\n"; }
+ 
+ use utf8;
+ use Cpanel::JSON::XS;
+@@ -20,6 +20,22 @@ ok ($false == !$true);
+ ok (Cpanel::JSON::XS::is_bool $false);
+ ok (++$false == 1);
+ ok (!Cpanel::JSON::XS::is_bool $false);
++{
++  ok ("0" eq decode_json("false"));
++  ok ("1" eq decode_json("true"));
++  my $FH;
++  my $fn = "tmp_$$";
++  open $FH, ">", $fn;
++  print $FH decode_json("false"); # printed as "false", but upstream as "0". GH #29
++  print $FH decode_json("true");
++  print $FH "\n";
++  close $FH;
++  open $FH, "<", $fn;
++  my $s = <$FH>;
++  close $FH;
++  unlink $fn;
++  ok ("01\n" eq $s);
++}
+ 
+ ok (Cpanel::JSON::XS->new->allow_nonref (1)->decode ('5') == 5);
+ ok (Cpanel::JSON::XS->new->allow_nonref (1)->decode ('-5') == -5);
+@@ -56,4 +72,3 @@ ok (32768 == ((decode_json encode_json [32768])->[0]));
+ 
+ my @sparse; @sparse[0,3] = (1, 4);
+ ok ("[1,null,null,4]" eq encode_json \@sparse);
+-

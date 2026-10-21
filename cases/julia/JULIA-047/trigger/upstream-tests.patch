@@ -1,0 +1,31 @@
+diff --git a/test/expr.jl b/test/expr.jl
+index 0a5dce4..272a5b9 100644
+--- a/test/expr.jl
++++ b/test/expr.jl
+@@ -673,6 +673,8 @@
+         # Custom cmd macros
+         @test parsestmt("foo`str`") ==
+             Expr(:macrocall, Symbol("@foo_cmd"), LineNumberNode(1), "str")
++        @test parsestmt("foo`str`flag") ==
++            Expr(:macrocall, Symbol("@foo_cmd"), LineNumberNode(1), "str", "flag")
+         @test parsestmt("foo```\n  a\n  b```") ==
+             Expr(:macrocall, Symbol("@foo_cmd"), LineNumberNode(1), "a\nb")
+         # Expr conversion distinguishes from explicit calls to a macro of the same name
+diff --git a/test/parser.jl b/test/parser.jl
+index caf40f9..70842a4 100644
+--- a/test/parser.jl
++++ b/test/parser.jl
+@@ -452,7 +452,12 @@ tests = [
+         "x\"s\"in"   => """(macrocall @x_str (string-r "s") "in")"""
+         "x\"s\"2"    => """(macrocall @x_str (string-r "s") 2)"""
+         "x\"s\"10.0" => """(macrocall @x_str (string-r "s") 10.0)"""
+-        #
++        # Cmd macro sufficies
++        "x`s`y"    => """(macrocall @x_cmd (cmdstring-r "s") "y")"""
++        "x`s`end"  => """(macrocall @x_cmd (cmdstring-r "s") "end")"""
++        "x`s`in"   => """(macrocall @x_cmd (cmdstring-r "s") "in")"""
++        "x`s`2"    => """(macrocall @x_cmd (cmdstring-r "s") 2)"""
++        "x`s`10.0" => """(macrocall @x_cmd (cmdstring-r "s") 10.0)"""
+     ],
+     JuliaSyntax.parse_resword => [
+         # In normal_context

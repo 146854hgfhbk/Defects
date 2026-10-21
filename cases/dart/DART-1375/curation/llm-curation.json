@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1375",
+  "technical_evidence_sha256": "eacf9d451cc9f7cf5bed4bbe7e896c459fe5bf5eb2e3c847c9255c9ab4c215b9",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "3453af23d09ebfc530c116b568ff4808a263b2be4633cf2137df0fc813164091",
+  "reviewed_at": "2026-08-15T08:28:28.729563+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-archive/args#141",
+  "rationale": "The defect is a parsing regression in lib/src/parser.dart where long-option name validation rejected underscores: the loop over name.codeUnitAt(i) called _isLetterOrDigitOrHyphen, which only permitted code units for letters, digits, and hyphen (45). The fix replaces that predicate with _isLetterDigitHyphenOrUnderscore, adding code unit 95 (underscore), matching the upstream subject 'Fix parsing: re-allow underscore in long names.' (source_candidate.subject) and the referenced public item dart-archive/args#141, which is in allowed_root_cause_ids and in traceability.verified_fix_issue_numbers. The minimized production patch touches only lib/src/parser.dart and contains exactly two hunks: the call-site predicate swap and the predicate definition; the helper rename is required by the semantic change, not an independent refactor. No test, config, docs, or formatting changes are present in patches/minimized-production.patch, and it is byte-identical to patches/production-fix.patch and to the production half of patches/original-commit.patch. The trigger is the unchanged upstream test from the same commit ('match letters, numbers, hyphens and underscores'), which exercises only pre-existing public API (ArgParser(), addFlag, parse, results[...]) with a name string containing '_' and '-'; it depends on no API introduced by the fix. Strict evidence for both the original and post-minimization runs reports all gates passed, including trigger.buggy_differential with the selector reproducing on the buggy revision, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green over a complete 32-run matrix with 3 repetitions. active_same_project_root_causes is empty, so this underscore-in-long-name validation root cause duplicates no registry entry.\n\nThe defect is a single-predicate validation bug in lib/src/parser.dart: long-option name validation rejected underscore code units, so '--some_flag' failed to parse even when registered. The minimized production patch changes exactly that predicate (adds code unit 95) and updates the single call site in the name-validation loop; the helper rename from _isLetterOrDigitOrHyphen to _isLetterDigitHyphenOrUnderscore is semantically required by the behavior change rather than an independent refactor, and the two inline '// Hyphen.'/'// Underscore.' comments sit on the changed lines and match the existing '// Digits.' style. No test, config, or feature-extension content remains in patches/minimized-production.patch, and production_files lists only lib/src/parser.dart. The trigger is the unchanged upstream test from the same fixing commit ('match letters, numbers, hyphens and underscores'), which uses only pre-existing public API (ArgParser, addFlag, parse, results[...]) and exercises a name containing '_' plus '-'; it introduces no API added by the fix, so it is semantically equivalent to the reported defect. Strict machine evidence on the post-minimization revision reports all gates passed: build.both_versions, trigger.buggy_differential with the declared selector failing alone on 7ac64f5, trigger.fixed_clean on 8b6b492, trigger.deterministic across 3 repetitions, and full_suite.buggy_reproduces_only_triggers with no extra failures. active_same_project_root_causes is empty and dart-archive/args#141 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T08:28:01.335482+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3453af23d09ebfc530c116b568ff4808a263b2be4633cf2137df0fc813164091",
+      "response_sha256": "1fe762d116d5c927d2df925d71d1f28627b7e33044430665f19dac53addc0d8c",
+      "response_id": "msg_f8ebb72d30604838a71e1afa21e8b8a9",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4754510845771144,
+        "input_tokens": 7696,
+        "output_tokens": 693
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/args#141",
+      "rationale": "The defect is a parsing regression in lib/src/parser.dart where long-option name validation rejected underscores: the loop over name.codeUnitAt(i) called _isLetterOrDigitOrHyphen, which only permitted code units for letters, digits, and hyphen (45). The fix replaces that predicate with _isLetterDigitHyphenOrUnderscore, adding code unit 95 (underscore), matching the upstream subject 'Fix parsing: re-allow underscore in long names.' (source_candidate.subject) and the referenced public item dart-archive/args#141, which is in allowed_root_cause_ids and in traceability.verified_fix_issue_numbers. The minimized production patch touches only lib/src/parser.dart and contains exactly two hunks: the call-site predicate swap and the predicate definition; the helper rename is required by the semantic change, not an independent refactor. No test, config, docs, or formatting changes are present in patches/minimized-production.patch, and it is byte-identical to patches/production-fix.patch and to the production half of patches/original-commit.patch. The trigger is the unchanged upstream test from the same commit ('match letters, numbers, hyphens and underscores'), which exercises only pre-existing public API (ArgParser(), addFlag, parse, results[...]) with a name string containing '_' and '-'; it depends on no API introduced by the fix. Strict evidence for both the original and post-minimization runs reports all gates passed, including trigger.buggy_differential with the selector reproducing on the buggy revision, trigger.fixed_clean, trigger.deterministic (3 fingerprint groups), full_suite.buggy_reproduces_only_triggers, and full_suite.fixed_all_green over a complete 32-run matrix with 3 repetitions. active_same_project_root_causes is empty, so this underscore-in-long-name validation root cause duplicates no registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:trigger_tests",
+        "case.json:strict_post_minimization.checks.trigger.buggy_differential",
+        "case.json:strict_original.checks.full_suite.fixed_all_green",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:source_candidate.subject"
+      ],
+      "risks": [
+        "The cited public reference (#141) is the merged pull request itself; there is no separate user-filed issue report, so the defect narrative comes from the PR title and diff rather than an independent bug report.",
+        "The trigger test asserts a combined alphabet (letters, digits, hyphen, underscore) rather than underscore alone, so it would also fail for a hypothetical regression in the letter/digit/hyphen branches.",
+        "The trigger is the upstream test authored with the fix, not an independent pre-existing test, so it validates the fix's intended behavior by construction.",
+        "require_analyze_clean is false, so analyzer diagnostics were treated as non-blocking."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T08:28:28.728978+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "3453af23d09ebfc530c116b568ff4808a263b2be4633cf2137df0fc813164091",
+      "response_sha256": "75807ebb8f2148731fb98e83ce9dde25c5340d4c7a98f6dbd838766cb1decf0c",
+      "response_id": "msg_7e1dd90d72074ff79de6a74d5c0639e3",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.594305932437811,
+        "input_tokens": 8185,
+        "output_tokens": 735
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-archive/args#141",
+      "rationale": "The defect is a single-predicate validation bug in lib/src/parser.dart: long-option name validation rejected underscore code units, so '--some_flag' failed to parse even when registered. The minimized production patch changes exactly that predicate (adds code unit 95) and updates the single call site in the name-validation loop; the helper rename from _isLetterOrDigitOrHyphen to _isLetterDigitHyphenOrUnderscore is semantically required by the behavior change rather than an independent refactor, and the two inline '// Hyphen.'/'// Underscore.' comments sit on the changed lines and match the existing '// Digits.' style. No test, config, or feature-extension content remains in patches/minimized-production.patch, and production_files lists only lib/src/parser.dart. The trigger is the unchanged upstream test from the same fixing commit ('match letters, numbers, hyphens and underscores'), which uses only pre-existing public API (ArgParser, addFlag, parse, results[...]) and exercises a name containing '_' plus '-'; it introduces no API added by the fix, so it is semantically equivalent to the reported defect. Strict machine evidence on the post-minimization revision reports all gates passed: build.both_versions, trigger.buggy_differential with the declared selector failing alone on 7ac64f5, trigger.fixed_clean on 8b6b492, trigger.deterministic across 3 repetitions, and full_suite.buggy_reproduces_only_triggers with no extra failures. active_same_project_root_causes is empty and dart-archive/args#141 is the sole allowed verified issue key, so the root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "lib/src/parser.dart",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "traceability.verified_fix_issue_numbers",
+        "trigger_tests",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The public record #141 is the merged pull request itself; issue_urls points at issues/141, which resolves to the same GitHub number. No separately filed bug report body text was supplied, so the user-facing symptom description rests on the PR subject 'Fix parsing: re-allow underscore in long names' plus the diff.",
+        "The commit subject implies a regression from an earlier commit, but the commit that removed underscore support was not supplied, so the exact regression window is unverified.",
+        "The helper rename means any other in-repo reference to _isLetterOrDigitOrHyphen would have to be updated; only the one call site appears in the diff, and no repository-wide search result was supplied to confirm there were no others.",
+        "full_suite repetitions is 1, so flaky full-suite behavior outside the isolated trigger is less thoroughly sampled than the 3-repetition trigger matrix.",
+        "Analyzer cleanliness was diagnostic only (require_analyze_clean=false), so static-analysis regressions are not gated."
+      ]
+    }
+  ]
+}

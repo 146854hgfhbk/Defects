@@ -1,0 +1,150 @@
+diff --git a/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/test/KeepScreenOn.test.ets b/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/test/KeepScreenOn.test.ets
+new file mode 100644
+index 000000000..c4adedb91
+--- /dev/null
++++ b/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/test/KeepScreenOn.test.ets
+@@ -0,0 +1,52 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import { describe, it, expect } from '@ohos/hypium';
++import { Driver, ON } from '@ohos.UiTest';
++import window from '@ohos.window';
++
++const BUNDLE: string = 'FlipClock_';
++const WAIT_TIME: number = 1000;
++
++let driver: Driver = Driver.create();
++let abilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator();
++
++async function startTestAbility(): Promise<window.Window> {
++  await abilityDelegator.startAbility({
++    bundleName: 'ohos.samples.flipclock',
++    abilityName: 'TestAbility'
++  });
++  await driver.delayMs(WAIT_TIME * 2);
++  let ability = await abilityDelegator.getCurrentTopAbility();
++  return await window.getLastWindow(ability.context);
++}
++
++export default function keepScreenOnTest(): void {
++  describe('KeepScreenOnTest', () => {
++    it(BUNDLE + 'KeepScreenOn_001', 0, async () => {
++      let testWindow = await startTestAbility();
++      await testWindow.setWindowKeepScreenOn(false);
++      expect(testWindow.getWindowProperties().isKeepScreenOn).assertFalse();
++
++      await driver.assertComponentExist(ON.id('screenLight'));
++      let keepScreenSwitch = await driver.findComponent(ON.id('screenLight'));
++      await keepScreenSwitch.click();
++      await driver.delayMs(WAIT_TIME * 2);
++
++      expect(testWindow.getWindowProperties().isKeepScreenOn).assertTrue();
++    })
++  })
++}
+diff --git a/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/test/List.test.ets b/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/test/List.test.ets
+index b00d0ae8a..f9a59c2e5 100644
+--- a/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,8 +13,8 @@
+  * limitations under the License.
+  */
+ 
+-import abilityTest from './Ability.test';
++import keepScreenOnTest from './KeepScreenOn.test';
+ 
+ export default function testsuite() {
+-  abilityTest();
+-}
+\ No newline at end of file
++  keepScreenOnTest();
++}
+diff --git a/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/testability/pages/Index.ets b/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/testability/pages/Index.ets
+index a5336c835..26d36e25d 100644
+--- a/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/testability/pages/Index.ets
++++ b/code/Solutions/Tools/FlipClock/entry/src/ohosTest/ets/testability/pages/Index.ets
+@@ -14,12 +14,20 @@
+  */
+ 
+ import hilog from '@ohos.hilog';
++import window from '@ohos.window';
++import { LockSwitch } from '../../../../main/ets/common/LockSwitch';
+ 
+ @Entry
+ @Component
+ struct Index {
++  @State isComTime: boolean = true;
++
+   aboutToAppear() {
+     hilog.info(0x0000, 'testTag', '%{public}s', 'TestAbility index aboutToAppear');
++    window.getLastWindow(getContext(this)).then((windowClass: window.Window) => {
++      AppStorage.SetOrCreate('windowClass', windowClass);
++      return windowClass.setWindowKeepScreenOn(false);
++    });
+   }
+ 
+   @State message: string = 'Hello World';
+@@ -27,26 +35,14 @@ struct Index {
+   build() {
+     Row() {
+       Column() {
+-        Text(this.message)
+-          .fontSize(50)
+-          .fontWeight(FontWeight.Bold)
+-        Button() {
+-          Text('next page')
+-            .fontSize(20)
+-            .fontWeight(FontWeight.Bold)
++        Column() {
++          LockSwitch({ isComTime: $isComTime })
+         }
+-        .type(ButtonType.Capsule)
+-        .margin({
+-          top: 20
+-        })
+-        .backgroundColor('#0D9FFB')
+-        .width('35%')
+-        .height('5%')
+-        .onClick(() => {
+-        })
++        .width('100%')
+       }
+       .width('100%')
++      .padding(24)
+     }
+     .height('100%')
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/code/Solutions/Tools/FlipClock/entry/src/ohosTest/resources/base/element/string.json b/code/Solutions/Tools/FlipClock/entry/src/ohosTest/resources/base/element/string.json
+index 65d8fa5a7..4f8419949 100644
+--- a/code/Solutions/Tools/FlipClock/entry/src/ohosTest/resources/base/element/string.json
++++ b/code/Solutions/Tools/FlipClock/entry/src/ohosTest/resources/base/element/string.json
+@@ -11,6 +11,10 @@
+     {
+       "name": "TestAbility_label",
+       "value": "test label"
++    },
++    {
++      "name": "screenLight",
++      "value": "steady on screen"
+     }
+   ]
+-}
+\ No newline at end of file
++}

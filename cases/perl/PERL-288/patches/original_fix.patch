@@ -1,0 +1,73 @@
+diff --git a/Changes b/Changes
+index d4c466633..03bb96266 100644
+--- a/Changes
++++ b/Changes
+@@ -4,6 +4,7 @@
+     - Fix #789 (Modification of read only value)
+     - Fix typo in Test::Builder when looking for IPC (#777)
+     - Fix #791, clone_io broke on scalar io layer
++    - Fix #790 and #756, Exception event stingify exception
+ 
+ 1.302096  2017-09-10 21:16:18-07:00 America/Los_Angeles
+ 
+diff --git a/lib/Test2/Event/Exception.pm b/lib/Test2/Event/Exception.pm
+index 8094de87c..67c757a3c 100644
+--- a/lib/Test2/Event/Exception.pm
++++ b/lib/Test2/Event/Exception.pm
+@@ -8,6 +8,11 @@ our $VERSION = '1.302097';
+ BEGIN { require Test2::Event; our @ISA = qw(Test2::Event) }
+ use Test2::Util::HashBase qw{error};
+ 
++sub init {
++    my $self = shift;
++    $self->{+ERROR} = "$self->{+ERROR}";
++}
++
+ sub causes_fail { 1 }
+ 
+ sub summary {
+@@ -71,6 +76,10 @@ The reason for the exception.
+ 
+ =back
+ 
++=head1 CAVEATS
++
++Be aware that all exceptions are stringified during construction.
++
+ =head1 SOURCE
+ 
+ The source code repository for Test2 can be found at
+diff --git a/t/Test2/modules/Event/Exception.t b/t/Test2/modules/Event/Exception.t
+index 78c175878..4d58aad7d 100644
+--- a/t/Test2/modules/Event/Exception.t
++++ b/t/Test2/modules/Event/Exception.t
+@@ -27,4 +27,29 @@ is_deeply(
+     "Got error facet",
+ );
+ 
++my $hash = {an => 'error'};
++my $str = "$hash";
++
++$exception = Test2::Event::Exception->new(
++    trace => {frame => []},
++    error => $hash,
++);
++
++ok($exception->causes_fail, "Exception events always cause failure");
++
++is($exception->error, $str, "Got stringified exception");
++
++$facet_data = $exception->facet_data;
++ok($facet_data->{about}, "Got common facet data");
++
++is_deeply(
++    $facet_data->{errors},
++    [{
++        tag => 'ERROR',
++        fail => 1,
++        details => $str,
++    }],
++    "Got error facet",
++);
++
+ done_testing;

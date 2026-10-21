@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-503",
+  "technical_evidence_sha256": "aa08215e1939299404f3008dd4f91d0846a45a674aeb60baddcb7b5c959ff314",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "8d4a538bcefddc24ab8b7278baed6e022ec0dbb36fb6a861d9c24da76a7136f2",
+  "reviewed_at": "2026-08-11T23:26:06.561965+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "leehack/mcp_dart#68",
+  "rationale": "Issue #68 reports that RFC 6570 template 'entity://list{?status,assignee}' fails to match the valid URI 'entity://list?status=s1&assignee=u1'. The minimized production patch fixes UriTemplateExpander.match() by emitting operator-correct separators: for '?' the first variable gets '\\?' prefix and subsequent variables get '&' separator (not ','). The fix also escapes variable names with RegExp.escape() to prevent regex metacharacter bugs. All three trigger tests exercise the pre-existing match() API with multi-variable expressions and passed strict runtime validation: buggy_differential confirmed all three fail on buggy revision and pass on fixed; deterministic across 3 repetitions; full_suite.buggy_reproduces_only_triggers confirmed these are the only failures. The patch contains no formatting, documentation, or feature additions—only the regex pattern construction logic changes. No active_same_project_root_causes supplied, confirming no duplicate.\n\nIssue #68 reports that RFC 6570 template 'entity://list{?status,assignee}' fails to match the valid expansion 'entity://list?status=s1&assignee=u1'. The minimized production patch fixes UriTemplateExpander.match() by moving separator logic inside the operator switch and emitting operator-correct separators: '?' uses '&' for subsequent variables (not ','), '#' uses ',' after the first '#', and variable names are escaped. The patch contains no formatting, refactor, documentation, configuration, or feature extension—only the regex pattern construction defect. All three triggering tests exercise the pre-existing match() API with multi-variable templates that would have failed on the buggy revision due to incorrect separator emission. Strict runtime evidence confirms differential failure on buggy (all three triggers reproduced) and clean passage on fixed across isolated, suite, and reversed runs with deterministic fingerprints. No active same-project root causes supplied.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:25:52.454011+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8d4a538bcefddc24ab8b7278baed6e022ec0dbb36fb6a861d9c24da76a7136f2",
+      "response_sha256": "c85b7ca803e5610bc15366a2991d975444dff7c686e2c85ca9831d06c2f0d20b",
+      "response_id": "msg_98d9ec4e-0809-40c7-a4",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 3756
+        },
+        "cache_creation_input_tokens": 3756,
+        "cache_read_input_tokens": 9385,
+        "input_tokens": 12440,
+        "output_tokens": 992
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "leehack/mcp_dart#68",
+      "rationale": "Issue #68 reports that RFC 6570 template 'entity://list{?status,assignee}' fails to match the valid URI 'entity://list?status=s1&assignee=u1'. The minimized production patch fixes UriTemplateExpander.match() by emitting operator-correct separators: for '?' the first variable gets '\\?' prefix and subsequent variables get '&' separator (not ','). The fix also escapes variable names with RegExp.escape() to prevent regex metacharacter bugs. All three trigger tests exercise the pre-existing match() API with multi-variable expressions and passed strict runtime validation: buggy_differential confirmed all three fail on buggy revision and pass on fixed; deterministic across 3 repetitions; full_suite.buggy_reproduces_only_triggers confirmed these are the only failures. The patch contains no formatting, documentation, or feature additions—only the regex pattern construction logic changes. No active_same_project_root_causes supplied, confirming no duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.deterministic",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests[0].name",
+        "trigger_tests[1].name",
+        "trigger_tests[2].name",
+        "issue_urls[0]",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The '#' operator branch change writes 'firstInExpr ? \"#\" : \",\"' which could duplicate a fragment prefix if written elsewhere; however strict validation passed all tests confirming no regression.",
+        "test/server/mcp_test.dart uses Future.delayed for sequencing which may be flaky on loaded runners; test/shared/uri_template_test.dart unit tests provide more stable isolated triggers."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T23:26:06.561690+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8d4a538bcefddc24ab8b7278baed6e022ec0dbb36fb6a861d9c24da76a7136f2",
+      "response_sha256": "291a91e68531dd737e05db3a456c3ebf367512284877c36a423a872ece7be22f",
+      "response_id": "msg_b333c133-16e6-4cf1-92",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 4219
+        },
+        "cache_creation_input_tokens": 4219,
+        "cache_read_input_tokens": 9271,
+        "input_tokens": 12440,
+        "output_tokens": 1082
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "leehack/mcp_dart#68",
+      "rationale": "Issue #68 reports that RFC 6570 template 'entity://list{?status,assignee}' fails to match the valid expansion 'entity://list?status=s1&assignee=u1'. The minimized production patch fixes UriTemplateExpander.match() by moving separator logic inside the operator switch and emitting operator-correct separators: '?' uses '&' for subsequent variables (not ','), '#' uses ',' after the first '#', and variable names are escaped. The patch contains no formatting, refactor, documentation, configuration, or feature extension—only the regex pattern construction defect. All three triggering tests exercise the pre-existing match() API with multi-variable templates that would have failed on the buggy revision due to incorrect separator emission. Strict runtime evidence confirms differential failure on buggy (all three triggers reproduced) and clean passage on fixed across isolated, suite, and reversed runs with deterministic fingerprints. No active same-project root causes supplied.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "issue_urls[0]: https://github.com/leehack/mcp_dart/issues/68",
+        "trigger_tests[0].name: resource template read matches query parameters",
+        "trigger_tests[1].name: matches RFC 6570 query expansion with multiple parameters",
+        "trigger_tests[2].name: matches path expansion with multiple variables",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed: true",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed: true",
+        "strict_post_minimization.checks.trigger.deterministic.passed: true"
+      ],
+      "risks": [
+        "The '#' operator branch adds 'firstInExpr ? \"#\" : \",\"' which writes a literal '#'; if upstream code already emits the fragment prefix this could cause pattern duplication, though strict evidence shows all fixed runs green.",
+        "test/server/mcp_test.dart uses Future.delayed for sequencing which may flake under load; test/shared/uri_template_test.dart provides the more isolated trigger."
+      ]
+    }
+  ]
+}

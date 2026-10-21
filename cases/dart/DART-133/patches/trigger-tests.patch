@@ -1,0 +1,95 @@
+diff --git a/test/changed_test.dart b/test/changed_test.dart
+new file mode 100644
+index 0000000..39de814
+--- /dev/null
++++ b/test/changed_test.dart
+@@ -0,0 +1,66 @@
++/// Copyright (C) 2021 Intel Corporation
++/// SPDX-License-Identifier: BSD-3-Clause
++/// 
++/// changed_test.dart
++/// Unit tests for Logic change events
++/// 
++/// 2021 November 5
++/// Author: Max Korbel <max.korbel@intel.com>
++/// 
++
++import 'package:rohd/rohd.dart';
++import 'package:test/test.dart';
++
++void main() {
++
++  tearDown(() {
++    Simulator.reset();
++  });
++
++  test('single changed multiple injections', () async {
++    var a = Logic();
++    a.put(0);
++
++    var b = Logic();
++    b.put(0);
++
++    var numChangesDetected = 0;
++
++    a.changed.listen((event) {
++      numChangesDetected++;
++    });
++
++    a.posedge.listen((event) {
++      b.inject(1);
++    });
++
++    Simulator.registerAction(10, () => a.put(1));
++
++    await Simulator.run();
++
++    expect(numChangesDetected, equals(1));
++  });
++
++  test('clk edge counter', () async {
++    var clk = SimpleClockGenerator(10).clk;
++    var b = Logic();
++    
++    bool val = false;
++    clk.negedge.listen((event) async {
++      b.inject(val);
++      val = !val;
++    });
++
++    var uniquePosedgeTimestamps = <int>{};
++    var count = 0;
++    clk.posedge.listen((event) {
++      uniquePosedgeTimestamps.add(Simulator.time);
++      count++;
++    });
++
++    Simulator.setMaxSimTime(100);
++    await Simulator.run();
++
++    expect(count, equals(uniquePosedgeTimestamps.length));
++  });
++}
+\ No newline at end of file
+diff --git a/test/wave_dumper_test.dart b/test/wave_dumper_test.dart
+index f09f89f..e2754bd 100644
+--- a/test/wave_dumper_test.dart
++++ b/test/wave_dumper_test.dart
+@@ -135,7 +135,7 @@ void main() {
+     var dumpName = 'dumpBeforePut';
+     
+     createTemporaryDump(mod, dumpName);
+-    await a.inject(1);
++    a.inject(1);
+ 
+     Simulator.registerAction(10, () => a.put(0));
+     Simulator.registerAction(20, () => a.put(1));
+@@ -172,7 +172,7 @@ void main() {
+     await clk.nextPosedge;
+ 
+     // inject a 0 on a when it should be 1 already from the clock
+-    await a.inject(0);
++    a.inject(0);
+ 
+     await Simulator.simulationEnded;
+     

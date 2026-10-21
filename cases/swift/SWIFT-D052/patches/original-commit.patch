@@ -1,0 +1,436 @@
+diff --git a/Sources/NIOIMAPCore/Parser/ParserLibrary.swift b/Sources/NIOIMAPCore/Parser/ParserLibrary.swift
+index 93d7cb768da9fc594bddb7cf7651151a9bf707bf..f9a5c41cfbdfaacf9f4e5d5f48c80b175b0df24f 100644
+--- a/Sources/NIOIMAPCore/Parser/ParserLibrary.swift
++++ b/Sources/NIOIMAPCore/Parser/ParserLibrary.swift
+@@ -25,9 +25,12 @@ typealias SubParser<T> = (inout ParseBuffer, StackTracker) throws -> T
+ 
+ internal struct ParseBuffer: Hashable {
+     fileprivate var bytes: ByteBuffer
++    /// Last newline parsed by `parseNewline()`
++    fileprivate(set) internal var lastParsedNewline: Newline?
+ 
+     internal init(_ bytes: ByteBuffer) {
+         self.bytes = bytes
++        self.lastParsedNewline = nil
+     }
+ 
+     internal var readableBytes: Int {
+@@ -35,6 +38,33 @@ internal struct ParseBuffer: Hashable {
+     }
+ }
+ 
++extension ParseBuffer {
++    /// Line ending kind
++    enum Newline: Sendable, Hashable {
++        case crlf
++        case cr
++        case lf
++    }
++
++    enum SkipLFResult: Hashable, Sendable {
++        case didSkip
++        case none
++    }
++
++    /// Skip an `LF` if it's the first byte in the buffer.
++    mutating func skipLF() -> SkipLFResult {
++        guard
++            let first = bytes.getInteger(
++                at: bytes.readerIndex,
++                as: UInt8.self
++            ),
++            first == UInt8(ascii: "\n")
++        else { return .none }
++        bytes.moveReaderIndex(forwardBy: 1)
++        return .didSkip
++    }
++}
++
+ /// Parsing a tagged command failed. Includes the tag of the invalid command, and the parsing error.
+ public struct BadCommand: Error {
+     /// The tag of the bad command.
+@@ -398,38 +428,54 @@ extension ParserLibrary {
+         }
+     }
+ 
+-    static func parseNewline(buffer: inout ParseBuffer, tracker: StackTracker) throws {
+-        switch buffer.bytes.getInteger(at: buffer.bytes.readerIndex, as: UInt16.self) {
+-        case .some(UInt16(0x0D0A)):  // CRLF
+-            // fast path: we find CRLF
+-            buffer.bytes.moveReaderIndex(forwardBy: 2)
+-            return
+-        case .some(let x) where (UInt8(x >> 8) == UInt8(ascii: "\n") || UInt8(x >> 8) == UInt8(ascii: "\r")):
+-            // other fast path: we find LF + some other byte
+-            buffer.bytes.moveReaderIndex(forwardBy: 1)
+-            return
+-        case .some(let x) where UInt8(x >> 8) == UInt8(ascii: " "):
+-            // found a space that we’ll skip. Some servers insert an extra space at the end.
+-            try PL.composite(buffer: &buffer, tracker: tracker) { buffer, tracker in
++    @discardableResult
++    static func parseNewline(
++        buffer: inout ParseBuffer,
++        tracker: StackTracker
++    ) throws -> ParseBuffer.Newline {
++        func _parseNewline() throws -> ParseBuffer.Newline {
++            switch buffer.bytes.getInteger(at: buffer.bytes.readerIndex, as: UInt16.self) {
++            case .some(UInt16(0x0D0A)):  // CRLF
++                // fast path: we find CRLF
++                buffer.bytes.moveReaderIndex(forwardBy: 2)
++                return .crlf
++            case .some(let x) where UInt8(x >> 8) == UInt8(ascii: "\n"):
++                // other fast path: we find LF + some other byte
+                 buffer.bytes.moveReaderIndex(forwardBy: 1)
+-                try PL.parseNewline(buffer: &buffer, tracker: tracker)
+-            }
+-        case .none:
+-            guard let first = buffer.bytes.getInteger(at: buffer.bytes.readerIndex, as: UInt8.self) else {
+-                throw IncompleteMessage()
+-            }
+-            switch first {
+-            case UInt8(ascii: "\n"), UInt8(ascii: "\r"):
++                return .lf
++            case .some(let x) where UInt8(x >> 8) == UInt8(ascii: "\r"):
++                // CR followed by some other byte
+                 buffer.bytes.moveReaderIndex(forwardBy: 1)
+-                return
++                return .cr
++            case .some(let x) where UInt8(x >> 8) == UInt8(ascii: " "):
++                // found a space that we’ll skip. Some servers insert an extra space at the end.
++                return try PL.composite(buffer: &buffer, tracker: tracker) { buffer, tracker in
++                    buffer.bytes.moveReaderIndex(forwardBy: 1)
++                    return try PL.parseNewline(buffer: &buffer, tracker: tracker)
++                }
++            case .none:
++                guard let first = buffer.bytes.getInteger(at: buffer.bytes.readerIndex, as: UInt8.self) else {
++                    throw IncompleteMessage()
++                }
++                switch first {
++                case UInt8(ascii: "\n"):
++                    buffer.bytes.moveReaderIndex(forwardBy: 1)
++                    return .lf
++                case UInt8(ascii: "\r"):
++                    buffer.bytes.moveReaderIndex(forwardBy: 1)
++                    return .cr
++                default:
++                    // found only one byte which is neither CR nor LF.
++                    throw ParserError()
++                }
+             default:
+-                // found only one byte which is neither CR nor LF.
++                // found two bytes but they’re neither CRLF, nor start with a NL.
+                 throw ParserError()
+             }
+-        default:
+-            // found two bytes but they're neither CRLF, nor start with a NL.
+-            throw ParserError()
+         }
++        let result = try _parseNewline()
++        buffer.lastParsedNewline = result
++        return result
+     }
+ 
+     static func parseByte(buffer: inout ParseBuffer, tracker: StackTracker) throws -> UInt8 {
+diff --git a/Sources/NIOIMAPCore/Parser/ResponseParser.swift b/Sources/NIOIMAPCore/Parser/ResponseParser.swift
+index c85cee35e7884fdb40ca1b0add77220a0714b291..fb77ac4a8b31ce51e64254d6f63b5f61ceb49d29 100644
+--- a/Sources/NIOIMAPCore/Parser/ResponseParser.swift
++++ b/Sources/NIOIMAPCore/Parser/ResponseParser.swift
+@@ -80,6 +80,8 @@ public struct ResponseParser: Parser, Sendable {
+     let messageAttributeLimit: Int
+     let bodySizeLimit: UInt64
+     private var mode: Mode
++    /// Newline kind of the last successfully parsed response.
++    private var lastResponseNewlineEnding: ParseBuffer.Newline?
+ 
+     /// Creates a new `ResponseParser`.
+     /// - parameter bufferLimit: The maximum amount of data that may be buffered by the parser. If this limit is exceeded then an error will be thrown. Defaults to 1000 bytes.
+@@ -94,6 +96,7 @@ public struct ResponseParser: Parser, Sendable {
+             parsedStringCache: options.parsedStringCache
+         )
+         self.bodySizeLimit = options.bodySizeLimit
++        self.lastResponseNewlineEnding = nil
+     }
+ 
+     /// Parses a `ResponseStream` and returns the result.
+@@ -117,7 +120,20 @@ public struct ResponseParser: Parser, Sendable {
+         do {
+             switch self.mode {
+             case .response(let state):
+-                return try self.parseResponse(state: state, buffer: &parseBuffer, tracker: tracker)
++                // Handle orphaned CR/LF from split CRLF where previous buffer ended with CR-only:
++                if self.lastResponseNewlineEnding == .cr,
++                   parseBuffer.skipLF() == .didSkip {
++                    // Did consume complete CR-LF pair:
++                    self.lastResponseNewlineEnding = .crlf
++                }
++
++                let result = try self.parseResponseAndNewline(
++                    state: state,
++                    buffer: &parseBuffer,
++                    tracker: tracker
++                )
++                self.lastResponseNewlineEnding = result.newline
++                return result.response
+             case .attributeBytes(let remaining, attributeCount: let attributeCount):
+                 return .response(
+                     try self.parseBytes(
+@@ -152,6 +168,27 @@ public struct ResponseParser: Parser, Sendable {
+ // MARK: - Parse responses
+ 
+ extension ResponseParser {
++    struct ResponseAndNewline {
++        var response: ResponseOrContinuationRequest
++        var newline: ParseBuffer.Newline?
++    }
++
++    private mutating func parseResponseAndNewline(
++        state: ResponseState,
++        buffer: inout ParseBuffer,
++        tracker: StackTracker
++    ) throws -> ResponseAndNewline {
++        let response = try parseResponse(
++            state: state,
++            buffer: &buffer,
++            tracker: tracker
++        )
++        return ResponseAndNewline(
++            response: response,
++            newline: buffer.lastParsedNewline
++        )
++    }
++
+     private mutating func parseResponse(
+         state: ResponseState,
+         buffer: inout ParseBuffer,
+diff --git a/Tests/NIOIMAPTests/Coders/IMAPClientHandlerTests.swift b/Tests/NIOIMAPTests/Coders/IMAPClientHandlerTests.swift
+index 1e50e14f9c30301d806c04addbcd85ee9c1311ea..0f1fe61cbb7441164faee5f3c9344690d3e00c08 100644
+--- a/Tests/NIOIMAPTests/Coders/IMAPClientHandlerTests.swift
++++ b/Tests/NIOIMAPTests/Coders/IMAPClientHandlerTests.swift
+@@ -977,6 +977,228 @@ struct IMAPClientHandlerTests {
+             )
+         )
+     }
++
++    @Test("rejects buffer starting with empty line (CR CR)")
++    func rejectsEmptyLineCRCR() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "c", command: .noop)))
++        helper.expectOutboundString("c NOOP\r\n")
++
++        // Empty line: CR CR - This is malformed and should fail
++        // (This could represent an empty line in the response stream)
++        #expect(throws: (any Error).self) {
++            try helper.channel.writeInbound(ByteBuffer(string: "\r\r* 1 EXISTS\r\n"))
++        }
++    }
++
++    @Test("rejects buffer starting with empty line (LF LF)")
++    func rejectsEmptyLineLFLF() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "d", command: .noop)))
++        helper.expectOutboundString("d NOOP\r\n")
++
++        // Empty line: LF LF - This is malformed and should fail
++        #expect(throws: (any Error).self) {
++            try helper.channel.writeInbound(ByteBuffer(string: "\n\n* 1 EXISTS\r\n"))
++        }
++    }
++
++    @Test("rejects buffer starting with empty line (CR LF CR)")
++    func rejectsEmptyLineCRLFCR() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "e", command: .noop)))
++        helper.expectOutboundString("e NOOP\r\n")
++
++        // Empty line: CR LF CR - Valid CRLF followed by orphaned CR
++        // This represents an empty line which is not valid in IMAP response stream
++        #expect(throws: (any Error).self) {
++            try helper.channel.writeInbound(ByteBuffer(string: "\r\n\r* 1 EXISTS\r\n"))
++        }
++    }
++
++    @Test("rejects buffer starting with empty line (CR LF LF)")
++    func rejectsEmptyLineCRLFLF() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "f", command: .noop)))
++        helper.expectOutboundString("f NOOP\r\n")
++
++        // Empty line: CR LF LF - Valid CRLF followed by orphaned LF
++        #expect(throws: (any Error).self) {
++            try helper.channel.writeInbound(ByteBuffer(string: "\r\n\n* 1 EXISTS\r\n"))
++        }
++    }
++
++    @Test("rejects buffer starting with empty line (LF CR)")
++    func rejectsEmptyLineLFCR() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "g", command: .noop)))
++        helper.expectOutboundString("g NOOP\r\n")
++
++        // Empty line: LF CR - This is an unusual sequence and should fail
++        #expect(throws: (any Error).self) {
++            try helper.channel.writeInbound(ByteBuffer(string: "\n\r* 1 EXISTS\r\n"))
++        }
++    }
++
++    @Test("accepts valid CR-only response and continues parsing next response")
++    func crOnlyResponseFollowedByAnotherResponse() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "h", command: .noop)))
++        helper.expectOutboundString("h NOOP\r\n")
++
++        // First response ends with CR only, then immediately another response
++        // (both in same buffer to avoid the split case)
++        helper.writeInbound("* 1 EXISTS\r* 0 RECENT\r")
++
++        helper.expectInbound(.untagged(.mailboxData(.exists(1))))
++        helper.expectInbound(.untagged(.mailboxData(.recent(0))))
++
++        helper.writeInbound("h OK\r\n")
++        helper.expectInbound(
++            .tagged(
++                .init(
++                    tag: "h",
++                    state: .ok(.init(code: nil, text: ""))
++                )
++            )
++        )
++    }
++
++    @Test("accepts valid CR-only response when it ends the buffer")
++    func crOnlyResponseEndsBuffer() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "i", command: .noop)))
++        helper.expectOutboundString("i NOOP\r\n")
++
++        // First response ends with CR only at the end of buffer
++        // This is a complete response that should be accepted
++        helper.writeInbound("* 2 EXISTS\r")
++
++        helper.expectInbound(.untagged(.mailboxData(.exists(2))))
++
++        // Send a normal CRLF response next
++        helper.writeInbound("* 1 RECENT\r\n")
++        helper.expectInbound(.untagged(.mailboxData(.recent(1))))
++
++        helper.writeInbound("i OK\r\n")
++        helper.expectInbound(
++            .tagged(
++                .init(
++                    tag: "i",
++                    state: .ok(.init(code: nil, text: ""))
++                )
++            )
++        )
++    }
++
++    @Test("fails when split CR-LF is followed by malformed data")
++    func failsWhenSplitCRLFFollowedByMalformedData() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "j", command: .noop)))
++        helper.expectOutboundString("j NOOP\r\n")
++
++        // First response ends with CR only
++        helper.writeInbound("* 1 EXISTS\r")
++        helper.expectInbound(.untagged(.mailboxData(.exists(1))))
++
++        // Next buffer starts with LF (orphaned, will be skipped)
++        // But then has malformed data that should cause a parse error
++        #expect(throws: (any Error).self) {
++            try helper.channel.writeInbound(ByteBuffer(string: "\n!!INVALID\r\n"))
++        }
++    }
++
++    @Test("rejects CR-only response followed by orphaned LF then another LF (not re-skipped)")
++    func rejectsCRThenLFThenLFNotReSkipped() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "k", command: .noop)))
++        helper.expectOutboundString("k NOOP\r\n")
++
++        // Response ends with CR only
++        helper.writeInbound("* 1 EXISTS\r")
++        helper.expectInbound(.untagged(.mailboxData(.exists(1))))
++
++        // Next buffer: just orphaned LF (will be skipped, state becomes .crlf)
++        helper.writeInbound("\n")
++        // Buffer was empty after skip, so IncompleteMessage - nothing to read
++
++        // Next buffer: another LF followed by otherwise valid response
++        // At this point lastResponseNewlineEnding should be .crlf (not .cr)
++        // So we should NOT skip this second LF, and the parser should fail
++        // because \n is not a valid start of a response (even though * 1 EXISTS would be)
++        #expect(throws: (any Error).self) {
++            try helper.channel.writeInbound(ByteBuffer(string: "\n* 1 EXISTS\r\n"))
++        }
++    }
++
++    @Test("accepts CR-only response, orphaned LF, then valid response")
++    func acceptsCRThenLFThenValidResponse() {
++        var helper = Helper()
++        defer {
++            helper.check()
++        }
++
++        helper.writeOutbound(.tagged(.init(tag: "l", command: .noop)))
++        helper.expectOutboundString("l NOOP\r\n")
++
++        // Response ends with CR only
++        helper.writeInbound("* 1 EXISTS\r")
++        helper.expectInbound(.untagged(.mailboxData(.exists(1))))
++
++        // Next buffer: orphaned LF (will be skipped)
++        helper.writeInbound("\n")
++        // Buffer was empty after skip, so IncompleteMessage
++
++        // Next buffer: valid response
++        helper.writeInbound("* 2 RECENT\r\n")
++        helper.expectInbound(.untagged(.mailboxData(.recent(2))))
++
++        helper.writeInbound("l OK\r\n")
++        helper.expectInbound(
++            .tagged(
++                .init(
++                    tag: "l",
++                    state: .ok(.init(code: nil, text: ""))
++                )
++            )
++        )
++    }
+ }
+ 
+ // MARK: - Helper

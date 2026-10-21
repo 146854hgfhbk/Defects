@@ -1,0 +1,137 @@
+diff --git a/pkgs/fixnum/lib/src/int64_native.dart b/pkgs/fixnum/lib/src/int64_native.dart
+index befa4d0a..3c593b38 100644
+--- a/pkgs/fixnum/lib/src/int64_native.dart
++++ b/pkgs/fixnum/lib/src/int64_native.dart
+@@ -270,7 +270,17 @@ class Int64 implements IntX {
+   /// Returns whether this [Int64] has the same numeric value as the given
+   /// object. The argument may be an [int] or an [IntX].
+   @override
+-  bool operator ==(Object other) => _i == _promote(other);
++  bool operator ==(Object other) {
++    if (other is Int64) {
++      return _i == other._i;
++    } else if (other is int) {
++      return _i == other;
++    } else if (other is Int32) {
++      return _i == other.toInt();
++    } else {
++      return false;
++    }
++  }
+ 
+   @override
+   Int64 abs() => Int64(_i.abs());
+diff --git a/pkgs/fixnum/test/int32_test.dart b/pkgs/fixnum/test/int32_test.dart
+index a56d57c0..0b3c6f35 100644
+--- a/pkgs/fixnum/test/int32_test.dart
++++ b/pkgs/fixnum/test/int32_test.dart
+@@ -214,18 +214,25 @@ void main() {
+     });
+ 
+     test('==', () {
+-      expect(Int32(17), isNot(equals(Int32(18))));
+-      expect(Int32(17), equals(Int32(17)));
+-      expect(Int32(17), isNot(equals(Int32(16))));
+-      expect(Int32(17), isNot(equals(Int64(18))));
+-      expect(Int32(17), equals(Int64(17)));
+-      expect(Int32(17), isNot(equals(Int64(16))));
+-      expect(Int32.MIN_VALUE, isNot(equals(Int32.MAX_VALUE)));
+-      expect(Int32(17), isNot(equals(18)));
+-      expect(Int32(17) == 17, isTrue); // ignore: unrelated_type_equality_checks
+-      expect(Int32(17), isNot(equals(16)));
+-      expect(Int32(17), isNot(equals(Object())));
+-      expect(Int32(17), isNot(equals(null)));
++      // Note: do not use `equals` matcher below as it considers exceptions as
++      // `false`. See issue #910.
++      expect(Int32(17) == Int32(18), false);
++      expect(Int32(17) == Int32(17), true);
++      expect(Int32(17) == Int32(16), false);
++      // ignore: unrelated_type_equality_checks
++      expect(Int32(17) == Int64(18), false);
++      // ignore: unrelated_type_equality_checks
++      expect(Int32(17) == Int64(17), true);
++      // ignore: unrelated_type_equality_checks
++      expect(Int32(17) == Int64(16), false);
++      expect(Int32.MIN_VALUE == Int32.MAX_VALUE, false);
++      expect(Int32(17) == 18, false);
++      // ignore: unrelated_type_equality_checks
++      expect(Int32(17) == 17, true);
++      expect(Int32(17) == 16, false);
++      expect(Int32(17) == Object(), false);
++      // ignore: unnecessary_null_comparison
++      expect(Int32(17) == null, false);
+     });
+ 
+     test('>=', () {
+diff --git a/pkgs/fixnum/test/int64_test.dart b/pkgs/fixnum/test/int64_test.dart
+index c7d085a2..e4bdd440 100644
+--- a/pkgs/fixnum/test/int64_test.dart
++++ b/pkgs/fixnum/test/int64_test.dart
+@@ -459,34 +459,40 @@ void main() {
+     });
+ 
+     test('==', () {
+-      expect(Int64(0), equals(Int64(0)));
+-      expect(Int64(0), isNot(equals(Int64(1))));
+-      expect(Int64(0), equals(Int32(0)));
+-      expect(Int64(0), isNot(equals(Int32(1))));
+-      expect(Int64(0) == 0, isTrue); // ignore: unrelated_type_equality_checks
+-      expect(Int64(0), isNot(equals(1)));
+-      expect(Int64(10), isNot(equals(Int64(11))));
+-      expect(Int64(10), equals(Int64(10)));
+-      expect(Int64(10), isNot(equals(Int64(9))));
+-      expect(Int64(10), isNot(equals(Int32(11))));
+-      expect(Int64(10), equals(Int32(10)));
+-      expect(Int64(10), isNot(equals(Int32(9))));
+-      expect(Int64(10), isNot(equals(11)));
+-      expect(Int64(10) == 10, isTrue); // ignore: unrelated_type_equality_checks
+-      expect(Int64(10), isNot(equals(9)));
+-      expect(Int64(-10), equals(Int64(-10)));
++      // Note: do not use `equals` matcher below as it considers exceptions as
++      // `false`. See issue #910.
++      expect(Int64(0) == Int64(0), true);
++      expect(Int64(0) == Int64(1), false);
++      // ignore: unrelated_type_equality_checks
++      expect(Int64(0) == Int32(0), true);
++      // ignore: unrelated_type_equality_checks
++      expect(Int64(0) == Int32(1), false);
++      expect(Int64(0) == 0, true);
++      expect(Int64(0) == 1, false);
++      expect(Int64(10) == Int64(11), false);
++      expect(Int64(10) == Int64(10), true);
++      expect(Int64(10) == Int64(9), false);
++      // ignore: unrelated_type_equality_checks
++      expect(Int64(10) == Int32(11), false);
++      // ignore: unrelated_type_equality_checks
++      expect(Int64(10) == Int32(10), true);
++      // ignore: unrelated_type_equality_checks
++      expect(Int64(10) == Int32(9), false);
++      expect(Int64(10) == 11, false);
++      expect(Int64(10) == 10, true);
++      expect(Int64(10) == 9, false);
++      expect(Int64(-10) == Int64(-10), true);
+       expect(Int64(-10) != Int64(-10), false);
+-      expect(
+-        Int64(-10) == -10,
+-        isTrue,
+-      ); // ignore: unrelated_type_equality_checks
+-      expect(Int64(-10), isNot(equals(-9)));
+-      expect(largePos, equals(largePos));
+-      expect(largePos, isNot(equals(largePosPlusOne)));
+-      expect(largePosPlusOne, isNot(equals(largePos)));
+-      expect(Int64.MIN_VALUE, isNot(equals(Int64.MAX_VALUE)));
+-      expect(Int64(17), isNot(equals(Object())));
+-      expect(Int64(17), isNot(equals(null)));
++      // ignore: unrelated_type_equality_checks
++      expect(Int64(-10) == -10, true);
++      expect(Int64(-10) == -9, false);
++      expect(largePos == largePos, true);
++      expect(largePos == largePosPlusOne, false);
++      expect(largePosPlusOne == largePos, false);
++      expect(Int64.MIN_VALUE == Int64.MAX_VALUE, false);
++      expect(Int64(17) == Object(), false);
++      // ignore: unnecessary_null_comparison
++      expect(Int64(17) == null, false);
+     });
+ 
+     test('>=', () {

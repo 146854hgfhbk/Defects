@@ -1,0 +1,16 @@
+diff --git a/Sources/Lexer.swift b/Sources/Lexer.swift
+--- a/Sources/Lexer.swift
++++ b/Sources/Lexer.swift
+@@ -181,9 +181,9 @@ class Scanner {
+     range = range.upperBound..<range.upperBound
+     for (index, char) in content.unicodeScalars.enumerated() {
+       if foundBrace && tokenChars.contains(char) {
+-        let result = String(content.prefix(index - 1))
+-        content = String(content.dropFirst(index - 1))
+-        range = range.upperBound..<originalContent.index(range.upperBound, offsetBy: index - 1)
++        let result = String(content.unicodeScalars.prefix(index - 1))
++        content = String(content.unicodeScalars.dropFirst(index - 1))
++        range = range.upperBound..<originalContent.unicodeScalars.index(range.upperBound, offsetBy: index - 1)
+         return (char, result)
+       } else {
+         foundBrace = (char == Scanner.tokenStartDelimiter)

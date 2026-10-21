@@ -1,0 +1,120 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-141",
+  "bug_id": "JULIA-141",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "SciML/SciMLBase.jl",
+  "repository_url": "https://github.com/SciML/SciMLBase.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "9c5f119906c32074605bf4a9581865a38355e1a8",
+  "fixed_revision": "be12972c8f4522cb9af61555e79fd6b3e60aef5f",
+  "candidate_sha": "be12972c8f4522cb9af61555e79fd6b3e60aef5f",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "9c5f119906c32074605bf4a9581865a38355e1a8",
+  "changed_production_files": [
+    "src/clock.jl"
+  ],
+  "changed_test_files": [
+    "test/clock.jl"
+  ],
+  "trigger_tests": [
+    "SciMLBase precompiles without deprecation warnings"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "d11e3e5bfe0599830f25218dbb475742c407628add0c5cbbe1cf6bf5b28eb88a",
+    "oracle": {
+      "source_evidence": {
+        "upstream_test_file": "test/clock.jl",
+        "basis": "testset copied from the upstream fix patch"
+      },
+      "upstream_test_patch_sha256": "da7688724122782e235b728f2055c2f80276397c076c1b74b1f1f919bc53127a"
+    }
+  },
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "project_compat_declared_1.10",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "be12972c8f4522cb9af61555e79fd6b3e60aef5f",
+    "project": "SciML/SciMLBase.jl",
+    "input_sha256": "7bda95bdc457b6f40188f206a13886ecccd11a4c68ea750256c8f1d402c147ad",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T03:15:44Z",
+    "usage": {
+      "prompt_tokens": 1925,
+      "completion_tokens": 564,
+      "total_tokens": 2489
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"The commit fixes a deprecation warning emitted during precompilation caused by using bare singleton variant syntax (`ContinuousClock`) instead of the explicit form (`ContinuousClock()`) required by Moshi v0.3.11+. This is a real defect — users on SciMLBase v2 see a warning on every precompile due to the resolved Moshi version.\", \"evidence\": \"The issue clearly documents the deprecation warning affecting all users on SciMLBase v2, traces the root cause to a specific Moshi version bump, and the fix is a minimal syntax change in production code (src/clock.jl). A test file (test/clock.jl) is included. The trigger test 'SciMLBase precompiles without deprecation warnings' confirms the observable broken behavior.\", \"missing_evidence\": \"The actual diff content is not provided, so the exact code change cannot be inspected. The PR body is empty (commit-only). Cannot fully verify that no other behavioral changes are bundled in.\", \"validation_risks\": \"The fix is extremely narrow (adding `()` to two singleton declarations), so risk is low. However, if Moshi's behavior around the explicit form differs subtly from the bare form in edge cases, there could be unexpected runtime differences. The issue notes that older Moshi versions (< 0.3.11) require the bare form, so compat bounds matter.\", \"suggested_tests\": [\"Verify SciMLBase precompiles without any deprecation warnings from Moshi\", \"Verify ContinuousClock and SolverStepClock are still usable as singleton instances after the syntax change\", \"Pattern-match test ensuring no bare singleton syntax remains in clock.jl\"]}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.72,
+    "summary": "The commit fixes a deprecation warning emitted during precompilation caused by using bare singleton variant syntax (`ContinuousClock`) instead of the explicit form (`ContinuousClock()`) required by Moshi v0.3.11+. This is a real defect — users on SciMLBase v2 see a warning on every precompile due to the resolved Moshi version.",
+    "evidence": "The issue clearly documents the deprecation warning affecting all users on SciMLBase v2, traces the root cause to a specific Moshi version bump, and the fix is a minimal syntax change in production code (src/clock.jl). A test file (test/clock.jl) is included. The trigger test 'SciMLBase precompiles without deprecation warnings' confirms the observable broken behavior.",
+    "missing_evidence": "The actual diff content is not provided, so the exact code change cannot be inspected. The PR body is empty (commit-only). Cannot fully verify that no other behavioral changes are bundled in.",
+    "validation_risks": "The fix is extremely narrow (adding `()` to two singleton declarations), so risk is low. However, if Moshi's behavior around the explicit form differs subtly from the bare form in edge cases, there could be unexpected runtime differences. The issue notes that older Moshi versions (< 0.3.11) require the bare form, so compat bounds matter.",
+    "suggested_tests": [
+      "Verify SciMLBase precompiles without any deprecation warnings from Moshi",
+      "Verify ContinuousClock and SolverStepClock are still usable as singleton instances after the syntax change",
+      "Pattern-match test ensuring no bare singleton syntax remains in clock.jl"
+    ]
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "SciMLBase precompiles without deprecation warnings"
+    ],
+    "exception_types": [
+      "6c3ce214311dc303ee74f485d9293b2742b39d120cce22739362a9d839f4745a"
+    ],
+    "fingerprints": [
+      "6c3ce214311dc303ee74f485d9293b2742b39d120cce22739362a9d839f4745a"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

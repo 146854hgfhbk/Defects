@@ -1,0 +1,113 @@
+diff --git a/lib/src/acp.dart b/lib/src/acp.dart
+index 716750a..8096557 100644
+--- a/lib/src/acp.dart
++++ b/lib/src/acp.dart
+@@ -3,6 +3,7 @@
+ library;
+ 
+ import 'dart:async';
++import 'dart:convert';
+ 
+ import 'package:acp_dart/src/schema.dart';
+ import 'package:acp_dart/src/stream.dart';
+@@ -231,18 +232,38 @@ class Connection {
+       final result = await _requestHandler(method, params);
+       _sendMessage({'jsonrpc': '2.0', 'id': id, 'result': result});
+     } catch (error) {
+-      late Map<String, dynamic> errorResponse;
+-      if (error is RequestError) {
+-        errorResponse = error.toErrorResponse().toJson();
+-      } else {
+-        errorResponse = RequestError.internalError(
+-          error.toString(),
+-        ).toErrorResponse().toJson();
+-      }
++      final errorResponse = _mapRequestError(error).toErrorResponse().toJson();
+       _sendMessage({'jsonrpc': '2.0', 'id': id, 'error': errorResponse});
+     }
+   }
+ 
++  RequestError _mapRequestError(Object error) {
++    if (error is RequestError) {
++      return error;
++    }
++
++    final errorData = _extractErrorData(error);
++    if (error is TypeError ||
++        error is FormatException ||
++        error is ArgumentError) {
++      return RequestError.invalidParams(errorData);
++    }
++    return RequestError.internalError(errorData);
++  }
++
++  dynamic _extractErrorData(Object error) {
++    final message = switch (error) {
++      FormatException() => error.message.toString(),
++      ArgumentError() => error.message?.toString() ?? error.toString(),
++      _ => error.toString(),
++    };
++    try {
++      return jsonDecode(message);
++    } catch (_) {
++      return message;
++    }
++  }
++
+   /// Handles incoming notification
+   void _handleNotification(Map<String, dynamic> message) async {
+     final method = message['method'] as String;
+diff --git a/lib/src/stream.dart b/lib/src/stream.dart
+index 645ba9a..256f48d 100644
+--- a/lib/src/stream.dart
++++ b/lib/src/stream.dart
+@@ -26,16 +26,32 @@ AcpStream ndJsonStream(Stream<List<int>> input, StreamSink<List<int>> output) {
+   // Create readable stream: transform bytes to messages
+   final readable = input
+       .transform(utf8.decoder) // Safely decode bytes to string
+-      .transform(const LineSplitter()) // Safely split lines, handling partial UTF-8
+-      .where((line) => line.trim().isNotEmpty) // Filter empty lines
+-      .map((line) {
+-        try {
+-          return jsonDecode(line) as Map<String, dynamic>;
+-        } catch (e) {
+-          // Propagate the error to the stream listener
+-          throw FormatException('Failed to parse JSON message: $line, error: $e');
+-        }
+-      });
++      .transform(
++        const LineSplitter(),
++      ) // Safely split lines, handling partial UTF-8
++      .transform(
++        StreamTransformer<String, Map<String, dynamic>>.fromHandlers(
++          handleData: (line, sink) {
++            final trimmed = line.trim();
++            if (trimmed.isEmpty) {
++              return;
++            }
++
++            try {
++              final decoded = jsonDecode(trimmed);
++              if (decoded is Map<String, dynamic>) {
++                sink.add(decoded);
++                return;
++              }
++              print(
++                'Failed to parse JSON message: $trimmed, error: expected JSON object',
++              );
++            } catch (e) {
++              print('Failed to parse JSON message: $trimmed, error: $e');
++            }
++          },
++        ),
++      );
+ 
+   // Create writable stream: transform messages to bytes
+   final writableController = StreamController<Map<String, dynamic>>();
+@@ -58,4 +74,4 @@ AcpStream ndJsonStream(Stream<List<int>> input, StreamSink<List<int>> output) {
+   );
+ 
+   return AcpStream(readable: readable, writable: writable);
+-}
+\ No newline at end of file
++}

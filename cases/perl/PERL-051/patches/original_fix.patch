@@ -1,0 +1,59 @@
+diff --git a/lib/ExtUtils/MM_Unix.pm b/lib/ExtUtils/MM_Unix.pm
+index fe385984f1245cde68214b0a06a3df78259c6dd1..7df19b525d3c6c7d984de9abf6f43994dde9c1eb 100644
+--- a/lib/ExtUtils/MM_Unix.pm
++++ b/lib/ExtUtils/MM_Unix.pm
+@@ -2896,6 +2896,8 @@ Returns true, if the argument is likely to be a command.
+ 
+ sub maybe_command {
+     my($self,$file) = @_;
++    #    $file = '' if (!defined $file or !length $file);
++    return unless defined $file and length $file;
+     return $file if -x $file && ! -d $file;
+     return;
+ }
+diff --git a/t/MM_Unix.t b/t/MM_Unix.t
+index b3175f4f52855692774e3e21ee782b01bf487648..fba139114a3dd1139b38a896ddfcf6a7122b39d3 100644
+--- a/t/MM_Unix.t
++++ b/t/MM_Unix.t
+@@ -12,7 +12,7 @@ BEGIN {
+         plan skip_all => 'Non-Unix platform';
+     }
+     else {
+-        plan tests => 114;
++        plan tests => 118;
+     }
+ }
+ 
+@@ -178,7 +178,31 @@ is ($t->libscan('Fatty'), 'Fatty', 'libscan on something not a VC file' );
+ 
+ open(FILE, ">command"); print FILE "foo"; close FILE;
+ SKIP: {
+-    skip("no separate execute mode on VOS", 2) if $^O eq "vos";
++    skip("no separate execute mode on VOS", 4) if $^O eq "vos";
++
++    {
++        local $@;
++        my $rv;
++        my @warnings = ();
++        local $SIG{__WARN__} = sub { push @warnings, shift; };
++        eval { $rv = $t->maybe_command( undef ); };
++        ok (! @warnings, "maybe_command emits no warnings with undefined argument");
++        ok (! defined $rv,
++            "maybe_command returns undef if not provided defined argument"
++        );
++    }
++
++    {
++        local $@;
++        my $rv;
++        my @warnings = ();
++        local $SIG{__WARN__} = sub { push @warnings, shift; };
++        eval { $rv = $t->maybe_command( '' ); };
++        ok (! @warnings, "maybe_command emits no warnings with empty-string argument");
++        ok (! defined $rv,
++            "maybe_command returns undef if not provided positive-length argument"
++        );
++    }
+ 
+     ok !$t->maybe_command('command') ,"non executable file isn't a command";
+ 

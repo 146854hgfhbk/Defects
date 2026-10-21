@@ -1,0 +1,27 @@
+diff --git a/lib/Test2/Event/Exception.pm b/lib/Test2/Event/Exception.pm
+index 8094de87c..67c757a3c 100644
+--- a/lib/Test2/Event/Exception.pm
++++ b/lib/Test2/Event/Exception.pm
+@@ -8,6 +8,11 @@ our $VERSION = '1.302097';
+ BEGIN { require Test2::Event; our @ISA = qw(Test2::Event) }
+ use Test2::Util::HashBase qw{error};
+ 
++sub init {
++    my $self = shift;
++    $self->{+ERROR} = "$self->{+ERROR}";
++}
++
+ sub causes_fail { 1 }
+ 
+ sub summary {
+@@ -71,6 +76,10 @@ The reason for the exception.
+ 
+ =back
+ 
++=head1 CAVEATS
++
++Be aware that all exceptions are stringified during construction.
++
+ =head1 SOURCE
+ 
+ The source code repository for Test2 can be found at

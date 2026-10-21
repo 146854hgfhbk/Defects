@@ -1,0 +1,112 @@
+{
+  "candidate_sha": "8a123a13d0da2e99f9f98ed9006aeb16f2e3b4d0",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "SWE-rebench-V2",
+  "instance_id": "julialang__juliasyntax.jl-452",
+  "swe_rebench": {
+    "base_commit": "f425045d56f75c71493aba77e1b751f69f552e48",
+    "environment_setup_commit": null,
+    "image_name": null,
+    "license": null,
+    "fail_to_pass": [
+      "Equality Expr",
+      "Equality SyntaxNode",
+      "Equality GreenNode",
+      "Hashing Expr",
+      "Hashing SyntaxNode",
+      "Hashing GreenNode",
+      "Serialization Expr",
+      "Serialization SyntaxNode",
+      "Serialization GreenNode"
+    ]
+  },
+  "issue_records": [
+    {
+      "number": 449,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/449",
+      "state": "closed",
+      "title": "GreenNode equality and hashing mismatch",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug"
+      ],
+      "body_excerpt": "```julia-repl\r\njulia> x = JuliaSyntax.parse(JuliaSyntax.GreenNode, \"1 + 1\")\r\n     1:5      │[call]\r\n     1:1      │  Integer                ✔\r\n     2:2      │  Whitespace\r\n     3:3      │  +                      ✔\r\n     4:4      │  Whitespace\r\n     5:5      │  Integer                ✔\r\n\r\n\r\njulia> y = JuliaSyntax.parse(JuliaSyntax.GreenNode, \"1 + 1\")\r\n     1:5      │[call]\r\n     1:1      │  Integer                ✔\r\n     2:2      │  Whitespace\r\n     3:3      │  +                      ✔\r\n     4:4      │  Whitespace\r\n     5:5      │  Integer                ✔\r\n\r\n\r\njulia> x == y\r\ntrue\r\n\r\njulia> hash(x) == hash(y)\r\nfalse\r\n```\r\n\r\nThis makes `Dict`s broken."
+    },
+    {
+      "number": 450,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/450",
+      "state": "closed",
+      "title": "`SyntaxNode`s are never equal",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": false,
+      "labels": [
+        "enhancement"
+      ],
+      "body_excerpt": "Because they use the `===` fallback, `SyntaxNode`s are never equal, even when they are semantically equivalent. For example,\r\n\r\n```julia-repl\r\njulia> x = JuliaSyntax.parse(Expr, \"1+1 == 2\")\r\n:(1 + 1 == 2)\r\n\r\njulia> y = JuliaSyntax.parse(Expr, \"1+1 == 2\")\r\n:(1 + 1 == 2)\r\n\r\njulia> x == y\r\ntrue\r\n\r\njulia> x = JuliaSyntax.parse(SyntaxNode, \"1+1 == 2\")\r\nline:col│ tree                                   │ file_name\r\n   1:1  │[call-i]\r\n   1:1  │  [call-i]\r\n   1:1  │    1\r\n   1:2  │    +\r\n   1:3  │    1\r\n   1:5  │  ==\r\n   1:8  │  2\r\n\r\n\r\njulia> y = JuliaSyntax.parse(SyntaxNode, \"1+1 == 2\")\r\nline:col│ tree                                   │ file_name\r\n   1:1  │[call-i]\r\n   1:1  │  [call-i]\r\n   1:1  │    1\r\n   1:2  │    +\r\n   1:3  │    1\r\n   1:5  │  ==\r\n   1:8  │  2\r\n\r\n\r\njulia> x == y\r\nfalse\r\n```\r\n\r\nIt'd be nice if I could check if two things parsed equally using `==`."
+    },
+    {
+      "number": 451,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/issues/451",
+      "state": "closed",
+      "title": "serialization support",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": false,
+      "labels": [
+        "enhancement"
+      ],
+      "body_excerpt": "It would be lovely to support serialization and de-serialization of parse results using Serialization.jl. All that's missing is read and write of `Kind`."
+    },
+    {
+      "number": 452,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/452",
+      "state": "closed",
+      "title": "Hashing fixup, equality support, and serialization support",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [
+        "enhancement"
+      ],
+      "body_excerpt": "I need these helper functions to facilitate checking if a string parses the same way on different versions of JuliaSyntax. They're generally useful/bugfixes/implement missing functionality that should be expected, so I figure I'll include them in `src`.\r\n\r\nFixes #449 - a hash-== mismatch bug\r\nImplements #450 - supports equality on `SyntaxNode`\r\nImplements #451 - supports serialization by implementing `read` and `write` on `Kind`. I used strings instead of UInt16 to represent Kind, see inline comment for more info."
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        449
+      ],
+      "pull_request": 452,
+      "fix_commit": "8a123a13d0da2e99f9f98ed9006aeb16f2e3b4d0",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "Hashing fixup, equality support, and serialization support (#452)",
+    "commit_issue_refs": [
+      452
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 452,
+    "pull_request_title": "Hashing fixup, equality support, and serialization support",
+    "pull_request_issue_refs": [
+      449,
+      450,
+      451
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "upstream_record": "upstream/swe-rebench-v2.json",
+  "upstream_recovery_status": "LEGACY_EMBEDDED_ROW_UNPINNED",
+  "verified_fix_issue_numbers": [
+    449
+  ],
+  "cross_repository_issue_records": []
+}

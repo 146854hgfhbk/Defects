@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1123",
+  "technical_evidence_sha256": "0a3f451a62b061cf9dfb05d27531db67b22e12dfb4d0c93ca2ecf099264ce94f",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "62dca3523e0b4814c9eb0d2071fd43a5b5146da27b6b95562224bad182574b10",
+  "reviewed_at": "2026-08-14T10:26:59.220935+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/core#917",
+  "rationale": "Issue #917 ([args] inconsistent newline behavior after Separator Name, opened 2025-10-08, closed by this merge) reports a spurious blank line between a separator header and the following option whenever the option preceding the separator had no help text. The commit message and PR #946 body state the same mechanism: _currentColumn was left at the help-text column, so the next _writeLine target column was lower and an extra wrap newline was emitted. The minimized production patch is exactly that one statement, `_currentColumn = 0;`, added after `_newlinesNeeded = 1;` in the separator writer of pkgs/args/lib/src/usage.dart, so the defect is pre-existing at parent 455d544 and the fix addresses the reported cause directly. The minimized patch drops the CHANGELOG.md version/entry edit and the pubspec.yaml 2.8.0 -> 2.8.0-wip bump present in the original commit, leaving no refactor, formatting, feature, docs, config, or test change; the single hunk is behavioral. The trigger, test/usage_test.dart::'consistently attaches separator headers to options', is the unchanged upstream test from the same fixing commit and exercises only ArgParser.addSeparator, addFlag, and usage, all present in the buggy revision, so it introduces no dependency on a new production API. Its four separator groups cover the exact issue permutations (separator after an option with no help, after a non-trailing option with help, and after a trailing option with help). Strict evidence for both original and post-minimization runs shows all gates passed: build on both revisions, one unique declared selector, buggy differential reproducing that selector in isolation, deterministic fingerprints across 3 repetitions of a 32-run matrix, fixed isolated/suite/reversed runs clean, and buggy full-suite failures limited to the expected trigger. active_same_project_root_causes is empty, so this root cause is not a duplicate, and dart-lang/core#917 is the supplied verified issue key.\n\nIssue #917 reports that `ArgParser.usage` emits an extra blank line after a separator when the preceding flag was rendered without help text; the reproducer shows 'Group 2/3/5' followed by a spurious empty line while 'Group 1/4' render correctly. The minimized production patch is a single added statement, `_currentColumn = 0;`, in the separator-writing method of pkgs/args/lib/src/usage.dart, which directly addresses the stale-column root cause described in the commit message and PR #946 body ('if a flag was written with no help text the current column would remain at the position where help text would otherwise be written... an extra line is added to wrap back to the intended column'). Same defect across issue, fix, and trigger. The minimized patch contains only that behavioral line: the CHANGELOG version/entry edit and the pubspec 2.8.0-wip bump present in the original commit are excluded, and no refactor, formatting, or feature change remains. The trigger is the unchanged upstream test 'consistently attaches separator headers to options' from the same fixing commit; it uses only pre-existing APIs (ArgParser, addSeparator, addFlag, usage), so it compiles on the buggy revision, and its four separator groups cover exactly the reported variants (separator after a no-help flag, after a non-trailing help flag, after a trailing help flag). Strict evidence confirms build on both revisions, isolated buggy differential failure on the single declared selector, deterministic fingerprints over 3 repetitions across a 32-run matrix, fixed-revision clean isolated/suite/reversed runs, and a full buggy suite whose failures are limited to the expected trigger. active_same_project_root_causes is empty and dart-lang/core#917 is the sole allowed verified issue key, so no duplicate root cause.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T10:26:37.557513+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "62dca3523e0b4814c9eb0d2071fd43a5b5146da27b6b95562224bad182574b10",
+      "response_sha256": "309044f946b3b24e57914b3a560b8b47d93b1ef0dbedd6aeaed9a1bf8802fee2",
+      "response_id": "msg_5ccc817242aa49edbb647b37799ef225",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5052848536981758,
+        "input_tokens": 14827,
+        "output_tokens": 745
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/core#917",
+      "rationale": "Issue #917 ([args] inconsistent newline behavior after Separator Name, opened 2025-10-08, closed by this merge) reports a spurious blank line between a separator header and the following option whenever the option preceding the separator had no help text. The commit message and PR #946 body state the same mechanism: _currentColumn was left at the help-text column, so the next _writeLine target column was lower and an extra wrap newline was emitted. The minimized production patch is exactly that one statement, `_currentColumn = 0;`, added after `_newlinesNeeded = 1;` in the separator writer of pkgs/args/lib/src/usage.dart, so the defect is pre-existing at parent 455d544 and the fix addresses the reported cause directly. The minimized patch drops the CHANGELOG.md version/entry edit and the pubspec.yaml 2.8.0 -> 2.8.0-wip bump present in the original commit, leaving no refactor, formatting, feature, docs, config, or test change; the single hunk is behavioral. The trigger, test/usage_test.dart::'consistently attaches separator headers to options', is the unchanged upstream test from the same fixing commit and exercises only ArgParser.addSeparator, addFlag, and usage, all present in the buggy revision, so it introduces no dependency on a new production API. Its four separator groups cover the exact issue permutations (separator after an option with no help, after a non-trailing option with help, and after a trailing option with help). Strict evidence for both original and post-minimization runs shows all gates passed: build on both revisions, one unique declared selector, buggy differential reproducing that selector in isolation, deterministic fingerprints across 3 repetitions of a 32-run matrix, fixed isolated/suite/reversed runs clean, and buggy full-suite failures limited to the expected trigger. active_same_project_root_causes is empty, so this root cause is not a duplicate, and dart-lang/core#917 is the supplied verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_original.checks.build.both_versions",
+        "trigger_tests[0]",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "The trigger asserts golden usage strings whose expected lines carry trailing spaces after flags with no help text; harness-level whitespace or line-ending normalization could alter the differential, though the recorded deterministic fingerprints across 3 repetitions argue against that here.",
+        "The trigger uses ArgParser.usage directly rather than the CommandRunner.usage path shown in the issue reproducer, so the global-options and Available-commands framing from the issue is exercised only indirectly.",
+        "Strict evidence is machine-generated and unverifiable here beyond the reported per-check details; analyzer cleanliness was diagnostic only (require_analyze_clean=false)."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T10:26:59.220636+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "62dca3523e0b4814c9eb0d2071fd43a5b5146da27b6b95562224bad182574b10",
+      "response_sha256": "9c83670997c9bcc9a153db6e63de90a994f78f0d988dca6a69c674f5606ba9d3",
+      "response_id": "msg_ddca76d38af04bba932a1be2b65d1975",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5169515872305142,
+        "input_tokens": 14876,
+        "output_tokens": 728
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/core#917",
+      "rationale": "Issue #917 reports that `ArgParser.usage` emits an extra blank line after a separator when the preceding flag was rendered without help text; the reproducer shows 'Group 2/3/5' followed by a spurious empty line while 'Group 1/4' render correctly. The minimized production patch is a single added statement, `_currentColumn = 0;`, in the separator-writing method of pkgs/args/lib/src/usage.dart, which directly addresses the stale-column root cause described in the commit message and PR #946 body ('if a flag was written with no help text the current column would remain at the position where help text would otherwise be written... an extra line is added to wrap back to the intended column'). Same defect across issue, fix, and trigger. The minimized patch contains only that behavioral line: the CHANGELOG version/entry edit and the pubspec 2.8.0-wip bump present in the original commit are excluded, and no refactor, formatting, or feature change remains. The trigger is the unchanged upstream test 'consistently attaches separator headers to options' from the same fixing commit; it uses only pre-existing APIs (ArgParser, addSeparator, addFlag, usage), so it compiles on the buggy revision, and its four separator groups cover exactly the reported variants (separator after a no-help flag, after a non-trailing help flag, after a trailing help flag). Strict evidence confirms build on both revisions, isolated buggy differential failure on the single declared selector, deterministic fingerprints over 3 repetitions across a 32-run matrix, fixed-revision clean isolated/suite/reversed runs, and a full buggy suite whose failures are limited to the expected trigger. active_same_project_root_causes is empty and dart-lang/core#917 is the sole allowed verified issue key, so no duplicate root cause.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "pkgs/args/lib/src/usage.dart",
+        "pkgs/args/test/usage_test.dart",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.message",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The trigger asserts golden usage strings that include trailing spaces after help-less flags; harness-side whitespace or line-ending normalization could alter the observed differential, though the strict matrix reported deterministic fingerprints.",
+        "The trigger test is a curator-preserved copy of the upstream test rather than the issue's own CommandRunner reproducer; it exercises ArgParser.usage directly, so the CommandRunner-level rendering path from the issue text is only covered transitively.",
+        "The original commit also renamed the release to 2.8.0-wip; excluding that from the minimized patch means the benchmark revision pair no longer matches upstream packaging metadata, which is irrelevant to behavior but could matter for pub resolution in a monorepo checkout."
+      ]
+    }
+  ]
+}

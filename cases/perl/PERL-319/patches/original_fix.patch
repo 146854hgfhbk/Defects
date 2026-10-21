@@ -1,0 +1,362 @@
+diff --git a/Changes b/Changes
+index 03f50e2..2e4f741 100644
+--- a/Changes
++++ b/Changes
+@@ -6,6 +6,8 @@ Revision history for Path-Tiny
+ 
+     - Added 'assert' method
+ 
++    - Added 'visit' method
++
+     [DOCUMENTED]
+ 
+     - Fixed SYNOPSIS example
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index 9fb9a89..f88ac5d 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -970,6 +970,63 @@ sub iterator {
+     };
+ }
+ 
++=method visit
++
++    path("/tmp")->visit( \&callback, \%options );
++
++Visits directory entries then executes callback for each entry.
++The current and parent directory entries ("." and "..") will not
++be visited.
++
++    path("/tmp")->visit(
++        sub {
++            my $file = shift; # Path::Tiny object
++
++            ...
++
++            if ($condition) {
++                return 1; # keep traversing
++            }
++            else {
++                return; # terminate traversing
++            }
++        },
++        \%options,
++    );
++
++The callback must return true if you want to traverse all entries in the directory.
++If the callback returns true, it will continue to visit the directory entries.
++But the callback returns false, traversing the directory will be terminated.
++
++If the C<recurse> option is true, the iterator will walk the directory
++recursively, breadth-first.  If the C<follow_symlinks> option is also true,
++directory links will be followed recursively.  There is no protection against
++loops when following links. If a directory is not readable, it will not be
++followed.
++
++The default is the same as:
++
++    path("/tmp")->visit( \&callback, {
++        recurse         => 0,
++        follow_symlinks => 0,
++    } );
++
++Current API available since 0.062.
++
++=cut
++
++sub visit {
++    my $self = shift;
++    my $cb   = shift;
++    my $args = _get_args( shift, qw/recurse follow_symlinks/ );
++    Carp::croak("Callback for visit() must be a code reference")
++      unless defined($cb) && ref($cb) eq 'CODE';
++    my $next = $self->iterator($args);
++    while ( my $file = $next->() ) {
++        $cb->($file) or last;
++    }
++}
++
+ =method lines, lines_raw, lines_utf8
+ 
+     @contents = path("/tmp/foo.txt")->lines;
+diff --git a/t/exception.t b/t/exception.t
+index e001ace..deffdd6 100644
+--- a/t/exception.t
++++ b/t/exception.t
+@@ -17,13 +17,21 @@ for my $m (qw/append iterator lines lines_raw lines_utf8 slurp spew/) {
+     $err = exception { path("foo")->$m( { wibble => 1 } ) };
+     like( $err, qr/Invalid option\(s\) for $m: wibble/, "$m bad args" );
+ }
++$err = exception {
++    path("foo")->visit( sub { 1 }, { wibble => 1 } );
++};
++like( $err, qr/Invalid option\(s\) for visit: wibble/, "visit bad args" );
+ 
+ # exclude append/spew because they handle hash/not-hash themselves
++my $scalar = [qw/array ref/];
+ for my $m (qw/iterator lines lines_raw lines_utf8 slurp/) {
+-    my $scalar = [qw/array ref/];
+     $err = exception { path("foo")->$m($scalar) };
+     like( $err, qr/Options for $m must be a hash reference/, "$m not hashref" );
+ }
++$err = exception {
++    path("foo")->visit( sub { 1 }, $scalar );
++};
++like( $err, qr/Options for visit must be a hash reference/, "visit not hashref" );
+ 
+ done_testing;
+ # COPYRIGHT
+diff --git a/t/filesystem.t b/t/filesystem.t
+index 2a7e158..faed51f 100644
+--- a/t/filesystem.t
++++ b/t/filesystem.t
+@@ -110,26 +110,48 @@ my $tmpdir = Path::Tiny->tempdir;
+     ok $dir->child('file.x')->touch;
+     ok $dir->child('0')->touch;
+     ok $dir->child('foo/bar/baz.txt')->touchpath;
+-    my @contents;
+-    my $iter = $dir->iterator;
+-    while ( my $file = $iter->() ) {
+-        push @contents, $file;
+-    }
+-    is scalar @contents, 4
+-      or diag explain \@contents;
+-    is( $iter->(), undef, "exhausted iterator is undef" );
+-
+-    my $joined = join ' ', sort map $_->basename, grep { -f $_ } @contents;
+-    is $joined, '0 file.x'
+-      or diag explain \@contents;
+ 
+-    my ($subdir) = grep { $_ eq $dir->child('dir') } @contents;
+-    ok $subdir;
+-    is -d $subdir, 1;
+-
+-    my ($file) = grep { $_ eq $dir->child('file.x') } @contents;
+-    ok $file;
+-    is -d $file, '';
++    subtest 'iterator' => sub {
++        my @contents;
++        my $iter = $dir->iterator;
++        while ( my $file = $iter->() ) {
++            push @contents, $file;
++        }
++        is scalar @contents, 4
++          or diag explain \@contents;
++        is( $iter->(), undef, "exhausted iterator is undef" );
++
++        my $joined = join ' ', sort map $_->basename, grep { -f $_ } @contents;
++        is $joined, '0 file.x'
++          or diag explain \@contents;
++
++        my ($subdir) = grep { $_ eq $dir->child('dir') } @contents;
++        ok $subdir;
++        is -d $subdir, 1;
++
++        my ($file) = grep { $_ eq $dir->child('file.x') } @contents;
++        ok $file;
++        is -d $file, '';
++    };
++
++    subtest 'visit' => sub {
++        my @contents;
++        $dir->visit( sub { push @contents, $_[0]; return 1; } );
++        is scalar @contents, 4
++          or diag explain \@contents;
++
++        my $joined = join ' ', sort map $_->basename, grep { -f $_ } @contents;
++        is $joined, '0 file.x'
++          or diag explain \@contents;
++
++        my ($subdir) = grep { $_ eq $dir->child('dir') } @contents;
++        ok $subdir;
++        is -d $subdir, 1;
++
++        my ($file) = grep { $_ eq $dir->child('file.x') } @contents;
++        ok $file;
++        is -d $file, '';
++    };
+ 
+     ok $dir->remove_tree;
+     ok !-e $dir;
+@@ -143,12 +165,19 @@ my $tmpdir = Path::Tiny->tempdir;
+     ok $dir2->child('0')->mkpath;
+     ok -d $dir2->child('0');
+ 
+-    @contents = ();
+-    $iter     = $dir2->iterator;
+-    while ( my $file = $iter->() ) {
+-        push @contents, $file;
+-    }
+-    ok grep { $_ eq '0' } @contents;
++    subtest 'iterator' => sub {
++        my @contents;
++        my $iter = $dir2->iterator;
++        while ( my $file = $iter->() ) {
++            push @contents, $file;
++        }
++        ok grep { $_ eq '0' } @contents;
++    };
++    subtest 'visit' => sub {
++        my @contents;
++        $dir2->visit( sub { push @contents, $_[0]; return 1; } );
++        ok grep { $_ eq '0' } @contents;
++    };
+ 
+     ok chdir($orig);
+     ok $dir->remove_tree;
+diff --git a/t/mutable_tree_while_iterating.t b/t/mutable_tree_while_iterating.t
+index a881890..ba1b247 100644
+--- a/t/mutable_tree_while_iterating.t
++++ b/t/mutable_tree_while_iterating.t
+@@ -17,20 +17,44 @@ my @tree = qw(
+ );
+ path($_)->touchpath for @tree;
+ 
+-my @files;
+-my $iter = path('base')->iterator( { recurse => 1 } );
+-my $exception = exception {
+-    while ( my $path = $iter->() ) {
+-        $path->remove_tree if $path->child('.naughty')->is_file;
+-        push @files, $path if $path->is_file;
+-    }
++subtest 'iterator' => sub {
++    my @files;
++    my $iter = path('base')->iterator( { recurse => 1 } );
++    my $exception = exception {
++        while ( my $path = $iter->() ) {
++            $path->remove_tree if $path->child('.naughty')->is_file;
++            push @files, $path if $path->is_file;
++        }
++    };
++
++    is( $exception, '', 'can remove directories while traversing' );
++    is_deeply(
++        [ sort @files ],
++        [ 'base/Bethlehem/XDG/gift_list.txt', 'base/New_York/XDG/gift_list.txt' ],
++        'remaining files',
++    );
+ };
+ 
+-is( $exception, '', 'can remove directories while traversing' );
+-is_deeply(
+-    [ sort @files ],
+-    [ 'base/Bethlehem/XDG/gift_list.txt', 'base/New_York/XDG/gift_list.txt' ],
+-    'remaining files',
+-);
++subtest 'visit' => sub {
++    my @files;
++    my $exception = exception {
++        path('base')->visit(
++            sub {
++                my $path = shift;
++                $path->remove_tree if $path->child('.naughty')->is_file;
++                push @files, $path if $path->is_file;
++                return 1;
++            },
++            { recurse => 1 },
++        );
++    };
++
++    is( $exception, '', 'can remove directories while traversing' );
++    is_deeply(
++        [ sort @files ],
++        [ 'base/Bethlehem/XDG/gift_list.txt', 'base/New_York/XDG/gift_list.txt' ],
++        'remaining files',
++    );
++};
+ 
+ done_testing;
+diff --git a/t/recurse.t b/t/recurse.t
+index 8710d96..716c205 100644
+--- a/t/recurse.t
++++ b/t/recurse.t
+@@ -35,16 +35,24 @@ subtest 'no symlinks' => sub {
+ 
+     path($_)->touchpath for @tree;
+ 
+-    my $iter = path(".")->iterator( { recurse => 1 } );
++    subtest 'iterator' => sub {
++        my $iter = path(".")->iterator( { recurse => 1 } );
+ 
+-    my @files;
+-    while ( my $f = $iter->() ) {
+-        push @files, "$f";
+-    }
++        my @files;
++        while ( my $f = $iter->() ) {
++            push @files, "$f";
++        }
+ 
+-    is_deeply( [ sort @files ], [ sort @breadth ], "Breadth first iteration" )
+-      or diag explain \@files;
++        is_deeply( [ sort @files ], [ sort @breadth ], "Breadth first iteration" )
++          or diag explain \@files;
++    };
++    subtest 'visit' => sub {
++        my @files;
++        path(".")->visit( sub { push @files, "$_[0]"; return 1; }, { recurse => 1 }, );
+ 
++        is_deeply( [ sort @files ], [ sort @breadth ], "Breadth first iteration" )
++          or diag explain \@files;
++    };
+ };
+ 
+ subtest 'with symlinks' => sub {
+@@ -93,23 +101,43 @@ subtest 'with symlinks' => sub {
+ 
+     subtest 'no follow' => sub {
+         # no-follow
+-        my $iter = path(".")->iterator( { recurse => 1 } );
+-        my @files;
+-        while ( my $f = $iter->() ) {
+-            push @files, "$f";
+-        }
+-        is_deeply( [ sort @files ], [ sort @nofollow ], "Don't follow symlinks" )
+-          or diag explain \@files;
++        subtest 'iterator' => sub {
++            my $iter = path(".")->iterator( { recurse => 1 } );
++            my @files;
++            while ( my $f = $iter->() ) {
++                push @files, "$f";
++            }
++            is_deeply( [ sort @files ], [ sort @nofollow ], "Don't follow symlinks" )
++              or diag explain \@files;
++        };
++        subtest 'visit' => sub {
++            my @files;
++            path(".")->visit( sub { push @files, "$_[0]"; return 1; }, { recurse => 1 }, );
++            is_deeply( [ sort @files ], [ sort @nofollow ], "Don't follow symlinks" )
++              or diag explain \@files;
++        };
+     };
+ 
+     subtest 'follow' => sub {
+-        my $iter = path(".")->iterator( { recurse => 1, follow_symlinks => 1 } );
+-        my @files;
+-        while ( my $f = $iter->() ) {
+-            push @files, "$f";
+-        }
+-        is_deeply( [ sort @files ], [ sort @follow ], "Follow symlinks" )
+-          or diag explain \@files;
++        subtest 'iterator' => sub {
++            my $iter = path(".")->iterator( { recurse => 1, follow_symlinks => 1 } );
++            my @files;
++            while ( my $f = $iter->() ) {
++                push @files, "$f";
++            }
++            is_deeply( [ sort @files ], [ sort @follow ], "Follow symlinks" )
++              or diag explain \@files;
++          },
++          subtest 'visit' => sub {
++            my @files;
++            path(".")->visit(
++                sub { push @files, "$_[0]"; return 1; },
++                { recurse => 1, follow_symlinks => 1 },
++            );
++            is_deeply( [ sort @files ], [ sort @follow ], "Follow symlinks" )
++              or diag explain \@files;
++          },
++          ;
+     };
+ };
+ 

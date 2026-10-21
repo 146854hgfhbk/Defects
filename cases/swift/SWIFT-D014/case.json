@@ -1,0 +1,617 @@
+{
+  "schema_version": 3,
+  "case_id": "SWIFT-438",
+  "language": "Swift",
+  "status": "release_candidate",
+  "project": "mattpolzin/OpenAPIKit",
+  "repository_url": "https://github.com/mattpolzin/OpenAPIKit.git",
+  "repository_evidence": {
+    "checked_at": "2026-09-03T12:49:42.795479+00:00",
+    "api_url": "https://api.github.com/repos/mattpolzin/OpenAPIKit",
+    "html_url": "https://github.com/mattpolzin/OpenAPIKit",
+    "private": false,
+    "visibility": "public",
+    "archived": false,
+    "public_verification_source": "github_api",
+    "license_spdx": "MIT",
+    "license_source": "github_api"
+  },
+  "commit_url": "https://github.com/mattpolzin/OpenAPIKit/commit/052deec2adeaf4a7a6fb683d2037ed3003664020",
+  "pull_request_url": "https://github.com/mattpolzin/OpenAPIKit/pull/403",
+  "issue_urls": [
+    "https://github.com/mattpolzin/OpenAPIKit/issues/402"
+  ],
+  "traceability": {
+    "requires_unique_fix_commit": true,
+    "verified_fix_issue_numbers": [
+      402
+    ],
+    "paths": [
+      {
+        "issue_number": 402,
+        "path": "fix_commit_to_issue",
+        "verification": "llm_semantic_defect_confirmation"
+      }
+    ],
+    "pull_request_number": 403,
+    "selected_from_multi_commit_pull_request": false,
+    "reference_mode": "DIRECT_COMMIT_ISSUE_REF",
+    "direct_commit_issue_reference": true,
+    "source": "authentic_local_git_commit_object",
+    "strict_direct_reference_satisfied": true,
+    "traceability_closed": true,
+    "publication_profile_satisfied": true,
+    "strict_direct_profile_satisfied": true,
+    "pr_mediated_chain_verified": false
+  },
+  "fixed_revision": "052deec2adeaf4a7a6fb683d2037ed3003664020",
+  "buggy_revision": "90c137c3dfde4e31204ffccc51a0a17a959efde7",
+  "fixed_tree": "8898d8d3d4a7e7cb0898cb4ae870d02f0243b121",
+  "buggy_tree": "e4443bb8f1e1d7a1bc357585a07a3712c4c143a7",
+  "repository_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/full-expansion9-SWIFT-438/repo",
+  "repository_bundle": {
+    "path": "sources/repository.bundle",
+    "sha256": "201a8f2cafde8ca17d2120ec471febb61ebb18e34dcea6c06c1a63bd46aa9013",
+    "bytes": 2246316,
+    "refs": {
+      "buggy": "refs/heads/buggy",
+      "fixed": "refs/heads/fixed"
+    },
+    "repaired_at": "2026-09-03T13:01:22.279533+00:00",
+    "previous_incomplete_bundle": "sources/repository.partial.bundle"
+  },
+  "production_files": [
+    "Sources/OpenAPIKitCore/Shared/Path.swift"
+  ],
+  "trigger_test_files": [
+    "Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift"
+  ],
+  "trigger_tests": [
+    {
+      "path": "Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift",
+      "name": "testInitializeRootPath"
+    }
+  ],
+  "commit_files": {
+    "all": [
+      "Sources/OpenAPIKitCore/Shared/Path.swift",
+      "Tests/OpenAPIKitTests/Path Item/PathItemTests.swift"
+    ],
+    "production": [
+      "Sources/OpenAPIKitCore/Shared/Path.swift"
+    ],
+    "tests": [
+      "Tests/OpenAPIKitTests/Path Item/PathItemTests.swift"
+    ],
+    "other": []
+  },
+  "commit_stats": {
+    "production_hunk_count": 1,
+    "maximum_exact_subset_candidates": 1,
+    "hunk_count_source": "materialize_git_diff"
+  },
+  "patches": {
+    "original_commit": {
+      "path": "patches/original-commit.patch",
+      "sha256": "b142090df869fc5bb65c07772956d5fdc8ecb8b67a7be885aa698c829eddc020",
+      "bytes": 1567
+    },
+    "production_fix": {
+      "path": "patches/production-fix.patch",
+      "sha256": "96f4b728e1900999b687d3cafd90a8203f34417c20184866beb309713616d365",
+      "bytes": 550
+    },
+    "trigger_tests": {
+      "path": "patches/trigger-tests-compatible.patch",
+      "sha256": "a79d814052bbf1cb01a6746e727ea42b6c45763381e78dc6cbc87bbdc8f37b79",
+      "bytes": 486
+    }
+  },
+  "trigger_reduction": {
+    "status": "PASS",
+    "upstream_trigger_patch": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "6ff4923da04a65b39dc9df4d30b0fb522516518326951bc0fcc7b7fe3d39fd73",
+      "bytes": 1017
+    },
+    "removed_external_dependency": false,
+    "rationale": "Extract the upstream-added root-path construction OpenAPI.Path(rawValue: \"/\") and its XCTAssertEqual(rawValue, \"/\") assertion into a separate project-native XCTest file with a space-free path. The same public API, input and expected result are preserved; unrelated pre-existing assertions remain in the original full suite. The upstream patch is retained unchanged for semantic comparison. Executable differential validation and semantic equivalence review are required."
+  },
+  "build": {
+    "directory": ".",
+    "dependency_command": [
+      "swift",
+      "package",
+      "resolve",
+      "--skip-update"
+    ],
+    "analyze_command": [
+      "swift",
+      "build",
+      "--build-tests"
+    ],
+    "test_command": [
+      "swift",
+      "test",
+      "--parallel",
+      "--num-workers",
+      "1"
+    ],
+    "timeout_seconds": 1200,
+    "require_analyze_clean": true
+  },
+  "source_evidence_sha256": "0bd2a9dc9796484087ef15c5857b8fcae40f48b2b96c10f18a7247d687e92748",
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "PASS",
+    "full_suite_validation": "PASS",
+    "human_curation": "PASS",
+    "release_eligible": false,
+    "semantic_curation": "PASS",
+    "curation_method": "llm_api_consensus",
+    "llm_confirmed": true,
+    "current_protocol_validation": "PENDING"
+  },
+  "materialized_at": "2026-09-03T12:49:47.987841+00:00",
+  "claude_screen": {
+    "model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "prompt_decision": "ACCEPT_FOR_VALIDATION",
+    "confidence": 0.9,
+    "runtime_acceptance": false
+  },
+  "validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-05T22:43:23.525697+00:00",
+    "report": "validation/validation.json",
+    "report_sha256": "32dc9610e1ce15dbfed386838b03ca5fb36a7957a47cd7e722a3f2faf261bb23",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift",
+        "name": "testInitializeRootPath"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-438",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift', 'testInitializeRootPath')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift::testInitializeRootPath']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/original-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "a7e99385a4c387e233f7798ea33fc15b37f377368807dec0dd6fd053f48067a0",
+        "package_config": "environment/original-fixed-workspace-state.json",
+        "package_config_sha256": "6a47dad06aabca3f2f18dde62a45d82ba84dbfd9f60be8d792ab80a3e87a17aa",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/original-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "a7e99385a4c387e233f7798ea33fc15b37f377368807dec0dd6fd053f48067a0",
+        "package_config": "environment/original-buggy-workspace-state.json",
+        "package_config_sha256": "6a47dad06aabca3f2f18dde62a45d82ba84dbfd9f60be8d792ab80a3e87a17aa",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/original-swift-toolchain.lock.json",
+      "sha256": "8f640c14794906e7ece27a9ac78ffa0fb254286a85845a1f556b673d8cd0bd0d"
+    },
+    "validation_image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "validation_image_lock": {
+      "path": "environment/original-validation-image.lock.json",
+      "sha256": "44bd3a6729806593348ce03c797d46dc0aee33429f26f5a6773e1643da961383"
+    }
+  },
+  "bug_id": "SWIFT-438",
+  "issue_id": 402,
+  "issue_ids": [
+    402
+  ],
+  "issue_url": "https://github.com/mattpolzin/OpenAPIKit/issues/402",
+  "buggy_commit": "90c137c3dfde4e31204ffccc51a0a17a959efde7",
+  "fixed_commit": "052deec2adeaf4a7a6fb683d2037ed3003664020",
+  "patch": "patches/minimized-production.patch",
+  "changed_source_files": [
+    "Sources/OpenAPIKitCore/Shared/Path.swift"
+  ],
+  "triggering_test": [
+    "Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift::testInitializeRootPath"
+  ],
+  "expected_failure": {
+    "test_id": "Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift::PathItemRootTriggerTests/testInitializeRootPath",
+    "error": "Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift:8: PathItemRootTriggerTests.testInitializeRootPath : XCTAssertEqual failed: (\"//\") is not equal to (\"/\")",
+    "failure_fingerprint": "d4f1f8b2ca6cf588901de4404f127ce69aac6dca7c1c5b532c48ad9899141f4e",
+    "all_trigger_failures": [
+      {
+        "test_id": "Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift::PathItemRootTriggerTests/testInitializeRootPath",
+        "error": "Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift:8: PathItemRootTriggerTests.testInitializeRootPath : XCTAssertEqual failed: (\"//\") is not equal to (\"/\")",
+        "failure_fingerprint": "d4f1f8b2ca6cf588901de4404f127ce69aac6dca7c1c5b532c48ad9899141f4e",
+        "repetition_count": 3,
+        "deterministic": true
+      }
+    ]
+  },
+  "fixed_test_result": {
+    "status": "HISTORICAL_RESULTS_RETAINED",
+    "historical_full_suite_exit_codes": [
+      0,
+      0
+    ],
+    "current_suite_success_required": {
+      "exit_code": 0,
+      "failed_tests": 0,
+      "repetitions": 3
+    },
+    "current_protocol_rerun_performed": false
+  },
+  "build_command": [
+    "swift",
+    "build",
+    "--build-tests"
+  ],
+  "test_command": [
+    "swift",
+    "test",
+    "--parallel",
+    "--num-workers",
+    "1"
+  ],
+  "language_version": "6.1",
+  "dependency_versions": {
+    "(swift-runtime)": "stdlib-only; package declares no external dependencies"
+  },
+  "operating_system_or_container": {
+    "platform": "jammy",
+    "host_system": "Linux",
+    "host_machine": "x86_64",
+    "validation_image": "swift-defects-validation:6.1-recovered-20260905",
+    "validation_image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad"
+  },
+  "timezone": "UTC",
+  "reproducibility_status": "direct_parent_historical_execution_evidence_current_protocol_deferred",
+  "deprecation_reason": null,
+  "minimized_patch": {
+    "path": "patches/minimized-production.patch",
+    "sha256": "8f55e7734835a865e1b7133e818b875c2e9f532a13da6987b8cd63090b44c8a1",
+    "original_hunk_count": 1,
+    "retained_hunks": [
+      1
+    ],
+    "retained_hunk_count": 1,
+    "removed_hunk_count": 0,
+    "screening_only": false,
+    "post_minimization_validation": "PASS",
+    "evidence_grade": "portable_release_evidence",
+    "automatic_minimization": {
+      "minimal_hunks": [
+        1
+      ],
+      "chosen_subset": [
+        1
+      ]
+    }
+  },
+  "post_minimization_validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-05T22:49:39.321003+00:00",
+    "report": "validation/post-minimization.json",
+    "report_sha256": "651d72f7919a54de53aeeb2261c666224951307a8e03550e7156fa14d4f052a1",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift",
+        "name": "testInitializeRootPath"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-438",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift', 'testInitializeRootPath')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/OpenAPIKitTests/PathItemRootTriggerTests.swift::testInitializeRootPath']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/post-minimization-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "a7e99385a4c387e233f7798ea33fc15b37f377368807dec0dd6fd053f48067a0",
+        "package_config": "environment/post-minimization-fixed-workspace-state.json",
+        "package_config_sha256": "6a47dad06aabca3f2f18dde62a45d82ba84dbfd9f60be8d792ab80a3e87a17aa",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/post-minimization-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "a7e99385a4c387e233f7798ea33fc15b37f377368807dec0dd6fd053f48067a0",
+        "package_config": "environment/post-minimization-buggy-workspace-state.json",
+        "package_config_sha256": "6a47dad06aabca3f2f18dde62a45d82ba84dbfd9f60be8d792ab80a3e87a17aa",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/post-minimization-swift-toolchain.lock.json",
+      "sha256": "8f640c14794906e7ece27a9ac78ffa0fb254286a85845a1f556b673d8cd0bd0d"
+    },
+    "validation_image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "validation_image_lock": {
+      "path": "environment/post-minimization-validation-image.lock.json",
+      "sha256": "44bd3a6729806593348ce03c797d46dc0aee33429f26f5a6773e1643da961383"
+    }
+  },
+  "release_policy": {
+    "path": "environment/release-policy.json",
+    "sha256": "c0630d38fec5ddc7e0b23bc55edab956aed494143166c40ab92e119ababa9ff8"
+  },
+  "dependency_cache": {
+    "archive": "environment/dependency-cache.tar.gz",
+    "archive_sha256": "c0c0d7d0c7bca9ab0074f84cec9a532d852225615f9ab33bd48d2b80b8350f3a",
+    "manifest": "environment/dependency-cache-manifest.json",
+    "manifest_sha256": "1e5a678a68a8114b0093c6b22a701e0bd59dc9d3c31a8b70416880421f3bacab",
+    "package_count": 1
+  },
+  "reproduction": {
+    "image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "network_mode": "none",
+    "runner": {
+      "path": "tools/reproduce_case.py",
+      "sha256": "2fbeb44814f8609d3cc6285ed764f7fb92fa96e7cd58e3366e60a2334dd6a0c3",
+      "bytes": 17123
+    },
+    "validation_engine": {
+      "path": "tools/validation_engine.py",
+      "sha256": "3d384f0a1be24e5e5a097b45182577c639b904d2680df657a2c39dc71ce9a619",
+      "bytes": 83296
+    },
+    "commands": {
+      "b": {
+        "path": "commands/SWIFT-438b",
+        "sha256": "1169ff8991de4e36d180e1b412a46685ed5bd6a3e106b3ce61628b9f62975949",
+        "bytes": 185
+      },
+      "f": {
+        "path": "commands/SWIFT-438f",
+        "sha256": "c1fdb0d6f8fd576bb1fc709a73ab92c82952f08ec478251dc2ded1b8b98b5f54",
+        "bytes": 185
+      }
+    }
+  },
+  "reproduction_verification": {
+    "path": "reproduction/verification.json",
+    "sha256": "f23c32edafe0f93735cf24e5ca90c38ff65871b00491523448b7b4e18552b9d8"
+  },
+  "network_isolation_attestation": {
+    "path": "environment/network-isolation.json",
+    "sha256": "6c75e87072b98ea019f0bbbfb3f5b8855fea662c510ea15b97057210d0f48a47"
+  },
+  "dataset_id": "SWIFT-D014",
+  "patch_sha256": "8f55e7734835a865e1b7133e818b875c2e9f532a13da6987b8cd63090b44c8a1",
+  "revision_alias_semantics": "buggy_commit/fixed_commit identify upstream provenance; experimental b/f identities are in artifacts",
+  "upstream_fix": {
+    "commit": "052deec2adeaf4a7a6fb683d2037ed3003664020",
+    "parents": [
+      "90c137c3dfde4e31204ffccc51a0a17a959efde7"
+    ],
+    "buggy_baseline_is_parent": true,
+    "single_parent_matches_baseline": true,
+    "commit_message": "Fix and test for https://github.com/mattpolzin/OpenAPIKit/issues/402\n\nSigned-off-by: Tim Bert <5411131+timbms@users.noreply.github.com>",
+    "boundary_evidence": "repair/boundary-verification.json",
+    "boundary_evidence_sha256": "77fca6137ab7075dd0548fa1e3fd07e2e985249936136c8de788017f6f985b29"
+  },
+  "fixed_revision_kind": "upstream_provenance_use_artifacts_for_experiment",
+  "artifacts": {
+    "buggy": {
+      "commit": "00e17a884f685fbbe1ad53119d9c1775be54c4cd",
+      "tree": "c8a9045cdccf7ed0908ddc933365c5088e62d768"
+    },
+    "fixed": {
+      "commit": "93c91e5a04c5515675cc9fba634b2c41e6c8d677",
+      "tree": "7dd2f08f32e87574327e70de758af5a2a8ba004f",
+      "equals_upstream_tree": false
+    },
+    "construction": "base + compatibility(if present) + trigger; fixed adds production patch",
+    "synthetic_commit_identity_disclosed": true,
+    "upstream_history_not_rewritten": true
+  },
+  "cohort": "runtime_test",
+  "trigger_kind": "runtime_test_failure",
+  "language_metadata": {
+    "compiler_version": "6.1",
+    "package_tools_version": null,
+    "note": "Compiler version is distinct from Package.swift tools/language mode; recovered manifest records may fill package_tools_version"
+  },
+  "auto_baseline_full_suite": false,
+  "test_suite_policy": {
+    "name": "explicitly_filtered_regression_suite",
+    "excluded_selectors": [],
+    "exclusions": [],
+    "failed_process_may_be_waived": false,
+    "fresh_filtered_suite_validation_required": false,
+    "trigger_exclusion_forbidden": true
+  },
+  "current_validation": {
+    "protocol": "explicit-isolated-order-and-filtered-full-suite-v1",
+    "required_repetitions": 3,
+    "full_suite_repetitions": 3,
+    "historical_logs_preserved": true,
+    "historical_reverse_runs_are_order_evidence": false,
+    "same_process_permutation_claimed": false,
+    "new_full_validation_performed": false,
+    "status": "PENDING_CURRENT_PROTOCOL_RERUN",
+    "bound_delivery_reports": [],
+    "raw_log_recovery_waived_by_user": true,
+    "waiver_scope": "historical raw-log recovery only; no metadata upgrade to PASS"
+  },
+  "runtime_release": {
+    "asset_manifest": "../../../runtime-assets.manifest.json",
+    "entrypoint": "../../../benchmark.py",
+    "image_id": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "swift_executable": "/usr/bin/swift",
+    "external_assets_are_required": true,
+    "artifact_tree_verified": true,
+    "assets": [
+      {
+        "kind": "repository_bundle",
+        "case_relative_path": "sources/repository.bundle",
+        "sha256": "201a8f2cafde8ca17d2120ec471febb61ebb18e34dcea6c06c1a63bd46aa9013",
+        "bytes": 2246316,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/201a8f2cafde8ca17d2120ec471febb61ebb18e34dcea6c06c1a63bd46aa9013"
+      },
+      {
+        "kind": "dependency_cache",
+        "case_relative_path": "environment/dependency-cache.tar.gz",
+        "sha256": "c0c0d7d0c7bca9ab0074f84cec9a532d852225615f9ab33bd48d2b80b8350f3a",
+        "bytes": 761029070,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/c0c0d7d0c7bca9ab0074f84cec9a532d852225615f9ab33bd48d2b80b8350f3a"
+      },
+      {
+        "kind": "experiment_bundle",
+        "case_relative_path": "sources/experiment.bundle",
+        "sha256": "a53eb79c45b56fdf2a968af0f9eee6561e6fde998a2912d49b69567e3c0b1346",
+        "bytes": 2245169,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/a53eb79c45b56fdf2a968af0f9eee6561e6fde998a2912d49b69567e3c0b1346"
+      }
+    ],
+    "wrapper_evidence": []
+  },
+  "human_curation": {
+    "status": "APPROVED",
+    "approval_template": "repair/human-review.json",
+    "agent_cannot_sign_as_human": true,
+    "reviewer": "dataset_owner",
+    "reviewed_at": "2026-09-13T10:22:32+00:00"
+  },
+  "release": {
+    "state": "RC",
+    "strict_active": false,
+    "blockers": [],
+    "deprecation_reason": null,
+    "deferred_gates": [
+      "current_protocol_validation_pending"
+    ],
+    "structural_boundary_status": "DIRECT",
+    "publication_profile_traceability": "PASS",
+    "strict_direct_traceability": "PASS",
+    "execution_evidence_policy": "HISTORICAL_EVIDENCE_PRESERVED_CURRENT_PROTOCOL_DEFERRED",
+    "human_signoff_policy": "APPROVED",
+    "classic_runtime_profile": "RUNTIME_TEST",
+    "publication_profile_cohort": "RUNTIME_CORE",
+    "defects4j_core_validation": "PASS"
+  },
+  "repair": {
+    "date": "2026-09-10",
+    "base_archive_sha256": "21599edfd4c0c560677f781fdd84da40fa22fb14472aaaf7174b7dec81d9df21",
+    "previous_metadata": "repair-history/case.before-repair.json",
+    "code_history": "repair-history/tools",
+    "historical_reports_not_rewritten": true,
+    "raw_log_recovery_out_of_scope": true,
+    "stage1_metadata_hardening": {
+      "performed_at": "2026-09-12",
+      "authoritative_boundary": "repair/boundary-verification.json",
+      "historical_execution_evidence_preserved": true,
+      "no_execution_result_invented": true
+    }
+  },
+  "defects4j_core_validation": {
+    "status": "PASS",
+    "classification": "HISTORICAL_STRICT_RAW_PASS",
+    "report": "validation/defects4j-core-reacceptance.json",
+    "report_sha256": "cb88e7da2c4b72d5cd101c3f98ff7b3900202c284ceec9efab97d8663cf7cc6d",
+    "generated_at": "2026-09-12",
+    "does_not_claim_current_protocol_rerun": true
+  }
+}

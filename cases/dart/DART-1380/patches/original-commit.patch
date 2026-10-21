@@ -1,0 +1,53 @@
+diff --git a/lib/parser.dart b/lib/parser.dart
+index 124ef6dc454b80ab65ef3ec6f60023541c8d9339..e3044aa3153ed57d6c9e65a93513187a4d3f025a 100644
+--- a/lib/parser.dart
++++ b/lib/parser.dart
+@@ -341,7 +341,7 @@ class SingleMapping extends Mapping {
+   SingleMapping.fromJson(Map map, {mapUrl})
+       : targetUrl = map['file'],
+         urls = List<String>.from(map['sources']),
+-        names = List<String>.from(map['names']),
++        names = List<String>.from(map['names'] ?? []),
+         files = List(map['sources'].length),
+         sourceRoot = map['sourceRoot'],
+         lines = <TargetLineEntry>[],
+diff --git a/test/parser_test.dart b/test/parser_test.dart
+index 275efd30a7189718f50899e67a7f112112e2bcad..45ac52db2afd800174a82d588bc320619205caeb 100644
+--- a/test/parser_test.dart
++++ b/test/parser_test.dart
+@@ -28,6 +28,14 @@ const Map<String, dynamic> MAP_WITH_SOURCE_LOCATION = {
+   'file': 'output.dart'
+ };
+ 
++const Map<String, dynamic> MAP_WITH_SOURCE_LOCATION_AND_MISSING_NAMES = {
++  'version': 3,
++  'sourceRoot': '',
++  'sources': ['input.dart'],
++  'mappings': 'AAAA',
++  'file': 'output.dart'
++};
++
+ const Map<String, dynamic> MAP_WITH_SOURCE_LOCATION_AND_NAME = {
+   'version': 3,
+   'sourceRoot': '',
+@@ -121,6 +129,20 @@ void main() {
+     expect(entry.sourceNameId, null);
+   });
+ 
++  test('parse with source location and missing names entry', () {
++    SingleMapping map =
++        parse(jsonEncode(MAP_WITH_SOURCE_LOCATION_AND_MISSING_NAMES));
++    expect(map.lines.length, 1);
++    expect(map.lines.first.entries.length, 1);
++    var entry = map.lines.first.entries.first;
++
++    expect(entry.column, 0);
++    expect(entry.sourceUrlId, 0);
++    expect(entry.sourceColumn, 0);
++    expect(entry.sourceLine, 0);
++    expect(entry.sourceNameId, null);
++  });
++
+   test('parse with source location and name', () {
+     SingleMapping map = parse(jsonEncode(MAP_WITH_SOURCE_LOCATION_AND_NAME));
+     expect(map.lines.length, 1);

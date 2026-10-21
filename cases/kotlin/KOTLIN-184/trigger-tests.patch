@@ -1,0 +1,23 @@
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt
+index a8517327a2..aabb1fb59e 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt
+@@ -257,4 +257,18 @@ class FunctionNamingRuleTest {
+             """.trimIndent()
+         functionNamingRuleAssertThat(code).hasNoLintViolations()
+     }
++
++    @Test
++    fun `Issue 2383 - Given a class with tests in JUnit3 style`() {
++        val code =
++            """
++            import junit.framework.TestCase
++
++            class FooTest : TestCase() {
++                fun testFoo_bar() {
++                }
++            }
++            """.trimIndent()
++        functionNamingRuleAssertThat(code).hasNoLintViolations()
++    }
+ }

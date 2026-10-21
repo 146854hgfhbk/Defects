@@ -1,0 +1,16 @@
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/UnnecessaryParenthesesBeforeTrailingLambdaRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/UnnecessaryParenthesesBeforeTrailingLambdaRule.kt
+index 0948c3ae..5b8943b6 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/UnnecessaryParenthesesBeforeTrailingLambdaRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/UnnecessaryParenthesesBeforeTrailingLambdaRule.kt
+@@ -27,8 +30,9 @@ public class UnnecessaryParenthesesBeforeTrailingLambdaRule : StandardRule("unne
+         node: ASTNode,
+         emit: (offset: Int, errorMessage: String, canBeAutoCorrected: Boolean) -> AutocorrectDecision,
+     ) {
+-        if (node.isPartOf(CALL_EXPRESSION) &&
+-            node.isEmptyArgumentList() &&
++        if (node.isEmptyArgumentList() &&
++            node.isPartOf(CALL_EXPRESSION) &&
++            node.isNotPrecededByCallExpressionEndingWithLambdaArgument() &&
+             node.nextCodeSibling()?.elementType == LAMBDA_ARGUMENT
+         ) {
+             emit(

@@ -1,0 +1,78 @@
+diff --git a/Sources/SwiftParserDiagnostics/ParseDiagnosticsGenerator.swift b/Sources/SwiftParserDiagnostics/ParseDiagnosticsGenerator.swift
+index cb07c594..b66c0b52 100644
+--- a/Sources/SwiftParserDiagnostics/ParseDiagnosticsGenerator.swift
++++ b/Sources/SwiftParserDiagnostics/ParseDiagnosticsGenerator.swift
+@@ -776,6 +776,20 @@ public class ParseDiagnosticsGenerator: SyntaxAnyVisitor {
+     return .visitChildren
+   }
+ 
++  public override func visit(_ node: SameTypeRequirementSyntax) -> SyntaxVisitorContinueKind {
++    if shouldSkip(node) {
++      return .skipChildren
++    }
++    if node.equalityToken.presence == .missing && node.rightTypeIdentifier.isMissingAllTokens {
++      addDiagnostic(
++        node.equalityToken,
++        .missingConformanceRequirement,
++        handledNodes: [node.equalityToken.id, node.rightTypeIdentifier.id]
++      )
++    }
++    return .visitChildren
++  }
++
+   public override func visit(_ node: SourceFileSyntax) -> SyntaxVisitorContinueKind {
+     if shouldSkip(node) {
+       return .skipChildren
+diff --git a/Sources/SwiftParserDiagnostics/ParserDiagnosticMessages.swift b/Sources/SwiftParserDiagnostics/ParserDiagnosticMessages.swift
+index 5e37d207..08e6465a 100644
+--- a/Sources/SwiftParserDiagnostics/ParserDiagnosticMessages.swift
++++ b/Sources/SwiftParserDiagnostics/ParserDiagnosticMessages.swift
+@@ -149,6 +149,9 @@ extension DiagnosticMessage where Self == StaticParserError {
+   public static var missingColonInTernaryExpr: Self {
+     .init("expected ':' after '? ...' in ternary expression")
+   }
++  public static var missingConformanceRequirement: Self {
++    .init("expected ':' or '==' to indicate a conformance or same-type requirement")
++  }
+   public static var misspelledAsync: Self {
+     .init("expected async specifier; did you mean 'async'?")
+   }
+diff --git a/Tests/SwiftParserTest/AttributeTests.swift b/Tests/SwiftParserTest/AttributeTests.swift
+index bba48ec0..70b4b5a2 100644
+--- a/Tests/SwiftParserTest/AttributeTests.swift
++++ b/Tests/SwiftParserTest/AttributeTests.swift
+@@ -43,11 +43,11 @@ final class AttributeTests: XCTestCase {
+       """,
+       diagnostics: [
+         DiagnosticSpec(locationMarker: "1️⃣", message: "expected ':' and parameters in '@differentiable' argument", fixIts: ["insert ':' and parameters"]),
+-        DiagnosticSpec(locationMarker: "2️⃣", message: "expected '=' and right-hand type in same type requirement", fixIts: ["insert '=' and right-hand type"]),
++        DiagnosticSpec(locationMarker: "2️⃣", message: "expected ':' or '==' to indicate a conformance or same-type requirement"),
+         DiagnosticSpec(locationMarker: "2️⃣", message: "expected ')' to end attribute", fixIts: ["insert ')'"]),
+       ],
+       fixedSource: """
+-        @differentiable(reverse wrt: <#identifier#>,where T = <#type#>)
++        @differentiable(reverse wrt: <#identifier#>,where T)
+         func podcastPlaybackSpeed() {
+         }
+         """
+diff --git a/Tests/SwiftParserTest/DeclarationTests.swift b/Tests/SwiftParserTest/DeclarationTests.swift
+index 4a12f72d..fe54746c 100644
+--- a/Tests/SwiftParserTest/DeclarationTests.swift
++++ b/Tests/SwiftParserTest/DeclarationTests.swift
+@@ -123,14 +123,14 @@ final class DeclarationTests: XCTestCase {
+     AssertParse(
+       "class T where t1️⃣",
+       diagnostics: [
+-        DiagnosticSpec(message: "expected '=' and right-hand type in same type requirement"),
++        DiagnosticSpec(message: "expected ':' or '==' to indicate a conformance or same-type requirement"),
+         DiagnosticSpec(message: "expected member block in class"),
+       ]
+     )
+     AssertParse(
+       "class B<where g1️⃣",
+       diagnostics: [
+-        DiagnosticSpec(message: "expected '=' and right-hand type in same type requirement"),
++        DiagnosticSpec(message: "expected ':' or '==' to indicate a conformance or same-type requirement"),
+         DiagnosticSpec(message: "expected '>' to end generic parameter clause"),
+         DiagnosticSpec(message: "expected member block in class"),
+       ]

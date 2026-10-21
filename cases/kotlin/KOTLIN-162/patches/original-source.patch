@@ -1,0 +1,87 @@
+diff --git a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/dataTypes/IMG.kt b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/dataTypes/IMG.kt
+index 15ca32585..4dfb55e03 100644
+--- a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/dataTypes/IMG.kt
++++ b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/dataTypes/IMG.kt
+@@ -23,6 +23,6 @@ public data class IMG(
+         if (height != null) style.append("height:${height}px;")
+         if (maxWidth != null) style.append("max-width:${maxWidth}px;")
+         if (maxHeight != null) style.append("max-height:${maxHeight}px;")
+-        return """<img src="$src" style="$style"}/>"""
++        return """<img src="$src" style="$style"/>"""
+     }
+ }
+diff --git a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/io/html.kt b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/io/html.kt
+index 432eab2c0..956fd99aa 100644
+--- a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/io/html.kt
++++ b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/io/html.kt
+@@ -20,6 +20,8 @@ import org.jetbrains.kotlinx.dataframe.columns.BaseColumn
+ import org.jetbrains.kotlinx.dataframe.columns.ColumnGroup
+ import org.jetbrains.kotlinx.dataframe.columns.ColumnWithPath
+ import org.jetbrains.kotlinx.dataframe.columns.FrameColumn
++import org.jetbrains.kotlinx.dataframe.dataTypes.IFRAME
++import org.jetbrains.kotlinx.dataframe.dataTypes.IMG
+ import org.jetbrains.kotlinx.dataframe.impl.DataFrameSize
+ import org.jetbrains.kotlinx.dataframe.impl.columns.addPath
+ import org.jetbrains.kotlinx.dataframe.impl.io.resizeKeepingAspectRatio
+@@ -514,6 +516,8 @@ private fun AnyFrame.getColumnsHeaderGrid(): List<List<ColumnWithPathWithBorder<
+ internal fun DataFrameHtmlData.print() = println(this)
+ 
+ /**
++ * By default, cell content is formatted as text
++ * Use [RenderedContent.media] or [IMG], [IFRAME] if you need custom HTML inside a cell.
+  * @return DataFrameHtmlData with table script and css definitions. Can be saved as an *.html file and displayed in the browser
+  */
+ public fun <T> DataFrame<T>.toStandaloneHTML(
+@@ -523,6 +527,8 @@ public fun <T> DataFrame<T>.toStandaloneHTML(
+ ): DataFrameHtmlData = toHTML(configuration, cellRenderer, getFooter).withTableDefinitions()
+ 
+ /**
++ * By default, cell content is formatted as text
++ * Use [RenderedContent.media] or [IMG], [IFRAME] if you need custom HTML inside a cell.
+  * @return DataFrameHtmlData without additional definitions. Can be rendered in Jupyter kernel environments
+  */
+ public fun <T> DataFrame<T>.toHTML(
+@@ -834,7 +840,7 @@ internal class DataFrameFormatter(
+             return sb.result()
+         }
+ 
+-        val result = when (value) {
++        val result: RenderedContent? = when (value) {
+             null -> "null".addCss(nullClass)
+ 
+             is AnyRow -> {
+@@ -899,6 +905,12 @@ internal class DataFrameFormatter(
+ 
+             is DataFrameHtmlData -> RenderedContent.text(value.body)
+ 
++            is IMG -> RenderedContent.media(value.toString())
++
++            is IFRAME -> RenderedContent.media(value.toString())
++
++            is RenderedContent -> value
++
+             else -> renderer.content(value, configuration)
+         }
+         if (result != null && result.textLength > configuration.cellContentLimit) return null
+diff --git a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/CellRenderer.kt b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/CellRenderer.kt
+index 6046d3f89..c9cb625cf 100644
+--- a/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/CellRenderer.kt
++++ b/core/src/main/kotlin/org/jetbrains/kotlinx/dataframe/jupyter/CellRenderer.kt
+@@ -1,5 +1,6 @@
+ package org.jetbrains.kotlinx.dataframe.jupyter
+ 
++import org.intellij.lang.annotations.Language
+ import org.jetbrains.kotlinx.dataframe.io.DisplayConfiguration
+ import org.jetbrains.kotlinx.dataframe.io.renderValueForHtml
+ import org.jetbrains.kotlinx.dataframe.io.tooltipLimit
+@@ -12,7 +13,9 @@ public data class RenderedContent(
+ ) {
+     public companion object {
+ 
+-        public fun media(html: String): RenderedContent = RenderedContent(html, 0, null, false)
++        public fun media(
++            @Language("HTML") html: String,
++        ): RenderedContent = RenderedContent(html, 0, null, false)
+ 
+         public fun textWithLength(str: String, len: Int): RenderedContent = RenderedContent(str, len, null, false)
+ 

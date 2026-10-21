@@ -1,0 +1,53 @@
+diff --git a/Sources/Hummingbird/Environment.swift b/Sources/Hummingbird/Environment.swift
+index e564380..f852b1b 100644
+--- a/Sources/Hummingbird/Environment.swift
++++ b/Sources/Hummingbird/Environment.swift
+@@ -157,8 +157,9 @@ public struct HBEnvironment: Sendable, Decodable, ExpressibleByDictionaryLiteral
+         var parser = HBParser(dotEnv)
+         var state: DotEnvParserState = .readingKey
+         do {
+-            parser.read(while: \.isWhitespace)
+             while !parser.reachedEnd() {
++                parser.read(while: \.isWhitespace)
++
+                 switch state {
+                 case .readingKey:
+                     // check for comment
+@@ -171,6 +172,7 @@ public struct HBEnvironment: Sendable, Decodable, ExpressibleByDictionaryLiteral
+                             parser.moveToEnd()
+                             break
+                         }
++                        continue
+                     }
+                     let key = try parser.read(until: { $0.isWhitespace || $0 == "=" }).string
+                     state = .skippingEquals(key: key)
+@@ -192,7 +194,6 @@ public struct HBEnvironment: Sendable, Decodable, ExpressibleByDictionaryLiteral
+                     dotEnvDictionary[key.lowercased()] = value
+                     state = .readingKey
+                 }
+-                parser.read(while: \.isWhitespace)
+             }
+             guard case .readingKey = state else { throw Error.dotEnvParseError }
+         } catch {
+diff --git a/Tests/HummingbirdTests/EnvironmentTests.swift b/Tests/HummingbirdTests/EnvironmentTests.swift
+index 9f6e112..29c514d 100644
+--- a/Tests/HummingbirdTests/EnvironmentTests.swift
++++ b/Tests/HummingbirdTests/EnvironmentTests.swift
+@@ -114,6 +114,17 @@ final class EnvironmentTests: XCTestCase {
+         XCTAssertEqual(result["credentials"], "sdkfjh")
+     }
+ 
++    func testDotEnvCommentAndEmptyLine() throws {
++        let dotenv = """
++        FOO=BAR
++        #BAZ=
++
++        """
++        let result = try HBEnvironment.parseDotEnv(dotenv)
++        XCTAssertEqual(result["foo"], "BAR")
++        XCTAssertEqual(result.count, 1)
++    }
++
+     func testDotEnvOverridingEnvironment() throws {
+         let dotenv = """
+         TEST_VAR=testDotEnvOverridingEnvironment

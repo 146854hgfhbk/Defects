@@ -1,0 +1,13 @@
+diff --git a/lib/req/steps.ex b/lib/req/steps.ex
+--- a/lib/req/steps.ex
++++ b/lib/req/steps.ex
+@@ -837,7 +837,8 @@ defmodule Req.Steps do
+   defp remove_credentials_if_untrusted(request, true, _), do: request
+ 
+   defp remove_credentials_if_untrusted(request, _, location_url) do
+-    if location_url.host == request.url.host do
++    if {location_url.host, location_url.scheme, location_url.port} ==
++         {request.url.host, request.url.scheme, request.url.port} do
+       request
+     else
+       remove_credentials(request)

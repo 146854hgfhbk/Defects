@@ -1,0 +1,109 @@
+diff --git a/lib/src/logic.dart b/lib/src/logic.dart
+index 3fd98f9..e9f76c1 100644
+--- a/lib/src/logic.dart
++++ b/lib/src/logic.dart
+@@ -335,8 +337,8 @@ class Logic {
+   /// Injects a value onto this signal in the current [Simulator] tick.
+   /// 
+   /// This function calls [put()] in [Simulator.injectAction()].
+-  Future<void> inject(dynamic val, {bool fill = false}) async {
+-    await Simulator.injectAction(() => put(val, fill: fill));
++  void inject(dynamic val, {bool fill = false}) {
++    Simulator.injectAction(() => put(val, fill: fill));
+   }
+ 
+   /// Keeps track of whether there is an active put, to detect reentrance.
+diff --git a/lib/src/simulator.dart b/lib/src/simulator.dart
+index 124d71c..2bcae07 100644
+--- a/lib/src/simulator.dart
++++ b/lib/src/simulator.dart
+@@ -127,12 +127,9 @@ class Simulator {
+   /// 
+   /// If the injection occurs outside of a tick ([SimulatorPhase.outOfTick]), it will trigger
+   /// a new tick in the same timestamp.
+-  static Future<void> injectAction(void Function() action) async {
++  static void injectAction(void Function() action) {
+     // adds an action to be executed in the current timestamp
+     _injectedActions.addLast(action);
+-    if(phase == SimulatorPhase.outOfTick) {
+-      await tickExecute(() => null);
+-    }
+   }
+ 
+   /// A single simulation tick.
+@@ -140,6 +137,15 @@ class Simulator {
+   /// Takes the simulator through all actions within the next pending 
+   /// timestamp, and passes through all events and phases on the way.
+   static Future<void> tick() async {
++    
++    if(_injectedActions.isNotEmpty) {
++      // injected actions will automatically be executed during tickExecute
++      tickExecute(() {});
++
++      // don't continue through the tick for injected actions, come back around
++      return;
++    }
++
+     var nextTimeStamp = _pendingTimestamps.firstKey();
+     if(nextTimeStamp == null){
+       print('No more to tick.');
+@@ -147,17 +153,17 @@ class Simulator {
+     }
+ 
+     _currentTimestamp = nextTimeStamp;
+-    // print('Tick: $_currentTimestamp');
+-    await tickExecute(() async {
++    // print("Tick: $_currentTimestamp");
++    tickExecute(() {
+       for(var func in _pendingTimestamps[nextTimeStamp]!) {
+-        await func();
++        func();
+       }
+     });
+     _pendingTimestamps.remove(_currentTimestamp);    
+   }
+ 
+   /// Executes all pending injected actions.
+-  static Future<void> _executeInjectedActions() async {
++  static void _executeInjectedActions() {
+     while(_injectedActions.isNotEmpty) {
+       var injectedFunction = _injectedActions.removeFirst();
+       injectedFunction();
+@@ -165,19 +171,19 @@ class Simulator {
+   }
+ 
+   /// Performs the actual execution of a collection of actions for a [tick()].
+-  static Future<void> tickExecute(Function() toExecute) async {
++  static void tickExecute(void Function() toExecute) {
+     _phase = SimulatorPhase.beforeTick;
+     _preTickController.add(null); // useful for flop sampling
+     
+     _phase = SimulatorPhase.mainTick;
+     _startTickController.add(null); // useful for things that need to trigger every tick without other input
+-    await _executeInjectedActions();
+-    await toExecute();
+-    await _executeInjectedActions();
++    _executeInjectedActions();
++    toExecute();
++    _executeInjectedActions();
+     
+     _phase = SimulatorPhase.clksStable;
+     _clkStableController.add(null); // useful for flop clk input stability
+-    await _executeInjectedActions();
++    _executeInjectedActions();
+ 
+     _phase = SimulatorPhase.outOfTick;
+     _postTickController.add(null); // useful for determination of signal settling
+diff --git a/lib/src/utilities/simcompare.dart b/lib/src/utilities/simcompare.dart
+index 29be1c9..8eb7186 100644
+--- a/lib/src/utilities/simcompare.dart
++++ b/lib/src/utilities/simcompare.dart
+@@ -63,7 +63,7 @@ class SimCompare {
+     for(var vector in vectors) {
+       // print('Running vector: $vector');
+       Simulator.registerAction(timestamp, () async {
+-        await Simulator.tickExecute(() {
++        Simulator.tickExecute(() {
+           for(var signalName in vector.inputValues.keys) {
+             var value = vector.inputValues[signalName];
+             module.input(signalName).put(value);

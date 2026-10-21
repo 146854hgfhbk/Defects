@@ -1,0 +1,44 @@
+diff --git a/test/comments/switch.stmt b/test/comments/switch.stmt
+index ae1962a5..d8082ba6 100644
+--- a/test/comments/switch.stmt
++++ b/test/comments/switch.stmt
+@@ -145,6 +145,18 @@ e = switch (n) {
+   1 => one, // comment
+   2 => two // comment
+ };
++>>> line comment before case with guard does not force split
++e = switch (n) {
++  0 => zero,
++  // comment
++  1 when true => one,
++};
++<<<
++e = switch (n) {
++  0 => zero,
++  // comment
++  1 when true => one,
++};
+ >>> line comment
+ switch (e) {
+   // comment
+diff --git a/test/regression/1200/1215.stmt b/test/regression/1200/1215.stmt
+new file mode 100644
+index 00000000..63573523
+--- /dev/null
++++ b/test/regression/1200/1215.stmt
+@@ -0,0 +1,14 @@
++>>>
++return switch (level) {
++  0 => a,
++  // Comment.
++  1
++      when flag =>
++    b,
++};
++<<<
++return switch (level) {
++  0 => a,
++  // Comment.
++  1 when flag => b,
++};
+\ No newline at end of file

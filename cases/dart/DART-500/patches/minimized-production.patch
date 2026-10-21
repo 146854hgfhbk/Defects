@@ -1,0 +1,26 @@
+diff --git a/lib/src/csv_parser.dart b/lib/src/csv_parser.dart
+index 12db847..165a4a2 100644
+--- a/lib/src/csv_parser.dart
++++ b/lib/src/csv_parser.dart
+@@ -166,10 +166,10 @@ class CsvParser {
+ 
+   /// Are we inside a quoted text/string ([_insideString] must be true as well
+   /// if [_insideQuotedString] is true).
+-  bool? _insideQuotedString;
++  bool _insideQuotedString = false;
+ 
+   /// Did we just now parse a [textEndDelimiter]?
+-  bool? _previousWasTextEndDelimiter;
++  bool _previousWasTextEndDelimiter = false;
+ 
+   // Counters for multi-character matching:
+ 
+@@ -629,7 +628,7 @@ class CsvParser {
+     if (!allowInvalid &&
+         result.stopReason == ParsingStopReason.EndOfString &&
+         fieldCompleteWhenEndOfString &&
+-        _insideQuotedString!) {
++        (_insideQuotedString && !_previousWasTextEndDelimiter)) {
+       throw InvalidCsvException(textEndDelimiter);
+     }
+     return result;

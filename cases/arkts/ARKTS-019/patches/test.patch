@@ -1,0 +1,159 @@
+diff --git a/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/List.test.ets b/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/List.test.ets
+index 589f8fbf0..ea0864329 100644
+--- a/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/List.test.ets
+@@ -13,8 +13,8 @@
+  * limitations under the License.
+  */
+ 
+-import abilityTest from './Ability.test';
++import playerModelLifecycleTest from './PlayerModelLifecycle.test';
+ 
+ export default function testsuite() {
+-  abilityTest();
++  playerModelLifecycleTest();
+ }
+diff --git a/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/PlayerModelLifecycle.test.ets b/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/PlayerModelLifecycle.test.ets
+new file mode 100644
+index 000000000..25160c056
+--- /dev/null
++++ b/code/SuperFeature/DistributedAppDev/ArkTSDistributedMusicPlayer/entry/src/ohosTest/ets/test/PlayerModelLifecycle.test.ets
+@@ -0,0 +1,138 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++
++const BUNDLE = 'DistributedMusicPlayer_PlayerModel_';
++
++type PlayerModelSlots = Record<string, Object | Function | number | boolean | undefined>;
++
++interface PlayerModelApi {
++  pause(): void;
++  stop(): void;
++  seek(ms: number): void;
++}
++
++class FakePlayer {
++  public pauseCount: number = 0;
++  public stopCount: number = 0;
++  public seekValue: number = -1;
++  public state: string = 'play';
++  public currentTime: number = 36;
++  public duration: number = 3600;
++  public src: string = 'fd://row1';
++
++  pause(): void {
++    this.pauseCount++;
++  }
++
++  stop(): void {
++    this.stopCount++;
++  }
++
++  seek(ms: number): void {
++    this.seekValue = ms;
++  }
++
++  on(eventName: string, callback: Function): void {
++  }
++}
++
++async function loadPlayerModel(): Promise<PlayerModelApi> {
++  let module: ESObject = await import('../../../main/ets/model/PlayerModel');
++  return module.default as PlayerModelApi;
++}
++
++function slots(playerModel: PlayerModelApi): PlayerModelSlots {
++  return playerModel as Object as PlayerModelSlots;
++}
++
++function withoutThrow(action: () => void): boolean {
++  try {
++    action();
++    return true;
++  } catch (error) {
++    console.info(BUNDLE + 'unexpected exception: ' + JSON.stringify(error));
++    return false;
++  }
++}
++
++function prepareModel(playerModel: PlayerModelApi, player: Object | undefined): void {
++  let model = slots(playerModel);
++  model['player'] = player;
++  model['isPlaying'] = true;
++  model['intervalID'] = undefined;
++  model['statusChangedListener'] = ((isPlaying: boolean) => {
++    console.info(BUNDLE + 'status changed: ' + isPlaying);
++  }) as Function;
++  model['playingProgressListener'] = ((currentTime: number) => {
++    console.info(BUNDLE + 'progress: ' + currentTime);
++  }) as Function;
++}
++
++function restoreModel(playerModel: PlayerModelApi, player: Object | undefined): void {
++  let model = slots(playerModel);
++  model['player'] = player;
++  model['isPlaying'] = false;
++  model['intervalID'] = undefined;
++}
++
++export default function playerModelLifecycleTest() {
++  describe('playerModelLifecycleTest', () => {
++    it(BUNDLE + 'ReleasedPlayerDoesNotCrash_001', 0, async () => {
++      let playerModel = await loadPlayerModel();
++      let originalPlayer = slots(playerModel)['player'] as Object | undefined;
++      try {
++        prepareModel(playerModel, undefined);
++        expect(withoutThrow(() => {
++          playerModel.pause();
++        })).assertTrue();
++
++        prepareModel(playerModel, undefined);
++        expect(withoutThrow(() => {
++          playerModel.stop();
++        })).assertTrue();
++
++        prepareModel(playerModel, undefined);
++        expect(withoutThrow(() => {
++          playerModel.seek(1200);
++        })).assertTrue();
++      } finally {
++        restoreModel(playerModel, originalPlayer);
++      }
++    });
++
++    it(BUNDLE + 'FakePlayerStillReceivesCommands_002', 0, async () => {
++      let playerModel = await loadPlayerModel();
++      let originalPlayer = slots(playerModel)['player'] as Object | undefined;
++      let fakePlayer = new FakePlayer();
++      try {
++        prepareModel(playerModel, fakePlayer);
++        playerModel.pause();
++        expect(fakePlayer.pauseCount).assertEqual(1);
++
++        prepareModel(playerModel, fakePlayer);
++        playerModel.stop();
++        expect(fakePlayer.stopCount).assertEqual(1);
++
++        prepareModel(playerModel, fakePlayer);
++        playerModel.seek(2500);
++        expect(fakePlayer.seekValue).assertEqual(2500);
++      } finally {
++        restoreModel(playerModel, originalPlayer);
++      }
++    });
++  });
++}

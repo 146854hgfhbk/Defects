@@ -1,0 +1,24 @@
+diff --git a/Sources/AWSLambdaRuntime/LambdaClock.swift b/Sources/AWSLambdaRuntime/LambdaClock.swift
+--- a/Sources/AWSLambdaRuntime/LambdaClock.swift
++++ b/Sources/AWSLambdaRuntime/LambdaClock.swift
+@@ -62,7 +62,7 @@ public struct LambdaClock: Clock {
+     /// ## Thread Safety
+     ///
+     /// `Instant` is a value type and is inherently thread-safe.
+-    public struct Instant: InstantProtocol {
++    public struct Instant: InstantProtocol, CustomStringConvertible {
+         /// The number of milliseconds since the Unix epoch.
+         let instant: Int64
+ 
+@@ -122,6 +122,11 @@ public struct LambdaClock: Clock {
+         public init(millisecondsSinceEpoch milliseconds: Int64) {
+             self.instant = milliseconds
+         }
++
++        /// Renders an Instant as an EPOCH value
++        public var description: String {
++            "\(self.instant)"
++        }
+     }
+ 
+     /// The current instant according to this clock.

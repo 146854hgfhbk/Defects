@@ -1,0 +1,42 @@
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BlankLineBeforeDeclarationRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BlankLineBeforeDeclarationRuleTest.kt
+index 77702f4986..cee323deb7 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BlankLineBeforeDeclarationRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BlankLineBeforeDeclarationRuleTest.kt
+@@ -447,4 +447,16 @@ class BlankLineBeforeDeclarationRuleTest {
+             .hasLintViolation(3, 5, "Expected a blank line for this declaration")
+             .isFormattedAs(formattedCode)
+     }
++
++    @Test
++    fun `Issue 2260 - Given an anonymous function as right hand side in an assignment`() {
++        val code =
++            """
++            val foo =
++                fun(): String {
++                    return "foo"
++                }
++            """.trimIndent()
++        blankLineBeforeDeclarationRuleAssertThat(code).hasNoLintViolations()
++    }
+ }
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt
+index 6f8116f8b9..34ab7fb691 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionNamingRuleTest.kt
+@@ -170,4 +170,16 @@ class FunctionNamingRuleTest {
+             """.trimIndent()
+         functionNamingRuleAssertThat(code).hasNoLintViolations()
+     }
++
++    @Test
++    fun `Issue 2260 - Given an anonymous function in a property assignment`() {
++        val code =
++            """
++            val foo =
++                fun(): String {
++                    return "foo"
++                }
++            """.trimIndent()
++        functionNamingRuleAssertThat(code).hasNoLintViolations()
++    }
+ }

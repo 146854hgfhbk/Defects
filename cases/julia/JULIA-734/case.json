@@ -1,0 +1,270 @@
+{
+  "bug_id": "JULIA-734",
+  "buggy_revision": "0974c8a45db0b141c14602cfb9744c6a7c66dcf5",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "b702da4e4cbb65a462d636b5847e8c38cc849972",
+  "case_id": "JULIA-734",
+  "changed_production_files": [
+    "src/intervals/interval_operations/boolean.jl",
+    "src/intervals/intervals.jl",
+    "src/intervals/real_interface.jl"
+  ],
+  "changed_test_files": [
+    "test/interval_tests/consistency.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "b702da4e4cbb65a462d636b5847e8c38cc849972",
+  "instance_id": "juliaintervals__intervalarithmetic.jl-602",
+  "issue_id": 601,
+  "issue_urls": [
+    "https://github.com/JuliaIntervals/IntervalArithmetic.jl/issues/601"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "parent_sha": "0974c8a45db0b141c14602cfb9744c6a7c66dcf5",
+  "project": "JuliaIntervals/IntervalArithmetic.jl",
+  "repository_url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "candidate_sha": "b702da4e4cbb65a462d636b5847e8c38cc849972",
+    "project": "JuliaIntervals/IntervalArithmetic.jl",
+    "input_sha256": "19143a1ff5385c04847fdcf0ad178f40dc7f4487c6fa21ad5759bc78613b609c",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T06:17:55Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.2956312486567164,
+      "input_tokens": 4203,
+      "output_tokens": 601
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.9, \"summary\": \"Base.one for Complex{Interval} returned complex(one, one), giving an imaginary part of [1,1] instead of [0,0], which violates the multiplicative identity semantics of one. The minimized patch pulls zero and one out of the shared metaprogramming loop so one sets the imaginary component to zero. The isthinone API addition from the same commit is excluded from the trigger and the minimized patch, leaving a single-hunk behavioral fix.\", \"evidence\": \"Issue #601 reports one on complex intervals returning [1,1] + im*[1,1] when [1,1] + im*[0,0] is expected; PR #602 closes it. The one-hunk production diff in src/intervals/real_interface.jl replaces the loop-generated Complex methods with explicit zero (both parts zero) and one (real one, imaginary zero) definitions. Trigger test 'one for complex intervals has zero imaginary component' in test/interval_tests/consistency.jl fails on parent 0974c8a and passes on b702da4; strict differential is stable across 3 repetitions and the fixed full suite passes.\", \"missing_evidence\": \"The actual test source for the trigger assertion is not shown, only its name. The full commit including isthinone was not provided, so the exclusion of the new API rests on the minimization report rather than direct inspection.\", \"validation_risks\": \"Low. The zero definitions are semantically unchanged from the loop expansion, so only one behavior differs; any hidden coupling to the previous incorrect one (e.g. code relying on one for complex identity arrays or promotion) could surface elsewhere, but the passing full suite argues against it. Minor risk that the trigger test file also exercises isthinone and would error on the buggy-plus-minimized-patch combination if the test file is taken wholesale.\", \"suggested_tests\": \"Assert one(Complex{Interval{Float64}}) == complex(interval(1), interval(0)) and one(complex(interval(2,3), interval(4,5))) == complex(interval(1), interval(0)); verify z * one(z) == z for several complex intervals; confirm zero(Complex{Interval{Float64}}) still has both parts thin zero; check isguaranteed propagation for both zero and one on complex intervals; test with Float32 and BigFloat NumTypes.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.9,
+    "summary": "Base.one for Complex{Interval} returned complex(one, one), giving an imaginary part of [1,1] instead of [0,0], which violates the multiplicative identity semantics of one. The minimized patch pulls zero and one out of the shared metaprogramming loop so one sets the imaginary component to zero. The isthinone API addition from the same commit is excluded from the trigger and the minimized patch, leaving a single-hunk behavioral fix.",
+    "evidence": "Issue #601 reports one on complex intervals returning [1,1] + im*[1,1] when [1,1] + im*[0,0] is expected; PR #602 closes it. The one-hunk production diff in src/intervals/real_interface.jl replaces the loop-generated Complex methods with explicit zero (both parts zero) and one (real one, imaginary zero) definitions. Trigger test 'one for complex intervals has zero imaginary component' in test/interval_tests/consistency.jl fails on parent 0974c8a and passes on b702da4; strict differential is stable across 3 repetitions and the fixed full suite passes.",
+    "missing_evidence": "The actual test source for the trigger assertion is not shown, only its name. The full commit including isthinone was not provided, so the exclusion of the new API rests on the minimization report rather than direct inspection.",
+    "validation_risks": "Low. The zero definitions are semantically unchanged from the loop expansion, so only one behavior differs; any hidden coupling to the previous incorrect one (e.g. code relying on one for complex identity arrays or promotion) could surface elsewhere, but the passing full suite argues against it. Minor risk that the trigger test file also exercises isthinone and would error on the buggy-plus-minimized-patch combination if the test file is taken wholesale.",
+    "suggested_tests": "Assert one(Complex{Interval{Float64}}) == complex(interval(1), interval(0)) and one(complex(interval(2,3), interval(4,5))) == complex(interval(1), interval(0)); verify z * one(z) == z for several complex intervals; confirm zero(Complex{Interval{Float64}}) still has both parts thin zero; check isguaranteed propagation for both zero and one on complex intervals; test with Float32 and BigFloat NumTypes."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "SWE-rebench-V2",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "interval_tests/consistency.jl",
+      "interval_tests/construction.jl",
+      "interval_tests/display.jl",
+      "interval_tests/hyperbolic.jl",
+      "interval_tests/loops.jl",
+      "interval_tests/multidim.jl",
+      "interval_tests/numeric.jl",
+      "interval_tests/parsing.jl",
+      "interval_tests/power.jl",
+      "interval_tests/rounding.jl",
+      "interval_tests/set_operations.jl",
+      "interval_tests/trigonometric.jl",
+      "ITF1788_tests/atan2.jl",
+      "ITF1788_tests/c-xsc.jl",
+      "ITF1788_tests/fi_lib.jl",
+      "ITF1788_tests/ieee1788-constructors.jl",
+      "ITF1788_tests/ieee1788-exceptions.jl",
+      "ITF1788_tests/libieeep1788_bool.jl",
+      "ITF1788_tests/libieeep1788_cancel.jl",
+      "ITF1788_tests/libieeep1788_class.jl",
+      "ITF1788_tests/libieeep1788_elem.jl",
+      "ITF1788_tests/libieeep1788_num.jl",
+      "ITF1788_tests/libieeep1788_overlap.jl",
+      "ITF1788_tests/libieeep1788_rec_bool.jl",
+      "ITF1788_tests/libieeep1788_set.jl",
+      "ITF1788_tests/mpfi.jl"
+    ],
+    "PASS_TO_PASS": [
+      "interval_tests/bisect.jl"
+    ],
+    "base_commit": "0974c8a45db0b141c14602cfb9744c6a7c66dcf5",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "instance_id": "juliaintervals__intervalarithmetic.jl-602",
+    "issue_url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/issues/601",
+    "patch": "diff --git a/src/intervals/interval_operations/boolean.jl b/src/intervals/interval_operations/boolean.jl\nindex 0457b550..ac46e177 100644\n--- a/src/intervals/interval_operations/boolean.jl\n+++ b/src/intervals/interval_operations/boolean.jl\n@@ -350,6 +350,20 @@ end\n \n isthinzero(x::Complex) = isthinzero(real(x)) & isthinzero(imag(x))\n \n+\"\"\"\n+    isthinone(x)\n+\n+Test whether `x` contains only one.\n+\"\"\"\n+isthinone(x::BareInterval) = isone(inf(x)) & isone(sup(x))\n+\n+function isthinone(x::Interval)\n+    isnai(x) && return false\n+    return isthinone(bareinterval(x))\n+end\n+\n+isthinone(x::Complex) = isthinone(real(x)) & isthinzero(imag(x))\n+\n \"\"\"\n     isthininteger(x)\n \ndiff --git a/src/intervals/intervals.jl b/src/intervals/intervals.jl\nindex 15587bf4..b558fda1 100644\n--- a/src/intervals/intervals.jl\n+++ b/src/intervals/intervals.jl\n@@ -30,7 +30,7 @@ include(\"interval_operations/extended_div.jl\")\n include(\"interval_operations/boolean.jl\")\n     export isempty_interval, isentire_interval, isequal_interval, in_interval,\n         issubset_interval, isinterior, precedes, strictprecedes,\n-        isdisjoint_interval, isweakless, isstrictless, isthin, isthinzero,\n+        isdisjoint_interval, isweakless, isstrictless, isthin, isthinzero, isthinone,\n         isbounded, isunbounded, isnai, iscommon, isatomic\n include(\"interval_operations/overlap.jl\")\n     export Overlap, overlap\ndiff --git a/src/intervals/real_interface.jl b/src/intervals/real_interface.jl\nindex 86661b23..676ce3c9 100644\n--- a/src/intervals/real_interface.jl\n+++ b/src/intervals/real_interface.jl\n@@ -35,12 +35,15 @@ for f ∈ (:zero, :one)\n \n         Base.$f(::Type{Interval{T}}) where {T<:NumTypes} = _unsafe_interval($f(BareInterval{T}), com, true)\n         Base.$f(x::Interval{T}) where {T<:NumTypes} = _unsafe_interval($f(BareInterval{T}), com, isguaranteed(x))\n-\n-        Base.$f(::Type{Complex{Interval{T}}}) where {T<:NumTypes} = complex($f(Interval{T}), $f(Interval{T}))\n-        Base.$f(x::Complex{<:Interval}) = complex($f(real(x)), $f(imag(x)))\n     end\n end\n \n+Base.zero(::Type{Complex{Interval{T}}}) where {T<:NumTypes} = complex(zero(Interval{T}), zero(Interval{T}))\n+Base.zero(x::Complex{<:Interval}) = complex(zero(real(x)), zero(imag(x)))\n+\n+Base.one(::Type{Complex{Interval{T}}}) where {T<:NumTypes} = complex(one(Interval{T}), zero(Interval{T}))\n+Base.one(x::Complex{<:Interval}) = complex(one(real(x)), zero(imag(x)))\n+\n Base.typemin(::Type{BareInterval{T}}) where {T<:NumTypes} =\n     _unsafe_bareinterval(T, typemin(T), nextfloat(typemin(T)))\n Base.typemin(::Type{Interval{T}}) where {T<:NumTypes} =\n",
+    "pr_url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/pull/602",
+    "problem_statement": "\"one\" on complex intervals returns wrong value\nHello,\r\n\r\nIt seems that in the more recent update the function \"one\" for complex intervals seems to return [1, 1] + im*[1, 1] (even though I assume that the value we want to get out of this function is [1, 1] + im*[0, 0]).",
+    "test_patch": "diff --git a/test/interval_tests/consistency.jl b/test/interval_tests/consistency.jl\nindex 03ced2d3..30881728 100644\n--- a/test/interval_tests/consistency.jl\n+++ b/test/interval_tests/consistency.jl\n@@ -36,6 +36,14 @@\n         @test isequal_interval(a * interval(0), zero(a))\n     end\n \n+    @testset \"real interface\" begin\n+        @test isthinzero(zero(Interval{Float64}))\n+        @test isthinzero(zero(Complex{Interval{Float64}}))\n+\n+        @test isthinone(one(Interval{Float64}))\n+        @test isthinone(one(Complex{Interval{Float64}}))\n+    end\n+\n     @testset \"inv\" begin\n         @test isequal_interval(inv( zero(a) ), emptyinterval())  # Only for set based flavor\n         @test isequal_interval(inv( interval(0, 1) ), interval(1, Inf))\n",
+    "repo": "JuliaIntervals/IntervalArithmetic.jl",
+    "pr_description": "Closes #601.",
+    "created_at": "2023-12-21 10:29:44",
+    "image_name": "docker.io/swerebenchv2/juliaintervals-intervalarithmetic.jl:602-0974c8a",
+    "language": "julia",
+    "interface": "Method: Base.one(::Type{Complex{Interval{T}}}) where T<:NumTypes\nLocation: src/intervals/real_interface.jl\nInputs: type parameter T bounded by NumTypes (e.g., Float64)\nOutputs: Complex{Interval{T}} whose real part is one(Interval{T}) and imaginary part is zero(Interval{T})\nDescription: Returns the multiplicative identity for complex intervals, i.e. [1, 1] + i·[0, 0].\n\nMethod: Base.one(x::Complex{<:Interval})\nLocation: src/intervals/real_interface.jl\nInputs: a complex interval value x\nOutputs: Complex{Interval{T}} with real part one(real(x)) and imag part zero(imag(x))\nDescription: Provides the identity element for a given complex‑interval instance, preserving the interval type of the argument.\n\nMethod: Base.zero(::Type{Complex{Interval{T}}}) where T<:NumTypes\nLocation: src/intervals/real_interface.jl\nInputs: type parameter T bounded by NumTypes\nOutputs: Complex{Interval{T}} = complex(zero(Interval{T}), zero(Interval{T}))\nDescription: Returns the additive identity for complex intervals, i.e. [0, 0] + i·[0, 0].\n\nMethod: Base.zero(x::Complex{<:Interval})\nLocation: src/intervals/real_interface.jl\nInputs: a complex interval value x\nOutputs: Complex{Interval{T}} = complex(zero(real(x)), zero(imag(x)))\nDescription: Returns a zero‑valued complex interval matching the interval type of the supplied argument.\n\nFunction: isthinone(x::BareInterval)\nLocation: src/intervals/interval_operations/boolean.jl\nInputs: a BareInterval x\nOutputs: Bool – true if both inf(x) and sup(x) equal 1\nDescription: Tests whether a bare interval consists of the single point 1.\n\nFunction: isthinone(x::Interval)\nLocation: src/intervals/interval_operations/boolean.jl\nInputs: an Interval x\nOutputs: Bool – false for NaI; otherwise true if its bare interval is thin one\nDescription: Determines whether the (possibly lifted) interval contains only the value 1.\n\nFunction: isthinone(x::Complex)\nLocation: src/intervals/interval_operations/boolean.jl\nInputs: a complex number or complex interval x\nOutputs: Bool – true if real part is thin one and imaginary part is thin zero\nDescription: Checks whether a complex interval equals 1 + 0 i (i.e., contains only the point 1 in the real part and zero in the imaginary part).\n",
+    "license": "custom-check-github",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.97,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "regression_bug"
+        ],
+        "reasoning": "The issue reports that one(Complex{Interval}) incorrectly returns an interval with imag part [1,1] instead of [0,0]; the test adds checks for isthinone on complex intervals to enforce the correct behavior. The test expectations directly match the desired semantics described in the issue, with no unrelated assertions or missing specifications. No signals of test coupling, naming expectations, external docs, ambiguity, patch artifacts, or hidden domain knowledge are present, so the task is a clear, solvable bug fix.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 4,
+      "num_modified_lines": null,
+      "pr_author": "OlivierHnt",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/pull/602"
+    }
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "one for complex intervals has zero imaginary component"
+      ],
+      "assertion_expression_sha256": [],
+      "f2p_tests": [
+        "one for complex intervals has zero imaginary component"
+      ],
+      "mwe_basis": {
+        "defect": "one(Complex{Interval}) returned one for both real and imaginary components instead of a zero imaginary component.",
+        "public_api": "Base.one on Complex{Interval}, IntervalArithmetic.isthin, and IntervalArithmetic.isthinzero",
+        "source_evidence": {
+          "extraction": "The input and expected value come directly from issue #601. This trigger deliberately excludes the isthinone API introduced by the same PR, isolating the pre-existing Base.one behavioral defect.",
+          "upstream_tests_patch_sha256": "172510d627c428ae067a7d69dafc1db273c589560ce12a242de99b837f4b0d6d"
+        },
+        "upstream_issue": 601,
+        "upstream_pull_request": 602,
+        "upstream_test_files": [
+          "test/interval_tests/consistency.jl"
+        ]
+      },
+      "schema_version": 1
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "a26cbca81424f1038e212a0e782d2f9ff0e57dbec91075d06de4112c41897145",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "one for complex intervals has zero imaginary component"
+  ],
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "one for complex intervals has zero imaginary component"
+    ],
+    "exception_types": [
+      "TRIGGER_EXIT_1"
+    ],
+    "fingerprints": [
+      "TRIGGER_EXIT_1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "b702da4e4cbb65a462d636b5847e8c38cc849972",
+    "parent_sha": "0974c8a45db0b141c14602cfb9744c6a7c66dcf5",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "e9caffe79dc066c186021c9343629923aab4031ee1f6b8f5e733aa4b75cc9f05",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

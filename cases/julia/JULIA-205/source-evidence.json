@@ -1,0 +1,63 @@
+{
+  "candidate_sha": "89dbe416380a5495629f449110547a3e23817b1a",
+  "project": "comonicon/Comonicon.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 218,
+      "url": "https://github.com/comonicon/Comonicon.jl/issues/218",
+      "state": "closed",
+      "title": "Casting `print` seems to break `--help` and `--version` flags",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [
+        "bug"
+      ],
+      "body_excerpt": "If I want to `@cast` the `print` function, it seems to be overloaded when I am running commands with `--help` and `--version` flags. Here I add the following lines to [FakePkg.jl](https://github.com/comonicon/Comonicon.jl/blob/master/example/FakePkg/src/FakePkg.jl#L6):\r\n\r\n```julia\r\n@cast function print(file)\r\n    @show file\r\n    if splitext(file)[2] == \".toml\"\r\n        print(\"hhhh\")\r\n    else\r\n        # An intentional error\r\n        error(\"my casted `print` is loaded!\")\r\n    end\r\nend\r\n```\r\n\r\nand simplify Comonicon.toml to\r\n\r\n```toml\r\nname = \"pkg\"\r\n\r\n[install]\r\ncompletion=true\r\nquiet=false\r\ncompile=\"min\"\r\noptimize=2\r\n\r\n[download]\r\nhost=\"github.com\"\r\nuser=\"Roger-luo\"\r\nrepo=\"Foo.jl\"\r\n```\r\n\r\nand install the command `pkg`.\r\n\r\nAnd when I run `pkg --help` or `pkg --version`, they throw the error:\r\n\r\n```shell\r\n❯ pkg --help            \r\nfile = \"\\n\\n\\e[94m\\e[1m  pkg\\e[22m\\e[39m v0.1.0\\n\\n\\n\\n\\e[0m\\e[1mUsage\\e[22m\\n\\n  \\e[94m\\e[1mpkg\\e[22m\\e[39m\\e[94m <command>\\e[39m\\n\\n\\e[0m\\e[1mCommands\\e[22m\\n\\n  \\e[94m\\e[1madd\\e[22m\\e[39m                                                       fake add\\n\\n  \\e[94m\\e[1mprint\\e[22m\\e[39m\\n\\n  \\e[94m\\e[1mnoarguments\\e[22m\\e[39m                                               fake noarguments\\n\\n  \\e[94m\\e[1mrm\\e[22m\\e[39m                                                        fake rm\\n\\n  \\e[94m\\e[1mregistry\\e[22m\\e[39m                                                  fake registry\\n\\n  \\e[94m\\e[1mactivate\\e[22m\\e[39m                                                  fake activate\\n\\n\\n\\n\\e[0m\\e[1mFlags\\e[22m\\n\\n\\e[96m  -h, --help\\e[39m                                                Print this help message\\n\\e[96m  -V, --version\\e[39m                                             Print version\\n\"\r\nERROR: LoadError: my casted `print` is loaded!\r\nStacktrace:\r\n [1] error(s::String)\r\n   @ Base ./error.jl:33\r\n [2] print(file::String)\r\n   @ FakePkg ~/Comonicon.jl/example/FakePkg/src/FakePkg.jl:13\r\n [3] command_main(ARGS::Vector{String})\r\n   @ FakePkg ~/.j"
+    },
+    {
+      "number": 219,
+      "url": "https://github.com/comonicon/Comonicon.jl/pull/219",
+      "state": "closed",
+      "title": "fix hygenie print",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "fix #218 "
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "issue_to_pull_request_to_fix_commit",
+      "issue_numbers": [
+        218
+      ],
+      "pull_request": 219,
+      "fix_commit": "89dbe416380a5495629f449110547a3e23817b1a",
+      "evidence_source": "merged_pull_request_body"
+    }
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "traceability_evidence": {
+    "commit_message": "fix hygenie print (#219)",
+    "commit_issue_refs": [
+      219
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 219,
+    "pull_request_title": "fix hygenie print",
+    "pull_request_issue_refs": [
+      218
+    ],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    218
+  ],
+  "cross_repository_issue_records": []
+}

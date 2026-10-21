@@ -1,0 +1,23 @@
+diff --git a/test/style/pipes_test.exs b/test/style/pipes_test.exs
+index c0bb6e6..c669942 100644
+--- a/test/style/pipes_test.exs
++++ b/test/style/pipes_test.exs
+@@ -473,11 +473,13 @@ defmodule Styler.Style.PipesTest do
+     end
+ 
+     test "allows ecto's from" do
+-      assert_style("""
+-      from(foo in Bar, where: foo.bool)
+-      |> some_query_helper()
+-      |> Repo.all()
+-      """)
++      for from <- ~w(from Query.from Ecto.Query.from) do
++        assert_style("""
++        #{from}(foo in Bar, where: foo.bool)
++        |> some_query_helper()
++        |> Repo.all()
++        """)
++      end
+     end
+ 
+     test "extracts >0 arity functions" do

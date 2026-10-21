@@ -1,0 +1,323 @@
+diff --git a/spec/check_spec.lua b/spec/check_spec.lua
+index 30adfab653926df172f63542cd95fbf49e36ecf2..47104b5a457f7430254f2f4ed2c67432b1a94776 100644
+--- a/spec/check_spec.lua
++++ b/spec/check_spec.lua
+@@ -296,19 +296,36 @@ for i in pairs{} do end
+ 
+    it("detects unused values", function()
+       assert.same({
+-         {code = "311", name = "a", line = 3, column = 4, end_column = 4},
+-         {code = "311", name = "a", line = 5, column = 4, end_column = 4},
+-         {code = "113", name = "print", indexing = {"print"}, line = 9, column = 1, end_column = 5}
++         {code = "311", name = "a", line = 3, column = 4, end_column = 4, overwritten_line = 3, overwritten_column = 7},
++         {code = "311", name = "a", line = 3, column = 7, end_column = 7, overwritten_line = 8, overwritten_column = 1},
++         {code = "311", name = "a", line = 5, column = 4, end_column = 4, overwritten_line = 8, overwritten_column = 1}
+       }, check[[
+ local a
+ if ... then
+-   a = 2
++   a, a = 2, 4
+ else
+    a = 3
+ end
+ 
+ a = 5
+-print(a)
++return a
++]])
++   end)
++
++   it("does not provide overwriting location if value can reach end of scope", function()
++      assert.same({
++         {code = "311", name = "a", line = 4, column = 4, end_column = 4},
++         {code = "311", name = "a", line = 7, column = 7, end_column = 7}
++      }, check[[
++do
++   local a = 1
++   (...)(a)
++   a = 2
++
++   if ... then
++      a = 3
++   end
++end
+ ]])
+    end)
+ 
+@@ -343,7 +360,8 @@ return a, b
+ 
+    it("considers a variable initialized if short rhs ends with potential multivalue", function()
+       assert.same({
+-         {code = "311", name = "b", line = 2, column = 13, end_column = 13, secondary = true}
++         {code = "311", name = "b", line = 2, column = 13, end_column = 13, secondary = true,
++            overwritten_line = 3, overwritten_column = 4}
+       }, check[[
+ return function(...)
+    local a, b = ...
+@@ -475,8 +493,10 @@ return {
+ 
+    it("considers a variable assigned even if it can't get a value due to short rhs (it still gets nil)", function()
+       assert.same({
+-         {code = "311", name = "a", line = 1, column = 7, end_column = 7},
+-         {code = "311", name = "b", line = 1, column = 10, end_column = 10},
++         {code = "311", name = "a", line = 1, column = 7, end_column = 7,
++            overwritten_line = 2, overwritten_column = 1},
++         {code = "311", name = "b", line = 1, column = 10, end_column = 10,
++            overwritten_line = 2, overwritten_column = 4},
+          {code = "532", line = 2, column = 6, end_column = 6}
+       }, check[[
+ local a, b = "foo", "bar"
+@@ -487,8 +507,10 @@ return a, b
+ 
+    it("reports vartype == var when the unused value is not the initial", function()
+       assert.same({
+-         {code = "312", name = "b", line = 1, column = 23, end_column = 23},
+-         {code = "311", name = "a", line = 2, column = 4, end_column = 4}
++         {code = "312", name = "b", line = 1, column = 23, end_column = 23,
++            overwritten_line = 4, overwritten_column = 4},
++         {code = "311", name = "a", line = 2, column = 4, end_column = 4,
++            overwritten_line = 3, overwritten_column = 4}
+       }, check[[
+ local function foo(a, b)
+    a = a or "default"
+diff --git a/spec/cli_spec.lua b/spec/cli_spec.lua
+index 6ac5f3e1d9ed2e723fc3d0c5b0aa79907d40da5a..2b43abcf2caffeaab98ea223b708d989014ceb4e 100644
+--- a/spec/cli_spec.lua
++++ b/spec/cli_spec.lua
+@@ -195,8 +195,8 @@ Checking spec/samples/unused_code.lua             9 warnings
+     spec/samples/unused_code.lua:7:11: unused loop variable 'a'
+     spec/samples/unused_code.lua:7:14: unused loop variable 'b'
+     spec/samples/unused_code.lua:7:17: unused loop variable 'c'
+-    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is unused
+-    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is unused
++    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is overwritten on line 14 before use
++    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is overwritten on line 15 before use
+     spec/samples/unused_code.lua:21:7: variable 'z' is never accessed
+ 
+ Total: 14 warnings / 0 errors in 3 files
+@@ -322,8 +322,8 @@ Checking spec/samples/unused_code.lua             9 warnings
+     spec/samples/unused_code.lua:7:11: unused loop variable 'a'
+     spec/samples/unused_code.lua:7:14: unused loop variable 'b'
+     spec/samples/unused_code.lua:7:17: unused loop variable 'c'
+-    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is unused
+-    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is unused
++    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is overwritten on line 14 before use
++    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is overwritten on line 15 before use
+     spec/samples/unused_code.lua:21:7: variable 'z' is never accessed
+ 
+ Total: 9 warnings / 0 errors in 1 file
+@@ -335,8 +335,8 @@ Total: 9 warnings / 0 errors in 1 file
+ Checking spec/samples/unused_code.lua             4 warnings
+ 
+     spec/samples/unused_code.lua:5:13: unused variable 'q'
+-    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is unused
+-    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is unused
++    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is overwritten on line 14 before use
++    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is overwritten on line 15 before use
+     spec/samples/unused_code.lua:21:7: variable 'z' is never accessed
+ 
+ Total: 4 warnings / 0 errors in 1 file
+@@ -866,8 +866,8 @@ Checking spec/samples/unused_code.lua             9 warnings
+     spec/samples/unused_code.lua:7:11: unused loop variable 'a'
+     spec/samples/unused_code.lua:7:14: unused loop variable 'b'
+     spec/samples/unused_code.lua:7:17: unused loop variable 'c'
+-    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is unused
+-    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is unused
++    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is overwritten on line 14 before use
++    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is overwritten on line 15 before use
+     spec/samples/unused_code.lua:21:7: variable 'z' is never accessed
+ 
+ Total: 16 warnings / 1 error in 4 files
+@@ -1166,8 +1166,8 @@ Checking spec/samples/unused_code.lua             7 warnings
+     spec/samples/unused_code.lua:7:11: unused loop variable 'a'
+     spec/samples/unused_code.lua:7:14: unused loop variable 'b'
+     spec/samples/unused_code.lua:7:17: unused loop variable 'c'
+-    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is unused
+-    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is unused
++    spec/samples/unused_code.lua:13:7: value assigned to variable 'x' is overwritten on line 14 before use
++    spec/samples/unused_code.lua:14:1: value assigned to variable 'x' is overwritten on line 15 before use
+ 
+ Total: 8 warnings / 0 errors in 2 files
+ ]], get_output "spec/samples/unused_secondaries.lua spec/samples/unused_code.lua --config=spec/configs/multioverride_config.luacheckrc")
+diff --git a/spec/luacheck_spec.lua b/spec/luacheck_spec.lua
+index ddcd6b3a82c8a3998dc109237da0cc881238f3a5..bd1243d689e57784797bca73c659b0ecc90ba9fc 100644
+--- a/spec/luacheck_spec.lua
++++ b/spec/luacheck_spec.lua
+@@ -250,14 +250,18 @@ describe("check_strings", function()
+                name = "self",
+                line = 3,
+                column = 11,
+-               end_column = 11
++               end_column = 11,
++               overwritten_line = 4,
++               overwritten_column = 4
+             },
+             {
+                code = "311",
+                name = "self",
+                line = 4,
+                column = 4,
+-               end_column = 7
++               end_column = 7,
++               overwritten_line = 5,
++               overwritten_column = 4
+             },
+             {
+                code = "511",
+diff --git a/src/luacheck/analyze.lua b/src/luacheck/analyze.lua
+index 092bafa6abefe3246849ded429833cd5915cc104..91fc41e48a815cb1dd5db64f04a19c04df734222 100644
+--- a/src/luacheck/analyze.lua
++++ b/src/luacheck/analyze.lua
+@@ -31,6 +31,9 @@ end
+ -- of items, i.e. when propogation followed some path from it to previous item
+ local function value_propogation_callback(line, stack, index, item, visited, var, value)
+    if not item then
++      -- Value reach end of line, so even if it's overwritten by a single assignment it's
++      -- not dominated by it.
++      value.overwriting_item = false
+       register_value(line.last_live_values, var, value)
+       return true
+    end
+@@ -45,10 +48,25 @@ local function value_propogation_callback(line, stack, index, item, visited, var
+       end
+    end
+ 
+-   local stop_and_save = not visited[index] and (
+-      not in_scope(var, index) or item.set_variables and item.set_variables[var])
++   local is_overwritten = item.set_variables and item.set_variables[var]
++   local out_of_scope = not in_scope(var, index)
++   local stop_and_save = not visited[index] and (out_of_scope or is_overwritten)
+ 
+    if stack[index] or stop_and_save then
++      if is_overwritten then
++         if value.overwriting_item ~= false then
++            if value.overwriting_item and value.overwriting_item ~= item then
++               value.overwriting_item = false
++            else
++               value.overwriting_item = item
++            end
++         end
++      elseif out_of_scope then
++         -- Value reach end of scope, so even if it's overwritten by a single assignment it's
++         -- not dominated by it.
++         value.overwriting_item = false
++      end
++
+       if not item.live_values then
+          item.live_values = {}
+       end
+@@ -190,6 +208,28 @@ local function externally_accessible(value)
+    return value.type ~= "var" or (value.node and externally_accessible_tags[value.node.tag])
+ end
+ 
++local function find_overwriting_lhs_node(item, value)
++   for _, node in ipairs(item.lhs) do
++      if node.var == value.var then
++         return node
++      end
++   end
++end
++
++local function get_overwriting_node_in_dup_assignment(item, value)
++   local after_value_node
++
++   for _, node in ipairs(item.lhs) do
++      if node.var == value.var then
++         if after_value_node then
++            return node
++         elseif node.location == value.location then
++            after_value_node = true
++         end
++      end
++   end
++end
++
+ -- Emits warnings for variable.
+ local function check_var(chstate, var)
+    if is_function_var(var) then
+@@ -229,7 +269,19 @@ local function check_var(chstate, var)
+       for _, value in ipairs(var.values) do
+          if not value.empty then
+             if not value.used and not value.mutated then
+-               chstate:warn_unused_value(value)
++               local overwriting_node
++
++               if value.overwriting_item then
++                  overwriting_node = find_overwriting_lhs_node(value.overwriting_item, value)
++
++                  if overwriting_node == value.node then
++                     overwriting_node = nil
++                  end
++               else
++                  overwriting_node = get_overwriting_node_in_dup_assignment(value.item, value)
++               end
++
++               chstate:warn_unused_value(value, false, overwriting_node)
+             elseif not value.used and not externally_accessible(value) then
+                if var.accessed or not no_values_externally_accessible then
+                   chstate:warn_unused_value(value, true)
+diff --git a/src/luacheck/cache.lua b/src/luacheck/cache.lua
+index a8f313ec27aa3c882f3aba9d260672c30114caa2..77ba8259a9e97449a6875c6877cb106cea471d52 100644
+--- a/src/luacheck/cache.lua
++++ b/src/luacheck/cache.lua
+@@ -9,7 +9,7 @@ local cache = {}
+ -- third is check result in lua table format.
+ -- String fields are compressed into array indexes.
+ 
+-cache.format_version = 18
++cache.format_version = 19
+ 
+ local option_fields = {
+    "ignore", "std", "globals", "unused_args", "self", "compat", "global", "unused", "redefined",
+diff --git a/src/luacheck/check.lua b/src/luacheck/check.lua
+index 3d31ef024c5d64caf3bc604babbf0a881fe03d4f..4bf7d3eb91b97ef361fc18d158813b8b0f3f4e32 100644
+--- a/src/luacheck/check.lua
++++ b/src/luacheck/check.lua
+@@ -126,10 +126,12 @@ function ChState:warn_unaccessed(var, mutated)
+    }, var.self)
+ end
+ 
+-function ChState:warn_unused_value(value, mutated)
++function ChState:warn_unused_value(value, mutated, overwriting_node)
+    self:warn({
+       code = "3" .. (mutated and "3" or "1") .. type_codes[value.type],
+       name = value.var.name,
++      overwritten_line = overwriting_node and overwriting_node.location.line,
++      overwritten_column = overwriting_node and overwriting_node.location.column,
+       line = value.location.line,
+       column = value.location.column,
+       secondary = is_secondary(value) or nil,
+diff --git a/src/luacheck/format.lua b/src/luacheck/format.lua
+index 2df88f36f40542b80f87012c52d733e6f8951a98..0677b2e1ee4f50c4ec864e536ad1af86ef833b7f 100644
+--- a/src/luacheck/format.lua
++++ b/src/luacheck/format.lua
+@@ -14,6 +14,16 @@ local function prefix_if_indirect(fmt)
+    end
+ end
+ 
++local function unused_or_overwritten(fmt)
++   return function(w)
++      if w.overwritten_line then
++         return fmt .. " is overwritten on line {overwritten_line} before use"
++      else
++         return fmt .. " is unused"
++      end
++   end
++end
++
+ local message_formats = {
+    ["011"] = "{msg}",
+    ["021"] = "invalid inline option",
+@@ -59,9 +69,9 @@ local message_formats = {
+    ["232"] = "argument {name!} is never accessed",
+    ["233"] = "loop variable {name!} is never accessed",
+    ["241"] = "variable {name!} is mutated but never accessed",
+-   ["311"] = "value assigned to variable {name!} is unused",
+-   ["312"] = "value of argument {name!} is unused",
+-   ["313"] = "value of loop variable {name!} is unused",
++   ["311"] = unused_or_overwritten("value assigned to variable {name!}"),
++   ["312"] = unused_or_overwritten("value of argument {name!}"),
++   ["313"] = unused_or_overwritten("value of loop variable {name!}"),
+    ["314"] = function(w)
+       local target = w.index and "index" or "field"
+       return "value assigned to " .. target .. " {field!} is overwritten on line {overwritten_line} before use"

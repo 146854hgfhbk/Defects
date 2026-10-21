@@ -1,0 +1,618 @@
+{
+  "schema_version": 3,
+  "case_id": "SWIFT-202",
+  "language": "Swift",
+  "status": "release_candidate",
+  "project": "pointfreeco/swift-identified-collections",
+  "repository_url": "https://github.com/pointfreeco/swift-identified-collections.git",
+  "repository_evidence": {
+    "checked_at": "2026-09-02T23:51:20.776711+00:00",
+    "api_url": "https://api.github.com/repos/pointfreeco/swift-identified-collections",
+    "html_url": "https://github.com/pointfreeco/swift-identified-collections",
+    "private": false,
+    "visibility": "public",
+    "archived": false,
+    "public_verification_source": "github_api",
+    "license_spdx": "MIT",
+    "license_source": "github_api"
+  },
+  "commit_url": "https://github.com/pointfreeco/swift-identified-collections/commit/6d40e008c39a7f82c9d1b6541938b7b90c879bad",
+  "pull_request_url": "https://github.com/pointfreeco/swift-identified-collections/pull/25",
+  "issue_urls": [
+    "https://github.com/pointfreeco/swift-identified-collections/issues/24"
+  ],
+  "traceability": {
+    "requires_unique_fix_commit": true,
+    "verified_fix_issue_numbers": [
+      24
+    ],
+    "paths": [
+      {
+        "issue_number": 24,
+        "path": "fix_commit_to_issue"
+      }
+    ],
+    "pull_request_number": 25,
+    "selected_from_multi_commit_pull_request": false,
+    "reference_mode": "DIRECT_COMMIT_ISSUE_REF",
+    "direct_commit_issue_reference": true,
+    "source": "authentic_local_git_commit_object",
+    "strict_direct_reference_satisfied": true,
+    "traceability_closed": true,
+    "publication_profile_satisfied": true,
+    "strict_direct_profile_satisfied": true,
+    "pr_mediated_chain_verified": false
+  },
+  "fixed_revision": "6d40e008c39a7f82c9d1b6541938b7b90c879bad",
+  "buggy_revision": "90628a560caa2ffbca5df6eb26959807e032bd10",
+  "fixed_tree": "74362e721d09526671c0cfbe2d3775d6c7c0085b",
+  "buggy_tree": "0b0c9e49501cf0d035b55464075153453d8c2976",
+  "repository_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/batch50-2/repositories/pointfreeco__swift-identified-collections",
+  "repository_bundle": {
+    "path": "sources/repository.bundle",
+    "sha256": "d031aa3b0f83a87cf32eb738bdb12ac17d6c316a99940e049fe635a7e0d9b660",
+    "bytes": 1426555,
+    "refs": {
+      "buggy": "refs/heads/buggy",
+      "fixed": "refs/heads/fixed"
+    }
+  },
+  "production_files": [
+    "Sources/IdentifiedCollections/IdentifiedArray/IdentifiedArray+Equatable.swift"
+  ],
+  "trigger_test_files": [
+    "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift"
+  ],
+  "trigger_tests": [
+    {
+      "path": "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift",
+      "name": "testEquatable"
+    }
+  ],
+  "commit_files": {
+    "all": [
+      "Sources/IdentifiedCollections/IdentifiedArray/IdentifiedArray+Equatable.swift",
+      "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift"
+    ],
+    "production": [
+      "Sources/IdentifiedCollections/IdentifiedArray/IdentifiedArray+Equatable.swift"
+    ],
+    "tests": [
+      "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift"
+    ],
+    "other": []
+  },
+  "commit_stats": {
+    "production_hunk_count": 1,
+    "maximum_exact_subset_candidates": 1,
+    "hunk_count_source": "materialize_git_diff"
+  },
+  "patches": {
+    "original_commit": {
+      "path": "patches/original-commit.patch",
+      "sha256": "9a5c51f56a9f7fc9fbff3aa9baf0fd9d1efc27697314a3f720887eb06d254a31",
+      "bytes": 2451
+    },
+    "production_fix": {
+      "path": "patches/production-fix.patch",
+      "sha256": "5152bb633e4d2ba7506044d4a6c9259695cd7873732c26b0db3967cca83e34ca",
+      "bytes": 672
+    },
+    "trigger_tests": {
+      "path": "patches/trigger-tests-stable-diagnostics.patch",
+      "sha256": "0c83cc61fcad16dcfb0798ded949d5a738d433ccb3f39ce7d08cdc2090a5ada2",
+      "bytes": 1779
+    }
+  },
+  "trigger_reduction": {
+    "status": "PASS",
+    "upstream_trigger_patch": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "9852e810d948b64165d73c275c8cbad355fcfd04d99d2bdd75fe687d825de46e",
+      "bytes": 1779
+    },
+    "removed_external_dependency": false,
+    "rationale": "The upstream patch is preserved. Only the two XCTAssertEqual(lhs, rhs) statements and one XCTAssertNotEqual(lhs, rhs) statement are expressed as XCTAssertTrue(lhs == rhs) and XCTAssertTrue(lhs != rhs). All collection initializers, mutations, iteration pairs and expected equality relationships remain. This avoids diagnostics containing randomized Swift type-context addresses; runtime differential and LLM semantic-equivalence checks remain required."
+  },
+  "build": {
+    "directory": ".",
+    "dependency_command": [
+      "swift",
+      "package",
+      "resolve",
+      "--skip-update"
+    ],
+    "analyze_command": [
+      "swift",
+      "build",
+      "--build-tests"
+    ],
+    "test_command": [
+      "swift",
+      "test",
+      "--parallel",
+      "--num-workers",
+      "1"
+    ],
+    "timeout_seconds": 1200,
+    "warm_package_manifest_locks": {
+      "90628a560caa2ffbca5df6eb26959807e032bd10": "{\n  \"object\": {\n    \"pins\": [\n      {\n        \"package\": \"swift-argument-parser\",\n        \"repositoryURL\": \"https://github.com/apple/swift-argument-parser\",\n        \"state\": {\n          \"branch\": null,\n          \"revision\": \"6a52f3251125d74daf04fcbd5e6f08a75d074382\",\n          \"version\": \"1.8.2\"\n        }\n      },\n      {\n        \"package\": \"swift-collections\",\n        \"repositoryURL\": \"https://github.com/apple/swift-collections\",\n        \"state\": {\n          \"branch\": null,\n          \"revision\": \"a0cb0954ecb21e4e31b0070e6ed5674e8556685a\",\n          \"version\": \"1.6.0\"\n        }\n      },\n      {\n        \"package\": \"swift-collections-benchmark\",\n        \"repositoryURL\": \"https://github.com/apple/swift-collections-benchmark\",\n        \"state\": {\n          \"branch\": null,\n          \"revision\": \"69cd5b456633671456884217688afe53f87efd13\",\n          \"version\": \"0.0.4\"\n        }\n      },\n      {\n        \"package\": \"swift-system\",\n        \"repositoryURL\": \"https://github.com/apple/swift-system\",\n        \"state\": {\n          \"branch\": null,\n          \"revision\": \"869129b7bf4ecc57b97d0193ad29690ca2134750\",\n          \"version\": \"1.8.1\"\n        }\n      }\n    ]\n  },\n  \"version\": 1\n}\n",
+      "6d40e008c39a7f82c9d1b6541938b7b90c879bad": "{\n  \"object\": {\n    \"pins\": [\n      {\n        \"package\": \"swift-argument-parser\",\n        \"repositoryURL\": \"https://github.com/apple/swift-argument-parser\",\n        \"state\": {\n          \"branch\": null,\n          \"revision\": \"6a52f3251125d74daf04fcbd5e6f08a75d074382\",\n          \"version\": \"1.8.2\"\n        }\n      },\n      {\n        \"package\": \"swift-collections\",\n        \"repositoryURL\": \"https://github.com/apple/swift-collections\",\n        \"state\": {\n          \"branch\": null,\n          \"revision\": \"a0cb0954ecb21e4e31b0070e6ed5674e8556685a\",\n          \"version\": \"1.6.0\"\n        }\n      },\n      {\n        \"package\": \"swift-collections-benchmark\",\n        \"repositoryURL\": \"https://github.com/apple/swift-collections-benchmark\",\n        \"state\": {\n          \"branch\": null,\n          \"revision\": \"69cd5b456633671456884217688afe53f87efd13\",\n          \"version\": \"0.0.4\"\n        }\n      },\n      {\n        \"package\": \"swift-system\",\n        \"repositoryURL\": \"https://github.com/apple/swift-system\",\n        \"state\": {\n          \"branch\": null,\n          \"revision\": \"869129b7bf4ecc57b97d0193ad29690ca2134750\",\n          \"version\": \"1.8.1\"\n        }\n      }\n    ]\n  },\n  \"version\": 1\n}\n"
+    },
+    "require_analyze_clean": true
+  },
+  "source_evidence_sha256": "c620054a91f7bca674046391cde7bec98a359e57d5a77b738c91c28ce34cfd8d",
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "PASS",
+    "full_suite_validation": "PASS",
+    "human_curation": "PASS",
+    "release_eligible": false,
+    "semantic_curation": "PASS",
+    "curation_method": "llm_api_consensus",
+    "llm_confirmed": true,
+    "current_protocol_validation": "PENDING"
+  },
+  "materialized_at": "2026-09-02T23:51:25.433181+00:00",
+  "claude_screen": {
+    "model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "prompt_decision": "ACCEPT_FOR_VALIDATION",
+    "confidence": 0.84,
+    "runtime_acceptance": false
+  },
+  "validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-05T17:54:44.102161+00:00",
+    "report": "validation/validation.json",
+    "report_sha256": "f3614057a83470f9ceac98c1e36a7cafd7355db82dc9847c0b32bbc8f897dcb0",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift",
+        "name": "testEquatable"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-202",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift', 'testEquatable')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift::testEquatable']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/original-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "f477f14a9102098237717910c61ab0a62f32009e2131e1ac9528f3914f688717",
+        "package_config": "environment/original-fixed-workspace-state.json",
+        "package_config_sha256": "37063b3ed73a2fb116b5c9be8e589220cd8853eda03e1fa251e32ba6047e72dc",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/original-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "f477f14a9102098237717910c61ab0a62f32009e2131e1ac9528f3914f688717",
+        "package_config": "environment/original-buggy-workspace-state.json",
+        "package_config_sha256": "37063b3ed73a2fb116b5c9be8e589220cd8853eda03e1fa251e32ba6047e72dc",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/original-swift-toolchain.lock.json",
+      "sha256": "8f640c14794906e7ece27a9ac78ffa0fb254286a85845a1f556b673d8cd0bd0d"
+    },
+    "validation_image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "validation_image_lock": {
+      "path": "environment/original-validation-image.lock.json",
+      "sha256": "44bd3a6729806593348ce03c797d46dc0aee33429f26f5a6773e1643da961383"
+    }
+  },
+  "bug_id": "SWIFT-202",
+  "issue_id": 24,
+  "issue_ids": [
+    24
+  ],
+  "issue_url": "https://github.com/pointfreeco/swift-identified-collections/issues/24",
+  "buggy_commit": "90628a560caa2ffbca5df6eb26959807e032bd10",
+  "fixed_commit": "6d40e008c39a7f82c9d1b6541938b7b90c879bad",
+  "patch": "patches/minimized-production.patch",
+  "changed_source_files": [
+    "Sources/IdentifiedCollections/IdentifiedArray/IdentifiedArray+Equatable.swift"
+  ],
+  "triggering_test": [
+    "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift::testEquatable"
+  ],
+  "expected_failure": {
+    "test_id": "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift::IdentifiedArrayTests/testEquatable",
+    "error": "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift:247: IdentifiedArrayTests.testEquatable : XCTAssertTrue failed - Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift:256: IdentifiedArrayTests.testEquatable : XCTAssertTrue failed - Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift:256: IdentifiedArrayTests.testEquatable : XCTAssertTrue failed",
+    "failure_fingerprint": "33a24f734d52a14632614d1ac2968c729d2416cba27a4d01e7df97d49f2218f1",
+    "all_trigger_failures": [
+      {
+        "test_id": "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift::IdentifiedArrayTests/testEquatable",
+        "error": "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift:247: IdentifiedArrayTests.testEquatable : XCTAssertTrue failed - Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift:256: IdentifiedArrayTests.testEquatable : XCTAssertTrue failed - Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift:256: IdentifiedArrayTests.testEquatable : XCTAssertTrue failed",
+        "failure_fingerprint": "33a24f734d52a14632614d1ac2968c729d2416cba27a4d01e7df97d49f2218f1",
+        "repetition_count": 3,
+        "deterministic": true
+      }
+    ]
+  },
+  "fixed_test_result": {
+    "status": "HISTORICAL_RESULTS_RETAINED",
+    "historical_full_suite_exit_codes": [
+      0,
+      0
+    ],
+    "current_suite_success_required": {
+      "exit_code": 0,
+      "failed_tests": 0,
+      "repetitions": 3
+    },
+    "current_protocol_rerun_performed": false
+  },
+  "build_command": [
+    "swift",
+    "build",
+    "--build-tests"
+  ],
+  "test_command": [
+    "swift",
+    "test",
+    "--parallel",
+    "--num-workers",
+    "1"
+  ],
+  "language_version": "6.1",
+  "dependency_versions": {
+    "(swift-runtime)": "stdlib-only; package declares no external dependencies"
+  },
+  "operating_system_or_container": {
+    "platform": "jammy",
+    "host_system": "Linux",
+    "host_machine": "x86_64",
+    "validation_image": "swift-defects-validation:6.1-recovered-20260905",
+    "validation_image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad"
+  },
+  "timezone": "UTC",
+  "reproducibility_status": "direct_parent_historical_execution_evidence_current_protocol_deferred",
+  "deprecation_reason": null,
+  "minimized_patch": {
+    "path": "patches/minimized-production.patch",
+    "sha256": "d20bd8d4d4d0d6f156af1a627b3a5bf6b85e47f338bdef200d7f01631930d746",
+    "original_hunk_count": 1,
+    "retained_hunks": [
+      1
+    ],
+    "retained_hunk_count": 1,
+    "removed_hunk_count": 0,
+    "screening_only": false,
+    "post_minimization_validation": "PASS",
+    "evidence_grade": "portable_release_evidence",
+    "automatic_minimization": {
+      "minimal_hunks": [
+        1
+      ],
+      "chosen_subset": [
+        1
+      ]
+    }
+  },
+  "post_minimization_validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-05T17:56:47.717943+00:00",
+    "report": "validation/post-minimization.json",
+    "report_sha256": "9d70e5757099d65f2be487f1730439c22ee17f891eae2d8c8c5ff7af93ca300c",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift",
+        "name": "testEquatable"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-202",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift', 'testEquatable')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/IdentifiedCollectionsTests/IdentifiedArrayTests.swift::testEquatable']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/post-minimization-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "f477f14a9102098237717910c61ab0a62f32009e2131e1ac9528f3914f688717",
+        "package_config": "environment/post-minimization-fixed-workspace-state.json",
+        "package_config_sha256": "37063b3ed73a2fb116b5c9be8e589220cd8853eda03e1fa251e32ba6047e72dc",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/post-minimization-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "f477f14a9102098237717910c61ab0a62f32009e2131e1ac9528f3914f688717",
+        "package_config": "environment/post-minimization-buggy-workspace-state.json",
+        "package_config_sha256": "37063b3ed73a2fb116b5c9be8e589220cd8853eda03e1fa251e32ba6047e72dc",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/post-minimization-swift-toolchain.lock.json",
+      "sha256": "8f640c14794906e7ece27a9ac78ffa0fb254286a85845a1f556b673d8cd0bd0d"
+    },
+    "validation_image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "validation_image_lock": {
+      "path": "environment/post-minimization-validation-image.lock.json",
+      "sha256": "44bd3a6729806593348ce03c797d46dc0aee33429f26f5a6773e1643da961383"
+    }
+  },
+  "dependency_cache": {
+    "archive": "environment/dependency-cache.tar.gz",
+    "archive_sha256": "b9cf2561ce00326caec5c5ff55f53041604ff48b9f60960c811ed636309902c1",
+    "manifest": "environment/dependency-cache-manifest.json",
+    "manifest_sha256": "94c0f83ccb4f002711d1d2dcaf9cf8ce76308985356ff25a5e0ace045bda3af5",
+    "package_count": 4
+  },
+  "reproduction": {
+    "image_digest": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "network_mode": "none",
+    "runner": {
+      "path": "tools/reproduce_case.py",
+      "sha256": "2fbeb44814f8609d3cc6285ed764f7fb92fa96e7cd58e3366e60a2334dd6a0c3",
+      "bytes": 17123
+    },
+    "validation_engine": {
+      "path": "tools/validation_engine.py",
+      "sha256": "3d384f0a1be24e5e5a097b45182577c639b904d2680df657a2c39dc71ce9a619",
+      "bytes": 83296
+    },
+    "commands": {
+      "b": {
+        "path": "commands/SWIFT-202b",
+        "sha256": "c54a58c9601c7db2265b56338eb7d9b9f9dd376005ff6a2bfd86e072d70e71c8",
+        "bytes": 185
+      },
+      "f": {
+        "path": "commands/SWIFT-202f",
+        "sha256": "691192eaac34d1bd2134b67cb5398cca49c52756e6300e4a0027921970f4cfce",
+        "bytes": 185
+      }
+    }
+  },
+  "release_policy": {
+    "path": "environment/release-policy.json",
+    "sha256": "c0630d38fec5ddc7e0b23bc55edab956aed494143166c40ab92e119ababa9ff8"
+  },
+  "reproduction_verification": {
+    "path": "reproduction/verification.json",
+    "sha256": "ce5c3bd3cba073e4ac652ab08787b314af981145eaa9dd2ca5d86d6092051131"
+  },
+  "network_isolation_attestation": {
+    "path": "environment/network-isolation.json",
+    "sha256": "12317b9ef4b04ad21d000bab2dd4e276e5c874eda9b9e2018b9922b0e1f86d6f"
+  },
+  "dataset_id": "SWIFT-D029",
+  "patch_sha256": "d20bd8d4d4d0d6f156af1a627b3a5bf6b85e47f338bdef200d7f01631930d746",
+  "revision_alias_semantics": "buggy_commit/fixed_commit identify upstream provenance; experimental b/f identities are in artifacts",
+  "upstream_fix": {
+    "commit": "6d40e008c39a7f82c9d1b6541938b7b90c879bad",
+    "parents": [
+      "90628a560caa2ffbca5df6eb26959807e032bd10"
+    ],
+    "buggy_baseline_is_parent": true,
+    "single_parent_matches_baseline": true,
+    "commit_message": "Remove the comparison of id (KeyPath) in IdentifiedArray Equatable implementation\n\nResolves issue at:\nhttps://github.com/pointfreeco/swift-identified-collections/issues/24#issuecomment-938697095",
+    "boundary_evidence": "repair/boundary-verification.json",
+    "boundary_evidence_sha256": "9fd8d3004789cd7acdeaa2dd81b873a5bf9942183d6830c19616aefeb6e2e967"
+  },
+  "fixed_revision_kind": "upstream_provenance_use_artifacts_for_experiment",
+  "artifacts": {
+    "buggy": {
+      "commit": "84a1c53c205276ac7c3410911da7df126fe6a379",
+      "tree": "f92e44546b35cfbfccc9b4b9e258a15d419d55d4"
+    },
+    "fixed": {
+      "commit": "3991794b825d5219d6814e0e6dddf2b58156fbd1",
+      "tree": "2e6036bdd6b54c1f5a210f259d735d19d9641bd3",
+      "equals_upstream_tree": false
+    },
+    "construction": "base + compatibility(if present) + trigger; fixed adds production patch",
+    "synthetic_commit_identity_disclosed": true,
+    "upstream_history_not_rewritten": true
+  },
+  "cohort": "runtime_test",
+  "trigger_kind": "runtime_test_failure",
+  "language_metadata": {
+    "compiler_version": "6.1",
+    "package_tools_version": null,
+    "note": "Compiler version is distinct from Package.swift tools/language mode; recovered manifest records may fill package_tools_version"
+  },
+  "auto_baseline_full_suite": false,
+  "test_suite_policy": {
+    "name": "explicitly_filtered_regression_suite",
+    "excluded_selectors": [],
+    "exclusions": [],
+    "failed_process_may_be_waived": false,
+    "fresh_filtered_suite_validation_required": false,
+    "trigger_exclusion_forbidden": true
+  },
+  "current_validation": {
+    "protocol": "explicit-isolated-order-and-filtered-full-suite-v1",
+    "required_repetitions": 3,
+    "full_suite_repetitions": 3,
+    "historical_logs_preserved": true,
+    "historical_reverse_runs_are_order_evidence": false,
+    "same_process_permutation_claimed": false,
+    "new_full_validation_performed": false,
+    "status": "PENDING_CURRENT_PROTOCOL_RERUN",
+    "bound_delivery_reports": [],
+    "raw_log_recovery_waived_by_user": true,
+    "waiver_scope": "historical raw-log recovery only; no metadata upgrade to PASS"
+  },
+  "runtime_release": {
+    "asset_manifest": "../../../runtime-assets.manifest.json",
+    "entrypoint": "../../../benchmark.py",
+    "image_id": "sha256:651f26a1fe123f2d52d3c85e9266c5d4d8f88a00b4ab40b3feb9d7d2930d06ad",
+    "swift_executable": "/usr/bin/swift",
+    "external_assets_are_required": true,
+    "artifact_tree_verified": true,
+    "assets": [
+      {
+        "kind": "repository_bundle",
+        "case_relative_path": "sources/repository.bundle",
+        "sha256": "d031aa3b0f83a87cf32eb738bdb12ac17d6c316a99940e049fe635a7e0d9b660",
+        "bytes": 1426555,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/d031aa3b0f83a87cf32eb738bdb12ac17d6c316a99940e049fe635a7e0d9b660"
+      },
+      {
+        "kind": "dependency_cache",
+        "case_relative_path": "environment/dependency-cache.tar.gz",
+        "sha256": "b9cf2561ce00326caec5c5ff55f53041604ff48b9f60960c811ed636309902c1",
+        "bytes": 89522894,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/b9cf2561ce00326caec5c5ff55f53041604ff48b9f60960c811ed636309902c1"
+      },
+      {
+        "kind": "experiment_bundle",
+        "case_relative_path": "sources/experiment.bundle",
+        "sha256": "d465ee8a12b0cdb921d0a54d24392809d5e0039eb476429945f6b7b7abaab4ef",
+        "bytes": 1426895,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/d465ee8a12b0cdb921d0a54d24392809d5e0039eb476429945f6b7b7abaab4ef"
+      }
+    ],
+    "wrapper_evidence": []
+  },
+  "human_curation": {
+    "status": "APPROVED",
+    "approval_template": "repair/human-review.json",
+    "agent_cannot_sign_as_human": true,
+    "reviewer": "dataset_owner",
+    "reviewed_at": "2026-09-13T10:22:32+00:00"
+  },
+  "release": {
+    "state": "RC",
+    "strict_active": false,
+    "blockers": [],
+    "deprecation_reason": null,
+    "deferred_gates": [
+      "current_protocol_validation_pending"
+    ],
+    "structural_boundary_status": "DIRECT",
+    "publication_profile_traceability": "PASS",
+    "strict_direct_traceability": "PASS",
+    "execution_evidence_policy": "HISTORICAL_EVIDENCE_PRESERVED_CURRENT_PROTOCOL_DEFERRED",
+    "human_signoff_policy": "APPROVED",
+    "classic_runtime_profile": "RUNTIME_TEST",
+    "publication_profile_cohort": "RUNTIME_CORE",
+    "defects4j_core_validation": "PASS"
+  },
+  "repair": {
+    "date": "2026-09-10",
+    "base_archive_sha256": "21599edfd4c0c560677f781fdd84da40fa22fb14472aaaf7174b7dec81d9df21",
+    "previous_metadata": "repair-history/case.before-repair.json",
+    "code_history": "repair-history/tools",
+    "historical_reports_not_rewritten": true,
+    "raw_log_recovery_out_of_scope": true,
+    "stage1_metadata_hardening": {
+      "performed_at": "2026-09-12",
+      "authoritative_boundary": "repair/boundary-verification.json",
+      "historical_execution_evidence_preserved": true,
+      "no_execution_result_invented": true
+    }
+  },
+  "defects4j_core_validation": {
+    "status": "PASS",
+    "classification": "HISTORICAL_STRICT_RAW_PASS",
+    "report": "validation/defects4j-core-reacceptance.json",
+    "report_sha256": "0c4f4b23744e08c030f6a5999f4ed604e52876fbbeba7f86c1e9bbb3e6ebb4d1",
+    "generated_at": "2026-09-12",
+    "does_not_claim_current_protocol_rerun": true
+  }
+}

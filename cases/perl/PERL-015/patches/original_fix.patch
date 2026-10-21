@@ -1,0 +1,58 @@
+diff --git a/Changes b/Changes
+index 8ba1e96f6550c0ff685ce087dcc264af989de6ef..842655ead777e4db1603be648c96c79fb8b22b69 100644
+--- a/Changes
++++ b/Changes
+@@ -1,6 +1,7 @@
+ Revision history for HTTP-Message
+ 
+ {{$NEXT}}
++    - fix warnings during HTTP::Config->match #62 (GH#152) (Viťas Strádal)
+ 
+ 6.27      2021-01-05 03:02:01Z
+     - Clean up backcompat code (GH#148) (Dan Book)
+diff --git a/lib/HTTP/Config.pm b/lib/HTTP/Config.pm
+index 3721bd9ce682206fa3da7146b47beb662e56eb4b..bd337b9507fc1fa8433cde95849aa79ae461f4d5 100644
+--- a/lib/HTTP/Config.pm
++++ b/lib/HTTP/Config.pm
+@@ -155,8 +155,12 @@ my %MATCH = (
+     m_header__ => sub {
+         my($v, $k, $uri, $request, $response) = @_;
+         return unless $request;
+-        return 1 if $request->header($k) eq $v;
+-        return 1 if $response && $response->header($k) eq $v;
++        my $req_header = $request->header($k);
++        return 1 if defined($req_header) && $req_header eq $v;
++        if ($response) {
++            my $res_header = $response->header($k);
++            return 1 if defined($res_header) && $res_header eq $v;
++        }
+         return 0;
+     },
+     m_response_attr__ => sub {
+diff --git a/t/http-config.t b/t/http-config.t
+index c0b8825d2a5aacfc4e7ca12616c306468438d950..0e0646744cd4982c05e8ac84b9f49c223187eb8a 100644
+--- a/t/http-config.t
++++ b/t/http-config.t
+@@ -2,7 +2,7 @@ use strict;
+ use warnings;
+ 
+ use Test::More;
+-plan tests => 28;
++plan tests => 30;
+ 
+ use HTTP::Config;
+ 
+@@ -103,4 +103,13 @@ is(j($conf->matching_items($response)), "HTML|html|text|any");
+     ok(($conf->empty), 'found and removed the config entry');
+     is(scalar(@warnings), 0, 'no warnings')
+         or diag('got warnings: ', explain(\@warnings));
++
++    @warnings = ();
++    $conf->add_item("bond", m_header__user_agent => 'james/0.0.7');
++    my $request2 = HTTP::Request->new(HEAD => "http://www.example.com/foo/bar");
++    is(j($conf->matching_items($request2)), '');
++
++    is(scalar(@warnings), 0, 'no warnings')
++        or diag('got warnings: ', explain(\@warnings));
++
+ }

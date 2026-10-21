@@ -1,0 +1,29 @@
+diff --git a/ktlint-cli/src/test/kotlin/com/pinterest/ktlint/cli/SimpleCLITest.kt b/ktlint-cli/src/test/kotlin/com/pinterest/ktlint/cli/SimpleCLITest.kt
+index 9e69ce8983..a1e2a2e8e3 100644
+--- a/ktlint-cli/src/test/kotlin/com/pinterest/ktlint/cli/SimpleCLITest.kt
++++ b/ktlint-cli/src/test/kotlin/com/pinterest/ktlint/cli/SimpleCLITest.kt
+@@ -78,6 +78,24 @@ class SimpleCLITest {
+             }
+     }
+
++    @Test
++    fun `Given some code with an error then return from lint with the error exit code and warning to use --format`(
++        @TempDir
++        tempDir: Path,
++    ) {
++        CommandLineTestRunner(tempDir)
++            .run(
++                "too-many-empty-lines",
++                listOf("**/*.test"),
++            ) {
++                SoftAssertions().apply {
++                    assertErrorExitCode()
++                    assertThat(normalOutput)
++                        .containsLineMatching(Regex(".* WARN .* Lint has found errors than can be autocorrected using 'ktlint --format'"))
++                }.assertAll()
++            }
++    }
++
+     @Test
+     fun `Given some code with an error but a glob which does not select the file`(
+         @TempDir

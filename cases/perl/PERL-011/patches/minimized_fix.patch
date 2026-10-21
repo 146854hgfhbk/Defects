@@ -1,0 +1,16 @@
+diff --git a/lib/Test2/Plugin/ExitSummary.pm b/lib/Test2/Plugin/ExitSummary.pm
+index 6639a70d3a01216ac0d7d1d3aac00416ad959af3..a62d7551402b86ee31c948665788324bae5499d2 100644
+--- a/lib/Test2/Plugin/ExitSummary.pm
++++ b/lib/Test2/Plugin/ExitSummary.pm
+@@ -31,6 +31,11 @@ sub summary {
+ 
+     $ctx->diag("Did not follow plan: expected $plan, ran $count.")
+         if $plan && $plan =~ m/^[0-9]+$/ && defined $count && $count != $plan;
++
++    if ($failed) {
++        my $s = $failed == 1 ? '' : 's';
++        $ctx->diag("Looks like you failed $failed test$s of $count.");
++    }
+ }
+ 
+ 1;

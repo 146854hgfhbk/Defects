@@ -1,0 +1,78 @@
+diff --git a/Changes b/Changes
+index fd6fdbf..a1bd6b5 100644
+--- a/Changes
++++ b/Changes
+@@ -18,6 +18,10 @@ TODO: http://stevehanov.ca/blog/index.php?id=104 compression
+           (GH #128, reported by pbrthemaster). The recursion guard temporarily
+           clears convert_blessed and allow_stringify flags on the JSON object
+           before calling the overload, preventing re-entrant encode loops.
++        - Fix $obj->new creating a broken object (GH #93, reported by cpansprout).
++          When new() is called on an existing object (e.g. $json->new->new),
++          the class name is now extracted from the object's stash rather than
++          using the stringified reference.
+         - Fix minor t/12_blessed.t typo.
+         - Fix GH #112: encode large whole-number NV values without .0 on
+           32-bit Perl (values exceeding UV_MAX that Perl stores as float).
+diff --git a/XS.xs b/XS.xs
+index 9bfa3ce..6fcc58f 100755
+--- a/XS.xs
++++ b/XS.xs
+@@ -4945,14 +4945,23 @@ void END(...)
+         return;
+ 
+ void new (char *klass)
++    PREINIT:
++        HV *stash;
+     PPCODE:
+         dMY_CXT;
+-  	SV *pv = NEWSV (0, sizeof (JSON));
++        SV *pv = NEWSV (0, sizeof (JSON));
+         SvPOK_only (pv);
+         json_init ((JSON *)SvPVX (pv));
++        if (SvROK (ST(0))) {
++          /* called as $obj->new — extract real class name from the object */
++          stash = SvSTASH (SvRV (ST(0)));
++          if (!stash)
++            croak ("Cannot create a %s object from an unblessed reference", klass);
++        } else {
++          stash = strEQc (klass, "Cpanel::JSON::XS") ? JSON_STASH : gv_stashpv (klass, 1);
++        }
+         XPUSHs (sv_2mortal (sv_bless (
+-           newRV_noinc (pv),
+-           strEQc (klass, "Cpanel::JSON::XS") ? JSON_STASH : gv_stashpv (klass, 1)
++           newRV_noinc (pv), stash
+         )));
+ 
+ void ascii (JSON *self, int enable = 1)
+diff --git a/t/00_load.t b/t/00_load.t
+index 92be373..b20f621 100644
+--- a/t/00_load.t
++++ b/t/00_load.t
+@@ -1,5 +1,26 @@
+-BEGIN { $| = 1; print "1..1\n"; }
++BEGIN { $| = 1; print "1..5\n"; }
+ END {print "not ok 1\n" unless $loaded;}
+ use Cpanel::JSON::XS;
+ $loaded = 1;
+ print "ok 1\n";
++
++# GH #93: $obj->new must work (not create a broken object)
++my $obj = Cpanel::JSON::XS->new->utf8;
++my $obj2 = eval { $obj->new };
++print $@ ? "not ok 2 - GH #93 \$obj->new crashed: $@" : "ok 2 - GH #93 \$obj->new\n";
++print ref($obj2) eq 'Cpanel::JSON::XS'
++  ? "ok 3 - GH #93 result is Cpanel::JSON::XS\n"
++  : "not ok 3 - GH #93 result is ", ref($obj2) // "undef", "\n";
++
++# GH #93: subclass $obj->new preserves class
++package MyJSON93;
++use parent -norequire, 'Cpanel::JSON::XS';
++package main;
++my $sub = MyJSON93->new;
++my $sub2 = $sub->new;
++print eval { $sub2->isa('MyJSON93') }
++  ? "ok 4 - GH #93 subclass ->new preserves class\n"
++  : "not ok 4 - GH #93\n";
++print eval { $sub2->isa('Cpanel::JSON::XS') }
++  ? "ok 5 - GH #93 subclass ->new still ISA Cpanel::JSON::XS\n"
++  : "not ok 5 - GH #93\n";

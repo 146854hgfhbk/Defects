@@ -1,0 +1,44 @@
+diff --git a/README.md b/README.md
+index b20d9b77b69721ee774172f7274118a48e93d135..ad9af2cbcabb39ccd4a61a6f61a5ce8e71b75432 100644
+--- a/README.md
++++ b/README.md
+@@ -17,7 +17,7 @@ s:set_namespace("en")
+ s:set('money', 'I have %s dollars')
+ s:set('wow', 'So much money!')
+ 
+-print(s('money', 1000)) -- I have 1000 dollars
++print(s('money', {1000})) -- I have 1000 dollars
+ 
+ s:set_namespace("fr") -- switch to french!
+ s:set('so_much_money', "Tant d'argent!")
+diff --git a/spec/say_spec.lua b/spec/say_spec.lua
+index b1c7889761820cc2ae1bd15a7e25d075902b3d93..80dd9f8d65449617349c40536900e5b61944dfaf 100644
+--- a/spec/say_spec.lua
++++ b/spec/say_spec.lua
+@@ -44,6 +44,12 @@ describe("Tests to make sure the say library is functional", function()
+     assert(s('herp') == 'derp')
+   end)
+ 
++  it("errors on bad type of param table", function()
++    s:set_namespace('en')
++    s:set('herp', 'derp %s')
++    assert.has.error(function() s('herp', 1000) end, "expected parameter table to be a table, got 'number'")
++  end)
++
+   it("tests missing elements returns nil", function()
+     assert(s('this does not exist') == nil)
+   end)
+diff --git a/src/init.lua b/src/init.lua
+index c77be2d31436ac98d853c0a3bac820c3126a1cb7..3e5c51f929a051dc3838564c891b44b66ec7e41f 100644
+--- a/src/init.lua
++++ b/src/init.lua
+@@ -31,6 +31,9 @@ local s = {
+ 
+ local __meta = {
+   __call = function(self, key, vars)
++    if vars ~= nil and type(vars) ~= "table" then
++      error(("expected parameter table to be a table, got '%s'"):format(type(vars)), 2)
++    end
+     vars = vars or {}
+ 
+     local str = registry[current_namespace][key] or registry[fallback_namespace][key]

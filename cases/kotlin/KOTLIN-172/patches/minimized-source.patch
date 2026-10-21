@@ -1,0 +1,18 @@
+diff --git a/ktlint-cli/src/main/kotlin/com/pinterest/ktlint/cli/internal/KtlintCommandLine.kt b/ktlint-cli/src/main/kotlin/com/pinterest/ktlint/cli/internal/KtlintCommandLine.kt
+index b4957055..bafc6807 100644
+--- a/ktlint-cli/src/main/kotlin/com/pinterest/ktlint/cli/internal/KtlintCommandLine.kt
++++ b/ktlint-cli/src/main/kotlin/com/pinterest/ktlint/cli/internal/KtlintCommandLine.kt
+@@ -329,6 +330,13 @@ internal class KtlintCommandLine {
+                 baseline.lintErrorsPerFile,
+                 aggregatedReporter,
+             )
++            if (adviseToUseFormat.get()) {
++                if (format) {
++                    logger.error { "Format was not able to autocorrect all errors that theoretically can be autocorrected." }
++                } else {
++                    logger.warn { "Lint has found errors than can be autocorrected using 'ktlint --format'" }
++                }
++            }
+         }
+         aggregatedReporter.afterAll()
+ 

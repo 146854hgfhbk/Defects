@@ -1,0 +1,623 @@
+{
+  "schema_version": 3,
+  "case_id": "SWIFT-830",
+  "language": "Swift",
+  "status": "release_candidate",
+  "project": "stencilproject/Stencil",
+  "repository_url": "https://github.com/stencilproject/Stencil.git",
+  "repository_evidence": {
+    "checked_at": "2026-09-06T06:38:38.174465+00:00",
+    "api_url": "https://api.github.com/repos/stencilproject/Stencil",
+    "html_url": "https://github.com/stencilproject/Stencil",
+    "private": false,
+    "visibility": "public",
+    "archived": false,
+    "public_verification_source": "github_api",
+    "license_spdx": "BSD-2-Clause",
+    "license_source": "github_api"
+  },
+  "commit_url": "https://github.com/stencilproject/Stencil/commit/fd79223ea0e661f5c12eb7a5da1422a1ec682ee5",
+  "pull_request_url": "https://github.com/stencilproject/Stencil/pull/254",
+  "issue_urls": [
+    "https://github.com/stencilproject/Stencil/issues/253"
+  ],
+  "traceability": {
+    "requires_unique_fix_commit": true,
+    "verified_fix_issue_numbers": [
+      253
+    ],
+    "paths": [
+      {
+        "issue_number": 253,
+        "path": "fix_commit_to_merged_pr_to_issue"
+      }
+    ],
+    "pull_request_number": 254,
+    "selected_from_multi_commit_pull_request": true,
+    "reference_mode": "PR_MEDIATED",
+    "direct_commit_issue_reference": false,
+    "source": "authentic_local_git_commit_object",
+    "strict_direct_reference_satisfied": false,
+    "traceability_closed": true,
+    "publication_profile_satisfied": true,
+    "strict_direct_profile_satisfied": false,
+    "pr_mediated_chain_verified": true,
+    "policy_note": "Issue→PR→fixing commit chain is verified; commit message itself does not directly name the Issue."
+  },
+  "fixed_revision": "fd79223ea0e661f5c12eb7a5da1422a1ec682ee5",
+  "buggy_revision": "9a6ba94d7d5f6abe620d530e7936535fe4d0ff24",
+  "fixed_tree": "83cf23e7c1188f68027d24289b3c30014045087f",
+  "buggy_tree": "ea395be1da7fb41b15f6f1abf88556e221ce9e0d",
+  "repository_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/enrich-SWIFT-830/repository",
+  "repository_bundle": {
+    "path": "sources/repository.bundle",
+    "sha256": "98ea2f0114ab2ef9d607a011eb61b0b2894677c30c0e544de5c691620a9e2196",
+    "bytes": 577881,
+    "refs": {
+      "buggy": "refs/heads/buggy",
+      "fixed": "refs/heads/fixed"
+    }
+  },
+  "production_files": [
+    "Sources/Tokenizer.swift"
+  ],
+  "trigger_test_files": [
+    "Tests/StencilTests/IfNodeSpec.swift"
+  ],
+  "trigger_tests": [
+    {
+      "path": "Tests/StencilTests/IfNodeSpec.swift",
+      "name": "testIfNode"
+    }
+  ],
+  "commit_files": {
+    "all": [
+      "Sources/Tokenizer.swift",
+      "Tests/StencilTests/IfNodeSpec.swift"
+    ],
+    "production": [
+      "Sources/Tokenizer.swift"
+    ],
+    "tests": [
+      "Tests/StencilTests/IfNodeSpec.swift"
+    ],
+    "other": []
+  },
+  "commit_stats": {
+    "production_hunk_count": 1,
+    "maximum_exact_subset_candidates": 1,
+    "hunk_count_source": "materialize_git_diff"
+  },
+  "patches": {
+    "original_commit": {
+      "path": "patches/original-commit.patch",
+      "sha256": "30c72b3965c0c5cf42864009ceca42f6b2b0b15d84b97287aa1e2d43ab118daf",
+      "bytes": 1464
+    },
+    "production_fix": {
+      "path": "patches/production-fix.patch",
+      "sha256": "b194b638861a898d63b3f8299f7aff084d97421dc7b69801cdb4eea613d6c1fc",
+      "bytes": 750
+    },
+    "trigger_tests": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "b9d7aff05eb31a16e4701c97aba256d8a425afa8f816f61b8513ad2a7c039b2d",
+      "bytes": 714
+    },
+    "build_compatibility": {
+      "path": "patches/build-compatibility.patch",
+      "sha256": "a0eda7317b69537558c24374964ac0e47a97616e80011b6b44aec1c112257a1a",
+      "bytes": 678,
+      "rationale": "Qualify the project Expression protocol to avoid a Swift 6 Foundation type-name collision. Applied symmetrically to buggy and fixed revisions without changing defect logic or assertions."
+    }
+  },
+  "trigger_reduction": {
+    "status": "PASS",
+    "upstream_trigger_patch": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "b9d7aff05eb31a16e4701c97aba256d8a425afa8f816f61b8513ad2a7c039b2d",
+      "bytes": 714
+    },
+    "removed_external_dependency": false,
+    "rationale": "The triggering patch is the unchanged upstream test or project-native fixture portion of the single fixing commit."
+  },
+  "build": {
+    "directory": ".",
+    "dependency_command": [
+      "swift",
+      "package",
+      "resolve",
+      "--skip-update"
+    ],
+    "analyze_command": [
+      "swift",
+      "build",
+      "--build-tests"
+    ],
+    "test_command": [
+      "swift",
+      "test",
+      "--parallel",
+      "--num-workers",
+      "1"
+    ],
+    "timeout_seconds": 1200,
+    "require_analyze_clean": true
+  },
+  "source_evidence_sha256": "295d835605dc62b8451a1b87c7f62fedc878f2c28a0d51bf918a2928750f8913",
+  "acceptance": {
+    "differential_validation": "PASS",
+    "patch_minimization": "PASS",
+    "full_suite_validation": "PASS",
+    "human_curation": "PASS",
+    "release_eligible": false,
+    "semantic_curation": "PASS",
+    "curation_method": "llm_api_consensus",
+    "llm_confirmed": true,
+    "current_protocol_validation": "PENDING"
+  },
+  "materialized_at": "2026-09-06T06:39:21.596165+00:00",
+  "claude_screen": {
+    "model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "prompt_decision": "ACCEPT_FOR_VALIDATION",
+    "confidence": 0.78,
+    "runtime_acceptance": false
+  },
+  "validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-06T12:31:22.753441+00:00",
+    "report": "validation/validation.json",
+    "report_sha256": "33b40f442bce3479f75da1ccd4d027c8bff4153f4e549faa1d54081e4ce12973",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/StencilTests/IfNodeSpec.swift",
+        "name": "testIfNode"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-830",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/StencilTests/IfNodeSpec.swift', 'testIfNode')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/StencilTests/IfNodeSpec.swift::testIfNode']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/original-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "918954366aca8cfea5a76324472cb3c0fafe5f7c64cb4ad03d1b99c549e58c8b",
+        "package_config": "environment/original-fixed-workspace-state.json",
+        "package_config_sha256": "fa7cf7f5506ae6fc595798dd203776862df5d551060ef174446ee5b18caceecd",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/original-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "918954366aca8cfea5a76324472cb3c0fafe5f7c64cb4ad03d1b99c549e58c8b",
+        "package_config": "environment/original-buggy-workspace-state.json",
+        "package_config_sha256": "fa7cf7f5506ae6fc595798dd203776862df5d551060ef174446ee5b18caceecd",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/original-swift-toolchain.lock.json",
+      "sha256": "840936ddd3f8b7640431a8f5e516102e58e929a8e02fad0941d43e9843fd45dd"
+    },
+    "validation_image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "validation_image_lock": {
+      "path": "environment/original-validation-image.lock.json",
+      "sha256": "afe67743141ac2790d9ec10c09dc570377e6a5c122e285d5f4826cd66c99e30d"
+    }
+  },
+  "bug_id": "SWIFT-830",
+  "issue_id": 253,
+  "issue_ids": [
+    253
+  ],
+  "issue_url": "https://github.com/stencilproject/Stencil/issues/253",
+  "buggy_commit": "9a6ba94d7d5f6abe620d530e7936535fe4d0ff24",
+  "fixed_commit": "fd79223ea0e661f5c12eb7a5da1422a1ec682ee5",
+  "patch": "patches/minimized-production.patch",
+  "changed_source_files": [
+    "Sources/Tokenizer.swift"
+  ],
+  "triggering_test": [
+    "Tests/StencilTests/IfNodeSpec.swift::testIfNode"
+  ],
+  "expected_failure": {
+    "test_id": "Tests/StencilTests/IfNodeSpec.swift::testIfNode",
+    "error": "IfNode parsing can parse an if with complex expression: 'if' expression error: dangling token",
+    "failure_fingerprint": "d1fb458fa766fc6a3b1736d70b754f7d58b53aa8198b5ca78b2d46cee01c9ae4",
+    "all_trigger_failures": [
+      {
+        "test_id": "Tests/StencilTests/IfNodeSpec.swift::testIfNode",
+        "error": "IfNode parsing can parse an if with complex expression: 'if' expression error: dangling token",
+        "failure_fingerprint": "d1fb458fa766fc6a3b1736d70b754f7d58b53aa8198b5ca78b2d46cee01c9ae4",
+        "repetition_count": 3,
+        "deterministic": true
+      }
+    ]
+  },
+  "fixed_test_result": {
+    "status": "HISTORICAL_RESULTS_RETAINED",
+    "historical_full_suite_exit_codes": [
+      0,
+      0
+    ],
+    "current_suite_success_required": {
+      "exit_code": 0,
+      "failed_tests": 0,
+      "repetitions": 3
+    },
+    "current_protocol_rerun_performed": false
+  },
+  "build_command": [
+    "swift",
+    "build",
+    "--build-tests"
+  ],
+  "test_command": [
+    "swift",
+    "test",
+    "--parallel",
+    "--num-workers",
+    "1"
+  ],
+  "language_version": "6.2.3",
+  "dependency_versions": {
+    "(swift-runtime)": "stdlib-only; package declares no external dependencies"
+  },
+  "operating_system_or_container": {
+    "platform": "ubuntu22.04-offline-overlay",
+    "host_system": "Linux",
+    "host_machine": "x86_64",
+    "validation_image": "swift-defects-validation:6.2.3-recovered-20260906-v2",
+    "validation_image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460"
+  },
+  "timezone": "UTC",
+  "reproducibility_status": "direct_parent_historical_execution_evidence_current_protocol_deferred",
+  "deprecation_reason": null,
+  "minimized_patch": {
+    "path": "patches/minimized-production.patch",
+    "sha256": "1a40f9bee9d7b7272330840942606564e1b2c595657b4ce6e7b02826076a2f72",
+    "original_hunk_count": 1,
+    "retained_hunks": [
+      1
+    ],
+    "retained_hunk_count": 1,
+    "removed_hunk_count": 0,
+    "screening_only": false,
+    "post_minimization_validation": "PASS",
+    "evidence_grade": "portable_release_evidence",
+    "automatic_minimization": {
+      "minimal_hunks": [
+        1
+      ],
+      "chosen_subset": [
+        1
+      ]
+    }
+  },
+  "post_minimization_validation": {
+    "status": "stable_differential",
+    "generated_at": "2026-09-06T12:32:13.746782+00:00",
+    "report": "validation/post-minimization.json",
+    "report_sha256": "6802a19c4ec4d453a3381bc2428b05cf5f0d73abd32922739c59250afd9d0407",
+    "engine": "validation_engine.py",
+    "fresh_worktree_per_repetition": true,
+    "repetitions": 3,
+    "infrastructure_error_count": 0,
+    "exact_trigger_test_selectors": [
+      {
+        "path": "Tests/StencilTests/IfNodeSpec.swift",
+        "name": "testIfNode"
+      }
+    ],
+    "test_network_policy": "os_enforced",
+    "strict_raw_evidence": {
+      "schema_version": 1,
+      "case_id": "SWIFT-830",
+      "repetitions": 3,
+      "full_suite_repetitions": 1,
+      "require_analyze_clean": false,
+      "passed": true,
+      "checks": {
+        "selectors.present_and_unique": {
+          "passed": true,
+          "detail": "declared=1 valid=1 unique=1"
+        },
+        "matrix.repetitions": {
+          "passed": true,
+          "detail": "observed=[1, 2, 3] minimum_count=3"
+        },
+        "matrix.complete": {
+          "passed": true,
+          "detail": "runs=32"
+        },
+        "build.both_versions": {
+          "passed": true,
+          "detail": "dependency and explicit build must pass; analyzer is diagnostic"
+        },
+        "trigger.fixed_clean": {
+          "passed": true,
+          "detail": "all fixed isolated/suite/reversed runs must pass"
+        },
+        "trigger.buggy_differential": {
+          "passed": true,
+          "detail": "at least one declared selector must fail alone; non-reproducing selectors must pass and suites may fail only on reproduced selectors; reproduced=[('Tests/StencilTests/IfNodeSpec.swift', 'testIfNode')]"
+        },
+        "trigger.deterministic": {
+          "passed": true,
+          "detail": "fingerprint_groups=3 expected=3"
+        },
+        "full_suite.fixed_all_green": {
+          "passed": true,
+          "detail": "runs=1 bad=0"
+        },
+        "full_suite.buggy_reproduces_only_triggers": {
+          "passed": true,
+          "detail": "buggy full-suite failures must include every reproduced trigger; expected_triggers=['Tests/StencilTests/IfNodeSpec.swift::testIfNode']"
+        }
+      },
+      "failed_checks": [],
+      "resolved_baseline_full_suite_exclusions": []
+    },
+    "dependency_snapshots": {
+      "fixed": {
+        "package_manifest_lock": "environment/post-minimization-fixed-Package.resolved",
+        "package_manifest_lock_sha256": "918954366aca8cfea5a76324472cb3c0fafe5f7c64cb4ad03d1b99c549e58c8b",
+        "package_config": "environment/post-minimization-fixed-workspace-state.json",
+        "package_config_sha256": "fa7cf7f5506ae6fc595798dd203776862df5d551060ef174446ee5b18caceecd",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      },
+      "buggy": {
+        "package_manifest_lock": "environment/post-minimization-buggy-Package.resolved",
+        "package_manifest_lock_sha256": "918954366aca8cfea5a76324472cb3c0fafe5f7c64cb4ad03d1b99c549e58c8b",
+        "package_config": "environment/post-minimization-buggy-workspace-state.json",
+        "package_config_sha256": "fa7cf7f5506ae6fc595798dd203776862df5d551060ef174446ee5b18caceecd",
+        "package_config_format": "workspace_state",
+        "locked_dependency_versions": {}
+      }
+    },
+    "swift_sdk_lock": {
+      "path": "environment/post-minimization-swift-toolchain.lock.json",
+      "sha256": "840936ddd3f8b7640431a8f5e516102e58e929a8e02fad0941d43e9843fd45dd"
+    },
+    "validation_image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "validation_image_lock": {
+      "path": "environment/post-minimization-validation-image.lock.json",
+      "sha256": "afe67743141ac2790d9ec10c09dc570377e6a5c122e285d5f4826cd66c99e30d"
+    }
+  },
+  "release_policy": {
+    "path": "environment/release-policy.json",
+    "sha256": "c0630d38fec5ddc7e0b23bc55edab956aed494143166c40ab92e119ababa9ff8"
+  },
+  "dependency_cache": {
+    "archive": "environment/dependency-cache.tar.gz",
+    "archive_sha256": "dfb80df225601dc0bd5280caaf7f09e9a690797dfad6fdd8fcf0bfac2ad00a58",
+    "manifest": "environment/dependency-cache-manifest.json",
+    "manifest_sha256": "834ec576ff02add59722f1c36e7fbe6c18262dcf821224c277374ffc9b39ec7e",
+    "package_count": 2
+  },
+  "reproduction": {
+    "image_digest": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "network_mode": "none",
+    "runner": {
+      "path": "tools/reproduce_case.py",
+      "sha256": "2fbeb44814f8609d3cc6285ed764f7fb92fa96e7cd58e3366e60a2334dd6a0c3",
+      "bytes": 17123
+    },
+    "validation_engine": {
+      "path": "tools/validation_engine.py",
+      "sha256": "80a5ab9488b3406d2fc2263d14dce31c36d01c00a76ae700f5640b501709bc80",
+      "bytes": 90072
+    },
+    "commands": {
+      "b": {
+        "path": "commands/SWIFT-830b",
+        "sha256": "1d10d89872037b356f6437a220c87fce136640b0f51ffcd5a4f70c894caedf96",
+        "bytes": 185
+      },
+      "f": {
+        "path": "commands/SWIFT-830f",
+        "sha256": "c6f47a198fcefbabdfd0c182d92ca4b0b99cd562d08ee954c91d99ca61e93550",
+        "bytes": 185
+      }
+    }
+  },
+  "reproduction_verification": {
+    "path": "reproduction/verification.json",
+    "sha256": "9ea966218ed8bf13e76ac52d9de850ad2ea187e540aff2fcd74e51a96531d2c1"
+  },
+  "network_isolation_attestation": {
+    "path": "environment/network-isolation.json",
+    "sha256": "d60ef98925e7f1e83069a70d05ad851bf28b01d5449984a96123da5b53364df0"
+  },
+  "dataset_id": "SWIFT-D025",
+  "patch_sha256": "1a40f9bee9d7b7272330840942606564e1b2c595657b4ce6e7b02826076a2f72",
+  "revision_alias_semantics": "buggy_commit/fixed_commit identify upstream provenance; experimental b/f identities are in artifacts",
+  "upstream_fix": {
+    "commit": "fd79223ea0e661f5c12eb7a5da1422a1ec682ee5",
+    "parents": [
+      "9a6ba94d7d5f6abe620d530e7936535fe4d0ff24"
+    ],
+    "buggy_baseline_is_parent": true,
+    "single_parent_matches_baseline": true,
+    "commit_message": "fix parsing token components with brackets without spaces",
+    "boundary_evidence": "repair/boundary-verification.json",
+    "boundary_evidence_sha256": "3661a4cae5eedf9c97d9611c7a40cae481505a9a35757c095705aeed0ab133a3"
+  },
+  "fixed_revision_kind": "upstream_provenance_use_artifacts_for_experiment",
+  "artifacts": {
+    "buggy": {
+      "commit": "15097549049dc97907cbd84706224c7abd757983",
+      "tree": "b0caf6eac4ee8722c1a2b0379fadfb8f30d77a41"
+    },
+    "fixed": {
+      "commit": "d780fce1468ff941a73572fccd9935a4a4bc313f",
+      "tree": "9a975f0c15c24d59353c62449ee7cc8a66a91de4",
+      "equals_upstream_tree": false
+    },
+    "construction": "base + compatibility(if present) + trigger; fixed adds production patch",
+    "synthetic_commit_identity_disclosed": true,
+    "upstream_history_not_rewritten": true
+  },
+  "cohort": "runtime_test",
+  "trigger_kind": "runtime_test_failure",
+  "language_metadata": {
+    "compiler_version": "6.2.3",
+    "package_tools_version": null,
+    "note": "Compiler version is distinct from Package.swift tools/language mode; recovered manifest records may fill package_tools_version"
+  },
+  "auto_baseline_full_suite": false,
+  "test_suite_policy": {
+    "name": "explicitly_filtered_regression_suite",
+    "excluded_selectors": [],
+    "exclusions": [],
+    "failed_process_may_be_waived": false,
+    "fresh_filtered_suite_validation_required": false,
+    "trigger_exclusion_forbidden": true
+  },
+  "current_validation": {
+    "protocol": "explicit-isolated-order-and-filtered-full-suite-v1",
+    "required_repetitions": 3,
+    "full_suite_repetitions": 3,
+    "historical_logs_preserved": true,
+    "historical_reverse_runs_are_order_evidence": false,
+    "same_process_permutation_claimed": false,
+    "new_full_validation_performed": false,
+    "status": "PENDING_CURRENT_PROTOCOL_RERUN",
+    "bound_delivery_reports": [],
+    "raw_log_recovery_waived_by_user": true,
+    "waiver_scope": "historical raw-log recovery only; no metadata upgrade to PASS"
+  },
+  "runtime_release": {
+    "asset_manifest": "../../../runtime-assets.manifest.json",
+    "entrypoint": "../../../benchmark.py",
+    "image_id": "sha256:41aa2ee7d0ce8b4524d73e3bcc6012614ae0dd0843e4c4a7ba4619aa19889460",
+    "swift_executable": "/usr/bin/swift",
+    "external_assets_are_required": true,
+    "artifact_tree_verified": true,
+    "assets": [
+      {
+        "kind": "repository_bundle",
+        "case_relative_path": "sources/repository.bundle",
+        "sha256": "98ea2f0114ab2ef9d607a011eb61b0b2894677c30c0e544de5c691620a9e2196",
+        "bytes": 577881,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/98ea2f0114ab2ef9d607a011eb61b0b2894677c30c0e544de5c691620a9e2196"
+      },
+      {
+        "kind": "dependency_cache",
+        "case_relative_path": "environment/dependency-cache.tar.gz",
+        "sha256": "dfb80df225601dc0bd5280caaf7f09e9a690797dfad6fdd8fcf0bfac2ad00a58",
+        "bytes": 1993545,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/dfb80df225601dc0bd5280caaf7f09e9a690797dfad6fdd8fcf0bfac2ad00a58"
+      },
+      {
+        "kind": "experiment_bundle",
+        "case_relative_path": "sources/experiment.bundle",
+        "sha256": "6ff5ae00aa4e03879fca0c52bd2877cdecc5bd4bddaa77781c97fa3e1bcb5b60",
+        "bytes": 579689,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/6ff5ae00aa4e03879fca0c52bd2877cdecc5bd4bddaa77781c97fa3e1bcb5b60"
+      }
+    ],
+    "wrapper_evidence": []
+  },
+  "human_curation": {
+    "status": "APPROVED",
+    "approval_template": "repair/human-review.json",
+    "agent_cannot_sign_as_human": true,
+    "reviewer": "dataset_owner",
+    "reviewed_at": "2026-09-13T10:22:32+00:00"
+  },
+  "release": {
+    "state": "RC",
+    "strict_active": false,
+    "blockers": [
+      "strict_direct_issue_reference_not_satisfied"
+    ],
+    "deprecation_reason": null,
+    "deferred_gates": [
+      "current_protocol_validation_pending"
+    ],
+    "structural_boundary_status": "DIRECT",
+    "publication_profile_traceability": "PASS",
+    "strict_direct_traceability": "EXTENSION_PR_MEDIATED",
+    "execution_evidence_policy": "HISTORICAL_EVIDENCE_PRESERVED_CURRENT_PROTOCOL_DEFERRED",
+    "human_signoff_policy": "APPROVED",
+    "classic_runtime_profile": "RUNTIME_TEST",
+    "publication_profile_cohort": "RUNTIME_CORE",
+    "defects4j_core_validation": "PASS"
+  },
+  "repair": {
+    "date": "2026-09-10",
+    "base_archive_sha256": "21599edfd4c0c560677f781fdd84da40fa22fb14472aaaf7174b7dec81d9df21",
+    "previous_metadata": "repair-history/case.before-repair.json",
+    "code_history": "repair-history/tools",
+    "historical_reports_not_rewritten": true,
+    "raw_log_recovery_out_of_scope": true,
+    "stage1_metadata_hardening": {
+      "performed_at": "2026-09-12",
+      "authoritative_boundary": "repair/boundary-verification.json",
+      "historical_execution_evidence_preserved": true,
+      "no_execution_result_invented": true
+    }
+  },
+  "defects4j_core_validation": {
+    "status": "PASS",
+    "classification": "HISTORICAL_STRICT_RAW_PASS",
+    "report": "validation/defects4j-core-reacceptance.json",
+    "report_sha256": "cb3848f5c55d676a096dcafe8825656452c93d3ab19011d669fd8fa2b13d8075",
+    "generated_at": "2026-09-12",
+    "does_not_claim_current_protocol_rerun": true
+  }
+}

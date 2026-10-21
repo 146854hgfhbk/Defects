@@ -1,0 +1,215 @@
+diff --git a/R/calendar.R b/R/calendar.R
+index ec33e2a8..2da07ff9 100644
+--- a/R/calendar.R
++++ b/R/calendar.R
+@@ -1044,28 +1044,6 @@ calendar_check_minimum_precision <- function(
+   cli::cli_abort(message, call = call)
+ }
+ 
+-calendar_check_maximum_precision <- function(
+-  x,
+-  precision,
+-  ...,
+-  arg = caller_arg(x),
+-  call = caller_env()
+-) {
+-  x_precision <- calendar_precision_attribute(x)
+-
+-  if (x_precision <= precision) {
+-    return(invisible(NULL))
+-  }
+-
+-  message <- c(
+-    "Can't perform this operation because of the precision of {.arg {arg}}.",
+-    i = "The precision of {.arg {arg}} must be at most {.str {precision_to_string(precision)}}.",
+-    i = "{.arg {arg}} has a precision of {.str {precision_to_string(x_precision)}}."
+-  )
+-
+-  cli::cli_abort(message, call = call)
+-}
+-
+ calendar_check_exact_precision <- function(
+   x,
+   precision,
+@@ -1229,21 +1207,6 @@ arith_numeric_and_calendar <- function(op, x, y, ...) {
+ 
+ # ------------------------------------------------------------------------------
+ 
+-# Special support for when `lag * differences >= n`
+-#
+-# In vctrs, this forces a return value of `vec_slice(x, 0L)`, but this is
+-# not correct for calendar types. See also, `diff.Date()` which exists for a
+-# similar reason.
+-calendar_diff_is_empty <- function(x, lag, differences) {
+-  # Same errors as vctrs
+-  stopifnot(length(lag) == 1L, lag >= 1L)
+-  stopifnot(length(differences) == 1L, differences >= 1L)
+-  n <- vec_size(x)
+-  lag * differences >= n
+-}
+-
+-# ------------------------------------------------------------------------------
+-
+ #' @export
+ as_year_month_day.clock_calendar <- function(x, ...) {
+   check_dots_empty0(...)
+diff --git a/R/gregorian-year-day.R b/R/gregorian-year-day.R
+index 147f942a..b38d1688 100644
+--- a/R/gregorian-year-day.R
++++ b/R/gregorian-year-day.R
+@@ -737,18 +737,6 @@ year_day_plus_duration <- function(
+ 
+ # ------------------------------------------------------------------------------
+ 
+-#' @export
+-diff.clock_year_day <- function(x, lag = 1L, differences = 1L, ...) {
+-  calendar_check_maximum_precision(x, PRECISION_YEAR)
+-  if (calendar_diff_is_empty(x, lag, differences)) {
+-    duration_helper(integer(), calendar_precision_attribute(x))
+-  } else {
+-    NextMethod()
+-  }
+-}
+-
+-# ------------------------------------------------------------------------------
+-
+ #' Convert to year-day
+ #'
+ #' `as_year_day()` converts a vector to the year-day calendar.
+diff --git a/R/gregorian-year-month-day.R b/R/gregorian-year-month-day.R
+index 23a7ae08..7838d1a8 100644
+--- a/R/gregorian-year-month-day.R
++++ b/R/gregorian-year-month-day.R
+@@ -1030,18 +1030,6 @@ year_month_day_plus_duration <- function(
+ 
+ # ------------------------------------------------------------------------------
+ 
+-#' @export
+-diff.clock_year_month_day <- function(x, lag = 1L, differences = 1L, ...) {
+-  calendar_check_maximum_precision(x, PRECISION_MONTH)
+-  if (calendar_diff_is_empty(x, lag, differences)) {
+-    duration_helper(integer(), calendar_precision_attribute(x))
+-  } else {
+-    NextMethod()
+-  }
+-}
+-
+-# ------------------------------------------------------------------------------
+-
+ #' Convert to year-month-day
+ #'
+ #' `as_year_month_day()` converts a vector to the year-month-day calendar.
+diff --git a/R/gregorian-year-month-weekday.R b/R/gregorian-year-month-weekday.R
+index 35df76b6..46765ee6 100644
+--- a/R/gregorian-year-month-weekday.R
++++ b/R/gregorian-year-month-weekday.R
+@@ -942,18 +942,6 @@ year_month_weekday_plus_duration <- function(
+ 
+ # ------------------------------------------------------------------------------
+ 
+-#' @export
+-diff.clock_year_month_weekday <- function(x, lag = 1L, differences = 1L, ...) {
+-  calendar_check_maximum_precision(x, PRECISION_MONTH)
+-  if (calendar_diff_is_empty(x, lag, differences)) {
+-    duration_helper(integer(), calendar_precision_attribute(x))
+-  } else {
+-    NextMethod()
+-  }
+-}
+-
+-# ------------------------------------------------------------------------------
+-
+ #' Convert to year-month-weekday
+ #'
+ #' `as_year_month_weekday()` converts a vector to the year-month-weekday
+diff --git a/R/iso-year-week-day.R b/R/iso-year-week-day.R
+index f1a052d7..1524a8f4 100644
+--- a/R/iso-year-week-day.R
++++ b/R/iso-year-week-day.R
+@@ -796,18 +796,6 @@ iso_year_week_day_plus_duration <- function(
+ 
+ # ------------------------------------------------------------------------------
+ 
+-#' @export
+-diff.clock_iso_year_week_day <- function(x, lag = 1L, differences = 1L, ...) {
+-  calendar_check_maximum_precision(x, PRECISION_YEAR)
+-  if (calendar_diff_is_empty(x, lag, differences)) {
+-    duration_helper(integer(), calendar_precision_attribute(x))
+-  } else {
+-    NextMethod()
+-  }
+-}
+-
+-# ------------------------------------------------------------------------------
+-
+ #' Convert to iso-year-week-day
+ #'
+ #' `as_iso_year_week_day()` converts a vector to the iso-year-week-day
+diff --git a/R/quarterly-year-quarter-day.R b/R/quarterly-year-quarter-day.R
+index a40d8094..27feb679 100644
+--- a/R/quarterly-year-quarter-day.R
++++ b/R/quarterly-year-quarter-day.R
+@@ -960,18 +960,6 @@ year_quarter_day_plus_duration <- function(
+ 
+ # ------------------------------------------------------------------------------
+ 
+-#' @export
+-diff.clock_year_quarter_day <- function(x, lag = 1L, differences = 1L, ...) {
+-  calendar_check_maximum_precision(x, PRECISION_QUARTER)
+-  if (calendar_diff_is_empty(x, lag, differences)) {
+-    duration_helper(integer(), calendar_precision_attribute(x))
+-  } else {
+-    NextMethod()
+-  }
+-}
+-
+-# ------------------------------------------------------------------------------
+-
+ #' Convert to year-quarter-day
+ #'
+ #' @description
+diff --git a/R/time-point.R b/R/time-point.R
+index 20c3d18d..095277ff 100644
+--- a/R/time-point.R
++++ b/R/time-point.R
+@@ -533,17 +533,6 @@ add_months.clock_time_point <- function(x, n, ...) {
+ 
+ # ------------------------------------------------------------------------------
+ 
+-#' @export
+-diff.clock_time_point <- function(x, lag = 1L, differences = 1L, ...) {
+-  # Special care to ensure that when `lag * differences >= n`, we still
+-  # return a duration type rather than `vec_slice(x, 0L)` which vctrs does by
+-  # default. It is always valid to diff the duration in place of the time point.
+-  x <- as_duration(x)
+-  diff(x, lag = lag, differences = differences, ...)
+-}
+-
+-# ------------------------------------------------------------------------------
+-
+ #' @export
+ as_duration.clock_time_point <- function(x, ...) {
+   check_dots_empty0(...)
+diff --git a/R/week-year-week-day.R b/R/week-year-week-day.R
+index dcb977a1..6e4f4c62 100644
+--- a/R/week-year-week-day.R
++++ b/R/week-year-week-day.R
+@@ -905,18 +905,6 @@ year_week_day_plus_duration <- function(
+ 
+ # ------------------------------------------------------------------------------
+ 
+-#' @export
+-diff.clock_year_week_day <- function(x, lag = 1L, differences = 1L, ...) {
+-  calendar_check_maximum_precision(x, PRECISION_YEAR)
+-  if (calendar_diff_is_empty(x, lag, differences)) {
+-    duration_helper(integer(), calendar_precision_attribute(x))
+-  } else {
+-    NextMethod()
+-  }
+-}
+-
+-# ------------------------------------------------------------------------------
+-
+ #' Convert to year-week-day
+ #'
+ #' `as_year_week_day()` converts a vector to the year-week-day

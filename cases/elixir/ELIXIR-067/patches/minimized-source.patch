@@ -1,0 +1,12 @@
+diff --git a/lib/phoenix/controller.ex b/lib/phoenix/controller.ex
+--- a/lib/phoenix/controller.ex
++++ b/lib/phoenix/controller.ex
+@@ -1274,7 +1274,7 @@ defmodule Phoenix.Controller do
+   end
+ 
+   defp encode_filename(filename, false), do: filename
+-  defp encode_filename(filename, true), do: URI.encode(filename)
++  defp encode_filename(filename, true), do: URI.encode(filename, &URI.char_unreserved?/1)
+ 
+   defp get_disposition_type(:attachment), do: "attachment"
+   defp get_disposition_type(:inline), do: "inline"

@@ -1,0 +1,131 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-205",
+  "bug_id": "JULIA-205",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "comonicon/Comonicon.jl",
+  "repository_url": "https://github.com/comonicon/Comonicon.jl.git",
+  "issue_urls": [
+    "https://github.com/comonicon/Comonicon.jl/issues/218"
+  ],
+  "issue_id": 218,
+  "buggy_revision": "b8cf0d1d13f127dfa109ead246bc7e8e11b11b8e",
+  "fixed_revision": "89dbe416380a5495629f449110547a3e23817b1a",
+  "candidate_sha": "89dbe416380a5495629f449110547a3e23817b1a",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "b8cf0d1d13f127dfa109ead246bc7e8e11b11b8e",
+  "changed_production_files": [
+    "src/codegen/julia.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-205 static help uses Base.print"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "cc809ec528e3788835ae39ce4a5476e8c3bede0186b6ef804ae52dddda3e3064",
+    "oracle": {
+      "mwe_basis": {
+        "upstream_test_file": "test/codegen/julia/print.jl",
+        "public_api": "Comonicon static command help",
+        "defect": "user-defined print shadowed Base.print during generated help rendering"
+      },
+      "source_evidence": "minimal public-API MWE derived from the fixed commit test hunk"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "89dbe416380a5495629f449110547a3e23817b1a",
+    "project": "comonicon/Comonicon.jl",
+    "input_sha256": "b3587f1b10bd62a8ddf1a7fa5f37f85289ef83c171cd555839c220773c3aeff7",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:36:41Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.6127639503150912,
+      "input_tokens": 4051,
+      "output_tokens": 820
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"no\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.6, \"summary\": \"Single-line macro-hygiene fix in Comonicon's Julia code generator: the emitted static help-printing expression referenced the unqualified symbol `print`, which resolves in the caller's module scope and breaks (or resolves to the wrong function) when the target module shadows or lacks `print`. The fix interpolates `Base.print` directly so the generated code always calls the intended function. This is a correctness fix to code the library produces at runtime, not a feature or refactor.\", \"evidence\": \"Minimized production patch is one hunk changing `:(print(...))` to `:($Base.print(...))` in src/codegen/julia.jl, inside the `ctx.configs.static` branch of `print_help_str`. Minimization metadata reports globally_minimal=true and all_hunks_necessary=true, so the behavior difference is attributable to this single change. Runtime evidence reports strict_differential=stable_differential over 3 repetitions with the full suite passing on the fixed revision, indicating a reproducible, non-flaky before/after behavior difference. The change is a semantic fix to generated code, not documentation, logging, or diagnostics, and adds no new API surface or options.\", \"missing_evidence\": \"No PR title/body, commit message, or linked issue is provided (traceability_class=UNVERIFIED), so intent cannot be confirmed from author narrative and issue_commit_match is unknown. No test files or trigger test identifiers are listed; the differential was observed via a dedicated script rather than a named repository test, so the exact failing assertion and the module/scope condition that triggers the unqualified-`print` resolution failure are not visible. The unminimized production patch is empty in the record, so it cannot be cross-checked against the minimized version.\", \"validation_risks\": \"The trigger likely depends on generating a static CLI into a module where `print` is shadowed or unavailable; reproducing that setup may require code generation plus evaluation in a synthetic module, which is more environment-sensitive than a plain unit test. Because Base.print is normally visible in ordinary modules, a naively written test may pass on both parent and fixed commits, yielding no differential. Generated-code tests that compare expression output must avoid brittle string comparison of `Base.print` versus the interpolated function object, since interpolating the function yields a GlobalRef/function value rather than the literal symbol. Reliance on a dedicated script rather than an in-repo test increases the chance the harness trigger diverges from upstream test conventions.\", \"suggested_tests\": \"1) Unit-test `print_help_str` with an EmitContext whose configs.static is true and assert the returned expression's call head is the `Base.print` function object (or a GlobalRef to Base.print), not the bare symbol `:print`; assert the same for the non-static branch remaining unchanged. 2) Integration test: define a fresh module that defines its own conflicting `print` (or does `import Base: print` shadowing with a method that throws/records), eval the generated static help code inside it, and assert the real help text is emitted; this fails on the parent commit and passes after the fix. 3) Golden test on a generated static CLI file for `--help`, capturing stdout and comparing to the expected help string with color disabled and a fixed width to keep output deterministic. 4) Regression scan of the codegen module for other unqualified Base references emitted into generated expressions, asserting each is interpolated rather than symbolic.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "no"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.6,
+    "summary": "Single-line macro-hygiene fix in Comonicon's Julia code generator: the emitted static help-printing expression referenced the unqualified symbol `print`, which resolves in the caller's module scope and breaks (or resolves to the wrong function) when the target module shadows or lacks `print`. The fix interpolates `Base.print` directly so the generated code always calls the intended function. This is a correctness fix to code the library produces at runtime, not a feature or refactor.",
+    "evidence": "Minimized production patch is one hunk changing `:(print(...))` to `:($Base.print(...))` in src/codegen/julia.jl, inside the `ctx.configs.static` branch of `print_help_str`. Minimization metadata reports globally_minimal=true and all_hunks_necessary=true, so the behavior difference is attributable to this single change. Runtime evidence reports strict_differential=stable_differential over 3 repetitions with the full suite passing on the fixed revision, indicating a reproducible, non-flaky before/after behavior difference. The change is a semantic fix to generated code, not documentation, logging, or diagnostics, and adds no new API surface or options.",
+    "missing_evidence": "No PR title/body, commit message, or linked issue is provided (traceability_class=UNVERIFIED), so intent cannot be confirmed from author narrative and issue_commit_match is unknown. No test files or trigger test identifiers are listed; the differential was observed via a dedicated script rather than a named repository test, so the exact failing assertion and the module/scope condition that triggers the unqualified-`print` resolution failure are not visible. The unminimized production patch is empty in the record, so it cannot be cross-checked against the minimized version.",
+    "validation_risks": "The trigger likely depends on generating a static CLI into a module where `print` is shadowed or unavailable; reproducing that setup may require code generation plus evaluation in a synthetic module, which is more environment-sensitive than a plain unit test. Because Base.print is normally visible in ordinary modules, a naively written test may pass on both parent and fixed commits, yielding no differential. Generated-code tests that compare expression output must avoid brittle string comparison of `Base.print` versus the interpolated function object, since interpolating the function yields a GlobalRef/function value rather than the literal symbol. Reliance on a dedicated script rather than an in-repo test increases the chance the harness trigger diverges from upstream test conventions.",
+    "suggested_tests": "1) Unit-test `print_help_str` with an EmitContext whose configs.static is true and assert the returned expression's call head is the `Base.print` function object (or a GlobalRef to Base.print), not the bare symbol `:print`; assert the same for the non-static branch remaining unchanged. 2) Integration test: define a fresh module that defines its own conflicting `print` (or does `import Base: print` shadowing with a method that throws/records), eval the generated static help code inside it, and assert the real help text is emitted; this fails on the parent commit and passes after the fix. 3) Golden test on a generated static CLI file for `--help`, capturing stdout and comparing to the expected help string with color disabled and a fixed width to keep output deterministic. 4) Regression scan of the codegen module for other unqualified Base references emitted into generated expressions, asserting each is interpolated rather than symbolic."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-205 static help uses Base.print"
+    ],
+    "exception_types": [
+      "22ced067b5425d3954de5fedf0e96a7ffd04eb5ca658f5d09213ffb52ede95d9",
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866"
+    ],
+    "fingerprints": [
+      "22ced067b5425d3954de5fedf0e96a7ffd04eb5ca658f5d09213ffb52ede95d9",
+      "565d240f5343e625ae579a4d45a770f1f02c6368b5ed4d06da4fbe6f47c28866"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

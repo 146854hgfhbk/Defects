@@ -1,0 +1,222 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-701",
+  "bug_id": "JULIA-701",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "Roger-luo/Configurations.jl",
+  "repository_url": "https://github.com/Roger-luo/Configurations.jl.git",
+  "issue_urls": [
+    "https://github.com/Roger-luo/Configurations.jl/issues/39"
+  ],
+  "issue_id": 39,
+  "buggy_revision": "315c534f4d4a25b7bb069540cf08375231caaf4b",
+  "fixed_revision": "946d8d966fae69d12f4cfa08dfd5c89ce6da9317",
+  "candidate_sha": "946d8d966fae69d12f4cfa08dfd5c89ce6da9317",
+  "source": "merged_pull_request",
+  "instance_id": "roger-luo__configurations.jl-40",
+  "swe": {
+    "base_commit": "315c534f4d4a25b7bb069540cf08375231caaf4b",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "pr_url": "https://github.com/Roger-luo/Configurations.jl/pull/40",
+    "issue_url": "https://github.com/Roger-luo/Configurations.jl/issues/39",
+    "problem_statement": "@static if inside @option\nWhile trying to port Pluto to Configurations.jl, I found this:\r\n```julia\r\njulia> using Configurations\r\n\r\njulia> f() = 123\r\nf (generic function with 1 method)\r\n\r\njulia> @option struct A\r\n           x=f()\r\n       end\r\n\r\njulia> @option struct B\r\n           x=1\r\n           @static if true\r\n               y=f()\r\n           end\r\n       end\r\n\r\njulia> A()\r\nA(;\r\n)\r\n\r\njulia> A(1)\r\nA(;\r\n    x = 1,\r\n)\r\n\r\njulia> B()\r\nERROR: MethodError: no method matching B(::Int64)\r\nClosest candidates are:\r\n  B(; x) at none:0\r\nStacktrace:\r\n [1] B(; x::Int64)\r\n   @ Main ./none:0\r\n [2] B()\r\n   @ Main ./none:0\r\n [3] top-level scope\r\n   @ REPL[9]:1\r\n\r\njulia> B(1,2)\r\nERROR: MethodError: no method matching B(::Int64, ::Int64)\r\nStacktrace:\r\n [1] top-level scope\r\n   @ REPL[5]:1\r\n\r\n```\r\n\r\nWe use `@static` here: https://github.com/fonsp/Pluto.jl/blob/main/src/Configuration.jl#L84",
+    "patch": "diff --git a/src/codegen.jl b/src/codegen.jl\nindex cf768b3..98bcb64 100644\n--- a/src/codegen.jl\n+++ b/src/codegen.jl\n@@ -71,14 +71,15 @@ OptionD(;\n ```\n \"\"\"\n macro option(ex)\n-    esc(option_m(ex))\n+    esc(option_m(__module__, ex))\n end\n \n macro option(alias::String, ex)\n-    esc(option_m(ex, alias))\n+    esc(option_m(__module__, ex, alias))\n end\n \n-function option_m(ex, type_alias=nothing)\n+function option_m(mod::Module, ex, type_alias=nothing)\n+    ex = macroexpand(mod, ex)\n     def = JLKwStruct(ex, type_alias)\n     return codegen_option_type(def)\n end\n",
+    "test_patch": "diff --git a/test/runtests.jl b/test/runtests.jl\nindex 65cb4e1..6071832 100644\n--- a/test/runtests.jl\n+++ b/test/runtests.jl\n@@ -405,6 +405,17 @@ end\n     @test from_dict(UnionToDict, d) == x\n end\n \n+@option struct MacroExpand\n+    x=1\n+    @static if true\n+        y=2\n+    end\n+end\n+\n+@testset \"macroexpand (#39)\" begin\n+    @test fieldnames(MacroExpand) == (:x, :y)\n+end\n+\n @option struct DefaultFunction\n     a::Float64\n     b::Float64 = sin(a)\n",
+    "FAIL_TO_PASS": [
+      "partial default"
+    ],
+    "PASS_TO_PASS": [
+      "options",
+      "to_dict",
+      "to_toml",
+      "default reflection",
+      "from_kwargs",
+      "inside constructor",
+      "test multi option type",
+      "optional field",
+      "validate keys",
+      "dict override",
+      "non-dict value conversion",
+      "to_dict nothing conversion",
+      "parametric types",
+      "emptry struct",
+      "custom kwfn",
+      "kwargs forward",
+      "default resolve",
+      "non-option type handling",
+      "multi-union to_dict/from_dict",
+      "macroexpand (#39)"
+    ],
+    "instance_id": "roger-luo__configurations.jl-40",
+    "repo": "Roger-luo/Configurations.jl",
+    "pr_description": "fix #39  need Expronicon 0.6.6",
+    "created_at": "2021-04-23 01:29:44",
+    "image_name": "docker.io/swerebenchv2/roger-luo-configurations.jl:40-315c534",
+    "language": "julia",
+    "interface": "Function: option_m(mod::Module, ex, type_alias=nothing)\nLocation: src/codegen.jl\nInputs: \n- mod (Module): the module in which the macro is being expanded, needed for correct `macroexpand` of `@static` blocks.  \n- ex (Expr): the raw expression of the `@option struct …` definition passed to the macro.  \n- type_alias (Union{String, Nothing}=nothing): optional string to provide an alias name for the generated option type.  \nOutputs: \n- Expr: a generated expression that defines the option type, including keyword fields and default values, ready to be evaluated by the macro system.  \nDescription: Generates the code for an `@option` struct, now explicitly receiving the calling module so that `@static` conditionals inside the struct are expanded correctly.\n\nFunction: @option(ex)\nLocation: src/codegen.jl\nInputs: \n- ex (Expr): the expression of a struct definition annotated with `@option`.  \nOutputs: \n- Any: the result of evaluating the generated option‐type definition (typically a new struct type).  \nDescription: Macro entry point for defining an option struct; forwards to `option_m(__module__, ex)` to produce the type with keyword constructors.\n\nFunction: @option(alias::String, ex)\nLocation: src/codegen.jl\nInputs: \n- alias (String): a string alias to be used as the type name for the generated option struct.  \n- ex (Expr): the struct definition expression.  \nOutputs: \n- Any: the evaluated definition of the aliased option type.  \nDescription: Variant of the `@option` macro that allows specifying a custom type name via a string alias, delegating to `option_m(__module__, ex, alias)`.\n",
+    "license": "MIT",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e \"using Pkg; Pkg.instantiate()\""
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e \"using Pkg; Pkg.test()\""
+    },
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.98,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [
+          "https://github.com/fonsp/Pluto.jl/blob/main/src/Configuration.jl#L84"
+        ],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "minor_bug"
+        ],
+        "reasoning": "The issue reports that using @static inside @option causes construction failures for structs, and provides reproducible REPL examples. The added test defines a simple @option struct with a @static block and asserts that both fields appear, directly matching the reported problem. No test introduces unrelated requirements or external dependencies beyond the referenced Pluto code, and the specification is clear, so the task is a clean, solvable bug fix.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 2,
+      "num_modified_lines": null,
+      "pr_author": "Roger-luo",
+      "pr_labels": null,
+      "pr_url": "https://github.com/Roger-luo/Configurations.jl/pull/40"
+    }
+  },
+  "parent_sha": "315c534f4d4a25b7bb069540cf08375231caaf4b",
+  "changed_production_files": [
+    "src/codegen.jl"
+  ],
+  "changed_test_files": [
+    "test/runtests.jl"
+  ],
+  "trigger_tests": [
+    "partial default"
+  ],
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.6.7",
+    "julia_version_origin": "fixed_revision_era_pre_2022",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test()'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.6.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "946d8d966fae69d12f4cfa08dfd5c89ce6da9317",
+    "project": "Roger-luo/Configurations.jl",
+    "input_sha256": "148e3901888f93918e43d3a935fbd4b3cda3f961229d139ba78e6df48257b0f6",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:37:15Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.3756123041127694,
+      "input_tokens": 4217,
+      "output_tokens": 734
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.82, \"summary\": \"The `@option` macro parsed its argument expression without macroexpanding it first, so any nested macro (e.g. `@static if ... end`) inside an option struct body was fed to `JLKwStruct` unexpanded. The resulting type was generated with missing/incorrect fields and a broken keyword constructor, as shown by the `MethodError: no method matching B(::Int64)` reproduction in issue #39. The fix threads `__module__` into `option_m` and calls `macroexpand(mod, ex)` before struct parsing.\", \"evidence\": \"Issue #39 gives a concrete, minimal reproduction where the same struct definition works without `@static` (type `A`) and produces incorrect codegen plus MethodErrors with `@static` (type `B`), demonstrating a real behavioral defect rather than a missing capability. Issue #40 (\\\"macroexpand option\\\") explicitly states it fixes #39, matching the commit content. The production patch is a single hunk in src/codegen.jl adding module-aware macroexpansion; the two macro signatures are updated only to pass `__module__` through. Minimization reports 1/1 hunks kept, globally minimal, all hunks necessary. Runtime evidence shows a stable differential across 3 repetitions with the fixed full suite passing, and test/runtests.jl carries the accompanying test change.\", \"missing_evidence\": \"No PR title/body or commit subject was provided, and `trigger_tests` is empty, so the specific failing test name is not visible. Issue #40 mentions requiring Expronicon 0.6.6, but no Project.toml compat change appears in the patch, so the dependency floor for reproduction is unverified. The exact content of the test/runtests.jl diff is not shown.\", \"validation_risks\": \"Reproduction may depend on an Expronicon version at or above 0.6.6; if the manifest resolves an older version the buggy behavior could manifest differently or the fix could error. `macroexpand` at parse time makes behavior module-dependent, so the test must define the struct in a module where the nested macro (`@static`) resolves. Because trigger tests are not named, the harness must derive them from the test patch. Julia version differences could alter `@static if true` expansion and the resulting error message.\", \"suggested_tests\": \"Define an `@option struct` containing `@static if true ... end` with a defaulted field and assert the field is present via `fieldnames`, that the keyword constructor accepts it, and that the default value is applied. Add a case where `@static if false` excludes the field and assert it is absent. Add a user-defined macro inside `@option` to confirm expansion uses the caller's module. Cover the aliased form `@option \\\"name\\\" struct ... end` with a nested macro. Assert the no-nested-macro baseline (`A()` / `A(x=1)`) still round-trips through `to_dict`/`from_dict` unchanged.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.82,
+    "summary": "The `@option` macro parsed its argument expression without macroexpanding it first, so any nested macro (e.g. `@static if ... end`) inside an option struct body was fed to `JLKwStruct` unexpanded. The resulting type was generated with missing/incorrect fields and a broken keyword constructor, as shown by the `MethodError: no method matching B(::Int64)` reproduction in issue #39. The fix threads `__module__` into `option_m` and calls `macroexpand(mod, ex)` before struct parsing.",
+    "evidence": "Issue #39 gives a concrete, minimal reproduction where the same struct definition works without `@static` (type `A`) and produces incorrect codegen plus MethodErrors with `@static` (type `B`), demonstrating a real behavioral defect rather than a missing capability. Issue #40 (\"macroexpand option\") explicitly states it fixes #39, matching the commit content. The production patch is a single hunk in src/codegen.jl adding module-aware macroexpansion; the two macro signatures are updated only to pass `__module__` through. Minimization reports 1/1 hunks kept, globally minimal, all hunks necessary. Runtime evidence shows a stable differential across 3 repetitions with the fixed full suite passing, and test/runtests.jl carries the accompanying test change.",
+    "missing_evidence": "No PR title/body or commit subject was provided, and `trigger_tests` is empty, so the specific failing test name is not visible. Issue #40 mentions requiring Expronicon 0.6.6, but no Project.toml compat change appears in the patch, so the dependency floor for reproduction is unverified. The exact content of the test/runtests.jl diff is not shown.",
+    "validation_risks": "Reproduction may depend on an Expronicon version at or above 0.6.6; if the manifest resolves an older version the buggy behavior could manifest differently or the fix could error. `macroexpand` at parse time makes behavior module-dependent, so the test must define the struct in a module where the nested macro (`@static`) resolves. Because trigger tests are not named, the harness must derive them from the test patch. Julia version differences could alter `@static if true` expansion and the resulting error message.",
+    "suggested_tests": "Define an `@option struct` containing `@static if true ... end` with a defaulted field and assert the field is present via `fieldnames`, that the keyword constructor accepts it, and that the default value is applied. Add a case where `@static if false` excludes the field and assert it is absent. Add a user-defined macro inside `@option` to confirm expansion uses the caller's module. Cover the aliased form `@option \"name\" struct ... end` with a nested macro. Assert the no-nested-macro baseline (`A()` / `A(x=1)`) still round-trips through `to_dict`/`from_dict` unchanged."
+  },
+  "trigger_test_origin": "swe_rebench_test_patch",
+  "trigger": {
+    "mode": "test_patch_suite",
+    "path": "trigger/upstream-tests.patch",
+    "origin": "swe_rebench_test_patch",
+    "timeout_seconds": 1800,
+    "test_files": [
+      "test/runtests.jl"
+    ],
+    "test_files_sha256": {
+      "test/runtests.jl": "78dd7f83f7118df3b4a7781b33cb2a5354db5ccd395597aaf1f33c9de729ee2d"
+    },
+    "oracle": {
+      "schema_version": 1,
+      "f2p_tests": [
+        "partial default"
+      ],
+      "added_testsets": [
+        "macroexpand (#39)"
+      ],
+      "inferred_testset_context": [
+        "multi-union to_dict/from_dict"
+      ],
+      "assertion_expression_sha256": [
+        "2fba0cec752518580320ea991fff342d3b88be5ee169709d867d3eacbfc6eb91"
+      ]
+    },
+    "sha256": "21d8abf385b87b4fa2dd84956dcf14a17421451c738578ac1d055fa678283145"
+  },
+  "origin_dataset": "nebius/SWE-rebench-V2"
+}

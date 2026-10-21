@@ -1,0 +1,98 @@
+diff --git a/Changes b/Changes
+index b53895ccd630efaa465fafd20de58d47548a335f..4deb0e0c2a52854a3bf284dbb75b637bceaaf852 100644
+--- a/Changes
++++ b/Changes
+@@ -2,6 +2,11 @@ Revision history for Path-Tiny
+ 
+ {{$NEXT}}
+ 
++    [Bug fixes]
++
++    - Path stringification now adds "./" in front of paths starting with literal tilde
++      so they will round-trip.  FREEZE updated to use this stringification rule as well.
++
+     [Changes]
+ 
+     - `move` now uses File::Copy::move internally instead of the built-in `rename`,
+diff --git a/lib/Path/Tiny.pm b/lib/Path/Tiny.pm
+index e0c466a2e5b24c52b79ec95b89831474c6342967..14b6e04bfd731bdbd40c15383848bdd83eec5e6d 100644
+--- a/lib/Path/Tiny.pm
++++ b/lib/Path/Tiny.pm
+@@ -27,13 +27,13 @@ use constant {
+ };
+ 
+ use overload (
+-    q{""}    => sub    { $_[0]->[PATH] },
++    q{""}    => 'stringify',
+     bool     => sub () { 1 },
+     fallback => 1,
+ );
+ 
+ # FREEZE/THAW per Sereal/CBOR/Types::Serialiser protocol
+-sub FREEZE { return $_[0]->[PATH] }
++*FREEZE = \&stringify;
+ sub THAW   { return path( $_[2] ) }
+ { no warnings 'once'; *TO_JSON = *FREEZE };
+ 
+@@ -2202,7 +2202,7 @@ Current API available since 0.001.
+ 
+ =cut
+ 
+-sub stringify { $_[0]->[PATH] }
++sub stringify { $_[0]->[PATH] =~ /^~/ ? './' . $_[0]->[PATH] : $_[0]->[PATH] }
+ 
+ =method subsumes
+ 
+diff --git a/t/basic.t b/t/basic.t
+index 178f98688a7f48ee7b65e2ccbaa20c17c3df5382..b465200a5f30e63864a5b21827f39cf4267ce77e 100644
+--- a/t/basic.t
++++ b/t/basic.t
+@@ -161,20 +161,29 @@ is $file->parent,  '/foo/baz';
+     );
+ 
+     for my $test (@tests) {
+-        is(path($test->[0]), defined $test->[1] ? $test->[1] : $test->[0], $test->[2]);
++        my $path = path($test->[0]);
++        my $internal_path = $path->[0]; # Avoid stringification adding a "./" prefix
++        is($internal_path, defined $test->[1] ? $test->[1] : $test->[0], $test->[2]);
+     }
+ 
+-    is(path('.')->child('~'), '~', 'Test indirect forms of literal tilde under current directory');
++    is(path('.')->child('~')->[0], '~', 'Test indirect forms of literal tilde under current directory');
+ 
+     $file = path('/tmp/foo/~root');
+-    is $file->relative('/tmp/foo'), '~root', 'relative path begins with tilde';
++    is $file->relative('/tmp/foo')->[0], '~root', 'relative path begins with tilde';
+ }
+ 
+ # freeze/thaw
+ {
+-    my $path = path("/foo/bar/baz");
+-    is( Path::Tiny->THAW( "fake", $path->FREEZE("fake") ),
+-        $path, "FREEZE-THAW roundtrip" );
++    my @cases = qw(
++        /foo/bar/baz"
++        ./~root
++    );
++
++    for my $c ( @cases ) {
++        my $path = path($c);
++        is( Path::Tiny->THAW( "fake", $path->FREEZE("fake") ),
++            $path, "FREEZE-THAW roundtrip: $c" );
++    }
+ }
+ 
+ # assertions
+diff --git a/t/children.t b/t/children.t
+index 1e32693df9cb1349018d9a81f08c74adf1954a0d..105e758973313b100b167954894cb6017f344fd2 100644
+--- a/t/children.t
++++ b/t/children.t
+@@ -41,7 +41,7 @@ like $@, qr/Invalid argument '\Q$arrayref\E' for children()/,
+ 
+ my $raw_tilde = path(".", "~");
+ my $tilde_child = $raw_tilde->child("rhubarb");
+-is( $tilde_child, "~/rhubarb", "child of literal tilde" );
++is( $tilde_child->[0], "~/rhubarb", "child of literal tilde" );
+ 
+ done_testing;
+ # COPYRIGHT

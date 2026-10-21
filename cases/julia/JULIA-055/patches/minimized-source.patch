@@ -1,0 +1,44 @@
+diff --git a/src/problems/ode_problems.jl b/src/problems/ode_problems.jl
+--- a/src/problems/ode_problems.jl
++++ b/src/problems/ode_problems.jl
+@@ -231,6 +231,18 @@ function ODEProblem(f::AbstractODEFunction, u0, tspan, args...; kwargs...)
+     return ODEProblem{isinplace(f)}(f, u0, tspan, args...; kwargs...)
+ end
+ 
++# In-place `SplitFunction` evaluation needs a temporary buffer (`_func_cache`).
++# `SplitODEProblem` always allocates it from `u0`; bare `ODEProblem(sf, u0, tspan)`
++# must do the same so `f(du,u,p,t)` does not call `get_tmp(nothing, du)`.
++function ODEProblem(f::SplitFunction, u0, tspan, args...; kwargs...)
++    iip = isinplace(f)
++    if iip && f._func_cache === nothing
++        _func_cache = typeof(u0) <: AbstractArray{<:Number} ? DiffCache(u0) : u0
++        f = remake(f; _func_cache)
++    end
++    return ODEProblem{iip}(f, u0, tspan, args...; kwargs...)
++end
++
+ function ODEProblem(f, u0, tspan, p = NullParameters(); kwargs...)
+     iip = isinplace(f, 4)
+     _u0 = prepare_initial_state(u0)
+diff --git a/src/scimlfunctions.jl b/src/scimlfunctions.jl
+--- a/src/scimlfunctions.jl
++++ b/src/scimlfunctions.jl
+@@ -2868,6 +2868,18 @@ end
+ 
+ (f::SplitFunction)(u, p, t) = f.f1(u, p, t) + f.f2(u, p, t)
+ function (f::SplitFunction)(du, u, p, t)
++    if f._func_cache === nothing
++        throw(
++            ArgumentError(
++                string(
++                    "In-place SplitFunction evaluation requires `_func_cache`. ",
++                    "Build the problem with `SplitODEProblem(f1, f2, u0, tspan)` or ",
++                    "`ODEProblem(split_function, u0, tspan)` so the cache is allocated ",
++                    "from `u0`. A bare `SplitFunction(f1, f2)` has no buffer until then."
++                )
++            )
++        )
++    end
+     tmp = get_tmp(f._func_cache, du)
+     f.f1(tmp, u, p, t)
+     f.f2(du, u, p, t)

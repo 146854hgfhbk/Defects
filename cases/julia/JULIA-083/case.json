@@ -1,0 +1,118 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-083",
+  "bug_id": "JULIA-083",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/565"
+  ],
+  "issue_id": 565,
+  "buggy_revision": "746d74c638e9e5c40795b6db57997e27f735bc44",
+  "fixed_revision": "71320ea0a64ff0a35dfb9ed43046de518a248d79",
+  "candidate_sha": "71320ea0a64ff0a35dfb9ed43046de518a248d79",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "746d74c638e9e5c40795b6db57997e27f735bc44",
+  "changed_production_files": [
+    "src/core/parse_stream.jl"
+  ],
+  "changed_test_files": [
+    "test/hooks.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-083 incomplete let comment"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "ed5e6cf9fb3c0576169b33c696511e2914233ef5618e97c33765a46387af096f",
+    "oracle": {
+      "mwe_basis": "upstream Core parser hook regression assertions",
+      "source_evidence": "Literal assertions from JuliaSyntax test/hooks.jl in the fixing boundary: an unterminated let statement ending in a comment must be tagged :other by the parser hook in both statement and complete-input modes.",
+      "upstream_test_patch_sha256": "95c099c3cd332bf7e863e08e20cfba81c4a1bd77a642112bd149c180ca9a0fee"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "71320ea0a64ff0a35dfb9ed43046de518a248d79",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "09e9d18715cbac67b0a81a48a29a1f03d24ff0e06dc22e2c3d9e865b45633205",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:54:00Z",
+    "usage": {
+      "prompt_tokens": 1538,
+      "completion_tokens": 519,
+      "total_tokens": 2057
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.92,\n  \"summary\": \"Fix for a real parsing bug where `let x = 1 #` (with a trailing comment) incorrectly threw a ParseError ('premature end of input') instead of treating it as an incomplete expression awaiting more input. The fix modifies `last_non_whitespace_byte` in the parse stream to skip zero-width error tokens.\",\n  \"evidence\": \"Issue #565 clearly documents the bug with a reproducible example: `let x = 1 #` throws a ParseError instead of prompting for more input. The fix is in production code (`src/core/parse_stream.jl`) and issue #566 (the PR) explicitly states it fixes #565. A test file (`test/hooks.jl`) is included, indicating test evidence for the fix.\",\n  \"missing_evidence\": \"The actual diff content is not provided, so the exact code change cannot be inspected. However, the issue description, commit message context, and file paths all align clearly.\",\n  \"validation_risks\": \"The fix involves skipping zero-width error tokens in `last_non_whitespace_byte`, which could potentially affect other parsing edge cases where error tokens are present. Regression testing across the full parser test suite would be important.\",\n  \"suggested_tests\": \"Test that `let x = 1 #` in incomplete-input mode is treated as incomplete (not an error). Test that `let x = 1 # comment\\\\nx\\\\nend` parses correctly. Test other expressions with trailing comments that span multiple lines to ensure no regressions.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.92,
+    "summary": "Fix for a real parsing bug where `let x = 1 #` (with a trailing comment) incorrectly threw a ParseError ('premature end of input') instead of treating it as an incomplete expression awaiting more input. The fix modifies `last_non_whitespace_byte` in the parse stream to skip zero-width error tokens.",
+    "evidence": "Issue #565 clearly documents the bug with a reproducible example: `let x = 1 #` throws a ParseError instead of prompting for more input. The fix is in production code (`src/core/parse_stream.jl`) and issue #566 (the PR) explicitly states it fixes #565. A test file (`test/hooks.jl`) is included, indicating test evidence for the fix.",
+    "missing_evidence": "The actual diff content is not provided, so the exact code change cannot be inspected. However, the issue description, commit message context, and file paths all align clearly.",
+    "validation_risks": "The fix involves skipping zero-width error tokens in `last_non_whitespace_byte`, which could potentially affect other parsing edge cases where error tokens are present. Regression testing across the full parser test suite would be important.",
+    "suggested_tests": "Test that `let x = 1 #` in incomplete-input mode is treated as incomplete (not an error). Test that `let x = 1 # comment\\nx\\nend` parses correctly. Test other expressions with trailing comments that span multiple lines to ensure no regressions."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-083 incomplete let comment"
+    ],
+    "exception_types": [
+      "46a934e6d7821f1efa5b3d8f4d5a060b1e138f75553a7ed667309a6464ebeb8f",
+      "cbb2da6cd1e9489010307247b6fbf64388e69eee2e414eec8ee09f9a3e00c326"
+    ],
+    "fingerprints": [
+      "46a934e6d7821f1efa5b3d8f4d5a060b1e138f75553a7ed667309a6464ebeb8f",
+      "cbb2da6cd1e9489010307247b6fbf64388e69eee2e414eec8ee09f9a3e00c326"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

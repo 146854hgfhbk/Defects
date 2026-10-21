@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-308",
+  "technical_evidence_sha256": "321ab49663978e5638783c98569016b122a2122fa4db1fb44f5375878ac8f32f",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "a0d8586fa820089c4a5c2e7de360c82f98030ff906fc56cc2ff6c36ef9ff53bb",
+  "reviewed_at": "2026-08-11T12:05:21.498897+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#1224",
+  "rationale": "Issue #1224 reports dartfmt removing '?' from '()?' typed fields, causing the formatter to report 'unexpected output'. The minimized production patch adds exactly one line `token(node.question);` to preserve the nullability marker for empty record types. The trigger test 'whitespace record_types.unit' added in the same commit contains the exact reproducer '()? x;' from the issue. Strict runtime validation confirms: (1) buggy version fails the trigger test deterministically across 3 repetitions, (2) fixed version passes cleanly in isolated, suite, and reversed runs, (3) full suite on buggy reproduces only the declared trigger, (4) full suite on fixed is all green. The .unit fixture is loaded by test/formatter_test.dart which exists at both revisions, making the trigger semantically equivalent to the reported defect without depending on new APIs. No active same-project root causes were supplied, confirming no duplicate.\n\nIssue #1224 reports dartfmt removing '?' from '()?' typed field, producing '() x;' instead of '()? x;' and triggering formatter's own 'unexpected output' error. The minimized production patch adds exactly one line 'token(node.question);' after 'token(node.rightParenthesis);' in the empty record type handling path of source_visitor.dart, directly addressing the missing token emission. The trigger test added to 'test/whitespace/record_types.unit' fixture ('>>> empty nullable record type / ()? x;') exercises the same defect: formatting '(  )  ?   x;' must preserve '()? x;'. Strict runtime evidence confirms all gates passed: trigger.buggy_differential shows the selector 'test/formatter_test.dart::whitespace record_types.unit' fails differentially on buggy (a36eb20) and passes on fixed (873fb1d); trigger.deterministic with 3 fingerprint groups; full_suite.buggy_reproduces_only_triggers confirms isolation; trigger.fixed_clean and full_suite.fixed_all_green confirm fix completeness. The trigger patch is identical to the original commit's test changes (495798bce... sha256 match). The active_same_project_root_causes list is empty, confirming no duplicates.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:05:07.868870+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a0d8586fa820089c4a5c2e7de360c82f98030ff906fc56cc2ff6c36ef9ff53bb",
+      "response_sha256": "a77352f39b1bb532eb9c7d472501a0513c79ff9e866c51349ddfbd18672a1f50",
+      "response_id": "msg_8dd5c49a-e8a6-4ca3-87",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2166
+        },
+        "cache_creation_input_tokens": 2166,
+        "cache_read_input_tokens": 5715,
+        "input_tokens": 7256,
+        "output_tokens": 949
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1224",
+      "rationale": "Issue #1224 reports dartfmt removing '?' from '()?' typed fields, causing the formatter to report 'unexpected output'. The minimized production patch adds exactly one line `token(node.question);` to preserve the nullability marker for empty record types. The trigger test 'whitespace record_types.unit' added in the same commit contains the exact reproducer '()? x;' from the issue. Strict runtime validation confirms: (1) buggy version fails the trigger test deterministically across 3 repetitions, (2) fixed version passes cleanly in isolated, suite, and reversed runs, (3) full suite on buggy reproduces only the declared trigger, (4) full suite on fixed is all green. The .unit fixture is loaded by test/formatter_test.dart which exists at both revisions, making the trigger semantically equivalent to the reported defect without depending on new APIs. No active same-project root causes were supplied, confirming no duplicate.",
+      "evidence_paths": [
+        "source_candidate.linked_issues[0].body",
+        "source_candidate.linked_issues[0].defect_text_matches",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed",
+        "strict_post_minimization.checks.trigger.deterministic.passed",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers.passed",
+        "strict_post_minimization.checks.full_suite.fixed_all_green.passed",
+        "trigger_reduction.status"
+      ],
+      "risks": [
+        "Trigger is a .unit fixture file (data-driven test) rather than a standalone Dart test, requiring the custom formatter_test.dart harness for execution"
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:05:21.498631+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "a0d8586fa820089c4a5c2e7de360c82f98030ff906fc56cc2ff6c36ef9ff53bb",
+      "response_sha256": "c18a7544d9831c7269c48dec492de4043abac2baf22b5f222243728a98fb4dd8",
+      "response_id": "msg_4ed90001-8343-4d66-a2",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 2352
+        },
+        "cache_creation_input_tokens": 2352,
+        "cache_read_input_tokens": 5669,
+        "input_tokens": 7256,
+        "output_tokens": 1029
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#1224",
+      "rationale": "Issue #1224 reports dartfmt removing '?' from '()?' typed field, producing '() x;' instead of '()? x;' and triggering formatter's own 'unexpected output' error. The minimized production patch adds exactly one line 'token(node.question);' after 'token(node.rightParenthesis);' in the empty record type handling path of source_visitor.dart, directly addressing the missing token emission. The trigger test added to 'test/whitespace/record_types.unit' fixture ('>>> empty nullable record type / ()? x;') exercises the same defect: formatting '(  )  ?   x;' must preserve '()? x;'. Strict runtime evidence confirms all gates passed: trigger.buggy_differential shows the selector 'test/formatter_test.dart::whitespace record_types.unit' fails differentially on buggy (a36eb20) and passes on fixed (873fb1d); trigger.deterministic with 3 fingerprint groups; full_suite.buggy_reproduces_only_triggers confirms isolation; trigger.fixed_clean and full_suite.fixed_all_green confirm fix completeness. The trigger patch is identical to the original commit's test changes (495798bce... sha256 match). The active_same_project_root_causes list is empty, confirming no duplicates.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.candidate.linked_issues[0].body",
+        "source_candidate.candidate.llm_review.evidence",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.trigger.fixed_clean",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_post_minimization.passed",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "Requires Dart 3 SDK with records language feature enabled at buggy revision",
+        "Trigger test is data-driven via .unit fixture loaded by test/formatter_test.dart custom harness"
+      ]
+    }
+  ]
+}

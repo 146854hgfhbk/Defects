@@ -1,0 +1,45 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5b3c860..6a819f8 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++## 3.0.1-dev
++
++* Fix a bug where a `null` result to a request caused an exception.
++
+ ## 3.0.0
+ 
+ * Migrate to null safety.
+diff --git a/lib/src/server.dart b/lib/src/server.dart
+index a2b4dc1..ac34edf 100644
+--- a/lib/src/server.dart
++++ b/lib/src/server.dart
+@@ -201,7 +201,7 @@ class Server {
+       var method = _methods[name];
+       method ??= _tryFallbacks;
+ 
+-      Object result;
++      Object? result;
+       if (method is ZeroArgumentFunction) {
+         if (request.containsKey('params')) {
+           throw RpcException.invalidParams('No parameters are allowed for '
+diff --git a/test/server/server_test.dart b/test/server/server_test.dart
+index 14ae1e4..8213ee7 100644
+--- a/test/server/server_test.dart
++++ b/test/server/server_test.dart
+@@ -44,6 +44,15 @@ void main() {
+         completion(equals({'jsonrpc': '2.0', 'result': 'foo', 'id': 1234})));
+   });
+ 
++  test('Allows a `null` result', () {
++    controller.server.registerMethod('foo', () => null);
++
++    expect(
++        controller
++            .handleRequest({'jsonrpc': '2.0', 'method': 'foo', 'id': 1234}),
++        completion(equals({'jsonrpc': '2.0', 'result': null, 'id': 1234})));
++  });
++
+   test('a method that takes no parameters rejects parameters', () {
+     controller.server.registerMethod('foo', () => 'foo');
+ 

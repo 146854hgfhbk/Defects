@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-967",
+  "technical_evidence_sha256": "e466443cd1968fc6b496634ea410eeceffb588060baaf541364cc5a089243b30",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "8bba8b151f4affddf2fd2675a1d425a53d59ca8ad1d32c58b3f714e18b0962d3",
+  "reviewed_at": "2026-08-14T06:20:10.969752+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/dart_style#960",
+  "rationale": "Issue #960 reports dartfmt 1.3.7 silently dropping the nullable '?' on a function-typed initializing formal ('C({@m int this.v()?})' formatted to 'C({@m int this.v()})', with the formatter's own self-check reporting unexpected output). The minimized production patch is exactly one line in lib/src/source_visitor.dart, adding 'token(node.question);' after 'visit(node.parameters);' in the formal-parameter visit that emits node.period/identifier/parameters, so the previously unemitted question token is now written. That is the direct cause of the dropped token and nothing else: the version bump in lib/src/cli/formatter_options.dart, CHANGELOG, pubspec.yaml/pubspec.lock churn present in the original commit are all excluded from patches/minimized-production.patch. Triggers are the unchanged upstream fixtures from the same fixing commit (test/regression/0900/0960.unit reproduces the issue snippet verbatim; test/whitespace/functions.unit adds nullable old-style function-typed parameter cases including 'function(int? this.callback()?)'), executed through the pre-existing test/formatter_test.dart harness with no new production API introduced by the fix. Strict evidence for both original and post-minimization runs passes every gate: build on both revisions, buggy differential with reproduced selectors ['test/formatter_test.dart::regression 0960.unit', 'test/formatter_test.dart::whitespace functions.unit'], deterministic fingerprints across 3 repetitions (38 matrix runs), fixed isolated/suite/reversed clean, and fixed full suite all green with buggy full-suite failures confined to the declared triggers. active_same_project_root_causes is empty and dart-lang/dart_style#960 is the allowed verified issue key.\n\nIssue #960 (labeled bug, closed by PR #962) reports dartfmt 1.3.7 silently dropping the '?' when formatting a function-typed initializing formal ('C({@m int this.v()?});' formatted to 'C({@m int this.v()});'), which the formatter itself flags as unexpected output. The minimized production patch is a single line in SourceVisitor's function-typed formal parameter handling, adding 'token(node.question);' after 'visit(node.parameters);' so the existing nullability token is emitted; this is exactly the omission described in the issue. The minimization correctly strips everything unrelated that appeared in the original commit: the dartStyleVersion constant bump in lib/src/cli/formatter_options.dart, CHANGELOG.md, pubspec.yaml, and pubspec.lock dependency-version churn. No refactor, formatting, feature extension, docs, or config remains in the minimized patch. The triggers are the project-native .unit fixtures from the same fixing commit (test/regression/0900/0960.unit reproducing the issue snippet verbatim, and two added cases in test/whitespace/functions.unit for nullable old-style named and initializing-formal function-typed parameters), executed via the pre-existing test/formatter_test.dart harness; they exercise only the public formatter entry point and introduce no production API added by the fix. Strict evidence for both original and post-minimization runs shows build passing on both revisions, both declared selectors reproducing on the buggy revision with buggy full-suite failures confined to those triggers, all fixed isolated/suite/reversed runs green, 38 matrix runs at 3 repetitions, and deterministic fingerprints (4 groups). active_same_project_root_causes is empty, so #960 is not a duplicate, and it matches the single allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:19:48.388912+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8bba8b151f4affddf2fd2675a1d425a53d59ca8ad1d32c58b3f714e18b0962d3",
+      "response_sha256": "64efd25328b66a0b8dfeedd7fe880059e7861010fd03d63849dc2c40d2c7bdf7",
+      "response_id": "msg_740e07e5174a42cfa6e0721d757f56c7",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5947764770480929,
+        "input_tokens": 16428,
+        "output_tokens": 685
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#960",
+      "rationale": "Issue #960 reports dartfmt 1.3.7 silently dropping the nullable '?' on a function-typed initializing formal ('C({@m int this.v()?})' formatted to 'C({@m int this.v()})', with the formatter's own self-check reporting unexpected output). The minimized production patch is exactly one line in lib/src/source_visitor.dart, adding 'token(node.question);' after 'visit(node.parameters);' in the formal-parameter visit that emits node.period/identifier/parameters, so the previously unemitted question token is now written. That is the direct cause of the dropped token and nothing else: the version bump in lib/src/cli/formatter_options.dart, CHANGELOG, pubspec.yaml/pubspec.lock churn present in the original commit are all excluded from patches/minimized-production.patch. Triggers are the unchanged upstream fixtures from the same fixing commit (test/regression/0900/0960.unit reproduces the issue snippet verbatim; test/whitespace/functions.unit adds nullable old-style function-typed parameter cases including 'function(int? this.callback()?)'), executed through the pre-existing test/formatter_test.dart harness with no new production API introduced by the fix. Strict evidence for both original and post-minimization runs passes every gate: build on both revisions, buggy differential with reproduced selectors ['test/formatter_test.dart::regression 0960.unit', 'test/formatter_test.dart::whitespace functions.unit'], deterministic fingerprints across 3 repetitions (38 matrix runs), fixed isolated/suite/reversed clean, and fixed full suite all green with buggy full-suite failures confined to the declared triggers. active_same_project_root_causes is empty and dart-lang/dart_style#960 is the allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/0900/0960.unit",
+        "test/whitespace/functions.unit",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "strict_original.checks.trigger.fixed_clean",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.verified_fix_issue_numbers"
+      ],
+      "risks": [
+        "The whitespace/functions.unit fixture adds a named non-initializing function-typed parameter case ('function({int? callback()?})') alongside the initializing-formal case; the selector granularity is file-level, so per-case attribution to the single-line fix is inferred from the fixed-revision green run rather than observed independently.",
+        "The regression fixture 0960.unit lacks a trailing newline, so any harness change in fixture parsing could affect reproduction stability.",
+        "Trigger execution depends on dart_style's project-native .unit fixture harness rather than plain Dart test functions, which is less portable across benchmark runners."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-14T06:20:10.969403+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "8bba8b151f4affddf2fd2675a1d425a53d59ca8ad1d32c58b3f714e18b0962d3",
+      "response_sha256": "80907a2d6aad6b308950ea998e067d8c814dd9fa7a20624e2d08e7db07eac3a8",
+      "response_id": "msg_49df4ea0f80945c9923b292da327ec41",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.44431829754560526,
+        "input_tokens": 16093,
+        "output_tokens": 716
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/dart_style#960",
+      "rationale": "Issue #960 (labeled bug, closed by PR #962) reports dartfmt 1.3.7 silently dropping the '?' when formatting a function-typed initializing formal ('C({@m int this.v()?});' formatted to 'C({@m int this.v()});'), which the formatter itself flags as unexpected output. The minimized production patch is a single line in SourceVisitor's function-typed formal parameter handling, adding 'token(node.question);' after 'visit(node.parameters);' so the existing nullability token is emitted; this is exactly the omission described in the issue. The minimization correctly strips everything unrelated that appeared in the original commit: the dartStyleVersion constant bump in lib/src/cli/formatter_options.dart, CHANGELOG.md, pubspec.yaml, and pubspec.lock dependency-version churn. No refactor, formatting, feature extension, docs, or config remains in the minimized patch. The triggers are the project-native .unit fixtures from the same fixing commit (test/regression/0900/0960.unit reproducing the issue snippet verbatim, and two added cases in test/whitespace/functions.unit for nullable old-style named and initializing-formal function-typed parameters), executed via the pre-existing test/formatter_test.dart harness; they exercise only the public formatter entry point and introduce no production API added by the fix. Strict evidence for both original and post-minimization runs shows build passing on both revisions, both declared selectors reproducing on the buggy revision with buggy full-suite failures confined to those triggers, all fixed isolated/suite/reversed runs green, 38 matrix runs at 3 repetitions, and deterministic fingerprints (4 groups). active_same_project_root_causes is empty, so #960 is not a duplicate, and it matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "lib/src/source_visitor.dart",
+        "patches/trigger-tests.patch",
+        "test/regression/0900/0960.unit",
+        "test/whitespace/functions.unit",
+        "issue_urls",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "active_same_project_root_causes",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "Both triggers are author-written fixtures from the fixing commit rather than an independent curator reproduction; equivalence rests on 0960.unit matching the issue snippet and on the strict differential result.",
+        "The functions.unit trigger selector is a whole-file fixture suite, so future edits to unrelated cases in test/whitespace/functions.unit could perturb that selector.",
+        "Trigger granularity depends on dart_style's .unit harness naming; selector stability is tied to that project-specific test infrastructure rather than standard Dart test declarations.",
+        "The nullable-named-parameter case in functions.unit is adjacent syntax rather than the literal issue snippet; strict evidence shows it reproduces on the buggy revision, but its coverage is slightly broader than the reported defect."
+      ]
+    }
+  ]
+}

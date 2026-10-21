@@ -1,0 +1,181 @@
+{
+  "schema_version": 2,
+  "case_id": "KOTLIN-142",
+  "status": "candidate_validated",
+  "candidate_source": "Kotlin/kotlin-swe-bench",
+  "source_task_id": "detekt_detekt-6443",
+  "revision_mode": "real_upstream_commit",
+  "project": "detekt/detekt",
+  "license": "Apache-2.0",
+  "pull_request_number": 6443,
+  "pr_url": "https://github.com/detekt/detekt/pull/6443",
+  "issue_urls": [
+    "https://github.com/detekt/detekt/issues/6442"
+  ],
+  "buggy_revision": "d99607861bb185a525c3db9c5b2568438c2a7bd2",
+  "fixed_revision": "eb52db740ee6770dcfb0b8b9a1fa85ca2f031c22",
+  "upstream_head_revision": "729abfe09827f4ac0803602a176706f3454d1cf1",
+  "patch": "patches/minimized-source.patch",
+  "patch_sha256": "0ae826993cfb5b9e0de6dba72e586be5e51cd2634f13ff2b573447d63c24da9e",
+  "changed_production_files": [
+    "detekt-rules-errorprone/src/main/kotlin/io/gitlab/arturbosch/detekt/rules/bugs/UnconditionalJumpStatementInLoop.kt"
+  ],
+  "trigger_tests": [
+    "*does not report a conditional break in a single body expression*"
+  ],
+  "trigger_test_filters": {},
+  "trigger_test_patch": "trigger-tests.patch",
+  "environment_lock": "environment.lock.json",
+  "build": {
+    "system": "Gradle Wrapper",
+    "gradle_version": "8.4",
+    "java_version": 17,
+    "android_sdk_required": false,
+    "compile_task": ":detekt-rules-errorprone:testClasses",
+    "test_task": ":detekt-rules-errorprone:test",
+    "test_results_glob": "detekt-rules-errorprone/build/test-results/**/TEST-*.xml",
+    "build_command": ".\\gradlew.bat :detekt-rules-errorprone:testClasses",
+    "test_command": ".\\gradlew.bat :detekt-rules-errorprone:test"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "report_sha256": "cf71727fd6b14f184bc92fb4b3eb4d4c979fd7b2b66331a6602b75017aaa0ee8",
+    "validated_at": "2026-09-13T18:55:00+08:00",
+    "fresh_replay": true,
+    "compile_valid": true,
+    "full_suite_valid": true,
+    "source": "2026-09-13 stage1 current structured replay",
+    "current_protocol_replay": true,
+    "current_protocol_repetitions": 3
+  },
+  "provenance": {
+    "swe_bench_gold_patch_sha256": "e2410bd1fa9fae02cc55959af17a7490c021e8d7c546de95ac95a53974577b09",
+    "swe_bench_trigger_patch_sha256": "5e5606994d904b1a74d7feea9d00a3c5f61316d5557c9b7f458521686e092084",
+    "gold_patch_sha256": "5d55d640d90f353e02ccd7692502486abca83dd63c2735c07b6fd3f739fd74ef",
+    "trigger_patch_sha256": "e418ee2f7bf63250da29c55ab8fdbbc770f9632e8df89c0b0768266c9dae013c",
+    "line_endings_normalized_for_git": true,
+    "real_fix_commit": "eb52db740ee6770dcfb0b8b9a1fa85ca2f031c22",
+    "real_fix_commit_message": "UnconditionalJumpStatementInLoop: don't report a conditional break in a single body expression (#6443)",
+    "patch_extraction": "parent..real pure fix diff (no intermediate pollution)",
+    "buggy_strategy": "real_upstream_commit",
+    "release_remediation": {
+      "remediated_at": "2026-08-15T11:41:43Z",
+      "canonical_tree": "cases",
+      "previous_status": "swe_bench_staging_unvalidated",
+      "previous_patch_path": "patches/original-source.patch",
+      "previous_patch_sha256": "0f9c9f71fc5949e412bb9d6f334078324234011e8f7ecdc338a51bc0dfcd4595",
+      "legacy_provenance_trigger_patch_sha256": "e418ee2f7bf63250da29c55ab8fdbbc770f9632e8df89c0b0768266c9dae013c",
+      "release_trigger_patch_sha256": "f27864d28acfabfa021a88f857edaf496e7ba09de27027fc8145fc64f1fde049",
+      "trigger_historical_binding": "legacy_mismatch",
+      "source_patch_evidence": "minimization_evidence",
+      "source_patch_evidence_file": "patches/minimization.json",
+      "package_dynamic_replayed": false,
+      "raw_run_artifacts_bundled": false,
+      "historical_snapshot": true,
+      "superseded_by_final_dynamic_acceptance": true,
+      "note_on_package_dynamic_replayed": "false records the 2026-08-15 remediation snapshot; final_dynamic_acceptance is authoritative for the 2026-08-17 replay."
+    },
+    "fix_boundary_correction": {
+      "old_buggy": "5672df8d0e358c2293d7c46796984e2afb79532d",
+      "new_buggy": "d99607861bb185a525c3db9c5b2568438c2a7bd2",
+      "reason": "buggy_revision was not parent(fixed_commit); corrected to real parent per upstream history",
+      "verified_parent": true
+    }
+  },
+  "exclusion_reason": null,
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "io.gitlab.arturbosch.detekt.rules.bugs.UnconditionalJumpStatementInLoopSpec.does not report a conditional break in a single body expression()"
+    ],
+    "exception_types": [
+      "java.lang.AssertionError"
+    ],
+    "fingerprints": [
+      "8ef3ca1c1e634cc92710ce6c063f06e5bea83fdbc14b83c3c7671b7dbce1d0a1"
+    ]
+  },
+  "fixed_test_result": "pass",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "deprecation_reason": null,
+  "issue_id": 6442,
+  "original_source_patch": "patches/original-source.patch",
+  "original_source_patch_sha256": "c103ac69f41797e5726d9356f13527572d89037e838273bd345568a4e28b2a72",
+  "trigger_test_patch_sha256": "064bbd2545f8f5561a8ed038c799cb7d858d085c2ad6e5b2664f2857729f58dc",
+  "test_identity": {
+    "scheme": "base-revision-plus-trigger-overlay-sha256-v1",
+    "trigger_overlay_sha256": "064bbd2545f8f5561a8ed038c799cb7d858d085c2ad6e5b2664f2857729f58dc",
+    "buggy_base_revision": "d99607861bb185a525c3db9c5b2568438c2a7bd2",
+    "fixed_base_revision": "eb52db740ee6770dcfb0b8b9a1fa85ca2f031c22",
+    "note": "Final release identity: trigger overlay bytes are bound by SHA-256 and base revisions are the final published buggy/fixed identities."
+  },
+  "release_eligibility": {
+    "semantic_candidate": true,
+    "strict_d4j_eligible": true,
+    "runtime_tier": "jvm",
+    "reason_code": null,
+    "reason": "Fix boundary repaired to the real upstream parent -> fix commit and patches regenerated; final fresh replay passed on both compile/full-suite and exact trigger differential."
+  },
+  "historical_exclusion": {
+    "reason": "SWE-bench buggy revision depends on pre-migration Issue API (no Severity parameter); the fix commit depends on the post-migration API. The buggy revision cannot compile independently, failing the Defects4J standard of both revisions being compilable. Excluded by human review.",
+    "superseded": true,
+    "superseded_by": {
+      "validation_report": "validation/validation.json",
+      "validation_report_sha256": "442c65d5c5b811805f4f9102695302a5fa5206479ed0dc20e2d9c4fab2fd88bb",
+      "validated_at": "2026-08-13T22:26:07.894123+00:00",
+      "compile_valid": true,
+      "curation_status": "accepted",
+      "curation_reviewed_at": "2026-08-15"
+    }
+  },
+  "release_integrity": "release-integrity.json",
+  "final_dynamic_acceptance": {
+    "status": "PASS_STRICT",
+    "fresh_replay_completed": true,
+    "accepted_at": "2026-08-17T00:44:00Z",
+    "fixed_result": "PASS",
+    "buggy_trigger_result": "FAIL_AS_EXPECTED",
+    "raw_run_artifacts_bundled": true,
+    "evidence_location": "validation/rc2-strict-20260912",
+    "repair_note": "Fix boundary corrected to real upstream parent -> fix commit; source/trigger patches regenerated; fresh replay passed.",
+    "rc2_strict_recertified_at": "2026-09-12T03:26:03.706212+00:00",
+    "rc2_verifier_contract": "PASS_STRICT_3X_TARGET_BOUND_WITH_FIXED_FULL_SUITE"
+  },
+  "patch_direction": "buggy_to_fixed",
+  "patch_semantics": {
+    "canonical_direction": "buggy_to_fixed",
+    "official_defects4j_reference_convention": "reverse_patch_applied_to_fixed_to_reintroduce_bug",
+    "note": "Direction is explicitly declared because this Defects4J-style Kotlin release is not byte-format-identical to the Defects4J internal patch store."
+  },
+  "defects4j_style_alignment": {
+    "dynamic_reproduction": "PASS_STRICT",
+    "patch_direction_declared": true,
+    "manual_review_adaptation": "LLM-assisted curation may replace the original Defects4J human-review stage for this dataset task"
+  },
+  "language": "Kotlin",
+  "benchmark_tier": "strict-upstream-boundary",
+  "upstream_boundary_strict_eligible": true,
+  "rc2_strict_recertification": {
+    "status": "PASS_STRICT",
+    "framework_version_used": "1.0.0-rc2",
+    "repetitions": 3,
+    "formal_validation": true,
+    "environment_override_used": false,
+    "evidence_location": "validation/rc2-strict-20260912",
+    "evidence_manifest_sha256": "acc177734785bdd790848210fdacf1b9f55d0792a001504a4d7d63372636d06c",
+    "summary_sha256": "40e3931be3d22914fde386195826d4eb0680d2afd1406d00a48367c04a12deba",
+    "generated_at": "2026-09-12T03:26:03.706212+00:00"
+  },
+  "stage1_current_protocol_replay": {
+    "status": "PASS_STRICT",
+    "repetitions": 3,
+    "generated_at": "2026-09-13T18:55:00+08:00",
+    "evidence_location": "../../stage1-rerun-results/KOTLIN-142/",
+    "raw_stdout_stderr_junit_bundled": true,
+    "source_archive_sha256": "a636324d16edb3aa85204844d077e2cda699f97a62ed0e3fa33d0d9383f222aa",
+    "role": "independent current-boundary replay in addition to the RC2 hardened-contract evidence"
+  }
+}

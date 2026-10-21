@@ -1,0 +1,25 @@
+diff --git a/lib/Test/Deep.pm b/lib/Test/Deep.pm
+index 8ffc3ef953e91056e374fd64596008efa74ee59f..cd82e695a8da406df23d91f96c9794690ebe628c 100644
+--- a/lib/Test/Deep.pm
++++ b/lib/Test/Deep.pm
+@@ -79,7 +79,20 @@ while (my ($pkg, $name) = splice @constructors, 0, 2)
+   my $file = "$full_pkg.pm";
+   $file =~ s#::#/#g;
+   my $sub = sub {
++
++    # We might be in the middle of testing one of the globals
++    # that require() overwrites. To simplify test authorship,
++    # we put those overwritten values back below.
++    my $dollar_at = $@;
++    my $dollar_bang = $!;
++    my $dollar_e = $^E;
++
+     require $file;
++
++    $@ = $dollar_at;
++    $! = $dollar_bang;
++    $^E = $dollar_e;
++
+     return $full_pkg->new(@_);
+   };
+   {

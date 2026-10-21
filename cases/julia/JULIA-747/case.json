@@ -1,0 +1,151 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-747",
+  "bug_id": "JULIA-747",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "JuliaIO/JLD2.jl",
+  "repository_url": "https://github.com/JuliaIO/JLD2.jl.git",
+  "issue_urls": [],
+  "issue_id": null,
+  "buggy_revision": "f8fefb60e02d2a4be0ad6413dfef046e77526bcb",
+  "fixed_revision": "25d60ea6f505a85c1607d45cf132d8ce5666c510",
+  "candidate_sha": "25d60ea6f505a85c1607d45cf132d8ce5666c510",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "f8fefb60e02d2a4be0ad6413dfef046e77526bcb",
+  "changed_production_files": [
+    "src/io/bufferedio.jl",
+    "src/io/io_wrappers.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-747 manual behavior MWE"
+  ],
+  "traceability_class": "PR_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.12.7",
+    "julia_version_origin": "fixed_revision_era_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.12.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "source_candidate_evidence": {
+    "source_index": "output/source_candidates.json",
+    "commit_sha": "25d60ea6f505a85c1607d45cf132d8ce5666c510",
+    "production_files": [
+      "src/io/bufferedio.jl",
+      "src/io/io_wrappers.jl"
+    ],
+    "test_files": [],
+    "file_details": {
+      "src/io/bufferedio.jl": {
+        "status": "modified",
+        "hunks": 1,
+        "changes": 3
+      },
+      "src/io/io_wrappers.jl": {
+        "status": "modified",
+        "hunks": 1,
+        "changes": 17
+      }
+    }
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "bb8470d87ce610ffd1495930e66f71abaebfe1d4aa7802264797654f51a27cdd",
+    "oracle": {
+      "public_api": "JLD2.RWBuffer size over seekable IO with misreported filesize",
+      "mwe_basis": "derived from upstream fix and commit test intent",
+      "source_evidence": "trigger/acquisition.json"
+    }
+  },
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "patch": "patches/minimized-source.patch",
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "fixed_test_result": "pass",
+  "origin_dataset": null,
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-747 manual behavior MWE"
+    ],
+    "exception_types": [
+      "TRIGGER_EXIT_1"
+    ],
+    "fingerprints": [
+      "TRIGGER_EXIT_1"
+    ],
+    "mode": "failing_assertions"
+  },
+  "review": {
+    "candidate_sha": "25d60ea6f505a85c1607d45cf132d8ce5666c510",
+    "project": "JuliaIO/JLD2.jl",
+    "input_sha256": "9343caef8cb43b106459faac44e7bfd331c270c2de6f8f207ed1a544456487c9",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-09-12T11:36:08Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.7053189893864014,
+      "input_tokens": 7134,
+      "output_tokens": 680
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"no\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.66, \"summary\": \"Small two-hunk fix in JLD2's IO layer: generic _getsize no longer trusts filesize() (which can be wrong or misleading for non-file IO) and always probes via position/seekend, a specialization returns RWBuffer.size directly, and BufferedReader.readmore! now bounds its read by the actual stream size instead of max(bytesavailable(f), n). Both hunks change runtime behavior of existing code paths (wrong size, over-reading) rather than adding capability, so it qualifies as a production behavior fix.\", \"evidence\": \"Commit subject 'fix runtime issue of IOBuffer backend' and diff semantics both indicate a behavioral defect, not refactor or docs. Runtime validation is a stable differential at strict tier over 3 repetitions: the MWE fails on the parent (RWBuffer(...).size == 0 while the wrapped seekable stream holds 5 bytes) and passes on the fixed revision, with the full suite green on the fixed side. Canonical forward replay reproduces the pass. The removed try/catch around filesize() is precisely what allowed a bogus size to be accepted, matching the reported symptom.\", \"missing_evidence\": \"PR body and issue body are empty, so there is no upstream description of the user-visible failure or a linked reproduction. The PR adds no tests; the trigger was synthesized from the fix itself, so it encodes the fix's semantics rather than an independently reported scenario. No evidence tying the bufferedio.jl readmore! hunk to an observed failure.\", \"validation_risks\": \"Minimization reports only 1 of 2 hunks exercised by the trigger, so the readmore! change in bufferedio.jl is unverified by the oracle and a partial revert could still pass. The trigger relies on a hand-rolled MisreportedIO subtype that overrides Base.filesize to return 0 and touches internals (JLD2.RWBuffer, JLD2.isseekable, RWBuffer.size field), so it is coupled to non-public API and could break on unrelated refactors. The synthetic misreported-filesize setup may be a narrower condition than the original IOBuffer runtime problem.\", \"suggested_tests\": \"Add a test that exercises readmore! through a real read path: write a JLD2 file into an IOBuffer/RWBuffer backend, then read datasets back and assert values and that no EOFError or over-read occurs, which would cover the bufferedio.jl hunk. Add a case where the buffered reader requests fewer bytes than 2^14 near end-of-stream to confirm the min(max(n, 2^14), sz-position(f)) bound. Keep a size-correctness assertion for a seekable IO whose filesize() is unavailable or wrong, ideally expressed through a public read/write round trip rather than the RWBuffer.size field.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "no"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.66,
+    "summary": "Small two-hunk fix in JLD2's IO layer: generic _getsize no longer trusts filesize() (which can be wrong or misleading for non-file IO) and always probes via position/seekend, a specialization returns RWBuffer.size directly, and BufferedReader.readmore! now bounds its read by the actual stream size instead of max(bytesavailable(f), n). Both hunks change runtime behavior of existing code paths (wrong size, over-reading) rather than adding capability, so it qualifies as a production behavior fix.",
+    "evidence": "Commit subject 'fix runtime issue of IOBuffer backend' and diff semantics both indicate a behavioral defect, not refactor or docs. Runtime validation is a stable differential at strict tier over 3 repetitions: the MWE fails on the parent (RWBuffer(...).size == 0 while the wrapped seekable stream holds 5 bytes) and passes on the fixed revision, with the full suite green on the fixed side. Canonical forward replay reproduces the pass. The removed try/catch around filesize() is precisely what allowed a bogus size to be accepted, matching the reported symptom.",
+    "missing_evidence": "PR body and issue body are empty, so there is no upstream description of the user-visible failure or a linked reproduction. The PR adds no tests; the trigger was synthesized from the fix itself, so it encodes the fix's semantics rather than an independently reported scenario. No evidence tying the bufferedio.jl readmore! hunk to an observed failure.",
+    "validation_risks": "Minimization reports only 1 of 2 hunks exercised by the trigger, so the readmore! change in bufferedio.jl is unverified by the oracle and a partial revert could still pass. The trigger relies on a hand-rolled MisreportedIO subtype that overrides Base.filesize to return 0 and touches internals (JLD2.RWBuffer, JLD2.isseekable, RWBuffer.size field), so it is coupled to non-public API and could break on unrelated refactors. The synthetic misreported-filesize setup may be a narrower condition than the original IOBuffer runtime problem.",
+    "suggested_tests": "Add a test that exercises readmore! through a real read path: write a JLD2 file into an IOBuffer/RWBuffer backend, then read datasets back and assert values and that no EOFError or over-read occurs, which would cover the bufferedio.jl hunk. Add a case where the buffered reader requests fewer bytes than 2^14 near end-of-stream to confirm the min(max(n, 2^14), sz-position(f)) bound. Keep a size-correctness assertion for a seekable IO whose filesize() is unavailable or wrong, ideally expressed through a public read/write round trip rather than the RWBuffer.size field."
+  },
+  "commit_topology": {
+    "fixed_revision": "25d60ea6f505a85c1607d45cf132d8ce5666c510",
+    "parent_sha": "f8fefb60e02d2a4be0ad6413dfef046e77526bcb",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "github_commit_page+server_finalize_run",
+    "evidence_url": "https://github.com/JuliaIO/JLD2.jl/commit/25d60ea6f505a85c1607d45cf132d8ce5666c510",
+    "evidence_note": "GitHub commit view reports 1 parent f8fefb6; server finalize_cases --no-publish reported 37/37 checks passed.",
+    "verified_date": "2026-09-12"
+  }
+}

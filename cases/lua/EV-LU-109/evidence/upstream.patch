@@ -1,0 +1,59 @@
+diff --git a/spec/check_spec.lua b/spec/check_spec.lua
+index 5ab282b77ac1eb011ef075abb21b571ef451691f..51281c2c8f8f4bec7ed076542196f3f3fe82740f 100644
+--- a/spec/check_spec.lua
++++ b/spec/check_spec.lua
+@@ -755,6 +755,19 @@ return foo;
+       ]])
+    end)
+ 
++   it("marks ignored warnings as filtered", function()
++      assert.same({
++         {code = "211", name = "foo", filtered = true, line = 1, column = 7, end_column = 9},
++         {code = "211", name = "bar", line = 1, column = 12, end_column = 14},
++         {code = "512", filtered = true, line = 2, column = 1, end_column = 3},
++         {code = "213", name = "_", filtered = true, line = 2, column = 5, end_column = 5},
++         {code = "113", name = "pairs", filtered_113 = true, line = 2, column = 10, end_column = 14},
++      }, check[[
++local foo, bar -- luacheck: ignore foo
++for _ in pairs({}) do return end -- luacheck: ignore
++      ]])
++   end)
++
+    it("handles argparse sample", function()
+       assert.table(check(io.open("spec/samples/argparse.lua", "rb"):read("*a")))
+    end)
+diff --git a/src/luacheck/filter.lua b/src/luacheck/filter.lua
+index c811b10bbad4785cb36540b6f0cf610658d59fd3..59be9ca1cac3e076f5563655829ecdf92b18f86a 100644
+--- a/src/luacheck/filter.lua
++++ b/src/luacheck/filter.lua
+@@ -166,7 +166,7 @@ local function is_enabled(rules, warning)
+       for _, pattern in ipairs(rule[1]) do
+          local matches_code, matches_name = match(warning, pattern)
+ 
+-         -- If a factor is enabled, warning can't be disable by it.
++         -- If a factor is enabled, warning can't be disabled by it.
+          if enabled_code then
+             matches_code = rule[2] ~= "disable"
+          end
+@@ -190,7 +190,7 @@ local function is_enabled(rules, warning)
+             end
+ 
+             if enabled_code and enabled_name then
+-               -- Enable as matching to some `enable` pattern by code and to other by name.
++               -- Enable as matching to some `enable` pattern by code and to another by name.
+                return true
+             end
+          elseif rule[2] == "disable" then
+diff --git a/src/luacheck/inline_options.lua b/src/luacheck/inline_options.lua
+index 3850bf32cc34af0e8723760f4b9f2a9254a4e7a5..ec13cb892d77a2f9e02e6b919bfecfc49ae31b3e 100644
+--- a/src/luacheck/inline_options.lua
++++ b/src/luacheck/inline_options.lua
+@@ -51,7 +51,7 @@ local function get_options(body)
+ 
+          opts.std = args[1]
+       elseif name == "ignore" and #args == 0 then
+-         opts.ignore = {".*/.*"}
++         opts.ignore = {".*"}
+       else
+          local flag = true
+ 

@@ -1,0 +1,226 @@
+diff --git a/ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/ASTNodeExtension.kt b/ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/ASTNodeExtension.kt
+index 0987be0b..9188f917 100644
+--- a/ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/ASTNodeExtension.kt
++++ b/ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/ASTNodeExtension.kt
+@@ -1,5 +1,6 @@
+ package com.pinterest.ktlint.rule.engine.core.api
+ 
++import com.pinterest.ktlint.rule.engine.core.api.ElementType.EOL_COMMENT
+ import com.pinterest.ktlint.rule.engine.core.api.ElementType.REGULAR_STRING_PART
+ import com.pinterest.ktlint.rule.engine.core.api.ElementType.STRING_TEMPLATE
+ import com.pinterest.ktlint.rule.engine.core.api.ElementType.VAL_KEYWORD
+@@ -444,6 +445,16 @@ public fun ASTNode.leavesOnLine(): Sequence<ASTNode> {
+         .takeWhile { lastLeafOnLineOrNull == null || it.prevLeaf() != lastLeafOnLineOrNull }
+ }
+ 
++/**
++ * Take all nodes preceding the whitespace before the EOL comment
++ */
++public fun Sequence<ASTNode>.dropTrailingEolComment(): Sequence<ASTNode> =
++    takeWhile {
++        !(it.isWhiteSpace() && it.nextLeaf()?.elementType == EOL_COMMENT) &&
++            // But if EOL-comment not preceded by whitespace than take all node before the EOL comment
++            it.elementType != EOL_COMMENT
++    }
++
+ internal fun ASTNode.getFirstLeafOnLineOrSelf() =
+     prevLeaf { it.textContains('\n') || it.prevLeaf() == null }
+         ?: this
+@@ -452,10 +463,30 @@ internal fun ASTNode.getLastLeafOnLineOrNull() = nextLeaf { it.textContains('\n'
+ 
+ /**
+  * Get the total length of all leaves on the same line as the given node including the whitespace indentation but excluding all leading
+- * newline characters in the whitespace indentation.
++ * newline characters in the whitespace indentation. Note that EOL-comments are included in the line length calculation. This can lead to
++ * rules modifying the code before the EOL-comment in case the EOL-comment causes the max_line_length to be exceeded. It should be
++ * preferred to prevent this by excluding the EOL-comment from the calculation (use [lineLength]), and let max-line-length rule report the
++ * violation.
+  */
++@Deprecated(
++    message =
++        "Marked for removal in Ktlint 2.x. Rules should not modify code in case the EOL comment causes the max_line_length to be exceeded.",
++    replaceWith = ReplaceWith("lineLength(excludeEolComment = false)"),
++)
+ public fun ASTNode.lineLengthWithoutNewlinePrefix(): Int = leavesOnLine().lineLengthWithoutNewlinePrefix()
+ 
++/**
++ * Get the total length of all leaves on the same line as the given node including the whitespace indentation but excluding all leading
++ * newline characters in the whitespace indentation. Use [excludeEolComment] to exclude the EOL-comment (and preceding whitespace) from this
++ * calculation. Note that rules should not modify code in case the EOL comment causes the max_line_length to be exceeded. Instead, let the
++ * max-line-length rule report this violation so that the developer can choose whether the comment can be shortened or that it can be placed
++ * on a separate line.
++ */
++public fun ASTNode.lineLength(excludeEolComment: Boolean = false): Int =
++    leavesOnLine()
++        .applyIf(excludeEolComment) { dropTrailingEolComment() }
++        .lineLengthWithoutNewlinePrefix()
++
+ /**
+  * Get the total length of all leaves in the sequence including the whitespace indentation but excluding all leading newline characters in
+  * the whitespace indentation. The first leaf node in the sequence must be a white space starting with at least one newline.
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ArgumentListWrappingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ArgumentListWrappingRule.kt
+index ae4bb5d4..4b0db9ca 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ArgumentListWrappingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ArgumentListWrappingRule.kt
+@@ -28,7 +28,7 @@ import com.pinterest.ktlint.rule.engine.core.api.indent
+ import com.pinterest.ktlint.rule.engine.core.api.isPartOfComment
+ import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpace
+ import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpaceWithNewline
+-import com.pinterest.ktlint.rule.engine.core.api.lineLengthWithoutNewlinePrefix
++import com.pinterest.ktlint.rule.engine.core.api.lineLength
+ import com.pinterest.ktlint.rule.engine.core.api.prevLeaf
+ import com.pinterest.ktlint.ruleset.standard.StandardRule
+ import org.ec4j.core.model.PropertyType
+@@ -128,7 +128,7 @@ public class ArgumentListWrappingRule :
+             false
+         }
+ 
+-    private fun ASTNode.exceedsMaxLineLength() = lineLengthWithoutNewlinePrefix() > maxLineLength && !textContains('\n')
++    private fun ASTNode.exceedsMaxLineLength() = lineLength(excludeEolComment = true) > maxLineLength && !textContains('\n')
+ 
+     private fun intendedIndent(child: ASTNode): String =
+         when {
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BinaryExpressionWrappingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BinaryExpressionWrappingRule.kt
+index 5609e1a5..4048330b 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BinaryExpressionWrappingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/BinaryExpressionWrappingRule.kt
+@@ -21,6 +21,7 @@ import com.pinterest.ktlint.rule.engine.core.api.RuleId
+ import com.pinterest.ktlint.rule.engine.core.api.SinceKtlint
+ import com.pinterest.ktlint.rule.engine.core.api.SinceKtlint.Status.EXPERIMENTAL
+ import com.pinterest.ktlint.rule.engine.core.api.children
++import com.pinterest.ktlint.rule.engine.core.api.dropTrailingEolComment
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.EditorConfig
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.INDENT_SIZE_PROPERTY
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.INDENT_STYLE_PROPERTY
+@@ -31,6 +32,7 @@ import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpace
+ import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpaceWithNewline
+ import com.pinterest.ktlint.rule.engine.core.api.lastChildLeafOrSelf
+ import com.pinterest.ktlint.rule.engine.core.api.leavesOnLine
++import com.pinterest.ktlint.rule.engine.core.api.lineLengthWithoutNewlinePrefix
+ import com.pinterest.ktlint.rule.engine.core.api.nextLeaf
+ import com.pinterest.ktlint.rule.engine.core.api.nextSibling
+ import com.pinterest.ktlint.rule.engine.core.api.noNewLineInClosedRange
+@@ -246,19 +248,18 @@ public class BinaryExpressionWrappingRule :
+             }
+     }
+ 
+-    private fun ASTNode.isOnLineExceedingMaxLineLength() = leavesOnLine().lengthWithoutNewlinePrefix() > maxLineLength
++    private fun ASTNode.isOnLineExceedingMaxLineLength() =
++        maxLineLength <
++            leavesOnLine()
++                .dropTrailingEolComment()
++                .lineLengthWithoutNewlinePrefix()
+ 
+     private fun ASTNode.causesMaxLineLengthToBeExceeded() =
+         lastChildLeafOrSelf().let { lastChildLeaf ->
+             leavesOnLine()
+                 .takeWhile { it.prevLeaf() != lastChildLeaf }
+-                .lengthWithoutNewlinePrefix()
++                .lineLengthWithoutNewlinePrefix()
+         } > maxLineLength
+-
+-    private fun Sequence<ASTNode>.lengthWithoutNewlinePrefix() =
+-        joinToString(separator = "") { it.text }
+-            .dropWhile { it == '\n' }
+-            .length
+ }
+ 
+ private fun IElementType.anyOf(vararg elementType: IElementType): Boolean = elementType.contains(this)
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt
+index ae3f7117..4397149d 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionExpressionBodyRule.kt
+@@ -79,11 +79,9 @@ public class FunctionExpressionBodyRule :
+     Rule.Experimental {
+     private var codeStyle = CODE_STYLE_PROPERTY.defaultValue
+     private var indentConfig = IndentConfig.DEFAULT_INDENT_CONFIG
+-    private var maxLineLength = MAX_LINE_LENGTH_PROPERTY.defaultValue
+ 
+     override fun beforeFirstNode(editorConfig: EditorConfig) {
+         codeStyle = editorConfig[CODE_STYLE_PROPERTY]
+-        maxLineLength = editorConfig[MAX_LINE_LENGTH_PROPERTY]
+         indentConfig =
+             IndentConfig(
+                 indentStyle = editorConfig[INDENT_STYLE_PROPERTY],
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRule.kt
+index 3851d7ab..6de1aa67 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/FunctionLiteralRule.kt
+@@ -30,6 +30,7 @@ import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpaceWithoutNewline
+ import com.pinterest.ktlint.rule.engine.core.api.lastChildLeafOrSelf
+ import com.pinterest.ktlint.rule.engine.core.api.leavesIncludingSelf
+ import com.pinterest.ktlint.rule.engine.core.api.leavesOnLine
++import com.pinterest.ktlint.rule.engine.core.api.lineLength
+ import com.pinterest.ktlint.rule.engine.core.api.lineLengthWithoutNewlinePrefix
+ import com.pinterest.ktlint.rule.engine.core.api.nextCodeSibling
+ import com.pinterest.ktlint.rule.engine.core.api.nextLeaf
+@@ -196,7 +197,7 @@ public class FunctionLiteralRule :
+             }.length
+     }
+ 
+-    private fun ASTNode.exceedsMaxLineLength() = lineLengthWithoutNewlinePrefix() > maxLineLength
++    private fun ASTNode.exceedsMaxLineLength() = lineLength(excludeEolComment = true) > maxLineLength
+ 
+     private fun ASTNode.wrapFirstParameterToNewline() =
+         if (isFunctionLiteralLambdaWithNonEmptyValueParameterList()) {
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListSpacingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListSpacingRule.kt
+index f16ca6a5..8ca7fcc5 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListSpacingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListSpacingRule.kt
+@@ -17,7 +17,7 @@ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.EditorConfig
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.MAX_LINE_LENGTH_PROPERTY
+ import com.pinterest.ktlint.rule.engine.core.api.isPartOfComment
+ import com.pinterest.ktlint.rule.engine.core.api.isWhiteSpaceWithNewline
+-import com.pinterest.ktlint.rule.engine.core.api.lineLengthWithoutNewlinePrefix
++import com.pinterest.ktlint.rule.engine.core.api.lineLength
+ import com.pinterest.ktlint.rule.engine.core.api.nextCodeSibling
+ import com.pinterest.ktlint.rule.engine.core.api.nextLeaf
+ import com.pinterest.ktlint.rule.engine.core.api.nextSibling
+@@ -300,13 +300,13 @@ public class ParameterListSpacingRule :
+             ?.let { typeReference ->
+                 val length =
+                     // length of previous line
+-                    lineLengthWithoutNewlinePrefix() +
++                    lineLength(excludeEolComment = true) +
+                         // single space before type reference
+                         1 -
+                         // length of current indent before typeReference
+                         this.text.substringAfterLast("\n").length +
+                         // length of line containing typeReference
+-                        typeReference.lineLengthWithoutNewlinePrefix()
++                        typeReference.lineLength(excludeEolComment = true)
+                 length > maxLineLength
+             }
+             ?: false
+diff --git a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListWrappingRule.kt b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListWrappingRule.kt
+index d2275089..a1901bc9 100644
+--- a/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListWrappingRule.kt
++++ b/ktlint-ruleset-standard/src/main/kotlin/com/pinterest/ktlint/ruleset/standard/rules/ParameterListWrappingRule.kt
+@@ -15,6 +15,7 @@ import com.pinterest.ktlint.rule.engine.core.api.RuleId
+ import com.pinterest.ktlint.rule.engine.core.api.SinceKtlint
+ import com.pinterest.ktlint.rule.engine.core.api.SinceKtlint.Status.STABLE
+ import com.pinterest.ktlint.rule.engine.core.api.column
++import com.pinterest.ktlint.rule.engine.core.api.dropTrailingEolComment
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.CODE_STYLE_PROPERTY
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.CodeStyleValue.ktlint_official
+ import com.pinterest.ktlint.rule.engine.core.api.editorconfig.EditorConfig
+@@ -134,10 +135,10 @@ public class ParameterListWrappingRule :
+         when {
+             hasNoParameters() -> false
+             codeStyle != ktlint_official && isPartOfFunctionLiteralInNonKtlintOfficialCodeStyle() -> false
++            codeStyle == ktlint_official && containsAnnotatedParameter() -> true
+             codeStyle == ktlint_official && isPartOfFunctionLiteralStartingOnSameLineAsClosingParenthesisOfPrecedingReferenceExpression() ->
+                 false
+             textContains('\n') -> true
+-            codeStyle == ktlint_official && containsAnnotatedParameter() -> true
+             isOnLineExceedingMaxLineLength() -> true
+             else -> false
+         }
+@@ -291,6 +292,7 @@ public class ParameterListWrappingRule :
+             prevLeaf { it.textContains('\n') }
+                 ?.leavesIncludingSelf()
+                 ?.takeWhile { it.prevLeaf() != stopLeaf }
++                ?.dropTrailingEolComment()
+                 ?.joinToString(separator = "") { it.text }
+                 ?.substringAfter('\n')
+                 ?.substringBefore('\n')

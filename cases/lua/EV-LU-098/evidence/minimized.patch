@@ -1,0 +1,14 @@
+diff --git a/src/init.lua b/src/init.lua
+index c77be2d31436ac98d853c0a3bac820c3126a1cb7..3e5c51f929a051dc3838564c891b44b66ec7e41f 100644
+--- a/src/init.lua
++++ b/src/init.lua
+@@ -31,6 +31,9 @@ local s = {
+ 
+ local __meta = {
+   __call = function(self, key, vars)
++    if vars ~= nil and type(vars) ~= "table" then
++      error(("expected parameter table to be a table, got '%s'"):format(type(vars)), 2)
++    end
+     vars = vars or {}
+ 
+     local str = registry[current_namespace][key] or registry[fallback_namespace][key]

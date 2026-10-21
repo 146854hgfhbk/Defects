@@ -1,0 +1,42 @@
+diff --git a/lua/pl/text.lua b/lua/pl/text.lua
+index 13a74be2478d9ae8a9255f043939b049f65b821c..5892aa338ab799d4cb1eea3f46d03afae64dbc02 100644
+--- a/lua/pl/text.lua
++++ b/lua/pl/text.lua
+@@ -52,7 +52,7 @@ end
+ -- @return indented string
+ function text.indent (s,n,ch)
+     assert_arg(1,s,'string')
+-    assert_arg(2,s,'number')
++    assert_arg(2,n,'number')
+     return _indent(s,string.rep(ch or ' ',n))
+ end
+ 
+diff --git a/tests/test-text.lua b/tests/test-text.lua
+index d9ebefccebbc3d6b7e8e0c90da1cc22e5b2a14c8..04a1b6bb4180d87114dd52a5f5ca7efdb4a2ed14 100644
+--- a/tests/test-text.lua
++++ b/tests/test-text.lua
+@@ -142,5 +142,24 @@ asserteq(
+     '$A & $B' % subst,'ay & bee'
+ )
+ 
++t = [[
++a whole lot
++of love
++]]
++
++asserteq(T.indent(t,4),[[
++    a whole lot
++    of love
++]])
++
++asserteq(T.indent([[
++easy
++
++enough!
++]],2,'*'),[[
++**easy
++**
++**enough!
++]])
+ 
+ 

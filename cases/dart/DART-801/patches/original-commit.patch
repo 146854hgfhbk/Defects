@@ -1,0 +1,29 @@
+diff --git a/lib/src/simulator.dart b/lib/src/simulator.dart
+index ae0e4f3..1c99ef2 100644
+--- a/lib/src/simulator.dart
++++ b/lib/src/simulator.dart
+@@ -92,6 +92,8 @@ class Simulator {
+   ///
+   /// Note: values deposited on [Module]s from the previous simulation remain.
+   static Future<void> reset() async {
++    if (_simulationEndRequested) await simulationEnded;
++
+     _currentTimestamp = 0;
+     _simulationEndRequested = false;
+     _maxSimTime = -1;
+diff --git a/test/simulator_test.dart b/test/simulator_test.dart
+index 4d8a637..8628179 100644
+--- a/test/simulator_test.dart
++++ b/test/simulator_test.dart
+@@ -49,4 +49,11 @@ void main() {
+     expect(tooFar, equals(false));
+     expect(farEnough, equals(true));
+   });
++
++  test('simulator reset waits for simulation to complete', () async {
++    Simulator.registerAction(100, () => Simulator.endSimulation());
++    Simulator.registerAction(100, () => Simulator.reset());
++    Simulator.registerAction(100, () => true);
++    await Simulator.run();
++  });
+ }

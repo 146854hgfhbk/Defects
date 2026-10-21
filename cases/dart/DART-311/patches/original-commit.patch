@@ -1,0 +1,186 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index e33bd91..3b3895f 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++## 3.0.2-wip
++
++* Don't add a trailing comma in lists that don't allow it, even when there is
++  a trailing comment (#1639).
++
+ ## 3.0.1
+ 
+ * Handle trailing commas in for-loop updaters (#1354).
+diff --git a/lib/src/front_end/delimited_list_builder.dart b/lib/src/front_end/delimited_list_builder.dart
+index 50a8d54..598654a 100644
+--- a/lib/src/front_end/delimited_list_builder.dart
++++ b/lib/src/front_end/delimited_list_builder.dart
+@@ -62,8 +62,21 @@ final class DelimitedListBuilder {
+       });
+     }
+ 
+-    var piece =
+-        ListPiece(_leftBracket, _elements, _blanksAfter, _rightBracket, _style);
++    // Find the index of the last non-comment element. The list may have
++    // trailing elements that are just comments. In that case, those are
++    // not considered the last element when it comes to deciding whether to add
++    // a trailing comma on the last element.
++    var lastNonCommentElement = -1;
++    for (var i = _elements.length - 1; i >= 0; i--) {
++      if (!_elements[i].isComment) {
++        lastNonCommentElement = i;
++        break;
++      }
++    }
++
++    var piece = ListPiece(
++        _leftBracket, _elements, _blanksAfter, _rightBracket, _style,
++        lastNonCommentElement: lastNonCommentElement);
+     if (_mustSplit || forceSplit) piece.pin(State.split);
+     return piece;
+   }
+diff --git a/lib/src/piece/list.dart b/lib/src/piece/list.dart
+index 3c9ec28..3b1e8ed 100644
+--- a/lib/src/piece/list.dart
++++ b/lib/src/piece/list.dart
+@@ -55,6 +55,10 @@ final class ListPiece extends Piece {
+   /// The details of how this particular list should be formatted.
+   final ListStyle _style;
+ 
++  /// The index of the last element in [_elements] that has content and isn't
++  /// a comment, or `-1` if all elements are comments.
++  final int _lastNonCommentElement;
++
+   /// Whether any element in this argument list can be block formatted.
+   bool get hasBlockElement =>
+       _elements.any((element) => element.allowNewlinesWhenUnsplit);
+@@ -64,8 +68,10 @@ final class ListPiece extends Piece {
+   /// [_elements] must not be empty. (If there are no elements, just concatenate
+   /// the brackets directly.)
+   ListPiece(
+-      this._before, this._elements, this._blanksAfter, this._after, this._style)
+-      : assert(_elements.isNotEmpty) {
++      this._before, this._elements, this._blanksAfter, this._after, this._style,
++      {required int lastNonCommentElement})
++      : assert(_elements.isNotEmpty),
++        _lastNonCommentElement = lastNonCommentElement {
+     // For most elements, we know whether or not it will have a comma based
+     // only on the comma style and its position in the list, so pin those here.
+     for (var i = 0; i < _elements.length; i++) {
+@@ -80,13 +86,13 @@ final class ListPiece extends Piece {
+           // Always has a comma after every element except the last. The last
+           // will be constrained to have one or not depending on whether the
+           // list splits. See applyConstraints().
+-          if (i < _elements.length - 1) {
++          if (i < _lastNonCommentElement) {
+             element.pin(ListElementPiece._appendComma);
+           }
+ 
+         case Commas.nonTrailing:
+           // Never a trailing comma after the last element.
+-          element.pin(i < _elements.length - 1
++          element.pin(i < _lastNonCommentElement
+               ? ListElementPiece._appendComma
+               : State.unsplit);
+ 
+@@ -103,8 +109,8 @@ final class ListPiece extends Piece {
+   @override
+   void applyConstraints(State state, Constrain constrain) {
+     // Give the last element a trailing comma only if the list is split.
+-    if (_style.commas == Commas.trailing) {
+-      constrain(_elements.last,
++    if (_style.commas == Commas.trailing && _lastNonCommentElement != -1) {
++      constrain(_elements[_lastNonCommentElement],
+           state == State.split ? ListElementPiece._appendComma : State.unsplit);
+     }
+   }
+@@ -319,6 +325,15 @@ final class ListElementPiece extends Piece {
+     _hangingComments.add(comment);
+   }
+ 
++  /// Whether this piece is a comment-only element, like the second element in:
++  ///
++  ///     [
++  ///       real,
++  ///       // Comment.
++  ///       anotherReal,
++  ///     ]
++  bool get isComment => _content == null;
++
+   void addComment(Piece comment, {bool beforeDelimiter = false}) {
+     _hangingComments.add(comment);
+     if (beforeDelimiter) _commentsBeforeDelimiter++;
+diff --git a/pubspec.yaml b/pubspec.yaml
+index b58877a..4838b91 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,6 +1,6 @@
+ name: dart_style
+ # Note: See tool/grind.dart for how to bump the version.
+-version: 3.0.1
++version: 3.0.2-wip
+ description: >-
+   Opinionated, automatic Dart source code formatter.
+   Provides an API and a CLI tool.
+diff --git a/test/tall/regression/1600/1639.unit b/test/tall/regression/1600/1639.unit
+new file mode 100644
+index 0000000..9a96ebf
+--- /dev/null
++++ b/test/tall/regression/1600/1639.unit
+@@ -0,0 +1,33 @@
++>>>
++class C<T
++// 1
++// 2
++// 3
++> {}
++<<<
++class C<
++  T
++  // 1
++  // 2
++  // 3
++> {}
++>>> (indent 2)
++  void Function<
++    Y extends A<FcovCyclicCoBound<Function(Function(FutureOr<Object>))>>
++    //          ^
++    // [cfe] Type argument 'dynamic Function(dynamic Function(FutureOr<Object>))' doesn't conform to the bound 'dynamic Function(X)' of the type variable 'X' on 'FcovCyclicCoBound'.
++    //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++    // [analyzer] COMPILE_TIME_ERROR.TYPE_ARGUMENT_NOT_MATCHING_BOUNDS
++  >()
++  x264;
++  void Function<Y extends A<CFcov<Object>>>() x265;
++<<<
++  void Function<
++    Y extends A<FcovCyclicCoBound<Function(Function(FutureOr<Object>))>>
++    //          ^
++    // [cfe] Type argument 'dynamic Function(dynamic Function(FutureOr<Object>))' doesn't conform to the bound 'dynamic Function(X)' of the type variable 'X' on 'FcovCyclicCoBound'.
++    //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++    // [analyzer] COMPILE_TIME_ERROR.TYPE_ARGUMENT_NOT_MATCHING_BOUNDS
++  >()
++  x264;
++  void Function<Y extends A<CFcov<Object>>>() x265;
+\ No newline at end of file
+diff --git a/test/tall/type/function_comment.stmt b/test/tall/type/function_comment.stmt
+index 3236224..08ffd18 100644
+--- a/test/tall/type/function_comment.stmt
++++ b/test/tall/type/function_comment.stmt
+@@ -443,4 +443,16 @@ Function(
+   int c, [
+   direction,
+ ])
++x;
++>>> After type parameter on its own line.
++Function<
++Y
++// Comment.
++>()
++x;
++<<<
++Function<
++  Y
++  // Comment.
++>()
+ x;
+\ No newline at end of file

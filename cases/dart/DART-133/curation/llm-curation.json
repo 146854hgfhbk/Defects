@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-133",
+  "technical_evidence_sha256": "79d0745fda41b694e9f3e3170048caeb035dae7e0434d033f74399bc1e5edd0a",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "66ea2406b42f48e922916232f45e4d8f17825ce217f805d7eabb694696e92d36",
+  "reviewed_at": "2026-08-11T12:01:39.888518+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "intel/rohd#44",
+  "rationale": "Issue #44 describes a defect where Simulator.injectAction causes multiple ticks to overlap, triggering duplicate Logic.changed and posedge events for a single signal transition. The issue provides a specific reproducer (clk edge counter test) that demonstrates count != uniquePosedgeTimestamps.length due to duplicate event triggers. The minimized production patch removes the nested tickExecute call from injectAction that was causing the reentrancy, adds logic to tick() to handle injected actions separately without overlapping timestamped ticks, and updates hasStepsRemaining() to account for pending injected actions. The trigger tests include the exact reproducer from the issue ('clk edge counter') plus additional tests that verify single changed events for multiple injections—all using APIs present in the buggy revision (Logic.inject, Simulator.registerAction, SimpleClockGenerator). The strict runtime evidence confirms deterministic reproduction: both 'clk edge counter' and 'attach dumper before put' fail on buggy but pass on fixed, with no extraneous failures. The patch contains no documentation, formatting, configuration, or unrelated refactoring—only the core behavioral fix. No active duplicates exist in the same project.\n\nIssue #44 describes a specific defect: `Simulator.injectAction` caused overlapping ticks when called during `SimulatorPhase.outOfTick`, triggering multiple events for single transitions. The minimized production patch removes exactly this behavior—removing the nested `tickExecute` call from `injectAction` and adding early-return logic in `tick()` to handle injected actions in isolation. The triggering tests ('clk edge counter' and 'attach dumper before put') validate the fix by asserting single event triggers per transition, matching the reported defect. The patch contains no documentation, formatting, or feature extension—only the core simulator timing fix. Strict runtime evidence confirms deterministic reproduction on buggy (2 of 3 triggers fail) and clean fixed behavior. No active duplicates exist in the supplied registry.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:01:27.205080+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "66ea2406b42f48e922916232f45e4d8f17825ce217f805d7eabb694696e92d36",
+      "response_sha256": "256d0996cf01c6aab73ad911ed868f0ea734568a7b4b92a36d73973f305307a1",
+      "response_id": "msg_a0376704-5af9-453d-80",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 5422
+        },
+        "cache_creation_input_tokens": 5422,
+        "cache_read_input_tokens": 12381,
+        "input_tokens": 16785,
+        "output_tokens": 1328
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#44",
+      "rationale": "Issue #44 describes a defect where Simulator.injectAction causes multiple ticks to overlap, triggering duplicate Logic.changed and posedge events for a single signal transition. The issue provides a specific reproducer (clk edge counter test) that demonstrates count != uniquePosedgeTimestamps.length due to duplicate event triggers. The minimized production patch removes the nested tickExecute call from injectAction that was causing the reentrancy, adds logic to tick() to handle injected actions separately without overlapping timestamped ticks, and updates hasStepsRemaining() to account for pending injected actions. The trigger tests include the exact reproducer from the issue ('clk edge counter') plus additional tests that verify single changed events for multiple injections—all using APIs present in the buggy revision (Logic.inject, Simulator.registerAction, SimpleClockGenerator). The strict runtime evidence confirms deterministic reproduction: both 'clk edge counter' and 'attach dumper before put' fail on buggy but pass on fixed, with no extraneous failures. The patch contains no documentation, formatting, configuration, or unrelated refactoring—only the core behavioral fix. No active duplicates exist in the same project.",
+      "evidence_paths": [
+        "issue_urls[0]: https://github.com/intel/rohd/issues/44",
+        "patches/minimized-production.patch: lib/src/simulator.dart injectAction removal of nested tickExecute",
+        "patches/minimized-production.patch: lib/src/simulator.dart tick() injected actions short-circuit",
+        "patches/trigger-tests.patch: test/changed_test.dart 'clk edge counter' exact issue reproducer",
+        "strict_post_minimization.checks.trigger.buggy_differential: reproduced=[('test/changed_test.dart', 'clk edge counter'), ('test/wave_dumper_test.dart', 'attach dumper before put')]",
+        "strict_post_minimization.checks.trigger.deterministic: fingerprint_groups=4 expected=4",
+        "strict_post_minimization.checks.trigger.fixed_clean: passed=true",
+        "active_same_project_root_causes: []"
+      ],
+      "risks": [
+        "The fix changes public method signatures from Future<void> to void (Logic.inject, Simulator.injectAction, Simulator.tickExecute), which is a breaking API change. However, the trigger tests are written to work with both versions by not awaiting these calls.",
+        "Async event ordering behavior means failure mode on buggy revision may vary (assertion failure, timeout, or hang) depending on Dart stream scheduling, though strict evidence shows deterministic reproduction across multiple runs."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-11T12:01:39.888230+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "66ea2406b42f48e922916232f45e4d8f17825ce217f805d7eabb694696e92d36",
+      "response_sha256": "ccabe556f264c5dbc0cc04f70096daee0ba546eced2a2430d1eede487c3c42c5",
+      "response_id": "msg_4cbccbba-1fc8-4961-ab",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 5126
+        },
+        "cache_creation_input_tokens": 5126,
+        "cache_read_input_tokens": 12454,
+        "input_tokens": 16785,
+        "output_tokens": 861
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "intel/rohd#44",
+      "rationale": "Issue #44 describes a specific defect: `Simulator.injectAction` caused overlapping ticks when called during `SimulatorPhase.outOfTick`, triggering multiple events for single transitions. The minimized production patch removes exactly this behavior—removing the nested `tickExecute` call from `injectAction` and adding early-return logic in `tick()` to handle injected actions in isolation. The triggering tests ('clk edge counter' and 'attach dumper before put') validate the fix by asserting single event triggers per transition, matching the reported defect. The patch contains no documentation, formatting, or feature extension—only the core simulator timing fix. Strict runtime evidence confirms deterministic reproduction on buggy (2 of 3 triggers fail) and clean fixed behavior. No active duplicates exist in the supplied registry.",
+      "evidence_paths": [
+        "issue_urls[0]: https://github.com/intel/rohd/issues/44",
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "strict_post_minimization.checks.trigger.buggy_differential.passed: true",
+        "strict_post_minimization.checks.trigger.fixed_clean.passed: true",
+        "strict_post_minimization.checks.trigger.deterministic.passed: true",
+        "traceability.verified_fix_issue_numbers: [44]"
+      ],
+      "risks": [
+        "Public API signature change (Future<void> to void) affects interleaving semantics; tests must avoid await on inject/injectAction",
+        "Async stream event ordering may cause buggy revision to hang rather than fail cleanly in some environments"
+      ]
+    }
+  ]
+}

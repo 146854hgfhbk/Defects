@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1776",
+  "technical_evidence_sha256": "40fa35cae6edd51a29e5b7c8f6c6446bde7435570b779944ecfde260330a9431",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "23b10ea9b1ba8f2ef0afebfe5110fc7175644ae19c3707489ae34fe3ff6cde92",
+  "reviewed_at": "2026-09-10T05:38:05.521930+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "apple/swift-argument-parser#327",
+  "rationale": "Issue #327 (labeled 'bug', closed by this merge) reports that an @Option declared with .customLong(withSingleDash: true) and parsing: .upToNextOption stops collecting values because the parser sees the exploded short-option candidates of the single-dash name (e.g. -h from a name containing 'h'), causing help output instead of value capture. The minimized production patch retains exactly the one hunk that addresses this: it unions the option's own origin into usedOrigins and removes it from inputArguments before the upToNextOption value-consumption loop, so the exploded short options are no longer treated as an option boundary. Minimization dropped the two unrelated-to-trigger '--foo=bar' usedOrigins hunks, leaving a single 5-line behavioral change in Sources/ArgumentParser/Parsing/ArgumentSet.swift with no refactor, formatting, feature, docs, config, or test content. The trigger is the unchanged upstream test from the same commit: testIssue327 parses ['-argWithAnH', '03ade86c0', '8f2058e3ade86c84ec5b'] (name contains 'h', same argument values as the issue report) and asserts both values land in args, which is the reported symptom stated as an assertion. It uses only APIs present on the buggy revision (@Option, .customLong(withSingleDash:), .upToNextOption, the existing AssertParse helper) and the strict gates confirm it builds and runs on both revisions, failing in isolation and in the full suite on 397d704f and passing on b77ea81c with the fixed suite all green over 3 repetitions; post-minimization strict evidence is identical PASS with no failed checks. No active same-project root causes are registered, and the root cause matches the single allowed verified issue key.\n\nIssue #327 (labeled 'bug', closed by this commit) reports that an @Option declared with .customLong(withSingleDash: true) and parsing: .upToNextOption stops collecting values because the option token is exploded into short-option candidates, one of which is '-h', so help is emitted instead of the array being filled. The retained minimized hunk in Sources/ArgumentParser/Parsing/ArgumentSet.swift does exactly one thing: unions the option's own origin into usedOrigins and removes it from inputArguments before the upToNextOption value-consumption loop, with a comment naming issue #327. That is the same causal mechanism the issue and PR #353 describe. Minimization dropped the two '--foo=bar' usedOrigins.formUnion hunks and kept only hunk 3; the remaining diff is pure behavioral parsing logic with no refactor, formatting, feature, doc, config, or test content. The trigger is the unchanged upstream test appended to an existing end-to-end file and uses only APIs that already exist on the buggy revision (@Option, .customLong(withSingleDash:), .upToNextOption, AssertParse), so there is no fix-only-API compile dependency; strict evidence confirms build.both_versions PASS and a genuine differential where testIssue327 fails in isolation and in the full suite on 397d704f and passes on b77ea81c, deterministic over 3 repetitions with fixed all-green. strict_post_minimization repeats every gate as PASS with the same expected trigger, so the single retained hunk is sufficient. active_same_project_root_causes is empty and the root cause key matches the sole allowed verified issue.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-10T05:37:41.312711+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "23b10ea9b1ba8f2ef0afebfe5110fc7175644ae19c3707489ae34fe3ff6cde92",
+      "response_sha256": "d25c21da73ce161277103ce93398dca325cad85077b3227ca1b53e0c2c56e6f8",
+      "response_id": "msg_8fbb65901c81422eba75041c89947a3f",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5697548722719734,
+        "input_tokens": 17996,
+        "output_tokens": 691
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-argument-parser#327",
+      "rationale": "Issue #327 (labeled 'bug', closed by this merge) reports that an @Option declared with .customLong(withSingleDash: true) and parsing: .upToNextOption stops collecting values because the parser sees the exploded short-option candidates of the single-dash name (e.g. -h from a name containing 'h'), causing help output instead of value capture. The minimized production patch retains exactly the one hunk that addresses this: it unions the option's own origin into usedOrigins and removes it from inputArguments before the upToNextOption value-consumption loop, so the exploded short options are no longer treated as an option boundary. Minimization dropped the two unrelated-to-trigger '--foo=bar' usedOrigins hunks, leaving a single 5-line behavioral change in Sources/ArgumentParser/Parsing/ArgumentSet.swift with no refactor, formatting, feature, docs, config, or test content. The trigger is the unchanged upstream test from the same commit: testIssue327 parses ['-argWithAnH', '03ade86c0', '8f2058e3ade86c84ec5b'] (name contains 'h', same argument values as the issue report) and asserts both values land in args, which is the reported symptom stated as an assertion. It uses only APIs present on the buggy revision (@Option, .customLong(withSingleDash:), .upToNextOption, the existing AssertParse helper) and the strict gates confirm it builds and runs on both revisions, failing in isolation and in the full suite on 397d704f and passing on b77ea81c with the fixed suite all green over 3 repetitions; post-minimization strict evidence is identical PASS with no failed checks. No active same-project root causes are registered, and the root cause matches the single allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "strict_post_minimization.checks.build.both_versions",
+        "minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "The second declared selector testJoinedItem_Issue327 is non-differential: it passes on both revisions after minimization removed the two '--foo=bar' usedOrigins hunks, so only testIssue327 carries FAIL_TO_PASS signal.",
+        "issue_evidence is null; the issue text was read from source_candidate.issue_check.linked_issues rather than a separately fetched artifact.",
+        "Clearing the initial origin before the value loop could in principle shift unused-input diagnostics for other option forms; the fixed full suite was green for 1 repetition only, so that breadth of coverage is limited."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-10T05:38:05.521206+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "23b10ea9b1ba8f2ef0afebfe5110fc7175644ae19c3707489ae34fe3ff6cde92",
+      "response_sha256": "aa90e758bf344f5e558cffe51acdf17664e68a28d2c706c19ded482694777aad",
+      "response_id": "msg_5b0648e08aba41bea38caf8fbaf928b3",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5259412418242122,
+        "input_tokens": 18123,
+        "output_tokens": 692
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "apple/swift-argument-parser#327",
+      "rationale": "Issue #327 (labeled 'bug', closed by this commit) reports that an @Option declared with .customLong(withSingleDash: true) and parsing: .upToNextOption stops collecting values because the option token is exploded into short-option candidates, one of which is '-h', so help is emitted instead of the array being filled. The retained minimized hunk in Sources/ArgumentParser/Parsing/ArgumentSet.swift does exactly one thing: unions the option's own origin into usedOrigins and removes it from inputArguments before the upToNextOption value-consumption loop, with a comment naming issue #327. That is the same causal mechanism the issue and PR #353 describe. Minimization dropped the two '--foo=bar' usedOrigins.formUnion hunks and kept only hunk 3; the remaining diff is pure behavioral parsing logic with no refactor, formatting, feature, doc, config, or test content. The trigger is the unchanged upstream test appended to an existing end-to-end file and uses only APIs that already exist on the buggy revision (@Option, .customLong(withSingleDash:), .upToNextOption, AssertParse), so there is no fix-only-API compile dependency; strict evidence confirms build.both_versions PASS and a genuine differential where testIssue327 fails in isolation and in the full suite on 397d704f and passes on b77ea81c, deterministic over 3 repetitions with fixed all-green. strict_post_minimization repeats every gate as PASS with the same expected trigger, so the single retained hunk is sufficient. active_same_project_root_causes is empty and the root cause key matches the sole allowed verified issue.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "minimized_patch_reference.post_minimization_validation",
+        "allowed_root_cause_ids"
+      ],
+      "risks": [
+        "Only testIssue327 is FAIL_TO_PASS; testJoinedItem_Issue327 already passes on the buggy revision and functions as a PASS_TO_PASS guard, so the second declared selector adds no discriminating power.",
+        "The minimized patch is narrower than the upstream fix: the two usedOrigins.formUnion(origin) additions on the '--foo=bar' paths are removed, so any latent origin-tracking issue for joined-equals values remains unaddressed in the benchmark's fixed state.",
+        "issue_evidence is null; the issue text used here comes from the embedded source_candidate.issue_check payload rather than an independently fetched record.",
+        "Broader effects of clearing the initial origin on unused-input diagnostics for other parsing strategies are covered only by a single full-suite repetition."
+      ]
+    }
+  ]
+}

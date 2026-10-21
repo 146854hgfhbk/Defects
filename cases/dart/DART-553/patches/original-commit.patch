@@ -1,0 +1,118 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a07a0e6..ddb4ff0 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,8 @@
++# 1.5.5
++
++* Fix a bug where `FileSpan.highlight()` would crash for spans that covered a
++  trailing newline and a single additional empty line.
++
+ # 1.5.4
+ 
+ * `FileSpan.highlight()` now properly highlights point spans at the beginning of
+diff --git a/lib/src/highlighter.dart b/lib/src/highlighter.dart
+index 8a928b3..4a7b713 100644
+--- a/lib/src/highlighter.dart
++++ b/lib/src/highlighter.dart
+@@ -117,6 +117,10 @@ class Highlighter {
+       SourceSpanWithContext span) {
+     if (!span.context.endsWith("\n")) return span;
+ 
++    // If there's a full blank line on the end of [span.context], it's probably
++    // significant, so we shouldn't trim it.
++    if (span.text.endsWith("\n\n")) return span;
++
+     var context = span.context.substring(0, span.context.length - 1);
+     var text = span.text;
+     var start = span.start;
+@@ -156,9 +160,11 @@ class Highlighter {
+     if (text.isEmpty) return 0;
+ 
+     // The "- 1" here avoids counting the newline itself.
+-    return text.codeUnitAt(text.length - 1) == $lf
+-        ? text.length - text.lastIndexOf("\n", text.length - 2) - 1
+-        : text.length - text.lastIndexOf("\n") - 1;
++    if (text.codeUnitAt(text.length - 1) == $lf) {
++      return text.length == 1 ? 0 : text.length - text.lastIndexOf("\n", text.length - 2) - 1;
++    } else {
++      return text.length - text.lastIndexOf("\n") - 1;
++    }
+   }
+ 
+   /// Returns whether [span]'s text runs all the way to the end of its context.
+diff --git a/pubspec.yaml b/pubspec.yaml
+index a470875..0cb9326 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,5 +1,5 @@
+ name: source_span
+-version: 1.5.4
++version: 1.5.5
+ 
+ description: A library for identifying source spans and locations.
+ author: Dart Team <misc@dartlang.org>
+diff --git a/test/highlight_test.dart b/test/highlight_test.dart
+index af9cd1b..5fdf622 100644
+--- a/test/highlight_test.dart
++++ b/test/highlight_test.dart
+@@ -117,6 +117,15 @@ zip zap zop
+           equals("""
+   ,
+ 1 | 
++  | ^
++  '"""));
++    });
++
++    test("on an empty line", () {
++      var file = new SourceFile.fromString("foo\n\nbar");
++      expect(file.location(4).pointSpan().highlight(), equals("""
++  ,
++2 | 
+   | ^
+   '"""));
+     });
+@@ -131,6 +140,15 @@ zip zap zop
+   '"""));
+   });
+ 
++  test("highlights a single empty line", () {
++    expect(new SourceFile.fromString("foo\n\nbar").span(4, 5).highlight(),
++        equals("""
++  ,
++2 | 
++  | ^
++  '"""));
++  });
++
+   group("with a multiline span", () {
+     test("highlights the middle of the first and last lines", () {
+       expect(file.span(4, 34).highlight(), equals("""
+@@ -275,6 +293,27 @@ bar
+       expect(file.span(0, 5).highlight(), equals("""
+   ,
+ 1 | / foo
++2 | \\ 
++  '"""));
++    });
++
++    test("highlights multiple empty lines", () {
++      var file = new SourceFile.fromString("foo\n\n\n\nbar");
++      expect(file.span(4, 7).highlight(), equals("""
++  ,
++2 | / 
++3 | | 
++4 | \\ 
++  '"""));
++    });
++
++    // Regression test for #32
++    test("highlights the end of a line and an empty line", () {
++      var file = new SourceFile.fromString("foo\n\n");
++      expect(file.span(3, 5).highlight(), equals("""
++  ,
++1 |   foo
++  | ,----^
+ 2 | \\ 
+   '"""));
+     });

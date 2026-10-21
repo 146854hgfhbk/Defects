@@ -1,0 +1,28 @@
+diff --git a/Sources/_NIOJSON/Types/JSONArray.swift b/Sources/_NIOJSON/Types/JSONArray.swift
+index 34936b06e7d068aef3859917ad72da2b300816d3..67055a0704ff647e6f52c755829ce431b23e0d69 100644
+--- a/Sources/_NIOJSON/Types/JSONArray.swift
++++ b/Sources/_NIOJSON/Types/JSONArray.swift
+@@ -75,7 +75,7 @@ public struct JSONArray: ExpressibleByArrayLiteral, Sequence, Equatable, CustomS
+                     bytes: buffer,
+                     destination: JSONDescription()
+                 )
+-                
++
+                 try tokenizer.scanValue()
+                 return tokenizer.destination
+             }
+@@ -333,6 +333,14 @@ extension String {
+       case .backslash:
+         escaped = true
+         characters.insert(.backslash, at: i &+ 1)
++      case 0x00..<0x20:
++        escaped = true
++        let byte = characters[i]
++        let hi = byte >> 4
++        let lo = byte & 0x0f
++        let hex: (UInt8) -> UInt8 = { $0 < 10 ? 0x30 &+ $0 : 0x57 &+ $0 }
++        characters[i] = .backslash
++        characters.insert(contentsOf: [.u, .zero, .zero, hex(hi), hex(lo)], at: i &+ 1)
+       default:
+         continue
+       }

@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-736",
+  "status": "trigger_ready",
+  "mode": "dedicated_script",
+  "origin": "manual_mwe_from_upstream_fix",
+  "trigger_name": "JULIA-736 upstream MathConstants regression",
+  "trigger_sha256": "70242ff0232b554f306e7ea3d8efab5aa420b731342d451de397b8a05f721f44",
+  "oracle": {
+    "mwe_basis": "Nemo.jl issue #2099 and PR #2104 regression assertions",
+    "source_evidence": "Issue #2099 documents that AcbField(400)(pi) loses precision; PR #2104 adds these MathConstants conversion and high-precision sin/log assertions.",
+    "upstream_test_patch_sha256": "e811fed66d38474d93efd48399eb74d5bb69246fec97ed66ef45b7f290915ed5",
+    "assertion_scope": "Only the eight AcbField assertions added by PR #2104; no unrelated testsets are executed."
+  },
+  "superseded_trigger": {
+    "mode": "test_patch_suite",
+    "origin": "swe_rebench_test_patch",
+    "artifact": "trigger/upstream-tests.patch",
+    "artifact_sha256": "e811fed66d38474d93efd48399eb74d5bb69246fec97ed66ef45b7f290915ed5",
+    "acquisition_backup": "trigger/acquisition.test-patch-suite.json",
+    "reason": "The old patch-mode oracle ran all testsets in four files and did not bind execution to the new assertions."
+  }
+}

@@ -1,0 +1,69 @@
+diff --git a/lib/ExtUtils/MakeMaker.pm b/lib/ExtUtils/MakeMaker.pm
+index e865504f..2404f5ff 100644
+--- a/lib/ExtUtils/MakeMaker.pm
++++ b/lib/ExtUtils/MakeMaker.pm
+@@ -452,9 +452,14 @@ sub new {
+                 {
+                   bad_version_hook => sub {
+                     #no warnings 'numeric'; # module doesn't use warnings
+-                    my ($fallback) = $_[0] ? ($_[0] =~ /^([0-9.]+)/) : 0;
+-                    $fallback += 0;
+-                    carp "Unparsable version '$_[0]' for prerequisite $_[1] treated as $fallback";
++                    my $fallback;
++                    if ( $_[0] =~ m!^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$! ) {
++                      $fallback = sprintf "%f", $_[0];
++                    } else {
++                      ($fallback) = $_[0] ? ($_[0] =~ /^([0-9.]+)/) : 0;
++                      $fallback += 0;
++                      carp "Unparsable version '$_[0]' for prerequisite $_[1] treated as $fallback";
++                    }
+                     version->new($fallback);
+                   },
+                 },
+@@ -472,9 +477,13 @@ sub new {
+                     next;
+                 }
+                 else {
+-                    my ($fallback) = $_[0] ? ($_[0] =~ /^([0-9.]+)/) : 0;
+-                    $fallback += 0;
+-                    carp "Unparsable version '$version' for prerequisite $module treated as $fallback (CPAN::Meta::Requirements not available)";
++                    if ( $version =~ m!^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$! ) {
++                      $fallback = sprintf "%f", $version;
++                    } else {
++                      ($fallback) = $version ? ($version =~ /^([0-9.]+)/) : 0;
++                      $fallback += 0;
++                      carp "Unparsable version '$version' for prerequisite $module treated as $fallback (CPAN::Meta::Requirements not available)";
++                    }
+                 }
+                 $self->{$key}->{$module} = $fallback;
+             }
+@@ -585,9 +594,14 @@ END
+           $pr_version = 0 if $pr_version eq 'undef';
+           if ( !eval { version->new( $pr_version ); 1 } ) {
+             #no warnings 'numeric'; # module doesn't use warnings
+-            my ($fallback) = $pr_version ? ($pr_version =~ /^([0-9.]+)/) : 0;
+-            $fallback += 0;
+-            carp "Unparsable version '$pr_version' for installed prerequisite $prereq treated as $fallback";
++            my $fallback;
++            if ( $pr_version =~ m!^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$! ) {
++              $fallback = sprintf '%f', $pr_version;
++            } else {
++              ($fallback) = $pr_version ? ($pr_version =~ /^([0-9.]+)/) : 0;
++              $fallback += 0;
++              carp "Unparsable version '$pr_version' for installed prerequisite $prereq treated as $fallback";
++            }
+             $pr_version = $fallback;
+           }
+         }
+diff --git a/t/vstrings.t b/t/vstrings.t
+index 80889368..9f88399e 100644
+--- a/t/vstrings.t
++++ b/t/vstrings.t
+@@ -41,6 +41,7 @@ my @DATA = (
+   [ V2DecimalString => 'v1.2', qr/^$/, '2-part v-decimal string', $UNPARSABLERE ],
+   [ V3DecimalString => 'v1.2.3', qr/^$/, '3-part v-Decimal String', $UNPARSABLERE ],
+   [ RangeString => '>= 5.0, <= 6.0', qr/^$/, 'Version range', $UNPARSABLERE ],
++  [ Scientific => 0.000005, qr/^$/, 'Scientific Notation' ],
+ );
+ 
+ plan tests => (1 + (@DATA * 4));

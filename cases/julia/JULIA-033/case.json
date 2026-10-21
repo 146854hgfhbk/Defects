@@ -1,0 +1,134 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-033",
+  "bug_id": "JULIA-033",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/512"
+  ],
+  "issue_id": 512,
+  "buggy_revision": "9483de85a3e59f017330f6f36a083e7951262e87",
+  "fixed_revision": "2d19c068cc942005db589ac25edc6b32fe5be8f8",
+  "candidate_sha": "2d19c068cc942005db589ac25edc6b32fe5be8f8",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "9483de85a3e59f017330f6f36a083e7951262e87",
+  "changed_production_files": [
+    "src/hooks.jl"
+  ],
+  "changed_test_files": [
+    "test/hooks.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-033 incomplete expression tags"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "2422005c2f921c9fa4f050f367c18ba34029b5f7554340850379034a86417c47",
+    "oracle": {
+      "mwe_basis": "upstream Core parser hook regression assertions",
+      "source_evidence": "Literal assertions added to JuliaSyntax test/hooks.jl: incomplete f(1,, [x , and (  inputs must receive the :other incomplete tag through the public Meta.parse hook.",
+      "upstream_test_patch_sha256": "5b57b29dabfd65c820218b5aea519c587c0e506e4d46747d81ee351bdb793424"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "2d19c068cc942005db589ac25edc6b32fe5be8f8",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "ff2159400fe5d47cc496f1f055e791059a483aa2871835246c6b063dd8aac666",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:52:36Z",
+    "usage": {
+      "prompt_tokens": 1941,
+      "completion_tokens": 537,
+      "total_tokens": 2478
+    },
+    "raw_response": "```json\n{\n  \"checks\": {\n    \"real_defect_evidence\": \"yes\",\n    \"existing_behavior_violated\": \"yes\",\n    \"issue_commit_match\": \"yes\",\n    \"production_behavior_fix\": \"yes\",\n    \"feature_or_api_extension\": \"no\",\n    \"diagnostic_only\": \"no\",\n    \"non_bug_change_only\": \"no\",\n    \"isolated_fix\": \"yes\",\n    \"test_evidence_visible\": \"yes\"\n  },\n  \"decision\": \"ACCEPT_FOR_VALIDATION\",\n  \"rejection_code\": \"NONE\",\n  \"confidence\": 0.90,\n  \"summary\": \"This commit fixes a regression in `incomplete_tag` generation (issue #512) caused by a prior change (#397). The fix modifies `src/hooks.jl` to compare against the stream position before trailing trivia is bumped, rather than relying on the last SyntaxNode consuming all trailing whitespace. This is a clear bug fix restoring previously correct behavior.\",\n  \"evidence\": \"Issue #512 clearly documents the regression: `Base.incomplete_tag` returns `:none` instead of the expected `:other` on JuliaSyntax master. The PR #518 body explains the root cause (broken assumption from #397 about trailing whitespace consumption) and the fix (comparing to stream position before trivia bumping). A test file `test/hooks.jl` is modified, indicating test coverage for the fix. The production change is isolated to `src/hooks.jl`.\",\n  \"missing_evidence\": \"Cannot see the actual diff content to verify the exact code change, but the issue descriptions, PR body, and file list are consistent with a targeted regression fix.\",\n  \"validation_risks\": \"The fix interacts with parser trivia handling which could have subtle edge cases. However, the issue is well-defined and the fix is described as a straightforward comparison change.\",\n  \"suggested_tests\": \"Test `Base.incomplete_tag` for inputs like `\\\"CompletionFoo.test(1, 1, \\\"`, `\\\"[x \\\"`, `\\\"[x)\\\"`, `\\\"(\\\"`, `\\\"( \\\"` to verify correct tag generation with trailing whitespace and various incomplete expressions.\"\n}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.9,
+    "summary": "This commit fixes a regression in `incomplete_tag` generation (issue #512) caused by a prior change (#397). The fix modifies `src/hooks.jl` to compare against the stream position before trailing trivia is bumped, rather than relying on the last SyntaxNode consuming all trailing whitespace. This is a clear bug fix restoring previously correct behavior.",
+    "evidence": "Issue #512 clearly documents the regression: `Base.incomplete_tag` returns `:none` instead of the expected `:other` on JuliaSyntax master. The PR #518 body explains the root cause (broken assumption from #397 about trailing whitespace consumption) and the fix (comparing to stream position before trivia bumping). A test file `test/hooks.jl` is modified, indicating test coverage for the fix. The production change is isolated to `src/hooks.jl`.",
+    "missing_evidence": "Cannot see the actual diff content to verify the exact code change, but the issue descriptions, PR body, and file list are consistent with a targeted regression fix.",
+    "validation_risks": "The fix interacts with parser trivia handling which could have subtle edge cases. However, the issue is well-defined and the fix is described as a straightforward comparison change.",
+    "suggested_tests": "Test `Base.incomplete_tag` for inputs like `\"CompletionFoo.test(1, 1, \"`, `\"[x \"`, `\"[x)\"`, `\"(\"`, `\"( \"` to verify correct tag generation with trailing whitespace and various incomplete expressions."
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-033 incomplete expression tags"
+    ],
+    "exception_types": [
+      "4102c78944bf4e40c761ae634a103559170e657e4ddd47f33b4f057473af500b",
+      "6b69840fb9313b3e997ca732daae1e00b16a279b26863785c6dcffd0b5086673",
+      "8926cc8a74a3fdec402ee6355f2a5e93cd5ce31ca1381b9bf3bd9bfb603e63c5"
+    ],
+    "fingerprints": [
+      "4102c78944bf4e40c761ae634a103559170e657e4ddd47f33b4f057473af500b",
+      "6b69840fb9313b3e997ca732daae1e00b16a279b26863785c6dcffd0b5086673",
+      "8926cc8a74a3fdec402ee6355f2a5e93cd5ce31ca1381b9bf3bd9bfb603e63c5"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "2d19c068cc942005db589ac25edc6b32fe5be8f8",
+    "parent_sha": "9483de85a3e59f017330f6f36a083e7951262e87",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "e9099eef5e1cbde23b8f54c6d39b6fce9f992bf035250e51e3f3b57260f148ab",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

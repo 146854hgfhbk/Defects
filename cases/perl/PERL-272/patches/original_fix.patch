@@ -1,0 +1,56 @@
+diff --git a/Changes b/Changes
+index b9ca54e4f..79489b687 100644
+--- a/Changes
++++ b/Changes
+@@ -8,6 +8,10 @@
+       subtests easier to read. [github #290] [github #364]
+       (Brendan Byrd)
+ 
++    Feature Changes
++    * like() and unlike() no longer warn about undef. [github #335]
++      (Michael G Schwern)
++
+ 
+ 0.98_04  Sun Apr 14 10:54:13 BST 2013
+     Distribution Changes
+diff --git a/lib/Test/Builder.pm b/lib/Test/Builder.pm
+index 000c1a177..1a8313f97 100644
+--- a/lib/Test/Builder.pm
++++ b/lib/Test/Builder.pm
+@@ -1454,14 +1454,19 @@ sub _regex_ok {
+     }
+ 
+     {
+-        ## no critic (BuiltinFunctions::ProhibitStringyEval)
+-
+         my $test;
+         my $context = $self->_caller_context;
+ 
+-        local( $@, $!, $SIG{__DIE__} );    # isolate eval
++        {
++            ## no critic (BuiltinFunctions::ProhibitStringyEval)
+ 
+-        $test = eval $context . q{$test = $thing =~ /$usable_regex/ ? 1 : 0};
++            local( $@, $!, $SIG{__DIE__} );    # isolate eval
++
++            # No point in issuing an uninit warning, they'll see it in the diagnostics
++            no warnings 'uninitialized';
++
++            $test = eval $context . q{$test = $thing =~ /$usable_regex/ ? 1 : 0};
++        }
+ 
+         $test = !$test if $cmp eq '!~';
+ 
+diff --git a/t/undef.t b/t/undef.t
+index 26c10a94e..2c8cace49 100644
+--- a/t/undef.t
++++ b/t/undef.t
+@@ -52,7 +52,7 @@ Test::More->builder->isnt_num(23, undef,  'isnt_num()');
+ 
+ #line 45
+ like( undef, qr/.*/,        'undef is like anything' );
+-warnings_like(qr/Use of uninitialized value.* at $Filename line 45\.\n/);
++no_warnings;
+ 
+ eq_array( [undef, undef], [undef, 23] );
+ no_warnings;

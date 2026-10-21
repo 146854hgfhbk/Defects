@@ -1,0 +1,34 @@
+diff --git a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/TryCatchFinallySpacingRuleTest.kt b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/TryCatchFinallySpacingRuleTest.kt
+index 0bd002b4a0..4be77cbdfc 100644
+--- a/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/TryCatchFinallySpacingRuleTest.kt
++++ b/ktlint-ruleset-standard/src/test/kotlin/com/pinterest/ktlint/ruleset/standard/rules/TryCatchFinallySpacingRuleTest.kt
+@@ -210,4 +210,29 @@ class TryCatchFinallySpacingRuleTest {
+                 ).isFormattedAs(formattedCode)
+         }
+     }
++
++    @Test
++    fun `Issue 2427 - Given a try-catch with a comment at an unexpected location`() {
++        val code =
++            """
++            fun foo() {
++                try {
++                    trySomething()
++                } // Unexpected comment
++                catch (e: IOException) {
++                    catchSomething()
++                } // Unexpected comment
++                finally {
++                    finallySomething()
++                }
++            }
++            """.trimIndent()
++        tryCatchRuleAssertThat(code)
++            .hasLintViolations(
++                LintViolation(4, 7, "No comment expected at this location", false),
++                LintViolation(5, 5, "A single space is required before 'catch'"),
++                LintViolation(7, 7, "No comment expected at this location", false),
++                LintViolation(8, 5, "A single space is required before 'finally'"),
++            )
++    }
+ }

@@ -1,0 +1,133 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-197",
+  "bug_id": "JULIA-197",
+  "language": "Julia",
+  "revision_mode": "real_upstream_commit",
+  "project": "hyrodium/BasicBSpline.jl",
+  "repository_url": "https://github.com/hyrodium/BasicBSpline.jl.git",
+  "issue_urls": [
+    "https://github.com/hyrodium/BasicBSpline.jl/issues/282"
+  ],
+  "issue_id": 282,
+  "buggy_revision": "2260551629ae2792cdbd72f9fe9c0939f9a07373",
+  "fixed_revision": "b461165005d31d8be87ef415b17b31be3b1f5d6d",
+  "candidate_sha": "b461165005d31d8be87ef415b17b31be3b1f5d6d",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "2260551629ae2792cdbd72f9fe9c0939f9a07373",
+  "changed_production_files": [
+    "src/_KnotVector.jl"
+  ],
+  "changed_test_files": [],
+  "trigger_tests": [
+    "JULIA-197 signed-zero knot counting"
+  ],
+  "trigger_test_origin": "upstream_fix_test_patch",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "ffa4aa919c0434fcf9fd1f147171f449b581d16006696fd98223e1cadf4132a7",
+    "oracle": {
+      "mwe_basis": {
+        "upstream_test_file": "test/test_KnotVector.jl",
+        "public_api": "BasicBSpline.countknots",
+        "defect": "signed zeroes were not counted consistently in a knot vector"
+      },
+      "source_evidence": "minimal public-API MWE derived from the fixed commit test hunk"
+    }
+  },
+  "traceability_class": "PR_MEDIATED",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "b461165005d31d8be87ef415b17b31be3b1f5d6d",
+    "project": "hyrodium/BasicBSpline.jl",
+    "input_sha256": "2e96e9c8538e40a0b3c5002927ec2825a8c171857fd8b2f11e8a8e777a0255cb",
+    "api_model": "claude-opus-5",
+    "provider": "claude",
+    "api_version": "2023-06-01",
+    "reviewed_at": "2026-08-31T04:32:26Z",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.5678257225538972,
+      "input_tokens": 3821,
+      "output_tokens": 774
+    },
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"unknown\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"no\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.66, \"summary\": \"Single-line fix in countknots: the multiplicity of a knot value t was computed via searchsorted on the AbstractKnotVector wrapper with the default ordering (isless). The fix searches the underlying vector via _vec(k) and passes lt=< explicitly. Because isless and < disagree for floating-point edge cases (notably -0.0 vs 0.0, and NaN), the previous code could return an incorrect multiplicity for such knot values, which propagates into any logic depending on knot multiplicity (e.g. degree/continuity or basis function support). This is a behavioral correctness fix, not a feature, refactor, or diagnostic change.\", \"evidence\": \"Minimized production patch is a single hunk touching only the return expression of countknots in src/_KnotVector.jl; minimization reports globally_minimal with all hunks necessary, so the behavior difference is attributable to this one expression. Runtime evidence reports strict_differential = stable_differential over 3 repetitions, with the full suite passing on the fixed version, indicating a reproducible pre-fix failure that the change resolves. The semantic nature of the change (switching the comparison from the default isless ordering to <, plus operating on the raw vector) is consistent with a correctness fix rather than an optimization: the retained comment about the faster path is unchanged.\", \"missing_evidence\": \"No PR number, title, body, commit subject, or linked issue is provided, so the author's stated intent and any issue-to-commit traceability cannot be confirmed (traceability_class = UNVERIFIED). No test files or named trigger tests are listed; the failing behavior was reproduced through a dedicated script rather than a committed test, so the exact failing input and the concrete wrong-vs-right values are not visible. It is also unverified whether searchsorted was previously well-defined on AbstractKnotVector or relied on an indexing fallback, which would change the precise failure mode.\", \"validation_risks\": \"Without a committed trigger test, dataset inclusion depends on the dedicated reproduction script being faithfully reconstructible; if the trigger relies on -0.0 or NaN literals, it is sensitive to how the test input is written and to Julia version differences in searchsorted/ord handling. There is a small chance part of the change is performance-motivated (_vec unwrapping) rather than purely semantic, which would make the differential narrower than it appears. Low flakiness risk otherwise: the function is pure and the differential was stable across repetitions.\", \"suggested_tests\": \"Assert countknots on a knot vector containing -0.0 returns the correct multiplicity when queried with 0.0 and vice versa, comparing against the reference count(==(t), vec) implementation preserved in the comment. Add a property test over random knot vectors asserting countknots(k, t) == count(==(t), BasicBSpline._vec(k)) for every t in the vector plus values not present. Include a case with repeated interior knots to confirm multiplicity greater than one is still returned, and a case with NaN present to confirm no spurious matches. Optionally assert downstream consumers of countknots (multiplicity-dependent basis support or continuity queries) agree with the reference implementation.\"}",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "unknown",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "no"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.66,
+    "summary": "Single-line fix in countknots: the multiplicity of a knot value t was computed via searchsorted on the AbstractKnotVector wrapper with the default ordering (isless). The fix searches the underlying vector via _vec(k) and passes lt=< explicitly. Because isless and < disagree for floating-point edge cases (notably -0.0 vs 0.0, and NaN), the previous code could return an incorrect multiplicity for such knot values, which propagates into any logic depending on knot multiplicity (e.g. degree/continuity or basis function support). This is a behavioral correctness fix, not a feature, refactor, or diagnostic change.",
+    "evidence": "Minimized production patch is a single hunk touching only the return expression of countknots in src/_KnotVector.jl; minimization reports globally_minimal with all hunks necessary, so the behavior difference is attributable to this one expression. Runtime evidence reports strict_differential = stable_differential over 3 repetitions, with the full suite passing on the fixed version, indicating a reproducible pre-fix failure that the change resolves. The semantic nature of the change (switching the comparison from the default isless ordering to <, plus operating on the raw vector) is consistent with a correctness fix rather than an optimization: the retained comment about the faster path is unchanged.",
+    "missing_evidence": "No PR number, title, body, commit subject, or linked issue is provided, so the author's stated intent and any issue-to-commit traceability cannot be confirmed (traceability_class = UNVERIFIED). No test files or named trigger tests are listed; the failing behavior was reproduced through a dedicated script rather than a committed test, so the exact failing input and the concrete wrong-vs-right values are not visible. It is also unverified whether searchsorted was previously well-defined on AbstractKnotVector or relied on an indexing fallback, which would change the precise failure mode.",
+    "validation_risks": "Without a committed trigger test, dataset inclusion depends on the dedicated reproduction script being faithfully reconstructible; if the trigger relies on -0.0 or NaN literals, it is sensitive to how the test input is written and to Julia version differences in searchsorted/ord handling. There is a small chance part of the change is performance-motivated (_vec unwrapping) rather than purely semantic, which would make the differential narrower than it appears. Low flakiness risk otherwise: the function is pure and the differential was stable across repetitions.",
+    "suggested_tests": "Assert countknots on a knot vector containing -0.0 returns the correct multiplicity when queried with 0.0 and vice versa, comparing against the reference count(==(t), vec) implementation preserved in the comment. Add a property test over random knot vectors asserting countknots(k, t) == count(==(t), BasicBSpline._vec(k)) for every t in the vector plus values not present. Include a case with repeated interior knots to confirm multiplicity greater than one is still returned, and a case with NaN present to confirm no spurious matches. Optionally assert downstream consumers of countknots (multiplicity-dependent basis support or continuity queries) agree with the reference implementation."
+  },
+  "production_files_provenance": {
+    "source": "output/patches/<case_id>/minimized-source.patch",
+    "method": "unified_diff_paths"
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-197 signed-zero knot counting"
+    ],
+    "exception_types": [
+      "38708a159b4218f84abf87bf43139eaf491d77eab7fbddf87ec64d031f06567d",
+      "64b9c1e82e28bf832c018b51018565a23af9464ffdea8507447a8e37f58c68f1",
+      "e18f24c6452d2537124395bde7cb598373ed95652cbc3d94f1175491c1e5e468"
+    ],
+    "fingerprints": [
+      "38708a159b4218f84abf87bf43139eaf491d77eab7fbddf87ec64d031f06567d",
+      "64b9c1e82e28bf832c018b51018565a23af9464ffdea8507447a8e37f58c68f1",
+      "e18f24c6452d2537124395bde7cb598373ed95652cbc3d94f1175491c1e5e468"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

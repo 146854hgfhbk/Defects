@@ -1,0 +1,25 @@
+diff --git a/lib/plug/debugger.ex b/lib/plug/debugger.ex
+--- a/lib/plug/debugger.ex
++++ b/lib/plug/debugger.ex
+@@ -338,7 +343,7 @@ defmodule Plug.Debugger do
+        doc: doc,
+        clauses: clauses,
+        args: args,
+-       link: editor && get_editor(source, line, editor)
++       link: editor && get_editor(source, file, line, editor)
+      }, index + 1}
+   end
+ 
+@@ -458,9 +463,10 @@ defmodule Plug.Debugger do
+     end
+   end
+ 
+-  defp get_editor(file, line, editor) do
++  defp get_editor(source, file, line, editor) do
+     editor
+-    |> :binary.replace("__FILE__", URI.encode(Path.expand(file)))
++    |> :binary.replace("__FILE__", URI.encode(Path.expand(source)))
++    |> :binary.replace("__RELATIVEFILE__", URI.encode(file))
+     |> :binary.replace("__LINE__", to_string(line))
+     |> h
+   end

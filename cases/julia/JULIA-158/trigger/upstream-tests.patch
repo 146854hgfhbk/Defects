@@ -1,0 +1,47 @@
+diff --git a/test/Core/forwarddiff_gpu.jl b/test/Core/forwarddiff_gpu.jl
+index 5b8c246f..1b9cfc42 100644
+--- a/test/Core/forwarddiff_gpu.jl
++++ b/test/Core/forwarddiff_gpu.jl
+@@ -2,6 +2,7 @@ using LinearSolve
+ using ForwardDiff
+ using JLArrays
+ using LinearAlgebra
++using SciMLOperators: WOperator
+ using Test
+ 
+ # JLArray is a CPU-backed AbstractGPUArray, so it exercises the GPU contract
+@@ -20,6 +21,12 @@ using Test
+ 
+ const N_PARTIALS = 3
+ 
++@testset "WOperator with a GPU right-hand side" begin
++    W = WOperator{true}(I, 0.1, Matrix{Float64}(I, 2, 2), zeros(2))
++    alg = LinearSolve.defaultalg(W, JLArray(ones(2)), LinearSolve.OperatorAssumptions(true))
++    @test alg.alg === LinearSolve.DefaultAlgorithmChoice.KrylovJL_GMRES
++end
++
+ function dual_problem(n, p)
+     A = [
+         ForwardDiff.Dual{Nothing}(
+diff --git a/test/qa/qa.jl b/test/qa/qa.jl
+index 6783bfb8..ffe7f6cd 100644
+--- a/test/qa/qa.jl
++++ b/test/qa/qa.jl
+@@ -140,7 +140,7 @@ linearsolve_internal_accesses = (
+     :_SPARSE_LU_FALLBACK_ALGORITHMS, :_SPARSE_ONLY_ALGORITHMS,
+     :__is_extension_loaded, :__nonstructural_zeros, :_adjoint_factorization_solve,
+     :_adjoint_krylov_solve, :_adjoint_precs, :_adjoint_solve, :_can_reuse_cache_factorization,
+-    :_check_residual_safety,
++    :_check_matrix_support, :_check_residual_safety,
+     :_custom_adjoint_factorization_solve, :_custom_cache_factorization,
+     :_custom_can_reuse_adjoint_factorization, Symbol("_direct_lu_factorize!"),
+     Symbol("_direct_lu_solve!"), Symbol("_fast_sym_givens!"), :_init_cacheval,
+@@ -182,7 +182,7 @@ external_internal_accesses = (
+     :rocBLAS, :rocSOLVER, Symbol("trsv!"), Symbol("geqrf!"), Symbol("getrs!"),
+     Symbol("ormqr!"),
+     # CUDSS / cuSOLVER
+-    :cuSPARSE, :CUDACore,
++    :cuSPARSE, :CUDACore, Symbol("csrlsvqr!"),
+     # EnzymeCore (+ .EnzymeRules)
+     :EnzymeRules, :augmented_primal, :forward, :inactive_type, :reverse,
+     # ForwardDiff

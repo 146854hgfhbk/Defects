@@ -1,0 +1,765 @@
+diff --git a/docs/management/expiring-records.md b/docs/management/expiring-records.md
+index f8381f0..7914abf 100644
+--- a/docs/management/expiring-records.md
++++ b/docs/management/expiring-records.md
+@@ -12,9 +12,7 @@ In the current version of Cachex, the Janitor is pretty well optimized as most o
+ import Cachex.Spec
+ 
+ Cachex.start(:my_cache, [
+-    expiration: expiration(
+-        interval: :timer.seconds(3)
+-    )
++    expiration: expiration(interval: :timer.seconds(3))
+ ])
+ ```
+ 
+@@ -34,9 +32,7 @@ There is a very minimal overhead to this lazy checking, and there are cases wher
+ import Cachex.Spec
+ 
+ Cachex.start(:my_cache, [
+-    expiration: expiration(
+-        lazy: false
+-    )
++    expiration: expiration(lazy: false)
+ ])
+ ```
+ 
+@@ -61,9 +57,7 @@ import Cachex.Spec
+ 
+ # default for all entries
+ Cachex.start(:my_cache, [
+-    expiration: expiration(
+-        default: :timer.seconds(60)
+-    )
++    expiration: expiration(default: :timer.seconds(60))
+ ])
+ 
+ # setting an expiration manually
+@@ -73,7 +67,7 @@ Cachex.expire(:my_cache, "key", :timer.seconds(60))
+ # using the `Cachex.put/4` shorthand rather than setting manually
+ Cachex.put(:my_cache, "key", "value", expire: :timer.seconds(60))
+ 
+-# setting expiration via lazily computed values
++# setting expiration on lazily computed values
+ Cachex.fetch(:my_cache, "key", fn ->
+     { :commit, "value", expire: :timer.seconds(60) }
+ end)
+diff --git a/lib/cachex/actions/export.ex b/lib/cachex/actions/export.ex
+index b58f118..075640f 100644
+--- a/lib/cachex/actions/export.ex
++++ b/lib/cachex/actions/export.ex
+@@ -5,7 +5,6 @@ defmodule Cachex.Actions.Export do
+   # This command is extremely expensive as it turns the entire cache table into
+   # a list, and so should be used sparingly. It's provided purely because it's
+   # the backing implementation of the `Cachex.save/3` command.
+-  alias Cachex.Actions.Stream, as: CachexStream
+   alias Cachex.Query
+ 
+   # add required imports
+@@ -22,7 +21,10 @@ defmodule Cachex.Actions.Export do
+   to the memory overhead involved, as well as the large concatenations.
+   """
+   def execute(cache() = cache, _options) do
+-    with {:ok, stream} <- CachexStream.execute(cache, Query.build(), []) do
++    query = Query.build()
++    options = const(:local) ++ const(:notify_false)
++
++    with {:ok, stream} <- Cachex.stream(cache, query, options) do
+       {:ok, Enum.to_list(stream)}
+     end
+   end
+diff --git a/lib/cachex/actions/prune.ex b/lib/cachex/actions/prune.ex
+index 95e114a..985cf54 100644
+--- a/lib/cachex/actions/prune.ex
++++ b/lib/cachex/actions/prune.ex
+@@ -7,7 +7,6 @@ defmodule Cachex.Actions.Prune do
+   # exactly prune the table.
+   #
+   # This command is used by the various limit hooks provided by Cachex.
+-  alias Cachex.Actions.Stream, as: CachexStream
+   alias Cachex.Query
+   alias Cachex.Services.Informant
+ 
+@@ -88,7 +87,13 @@ defmodule Cachex.Actions.Prune do
+   # naturally required when it comes to removing the document, and the touch time is
+   # used to determine the sort order required for LRW.
+   defp erase_lower_bound(offset, cache, batch) when offset > 0 do
+-    with {:ok, stream} <- CachexStream.execute(cache, @query, batch_size: batch) do
++    options =
++      :local
++      |> const()
++      |> Enum.concat(const(:notify_false))
++      |> Enum.concat(batch_size: batch)
++
++    with {:ok, stream} <- Cachex.stream(cache, @query, options) do
+       cache(name: name) = cache
+ 
+       stream
+diff --git a/lib/cachex/actions/reset.ex b/lib/cachex/actions/reset.ex
+index 54a5531..8cfe4c5 100644
+--- a/lib/cachex/actions/reset.ex
++++ b/lib/cachex/actions/reset.ex
+@@ -7,6 +7,7 @@ defmodule Cachex.Actions.Reset do
+   #
+   # This is not executed inside an action context as there is no need to
+   # notify on reset (as otherwise a reset would always be the first message).
++  alias Cachex.Hook
+   alias Cachex.Actions.Clear
+   alias Cachex.Services.Locksmith
+ 
+@@ -63,22 +64,20 @@ defmodule Cachex.Actions.Reset do
+   # This has the ability to clear either all hooks or a subset of hooks. We have a small
+   # optimization here to detect when we want to reset all hooks to avoid filtering without
+   # a real need to. We also convert the list of hooks to a set to avoid O(N) lookups.
+-  defp reset_hooks(cache(hooks: hooks(pre: pre, post: post)), only, opts) do
++  defp reset_hooks(cache(hooks: hooks), only, opts) do
+     if :hooks in only do
+-      case Keyword.get(opts, :hooks) do
+-        nil ->
+-          pre
+-          |> Enum.concat(post)
+-          |> Enum.each(&notify_reset/1)
++      hooks = Hook.concat(hooks)
+ 
+-        val ->
+-          hook_sets = List.wrap(val)
++      hooks =
++        case Keyword.get(opts, :hooks) do
++          nil ->
++            hooks
+ 
+-          pre
+-          |> Enum.concat(post)
+-          |> Enum.filter(&should_reset?(&1, hook_sets))
+-          |> Enum.each(&notify_reset/1)
+-      end
++          val ->
++            Enum.filter(hooks, &should_reset?(&1, val))
++        end
++
++      Enum.each(hooks, &notify_reset/1)
+     end
+   end
+ 
+diff --git a/lib/cachex/actions/save.ex b/lib/cachex/actions/save.ex
+index 27ab9e5..c39bc2e 100644
+--- a/lib/cachex/actions/save.ex
++++ b/lib/cachex/actions/save.ex
+@@ -7,7 +7,6 @@ defmodule Cachex.Actions.Save do
+   #
+   # Backups can be imported again using the `Cachex.restore/3` command, and
+   # should be ble to be transferred between processes and physical nodes.
+-  alias Cachex.Actions.Stream, as: CachexStream
+   alias Cachex.Options
+   alias Cachex.Query
+   alias Cachex.Router.Local
+@@ -53,8 +52,15 @@ defmodule Cachex.Actions.Save do
+   ###############
+ 
+   # Use a local stream to lazily walk through records on a local cache.
+-  defp init_stream(local, router, cache, batch) when local or router == Local,
+-    do: CachexStream.execute(cache, Query.build(), batch_size: batch)
++  defp init_stream(local, router, cache, batch) when local or router == Local do
++    options =
++      :local
++      |> const()
++      |> Enum.concat(const(:notify_false))
++      |> Enum.concat(batch_size: batch)
++
++    Cachex.stream(cache, Query.build(), options)
++  end
+ 
+   # Generate an export of all nodes in a distributed cluster via `Cachex.export/2`
+   defp init_stream(_local, _router, cache, _batch),
+diff --git a/lib/cachex/hook.ex b/lib/cachex/hook.ex
+index 907e844..91095a2 100644
+--- a/lib/cachex/hook.ex
++++ b/lib/cachex/hook.ex
+@@ -10,6 +10,9 @@ defmodule Cachex.Hook do
+   """
+   import Cachex.Spec
+ 
++  # types of accepted hooks
++  @hook_types [:service, :post, :pre]
++
+   #############
+   # Behaviour #
+   #############
+@@ -17,9 +20,9 @@ defmodule Cachex.Hook do
+   @doc """
+   Returns the actions this hook is expected to listen on.
+ 
+-  This will default to the atom `:all`, which signals that all actions should
+-  be reported to the hook. If not this atom, an enumerable of atoms should be
+-  returned.
++  This will default to an empty list, to force the developer to opt into the
++  actions they receive notifications for. If all actions should be received,
++  you can use the `:all` atom to receive everything.
+   """
+   @callback actions :: :all | [atom]
+ 
+@@ -40,9 +43,10 @@ defmodule Cachex.Hook do
+   Returns the type of this hook.
+ 
+   This should return `:post` to fire after a cache action has occurred, and
+-  return `:pre` if it should fire before the action occurs.
++  return `:pre` if it should fire before the action occurs. The `:quiet` type
++  is for hooks which don't listen to any broadcasts.
+   """
+-  @callback type :: :pre | :post
++  @callback type :: :pre | :post | :service
+ 
+   @doc """
+   Handles a cache notification.
+@@ -84,7 +88,7 @@ defmodule Cachex.Hook do
+ 
+       @doc false
+       def actions,
+-        do: :all
++        do: []
+ 
+       @doc false
+       def async?,
+@@ -95,8 +99,12 @@ defmodule Cachex.Hook do
+         do: nil
+ 
+       @doc false
+-      def type,
+-        do: :post
++      def type do
++        case actions() do
++          [] -> :service
++          _ -> :post
++        end
++      end
+ 
+       # config overrides
+       defoverridable actions: 0,
+@@ -158,30 +166,57 @@ defmodule Cachex.Hook do
+   ##############
+ 
+   @doc """
+-  Locates a hook for a cache.
++  Concatenates all hooks in a cache.
++  """
++  @spec concat(Cachex.t() | Cachex.Spec.hooks()) :: [Cachex.Spec.hook()]
++  def concat(hooks() = hooks) do
++    @hook_types
++    |> Enum.map(&for_type(hooks, &1))
++    |> Enum.concat()
++  end
++
++  def concat(cache(hooks: hooks)),
++    do: concat(hooks)
++
++  @doc """
++  Locates a hook module for a cache.
+   """
+-  @spec locate(Cachex.t(), module :: atom(), type :: :all | :pre | :post) ::
++  @spec locate(Cachex.t() | Cachex.Spec.hooks(), atom(), atom()) ::
+           Cachex.Spec.hook() | nil
+-  def locate(cache, module, type \\ :all)
++  def locate(hooks, module, type \\ :all)
+ 
+-  def locate(cache, module, :all) do
+-    case locate(cache, module, :post) do
+-      nil -> locate(cache, module, :pre)
+-      val -> val
+-    end
++  def locate(hooks() = hooks, module, type) do
++    hooks
++    |> concat()
++    |> Enum.find(&match_hook(&1, module, type))
+   end
+ 
+-  def locate(cache(hooks: hooks(pre: hooks)), module, :pre),
+-    do: locate_hook(hooks, module)
++  def locate(cache(hooks: hooks), module, type),
++    do: locate(hooks, module, type)
+ 
+-  def locate(cache(hooks: hooks(post: hooks)), module, :post),
+-    do: locate_hook(hooks, module)
++  @doc """
++  Retrieve all known types of hook.
++  """
++  def types(),
++    do: @hook_types
+ 
+   ###############
+   # Private API #
+   ###############
+ 
+-  # Find a hook based on module name.
+-  defp locate_hook(hooks, module),
+-    do: Enum.find(hooks, &match?(hook(module: ^module), &1))
++  # Hook lookup at runtime, instead of `hooks/2`.
++  for type <- @hook_types do
++    defp for_type(hooks() = hooks, unquote(type)),
++      do: hooks(hooks, unquote(type))
++  end
++
++  # Find a hook based on module name and module type.
++  defp match_hook(hook(module: module), module, :all),
++    do: true
++
++  defp match_hook(hook(module: module), module, type),
++    do: module.type() == type
++
++  defp match_hook(_hook, _module, _type),
++    do: false
+ end
+diff --git a/lib/cachex/limit/scheduled.ex b/lib/cachex/limit/scheduled.ex
+index 4890f2e..fd62ba7 100644
+--- a/lib/cachex/limit/scheduled.ex
++++ b/lib/cachex/limit/scheduled.ex
+@@ -31,13 +31,6 @@ defmodule Cachex.Limit.Scheduled do
+   # Hook Configuration #
+   ######################
+ 
+-  @doc """
+-  Returns the actions this policy should listen on.
+-  """
+-  @spec actions :: [atom]
+-  def actions,
+-    do: []
+-
+   @doc """
+   Returns the provisions this policy requires.
+   """
+diff --git a/lib/cachex/options.ex b/lib/cachex/options.ex
+index 2963adc..963a465 100644
+--- a/lib/cachex/options.ex
++++ b/lib/cachex/options.ex
+@@ -209,10 +209,14 @@ defmodule Cachex.Options do
+       true ->
+         type = Enum.group_by(hooks, &hook(&1, :module).type())
+ 
+-        pre = Map.get(type, :pre, [])
+-        post = Map.get(type, :post, [])
+-
+-        cache(cache, hooks: hooks(pre: pre, post: post))
++        hooks =
++          hooks(
++            pre: Map.get(type, :pre, []),
++            post: Map.get(type, :post, []),
++            service: Map.get(type, :service, [])
++          )
++
++        cache(cache, hooks: hooks)
+     end
+   end
+ 
+diff --git a/lib/cachex/router.ex b/lib/cachex/router.ex
+index 5b2785d..95f2800 100644
+--- a/lib/cachex/router.ex
++++ b/lib/cachex/router.ex
+@@ -319,10 +319,25 @@ defmodule Cachex.Router do
+   defp route_cluster(cache, module, {:transaction, [_keys | _]} = call),
+     do: route_batch(cache, module, call, & &1)
+ 
+-  # Any other actions are explicitly disabled in distributed environments.
++  # Any other actions are only available with local: true in the call
++  defp route_cluster(cache, module, {_action, arguments} = call) do
++    # all calls have options we can use
++    options = List.last(arguments)
++
++    # can force local node setting local: true
++    case Keyword.get(options, :local) do
++      true -> route_local(cache, module, call)
++      _any -> error(:non_distributed)
++    end
++  end
++
++  # coveralls-ignore-start
++  # Catch-all just in case we missed something...
+   defp route_cluster(_cache, _module, _call),
+     do: error(:non_distributed)
+ 
++  # coveralls-ignore-stop
++
+   # Calls a slot for the provided cache action if all keys slot to the same node.
+   #
+   # This is a delegate handler for `route_node/4`, but ensures that all keys slot to the
+diff --git a/lib/cachex/services.ex b/lib/cachex/services.ex
+index 1c38e35..0d6e94c 100644
+--- a/lib/cachex/services.ex
++++ b/lib/cachex/services.ex
+@@ -69,10 +69,9 @@ defmodule Cachex.Services do
+   the Supervisor children and place them in a modified cache record.
+   """
+   @spec link(Cachex.t()) :: {:ok, Cachex.t()}
+-  def link(cache(hooks: hooks(pre: [], post: []), warmers: []) = cache),
+-    do: {:ok, cache}
++  def link(cache(hooks: hooks, warmers: warmers) = cache) do
++    hooks(pre: pre, post: post, service: service) = hooks
+ 
+-  def link(cache(hooks: hooks(pre: pre, post: post), warmers: warmers) = cache) do
+     hook_children = find_children(cache, Services.Informant)
+     warmer_children = find_children(cache, Services.Incubator)
+ 
+@@ -81,7 +80,8 @@ defmodule Cachex.Services do
+         hooks:
+           hooks(
+             pre: attach_child(pre, hook_children),
+-            post: attach_child(post, hook_children)
++            post: attach_child(post, hook_children),
++            service: attach_child(service, hook_children)
+           ),
+         warmers: attach_child(warmers, warmer_children)
+       )
+@@ -90,28 +90,28 @@ defmodule Cachex.Services do
+   end
+ 
+   @doc """
+-  Retrieves the process identifier of the provided service.
++  Returns a list of all running cache services.
+ 
+-  This will return `nil` if the service does not exist, or is not running.
++  This is used to view the children of the specified cache, whilst filtering
++  out any services which may not have been started based on the cache options.
+   """
+-  @spec locate(Cachex.t(), atom) :: pid | nil
+-  def locate(cache() = cache, service) do
++  @spec list(Cachex.t()) :: [Supervisor.Spec.spec()]
++  def list(cache(name: cache)) do
+     cache
+-    |> services
+-    |> find_pid(service)
++    |> Supervisor.which_children()
++    |> Enum.filter(&service?/1)
+   end
+ 
+   @doc """
+-  Returns a list of all running cache services.
++  Retrieves the process identifier of the provided service.
+ 
+-  This is used to view the children of the specified cache, whilst filtering
+-  out any services which may not have been started based on the cache options.
++  This will return `nil` if the service does not exist, or is not running.
+   """
+-  @spec services(Cachex.t()) :: [Supervisor.Spec.spec()]
+-  def services(cache(name: cache)) do
++  @spec locate(Cachex.t(), atom) :: pid | nil
++  def locate(cache() = cache, service) do
+     cache
+-    |> Supervisor.which_children()
+-    |> Enum.filter(&service?/1)
++    |> list
++    |> find_pid(service)
+   end
+ 
+   ###############
+diff --git a/lib/cachex/services/informant.ex b/lib/cachex/services/informant.ex
+index 2760bd1..d62a03f 100644
+--- a/lib/cachex/services/informant.ex
++++ b/lib/cachex/services/informant.ex
+@@ -7,6 +7,7 @@ defmodule Cachex.Services.Informant do
+   all hooks as children, as well as provide utility functions for new
+   notifications being sent to child hooks for a cache.
+   """
++  alias Cachex.Hook
+   import Cachex.Spec
+ 
+   ##############
+@@ -21,14 +22,16 @@ defmodule Cachex.Services.Informant do
+   this will skip creating an unnecessary Supervisor process.
+   """
+   @spec start_link(Cachex.t()) :: Supervisor.on_start()
+-  def start_link(cache(hooks: hooks(pre: [], post: []))),
+-    do: :ignore
+-
+-  def start_link(cache(hooks: hooks(pre: pre, post: post))) do
+-    pre
+-    |> Enum.concat(post)
+-    |> Enum.map(&spec/1)
+-    |> Supervisor.start_link(strategy: :one_for_one)
++  def start_link(cache(hooks: hooks)) do
++    case Hook.concat(hooks) do
++      [] ->
++        :ignore
++
++      li ->
++        li
++        |> Enum.map(&spec/1)
++        |> Supervisor.start_link(strategy: :one_for_one)
++    end
+   end
+ 
+   @doc """
+@@ -62,13 +65,16 @@ defmodule Cachex.Services.Informant do
+ 
+       # handling of running hooks
+       hook(name: name, module: module) ->
+-        # define the base payload, regardless of type
+-        payload = {:cachex_notify, {action, result}}
+-
+-        # handle async vs. sync
+-        case module.async?() do
+-          true -> send(name, payload)
+-          false -> GenServer.call(name, payload, :infinity)
++        # skip notifying service hooks
++        if module.type() != :service do
++          # define the base payload, regardless of type
++          payload = {:cachex_notify, {action, result}}
++
++          # handle async vs. sync
++          case module.async?() do
++            true -> send(name, payload)
++            false -> GenServer.call(name, payload, :infinity)
++          end
+         end
+     end)
+   end
+diff --git a/lib/cachex/services/janitor.ex b/lib/cachex/services/janitor.ex
+index 0122c48..9cde0f3 100644
+--- a/lib/cachex/services/janitor.ex
++++ b/lib/cachex/services/janitor.ex
+@@ -12,15 +12,16 @@ defmodule Cachex.Services.Janitor do
+   scans, so it should be expected that this can take a while to execute.
+   """
+   use GenServer
++  use Cachex.Provision
+ 
+   # import parent macros
+   import Cachex.Errors
+   import Cachex.Spec
+ 
+   # add some aliases
++  alias Cachex.Query
+   alias Cachex.Services
+   alias Services.Informant
+-  alias Services.Overseer
+ 
+   ##############
+   # Public API #
+@@ -88,14 +89,19 @@ defmodule Cachex.Services.Janitor do
+   #
+   # This will create the structure used to store metadata about
+   # the run cycles of the Janitor, and schedule the first run.
+-  def init(cache),
+-    do: {:ok, {schedule_check(cache), %{}}}
++  def init(_),
++    do: {:ok, {nil, false, nil}}
++
++  @doc false
++  # Defines provisions required by this service.
++  def provisions,
++    do: [:cache]
+ 
+   @doc false
+   # Returns metadata about the last run of this Janitor.
+   #
+   # The returned information should be treated as non-guaranteed.
+-  def handle_call(:last, _ctx, {_cache, last} = state),
++  def handle_call(:last, _ctx, {_cache, _active, last} = state),
+     do: {:reply, {:ok, last}, state}
+ 
+   @doc false
+@@ -103,36 +109,90 @@ defmodule Cachex.Services.Janitor do
+   #
+   # This will drop to the ETS level and use a select to match documents which
+   # need to be removed; they are then deleted by ETS at very high speeds.
+-  def handle_info(:purge, {cache(name: name), _last}) do
+-    start_time = now()
+-    new_caches = Overseer.retrieve(name)
++  def handle_info(:purge, {cache, false, _last}) do
++    started = now()
++    options = const(:local) ++ const(:notify_false)
++
++    {duration, active} =
++      :timer.tc(fn ->
++        query =
++          Query.build(
++            where: {:not, {:==, :expiration, nil}},
++            output: true,
++            batch_size: 1
++          )
++
++        cache
++        |> Cachex.stream!(query, options)
++        |> Enum.empty?()
++      end)
++
++    last = %{
++      count: 0,
++      started: started,
++      duration: duration
++    }
++
++    handle_activation(active, {cache, false, last})
++  end
++
++  @doc false
++  # Executes an expiration cleanup against a cache table.
++  #
++  # This will drop to the ETS level and use a select to match documents which
++  # need to be removed; they are then deleted by ETS at very high speeds.
++  def handle_info(:purge, {cache, true, _last}) do
++    started = now()
+ 
+     {duration, {:ok, count} = result} =
+       :timer.tc(fn ->
+-        Cachex.purge(new_caches, const(:local))
++        Cachex.purge(cache, const(:local))
+       end)
+ 
+     case count do
+       0 -> nil
+-      _ -> Informant.broadcast(new_caches, const(:purge_override_call), result)
++      _ -> Informant.broadcast(cache, const(:purge_override_call), result)
+     end
+ 
+     last = %{
+       count: count,
+-      duration: duration,
+-      started: start_time
++      started: started,
++      duration: duration
+     }
+ 
+-    {:noreply, {schedule_check(new_caches), last}}
++    {:noreply, {schedule(cache), true, last}}
+   end
+ 
++  @doc false
++  # Receives a provisioned cache instance.
++  #
++  # The provided cache is then stored in the state and used for cache calls going
++  # forwards, in order to skip the lookups inside the cache overseer for performance.
++  def handle_provision({:cache, cache}, {nil, active, last}),
++    do: {:ok, {schedule(cache), active, last}}
++
++  def handle_provision({:cache, cache}, {_cache, active, last}),
++    do: {:ok, {cache, active, last}}
++
+   ###############
+   # Private API #
+   ###############
+ 
++  @doc false
++  # Handles lazy Janitor activation paradigms.
++  #
++  # If the first argument is true, it reflects that there are no records with
++  # an expiration defined so we re-schedule and skip.  In the case there are
++  # records with expiration defined, we continue to the main purge cycle.
++  defp handle_activation(true, {cache, _active, last}),
++    do: {:noreply, {schedule(cache), false, last}}
++
++  defp handle_activation(false, {cache, _active, last}),
++    do: handle_info(:purge, {cache, true, last})
++
+   # Schedules a check to occur after the designated interval. Once scheduled,
+   # returns the state - this is just sugar for pipelining with a state.
+-  defp schedule_check(cache(expiration: expiration(interval: interval)) = cache) do
++  defp schedule(cache(expiration: expiration(interval: interval)) = cache) do
+     :erlang.send_after(interval, self(), :purge)
+     cache
+   end
+diff --git a/lib/cachex/services/steward.ex b/lib/cachex/services/steward.ex
+index 8e6c00a..354ec5e 100644
+--- a/lib/cachex/services/steward.ex
++++ b/lib/cachex/services/steward.ex
+@@ -12,6 +12,10 @@ defmodule Cachex.Services.Steward do
+   """
+   import Cachex.Spec
+ 
++  # convenience alias
++  alias Cachex.Hook
++  alias Cachex.Services
++
+   # recognised
+   @provisions [
+     :cache
+@@ -30,13 +34,18 @@ defmodule Cachex.Services.Steward do
+   """
+   @spec provide(Cachex.t(), {atom, any}) :: :ok
+   def provide(cache() = cache, {key, _} = provision) when key in @provisions do
+-    cache(hooks: hooks(pre: pre, post: post)) = cache
+-    cache(warmers: warmers) = cache
++    cache(hooks: hooks, warmers: warmers) = cache
++
++    services =
++      cache
++      |> Services.list()
++      |> Enum.filter(&filter_services/1)
+ 
+     provisioned =
+-      warmers
+-      |> Enum.concat(pre)
+-      |> Enum.concat(post)
++      hooks
++      |> Hook.concat()
++      |> Enum.concat(services)
++      |> Enum.concat(warmers)
+       |> Enum.map(&map_names/1)
+ 
+     for {name, mod} <- provisioned, key in mod.provisions() do
+@@ -55,4 +64,16 @@ defmodule Cachex.Services.Steward do
+   # Map a warmer into the name and module tuple
+   defp map_names(warmer(name: name, module: module)),
+     do: {name, module}
++
++  # Map a service into the name and module tuple
++  defp map_names({module, name, _tag, _id}),
++    do: {name, module}
++
++  # Filter out service modules if they don't have provisions
++  defp filter_services({module, _name, _tag, _id}) do
++    :attributes
++    |> module.__info__()
++    |> Keyword.get_values(:behaviour)
++    |> Enum.member?([Cachex.Provision])
++  end
+ end
+diff --git a/lib/cachex/spec.ex b/lib/cachex/spec.ex
+index 752e38a..d09733e 100644
+--- a/lib/cachex/spec.ex
++++ b/lib/cachex/spec.ex
+@@ -84,7 +84,8 @@ defmodule Cachex.Spec do
+   @type hooks ::
+           record(:hooks,
+             pre: [hook],
+-            post: [hook]
++            post: [hook],
++            service: [hook]
+           )
+ 
+   # Record specification for a router instance
+@@ -213,7 +214,8 @@ defmodule Cachex.Spec do
+   """
+   defrecord :hooks,
+     pre: [],
+-    post: []
++    post: [],
++    service: []
+ 
+   @doc """
+   Creates a router record from the provided values.
+diff --git a/lib/cachex/spec/validator.ex b/lib/cachex/spec/validator.ex
+index e271497..95ac3aa 100644
+--- a/lib/cachex/spec/validator.ex
++++ b/lib/cachex/spec/validator.ex
+@@ -87,7 +87,7 @@ defmodule Cachex.Spec.Validator do
+     check5 = check4 and (enum?(action, &is_atom/1) or action == :all)
+ 
+     check6 = check5 and enum?(module.provisions(), &is_atom/1)
+-    check7 = check6 and module.type() in [:post, :pre]
++    check7 = check6 and module.type() in Cachex.Hook.types()
+ 
+     check7
+   end
+diff --git a/lib/cachex/stats.ex b/lib/cachex/stats.ex
+index b08c0e8..ee837c4 100644
+--- a/lib/cachex/stats.ex
++++ b/lib/cachex/stats.ex
+@@ -48,6 +48,10 @@ defmodule Cachex.Stats do
+   # Server Callbacks #
+   ####################
+ 
++  @doc false
++  def actions,
++    do: :all
++
+   @doc false
+   # Initializes this hook with a new stats container.
+   #

@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-061",
+  "technical_evidence_sha256": "733c2f5c3f02ab8c6cc8dafa531b1742f27bfba035f79e8bf7b23beeccc91204",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "1b0f314fe3fa0f28b90aaee70c678e33c59b75d7647db0591bb84cead34c57b4",
+  "reviewed_at": "2026-10-15T17:24:53.263799+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "vapor/vapor#2889",
+  "rationale": "Issue #2889 (\"Fix handling of uppercase domain names when validating email addresses\", label bug, closed) is linked to the fix commit 1da8bba via a verified 'Fixes #2889' reference, and the production change addresses exactly that symptom: in Sources/Vapor/Validation/Validators/Email.swift the domain-label character classes are widened from [a-z0-9]/[a-z0-9-] to [a-zA-Z0-9]/[a-zA-Z0-9-]. The pre-existing in-source 'FIXME: this regex is too strict with capitalization of the domain part' on the buggy revision independently documents the defect, and its removal is part of resolving that FIXME rather than an unrelated documentation edit. The minimized patch is one hunk touching a single production file (sha256 identical to production-fix.patch, retained 1/1 hunks, post_minimization_validation PASS) with no refactor, feature extension, or config change. The trigger is the unchanged upstream test portion of the same commit: two added assertions in ValidationTests.testEmail using the already-existing assert/.email/!.email helpers, so the same source compiles and runs on both revisions with no fix-only API. Machine-generated strict gates pass on both the original and post-minimization matrices (build.both_versions, trigger.buggy_differential with reproduced selector ValidationTests.swift::testEmail, trigger.deterministic over 3 repetitions, trigger.fixed_clean, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers), giving a genuine behavioral FAIL_TO_PASS. active_same_project_root_causes is empty and vapor/vapor#2889 is the single allowed root cause key, so this is not a duplicate.\n\nThe linked issue (#2889, state closed, label 'bug', title 'Fix handling of uppercase domain names when validating email addresses') describes a pre-existing validator defect that the production patch addresses directly: in Sources/Vapor/Validation/Validators/Email.swift the domain-label character classes change from [a-z0-9]/[a-z0-9-] to [a-zA-Z0-9]/[a-zA-Z0-9-], and the stale '// FIXME: this regex is too strict with capitalization of the domain part' comment that names the exact defect is deleted as part of the same fix. The minimized patch is one hunk in one production file with no refactor, feature extension, configuration, or test content; it is byte-identical to the production fix (sha256 6611a1b5...), and the retained-hunk decision is justified because the automatic minimal subset failed post-minimization full-suite validation. The trigger is the unchanged upstream test portion of the same squashed fix commit: testEmail gains assert(\"tanner@VAPOR.codes\", passes: .email) and assert(\"tanner@VAPOR.codes\", fails: !.email, ...), using the pre-existing assert helper and .email validator, so the same source compiles on both revisions and asserts exactly the uppercase-domain acceptance behavior reported in the issue, not a fix-only API. Strict machine evidence passes on both original and post-minimization runs: build.both_versions PASS, trigger.buggy_differential reproduced on Tests/VaporTests/ValidationTests.swift::testEmail, trigger.deterministic 3 outcome groups over 3 repetitions in a 32-run matrix, trigger.fixed_clean PASS, and full_suite.fixed_all_green PASS with a single stable fingerprinted baseline exclusion for the unrelated ContentTests/testDataCorruptionError. active_same_project_root_causes is empty and vapor/vapor#2889 is the only allowed verified issue key, so no duplicate root cause exists.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-10-15T17:24:29.277295+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "1b0f314fe3fa0f28b90aaee70c678e33c59b75d7647db0591bb84cead34c57b4",
+      "response_sha256": "336396da108166dc7f67982a577cd8c77093d9394c58b1c176e0f3835287ab74",
+      "response_id": "msg_b3a98fa96323445c855cb279910a74c6",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.579958356252073,
+        "input_tokens": 8151,
+        "output_tokens": 726
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "vapor/vapor#2889",
+      "rationale": "Issue #2889 (\"Fix handling of uppercase domain names when validating email addresses\", label bug, closed) is linked to the fix commit 1da8bba via a verified 'Fixes #2889' reference, and the production change addresses exactly that symptom: in Sources/Vapor/Validation/Validators/Email.swift the domain-label character classes are widened from [a-z0-9]/[a-z0-9-] to [a-zA-Z0-9]/[a-zA-Z0-9-]. The pre-existing in-source 'FIXME: this regex is too strict with capitalization of the domain part' on the buggy revision independently documents the defect, and its removal is part of resolving that FIXME rather than an unrelated documentation edit. The minimized patch is one hunk touching a single production file (sha256 identical to production-fix.patch, retained 1/1 hunks, post_minimization_validation PASS) with no refactor, feature extension, or config change. The trigger is the unchanged upstream test portion of the same commit: two added assertions in ValidationTests.testEmail using the already-existing assert/.email/!.email helpers, so the same source compiles and runs on both revisions with no fix-only API. Machine-generated strict gates pass on both the original and post-minimization matrices (build.both_versions, trigger.buggy_differential with reproduced selector ValidationTests.swift::testEmail, trigger.deterministic over 3 repetitions, trigger.fixed_clean, full_suite.fixed_all_green, full_suite.buggy_reproduces_only_triggers), giving a genuine behavioral FAIL_TO_PASS. active_same_project_root_causes is empty and vapor/vapor#2889 is the single allowed root cause key, so this is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0]",
+        "source_candidate.fix_boundary_evidence",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "trigger_tests[0]"
+      ],
+      "risks": [
+        "issue_evidence is null; issue intent is inferred from the supplied issue title/labels, the commit 'Fixes #2889' reference, and the removed in-source FIXME rather than from the issue body text.",
+        "The fix widens only the repeated domain-label classes; the final label alternative remains [a-z0-9], so fully uppercase TLDs (e.g. tanner@vapor.CODES) may still fail. The trigger uses a lowercase TLD, so the benchmark does not cover that residual narrowness.",
+        "The full-suite gate relies on a resolved baseline exclusion for the unrelated ContentTests/testDataCorruptionError failure; that exclusion is machine-reported as fingerprint_stable but masks one pre-existing failing test on both revisions.",
+        "Trigger reduction status is EXECUTABLY_VALIDATED_PENDING_LLM_EQUIVALENCE, so equivalence rests on this review rather than a separate upstream confirmation."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-10-15T17:24:53.263010+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "1b0f314fe3fa0f28b90aaee70c678e33c59b75d7647db0591bb84cead34c57b4",
+      "response_sha256": "7bc621252d62c87dbfa01f09ec0534ed4c6e2df4aa70f3c2cc55400275e105fc",
+      "response_id": "msg_51c1dc2e6eaa46a3a68fea78904188a5",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5239430332669983,
+        "input_tokens": 8151,
+        "output_tokens": 790
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "vapor/vapor#2889",
+      "rationale": "The linked issue (#2889, state closed, label 'bug', title 'Fix handling of uppercase domain names when validating email addresses') describes a pre-existing validator defect that the production patch addresses directly: in Sources/Vapor/Validation/Validators/Email.swift the domain-label character classes change from [a-z0-9]/[a-z0-9-] to [a-zA-Z0-9]/[a-zA-Z0-9-], and the stale '// FIXME: this regex is too strict with capitalization of the domain part' comment that names the exact defect is deleted as part of the same fix. The minimized patch is one hunk in one production file with no refactor, feature extension, configuration, or test content; it is byte-identical to the production fix (sha256 6611a1b5...), and the retained-hunk decision is justified because the automatic minimal subset failed post-minimization full-suite validation. The trigger is the unchanged upstream test portion of the same squashed fix commit: testEmail gains assert(\"tanner@VAPOR.codes\", passes: .email) and assert(\"tanner@VAPOR.codes\", fails: !.email, ...), using the pre-existing assert helper and .email validator, so the same source compiles on both revisions and asserts exactly the uppercase-domain acceptance behavior reported in the issue, not a fix-only API. Strict machine evidence passes on both original and post-minimization runs: build.both_versions PASS, trigger.buggy_differential reproduced on Tests/VaporTests/ValidationTests.swift::testEmail, trigger.deterministic 3 outcome groups over 3 repetitions in a 32-run matrix, trigger.fixed_clean PASS, and full_suite.fixed_all_green PASS with a single stable fingerprinted baseline exclusion for the unrelated ContentTests/testDataCorruptionError. active_same_project_root_causes is empty and vapor/vapor#2889 is the only allowed verified issue key, so no duplicate root cause exists.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "strict_original.checks",
+        "strict_post_minimization.checks",
+        "traceability.verified_fix_issue_numbers",
+        "source_candidate.issue_check.linked_issues",
+        "source_candidate.fix_boundary_evidence",
+        "minimized_patch_reference.semantic_selection"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue's semantics are inferred from the stored issue title, 'bug' label, closed state, and the commit's 'Fixes #2889' reference rather than from the issue body text.",
+        "The fix is incomplete relative to the general defect: the final domain label (TLD) class remains [a-z0-9](?:[a-z0-9-]*[a-z0-9])?, so a fully uppercase TLD such as tanner@vapor.CODES still fails on the fixed revision. The trigger only covers an uppercase non-final label.",
+        "Full-suite validation ran a single repetition (full_suite_repetitions=1) and relies on one fingerprinted baseline exclusion, so unrelated flakiness outside the trigger is only weakly characterized.",
+        "The defect is regex/string-literal behavior inside a multi-line Swift literal; patch-level minimization cannot sub-divide the hunk, so the comment deletion and the character-class change remain coupled in one hunk."
+      ]
+    }
+  ]
+}

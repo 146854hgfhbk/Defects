@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-415",
+  "technical_evidence_sha256": "e3db6a8d2860d74721861400d917153aed53d589818333ce6e89fb5d30f8bf60",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "ba8aa23faa0d0ddaf1451c1537598e72cb4b375b3726afd160a6da3974132f8a",
+  "reviewed_at": "2026-09-07T04:51:59.899101+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "pointfreeco/swift-dependencies#148",
+  "rationale": "Issue #148 reports that @DependencyEndpoint emits invalid Swift when the endpoint default uses fatalError, and merged PR #158 (\"Fix fatalerror default\", body \"Fixes #148\") targets exactly that expansion defect; traceability is fix_commit -> merged PR -> issue. The retained production hunk relaxes the pre-existing guard `if !functionType.isVoid, closure.statements.count == 1, ...` in DependencyEndpointMacro so the implicit-`return` rewrite also applies to Void endpoints whose single statement is an immediately-invoked closure; without it the generated `_foo` body places `{ fatalError() }()` directly after `XCTestDynamicOverlay.XCTFail(...)`, which parses as a trailing closure rather than valid intended code. The supplied pre-PR baseline evidence (PR base 6c2bbde, blob 742b3ef, merge-base check confirming 6c2bbde is an ancestor of buggy revision 9b56680) shows the `!functionType.isVoid` exclusion existed before the PR branch, so the defect is pre-existing rather than introduced by the selected intra-PR parent. Minimization retained only hunk 2 and dropped the pure-formatting `if\\n let initializer` collapse, leaving a single behavioral change with no refactor, feature, doc, or config content; post-minimization strict gates report all checks passed with the single selector Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift::testFatalError_SilenceWarning failing on the buggy revision, clean on the fixed revision, deterministic across 3 repetitions, and the full suite green when fixed. The trigger is the project's own assertMacro expansion snapshot for `public var foo: () -> Void = { { fatalError() }() }`, exercising only the pre-existing @DependencyEndpoint macro; no production API is introduced by the fix. active_same_project_root_causes is empty, so #148 is not a duplicate of any registry entry.\n\nIssue #148 reports that @DependencyEndpoint emits invalid Swift when a default value uses fatalError (the generated unimplemented body lacks a usable return statement). PR #158 ('Fix fatalerror default', 'Fixes #148') contains the selected fix commit cace5f89, and traceability is fix_commit_to_merged_pr_to_issue with verified_fix_issue_numbers=[148]. The retained production hunk in Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift relaxes the `!functionType.isVoid` guard so the implicit-return rewrite also applies when the single statement is an immediately-invoked closure, which is the same generated-code-validity defect: without it the expansion emits `XCTFail(\"Unimplemented: 'foo'\")` followed by a bare `{ fatalError() }()` statement. Pre-existence at the PR base is supported by concrete evidence rather than a label: pre_pr_baseline_evidence records merge-base(6c2bbde, 9b56680) == 6c2bbde, base tree 4dbd710, source blob 742b3ef, and quotes the base-revision guard `if !functionType.isVoid, closure.statements.count == 1, ...` at lines 79-83, so the Void-path exclusion that the retained hunk repairs predates the PR branch and was not created by the intra-PR buggy revision 9b56680. Minimization retained only hunk 2 (semantic guard) and dropped hunk 1, which was pure formatting (`if\\n let initializer` collapsed onto one line); the minimized production patch therefore has no refactor, feature, docs, config, or test content, and strict_post_minimization passes every gate with the same single reproduced selector. The trigger is the unchanged upstream test edit to the existing testFatalError_SilenceWarning case, switching `foo` from `() -> String` to `() -> Void` plus the matching expansion snapshot; it exercises only the pre-existing @DependencyEndpoint macro and swift-macro-testing assertMacro, introducing no API added by the fix, and the sibling `bar: () -> String` case keeps the non-Void path covered. Machine evidence shows a clean differential (buggy isolated/suite failure limited to that selector, fixed all-green, 3 repetitions, 32-run matrix, deterministic fingerprint groups=3). active_same_project_root_causes is empty and pointfreeco/swift-dependencies#148 is the sole allowed root cause id, so no duplicate exists.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T04:50:55.483867+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "ba8aa23faa0d0ddaf1451c1537598e72cb4b375b3726afd160a6da3974132f8a",
+      "response_sha256": "13b6d5695b06a9a75ceaa993001e9821a7aa05a98455138f4cefb2196746f61e",
+      "response_id": "msg_9d7889a07be3478199eab8b6425784a3",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.3020211016252072,
+        "input_tokens": 23317,
+        "output_tokens": 808
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "pointfreeco/swift-dependencies#148",
+      "rationale": "Issue #148 reports that @DependencyEndpoint emits invalid Swift when the endpoint default uses fatalError, and merged PR #158 (\"Fix fatalerror default\", body \"Fixes #148\") targets exactly that expansion defect; traceability is fix_commit -> merged PR -> issue. The retained production hunk relaxes the pre-existing guard `if !functionType.isVoid, closure.statements.count == 1, ...` in DependencyEndpointMacro so the implicit-`return` rewrite also applies to Void endpoints whose single statement is an immediately-invoked closure; without it the generated `_foo` body places `{ fatalError() }()` directly after `XCTestDynamicOverlay.XCTFail(...)`, which parses as a trailing closure rather than valid intended code. The supplied pre-PR baseline evidence (PR base 6c2bbde, blob 742b3ef, merge-base check confirming 6c2bbde is an ancestor of buggy revision 9b56680) shows the `!functionType.isVoid` exclusion existed before the PR branch, so the defect is pre-existing rather than introduced by the selected intra-PR parent. Minimization retained only hunk 2 and dropped the pure-formatting `if\\n let initializer` collapse, leaving a single behavioral change with no refactor, feature, doc, or config content; post-minimization strict gates report all checks passed with the single selector Tests/DependenciesMacrosPluginTests/DependencyEndpointMacroTests.swift::testFatalError_SilenceWarning failing on the buggy revision, clean on the fixed revision, deterministic across 3 repetitions, and the full suite green when fixed. The trigger is the project's own assertMacro expansion snapshot for `public var foo: () -> Void = { { fatalError() }() }`, exercising only the pre-existing @DependencyEndpoint macro; no production API is introduced by the fix. active_same_project_root_causes is empty, so #148 is not a duplicate of any registry entry.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "minimized_patch_reference.retained_hunks",
+        "patches/trigger-tests.patch",
+        "trigger_tests[0].name",
+        "semantic_justification.pre_pr_baseline_evidence.pre_existing_condition",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift"
+      ],
+      "risks": [
+        "The buggy revision is an intra-PR wip commit (9b56680) of a 15-commit PR, so the parent already contains earlier parts of the #148 work; the retained hunk fixes the Void plus immediately-invoked-closure variant of the reported defect class rather than the issue's literal `() async throws -> Set<...> = { fatalError() }` reproducer.",
+        "The trigger is an exact-string macro expansion snapshot, so it verifies the emitted text contains `return { fatalError() }()` rather than directly compiling the expansion; it is sensitive to swift-syntax and swift-macro-testing toolchain versions.",
+        "The trigger patch also carries a test-only whitespace fix (`}fixes:` to `} fixes:`) in an unrelated test case; it is absent from the minimized production patch and outside the declared selector, but it is noise in the trigger diff.",
+        "issue_evidence is null; the issue text was read from the embedded source_candidate.issue_check payload rather than an independent evidence file."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-07T04:51:59.898657+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "ba8aa23faa0d0ddaf1451c1537598e72cb4b375b3726afd160a6da3974132f8a",
+      "response_sha256": "e4b0c5e048bcfa23bd37551b55fbe8047d3cc3e423ecf2317e271a7b9b22d57d",
+      "response_id": "msg_8f3d56a219344a19af619ea0cd5b50f0",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 1.1738460249087894,
+        "input_tokens": 23128,
+        "output_tokens": 961
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "pointfreeco/swift-dependencies#148",
+      "rationale": "Issue #148 reports that @DependencyEndpoint emits invalid Swift when a default value uses fatalError (the generated unimplemented body lacks a usable return statement). PR #158 ('Fix fatalerror default', 'Fixes #148') contains the selected fix commit cace5f89, and traceability is fix_commit_to_merged_pr_to_issue with verified_fix_issue_numbers=[148]. The retained production hunk in Sources/DependenciesMacrosPlugin/DependencyEndpointMacro.swift relaxes the `!functionType.isVoid` guard so the implicit-return rewrite also applies when the single statement is an immediately-invoked closure, which is the same generated-code-validity defect: without it the expansion emits `XCTFail(\"Unimplemented: 'foo'\")` followed by a bare `{ fatalError() }()` statement. Pre-existence at the PR base is supported by concrete evidence rather than a label: pre_pr_baseline_evidence records merge-base(6c2bbde, 9b56680) == 6c2bbde, base tree 4dbd710, source blob 742b3ef, and quotes the base-revision guard `if !functionType.isVoid, closure.statements.count == 1, ...` at lines 79-83, so the Void-path exclusion that the retained hunk repairs predates the PR branch and was not created by the intra-PR buggy revision 9b56680. Minimization retained only hunk 2 (semantic guard) and dropped hunk 1, which was pure formatting (`if\\n let initializer` collapsed onto one line); the minimized production patch therefore has no refactor, feature, docs, config, or test content, and strict_post_minimization passes every gate with the same single reproduced selector. The trigger is the unchanged upstream test edit to the existing testFatalError_SilenceWarning case, switching `foo` from `() -> String` to `() -> Void` plus the matching expansion snapshot; it exercises only the pre-existing @DependencyEndpoint macro and swift-macro-testing assertMacro, introducing no API added by the fix, and the sibling `bar: () -> String` case keeps the non-Void path covered. Machine evidence shows a clean differential (buggy isolated/suite failure limited to that selector, fixed all-green, 3 repetitions, 32-run matrix, deterministic fingerprint groups=3). active_same_project_root_causes is empty and pointfreeco/swift-dependencies#148 is the sole allowed root cause id, so no duplicate exists.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "semantic_justification.pre_pr_baseline_evidence.pre_existing_condition",
+        "semantic_justification.pre_pr_baseline_evidence.ancestry_check",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "minimized_patch_reference.post_minimization_validation",
+        "trigger_tests[0].name"
+      ],
+      "risks": [
+        "The buggy revision 9b56680 is an intra-PR wip commit, so part of the #148 work already landed before it; pre-existence of the Void-guard defect rests on the quoted PR-base source blob rather than an executed expansion run at 6c2bbde.",
+        "The trigger exercises the Void plus immediately-invoked-closure variant rather than the issue's literal `() async throws -> Set<...> = { fatalError() }` reproducer; equivalence is at the level of the shared root cause (guard suppressing the return rewrite), not the reporter's exact snippet.",
+        "The trigger is an exact-string macro-expansion snapshot, so it asserts generated text rather than compilability of the expansion, and is sensitive to the swift-syntax / swift-macro-testing toolchain version used in the recorded matrix.",
+        "The upstream trigger patch also carries an unrelated `}fixes:` whitespace correction in a different test case; it is test-only and outside the declared selector, but it does travel with the trigger artifact.",
+        "issue_evidence is null; issue text was read from the embedded source_candidate payload rather than an independently captured issue record."
+      ]
+    }
+  ]
+}

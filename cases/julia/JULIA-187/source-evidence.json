@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "ff988fbc1eccc4c1772528fe5e821afea352d93e",
+  "project": "JuliaNLSolvers/Optim.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1272,
+      "url": "https://github.com/JuliaNLSolvers/Optim.jl/pull/1272",
+      "state": "closed",
+      "title": "Fix LBFGSB subspace backtracking to measure from the Cauchy point",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "## The bug\n\nIn `subspace_optimize!`'s `clip` branch, `x̄` aliases `B.xc`, so the clamp loop overwrites the Cauchy point before the `dd_p > 0` backtracking safeguard reads it. Any component clamped at a bound with `du` pointing into it then yields a zero step-to-bound ratio, `α_star` collapses to 0, and the safeguard returns exactly the clamped point it was meant to repair. Fortran `subsm` keeps the unclamped values in `xp` for this purpose, and `simple_lbfgsb.jl` copies before clamping.\n\nThe caller detects the resulting ascent direction (`dφ0 ≥ 0`) and recovers by discarding the full L-BFGS-B history and redoing the step, so the safeguard being a no-op mostly costs work rather than correctness. Instrumented on a 1,000-problem battery of box-constrained problems (random quadratics, Rosenbrock, exponential objectives): the branch fired 206 times, the collapsed `α_star = 0` outcome occurred on every firing, and the correctly backtracked step had a strictly negative directional derivative every time. On the 40 triggering Rosenbrock instances, the history-reset recovery cost ~15% more iterations and ~18% more objective evaluations. An A/B rerun of the full battery with the fix showed it is never worse: identical final minima on 993 problems, strictly better on 7 (largest objective gap 1.8), and one additional problem converging, so the recovery does not always reach the same final answer.\n\n## The fix\n\nStash the free components of the Cauchy point in the clamp loop, reusing the reduced-gradient buffer `r` (dead once `du` has been formed, so no new allocation), and compute both the backtracking ratios and the backtracked point from the stashed values, matching `xp` in Fortran `subsm`.\n\n## Tests\n\nAdds a deterministic regression test: a 2-variable box-constrained Rosenbrock instance that reliably enters the `dd_p > 0` branch. It asserts convergence, the known minimum, and an objective-evaluation bound (the fixed build uses 44 evaluations, master uses 65). The bound fails on "
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 1272,
+      "pull_request_repository": "JuliaNLSolvers/Optim.jl",
+      "pull_request_url": "https://github.com/JuliaNLSolvers/Optim.jl/pull/1272",
+      "fix_commit": "ff988fbc1eccc4c1772528fe5e821afea352d93e",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix LBFGSB subspace backtracking to measure from the Cauchy point (#1272)\n\nIn subspace_optimize!'s clip branch, x̄ aliases B.xc, so the clamp loop\noverwrites the Cauchy point before the dd_p > 0 backtracking safeguard\nreads it. Any component clamped at a bound with du pointing into it then\nyields a zero step-to-bound ratio, α_star collapses to 0, and the\nsafeguard returns exactly the clamped point it was meant to repair. The\ncaller detects the resulting ascent direction and recovers by discarding\nthe full L-BFGS-B history, wasting the curvature information and extra\niterations.\n\nStash the free components of the Cauchy point before clamping, reusing\nthe dead reduced-gradient buffer, and compute the backtracking ratios\nand the backtracked point from the stashed values. This matches xp in\nFortran subsm. On a box-constrained Rosenbrock instance that triggers\nthe branch, objective evaluations drop from 65 to 44 with an identical\nminimum; that instance is added as a regression test.\n\nCo-authored-by: Claude Fable 5 <noreply@anthropic.com>",
+    "commit_issue_refs": [
+      1272
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 1272,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Fix LBFGSB subspace backtracking to measure from the Cauchy point",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [],
+  "pull_request_record": {
+    "number": 1272,
+    "repository": "JuliaNLSolvers/Optim.jl",
+    "url": "https://github.com/JuliaNLSolvers/Optim.jl/pull/1272",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2026-08-17T10:04:14Z",
+    "merge_commit_sha": "ff988fbc1eccc4c1772528fe5e821afea352d93e",
+    "title": "Fix LBFGSB subspace backtracking to measure from the Cauchy point",
+    "body_excerpt": "## The bug\n\nIn `subspace_optimize!`'s `clip` branch, `x̄` aliases `B.xc`, so the clamp loop overwrites the Cauchy point before the `dd_p > 0` backtracking safeguard reads it. Any component clamped at a bound with `du` pointing into it then yields a zero step-to-bound ratio, `α_star` collapses to 0, and the safeguard returns exactly the clamped point it was meant to repair. Fortran `subsm` keeps the unclamped values in `xp` for this purpose, and `simple_lbfgsb.jl` copies before clamping.\n\nThe caller detects the resulting ascent direction (`dφ0 ≥ 0`) and recovers by discarding the full L-BFGS-B history and redoing the step, so the safeguard being a no-op mostly costs work rather than correctness. Instrumented on a 1,000-problem battery of box-constrained problems (random quadratics, Rosenbrock, exponential objectives): the branch fired 206 times, the collapsed `α_star = 0` outcome occurred on every firing, and the correctly backtracked step had a strictly negative directional derivative every time. On the 40 triggering Rosenbrock instances, the history-reset recovery cost ~15% more iterations and ~18% more objective evaluations. An A/B rerun of the full battery with the fix showed it is never worse: identical final minima on 993 problems, strictly better on 7 (largest objective gap 1.8), and one additional problem converging, so the recovery does not always reach the same final answer.\n\n## The fix\n\nStash the free components of the Cauchy point in the clamp loop, reusing the reduced-gradient buffer `r` (dead once `du` has been formed, so no new allocation), and compute both the backtracking ratios and the backtracked point from the stashed values, matching `xp` in Fortran `subsm`.\n\n## Tests\n\nAdds a deterministic regression test: a 2-variable box-constrained Rosenbrock instance that reliably enters the `dd_p > 0` branch. It asserts convergence, the known minimum, and an objective-evaluation bound (the fixed build uses 44 evaluations, master uses 65). The bound fails on ",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

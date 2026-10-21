@@ -1,0 +1,53 @@
+diff --git a/test/gettext/extractor_test.exs b/test/gettext/extractor_test.exs
+index b12d859..d3009d1 100644
+--- a/test/gettext/extractor_test.exs
++++ b/test/gettext/extractor_test.exs
+@@ -33,9 +33,9 @@ defmodule Gettext.ExtractorTest do
+         Extractor.merge_pot_files(extracted_po_structs, [paths.tomerge, paths.ignored], [])
+ 
+       # Unchanged files are not returned
+-      assert List.keyfind(structs, paths.ignored, 0) == nil
++      assert {_path, :unchanged} = List.keyfind(structs, paths.ignored, 0)
+ 
+-      {_, contents} = List.keyfind(structs, paths.tomerge, 0)
++      assert {_, {:changed, contents}} = List.keyfind(structs, paths.tomerge, 0)
+ 
+       assert IO.iodata_to_binary(contents) == """
+              msgid "foo"
+@@ -45,7 +45,7 @@ defmodule Gettext.ExtractorTest do
+              msgstr ""
+              """
+ 
+-      {_, contents} = List.keyfind(structs, paths.new, 0)
++      assert {_, {:changed, contents}} = List.keyfind(structs, paths.new, 0)
+       contents = IO.iodata_to_binary(contents)
+ 
+       assert contents =~ """
+@@ -385,7 +385,11 @@ defmodule Gettext.ExtractorTest do
+     assert [] = Extractor.pot_files(:unknown, [])
+ 
+     pot_files = Extractor.pot_files(:test_application, [])
+-    dumped = Enum.map(pot_files, fn {k, v} -> {k, IO.iodata_to_binary(v)} end)
++
++    dumped =
++      pot_files
++      |> Enum.reject(&match?({_path, :unchanged}, &1))
++      |> Enum.map(fn {k, {:changed, v}} -> {k, IO.iodata_to_binary(v)} end)
+ 
+     # We check that dumped strings end with the `expected` string because
+     # there's the informative comment at the start of each dumped string.
+diff --git a/test/mix/tasks/gettext.extract_test.exs b/test/mix/tasks/gettext.extract_test.exs
+index a4eb5b8..7e1d702 100644
+--- a/test/mix/tasks/gettext.extract_test.exs
++++ b/test/mix/tasks/gettext.extract_test.exs
+@@ -60,6 +60,10 @@ defmodule Mix.Tasks.Gettext.ExtractTest do
+            msgid "other"
+            msgstr ""
+            """
++
++    capture_io(fn ->
++      Mix.Project.in_project(test, tmp_dir, fn _module -> run(["--merge"]) end)
++    end) =~ "Wrote priv/gettext/it/LC_MESSAGES/my_domain.po"
+   end
+ 
+   test "--check-up-to-date should fail if no POT files have been created",

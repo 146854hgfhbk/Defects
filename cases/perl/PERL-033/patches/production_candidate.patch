@@ -1,0 +1,60 @@
+diff --git a/lib/File/Temp.pm b/lib/File/Temp.pm
+index 77cd9f7..f260f55 100644
+--- a/lib/File/Temp.pm
++++ b/lib/File/Temp.pm
+@@ -1367,6 +1367,14 @@ Use C<PERMS> to change this:
+ 
+   ($fh, $filename) = tempfile($template, PERMS => 0666);
+ 
++To open the temporary filehandle with a specific IO layer (e.g. for
++encoding), use C<LAYER>:
++
++  ($fh, $filename) = tempfile($template, LAYER => ':encoding(UTF-8)');
++
++This is equivalent to calling C<binmode($fh, $layer)> on the returned
++handle.  Any layer string accepted by C<binmode()> is valid.
++
+ Options can be combined as required.
+ 
+ Will croak() if there is an error.
+@@ -1381,6 +1389,8 @@ EXLOCK flag available since 0.19.
+ 
+ PERMS flag available since 0.2310.
+ 
++LAYER flag available since 0.2314.
++
+ =cut
+ 
+ sub tempfile {
+@@ -1399,6 +1409,7 @@ sub tempfile {
+                  "TMPDIR" => 0,     # Place tempfile in tempdir if template specified
+                  "EXLOCK" => 0,     # Open file with O_EXLOCK
+                  "PERMS"  => undef, # File permissions
++                 "LAYER"  => undef, # IO layer (binmode) to apply to filehandle
+                 );
+ 
+   # Check to see whether we have an odd or even number of arguments
+@@ -1484,6 +1495,9 @@ sub tempfile {
+                                     "file_permissions" => $options{PERMS},
+                                    ) );
+ 
++  # Apply IO layer if requested
++  binmode($fh, $options{LAYER}) if $options{OPEN} && defined $options{LAYER};
++
+   # Set up an exit handler that can do whatever is right for the
+   # system. This removes files at exit when requested explicitly or when
+   # system is asked to unlink_on_close but is unable to do so because
+@@ -2565,6 +2579,13 @@ function to change the mode of the filehandle.
+ Note that you can modify the encoding of a file opened by File::Temp
+ also by using C<binmode()>.
+ 
++Alternatively, use the C<LAYER> option to C<tempfile()> or
++C<File::Temp-E<gt>new()> to have the IO layer applied automatically on
++opening:
++
++  my ($fh, $fn) = tempfile( LAYER => ':encoding(UTF-8)' );
++  print $fh "café\n";   # works without an explicit binmode()
++
+ =head1 HISTORY
+ 
+ Originally began life in May 1999 as an XS interface to the system

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "case_id": "JULIA-707",
+  "status": "trigger_ready",
+  "mode": "dedicated_script",
+  "origin": "manual_mwe_from_upstream_fix",
+  "script_sha256": "3b20bd665635c49a75fa75ed9862af8c1c0fdcf53690ecfa7023d5bb5ec9ab1d",
+  "oracle": {
+    "schema_version": 1,
+    "added_testsets": [
+      "invalid catch binding is rejected"
+    ],
+    "assertion_expression_sha256": [],
+    "f2p_tests": [
+      "invalid catch binding is rejected"
+    ],
+    "mwe_basis": {
+      "defect": "A catch clause with an expression in the exception-name position was silently accepted instead of rejected as invalid Julia syntax.",
+      "public_api": "JuliaSyntax.parseall(GreenNode, source)",
+      "source_evidence": {
+        "extraction": "The input is the issue #105 reproducer; PR #106 adds the corresponding parser regression coverage. The oracle requires the documented parser exception rather than inspecting source text.",
+        "upstream_tests_patch_sha256": "334764a21f8dafa33979d36f222f339fd8728bb355600cd495a5971743d5aff2"
+      },
+      "upstream_issue": 105,
+      "upstream_pull_request": 106,
+      "upstream_test_files": [
+        "test/parser.jl"
+      ]
+    }
+  }
+}

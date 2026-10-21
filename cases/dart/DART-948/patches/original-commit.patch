@@ -1,0 +1,105 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ec5fdd7d..d709188e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 0.2.17
++
++* Handle mixed block and arrow bodied function arguments uniformly (#500).
++
+ # 0.2.16
+ 
+ * Don't discard type arguments on method calls with closure arguments (#582).
+diff --git a/lib/src/argument_list_visitor.dart b/lib/src/argument_list_visitor.dart
+index 38bc6eb0..7bf36030 100644
+--- a/lib/src/argument_list_visitor.dart
++++ b/lib/src/argument_list_visitor.dart
+@@ -110,6 +110,40 @@ class ArgumentListVisitor {
+       functionsStart = null;
+     }
+ 
++    // Edge case: If all of the function arguments are named and there are
++    // other named arguments that are "=>" functions, then don't treat the
++    // block-bodied functions specially. In a mixture of the two function
++    // styles, it looks cleaner to treat them all like normal expressions so
++    // that the named arguments line up.
++    if (functionsStart != null &&
++        arguments[functionsStart] is NamedExpression) {
++      bool isArrow(NamedExpression named) {
++        var expression = named.expression;
++
++        if (expression is FunctionExpression) {
++          return expression.body is ExpressionFunctionBody;
++        }
++
++        return false;
++      }
++
++      for (var i = 0; i < functionsStart; i++) {
++        if (arguments[i] is! NamedExpression) continue;
++
++        if (isArrow(arguments[i])) {
++          functionsStart = null;
++          break;
++        }
++      }
++
++      for (var i = functionsEnd; i < arguments.length; i++) {
++        if (isArrow(arguments[i])) {
++          functionsStart = null;
++          break;
++        }
++      }
++    }
++
+     if (functionsStart == null) {
+       // No functions, so there is just a single argument list.
+       return new ArgumentListVisitor._(
+diff --git a/test/regression/0500/0500.unit b/test/regression/0500/0500.unit
+new file mode 100644
+index 00000000..4e1a62f0
+--- /dev/null
++++ b/test/regression/0500/0500.unit
+@@ -0,0 +1,41 @@
++>>> (indent 2)
++  Decl immutableVariableDeclaration(
++          List<String> names, List<Expr> initializers) =>
++      (Environment env) {
++        assert(names.length == initializers.length);
++        for (int i = 0; i < names.length; ++i) {
++          env.initialize(names[i],
++              getter: (TopLevelBinding binding, ExprCont ek, ExprCont k) {
++            binding.getter = (TopLevelBinding _, ExprCont ek0, ExprCont k0) => ek0(
++                "Reading static variable '${binding.name}' during its initialization");
++            initializers[i](env, ek, (v) {
++              binding.getter =
++                  (TopLevelBinding _, ExprCont ek1, ExprCont k1) => k1(v);
++              return k(v);
++            });
++          },
++              setter: (value, ExprCont ek, ExprCont k) =>
++                  ek("NoSuchMethodError: method not found: '${names[i]}='"));
++        }
++      };
++<<<
++  Decl immutableVariableDeclaration(
++          List<String> names, List<Expr> initializers) =>
++      (Environment env) {
++        assert(names.length == initializers.length);
++        for (int i = 0; i < names.length; ++i) {
++          env.initialize(names[i],
++              getter: (TopLevelBinding binding, ExprCont ek, ExprCont k) {
++                binding.getter = (TopLevelBinding _, ExprCont ek0,
++                        ExprCont k0) =>
++                    ek0("Reading static variable '${binding.name}' during its initialization");
++                initializers[i](env, ek, (v) {
++                  binding.getter =
++                      (TopLevelBinding _, ExprCont ek1, ExprCont k1) => k1(v);
++                  return k(v);
++                });
++              },
++              setter: (value, ExprCont ek, ExprCont k) =>
++                  ek("NoSuchMethodError: method not found: '${names[i]}='"));
++        }
++      };
+\ No newline at end of file

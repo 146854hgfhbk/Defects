@@ -1,0 +1,51 @@
+diff --git a/spec/check_spec.lua b/spec/check_spec.lua
+index 02c4513b0047d444345579fe1205ea10e525c5d1..6bc3e4de5b14e8377a3e1793c988ecd65b628117 100644
+--- a/spec/check_spec.lua
++++ b/spec/check_spec.lua
+@@ -254,6 +254,23 @@ return a
+       ]])
+    end)
+ 
++   it("does not detect accessing unitialized variables in a loop", function()
++      assert.same({}, get_report[[
++local a
++
++while true do
++   if true then
++      local c = {}
++      a = a or {c}
++   end
++
++   if true then
++      return a
++   end
++end
++      ]])
++   end)
++
+    it("detects unset variables", function()
+       assert.same({
+          {type = "unused", subtype = "unset", vartype = "var", name = "a", line = 1, column = 7}
+diff --git a/src/luacheck/check.lua b/src/luacheck/check.lua
+index 5cbcace47d6d7475ff71660200f81ad0f4d0ca97..3ea0dc416fad8b8a82fb31380adaa56036ac035d 100644
+--- a/src/luacheck/check.lua
++++ b/src/luacheck/check.lua
+@@ -197,8 +197,16 @@ local function check(ast)
+ 
+             if not variable.is_upvalue and not variable.value then
+                -- Variable is uninitialized.
+-               variable.uninitialized = variable.uninitialized or {}
+-               table.insert(variable.uninitialized, warning(node, "uninit", "uninit", variable.type))
++
++               -- If the access is inside a loop, a value can come from the previous iteration.
++               -- This can not be easily checked without flow analysis in place.
++               -- Simply ignore such accesses for now.
++               -- FIXME: loop conditions are not considered being inside loops. Some cooperation from scanner is needed.
++               -- TODO: try for each assignment remove uninitialized warnings it invalidates.
++               if outer[3] == variable.outer[3] then
++                  variable.uninitialized = variable.uninitialized or {}
++                  table.insert(variable.uninitialized, warning(node, "uninit", "uninit", variable.type))
++               end
+             end
+          end
+ 

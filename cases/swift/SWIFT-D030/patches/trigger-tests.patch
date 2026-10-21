@@ -1,0 +1,160 @@
+diff --git a/Tests/SwiftFormatTests/PrettyPrint/GarbageTextTests.swift b/Tests/SwiftFormatTests/PrettyPrint/GarbageTextTests.swift
+index cb8223be79788e4d6090a5accaa4d37c555202d7..1cf454916a00b9c1d2a07fbf9ef9b10a42f9e8ac 100644
+--- a/Tests/SwiftFormatTests/PrettyPrint/GarbageTextTests.swift
++++ b/Tests/SwiftFormatTests/PrettyPrint/GarbageTextTests.swift
+@@ -10,6 +10,12 @@
+ //
+ //===----------------------------------------------------------------------===//
+ 
++import SwiftFormat
++import SwiftOperators
++import SwiftParser
++import SwiftSyntax
++import XCTest
++
+ private let bom: Unicode.Scalar = "\u{feff}"
+ private let unknownScalar: Unicode.Scalar = "\u{fffe}"
+ 
+@@ -32,6 +38,78 @@ final class GarbageTextTests: PrettyPrintTestCase {
+     assertPrettyPrintEqual(input: input, expected: expected, linelength: 20)
+   }
+ 
++  func testHashBangFollowedByLineComment() {
++    let input =
++      """
++      #!/usr/bin/env swift
++      // (c) Acme Inc.
++
++      print("Hello world!")
++      """
++
++    let expected =
++      """
++      #!/usr/bin/env swift
++      // (c) Acme Inc.
++
++      print("Hello world!")
++
++      """
++
++    assertPrettyPrintEqual(input: input, expected: expected, linelength: 80)
++
++    // Also exercise the full formatter pipeline, which is the path the CLI
++    // takes and the one the original bug report exercised.
++    assertFormatted(input: input, expected: expected, linelength: 80)
++  }
++
++  private func assertFormatted(
++    input: String,
++    expected: String,
++    linelength: Int,
++    file: StaticString = #file,
++    line: UInt = #line
++  ) {
++    var configuration = Configuration.forTesting
++    configuration.lineLength = linelength
++    let formatter = SwiftFormatter(configuration: configuration)
++    var output = ""
++    let tree = Parser.parse(source: input)
++    let folded = try! OperatorTable.standardOperators.foldAll(tree).as(SourceFileSyntax.self)!
++    try! formatter.format(
++      syntax: folded,
++      source: input,
++      operatorTable: .standardOperators,
++      assumingFileURL: nil,
++      selection: .infinite,
++      to: &output
++    )
++    XCTAssertEqual(output, expected, file: file, line: line)
++  }
++
++  func testHashBangFollowedByBlankLineAndComment() {
++    let input =
++      """
++      #!/usr/bin/env swift
++
++      // (c) Acme Inc.
++
++      print("Hello world!")
++      """
++
++    let expected =
++      """
++      #!/usr/bin/env swift
++
++      // (c) Acme Inc.
++
++      print("Hello world!")
++
++      """
++
++    assertPrettyPrintEqual(input: input, expected: expected, linelength: 80)
++  }
++
+   func testBOM() {
+     let input =
+       """
+diff --git a/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift b/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift
+index 4562663a31540e5a5d0f89351154f20c2880f47c..825769bfb7730b30767b14f32c3eea53001ad52c 100644
+--- a/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift
++++ b/Tests/SwiftFormatTests/Rules/OrderedImportsTests.swift
+@@ -259,6 +259,59 @@ final class OrderedImportsTests: LintOrFormatRuleTestCase {
+     )
+   }
+ 
++  func testShebangWithFileHeaderAndImport() {
++    // The newline that ends a shebang line is leading trivia on the first
++    // statement; reordering must not pull the file header up onto the shebang.
++    assertFormatting(
++      OrderedImports.self,
++      input: """
++        #!/usr/bin/swift
++        //
++        // some file comment
++
++        import Foundation
++
++        someCode()
++        """,
++      expected: """
++        #!/usr/bin/swift
++        //
++        // some file comment
++
++        import Foundation
++
++        someCode()
++        """
++    )
++  }
++
++  func testShebangWithReorderedImports() {
++    assertFormatting(
++      OrderedImports.self,
++      input: """
++        #!/usr/bin/swift
++        // File header.
++
++        import Zebra
++        1️⃣import Apple
++
++        someCode()
++        """,
++      expected: """
++        #!/usr/bin/swift
++        // File header.
++
++        import Apple
++        import Zebra
++
++        someCode()
++        """,
++      findings: [
++        FindingSpec("1️⃣", message: "sort import statements lexicographically")
++      ]
++    )
++  }
++
+   func testNonHeaderComment() {
+     let input =
+       """

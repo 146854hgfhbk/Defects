@@ -1,0 +1,100 @@
+diff --git a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/List.test.ets b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/List.test.ets
+index 27c07a1a1..2de32fd14 100644
+--- a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Ability.test'
++import pageTransitionRegressionTest from './PageTransitionRegression.test'
+ 
+ export default function testsuite() {
+   abilityTest()
+-}
+\ No newline at end of file
++  pageTransitionRegressionTest()
++}
+diff --git a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/PageTransitionRegression.test.ets b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/PageTransitionRegression.test.ets
+new file mode 100644
+index 000000000..1b0b0a838
+--- /dev/null
++++ b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/PageTransitionRegression.test.ets
+@@ -0,0 +1,78 @@
++/*
++ * Copyright (c) 2023 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++import { Driver, ON } from '@ohos.UiTest';
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import resourceManager from '@ohos.resourceManager';
++
++const DELAY_TIME = 1000;
++const LONG_DELAY_TIME = 2000;
++let driver: Driver = Driver.create();
++let manager: resourceManager.ResourceManager;
++
++async function startMainAbility() {
++  let abilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator();
++  await abilityDelegator.startAbility({
++    bundleName: 'ohos.samples.componentcollection',
++    abilityName: 'MainAbility'
++  });
++  let context = await AbilityDelegatorRegistry.getAbilityDelegator().getAppContext();
++  manager = context.resourceManager;
++  await driver.delayMs(LONG_DELAY_TIME);
++}
++
++async function clickText(text: string) {
++  await driver.assertComponentExist(ON.text(text));
++  let component = await driver.findComponent(ON.text(text));
++  await component.click();
++  await driver.delayMs(DELAY_TIME);
++}
++
++async function clickResourceText(resource: Resource) {
++  await clickText(await manager.getStringValue(resource));
++}
++
++async function assertPageTransitionTargetVisible() {
++  await driver.delayMs(LONG_DELAY_TIME);
++  await driver.assertComponentExist(ON.text('PAGE TRANSITIONS'));
++  await driver.assertComponentExist(ON.text(await manager.getStringValue($r('app.string.page_transition_back'))));
++}
++
++export default function pageTransitionRegressionTest() {
++  describe('PageTransitionRegressionTest', () => {
++    it('keeps target page visible after top page transition', 0, async () => {
++      await startMainAbility();
++
++      await driver.assertComponentExist(ON.id('tabBar2'));
++      let animationTab = await driver.findComponent(ON.id('tabBar2'));
++      await animationTab.click();
++      await driver.delayMs(DELAY_TIME);
++
++      let pageTransition = await manager.getStringValue($r('app.string.page_transition'));
++      let transitionAnimation = await manager.getStringValue($r('app.string.transition_animation'));
++      let pageTransitionButton = await driver.findComponent(ON.text(pageTransition));
++      if (!pageTransitionButton) {
++        await clickText(transitionAnimation);
++      }
++
++      await clickText(pageTransition);
++      await clickResourceText($r('app.string.page_transition_top'));
++      await assertPageTransitionTargetVisible();
++
++      expect(true).assertTrue();
++    });
++  });
++}

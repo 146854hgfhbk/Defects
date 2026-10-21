@@ -1,0 +1,135 @@
+diff --git a/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/LanguageBaseDialogStyle.test.ets b/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/LanguageBaseDialogStyle.test.ets
+new file mode 100644
+index 0000000000..aebcc5e17f
+--- /dev/null
++++ b/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/LanguageBaseDialogStyle.test.ets
+@@ -0,0 +1,114 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium';
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
++import { Driver, ON, Component } from '@ohos.UiTest';
++
++const BUNDLE_NAME: string = 'com.samples.languagebaseclasslibrary';
++const ABILITY_NAME: string = 'EntryAbility';
++const WAIT_START: number = 2400;
++const WAIT_PAGE: number = 1200;
++
++let delegator: AbilityDelegatorRegistry.AbilityDelegator =
++  AbilityDelegatorRegistry.getAbilityDelegator();
++
++async function findText(driver: Driver, text: string): Promise<Component | null> {
++  try {
++    let component = await driver.findComponent(ON.text(text));
++    if (component !== undefined && component !== null) {
++      return component;
++    }
++  } catch (error) {
++  }
++  return null;
++}
++
++async function findById(driver: Driver, id: string): Promise<Component | null> {
++  try {
++    let component = await driver.findComponent(ON.id(id));
++    if (component !== undefined && component !== null) {
++      return component;
++    }
++  } catch (error) {
++  }
++  return null;
++}
++
++async function isWithinDisplay(driver: Driver, component: Component | null): Promise<boolean> {
++  if (component === null) {
++    return false;
++  }
++  try {
++    let bounds = await component.getBounds();
++    let display = await driver.getDisplaySize();
++    return bounds.top >= 0 && bounds.bottom <= display.y && bounds.left >= 0 &&
++      bounds.right <= display.x;
++  } catch (error) {
++    return false;
++  }
++}
++
++export default function languageBaseDialogStyleTest() {
++  describe('LanguageBaseDialogStyleTestSuite', () => {
++    it('LanguageBaseDialog_BottomButtonsRemainReachable', 0, async () => {
++      const driver: Driver = Driver.create();
++      await delegator.startAbility({ bundleName: BUNDLE_NAME, abilityName: ABILITY_NAME });
++      await driver.delayMs(WAIT_START);
++
++      let manager = delegator.getAppContext().resourceManager;
++      let dequeText: string = await manager.getStringByName('deque');
++
++      let entry: Component | null = null;
++      try {
++        let list = await driver.findComponent(ON.type('List'));
++        let found = await list.scrollSearch(ON.text(dequeText));
++        if (found !== undefined && found !== null) {
++          entry = found;
++        }
++      } catch (error) {
++        entry = null;
++      }
++      if (entry === null) {
++        entry = await findText(driver, dequeText);
++      }
++      if (entry !== null) {
++        await entry.click();
++      }
++      await driver.delayMs(WAIT_PAGE);
++      await driver.assertComponentExist(ON.id('add'));
++      let addButton: Component = await driver.findComponent(ON.id('add'));
++      await addButton.click();
++      await driver.delayMs(WAIT_PAGE);
++      await driver.assertComponentExist(ON.id('add_age'));
++
++      let ageTrigger: Component = await driver.findComponent(ON.id('add_age'));
++      await ageTrigger.click();
++      await driver.delayMs(WAIT_PAGE);
++
++      let sure: Component | null = await findById(driver, 'add_sure');
++      let cancelText: string = await manager.getStringByName('cancel');
++      let cancel: Component | null = await findText(driver, cancelText);
++      let sureReachable: boolean = await isWithinDisplay(driver, sure);
++      let cancelReachable: boolean = await isWithinDisplay(driver, cancel);
++
++      let probe: string = 'sureExists=' + (sure !== null) + ';cancelExists=' + (cancel !== null) +
++        ';sureReachable=' + sureReachable + ';cancelReachable=' + cancelReachable;
++      console.info('LanguageBaseDialogProbe ' + probe);
++      let buttonsReachable: boolean = sureReachable && cancelReachable;
++      expect(buttonsReachable ? 'REACHABLE' : ('UNREACHABLE:' + probe)).assertEqual('REACHABLE');
++    });
++  });
++}
+diff --git a/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/List.test.ets b/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/List.test.ets
+index 657d194164..3cc374797a 100644
+--- a/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/LaunguageBaseClassLibrary/LanguageBaseClassLibrary/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Ability.test';
++import languageBaseDialogStyleTest from './LanguageBaseDialogStyle.test';
+ 
+ export default function testsuite() {
+   abilityTest();
++  languageBaseDialogStyleTest();
+ }
+\ No newline at end of file

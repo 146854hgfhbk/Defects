@@ -1,0 +1,79 @@
+diff --git a/lib/req_llm/providers/anthropic.ex b/lib/req_llm/providers/anthropic.ex
+index 5f77bb1df..1beddc2f1 100644
+--- a/lib/req_llm/providers/anthropic.ex
++++ b/lib/req_llm/providers/anthropic.ex
+@@ -588,16 +588,16 @@ defmodule ReqLLM.Providers.Anthropic do
+   defp maybe_cache_tools(body, cache_meta) do
+     case Map.get(body, :tools) do
+       tools when is_list(tools) and tools != [] ->
+-        updated_tools =
+-          Enum.map(tools, fn tool ->
+-            if Map.has_key?(tool, :cache_control) or Map.has_key?(tool, "cache_control") do
+-              tool
+-            else
+-              Map.put(tool, :cache_control, cache_meta)
+-            end
+-          end)
++        {init, [last]} = Enum.split(tools, -1)
++
++        updated_last =
++          if Map.has_key?(last, :cache_control) or Map.has_key?(last, "cache_control") do
++            last
++          else
++            Map.put(last, :cache_control, cache_meta)
++          end
+ 
+-        Map.put(body, :tools, updated_tools)
++        Map.put(body, :tools, init ++ [updated_last])
+ 
+       _ ->
+         body
+diff --git a/test/req_llm/providers/anthropic_prompt_cache_test.exs b/test/req_llm/providers/anthropic_prompt_cache_test.exs
+index fcc8e1b14..0ca967627 100644
+--- a/test/req_llm/providers/anthropic_prompt_cache_test.exs
++++ b/test/req_llm/providers/anthropic_prompt_cache_test.exs
+@@ -109,6 +109,44 @@ defmodule ReqLLM.Providers.AnthropicPromptCacheTest do
+       assert encoded_tool["cache_control"] == %{"type" => "ephemeral", "ttl" => "1h"}
+     end
+ 
++    test "only injects cache_control into last tool with multiple tools" do
++      {:ok, model} = ReqLLM.model("anthropic:claude-sonnet-4-5-20250929")
++      context = context_fixture()
++
++      make_tool = fn name ->
++        ReqLLM.Tool.new!(
++          name: name,
++          description: "Tool #{name}",
++          parameter_schema: [
++            param: [type: :string, required: true, doc: "Test parameter"]
++          ],
++          callback: fn _ -> {:ok, "result"} end
++        )
++      end
++
++      tools = Enum.map(~w(tool_a tool_b tool_c tool_d tool_e), make_tool)
++
++      {:ok, request} =
++        Anthropic.prepare_request(:chat, model, context,
++          tools: tools,
++          anthropic_prompt_cache: true
++        )
++
++      updated_request = Anthropic.encode_body(request)
++      decoded = Jason.decode!(updated_request.body)
++
++      assert length(decoded["tools"]) == 5
++
++      {init_tools, [last_tool]} = Enum.split(decoded["tools"], -1)
++
++      for tool <- init_tools do
++        refute Map.has_key?(tool, "cache_control"),
++               "Expected no cache_control on #{tool["name"]}, but found one"
++      end
++
++      assert last_tool["cache_control"] == %{"type" => "ephemeral"}
++    end
++
+     test "does not inject cache_control when prompt caching disabled" do
+       {:ok, model} = ReqLLM.model("anthropic:claude-sonnet-4-5-20250929")
+       context = context_fixture()

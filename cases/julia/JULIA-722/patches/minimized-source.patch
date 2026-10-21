@@ -1,0 +1,21 @@
+diff --git a/src/source_files.jl b/src/source_files.jl
+--- a/src/source_files.jl
++++ b/src/source_files.jl
+@@ -34,14 +34,15 @@ end
+ 
+ # Get line number of the given byte within the code
+ function source_line(source::SourceFile, byte_index)
+-    searchsortedlast(source.line_starts, byte_index)
++    line = searchsortedlast(source.line_starts, byte_index)
++    return (line < lastindex(source.line_starts)) ? line : line-1
+ end
+ 
+ """
+ Get line number and character within the line at the given byte index.
+ """
+ function source_location(source::SourceFile, byte_index)
+-    line = searchsortedlast(source.line_starts, byte_index)
++    line = source_line(source, byte_index)
+     i = source.line_starts[line]
+     column = 1
+     while i < byte_index

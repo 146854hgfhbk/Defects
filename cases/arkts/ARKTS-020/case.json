@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "case_id": "ARKTS-020",
+  "status": "VALIDATED_ACTIVE",
+  "source_dataset": "ArkEval",
+  "source_instance_id": "openharmony__applications_app_samples+5f05d54a-4022",
+  "project": "openharmony/applications_app_samples",
+  "repo_url": "https://gitee.com/openharmony/applications_app_samples",
+  "title": "【Sample】修复Chat应用组件复用列表乱序问题",
+  "pr_number": 4022,
+  "pr_url": "https://gitee.com/openharmony/applications_app_samples/pulls/4022",
+  "issue_urls": [
+    "https://gitee.com/openharmony/applications_app_samples/issues/I8WSZW"
+  ],
+  "buggy_revision": "5f05d54a6a9c28460844e00dde3b293d03df5422",
+  "fixed_revision": "e58bb5c80f6877886a61633bcb9923c78f661922",
+  "revision_mode": "strict_upstream_boundary",
+  "project_root": "code/Solutions/IM/Chat",
+  "changed_production_files": [
+    "code/Solutions/IM/Chat/features/chatlist/src/main/ets/view/OptLayoutChatView.ets"
+  ],
+  "trigger_test_files": [
+    "code/Solutions/IM/Chat/products/phone/entry/src/ohosTest/ets/test/List.test.ets",
+    "code/Solutions/IM/Chat/products/phone/entry/src/ohosTest/ets/test/OptLayoutChatViewReuse.test.ets"
+  ],
+  "target": "OptLayoutChatViewReuseTest#about_to_reuse_should_replace_rendered_chat_item_001",
+  "runner": "/ets/TestRunner/OpenHarmonyTestRunner",
+  "bundle": "com.samples.chat",
+  "patches": {
+    "upstream": "patches/upstream.patch",
+    "source": "patches/source.patch",
+    "test": "patches/test.patch",
+    "harness": null
+  },
+  "source_patch_sha256": "edc9f2e708294f0518893597ee8acb938b9d47e1e2c1b1a8cb6a25b08ac11c0d",
+  "source_diff_payload_sha256": "3ce1eecae682b87a183f7302a89c5db32242fd6a65af77dcc0a497a02c136996",
+  "test_patch_sha256": "29be50228697a710ce2280d606743f9d28898b86cfa9960be72367e2b88da3df",
+  "build_commands": {
+    "buggy": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/retry-hvigor3-key-5f05-v2/work/S001/buggy/code/Solutions/IM/Chat",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/retry-hvigor3-key-5f05-v2/work/S001/buggy/code/Solutions/IM/Chat",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    },
+    "fixed": {
+      "app": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/retry-hvigor3-key-5f05-v2/work/S001/fixed/code/Solutions/IM/Chat",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ],
+      "test": [
+        "/tools/hvigor",
+        "__REFERENCE_USER_HOME__/arkts-defects-miner/execution_v3/retry-hvigor3-key-5f05-v2/work/S001/fixed/code/Solutions/IM/Chat",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@ohosTest",
+        "-p",
+        "product=default",
+        "--no-daemon",
+        "assembleHap"
+      ]
+    }
+  },
+  "test_command_template": [
+    "hdc",
+    "-t",
+    "127.0.0.1:5555",
+    "shell",
+    "aa",
+    "test",
+    "-b",
+    "com.samples.chat",
+    "-m",
+    "entry_test",
+    "-s",
+    "unittest",
+    "/ets/TestRunner/OpenHarmonyTestRunner",
+    "-s",
+    "class",
+    "OptLayoutChatViewReuseTest#about_to_reuse_should_replace_rendered_chat_item_001"
+  ],
+  "environment_lock": "environment.lock.json",
+  "validation": "validation/validation.json",
+  "selection_status": "ACTIVE",
+  "release_eligibility": "ACTIVE",
+  "issue_id": "I8WSZW",
+  "traceability_type": "ISSUE",
+  "bug_report_id": "I8WSZW",
+  "bug_report_url": "https://gitee.com/openharmony/applications_app_samples/issues/I8WSZW",
+  "fix_kind": "production_source",
+  "branch_specific_instance": false,
+  "shared_fix_pattern": false,
+  "duplicate": false,
+  "duplicate_of": null,
+  "minimization_method": "original_patch_already_minimal"
+}

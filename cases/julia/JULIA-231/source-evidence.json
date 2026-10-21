@@ -1,0 +1,59 @@
+{
+  "candidate_sha": "b099103eb40047015f10657b95845fc25fd2823a",
+  "project": "Ferrite-FEM/Ferrite.jl",
+  "source": "local_git_commit",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 1226,
+      "url": "https://github.com/Ferrite-FEM/Ferrite.jl/issues/1226",
+      "state": "closed",
+      "title": "`FacetValues` not fully implemented for gemetry dimension != interpolation dimension (2D line element)",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": false,
+      "labels": [],
+      "body_excerpt": "I've encountered a bug within `FacetValues`, where I have a 2D line. It seems that `weighted_normal` is not implemented for that case. \nA minimal example is given here: \n\n```julia\nusing Ferrite\n\n_grid = generate_grid(Line, (2,), Vec((0.0,)), Vec((1.0)))\nnodes = [(n.x[1], 0.0) |> Vec{2} |> Node for n in _grid.nodes]\ngrid = Grid(_grid.cells, nodes)\n\nip = Lagrange{RefLine, 1}()\nipGeo = Lagrange{RefLine, 1}()^2\n\nfqr = FacetQuadratureRule{RefLine}(2)\nfv = FacetValues(fqr, ip, ipGeo)\n\nfc = FacetCache(grid);\nFerrite.reinit!(fc, FaceIndex((1, 2)))\nFerrite.reinit!(fv, fc)\n``` \n\nthrows \n```julia\nERROR: MethodError: no method matching weighted_normal(::StaticArraysCore.SMatrix{2, 1, Float64, 2}, ::Type{RefLine}, ::Int64)\nThe function `weighted_normal` exists, but no method is defined for this combination of argument types.\n\nClosest candidates are:\n  weighted_normal(::Tensor{2, 1, T}, ::Type{RefLine}, ::Int64) where T\n   @ Ferrite C:\\Users\\ac136110\\.julia\\packages\\Ferrite\\xAVKU\\src\\FEValues\\facet_integrals.jl:85\n  weighted_normal(::Tensor{2, 3}, ::Type{RefPyramid}, ::Int64)\n   @ Ferrite C:\\Users\\ac136110\\.julia\\packages\\Ferrite\\xAVKU\\src\\FEValues\\facet_integrals.jl:294\n  weighted_normal(::Tensor{2, 3}, ::Type{RefPrism}, ::Int64)\n   @ Ferrite C:\\Users\\ac136110\\.julia\\packages\\Ferrite\\xAVKU\\src\\FEValues\\facet_integrals.jl:257\n  ...\n```\n\n"
+    },
+    {
+      "number": 1235,
+      "url": "https://github.com/Ferrite-FEM/Ferrite.jl/pull/1235",
+      "state": "closed",
+      "title": "fix `weighted_normal` for embedded lines",
+      "closed": true,
+      "defect_evidence": false,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "Fixes #1226 for 2D lines"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "fix_commit_to_issue",
+      "issue_numbers": [
+        1226
+      ],
+      "fix_commit": "b099103eb40047015f10657b95845fc25fd2823a",
+      "evidence_source": "fix_commit_message"
+    }
+  ],
+  "traceability_class": "STRICT_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "fix `weighted_normal` for embedded lines (#1235)\n\nMakes `reinit!` of `FacetValues` work for embedded line elements.\nCloses #1226",
+    "commit_issue_refs": [
+      1226,
+      1235
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": null,
+    "pull_request_title": "",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [
+    1226
+  ],
+  "cross_repository_issue_records": []
+}

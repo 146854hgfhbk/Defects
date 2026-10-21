@@ -1,0 +1,160 @@
+{
+  "bug_id": "JULIA-165",
+  "buggy_revision": "a9fdb879c601555c80e75c5daa8e535caa92cc42",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.12.7",
+    "julia_version_origin": "project_compat_modern_floor",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "e386ddfbe9d81a14ec5eff8830c30d9ff0efbe6f",
+  "case_id": "JULIA-165",
+  "changed_production_files": [
+    "src/toplevel/virtualprocess.jl"
+  ],
+  "changed_test_files": [
+    "test/toplevel/test_toplevel_inference.jl",
+    "test/toplevel/test_virtualprocess.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "e386ddfbe9d81a14ec5eff8830c30d9ff0efbe6f",
+  "instance_id": null,
+  "issue_id": 555,
+  "issue_urls": [
+    "https://github.com/aviatesk/JETLS.jl/issues/555"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.12.7",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": null,
+  "parent_sha": "a9fdb879c601555c80e75c5daa8e535caa92cc42",
+  "project": "aviatesk/JET.jl",
+  "repository_url": "https://github.com/aviatesk/JET.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-4-6",
+    "api_version": null,
+    "candidate_sha": "e386ddfbe9d81a14ec5eff8830c30d9ff0efbe6f",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.72,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Issue #830 describes a real defect: false positive MissingConcretizationErrorReport when analyzing top-level loops containing comprehensions. The fix is in production code (src/toplevel/virtualprocess.jl) and test files are included. The issue explicitly states 'Added a regression test covering aviatesk/JETLS.jl#555'. The change targets existing incorrect behavior (false error report) rather than adding new functionality.",
+    "input_sha256": "cb7c5ad4c0a25f59c01fd2576b6be18e127c6bd61f283eedcf026b639156de2e",
+    "missing_evidence": "Cannot inspect the actual diff content to verify the exact code change matches the described fix. Cannot verify the test content directly. PR body and title are empty, so context comes solely from the linked issue.",
+    "project": "aviatesk/JET.jl",
+    "provider": "openai_compatible",
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.72, \"summary\": \"Fix for a false MissingConcretizationErrorReport caused by :latestworld statements incorrectly triggering loop concretization in the virtual process. The issue describes a concrete reproducer where a top-level loop with a comprehension (creating a closure method) erroneously forced JET to concretize the loop iterator.\", \"evidence\": \"Issue #830 describes a real defect: false positive MissingConcretizationErrorReport when analyzing top-level loops containing comprehensions. The fix is in production code (src/toplevel/virtualprocess.jl) and test files are included. The issue explicitly states 'Added a regression test covering aviatesk/JETLS.jl#555'. The change targets existing incorrect behavior (false error report) rather than adding new functionality.\", \"missing_evidence\": \"Cannot inspect the actual diff content to verify the exact code change matches the described fix. Cannot verify the test content directly. PR body and title are empty, so context comes solely from the linked issue.\", \"validation_risks\": \"Without seeing the actual diff, there's a risk the change could be more complex than described or could affect other concretization heuristics. The fix modifies selection logic for concretization requirements which could have subtle downstream effects on other analysis scenarios.\", \"suggested_tests\": [\"Test that a top-level loop over a const array containing a comprehension does not produce MissingConcretizationErrorReport\", \"Test that :latestworld statements still correctly update world age for method definitions that are selected for concrete execution\", \"Test that loops without comprehensions still behave correctly with respect to concretization\"]}\n```",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-28T02:55:04Z",
+    "suggested_tests": [
+      "Test that a top-level loop over a const array containing a comprehension does not produce MissingConcretizationErrorReport",
+      "Test that :latestworld statements still correctly update world age for method definitions that are selected for concrete execution",
+      "Test that loops without comprehensions still behave correctly with respect to concretization"
+    ],
+    "summary": "Fix for a false MissingConcretizationErrorReport caused by :latestworld statements incorrectly triggering loop concretization in the virtual process. The issue describes a concrete reproducer where a top-level loop with a comprehension (creating a closure method) erroneously forced JET to concretize the loop iterator.",
+    "usage": {
+      "completion_tokens": 575,
+      "prompt_tokens": 1592,
+      "total_tokens": 2167
+    },
+    "validation_risks": "Without seeing the actual diff, there's a risk the change could be more complex than described or could affect other concretization heuristics. The fix modifies selection logic for concretization requirements which could have subtle downstream effects on other analysis scenarios."
+  },
+  "revision_mode": "fixed_minus_minimized_patch",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": null,
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "oracle": {
+      "added_testsets": [
+        "top-level closure in abstract loop (aviatesk/JETLS.jl#555)"
+      ],
+      "assertion_expression_sha256": [
+        "41b939c4a8286ece634fc6d41a30265b4426e802cdea679cb381ffc16f9f43a9",
+        "224bfcdcc9b1bcbdf248ab236ca03e066ad7e2d85212f62a632dfaba50897877",
+        "6b854a22c43d838081fc9fff8045da9fbe6cfb032612cb2cbb10a22f0ed4ff84",
+        "5f87a249d72960774d9299697f257c93cdef1732698d69266cd77579df7a31f9",
+        "ed4d0ad398722f06d79d26a477ad64743e24f92b5650a92d90febbd8874c73ee",
+        "81711468ead412d769eda90fc96d52f5fd5b1908f63f77372eaa3ffcee217802"
+      ],
+      "f2p_tests": [
+        "SourceFile lines and column indexing"
+      ],
+      "mwe_basis": "exact_assertions_from_upstream_fix_test_patch",
+      "schema_version": 1,
+      "source_evidence": {
+        "path": "trigger/upstream-tests.patch",
+        "sha256": "bd870f17f500ee2bb6ecca6a45479a219a23c455cbb8795ccb9e8802e8a98428",
+        "test_files": [
+          "test/toplevel/test_toplevel_inference.jl",
+          "test/toplevel/test_virtualprocess.jl"
+        ],
+        "test_files_sha256": {
+          "test/toplevel/test_toplevel_inference.jl": "9af9a7917644a9895abb20939c408722210be10bc58e2d79dd8ffaf4f56d6791",
+          "test/toplevel/test_virtualprocess.jl": "76e3670f1ae6c24cb9f46fe8c5d8d6fd8bf1333fb1ac5b2a28e4cecede8db50c"
+        }
+      }
+    },
+    "origin": "manual_mwe_from_upstream_fix",
+    "path": "trigger/trigger.jl",
+    "sha256": "de1bb4260c831ffe6fcbd6fb6ec5f6f187d00ea53c10f06661281ea317ed1807",
+    "timeout_seconds": 1800
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "top-level closure in abstract loop"
+  ],
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "top-level closure in abstract loop"
+    ],
+    "exception_types": [
+      "8792b8af112b16fb66b69035cf4c263db2e98107f4ca6de14a0c5bd3fc80a30a"
+    ],
+    "fingerprints": [
+      "8792b8af112b16fb66b69035cf4c263db2e98107f4ca6de14a0c5bd3fc80a30a"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "e386ddfbe9d81a14ec5eff8830c30d9ff0efbe6f",
+    "parent_sha": "a9fdb879c601555c80e75c5daa8e535caa92cc42",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "cd382bd0929edb546baf922029ecbfef39a9f4731a715a40cbdda192a2fda34d",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

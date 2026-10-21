@@ -1,0 +1,136 @@
+{
+  "schema_version": 2,
+  "case_id": "JULIA-027",
+  "bug_id": "JULIA-027",
+  "language": "Julia",
+  "revision_mode": "fixed_minus_minimized_patch",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "repository_url": "https://github.com/JuliaLang/JuliaSyntax.jl.git",
+  "issue_urls": [
+    "https://github.com/JuliaLang/JuliaSyntax.jl/issues/405"
+  ],
+  "issue_id": 405,
+  "buggy_revision": "17b92856fa20381e6625ca0b2530496ef299457c",
+  "fixed_revision": "21c67740c93f5a04008232d0f638c830a0852ba9",
+  "candidate_sha": "21c67740c93f5a04008232d0f638c830a0852ba9",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe": null,
+  "parent_sha": "17b92856fa20381e6625ca0b2530496ef299457c",
+  "changed_production_files": [
+    "src/kinds.jl",
+    "src/parser.jl"
+  ],
+  "changed_test_files": [
+    "test/parser.jl"
+  ],
+  "trigger_tests": [
+    "JULIA-027 standalone syntactic assignments"
+  ],
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "970251e634da9f18d45edb7f9e1d9cd5c61660c1b01bf20825302bb78a78b59c",
+    "oracle": {
+      "public_api": "JuliaSyntax.parseatom",
+      "upstream_test_file": "test/parser.jl",
+      "source_evidence": "isolated from the upstream fix cases in test/parser.jl",
+      "upstream_test_patch_sha256": "0aee3280d79f2a917098b94360c20999cd180b9145151e7dee254a01c726a48c"
+    }
+  },
+  "traceability_class": "STRICT_DIRECT",
+  "build": {
+    "system": "Julia Pkg",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'",
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary"
+  },
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "timezone": "UTC",
+  "reproducibility_status": "stable_differential",
+  "environment_lock": "environment.lock.json",
+  "review": {
+    "candidate_sha": "21c67740c93f5a04008232d0f638c830a0852ba9",
+    "project": "JuliaLang/JuliaSyntax.jl",
+    "input_sha256": "eaaa46141c960e47c03835fcf5556ab98b613a19c54366a8d55ac7f5d8ee1ca7",
+    "api_model": "claude-opus-4-6",
+    "provider": "openai_compatible",
+    "api_version": null,
+    "reviewed_at": "2026-08-28T02:52:31Z",
+    "usage": {
+      "prompt_tokens": 1614,
+      "completion_tokens": 525,
+      "total_tokens": 2139
+    },
+    "raw_response": "```json\n{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.9, \"summary\": \"Fix for parsing bug where ≔ (\\\\coloneq) and related characters (⩴, ≕) were incorrectly rejected as invalid identifiers, despite being accepted by the legacy FLISP parser. The fix modifies the parser and kinds to allow these characters as normal identifiers rather than special operator syntax.\", \"evidence\": \"Issue #405 clearly documents a regression/incompatibility where JuliaSyntax rejects ≔ as an identifier while the FLISP parser accepts it. Issue #478 is the PR that explicitly states 'Fix #405' and describes these assignment-precedence operators should be usable as normal identifiers. The commit modifies production files (src/kinds.jl, src/parser.jl) and includes test changes (test/parser.jl). The existing behavior (FLISP parser accepting ≔ as identifier) was violated by JuliaSyntax.\", \"missing_evidence\": \"Cannot see the actual diff content to verify the exact code changes, but issue context strongly supports this is a compatibility bug fix.\", \"validation_risks\": \"The change demotes certain operators from special syntax to identifier status, which could theoretically affect code relying on them as operators, but the issue indicates these were not properly supported as operators anyway.\", \"suggested_tests\": [\"Test that ≔, ⩴, and ≕ can be used as variable names (e.g., `≔ = 1`)\", \"Test that expressions using these characters as identifiers parse without error\", \"Test that these characters are not treated as assignment operators in parsing\"]}\n```",
+    "checks": {
+      "real_defect_evidence": "yes",
+      "existing_behavior_violated": "yes",
+      "issue_commit_match": "yes",
+      "production_behavior_fix": "yes",
+      "feature_or_api_extension": "no",
+      "diagnostic_only": "no",
+      "non_bug_change_only": "no",
+      "isolated_fix": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "rejection_code": "NONE",
+    "confidence": 0.9,
+    "summary": "Fix for parsing bug where ≔ (\\coloneq) and related characters (⩴, ≕) were incorrectly rejected as invalid identifiers, despite being accepted by the legacy FLISP parser. The fix modifies the parser and kinds to allow these characters as normal identifiers rather than special operator syntax.",
+    "evidence": "Issue #405 clearly documents a regression/incompatibility where JuliaSyntax rejects ≔ as an identifier while the FLISP parser accepts it. Issue #478 is the PR that explicitly states 'Fix #405' and describes these assignment-precedence operators should be usable as normal identifiers. The commit modifies production files (src/kinds.jl, src/parser.jl) and includes test changes (test/parser.jl). The existing behavior (FLISP parser accepting ≔ as identifier) was violated by JuliaSyntax.",
+    "missing_evidence": "Cannot see the actual diff content to verify the exact code changes, but issue context strongly supports this is a compatibility bug fix.",
+    "validation_risks": "The change demotes certain operators from special syntax to identifier status, which could theoretically affect code relying on them as operators, but the issue indicates these were not properly supported as operators anyway.",
+    "suggested_tests": [
+      "Test that ≔, ⩴, and ≕ can be used as variable names (e.g., `≔ = 1`)",
+      "Test that expressions using these characters as identifiers parse without error",
+      "Test that these characters are not treated as assignment operators in parsing"
+    ]
+  },
+  "origin_dataset": null,
+  "revision_semantics": {
+    "mode": "fixed_minus_minimized_patch",
+    "buggy_state": "fixed_commit_minus_canonical_minimized_source_patch",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "buggy_program_definition"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "JULIA-027 standalone syntactic assignments"
+    ],
+    "exception_types": [
+      "ad91828ac140cfd16c49837d8b40669eb5ab0ab2cc979e28814004f59e8793d9"
+    ],
+    "fingerprints": [
+      "ad91828ac140cfd16c49837d8b40669eb5ab0ab2cc979e28814004f59e8793d9"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass",
+  "construction": {
+    "canonical_source_patch": "patches/minimized-source.patch",
+    "base_revision": "fixed_revision",
+    "buggy_state": "reverse_apply_canonical_minimized_patch",
+    "environment_binding": "fixed_for_both_states"
+  },
+  "commit_topology": {
+    "fixed_revision": "21c67740c93f5a04008232d0f638c830a0852ba9",
+    "parent_sha": "17b92856fa20381e6625ca0b2530496ef299457c",
+    "fixed_commit_parent_count": 1,
+    "evidence_source": "prior_release_audit",
+    "prior_release_audit_sha256": "cad6388c26a35e9b15fca816ac9144ca9c3613f7239b4546897df757a91655e6",
+    "evidence_note": "single_parent_commit was PASS before hardening; fixed_revision is unchanged"
+  }
+}

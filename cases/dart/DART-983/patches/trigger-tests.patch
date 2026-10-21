@@ -1,0 +1,133 @@
+diff --git a/test/regression/0700/0711.stmt b/test/regression/0700/0711.stmt
+new file mode 100644
+index 00000000..8fd21791
+--- /dev/null
++++ b/test/regression/0700/0711.stmt
+@@ -0,0 +1,12 @@
++>>>
++var str = '''${"""
++a
++b
++c
++"""}''';
++<<<
++var str = '''${"""
++a
++b
++c
++"""}''';
+\ No newline at end of file
+diff --git a/test/splitting/strings.stmt b/test/splitting/strings.stmt
+index d3bdaab5..43948585 100644
+--- a/test/splitting/strings.stmt
++++ b/test/splitting/strings.stmt
+@@ -161,8 +161,75 @@ a + thing   } more'} text", "another arg");
+ someMethod(
+     "some text that is ${pretty + 'long ${interpolate + a + thing} more'} text",
+     "another arg");
+->>> hard splits are not split in interpolation
++>>> hard splits are split in interpolation
+ someMethod("before ${(){statement();statement();statement();}} after");
+ <<<
+-someMethod(
+-    "before ${() { statement(); statement(); statement(); }} after");
+\ No newline at end of file
++someMethod("before ${() {
++  statement();
++  statement();
++  statement();
++}} after");
++>>> collections split in interpolation if needed
++method(
++"b ${[1, 2, 3, 4, 5, 6]} a",
++"before ${[first, second, third, fourth, {fifth: sixth}]} after");
++<<<
++method(
++    "b ${[1, 2, 3, 4, 5, 6]} a",
++    "before ${[
++      first,
++      second,
++      third,
++      fourth,
++      {fifth: sixth}
++    ]} after");
++>>> nested multiline strings are not merged in interpolation
++"before ${"""a
++b"""} ${aft
+++
++er}";
++<<<
++"before ${"""a
++b"""} ${aft + er}";
++>>> multiply-nested interpolation
++'''a
++${b +
++"""c
++${d
+++ '''e
++f'''
+++
++g}
++h"""
+++ i}
++j ${k
+++
++l}''';
++<<<
++'''a
++${b + """c
++${d + '''e
++f''' + g}
++h""" + i}
++j ${k + l}''';
++>>> nested interpolation inside function
++"before ${ () { a(); """b
++c"""; d(); }} after";
++<<<
++"before ${() {
++  a();
++  """b
++c""";
++  d();
++}} after";
++>>> comment inside interpolation
++"before ${// comment
++a
+++
++b
+++  // another
++c} after";
++<<<
++"before ${ // comment
++    a + b + // another
++        c} after";
+\ No newline at end of file
+diff --git a/test/utils.dart b/test/utils.dart
+index 74fa4890..0d5f8898 100644
+--- a/test/utils.dart
++++ b/test/utils.dart
+@@ -62,6 +62,8 @@ void testDirectory(String name, [Iterable<StyleFix> fixes]) {
+ 
+   var entries = new Directory(p.join(testDir, name))
+       .listSync(recursive: true, followLinks: false);
++  entries.sort((a, b) => a.path.compareTo(b.path));
++
+   for (var entry in entries) {
+     if (!entry.path.endsWith(".stmt") && !entry.path.endsWith(".unit")) {
+       continue;
+diff --git a/test/whitespace/strings.stmt b/test/whitespace/strings.stmt
+new file mode 100644
+index 00000000..b44f8bfc
+--- /dev/null
++++ b/test/whitespace/strings.stmt
+@@ -0,0 +1,9 @@
++40 columns                              |
++>>>
++"a"     "b" "c";
++<<<
++"a" "b" "c";
++>>> empty multi-line
++"""""" '''''';
++<<<
++"""""" '''''';
+\ No newline at end of file

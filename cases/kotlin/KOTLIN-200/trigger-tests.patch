@@ -1,0 +1,23 @@
+diff --git a/ktlint-cli/src/test/kotlin/com/pinterest/ktlint/cli/api/BaselineCLITest.kt b/ktlint-cli/src/test/kotlin/com/pinterest/ktlint/cli/api/BaselineCLITest.kt
+index a41c208fab..7e30579769 100644
+--- a/ktlint-cli/src/test/kotlin/com/pinterest/ktlint/cli/api/BaselineCLITest.kt
++++ b/ktlint-cli/src/test/kotlin/com/pinterest/ktlint/cli/api/BaselineCLITest.kt
+@@ -49,6 +49,7 @@ class BaselineCLITest {
+                     projectName,
+                     listOf(
+                         "--baseline=$baselinePath",
++                        "--format",
+                         "TestBaselineFile.kt.test",
+                         "some/path/to/TestBaselineFile.kt.test",
+                     ),
+@@ -66,6 +67,10 @@ class BaselineCLITest {
+                                             "For those references the rule set id 'standard' is assumed. It is advised to regenerate " +
+                                             "this baseline file.*",
+                                     ),
++                                ).doesNotContainLineMatching(
++                                    Regex(
++                                        ".*Format was not able to resolve all violations which \\(theoretically\\) can be autocorrected in file.*",
++                                    ),
+                                 )
+                         }.assertAll()
+                 }

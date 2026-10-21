@@ -1,0 +1,23 @@
+diff --git a/test/frame_test.dart b/test/frame_test.dart
+index 1aa012d5707cc040e1cdc0026398a9b77d7402d9..087b5b6db4b296868d9f6b26f3a026c5e456fa6e 100644
+--- a/test/frame_test.dart
++++ b/test/frame_test.dart
+@@ -568,11 +568,17 @@ baz@https://pub.dev/buz.js:56355:55
+           equals(path.join('foo', 'bar.dart')));
+     });
+ 
+-    test('truncates data: URIs', () {
++    test('truncates legacy data: URIs', () {
+       var frame = Frame.parseVM(
+           '#0 Foo (data:application/dart;charset=utf-8,blah:0:0)');
+       expect(frame.library, equals('data:...'));
+     });
++
++    test('truncates data: URIs', () {
++      var frame = Frame.parseVM(
++          '#0      main (<data:application/dart;charset=utf-8>:1:15)');
++      expect(frame.library, equals('data:...'));
++    });
+   });
+ 
+   group('.location', () {

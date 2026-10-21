@@ -1,0 +1,31 @@
+diff --git a/benchmark/case/large.expect b/benchmark/case/large.expect
+index f71df6b3..d90d9f6c 100644
+--- a/benchmark/case/large.expect
++++ b/benchmark/case/large.expect
+@@ -1,6 +1,7 @@
+ // Copyright (c) 2012, the Dart project authors.  Please see the AUTHORS file
+ // for details. All rights reserved. Use of this source code is governed by a
+ // BSD-style license that can be found in the LICENSE file.
++
+ library pub.solver.backtracking_solver;
+ 
+ import 'dart:async';
+diff --git a/lib/src/front_end/sequence_builder.dart b/lib/src/front_end/sequence_builder.dart
+index d5839860..7d16f557 100644
+--- a/lib/src/front_end/sequence_builder.dart
++++ b/lib/src/front_end/sequence_builder.dart
+@@ -152,7 +155,13 @@ class SequenceBuilder {
+     if (comments.requiresNewline) _mustSplit = true;
+ 
+     // Write a blank before the token if there should be one.
+-    if (comments.linesBeforeNextToken > 1) addBlank();
++    if (comments.linesBeforeNextToken > 1) {
++      // If we just wrote a comment, then allow a blank line between it and the
++      // element.
++      if (comments.isNotEmpty) _allowBlank = true;
++
++      addBlank();
++    }
+   }
+ 
+   void _add(int indent, Piece piece) {

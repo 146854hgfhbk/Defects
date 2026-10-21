@@ -1,0 +1,176 @@
+diff --git a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/List.test.ets b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/List.test.ets
+index 27c07a1a17..224dc21e30 100644
+--- a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/List.test.ets
++++ b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/List.test.ets
+@@ -14,7 +14,9 @@
+  */
+ 
+ import abilityTest from './Ability.test'
++import textInputSelectionRangeTest from './TextInputSelectionRange.test'
+ 
+ export default function testsuite() {
+   abilityTest()
+-}
+\ No newline at end of file
++  textInputSelectionRangeTest()
++}
+diff --git a/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/TextInputSelectionRange.test.ets b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/TextInputSelectionRange.test.ets
+new file mode 100644
+index 0000000000..2065f23838
+--- /dev/null
++++ b/code/UI/ArkTsComponentCollection/ComponentCollection/entry/src/ohosTest/ets/test/TextInputSelectionRange.test.ets
+@@ -0,0 +1,154 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import { describe, it, expect } from '@ohos/hypium'
++import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry'
++import { Driver, ON, Component, MatchPattern } from '@ohos.UiTest'
++
++const DRIVER = Driver.create()
++const BUNDLE_NAME: string = 'ohos.samples.componentcollection'
++const ABILITY_NAME: string = 'MainAbility'
++const DELAY_MS: number = 1000
++
++function startMainAbility(): Promise<void> {
++  return new Promise<void>((resolve, reject) => {
++    let abilityDelegator: AbilityDelegatorRegistry.AbilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator()
++    abilityDelegator.startAbility({
++      bundleName: BUNDLE_NAME,
++      abilityName: ABILITY_NAME
++    }, (err) => {
++      if (err && err.code !== 0) {
++        reject(err)
++        return
++      }
++      resolve()
++    })
++  })
++}
++
++async function getString(resource: Resource): Promise<string> {
++  let abilityDelegator: AbilityDelegatorRegistry.AbilityDelegator = AbilityDelegatorRegistry.getAbilityDelegator()
++  let context = await abilityDelegator.getAppContext()
++  return await context.resourceManager.getStringValue(resource)
++}
++
++async function tryFindByText(text: string): Promise<Component | null> {
++  try {
++    let component = await DRIVER.findComponent(ON.text(text, MatchPattern.CONTAINS))
++    if (component === undefined) {
++      return null
++    }
++    return component
++  } catch (error) {
++    return null
++  }
++}
++
++async function tryFindById(id: string): Promise<Component | null> {
++  try {
++    let component = await DRIVER.findComponent(ON.id(id))
++    if (component === undefined) {
++      return null
++    }
++    return component
++  } catch (error) {
++    return null
++  }
++}
++
++async function openTextInputPage(): Promise<void> {
++  let textAndInput = await getString($r('app.string.text_and_input'))
++  let textInputTitle = await getString($r('app.string.text_input_title'))
++  let list = await DRIVER.findComponent(ON.id('list_001'))
++  await list.scrollSearch(ON.text(textAndInput, MatchPattern.CONTAINS))
++  let textInput = await tryFindByText(textInputTitle)
++  if (textInput === null) {
++    let group = await DRIVER.findComponent(ON.text(textAndInput, MatchPattern.CONTAINS))
++    await group.click()
++    await DRIVER.delayMs(DELAY_MS)
++  }
++  let target = await DRIVER.findComponent(ON.text(textInputTitle, MatchPattern.CONTAINS))
++  await target.click()
++  await DRIVER.delayMs(DELAY_MS)
++}
++
++async function scrollToSelectionInput(): Promise<Component> {
++  let scroll = await DRIVER.findComponent(ON.type('Scroll'))
++  for (let index = 0; index < 8; index++) {
++    let input = await tryFindById('test_input_to_select')
++    if (input !== null) {
++      return input
++    }
++    await scroll.scrollToBottom()
++    await DRIVER.delayMs(DELAY_MS)
++  }
++  await DRIVER.assertComponentExist(ON.id('test_input_to_select'))
++  return await DRIVER.findComponent(ON.id('test_input_to_select'))
++}
++
++async function scrollToEndPicker(): Promise<Component> {
++  let scroll = await DRIVER.findComponent(ON.type('Scroll'))
++  await scroll.scrollToTop()
++  await DRIVER.delayMs(DELAY_MS)
++  let endPicker = await scroll.scrollSearch(ON.id('end_select'))
++  if (endPicker === undefined) {
++    await DRIVER.assertComponentExist(ON.id('end_select'))
++    return await DRIVER.findComponent(ON.id('end_select'))
++  }
++  return endPicker
++}
++
++async function findPickerOption(picker: Component, text: string): Promise<Component | null> {
++  try {
++    for (let attempt = 0; attempt < 5; attempt++) {
++      await picker.scrollToBottom()
++      await DRIVER.delayMs(DELAY_MS)
++      picker = await DRIVER.findComponent(ON.id('end_select'))
++      let pickerBounds = await picker.getBounds()
++      let options = await DRIVER.findComponents(ON.text(text))
++      for (let option of options) {
++        let center = await option.getBoundsCenter()
++        if (center.x >= pickerBounds.left && center.x <= pickerBounds.right &&
++          center.y >= pickerBounds.top && center.y <= pickerBounds.bottom) {
++          return option
++        }
++      }
++    }
++    return null
++  } catch (error) {
++    return null
++  }
++}
++
++export default function textInputSelectionRangeTest() {
++  describe('TextInputSelectionRangeTest', () => {
++    it('selectionPickerShouldIncludeTextEndAfterInputChange', 0, async () => {
++      await startMainAbility()
++      await DRIVER.delayMs(DELAY_MS)
++      await openTextInputPage()
++      let selectionInput = await scrollToSelectionInput()
++
++      await selectionInput.inputText('abcd')
++      await DRIVER.delayMs(DELAY_MS)
++      expect(await selectionInput.getText()).assertEqual('abcd')
++
++      let endPicker = await scrollToEndPicker()
++      let endOption = await findPickerOption(endPicker, '4')
++
++      expect(endOption !== null).assertTrue()
++      expect(await endOption!.getText()).assertEqual('4')
++    })
++  })
++}

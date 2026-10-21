@@ -1,0 +1,44 @@
+diff --git a/test/fixtures/config.exs b/test/fixtures/config.exs
+index ea4c44c..8e98fe2 100644
+--- a/test/fixtures/config.exs
++++ b/test/fixtures/config.exs
+@@ -8,12 +8,12 @@
+   dry: false,
+   # Can also be set/reset with `--verbose`/`--no-verbose`.
+   verbose: false,
+-  # Can be overwritten by calling `mix recode "lib/**/*.ex"`.
++  # Can be overwriten by calling `mix recode "lib/**/*.ex"`.
+   inputs: ["{mix,.formatter}.exs", "{apps,config,lib,test}/**/*.{ex,exs}"],
+   formatter: {Recode.Formatter, []},
+   tasks: [
+     # Tasks could be added by a tuple of the tasks module name and an options
+-    # keyword list. A task can be deactivated by `active: false`. The execution of
++    # keyword list. A task can be deactived by `active: false`. The execution of
+     # a deactivated task can be forced by calling `mix recode --task ModuleName`.
+     {Recode.Task.AliasExpansion, []},
+     {Recode.Task.AliasOrder, []},
+diff --git a/test/recode/runner/impl_test.exs b/test/recode/runner/impl_test.exs
+index 696a9fa..fe621a1 100644
+--- a/test/recode/runner/impl_test.exs
++++ b/test/recode/runner/impl_test.exs
+@@ -40,6 +40,20 @@ defmodule Recode.Runner.ImplTest do
+       end)
+     end
+ 
++    test "runs tasks from config (check: false)", %{config: config} do
++      config =
++        Keyword.merge(config,
++          dry: true,
++          autocorrect: true,
++          check: false,
++          tasks: [{SinglePipe, []}]
++        )
++
++      capture_io(fn ->
++        assert %Rewrite{} = Runner.run(config)
++      end)
++    end
++
+     test "runs task with the right config", %{config: config} do
+       TaskMock
+       |> expect(:run, fn source, config ->

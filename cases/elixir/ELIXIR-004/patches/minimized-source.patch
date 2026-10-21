@@ -1,0 +1,12 @@
+diff --git a/lib/kino/remote_execution_cell.ex b/lib/kino/remote_execution_cell.ex
+--- a/lib/kino/remote_execution_cell.ex
++++ b/lib/kino/remote_execution_cell.ex
+@@ -139,7 +139,7 @@ defmodule Kino.RemoteExecutionCell do
+ 
+   defp quoted_code(code) do
+     {delimiter, code} =
+-      if String.contains?(code, "\n") do
++      if String.contains?(code, ["\n", ~s/"/]) do
+         {~s["""], code <> "\n"}
+       else
+         {~s["], code}

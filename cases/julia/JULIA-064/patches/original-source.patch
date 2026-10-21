@@ -1,0 +1,29 @@
+diff --git a/src/misc.jl b/src/misc.jl
+--- a/src/misc.jl
++++ b/src/misc.jl
+@@ -59,7 +59,9 @@ run lengths.
+ """
+ function inverse_rle(vals::AbstractVector{T}, lens::AbstractVector{<:Integer}) where T
+     m = length(vals)
+-    length(lens) == m || raise_dimerror()
++    mlens = length(lens)
++    mlens == m || throw(DimensionMismatch(
++                        "number of vals ($m) does not match the number of lens ($mlens)"))
+     n = sum(lens)
+     n >= 0 || throw(ArgumentError("lengths must be non-negative"))
+ 
+diff --git a/src/ranking.jl b/src/ranking.jl
+--- a/src/ranking.jl
++++ b/src/ranking.jl
+@@ -8,7 +8,10 @@
+ 
+ function _check_randparams(rks, x, p)
+     n = length(rks)
+-    length(x) == length(p) == n || raise_dimerror()
++    nx = length(x)
++    np = length(p)
++    nx == np == n || throw(
++        DimensionMismatch("lengths of x $nx and p $np do not match that of ranks $n"))
+     return n
+ end
+ 

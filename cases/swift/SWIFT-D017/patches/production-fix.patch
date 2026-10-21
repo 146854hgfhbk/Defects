@@ -1,0 +1,13 @@
+diff --git a/Sources/NIOSSH/Child Channels/SSHChildChannel.swift b/Sources/NIOSSH/Child Channels/SSHChildChannel.swift
+index e2188e8ee5a4794e9f27a502366b98062033ac91..29077b3e797cf7742cd3960462548aea3969a8f6 100644
+--- a/Sources/NIOSSH/Child Channels/SSHChildChannel.swift	
++++ b/Sources/NIOSSH/Child Channels/SSHChildChannel.swift	
+@@ -647,7 +647,7 @@ private extension SSHChildChannel {
+         switch data {
+         case .data(let data):
+             // We only futz with the window manager if the channel is not already closed.
+-            if !self.didClose, let increment = self.windowManager.unbufferBytes(data.data.readableBytes) {
++            if !self.didClose, !self.state.sentClose, let increment = self.windowManager.unbufferBytes(data.data.readableBytes) {
+                 let update = SSHMessage.ChannelWindowAdjustMessage(recipientChannel: self.state.remoteChannelIdentifier!, bytesToAdd: UInt32(increment))
+                 self.processOutboundMessage(.channelWindowAdjust(update), promise: nil)
+             }

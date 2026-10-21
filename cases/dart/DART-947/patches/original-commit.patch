@@ -1,0 +1,112 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4a2122ed..b0832bf7 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,7 @@
++# 1.3.1
++
++* Fix crash in formatting complex method chains (#855).
++
+ # 1.3.0
+ 
+ * Add support for formatting extension methods (#830).
+diff --git a/bin/format.dart b/bin/format.dart
+index 45fd902f..771d81bc 100644
+--- a/bin/format.dart
++++ b/bin/format.dart
+@@ -15,7 +15,7 @@ import 'package:dart_style/src/source_code.dart';
+ import 'package:dart_style/src/style_fix.dart';
+ 
+ // Note: The following line of code is modified by tool/grind.dart.
+-const version = "1.3.0";
++const version = "1.3.1";
+ 
+ void main(List<String> args) {
+   var parser = ArgParser(allowTrailingOptions: true);
+diff --git a/lib/src/call_chain_visitor.dart b/lib/src/call_chain_visitor.dart
+index ce40e72b..3c04c59f 100644
+--- a/lib/src/call_chain_visitor.dart
++++ b/lib/src/call_chain_visitor.dart
+@@ -96,7 +96,7 @@ class CallChainVisitor {
+   /// need to split before its `.` and this accommodates the common pattern of
+   /// a trailing `toList()` or `toSet()` after a series of higher-order methods
+   /// on an iterable.
+-  final _MethodSelector _hangingCall;
++  final _Selector _hangingCall;
+ 
+   /// Whether or not a [Rule] is currently active for the call chain.
+   bool _ruleEnabled = false;
+@@ -136,7 +136,7 @@ class CallChainVisitor {
+ 
+     // Separate out the block calls, if there are any.
+     List<_MethodSelector> blockCalls;
+-    _MethodSelector hangingCall;
++    _Selector hangingCall;
+ 
+     var inBlockCalls = false;
+     for (var call in calls) {
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 00391816..f933509c 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,6 +1,6 @@
+ name: dart_style
+ # Note: See tool/grind.dart for how to bump the version.
+-version: 1.3.0
++version: 1.3.1
+ author: Dart Team <misc@dartlang.org>
+ description: >-
+   Opinionated, automatic Dart source code formatter.
+diff --git a/test/regression/0800/0855.unit b/test/regression/0800/0855.unit
+new file mode 100644
+index 00000000..992b0e9c
+--- /dev/null
++++ b/test/regression/0800/0855.unit
+@@ -0,0 +1,46 @@
++>>>
++Method _main() => Method((b) => b
++  ..name = 'main'
++  ..modifier = MethodModifier.async
++  ..requiredParameters.add(Parameter((b) => b
++    ..name = 'args'
++    ..type = TypeReference((b) => b
++      ..symbol = 'List'
++      ..types.add(refer('String')))))
++  ..optionalParameters.add(Parameter((b) => b
++    ..name = 'sendPort'
++    ..type = refer('SendPort', 'dart:isolate')))
++  ..body = Block.of([
++    refer('run', 'package:build_runner/build_runner.dart')
++        .call([refer('args'), refer('_builders')])
++        .awaited
++        .assignVar('result')
++        .statement,
++    refer('sendPort')
++        .nullSafeProperty('send')
++        .call([refer('result')]).statement,
++    refer('exitCode', 'dart:io').assign(refer('result')).statement,
++  ]));
++<<<
++Method _main() => Method((b) => b
++  ..name = 'main'
++  ..modifier = MethodModifier.async
++  ..requiredParameters.add(Parameter((b) => b
++    ..name = 'args'
++    ..type = TypeReference((b) => b
++      ..symbol = 'List'
++      ..types.add(refer('String')))))
++  ..optionalParameters.add(Parameter((b) => b
++    ..name = 'sendPort'
++    ..type = refer('SendPort', 'dart:isolate')))
++  ..body = Block.of([
++    refer('run', 'package:build_runner/build_runner.dart')
++        .call([refer('args'), refer('_builders')])
++        .awaited
++        .assignVar('result')
++        .statement,
++    refer('sendPort')
++        .nullSafeProperty('send')
++        .call([refer('result')]).statement,
++    refer('exitCode', 'dart:io').assign(refer('result')).statement,
++  ]));
+\ No newline at end of file

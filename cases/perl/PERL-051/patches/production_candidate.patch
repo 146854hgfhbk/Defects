@@ -1,0 +1,13 @@
+diff --git a/lib/ExtUtils/MM_Unix.pm b/lib/ExtUtils/MM_Unix.pm
+index fe385984f1245cde68214b0a06a3df78259c6dd1..7df19b525d3c6c7d984de9abf6f43994dde9c1eb 100644
+--- a/lib/ExtUtils/MM_Unix.pm
++++ b/lib/ExtUtils/MM_Unix.pm
+@@ -2896,6 +2896,8 @@ Returns true, if the argument is likely to be a command.
+ 
+ sub maybe_command {
+     my($self,$file) = @_;
++    #    $file = '' if (!defined $file or !length $file);
++    return unless defined $file and length $file;
+     return $file if -x $file && ! -d $file;
+     return;
+ }

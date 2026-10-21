@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "case_id": "DART-1199",
+  "technical_evidence_sha256": "74b9b86e95eb8146d6229db19a252589ecb4e827f69dfe0e71d1b1ef34f88f79",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "dart-defects-final-curation-v1",
+  "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+  "input_sha256": "1d3b638b12f14bab3456794ede2d1bab1768075408ff78a93db6c386fa0b67fb",
+  "reviewed_at": "2026-08-15T02:02:11.981098+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "dart-lang/test#2454",
+  "rationale": "Issue #2454 reports that pairwiseCompare over iterables with mismatched element types throws 'type int is not a subtype of type String in type cast' from _PairwiseCompare.typedMatches (iterable_matchers.dart) and emits the malformed description 'has <null> which is not  <null> at index null'. The minimized production patch changes exactly that line in pkgs/matcher/lib/src/iterable_matchers.dart, replacing the unchecked `iterator.current as T` cast with `var current = iterator.current; if (current is! T || !_comparator(e, current))`, so the mismatched element reaches addStateInfo and is reported as a normal mismatch instead of escaping as a TypeError. Commit and PR #2596 both state 'Closes #2454' and describe the same change. The minimized patch is a single 3-line hunk in one production file, with the CHANGELOG note and test addition excluded, so it carries no refactor, formatting, feature, docs, or config change. The trigger is the unchanged upstream test from the same fixing commit ('pairwiseCompare with mismatched types'), which exercises the reported scenario through the pre-existing public pairwiseCompare API and the pre-existing shouldFail harness; it introduces no API added by the fix, and it asserts the well-formed index/expected/actual description that the fix restores. Strict machine evidence for both original and post-minimization runs reports passed=true with no failed checks: build on both revisions, buggy differential reproduction of the single declared selector, deterministic fingerprints across 3 repetitions, fixed isolated/suite/reversed runs clean, and fixed full suite green. active_same_project_root_causes is empty and dart-lang/test#2454 is the only allowed key, so this root cause is not a duplicate.\n\nIssue #2454 reports that pairwiseCompare over an iterable whose elements do not match the comparator's parameter type throws an unchecked-cast TypeError out of _PairwiseCompare.typedMatches before addStateInfo runs, producing the malformed description 'has <null> which is not <null> at index null'. The issue stack trace names exactly the code the patch touches (pkgs/matcher/lib/src/iterable_matchers.dart, _PairwiseCompare.typedMatches, 'type int is not a subtype of type String in type cast'). The minimized production patch is a single three-line hunk that replaces `iterator.current as T` with `var current = iterator.current; if (current is! T || !_comparator(e, current))`, so a type-mismatched element falls through to addStateInfo and is reported as an ordinary indexed mismatch. That is the same defect the commit message and PR #2596 describe ('Closes #2454'), and it is a behavior change, not a message-only or diagnostic-only edit, because previously an exception escaped the matcher. The minimized patch excludes the CHANGELOG line and the test file present in the original commit and contains no refactor, formatting, feature, config, or test-only content; the only variable introduction (`current`) is required by the type promotion. The trigger is the unchanged upstream test from the same commit ('pairwiseCompare with mismatched types'), which uses the pre-existing public `pairwiseCompare` API and the pre-existing `shouldFail` harness, so it compiles on the buggy parent and depends on no API introduced by the fix; it exercises the same String-vs-int mismatch as the issue reproducer and asserts the well-formed failure text. Strict machine evidence reports all gates green in both the original and post-minimization runs: build on both revisions, isolated buggy differential failure on the single declared selector, deterministic fingerprints across 3 repetitions, a complete 32-run matrix, fixed-revision clean isolated/suite/reversed runs, and an all-green fixed full suite with the buggy full suite failing only on the reproduced trigger. active_same_project_root_causes is empty, so dart-lang/test#2454 is not a duplicate of any active registry entry, and it is the sole allowed root cause id.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T02:01:43.992336+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "1d3b638b12f14bab3456794ede2d1bab1768075408ff78a93db6c386fa0b67fb",
+      "response_sha256": "10f793de4ae38c51ddd5e4981af1758dbcebba8dfe26a1f624adbd5472d4f8f9",
+      "response_id": "msg_4d6819edf1764f1eb7f1b92d35f4bafe",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5553362915422885,
+        "input_tokens": 20243,
+        "output_tokens": 636
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/test#2454",
+      "rationale": "Issue #2454 reports that pairwiseCompare over iterables with mismatched element types throws 'type int is not a subtype of type String in type cast' from _PairwiseCompare.typedMatches (iterable_matchers.dart) and emits the malformed description 'has <null> which is not  <null> at index null'. The minimized production patch changes exactly that line in pkgs/matcher/lib/src/iterable_matchers.dart, replacing the unchecked `iterator.current as T` cast with `var current = iterator.current; if (current is! T || !_comparator(e, current))`, so the mismatched element reaches addStateInfo and is reported as a normal mismatch instead of escaping as a TypeError. Commit and PR #2596 both state 'Closes #2454' and describe the same change. The minimized patch is a single 3-line hunk in one production file, with the CHANGELOG note and test addition excluded, so it carries no refactor, formatting, feature, docs, or config change. The trigger is the unchanged upstream test from the same fixing commit ('pairwiseCompare with mismatched types'), which exercises the reported scenario through the pre-existing public pairwiseCompare API and the pre-existing shouldFail harness; it introduces no API added by the fix, and it asserts the well-formed index/expected/actual description that the fix restores. Strict machine evidence for both original and post-minimization runs reports passed=true with no failed checks: build on both revisions, buggy differential reproduction of the single declared selector, deterministic fingerprints across 3 repetitions, fixed isolated/suite/reversed runs clean, and fixed full suite green. active_same_project_root_causes is empty and dart-lang/test#2454 is the only allowed key, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:issue_urls",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.message",
+        "case.json:strict_post_minimization.checks",
+        "case.json:trigger_tests",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger asserts an exact failure description string, so it is sensitive to unrelated matcher description formatting changes in future revisions.",
+        "The fix broadens semantics: wrong-typed elements are now reported as non-matching rather than raising a TypeError, which could mask genuinely mistyped comparator usage.",
+        "The user-visible defect is partly diagnostic quality; the behavioral difference relied on is an escaping TypeError versus a normal mismatch, verified only through the supplied strict differential evidence on the declared selector."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-08-15T02:02:11.980827+00:00",
+      "prompt_version": "dart-defects-final-curation-v1",
+      "prompt_sha256": "11bd7a9564426109dcbdf133c24176844981e1b4c269be131f9e226c151344e8",
+      "input_sha256": "1d3b638b12f14bab3456794ede2d1bab1768075408ff78a93db6c386fa0b67fb",
+      "response_sha256": "8ee8a05a6213b4693eeffb781249776714c72c9082533c7175a6c2dfa1d741e7",
+      "response_id": "msg_fd73be28c4854bfab6bccb62b5ba6428",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5790783748590381,
+        "input_tokens": 20679,
+        "output_tokens": 806
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "dart-lang/test#2454",
+      "rationale": "Issue #2454 reports that pairwiseCompare over an iterable whose elements do not match the comparator's parameter type throws an unchecked-cast TypeError out of _PairwiseCompare.typedMatches before addStateInfo runs, producing the malformed description 'has <null> which is not <null> at index null'. The issue stack trace names exactly the code the patch touches (pkgs/matcher/lib/src/iterable_matchers.dart, _PairwiseCompare.typedMatches, 'type int is not a subtype of type String in type cast'). The minimized production patch is a single three-line hunk that replaces `iterator.current as T` with `var current = iterator.current; if (current is! T || !_comparator(e, current))`, so a type-mismatched element falls through to addStateInfo and is reported as an ordinary indexed mismatch. That is the same defect the commit message and PR #2596 describe ('Closes #2454'), and it is a behavior change, not a message-only or diagnostic-only edit, because previously an exception escaped the matcher. The minimized patch excludes the CHANGELOG line and the test file present in the original commit and contains no refactor, formatting, feature, config, or test-only content; the only variable introduction (`current`) is required by the type promotion. The trigger is the unchanged upstream test from the same commit ('pairwiseCompare with mismatched types'), which uses the pre-existing public `pairwiseCompare` API and the pre-existing `shouldFail` harness, so it compiles on the buggy parent and depends on no API introduced by the fix; it exercises the same String-vs-int mismatch as the issue reproducer and asserts the well-formed failure text. Strict machine evidence reports all gates green in both the original and post-minimization runs: build on both revisions, isolated buggy differential failure on the single declared selector, deterministic fingerprints across 3 repetitions, a complete 32-run matrix, fixed-revision clean isolated/suite/reversed runs, and an all-green fixed full suite with the buggy full suite failing only on the reproduced trigger. active_same_project_root_causes is empty, so dart-lang/test#2454 is not a duplicate of any active registry entry, and it is the sole allowed root cause id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/original-commit.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.message",
+        "case.json:trigger_tests",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:active_same_project_root_causes",
+        "case.json:allowed_root_cause_ids"
+      ],
+      "risks": [
+        "The trigger asserts an exact failure-description string, so it is brittle to unrelated matcher description or pretty-printing formatting changes elsewhere in pkgs/matcher.",
+        "The fix broadens semantics: wrong-runtime-type elements are now reported as non-matching rather than raising a TypeError, which could mask genuinely mistyped comparator usage for downstream users.",
+        "The user-visible improvement is largely failure-message quality; acceptance rests on the escaping TypeError and unpopulated matchState, so the case sits near the diagnostic-quality boundary.",
+        "Runtime gates were executed scoped to pkgs/matcher in a monorepo; behavior on non-VM backends (js/browser suites) is not covered by the supplied evidence."
+      ]
+    }
+  ]
+}

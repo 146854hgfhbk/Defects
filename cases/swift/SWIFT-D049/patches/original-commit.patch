@@ -1,0 +1,65 @@
+diff --git a/Sources/ArgumentParser/Parsing/ArgumentSet.swift b/Sources/ArgumentParser/Parsing/ArgumentSet.swift
+index 520f864044d7334a5d84366988bb73bb04466585..2c5b366be6e61426c88d7765dc8f3cce839410b8 100644
+--- a/Sources/ArgumentParser/Parsing/ArgumentSet.swift
++++ b/Sources/ArgumentParser/Parsing/ArgumentSet.swift
+@@ -221,6 +221,7 @@ extension ArgumentSet {
+         if let value = parsed.value {
+           // This was `--foo=bar` style:
+           try update(origin, parsed.name, value, &result)
++          usedOrigins.formUnion(origin)
+         } else if argument.allowsJoinedValue,
+            let (origin2, value) = inputArguments.extractJoinedElement(at: originElement)
+         {
+@@ -243,6 +244,7 @@ extension ArgumentSet {
+         if let value = parsed.value {
+           // This was `--foo=bar` style:
+           try update(origin, parsed.name, value, &result)
++          usedOrigins.formUnion(origin)
+         } else if argument.allowsJoinedValue,
+             let (origin2, value) = inputArguments.extractJoinedElement(at: originElement) {
+           // Found a joined argument
+@@ -320,6 +322,11 @@ extension ArgumentSet {
+           inputArguments.removeAll(in: usedOrigins)
+         }
+         
++        // Clear out the initial origin first, since it can include
++        // the exploded elements of an options group (see issue #327).
++        usedOrigins.formUnion(origin)
++        inputArguments.removeAll(in: origin)
++        
+         // ...and then consume the arguments until hitting an option
+         while let (origin2, value) = inputArguments.popNextElementIfValue() {
+           let origins = origin.inserting(origin2)
+diff --git a/Tests/ArgumentParserEndToEndTests/LongNameWithShortDashEndToEndTests.swift b/Tests/ArgumentParserEndToEndTests/LongNameWithShortDashEndToEndTests.swift
+index 940d20549fece1ebf9573efea6c1d7702c00eddc..8dedfd5df4a997f2ba412927ce7458562dbab433 100644
+--- a/Tests/ArgumentParserEndToEndTests/LongNameWithShortDashEndToEndTests.swift
++++ b/Tests/ArgumentParserEndToEndTests/LongNameWithShortDashEndToEndTests.swift
+@@ -107,3 +107,28 @@ extension LongNameWithSingleDashEndToEndTests {
+     XCTAssertThrowsError(try Bar.parse(["--file"]))
+   }
+ }
++
++extension LongNameWithSingleDashEndToEndTests {
++  private struct Issue327: ParsableCommand {
++    @Option(name: .customLong("argWithAnH", withSingleDash: true),
++            parsing: .upToNextOption)
++    var args: [String]
++  }
++
++  func testIssue327() {
++    AssertParse(Issue327.self, ["-argWithAnH", "03ade86c0", "8f2058e3ade86c84ec5b"]) { issue327 in
++      XCTAssertEqual(issue327.args, ["03ade86c0", "8f2058e3ade86c84ec5b"])
++    }
++  }
++  
++  private struct JoinedItem: ParsableCommand {
++    @Option(name: .customLong("argWithAnH", withSingleDash: true))
++    var arg: String
++  }
++
++  func testJoinedItem_Issue327() {
++    AssertParse(JoinedItem.self, ["-argWithAnH=foo"]) { joinedItem in
++      XCTAssertEqual(joinedItem.arg, "foo")
++    }
++  }
++}

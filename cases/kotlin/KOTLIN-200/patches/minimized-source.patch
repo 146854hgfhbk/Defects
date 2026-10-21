@@ -1,0 +1,15 @@
+diff --git a/ktlint-rule-engine/src/main/kotlin/com/pinterest/ktlint/rule/engine/internal/CodeFormatter.kt b/ktlint-rule-engine/src/main/kotlin/com/pinterest/ktlint/rule/engine/internal/CodeFormatter.kt
+index ac111cb5..35c073b2 100644
+--- a/ktlint-rule-engine/src/main/kotlin/com/pinterest/ktlint/rule/engine/internal/CodeFormatter.kt
++++ b/ktlint-rule-engine/src/main/kotlin/com/pinterest/ktlint/rule/engine/internal/CodeFormatter.kt
+@@ -55,7 +55,9 @@ internal class CodeFormatter(
+                 mutated =
+                     format(autocorrectHandler, code).let { ruleErrors ->
+                         errors.addAll(ruleErrors)
+-                        ruleErrors.any { it.first.canBeAutoCorrected }
++                        // Check if at least one error can be autocorrected, and fixing this error has been approved by the autocorrect
++                        // handler
++                        ruleErrors.any { it.first.canBeAutoCorrected && it.second }
+                     }
+                 formatRunCount++
+             } while (mutated && formatRunCount < maxFormatRunsPerFile)

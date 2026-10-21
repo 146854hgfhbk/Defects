@@ -1,0 +1,248 @@
+{
+  "bug_id": "JULIA-683",
+  "buggy_revision": "579ecbe8c7e1c841b078d59c8ba210a60eff586e",
+  "build": {
+    "dependency_mode": "per-revision locked test-target Manifest.toml + pinned Julia binary",
+    "julia_version": "1.10.12",
+    "julia_version_origin": "fixed_revision_era_pre_1.12",
+    "system": "Julia Pkg",
+    "test_command": "julia --project=<dir> -e 'using Pkg; Pkg.test(; allow_reresolve=false)'"
+  },
+  "candidate_sha": "6b7b0dacbab147cbc47c795e5297da5a9ec2dbe8",
+  "case_id": "JULIA-683",
+  "changed_production_files": [
+    "src/IntervalArithmetic.jl",
+    "src/intervals/arithmetic/basic.jl"
+  ],
+  "changed_test_files": [
+    "test/interval_tests/numeric.jl"
+  ],
+  "environment_lock": "environment.lock.json",
+  "fixed_revision": "6b7b0dacbab147cbc47c795e5297da5a9ec2dbe8",
+  "instance_id": "juliaintervals__intervalarithmetic.jl-577",
+  "issue_id": 573,
+  "issue_urls": [
+    "https://github.com/JuliaIntervals/IntervalArithmetic.jl/issues/573"
+  ],
+  "language": "Julia",
+  "language_version": "Julia 1.10.12",
+  "operating_system_or_container": "Linux/x86_64",
+  "origin_dataset": "nebius/SWE-rebench-V2",
+  "parent_sha": "579ecbe8c7e1c841b078d59c8ba210a60eff586e",
+  "project": "JuliaIntervals/IntervalArithmetic.jl",
+  "repository_url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl.git",
+  "reproducibility_status": "stable_differential",
+  "review": {
+    "api_model": "claude-opus-5",
+    "api_version": "2023-06-01",
+    "candidate_sha": "b26a28e4b0037fb83f395edc3e744dacf1c5ea53",
+    "checks": {
+      "diagnostic_only": "no",
+      "existing_behavior_violated": "yes",
+      "feature_or_api_extension": "no",
+      "isolated_fix": "yes",
+      "issue_commit_match": "yes",
+      "non_bug_change_only": "no",
+      "production_behavior_fix": "yes",
+      "real_defect_evidence": "yes",
+      "test_evidence_visible": "yes"
+    },
+    "confidence": 0.68,
+    "decision": "ACCEPT_FOR_VALIDATION",
+    "evidence": "Issue #573 gives a reproducible failing case with an exact error and stack trace naming `muladd(x::Interval{Float64}, y::Float64, z::Interval{Float64})`, plus a before/after version comparison showing the behavior regressed between 0.20.9 and 0.21.0. Issue #577 (`Implement muladd`, closes #573) links the commit to that defect. The production patch is two minimal hunks (import line + method definitions defined purely in terms of existing `*` and `+`), flagged globally minimal with all hunks necessary. Test evidence: test/interval_tests/numeric.jl accompanies the change, runtime evidence reports a stable_differential over 3 repetitions with the full suite passing on the fixed side.",
+    "input_sha256": "37a7e1652c99ed5e666263f87716fe89d5cb0a38119f7e414f3eeea91b32100a",
+    "missing_evidence": "No explicit trigger test names are listed, so the specific failing assertion(s) in test/interval_tests/numeric.jl are not visible. The test patch content itself was not provided, so I cannot confirm whether the added tests reproduce the SMatrix scenario from the issue or only exercise scalar `muladd` calls. PR title/body are empty, so the maintainers' own framing (bug fix vs. feature) is not directly observable.",
+    "project": "JuliaIntervals/IntervalArithmetic.jl",
+    "provider": "claude",
+    "raw_response": "{\"checks\": {\"real_defect_evidence\": \"yes\", \"existing_behavior_violated\": \"yes\", \"issue_commit_match\": \"yes\", \"production_behavior_fix\": \"yes\", \"feature_or_api_extension\": \"no\", \"diagnostic_only\": \"no\", \"non_bug_change_only\": \"no\", \"isolated_fix\": \"yes\", \"test_evidence_visible\": \"yes\"}, \"decision\": \"ACCEPT_FOR_VALIDATION\", \"rejection_code\": \"NONE\", \"confidence\": 0.68, \"summary\": \"The commit adds `muladd` methods for `Interval` operands (and mixed Interval/Number combinations) plus the corresponding `import Base: muladd`. Issue #573 documents a concrete regression: mixed `Interval`/`Float64` static matrix multiplication worked in v0.20.9 but throws `ERROR: promotion of types Interval{Float64}, Float64 and Interval{Float64} failed to change any arguments` in v0.21.0, with a stack trace pointing directly at `Base.muladd` called from StaticArrays' `mul_loop`. Because Interval no longer promotes to a common type with plain numbers, Base's generic `muladd` fallback errors instead of computing `a*b + c`. The patch restores the previously working arithmetic path without changing any other semantics.\", \"evidence\": \"Issue #573 gives a reproducible failing case with an exact error and stack trace naming `muladd(x::Interval{Float64}, y::Float64, z::Interval{Float64})`, plus a before/after version comparison showing the behavior regressed between 0.20.9 and 0.21.0. Issue #577 (`Implement muladd`, closes #573) links the commit to that defect. The production patch is two minimal hunks (import line + method definitions defined purely in terms of existing `*` and `+`), flagged globally minimal with all hunks necessary. Test evidence: test/interval_tests/numeric.jl accompanies the change, runtime evidence reports a stable_differential over 3 repetitions with the full suite passing on the fixed side.\", \"missing_evidence\": \"No explicit trigger test names are listed, so the specific failing assertion(s) in test/interval_tests/numeric.jl are not visible. The test patch content itself was not provided, so I cannot confirm whether the added tests reproduce the SMatrix scenario from the issue or only exercise scalar `muladd` calls. PR title/body are empty, so the maintainers' own framing (bug fix vs. feature) is not directly observable.\", \"validation_risks\": \"The commit subject in issue #577 is phrased as \\\"Implement muladd\\\", which could be read as an API extension rather than a defect fix; the accept rests on the regression evidence in #573 showing this path previously worked. If the added tests only assert new scalar `muladd` results rather than reproducing the broken mixed-type multiplication, the buggy-version failure may surface as a MethodError/promotion error rather than a value mismatch, which some harnesses classify differently. The StaticArrays dependency in the original reproducer is external and may not be exercised by the in-repo test suite.\", \"suggested_tests\": \"Assert `muladd(interval(1,2), 3.0, interval(0,1))` returns the same interval as `interval(1,2)*3.0 + interval(0,1)` (this errors on the parent commit). Cover each dispatch arm: all-Interval, two-Interval/one-Number in each position, and one-Interval/two-Number in each position, checking both bounds and the resulting numeric type via `promote_numtype`. Add a mixed-precision case (e.g. `Interval{Float32}` with `Interval{Float64}`) to pin the promotion behavior, and if StaticArrays is available as a test dependency, reproduce the issue directly with `A*B` and `B*A` for a mixed `Interval`/`Float64` SMatrix pair.\"}",
+    "rejection_code": "NONE",
+    "reviewed_at": "2026-08-31T04:37:39Z",
+    "revision_equivalence": {
+      "method": "exact_fix_commit_parent_with_identical_full_binary_patch",
+      "old_buggy_revision": "0efb7f27228faea75a2f3a5d21e2324b47173b67",
+      "old_merge_commit": "b26a28e4b0037fb83f395edc3e744dacf1c5ea53",
+      "patch_sha256": "83089975b99125666e75c49aedea48e99e7744073bda0fec58df4021c04a8440",
+      "project_toml_sha256": "1f8905dde87ec028f964609b81a841ee20bc24f27ecdc823dbb39a96a3329ad9",
+      "recovered_buggy_parent": "579ecbe8c7e1c841b078d59c8ba210a60eff586e",
+      "recovered_single_parent_fix_commit": "6b7b0dacbab147cbc47c795e5297da5a9ec2dbe8",
+      "status": "PATCH_BYTE_IDENTICAL"
+    },
+    "suggested_tests": "Assert `muladd(interval(1,2), 3.0, interval(0,1))` returns the same interval as `interval(1,2)*3.0 + interval(0,1)` (this errors on the parent commit). Cover each dispatch arm: all-Interval, two-Interval/one-Number in each position, and one-Interval/two-Number in each position, checking both bounds and the resulting numeric type via `promote_numtype`. Add a mixed-precision case (e.g. `Interval{Float32}` with `Interval{Float64}`) to pin the promotion behavior, and if StaticArrays is available as a test dependency, reproduce the issue directly with `A*B` and `B*A` for a mixed `Interval`/`Float64` SMatrix pair.",
+    "summary": "The commit adds `muladd` methods for `Interval` operands (and mixed Interval/Number combinations) plus the corresponding `import Base: muladd`. Issue #573 documents a concrete regression: mixed `Interval`/`Float64` static matrix multiplication worked in v0.20.9 but throws `ERROR: promotion of types Interval{Float64}, Float64 and Interval{Float64} failed to change any arguments` in v0.21.0, with a stack trace pointing directly at `Base.muladd` called from StaticArrays' `mul_loop`. Because Interval no longer promotes to a common type with plain numbers, Base's generic `muladd` fallback errors instead of computing `a*b + c`. The patch restores the previously working arithmetic path without changing any other semantics.",
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "credit_unit": "credit",
+      "credit_unit_plural": "credits",
+      "credit_usage": 0.633851567628524,
+      "input_tokens": 6975,
+      "output_tokens": 831
+    },
+    "validation_risks": "The commit subject in issue #577 is phrased as \"Implement muladd\", which could be read as an API extension rather than a defect fix; the accept rests on the regression evidence in #573 showing this path previously worked. If the added tests only assert new scalar `muladd` results rather than reproducing the broken mixed-type multiplication, the buggy-version failure may surface as a MethodError/promotion error rather than a value mismatch, which some harnesses classify differently. The StaticArrays dependency in the original reproducer is external and may not be exercised by the in-repo test suite."
+  },
+  "revision_boundary_recovery": {
+    "method": "exact_fix_commit_parent_with_identical_full_binary_patch",
+    "old_buggy_revision": "0efb7f27228faea75a2f3a5d21e2324b47173b67",
+    "old_merge_commit": "b26a28e4b0037fb83f395edc3e744dacf1c5ea53",
+    "patch_sha256": "83089975b99125666e75c49aedea48e99e7744073bda0fec58df4021c04a8440",
+    "project_toml_sha256": "1f8905dde87ec028f964609b81a841ee20bc24f27ecdc823dbb39a96a3329ad9",
+    "recovered_buggy_parent": "579ecbe8c7e1c841b078d59c8ba210a60eff586e",
+    "recovered_single_parent_fix_commit": "6b7b0dacbab147cbc47c795e5297da5a9ec2dbe8",
+    "status": "PATCH_BYTE_IDENTICAL"
+  },
+  "revision_mode": "real_upstream_commit",
+  "schema_version": 2,
+  "source": "merged_pull_request",
+  "swe": {
+    "FAIL_TO_PASS": [
+      "decoration_tests/decoration_tests.jl",
+      "rand.jl",
+      "display_tests/display.jl",
+      "multidim_tests/multidim.jl"
+    ],
+    "PASS_TO_PASS": [],
+    "base_commit": "579ecbe8c7e1c841b078d59c8ba210a60eff586e",
+    "boundary_type": "DIRECT_PARENT_FIX",
+    "created_at": "2023-08-28 11:58:49",
+    "image_name": "docker.io/swerebenchv2/juliaintervals-intervalarithmetic.jl:577-0efb7f2",
+    "install_config": {
+      "base_image_name": "julia_base",
+      "docker_specs": {
+        "_variant": null,
+        "bazel_version": null,
+        "bun_version": null,
+        "cargo_version": null,
+        "deno_version": null,
+        "docker_version": null,
+        "erlang_version": null,
+        "gcc_version": null,
+        "go_version": null,
+        "helm_version": null,
+        "java_version": null,
+        "jdk_version": null,
+        "llvm_version": null,
+        "lua_version": null,
+        "luajit_version": null,
+        "neovim_version": null,
+        "node_version": null,
+        "npm_version": null,
+        "nvim_version": null,
+        "pnpm_version": null,
+        "python_image": null,
+        "python_version": null,
+        "redis_version": null,
+        "ruby_version": "8.3.16",
+        "rust_version": null,
+        "rustc_version": null,
+        "solana_version": null,
+        "sqlite_version": null
+      },
+      "install": [
+        "julia --project=. -e 'using Pkg; Pkg.instantiate()'"
+      ],
+      "log_parser": "parse_log_julia",
+      "test_cmd": "julia --project=. -e 'using Pkg; Pkg.test()'"
+    },
+    "instance_id": "juliaintervals__intervalarithmetic.jl-577",
+    "interface": "Function: muladd(a::Interval, b::Interval, c::Interval)\nLocation: src/intervals/arithmetic/basic.jl\nInputs: a, b, c – three intervals of any supported numeric type (e.g., Interval{Float64}); all arguments are promoted to a common interval type.\nOutputs: Interval – the result of a * b + c computed with interval arithmetic (exact enclosure of the true product‑sum).\nDescription: Computes the product of the first two interval arguments and adds the third, returning an interval that safely contains the exact value. Used when all operands are already intervals.\n\nFunction: muladd(a::Interval, b::Interval, c::Number)\nLocation: src/intervals/arithmetic/basic.jl\nInputs: a, b – intervals; c – a plain numeric scalar (e.g., Int, Float64, Float32). The scalar is promoted to an interval of the appropriate type.\nOutputs: Interval – the interval result of a * b + c.\nDescription: Allows mixing two interval operands with a numeric constant as the addend, promoting the constant to an interval before performing the operation.\n\nFunction: muladd(a::Interval, b::Number, c::Interval)\nLocation: src/intervals/arithmetic/basic.jl\nInputs: a, c – intervals; b – a numeric scalar. The scalar is promoted to an interval matching the type of a and c.\nOutputs: Interval – the interval result of a * b + c.\nDescription: Handles the case where the multiplier is a plain number while the multiplicand and addend are intervals.\n\nFunction: muladd(a::Number, b::Interval, c::Interval)\nLocation: src/intervals/arithmetic/basic.jl\nInputs: a – numeric scalar; b, c – intervals. The scalar is promoted to an interval compatible with b and c.\nOutputs: Interval – the interval result of a * b + c.\nDescription: Supports a plain numeric first argument with interval second and third arguments.\n\nFunction: muladd(a::Interval, b::Number, c::Number)\nLocation: src/intervals/arithmetic/basic.jl\nInputs: a – interval; b, c – numeric scalars. Both scalars are promoted to intervals of the same type as a.\nOutputs: Interval – the interval result of a * b + c.\nDescription: Enables multiplication of an interval by a scalar and addition of another scalar, with full promotion to intervals.\n\nFunction: muladd(a::Number, b::Interval, c::Number)\nLocation: src/intervals/arithmetic/basic.jl\nInputs: a, c – numeric scalars; b – interval. Scalars are promoted to intervals matching b’s type.\nOutputs: Interval – the interval result of a * b + c.\nDescription: Handles a scalar multiplied by an interval and then added to another scalar.\n\nFunction: muladd(a::Number, b::Number, c::Interval)\nLocation: src/intervals/arithmetic/basic.jl\nInputs: a, b – numeric scalars; c – interval. Both scalars are promoted to intervals compatible with c.\nOutputs: Interval – the interval result of a * b + c.\nDescription: Allows two plain numbers to be multiplied and the result added to an interval, with promotion to interval arithmetic.\n\nFunction: muladd(a::F, b::F, c::F) where {F<:Interval}\nLocation: src/intervals/arithmetic/basic.jl\nInputs: a, b, c – intervals of the same concrete interval type F.\nOutputs: Interval{F} – direct computation a * b + c without extra promotion.\nDescription: Fast path for three intervals already of the same element type, bypassing generic promotion logic.\n",
+    "issue_url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/issues/573",
+    "language": "julia",
+    "license": "custom-check-github",
+    "meta": {
+      "llm_metadata": {
+        "code": "A",
+        "confidence": 0.93,
+        "detected_issues": {
+          "B1": false,
+          "B2": false,
+          "B3": false,
+          "B4": false,
+          "B5": false,
+          "B6": false
+        },
+        "difficulty": "easy",
+        "external_urls": [
+          "https://github.com/JuliaIntervals/IntervalRootFinding.jl/pull/192"
+        ],
+        "intent_completeness": "complete",
+        "pr_categories": [
+          "regression_bug"
+        ],
+        "reasoning": "The issue reports that multiplying an Interval SMatrix with a regular SMatrix fails in v0.21.0, implying missing promotion support used internally by StaticArrays' matrix multiplication (which relies on muladd). The test patch adds comprehensive muladd tests, and the golden patch implements muladd overloads and exports it, directly enabling the mixed‑type multiplication. Tests align with the required behavior and no unrelated test failures are introduced, so the problem is clearly specified and solvable.",
+        "test_alignment_issues": []
+      },
+      "num_modified_files": 3,
+      "num_modified_lines": null,
+      "pr_author": "OlivierHnt",
+      "pr_labels": null,
+      "pr_url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/pull/577"
+    },
+    "original_base_commit": "0efb7f27228faea75a2f3a5d21e2324b47173b67",
+    "patch": "diff --git a/src/IntervalArithmetic.jl b/src/IntervalArithmetic.jl\nindex ed729b30..9d9f2229 100644\n--- a/src/IntervalArithmetic.jl\n+++ b/src/IntervalArithmetic.jl\n@@ -14,7 +14,7 @@ import LinearAlgebra: ×, dot, norm\n export ×, dot\n \n import Base:\n-    +, -, *, /, //, fma,\n+    +, -, *, /, //, muladd, fma,\n     ^, sqrt, exp, log, exp2, exp10, log2, log10, inv, cbrt, hypot,\n     zero, one, eps, typemin, typemax, abs, abs2, min, max,\n     rad2deg, deg2rad,\ndiff --git a/src/intervals/arithmetic/basic.jl b/src/intervals/arithmetic/basic.jl\nindex 9e452f0c..2218b321 100644\n--- a/src/intervals/arithmetic/basic.jl\n+++ b/src/intervals/arithmetic/basic.jl\n@@ -211,6 +211,20 @@ min_ignore_nans(args...) = minimum(filter(x -> !isnan(x), args))\n \n max_ignore_nans(args...) = maximum(filter(x -> !isnan(x), args))\n \n+\n+\n+muladd(a::F, b::F, c::F) where {F<:Interval} = a * b + c\n+\n+muladd(a::Interval, b::Interval, c::Interval) = muladd(promote(a, b, c)...)\n+\n+muladd(a::Interval{T}, b::Interval{S}, c::Number) where {T<:NumTypes,S<:NumTypes} = muladd(promote(a, b, interval(promote_numtype(T, S), c))...)\n+muladd(a::Interval{T}, b::Number, c::Interval{S}) where {T<:NumTypes,S<:NumTypes} = muladd(promote(a, interval(promote_numtype(T, S), b), c)...)\n+muladd(a::Number, b::Interval{T}, c::Interval{S}) where {T<:NumTypes,S<:NumTypes} = muladd(promote(interval(promote_numtype(T, S), a), b, c)...)\n+\n+muladd(a::Interval{T}, b::Number, c::Number) where {T<:NumTypes} = muladd(a, interval(T, b), interval(T, c))\n+muladd(a::Number, b::Interval{T}, c::Number) where {T<:NumTypes} = muladd(interval(T, a), b, interval(T, c))\n+muladd(a::Number, b::Number, c::Interval{T}) where {T<:NumTypes} = muladd(interval(T, a), interval(T, b), c)\n+\n \"\"\"\n     fma(a::Interval, b::Interval, c::Interval)\n \n",
+    "pr_description": "Closes #573",
+    "pr_url": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/pull/577",
+    "problem_statement": "Matrix multiplication with mixed Interval SMatrix and SMatrix broken\nThis came up while working on https://github.com/JuliaIntervals/IntervalRootFinding.jl/pull/192.\r\n\r\n```julia\r\njulia> A = SMatrix{2,2}([-12..12 -12..12; -2.. -2 1..1])\r\n2×2 SMatrix{2, 2, Interval{Float64}, 4} with indices SOneTo(2)×SOneTo(2):\r\n [-12.0, 12.0]  [-12.0, 12.0]\r\n  [-2.0, -2.0]    [1.0, 1.0]\r\n\r\njulia> B = SMatrix{2,2}([1.0 1.0; 1.0 1.0])\r\n2×2 SMatrix{2, 2, Float64, 4} with indices SOneTo(2)×SOneTo(2):\r\n 1.0  1.0\r\n 1.0  1.0\r\n```\r\n\r\n`A*A` still works, but `A*B` and `B*A` do not work anymore.\r\n\r\n### v0.20.9\r\n\r\n```julia\r\njulia> A*B\r\n2×2 SMatrix{2, 2, Interval{Float64}, 4} with indices SOneTo(2)×SOneTo(2):\r\n [-24, 24]  [-24, 24]\r\n  [-1, -1]   [-1, -1]\r\n```\r\n\r\n### v0.21.0\r\n\r\n```julia\r\njulia> A*B\r\nERROR: promotion of types Interval{Float64}, Float64 and Interval{Float64} failed to change any arguments\r\nStacktrace:\r\n  [1] error(::String, ::String, ::String)\r\n    @ Base ./error.jl:44\r\n  [2] sametype_error(input::Tuple{Interval{Float64}, Float64, Interval{Float64}})\r\n    @ Base ./promotion.jl:405\r\n  [3] not_sametype(x::Tuple{Interval{Float64}, Float64, Interval{Float64}}, y::Tuple{Interval{Float64}, Float64, Interval{Float64}})\r\n    @ Base ./promotion.jl:399\r\n  [4] promote\r\n    @ ./promotion.jl:388 [inlined]\r\n  [5] muladd(x::Interval{Float64}, y::Float64, z::Interval{Float64})\r\n    @ Base ./promotion.jl:447\r\n  [6] macro expansion\r\n    @ ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:221 [inlined]\r\n  [7] mul_loop\r\n    @ ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:188 [inlined]\r\n  [8] macro expansion\r\n    @ ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:139 [inlined]\r\n  [9] _mul\r\n    @ ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:130 [inlined]\r\n [10] *(A::SMatrix{2, 2, Interval{Float64}, 4}, B::SMatrix{2, 2, Float64, 4})\r\n    @ StaticArrays ~/.julia/packages/StaticArrays/9KYrc/src/matrix_multiply.jl:11\r\n [11] top-level scope\r\n    @ REPL[67]:1\r\n```",
+    "recovered_fix_commit": "6b7b0dacbab147cbc47c795e5297da5a9ec2dbe8",
+    "repo": "JuliaIntervals/IntervalArithmetic.jl",
+    "test_patch": "diff --git a/test/interval_tests/numeric.jl b/test/interval_tests/numeric.jl\nindex 7d96f8b4..e72f218b 100644\n--- a/test/interval_tests/numeric.jl\n+++ b/test/interval_tests/numeric.jl\n@@ -71,6 +71,17 @@ end\n     @test extended_div(interval(0.0, 0.0), interval(-1.0, 1.0)) ≛ (entireinterval(c), emptyinterval(c))\n \n     @test interval(0, Inf) * interval(-1, Inf) ≛ interval(-Inf, Inf)\n+\n+    result = interval(1.1) * interval(2) + interval(3)\n+    @test muladd(interval(1.1), interval(2), interval(3)) ≛ result\n+    @test muladd(interval(1.1), interval(Float32, 2), interval(3)) ≛ result\n+    @test muladd(interval(1.1), interval(2), 3) ≛ result\n+    @test muladd(interval(1.1), 2, interval(3)) ≛ result\n+    @test muladd(1.1, interval(2), interval(3)) ≛ result\n+    @test muladd(interval(1.1), 2, 3) ≛ result\n+    @test muladd(1.1, interval(2), 3) ≛ result\n+    @test muladd(1.1, 2, interval(3)) ≛ result\n+\n end\n \n @testset \"Arithmetic with constants\" begin\n"
+  },
+  "timezone": "UTC",
+  "traceability_class": "PR_MEDIATED",
+  "trigger": {
+    "mode": "dedicated_script",
+    "path": "trigger/trigger.jl",
+    "origin": "manual_mwe_from_upstream_fix",
+    "timeout_seconds": 1800,
+    "sha256": "98e0c9edb0e96dd8642664b3d8795e64b4989ff2f44114dff09c81d03f63b839",
+    "oracle": {
+      "mwe_basis": "public Base.muladd behavior for IntervalArithmetic operands",
+      "defect": "Mixed interval/scalar multiplication used Base.muladd internally and regressed from a valid interval result to a promotion error.",
+      "source_evidence": {
+        "issue": "https://github.com/JuliaIntervals/IntervalArithmetic.jl/issues/573",
+        "upstream_test_file": "test/interval_tests/numeric.jl",
+        "basis": "Public muladd assertions copied from the upstream fix tests and directly exercising the mixed Interval/Number regression reported in Issue 573."
+      },
+      "upstream_test_patch_sha256": "cdc51ac22aa141d6c0240130435c0cd7937d5904938208f6c5b9b386f562c354"
+    }
+  },
+  "trigger_test_origin": "manual_mwe_from_upstream_fix",
+  "trigger_tests": [
+    "mixed interval muladd regression"
+  ],
+  "revision_semantics": {
+    "mode": "real_upstream_commit",
+    "buggy_state": "literal_upstream_buggy_commit",
+    "fixed_state": "literal_upstream_fix_commit",
+    "canonical_patch_role": "repair_evidence"
+  },
+  "validation": {
+    "status": "stable_differential",
+    "report": "validation/validation.json",
+    "repetitions": 3
+  },
+  "patch": "patches/minimized-source.patch",
+  "expected_failure": {
+    "test_count": 1,
+    "tests": [
+      "mixed interval muladd regression"
+    ],
+    "exception_types": [
+      "00e899923cd3c0d4fb5a01efcc024de1918962d74f98ea2c1d9929a13c3d5ccc",
+      "796167d8ece45925504cf35698ade8803f1136d37296a3c298c0be6b56e99414",
+      "969706375fc71e87901860edba0bff2685a29933f8a843fd515eb5f7dfb9f6a8",
+      "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7"
+    ],
+    "fingerprints": [
+      "00e899923cd3c0d4fb5a01efcc024de1918962d74f98ea2c1d9929a13c3d5ccc",
+      "796167d8ece45925504cf35698ade8803f1136d37296a3c298c0be6b56e99414",
+      "969706375fc71e87901860edba0bff2685a29933f8a843fd515eb5f7dfb9f6a8",
+      "cbe5cfdf7c2118a9c3d78ef1d684f3afa089201352886449a06a6511cfef74a7"
+    ],
+    "mode": "failing_assertions"
+  },
+  "fixed_test_result": "pass"
+}

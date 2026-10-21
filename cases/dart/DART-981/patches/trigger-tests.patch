@@ -1,0 +1,65 @@
+diff --git a/test/regression/1000/1029.unit b/test/regression/1000/1029.unit
+new file mode 100644
+index 00000000..8dda931f
+--- /dev/null
++++ b/test/regression/1000/1029.unit
+@@ -0,0 +1,17 @@
++>>>
++void main() {
++  try {
++    doSomething();
++  } on Exception catch (e) {} finally {
++    cleanupSomething();
++  }
++}
++<<<
++void main() {
++  try {
++    doSomething();
++  } on Exception catch (e) {
++  } finally {
++    cleanupSomething();
++  }
++}
+\ No newline at end of file
+diff --git a/test/splitting/statements.stmt b/test/splitting/statements.stmt
+index 13e9aea8..dde279c7 100644
+--- a/test/splitting/statements.stmt
++++ b/test/splitting/statements.stmt
+@@ -70,4 +70,33 @@ if (condition) {} else {
+ }
+ <<<
+ if (condition) {
+-} else {}
+\ No newline at end of file
++} else {}
++>>> split empty catch if there is a finally
++try {;} catch (err) {} finally {;}
++<<<
++try {
++  ;
++} catch (err) {
++} finally {
++  ;
++}
++>>> split empty on if there is a finally
++try {;} on Exception {} finally {;}
++<<<
++try {
++  ;
++} on Exception {
++} finally {
++  ;
++}
++>>> split all empty catches if there is a finally
++try {;} catch (err1) {} catch (err2) {} catch (err3) {} finally {;}
++<<<
++try {
++  ;
++} catch (err1) {
++} catch (err2) {
++} catch (err3) {
++} finally {
++  ;
++}
+\ No newline at end of file

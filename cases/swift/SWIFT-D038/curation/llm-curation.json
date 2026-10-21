@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1603",
+  "technical_evidence_sha256": "061c018ab10015e04fedfea276e4b63bfde5d8e6c0a686a00acef6309f1176b2",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "2bf605acc357b07b3a467162393be5b86790c4a0d8ebf1318c33a9411d536077",
+  "reviewed_at": "2026-09-09T14:58:45.391788+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "scinfu/swiftsoup#322",
+  "rationale": "Issue #322 ('getElementsByClass fails to match classes with uppercase letters') reports that parsing `<div class=\"A\">` and querying getElementsByClass(\"A\") returns 0 matches on 2.9.x after working previously. The minimized production patch is a single hunk in Sources/Element.swift that lowercases the key when populating the class-name index (`newIndex[Array(className)]` -> `newIndex[Array(className.lowercased())]`), which is exactly the missing normalization the issue describes and the commit subject states ('Fix class names index doesn't normalize'). Traceability is fix_commit -> merged PR #323 ('Closes #322') -> issue #322, with verified_fix_issue_numbers=[322]. The minimized patch retains 1 of 1 production hunk with zero refactor, formatting, docs, config, or test content; the only test-side content lives in the separate trigger patch. The curator trigger is the upstream regression test verbatim except for guarding the dependent `elements.get(0)` access behind `if elements.count == 1`, which preserves the upstream XCTAssertEqual(elements.count, 1) assertion and only prevents an out-of-range crash on the buggy revision; it exercises pre-existing public APIs (SwiftSoup.parse, getElementsByClass, Elements.count/get/tagName), so the same source builds on both revisions and the buggy failure is a genuine behavioral assertion failure, not a fix-only-API compile error. Strict machine evidence passes on both the original and post-minimization runs: build.both_versions PASS, trigger.buggy_differential reproduced on Tests/SwiftSoupTests/ElementTest.swift::testGetElementsByClassNormalizationRegression, trigger.fixed_clean PASS, trigger.deterministic across 3 repetitions, full_suite.fixed_all_green PASS, and buggy full-suite failures confined to the reproduced trigger (with two pre-existing charset tests resolved as stable baseline exclusions). active_same_project_root_causes is empty, so #322 is not a duplicate, and it matches the sole allowed root cause id.\n\nIssue #322 ('getElementsByClass fails to match classes with uppercase letters') reports a 2.9.x regression where a mixed-case class attribute is not matched by getElementsByClass. The single retained production hunk in Sources/Element.swift lowercases the key when populating the class-name index (newIndex[Array(className)] -> newIndex[Array(className.lowercased())]), which is exactly the normalization gap the issue describes; commit subject 'Fix class names index doesn't normalize' and merged PR #323 body 'Closes #322' give a fix_commit_to_merged_pr_to_issue traceability path. The minimized patch is one line in one production file: no refactor, formatting, feature, docs, or config change (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger mirrors the issue reproducer using only pre-existing public APIs (SwiftSoup.parse, getElementsByClass, Elements.count/get(0).tagName()), so it builds and runs on both revisions; the only curator deviation is guarding the dependent get(0) access behind the count check, which preserves the upstream assertion semantics. This is a behavioral, not compile-acceptance, defect and no fix-only symbol is referenced. Strict machine evidence passes on both the original and post-minimization matrices: build.both_versions PASS, trigger.buggy_differential reproduces Tests/SwiftSoupTests/ElementTest.swift::testGetElementsByClassNormalizationRegression, trigger.fixed_clean PASS, full_suite.fixed_all_green PASS, deterministic across 3 repetitions with 38 matrix runs. The second declared selector (testLinuxTestSuiteIncludesAllTests) is non-reproducing and passes on both sides, consistent with the allTests registration bookkeeping line. active_same_project_root_causes is empty, so #322 is not a duplicate, and it is the sole allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T14:58:20.663682+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "2bf605acc357b07b3a467162393be5b86790c4a0d8ebf1318c33a9411d536077",
+      "response_sha256": "55f92a33b0e66691f28645b12cf06a24ad5bb3ecb1dda60bca7766c95c8d5d1c",
+      "response_id": "msg_3ef55edb9b434edd9082f4c2d00805dc",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5594120480265339,
+        "input_tokens": 14904,
+        "output_tokens": 791
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#322",
+      "rationale": "Issue #322 ('getElementsByClass fails to match classes with uppercase letters') reports that parsing `<div class=\"A\">` and querying getElementsByClass(\"A\") returns 0 matches on 2.9.x after working previously. The minimized production patch is a single hunk in Sources/Element.swift that lowercases the key when populating the class-name index (`newIndex[Array(className)]` -> `newIndex[Array(className.lowercased())]`), which is exactly the missing normalization the issue describes and the commit subject states ('Fix class names index doesn't normalize'). Traceability is fix_commit -> merged PR #323 ('Closes #322') -> issue #322, with verified_fix_issue_numbers=[322]. The minimized patch retains 1 of 1 production hunk with zero refactor, formatting, docs, config, or test content; the only test-side content lives in the separate trigger patch. The curator trigger is the upstream regression test verbatim except for guarding the dependent `elements.get(0)` access behind `if elements.count == 1`, which preserves the upstream XCTAssertEqual(elements.count, 1) assertion and only prevents an out-of-range crash on the buggy revision; it exercises pre-existing public APIs (SwiftSoup.parse, getElementsByClass, Elements.count/get/tagName), so the same source builds on both revisions and the buggy failure is a genuine behavioral assertion failure, not a fix-only-API compile error. Strict machine evidence passes on both the original and post-minimization runs: build.both_versions PASS, trigger.buggy_differential reproduced on Tests/SwiftSoupTests/ElementTest.swift::testGetElementsByClassNormalizationRegression, trigger.fixed_clean PASS, trigger.deterministic across 3 repetitions, full_suite.fixed_all_green PASS, and buggy full-suite failures confined to the reproduced trigger (with two pre-existing charset tests resolved as stable baseline exclusions). active_same_project_root_causes is empty, so #322 is not a duplicate, and it matches the sole allowed root cause id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/upstream-trigger.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.paths[0]",
+        "strict_post_minimization.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue text is only available via source_candidate.issue_check.linked_issues, not an independently fetched record.",
+        "The query-side of the class index is not visible in the patch, so symmetry of lowercasing between index build and lookup is inferred from the passing differential rather than read directly.",
+        "Lowercasing index keys could in principle over-match case-distinct class names; only the project's own suite (green on the fixed revision) covers this.",
+        "Two pre-existing charset test failures (testMetaCharsetUpdateIsoLatin2, testMetaCharsetUpdateXmlIso2022JP) are excluded as baseline noise, so the full-suite signal is not fully clean.",
+        "The trigger patch also edits the Linux allTests registration, which the second declared selector (testLinuxTestSuiteIncludesAllTests) depends on; this is test-only bookkeeping with no production effect."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T14:58:45.391619+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "2bf605acc357b07b3a467162393be5b86790c4a0d8ebf1318c33a9411d536077",
+      "response_sha256": "19f4a53ce7fedf9c55b8e4991eb8d843c0bd093f407953fb52e9ec76f3131ecf",
+      "response_id": "msg_e2b1908020f649df83f49aa4ac3b5830",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4580959766832504,
+        "input_tokens": 14750,
+        "output_tokens": 735
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "scinfu/swiftsoup#322",
+      "rationale": "Issue #322 ('getElementsByClass fails to match classes with uppercase letters') reports a 2.9.x regression where a mixed-case class attribute is not matched by getElementsByClass. The single retained production hunk in Sources/Element.swift lowercases the key when populating the class-name index (newIndex[Array(className)] -> newIndex[Array(className.lowercased())]), which is exactly the normalization gap the issue describes; commit subject 'Fix class names index doesn't normalize' and merged PR #323 body 'Closes #322' give a fix_commit_to_merged_pr_to_issue traceability path. The minimized patch is one line in one production file: no refactor, formatting, feature, docs, or config change (original_hunk_count=1, retained=1, removed=0, post_minimization_validation PASS). The trigger mirrors the issue reproducer using only pre-existing public APIs (SwiftSoup.parse, getElementsByClass, Elements.count/get(0).tagName()), so it builds and runs on both revisions; the only curator deviation is guarding the dependent get(0) access behind the count check, which preserves the upstream assertion semantics. This is a behavioral, not compile-acceptance, defect and no fix-only symbol is referenced. Strict machine evidence passes on both the original and post-minimization matrices: build.both_versions PASS, trigger.buggy_differential reproduces Tests/SwiftSoupTests/ElementTest.swift::testGetElementsByClassNormalizationRegression, trigger.fixed_clean PASS, full_suite.fixed_all_green PASS, deterministic across 3 repetitions with 38 matrix runs. The second declared selector (testLinuxTestSuiteIncludesAllTests) is non-reproducing and passes on both sides, consistent with the allTests registration bookkeeping line. active_same_project_root_causes is empty, so #322 is not a duplicate, and it is the sole allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "patches/upstream-trigger.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "traceability.paths[0]",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.buggy_reproduces_only_triggers",
+        "minimized_patch_reference.post_minimization_validation",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "issue_evidence field is null; issue text is available only via the embedded source_candidate snapshot rather than an independently fetched record.",
+        "The lookup side of the class index is not in the diff, so symmetry of normalization (whether the query term is also lowercased) is inferred from the passing differential rather than read directly.",
+        "Lowercasing index keys could in principle affect case-sensitive class handling elsewhere; only the full-suite green result on the fixed revision (with two pre-existing baseline charset exclusions) bounds this.",
+        "Two baseline full-suite exclusions (testMetaCharsetUpdateIsoLatin2, testMetaCharsetUpdateXmlIso2022JP) are pre-existing failures unrelated to this defect and remain outside gate coverage."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+diff --git a/Tests/SwiftFormatTests/PrettyPrint/RespectsExistingLineBreaksTests.swift b/Tests/SwiftFormatTests/PrettyPrint/RespectsExistingLineBreaksTests.swift
+index dfac19f36e1b99c0f757612a14d996b8a8889183..955a7147a1676db03c63ea329f980d686b0043d1 100644
+--- a/Tests/SwiftFormatTests/PrettyPrint/RespectsExistingLineBreaksTests.swift
++++ b/Tests/SwiftFormatTests/PrettyPrint/RespectsExistingLineBreaksTests.swift
+@@ -295,6 +295,63 @@ final class RespectsExistingLineBreaksTests: PrettyPrintTestCase {
+     )
+   }
+ 
++  func testIfConfigKeepsRequiredLineBreakAfterEndif() {
++    let input =
++      """
++      #if FLAG
++      @frozen
++      #endif
++      struct S {}
++
++      switch x {
++      #if A
++      case 1: f()
++      #endif
++      #if B
++      case 2: g()
++      #endif
++      }
++
++      let x =
++        base
++        #if FLAG
++        .foo()
++        #endif
++        .bar()
++
++      """
++
++    let expected =
++      """
++      #if FLAG
++        @frozen
++      #endif
++      struct S {}
++
++      switch x { #if A
++        case 1: f()
++      #endif
++      #if B
++        case 2: g()
++      #endif
++      }
++
++      let x = base
++        #if FLAG
++          .foo()
++        #endif
++        .bar()
++
++      """
++
++    assertPrettyPrintEqual(
++      input: input,
++      expected: expected,
++      linelength: 100,
++      configuration: configuration(respectingExistingLineBreaks: false)
++    )
++  }
++
+   /// Creates a new configuration with the given value for `respectsExistingLineBreaks` and default
+   /// values for everything else.
+   private func configuration(respectingExistingLineBreaks: Bool) -> Configuration {

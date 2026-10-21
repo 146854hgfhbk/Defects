@@ -1,0 +1,111 @@
+diff --git a/spec/arguments_spec.lua b/spec/arguments_spec.lua
+index 6185d8df0de094a024e86a67a9d6fd6e5c5a29c8..8a1dbef45b16bcb3b351bb85aa418b0608e7fdcf 100644
+--- a/spec/arguments_spec.lua
++++ b/spec/arguments_spec.lua
+@@ -97,7 +97,7 @@ describe("tests related to positional arguments", function()
+          local parser = Parser()
+          parser:argument "foo"
+ 
+-         assert.has_error(function() parser:parse{} end, "argument 'foo' is required")
++         assert.has_error(function() parser:parse{} end, "missing argument 'foo'")
+       end)
+ 
+       it("handles extra arguments with several arguments correctly", function()
+@@ -113,7 +113,7 @@ describe("tests related to positional arguments", function()
+          parser:argument "foo1"
+          parser:argument "foo2"
+ 
+-         assert.has_error(function() parser:parse{"bar"} end, "argument 'foo2' is required")
++         assert.has_error(function() parser:parse{"bar"} end, "missing argument 'foo2'")
+       end)
+ 
+       it("handles too few arguments with multi-argument correctly", function()
+@@ -121,7 +121,7 @@ describe("tests related to positional arguments", function()
+          parser:argument "foo" {
+             args = "+"
+          }
+-         assert.has_error(function() parser:parse{} end, "argument 'foo' is required")
++         assert.has_error(function() parser:parse{} end, "missing argument 'foo'")
+       end)
+ 
+       it("handles too many arguments with multi-argument correctly", function()
+@@ -159,7 +159,7 @@ describe("tests related to positional arguments", function()
+          parser:argument "foo2" {
+             args = "*"
+          }
+-         assert.has_error(function() parser:parse{} end, "argument 'foo1' is required")
++         assert.has_error(function() parser:parse{} end, "missing argument 'foo1'")
+       end)
+    end)
+ end)
+diff --git a/spec/integrity_spec.lua b/spec/integrity_spec.lua
+index d473ac9b12feb3ab46a8ebed9d15e464e19f0698..1817074c387f2e73c0b7a20dcdffac6d5627f8a6 100644
+--- a/spec/integrity_spec.lua
++++ b/spec/integrity_spec.lua
+@@ -20,7 +20,7 @@ describe("tests related to CLI behaviour #unsafe", function()
+          assert.equal([[
+ Usage: ]]..script..[[ [-v] [-h] <input> [<command>] ...
+ 
+-Error: argument 'input' is required
++Error: missing argument 'input'
+ ]], get_output(""))
+       end)
+ 
+@@ -62,7 +62,7 @@ Did you mean 'install'?
+          assert.equal([[
+ Usage: ]]..script..[[ install [-f <from>] [-h] <rock> [<version>]
+ 
+-Error: argument 'rock' is required
++Error: missing argument 'rock'
+ ]], get_output("foo install"))
+       end)
+ 
+diff --git a/spec/options_spec.lua b/spec/options_spec.lua
+index 3ebfdff6dd7fe6fa566591bc67a9a61293d3ece0..31363e87636e2a86597d174227bad426742d0f6b 100644
+--- a/spec/options_spec.lua
++++ b/spec/options_spec.lua
+@@ -298,7 +298,8 @@ describe("tests related to options", function()
+          parser:option "-f" "--foo" {
+             count = "3-4"
+          }
+-         assert.has_error(function() parser:parse{"-fFOO", "-fBAR"} end, "option '-f' must be used at least 3 times")
++         assert.has_error(function() parser:parse{"-fFOO", "--foo=BAR"} end, "option '--foo' must be used at least 3 times")
++         assert.has_error(function() parser:parse{} end, "missing option '-f'")
+       end)
+    end)
+ end)
+diff --git a/spec/pparse_spec.lua b/spec/pparse_spec.lua
+index b72abd615782fedd9976b2a365d16a2c420daa35..7994bc4caf432da44a5bb99f037eecab00970662 100644
+--- a/spec/pparse_spec.lua
++++ b/spec/pparse_spec.lua
+@@ -15,7 +15,7 @@ describe("tests related to :pparse()", function()
+       parser:argument "foo"
+       local ok, errmsg = parser:pparse{}
+       assert.is_false(ok)
+-      assert.equal("argument 'foo' is required", errmsg)
++      assert.equal("missing argument 'foo'", errmsg)
+    end)
+ 
+    it("rethrows errors from callbacks", function()
+diff --git a/src/argparse.lua b/src/argparse.lua
+index 8c652c476be1bef3dc9847aca972af222ec07787..7e762bb49221c00855f8b826d0aec88fb23206b6 100644
+--- a/src/argparse.lua
++++ b/src/argparse.lua
+@@ -809,7 +809,7 @@ function ElementState:close()
+          else
+             if #self.args == 0 then
+                if getmetatable(self.element) == Argument then
+-                  self:error("%s is required", self.name)
++                  self:error("missing %s", self.name)
+                elseif self.element._maxargs == 1 then
+                   self:error("%s requires an argument", self.name)
+                end
+@@ -996,6 +996,8 @@ function ParseState:finalize()
+                option:invoke(name)
+                option:close()
+             end
++         elseif option.invocations == 0 then
++            self:error("missing %s", name)
+          else
+             self:error("%s must be used %s", name, bound("time", mincount, option.element._maxcount))
+          end

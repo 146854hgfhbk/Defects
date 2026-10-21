@@ -1,0 +1,199 @@
+diff --git a/model/src/test/assets/package-configuration.yml b/model/src/test/assets/package-configuration.yml
+index 94abad2327ffa..c9121d032996a 100644
+--- a/model/src/test/assets/package-configuration.yml
++++ b/model/src/test/assets/package-configuration.yml
+@@ -5,7 +5,7 @@ path_excludes:
+   reason: "DOCUMENTATION_OF"
+   comment: "This directory contains documentation which is not distributed."
+ license_finding_curations:
+-- path: "src/**.cpp"
++- path: "src/**/*.cpp"
+   start_lines: "3"
+   line_count: 11
+   detected_license: "GPL-2.0-only"
+diff --git a/model/src/test/kotlin/config/ExcludesTest.kt b/model/src/test/kotlin/config/ExcludesTest.kt
+index 2fc6d2951acfc..6fedde5f12909 100644
+--- a/model/src/test/kotlin/config/ExcludesTest.kt
++++ b/model/src/test/kotlin/config/ExcludesTest.kt
+@@ -55,7 +55,7 @@ class ExcludesTest : WordSpec() {
+ 
+     private val pathExclude1 = PathExclude("path1", PathExcludeReason.BUILD_TOOL_OF, "")
+     private val pathExclude2 = PathExclude("path2", PathExcludeReason.BUILD_TOOL_OF, "")
+-    private val pathExclude3 = PathExclude("**.ext", PathExcludeReason.BUILD_TOOL_OF, "")
++    private val pathExclude3 = PathExclude("**/*.ext", PathExcludeReason.BUILD_TOOL_OF, "")
+     private val pathExclude4 = PathExclude("**/file.ext", PathExcludeReason.BUILD_TOOL_OF, "")
+ 
+     private val scope1 = Scope("scope1", sortedSetOf(PackageReference(id)))
+diff --git a/model/src/test/kotlin/config/PathExcludeTest.kt b/model/src/test/kotlin/config/PathExcludeTest.kt
+index bd5f8753433bd..17da10816adce 100644
+--- a/model/src/test/kotlin/config/PathExcludeTest.kt
++++ b/model/src/test/kotlin/config/PathExcludeTest.kt
+@@ -22,18 +22,22 @@ package org.ossreviewtoolkit.model.config
+ import io.kotest.core.spec.style.WordSpec
+ import io.kotest.matchers.shouldBe
+ 
+-/**
+- * This class tests [PathExclude] members functions
+- */
+-class PathExcludeTest : WordSpec() {
+-    private val pathExcludeWithLeadingDot = PathExclude("./path1", PathExcludeReason.BUILD_TOOL_OF, "")
++class PathExcludeTest : WordSpec({
++    "isPathExcluded" should {
++        "ignore leading './' in the matching path" {
++            val pathExclude = pathExclude("./path")
+ 
+-    init {
+-        "isPathExcluded" should {
+-            "ignore leading './' in the matching path" {
+-                pathExcludeWithLeadingDot.matches("path1") shouldBe true
+-                pathExcludeWithLeadingDot.matches("path2") shouldBe false
+-            }
++            pathExclude.matches("path") shouldBe true
++        }
++
++        "match zero up to multiple segments for a leading double asterisk" {
++            val pathExclude = pathExclude("**/path/file.ext")
++
++            pathExclude.matches("path/file.ext") shouldBe true
++            pathExclude.matches("1/path/file.ext") shouldBe true
++            pathExclude.matches("1/2/path/file.ext") shouldBe true
+         }
+     }
+-}
++})
++
++private fun pathExclude(pattern: String) = PathExclude(pattern, PathExcludeReason.BUILD_TOOL_OF)
+diff --git a/model/src/test/kotlin/config/RepositoryConfigurationTest.kt b/model/src/test/kotlin/config/RepositoryConfigurationTest.kt
+index 36aae94c08d5e..5a622b716f93a 100644
+--- a/model/src/test/kotlin/config/RepositoryConfigurationTest.kt
++++ b/model/src/test/kotlin/config/RepositoryConfigurationTest.kt
+@@ -41,7 +41,7 @@ class RepositoryConfigurationTest : WordSpec({
+             val configuration = """
+                 excludes:
+                   paths:
+-                  - pattern: "android/**build.gradle"
++                  - pattern: "android/**/build.gradle"
+                     reason: "BUILD_TOOL_OF"
+                     comment: "project comment"
+                 """.trimIndent()
+diff --git a/reporter/src/funTest/assets/evaluated-model-reporter-test-deduplicate-expected-output.yml b/reporter/src/funTest/assets/evaluated-model-reporter-test-deduplicate-expected-output.yml
+index 310eb4f45c134..7676d9f307230 100644
+--- a/reporter/src/funTest/assets/evaluated-model-reporter-test-deduplicate-expected-output.yml
++++ b/reporter/src/funTest/assets/evaluated-model-reporter-test-deduplicate-expected-output.yml
+@@ -5,7 +5,7 @@ path_excludes:
+   reason: "EXAMPLE_OF"
+   comment: "The project is an example."
+ - _id: 1
+-  pattern: "**.java"
++  pattern: "**/*.java"
+   reason: "EXAMPLE_OF"
+   comment: "These are example files."
+ scope_excludes:
+@@ -943,7 +943,7 @@ severe_issue_threshold: "WARNING"
+ severe_rule_violation_threshold: "WARNING"
+ repository_configuration: "---\nexcludes:\n  paths:\n  - pattern: \"sub/module/project/build.gradle\"\
+   \n    reason: \"EXAMPLE_OF\"\n    comment: \"The project is an example.\"\n  - pattern:\
+-  \ \"**.java\"\n    reason: \"EXAMPLE_OF\"\n    comment: \"These are example files.\"\
++  \ \"**/*.java\"\n    reason: \"EXAMPLE_OF\"\n    comment: \"These are example files.\"\
+   \n  scopes:\n  - pattern: \"testCompile\"\n    reason: \"TEST_DEPENDENCY_OF\"\n\
+   \    comment: \"The scope only contains test dependencies.\"\nresolutions:\n  rule_violations:\n\
+   \  - message: \"Apache-2.0 hint\"\n    reason: \"CANT_FIX_EXCEPTION\"\n    comment:\
+diff --git a/reporter/src/funTest/assets/evaluated-model-reporter-test-expected-output.json b/reporter/src/funTest/assets/evaluated-model-reporter-test-expected-output.json
+index 4f28ea0cf2b6f..1962aabf7acbe 100644
+--- a/reporter/src/funTest/assets/evaluated-model-reporter-test-expected-output.json
++++ b/reporter/src/funTest/assets/evaluated-model-reporter-test-expected-output.json
+@@ -6,7 +6,7 @@
+     "comment" : "The project is an example."
+   }, {
+     "_id" : 1,
+-    "pattern" : "**.java",
++    "pattern" : "**/*.java",
+     "reason" : "EXAMPLE_OF",
+     "comment" : "These are example files."
+   } ],
+@@ -1047,7 +1047,7 @@
+   },
+   "severe_issue_threshold" : "WARNING",
+   "severe_rule_violation_threshold" : "WARNING",
+-  "repository_configuration" : "---\nexcludes:\n  paths:\n  - pattern: \"sub/module/project/build.gradle\"\n    reason: \"EXAMPLE_OF\"\n    comment: \"The project is an example.\"\n  - pattern: \"**.java\"\n    reason: \"EXAMPLE_OF\"\n    comment: \"These are example files.\"\n  scopes:\n  - pattern: \"testCompile\"\n    reason: \"TEST_DEPENDENCY_OF\"\n    comment: \"The scope only contains test dependencies.\"\nresolutions:\n  rule_violations:\n  - message: \"Apache-2.0 hint\"\n    reason: \"CANT_FIX_EXCEPTION\"\n    comment: \"Apache-2 is not an issue.\"\nlicense_choices:\n  repository_license_choices:\n  - given: \"GPL-2.0-only OR MIT\"\n    choice: \"MIT\"\n  package_license_choices:\n  - package_id: \"Maven:com.h2database:h2:1.4.200\"\n    license_choices:\n    - given: \"MPL-2.0 OR EPL-1.0\"\n      choice: \"MPL-2.0\"\n",
++  "repository_configuration" : "---\nexcludes:\n  paths:\n  - pattern: \"sub/module/project/build.gradle\"\n    reason: \"EXAMPLE_OF\"\n    comment: \"The project is an example.\"\n  - pattern: \"**/*.java\"\n    reason: \"EXAMPLE_OF\"\n    comment: \"These are example files.\"\n  scopes:\n  - pattern: \"testCompile\"\n    reason: \"TEST_DEPENDENCY_OF\"\n    comment: \"The scope only contains test dependencies.\"\nresolutions:\n  rule_violations:\n  - message: \"Apache-2.0 hint\"\n    reason: \"CANT_FIX_EXCEPTION\"\n    comment: \"Apache-2 is not an issue.\"\nlicense_choices:\n  repository_license_choices:\n  - given: \"GPL-2.0-only OR MIT\"\n    choice: \"MIT\"\n  package_license_choices:\n  - package_id: \"Maven:com.h2database:h2:1.4.200\"\n    license_choices:\n    - given: \"MPL-2.0 OR EPL-1.0\"\n      choice: \"MPL-2.0\"\n",
+   "labels" : {
+     "job_parameters.JOB_PARAM_1" : "label job param 1",
+     "job_parameters.JOB_PARAM_2" : "label job param 2",
+diff --git a/reporter/src/funTest/assets/evaluated-model-reporter-test-expected-output.yml b/reporter/src/funTest/assets/evaluated-model-reporter-test-expected-output.yml
+index 971405b397725..26d1d291a51e6 100644
+--- a/reporter/src/funTest/assets/evaluated-model-reporter-test-expected-output.yml
++++ b/reporter/src/funTest/assets/evaluated-model-reporter-test-expected-output.yml
+@@ -5,7 +5,7 @@ path_excludes:
+   reason: "EXAMPLE_OF"
+   comment: "The project is an example."
+ - _id: 1
+-  pattern: "**.java"
++  pattern: "**/*.java"
+   reason: "EXAMPLE_OF"
+   comment: "These are example files."
+ scope_excludes:
+@@ -947,7 +947,7 @@ severe_issue_threshold: "WARNING"
+ severe_rule_violation_threshold: "WARNING"
+ repository_configuration: "---\nexcludes:\n  paths:\n  - pattern: \"sub/module/project/build.gradle\"\
+   \n    reason: \"EXAMPLE_OF\"\n    comment: \"The project is an example.\"\n  - pattern:\
+-  \ \"**.java\"\n    reason: \"EXAMPLE_OF\"\n    comment: \"These are example files.\"\
++  \ \"**/*.java\"\n    reason: \"EXAMPLE_OF\"\n    comment: \"These are example files.\"\
+   \n  scopes:\n  - pattern: \"testCompile\"\n    reason: \"TEST_DEPENDENCY_OF\"\n\
+   \    comment: \"The scope only contains test dependencies.\"\nresolutions:\n  rule_violations:\n\
+   \  - message: \"Apache-2.0 hint\"\n    reason: \"CANT_FIX_EXCEPTION\"\n    comment:\
+diff --git a/reporter/src/funTest/assets/static-html-reporter-test-expected-output.html b/reporter/src/funTest/assets/static-html-reporter-test-expected-output.html
+index 295b42eb2d6a3..987d12b8a15c4 100644
+--- a/reporter/src/funTest/assets/static-html-reporter-test-expected-output.html
++++ b/reporter/src/funTest/assets/static-html-reporter-test-expected-output.html
+@@ -909,7 +909,7 @@ <h2 id="repository-configuration">Repository Configuration</h2>
+   - pattern: "sub/module/project/build.gradle"
+     reason: "EXAMPLE_OF"
+     comment: "The project is an example."
+-  - pattern: "**.java"
++  - pattern: "**/*.java"
+     reason: "EXAMPLE_OF"
+     comment: "These are example files."
+   scopes:
+diff --git a/reporter/src/funTest/assets/static-html-reporter-test-input.yml b/reporter/src/funTest/assets/static-html-reporter-test-input.yml
+index db4d431780226..13d641bc42677 100644
+--- a/reporter/src/funTest/assets/static-html-reporter-test-input.yml
++++ b/reporter/src/funTest/assets/static-html-reporter-test-input.yml
+@@ -22,7 +22,7 @@ repository:
+       - pattern: "sub/module/project/build.gradle"
+         reason: "EXAMPLE_OF"
+         comment: "The project is an example."
+-      - pattern: "**.java"
++      - pattern: "**/*.java"
+         reason: "EXAMPLE_OF"
+         comment: "These are example files."
+       scopes:
+diff --git a/build.gradle.kts b/build.gradle.kts
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -54,13 +54,17 @@
+ 
+ // Only override a default version (which usually is "unspecified"), but not a custom version.
+ if (version == Project.DEFAULT_VERSION) {
+-    version = Git.open(rootDir).use { git ->
+-        // Make the output exactly match "git describe --abbrev=10 --always --tags --dirty", which is what is used in
+-        // "scripts/docker_build.sh", to make the hash match what JitPack uses.
+-        val description = git.describe().setAbbrev(10).setAlways(true).setTags(true).call()
+-
+-        // Simulate the "--dirty" option with JGit.
+-        description.takeUnless { git.status().call().hasUncommittedChanges() } ?: "$description-dirty"
++    version = try {
++        version = Git.open(rootDir).use { git ->
++            // Make the output exactly match "git describe --abbrev=10 --always --tags --dirty", which is what is used in
++            // "scripts/docker_build.sh", to make the hash match what JitPack uses.
++            val description = git.describe().setAbbrev(10).setAlways(true).setTags(true).call()
++    
++            // Simulate the "--dirty" option with JGit.
++            description.takeUnless { git.status().call().hasUncommittedChanges() } ?: "$description-dirty"
++        }
++    } catch (e: Exception) {
++        "unspecified"
+     }
+ }
+ 
+

@@ -1,0 +1,69 @@
+diff --git a/kotlinpoet/src/jvmTest/kotlin/com/squareup/kotlinpoet/FunSpecTest.kt b/kotlinpoet/src/jvmTest/kotlin/com/squareup/kotlinpoet/FunSpecTest.kt
+index c655d3c4..d85ef2a5 100644
+--- a/kotlinpoet/src/jvmTest/kotlin/com/squareup/kotlinpoet/FunSpecTest.kt
++++ b/kotlinpoet/src/jvmTest/kotlin/com/squareup/kotlinpoet/FunSpecTest.kt
+@@ -227,6 +227,51 @@ class FunSpecTest {
+       )
+   }
+ 
++  @Test
++  fun operatorGetAndSetNamesAreNotEscaped() {
++    val get =
++      FunSpec.builder("get")
++        .addModifiers(KModifier.OPERATOR)
++        .addParameter("index", Int::class)
++        .returns(Int::class)
++        .addStatement("return values[index]")
++        .build()
++    assertThat(get.toString())
++      .isEqualTo(
++        """
++        |public operator fun get(index: kotlin.Int): kotlin.Int = values[index]
++        |"""
++          .trimMargin()
++      )
++
++    val set =
++      FunSpec.builder("set")
++        .addModifiers(KModifier.OPERATOR)
++        .addParameter("index", Int::class)
++        .addParameter("element", Int::class)
++        .addStatement("values[index] = element")
++        .build()
++    assertThat(set.toString())
++      .isEqualTo(
++        """
++        |public operator fun set(index: kotlin.Int, element: kotlin.Int) {
++        |  values[index] = element
++        |}
++        |"""
++          .trimMargin()
++      )
++
++    // Without the operator modifier, get/set are still escaped as soft keywords.
++    val nonOperatorGet = FunSpec.builder("get").returns(Int::class).addStatement("return 0").build()
++    assertThat(nonOperatorGet.toString())
++      .isEqualTo(
++        """
++        |public fun `get`(): kotlin.Int = 0
++        |"""
++          .trimMargin()
++      )
++  }
++
+   @Test
+   fun returnsLongExpression() {
+     val funSpec =
+diff --git a/kotlinpoet/src/jvmTest/kotlin/com/squareup/kotlinpoet/KotlinPoetTest.kt b/kotlinpoet/src/jvmTest/kotlin/com/squareup/kotlinpoet/KotlinPoetTest.kt
+index c4b5a539..112de74e 100644
+--- a/kotlinpoet/src/jvmTest/kotlin/com/squareup/kotlinpoet/KotlinPoetTest.kt
++++ b/kotlinpoet/src/jvmTest/kotlin/com/squareup/kotlinpoet/KotlinPoetTest.kt
+@@ -773,7 +773,7 @@ class KotlinPoetTest {
+         |import kotlin.String
+         |
+         |public open class A {
+-        |  protected open external infix operator fun `get`(v: String): String
++        |  protected open external infix operator fun get(v: String): String
+         |
+         |  internal final tailrec inline fun loop(): String = "a"
+         |}

@@ -1,0 +1,28 @@
+diff --git a/test/fake_async_test.dart b/test/fake_async_test.dart
+index 7aefc5fe8156a9792f0bad5517f7de1670ee32c0..463eecdb8bbbdd9378853d2e3de3dbb22a06a78d 100644
+--- a/test/fake_async_test.dart
++++ b/test/fake_async_test.dart
+@@ -586,6 +586,23 @@ void main() {
+         expect(ticks, [1, 2]);
+       });
+     });
++
++    test('should update periodic timer state before invoking callback', () {
++      // Regression test for: https://github.com/dart-lang/fake_async/issues/88
++      FakeAsync().run((async) {
++        final log = <String>[];
++        Timer.periodic(const Duration(seconds: 2), (timer) {
++          log.add('periodic ${timer.tick}');
++          async.elapse(Duration.zero);
++        });
++        Timer(const Duration(seconds: 3), () {
++          log.add('single');
++        });
++
++        async.flushTimers(flushPeriodicTimers: false);
++        expect(log, ['periodic 1', 'single']);
++      });
++    });
+   });
+ 
+   group('clock', () {

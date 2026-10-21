@@ -1,0 +1,20 @@
+diff --git a/detekt-rules-naming/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/naming/TopLevelPropertyNamingSpec.kt b/detekt-rules-naming/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/naming/TopLevelPropertyNamingSpec.kt
+index 79933b043bad..9cc141589204 100644
+--- a/detekt-rules-naming/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/naming/TopLevelPropertyNamingSpec.kt
++++ b/detekt-rules-naming/src/test/kotlin/io/gitlab/arturbosch/detekt/rules/naming/TopLevelPropertyNamingSpec.kt
+@@ -46,6 +46,15 @@ class TopLevelPropertyNamingSpec {
+         }
+     }
+
++    @Test
++    fun `should not report on top level extension properties`() {
++        val code = """
++            val String._foo = "foo"
++        """.trimIndent()
++
++        assertThat(subject.lint(code)).isEmpty()
++    }
++
+     @Nested
+     inner class `variables on top level` {
+

@@ -1,0 +1,26 @@
+diff --git a/lib/Test/Tester/Delegate.pm b/lib/Test/Tester/Delegate.pm
+index 68c36deec..ed667492a 100644
+--- a/lib/Test/Tester/Delegate.pm
++++ b/lib/Test/Tester/Delegate.pm
+@@ -5,6 +5,7 @@ package Test::Tester::Delegate;
+ 
+ our $VERSION = '1.302065';
+ 
++use Scalar::Util();
+ 
+ use vars '$AUTOLOAD';
+ 
+@@ -32,4 +33,13 @@ sub AUTOLOAD
+ 	goto &$ref;
+ }
+ 
++sub can {
++	my $this = shift;
++	my ($sub) = @_;
++
++	return $this->{Object}->can($sub) if Scalar::Util::blessed($this);
++
++	return $this->SUPER::can(@_);
++}
++
+ 1;

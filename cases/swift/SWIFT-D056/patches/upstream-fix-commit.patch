@@ -1,0 +1,93 @@
+diff --git a/Sources/Markdown/Block Nodes/Block Container Blocks/BlockDirective.swift b/Sources/Markdown/Block Nodes/Block Container Blocks/BlockDirective.swift
+index 50910b6..d7bd982 100644
+--- a/Sources/Markdown/Block Nodes/Block Container Blocks/BlockDirective.swift	
++++ b/Sources/Markdown/Block Nodes/Block Container Blocks/BlockDirective.swift	
+@@ -90,13 +90,14 @@ public extension BlockDirective {
+     init<Children: Sequence>(name: String,
+                              argumentText: String? = nil,
+                              children: Children) where Children.Element == BlockMarkup {
+-        let argumentSegments = argumentText?.split(separator: "\n",
+-                                                   maxSplits: .max,
+-                                                   omittingEmptySubsequences: false).map { lineText -> DirectiveArgumentText.LineSegment in
+-                                                    let untrimmedText = String(lineText)
+-                                                    return DirectiveArgumentText.LineSegment(untrimmedText: untrimmedText,
+-                                                                                             range: nil)
+-                                                   } ?? []
++        let argumentSegments = argumentText?.split(
++            omittingEmptySubsequences: false,
++            whereSeparator: \.isNewline
++        ).map { lineText -> DirectiveArgumentText.LineSegment in
++            let untrimmedText = String(lineText)
++            return DirectiveArgumentText.LineSegment(untrimmedText: untrimmedText,
++                                                     range: nil)
++        } ?? []
+         try! self.init(.blockDirective(name: name,
+                                        nameLocation: nil,
+                                        argumentText: DirectiveArgumentText(segments: argumentSegments),
+diff --git a/Sources/Markdown/Parser/BlockDirectiveParser.swift b/Sources/Markdown/Parser/BlockDirectiveParser.swift
+index 5e20b8f..c9da26e 100644
+--- a/Sources/Markdown/Parser/BlockDirectiveParser.swift
++++ b/Sources/Markdown/Parser/BlockDirectiveParser.swift
+@@ -537,7 +537,7 @@ private enum ParseContainer: CustomStringConvertible {
+         }
+ 
+         mutating private func print<S: StringProtocol>(_ text: S) {
+-            let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
++            let lines = text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+             for i in lines.indices {
+                 if i != lines.startIndex {
+                     queueNewline()
+diff --git a/Sources/Markdown/Parser/LazySplitLines.swift b/Sources/Markdown/Parser/LazySplitLines.swift
+index 68358d1..398cda8 100644
+--- a/Sources/Markdown/Parser/LazySplitLines.swift
++++ b/Sources/Markdown/Parser/LazySplitLines.swift
+@@ -28,7 +28,7 @@ struct LazySplitLines: Sequence {
+         private var source: URL?
+ 
+         init<S: StringProtocol>(_ input: S, source: URL?) where S.SubSequence == Substring {
+-            self.rawLines = input.split(separator: "\n", maxSplits: Int.max, omittingEmptySubsequences: false)
++            self.rawLines = input.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+             self.index = rawLines.startIndex
+             self.source = source
+         }
+diff --git a/Sources/Markdown/Walker/Walkers/MarkupFormatter.swift b/Sources/Markdown/Walker/Walkers/MarkupFormatter.swift
+index bee884b..218172c 100644
+--- a/Sources/Markdown/Walker/Walkers/MarkupFormatter.swift
++++ b/Sources/Markdown/Walker/Walkers/MarkupFormatter.swift
+@@ -38,7 +38,7 @@ fileprivate extension Markup {
+ fileprivate extension String {
+     /// This string, split by newline characters, dropping leading and trailing lines that are empty.
+     var trimmedLineSegments: ArraySlice<Substring> {
+-        var splitLines = split(separator: "\n", omittingEmptySubsequences: false)[...].drop { $0.isEmpty }
++        var splitLines = split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)[...].drop { $0.isEmpty }
+         while let lastLine = splitLines.last, lastLine.isEmpty {
+             splitLines = splitLines.dropLast()
+         }
+diff --git a/Tests/MarkdownTests/Block Nodes/DocumentTests.swift b/Tests/MarkdownTests/Block Nodes/DocumentTests.swift
+index 57078ec..3971418 100644
+--- a/Tests/MarkdownTests/Block Nodes/DocumentTests.swift	
++++ b/Tests/MarkdownTests/Block Nodes/DocumentTests.swift	
+@@ -40,4 +40,23 @@ final class DocumentTests: XCTestCase {
+         XCTAssertThrowsError(try Document(parsing: URL(fileURLWithPath: #file)
+             .appendingPathComponent("doesntexist")))
+     }
++ 
++    func testParseNewlineCharacters() {
++        let inputParagraphString = """
++        # First\n
++        ## Second\r
++        ### Third\r\n
++        """
++        let document = Document(parsing: inputParagraphString, options: [.parseBlockDirectives, .parseSymbolLinks])
++        let expectedDump = """
++                Document
++                ├─ Heading level: 1
++                │  └─ Text "First"
++                ├─ Heading level: 2
++                │  └─ Text "Second"
++                └─ Heading level: 3
++                   └─ Text "Third"
++                """
++        XCTAssertEqual(expectedDump, document.debugDescription())
++    }
+ }

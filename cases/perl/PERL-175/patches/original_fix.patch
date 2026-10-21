@@ -1,0 +1,84 @@
+diff --git a/Changes b/Changes
+index b05057d..9a9ceba 100644
+--- a/Changes
++++ b/Changes
+@@ -2,13 +2,17 @@ Revision history for Perl extension Cpanel::JSON::XS
+ 
+ TODO: http://stevehanov.ca/blog/index.php?id=104 compression
+ 
+-3.0206 2015-11-?? (rurban)
++3.0206 2015-11-30 (rurban)
+        - Add support for escape_slash from JSON::PP. #47
+        - Map sort_by to canonical from JSON::PP. #47
++         reverse sort or sort by custom keys not yet possible/silently ignored.
+        - Add support for allow_singlequote from JSON::PP. #47
+        - Add support for allow_barekey from JSON::PP. #47
+-       - Add testcase for yet unsupported for allow_bignum from JSON::PP. #47
++       - Add support for allow_bignum from JSON::PP. #47
+        - relaxed uses now also allow_singlequote and allow_barekey.
++       - Fixed t/20_unknown.t: SKIP when JSON is not available. #45
++       - Fixed t/55_modifiable.t: Broaden the is check of true <5.12 #45
++         (both reported by Paul Howarth)
+ 
+ 3.0205 2015-11-29 (rurban)
+        - Add t/20_unknown.t tests from JSON::PP, extended.
+diff --git a/XS.xs b/XS.xs
+index c66cc66..7350179 100644
+--- a/XS.xs
++++ b/XS.xs
+@@ -2232,9 +2232,9 @@ decode_num (pTHX_ dec_t *dec)
+         return newSVnv (json_atof (start));
+ 
+       if (dec->json.flags & F_ALLOW_BIGNUM) {
+-        SV* pv = newSVpvs("require Math::BigInt && return Math::BigInt->new(");
++        SV* pv = newSVpvs("require Math::BigInt && return Math::BigInt->new(\"");
+         sv_catpv(pv, start);
+-        sv_catpvs(pv, ");");
++        sv_catpvs(pv, "\");");
+         eval_sv(pv, G_SCALAR);
+         SvREFCNT_dec(pv);
+         {
+@@ -2250,9 +2250,9 @@ decode_num (pTHX_ dec_t *dec)
+     }
+ 
+   if (dec->json.flags & F_ALLOW_BIGNUM) {
+-    SV* pv = newSVpvs("require Math::BigFloat && return Math::BigFloat->new(");
++    SV* pv = newSVpvs("require Math::BigFloat && return Math::BigFloat->new(\"");
+     sv_catpv(pv, start);
+-    sv_catpvs(pv, ");");
++    sv_catpvs(pv, "\");");
+     eval_sv(pv, G_SCALAR);
+     SvREFCNT_dec(pv);
+     {
+diff --git a/t/110_bignum.t b/t/110_bignum.t
+index ca977f5..50345d8 100644
+--- a/t/110_bignum.t
++++ b/t/110_bignum.t
+@@ -24,19 +24,17 @@ $json->convert_blessed->allow_blessed;
+ my $num  = $json->decode(q|100000000000000000000000000000000000000|);
+ 
+ isa_ok($num, 'Math::BigInt');
+-is("$num", $fix . '100000000000000000000000000000000000000', 'decode bigint') or
+-  Dump ($num);
++is("$num", $fix . '100000000000000000000000000000000000000', 'decode bigint')
++  or Dump ($num);
+ 
+ my $e = $json->encode($num);
+-is($e, $fix . '100000000000000000000000000000000000000', 'encode bigint') or
+-  Dump( $e );
++is($e, $fix . '100000000000000000000000000000000000000', 'encode bigint')
++  or Dump( $e );
+ 
+ $num  = $json->decode(q|2.0000000000000000001|);
+ isa_ok($num, 'Math::BigFloat');
+ 
+-TODO: {
+-  local $TODO = 'encode BigFloat';
+-  is("$num", '2.0000000000000000001', 'decode bigfloat') or Dump $num;
+-  my $e = $json->encode($num);
+-  is($e, '2.0000000000000000001', 'encode bigfloat') or Dump $e;
+-}
++is("$num", '2.0000000000000000001', 'decode bigfloat') or Dump $num;
++my $e = $json->encode($num);
++is($e, '2.0000000000000000001', 'encode bigfloat') or Dump $e;
++

@@ -1,0 +1,65 @@
+{
+  "candidate_sha": "4a983f60eb8ef3d877bbeb7eac6d2ae3d98fa377",
+  "project": "JuliaLang/JuliaSyntax.jl",
+  "source": "merged_pull_request",
+  "instance_id": null,
+  "swe_rebench": null,
+  "issue_records": [
+    {
+      "number": 580,
+      "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/580",
+      "state": "closed",
+      "title": "Fix multiline function signature parsing",
+      "closed": true,
+      "defect_evidence": true,
+      "is_pull_request": true,
+      "labels": [],
+      "body_excerpt": "👨 @fredrikekre had an issue where the following parse was weird\r\n\r\n```\r\njulia> using JuliaSyntax\r\n\r\nshell> cat bug.jl\r\nfunction (\r\n        ::A\r\n        )()\r\nend\r\n\r\njulia> node = JuliaSyntax.parseall(JuliaSyntax.GreenNode, read(\"bug.jl\", String))\r\n     1:39     │[toplevel]\r\n     1:38     │  [function]\r\n     1:8      │    function\r\n     9:9      │    Whitespace\r\n    10:32     │    [tuple]\r\n    10:10     │      (\r\n    11:19     │      NewlineWs\r\n    20:22     │      [::]\r\n    20:21     │        ::\r\n    22:22     │        Identifier       ✔\r\n    23:31     │      NewlineWs\r\n    32:32     │      )\r\n    33:35     │    [block]\r\n    33:34     │      [tuple]\r\n    33:33     │        (\r\n    34:34     │        )\r\n    35:35     │      NewlineWs\r\n    36:38     │    end\r\n    39:39     │  NewlineWs\r\n```\r\n\r\nI let Claude lose on it and occording to it the issue was that with newlines the `peek(ps, 2)` check didn't function properly. \r\n\r\nThis is a bit AI slop so it might not make sense to merge but it might point to where the issue is at least.\r\n\r\n----------------\r\n\r\n🤖 \r\n\r\nMultiline function signatures with type annotations were incorrectly\r\nparsed as tuples instead of calls when newlines appeared between\r\nparentheses. For example:\r\n\r\n```julia\r\nfunction (\r\n    ::A\r\n)()\r\nend\r\n```\r\n\r\nwas parsed as `(function (tuple ...) (block))` instead of the correct\r\n`(function (call (parens ...)) (block))`, inconsistent with the\r\nsingle-line version `function (::A)() end`.\r\n\r\nThe issue was in parse_function_signature where `peek(ps, 2)` was used\r\nto detect if a call pattern follows the closing parenthesis, but this\r\ndidn't skip newlines. \r\n\r\n🤖 Generated with [Claude Code](https://claude.ai/code)\r\n\r\nCo-Authored-By: Claude <noreply@anthropic.com>\r\n"
+    }
+  ],
+  "traceability_paths": [
+    {
+      "chain": "defect_pull_request_to_fix_commit",
+      "pull_request": 580,
+      "pull_request_repository": "JuliaLang/JuliaSyntax.jl",
+      "pull_request_url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/580",
+      "fix_commit": "4a983f60eb8ef3d877bbeb7eac6d2ae3d98fa377",
+      "evidence_source": "merged_defect_fixing_pull_request"
+    }
+  ],
+  "traceability_class": "PR_DIRECT",
+  "traceability_evidence": {
+    "commit_message": "Fix multiline function signature parsing (#580)",
+    "commit_issue_refs": [
+      580
+    ],
+    "commit_cross_repository_refs": [],
+    "pull_request": 580,
+    "pull_request_source": "github_commit_pulls",
+    "pull_request_title": "Fix multiline function signature parsing",
+    "pull_request_issue_refs": [],
+    "pull_request_cross_repository_refs": [],
+    "pull_request_commit_issue_refs": [],
+    "pull_request_commit_cross_repository_refs": [],
+    "pull_request_timeline_issue_refs": [],
+    "pull_request_timeline_cross_repository_refs": [],
+    "refreshed_from_live_github": true
+  },
+  "verified_fix_issue_numbers": [],
+  "cross_repository_issue_records": [],
+  "pull_request_record": {
+    "number": 580,
+    "repository": "JuliaLang/JuliaSyntax.jl",
+    "url": "https://github.com/JuliaLang/JuliaSyntax.jl/pull/580",
+    "state": "closed",
+    "closed": true,
+    "merged": true,
+    "merged_at": "2025-11-11T10:32:56Z",
+    "merge_commit_sha": "4a983f60eb8ef3d877bbeb7eac6d2ae3d98fa377",
+    "title": "Fix multiline function signature parsing",
+    "body_excerpt": "👨 @fredrikekre had an issue where the following parse was weird\r\n\r\n```\r\njulia> using JuliaSyntax\r\n\r\nshell> cat bug.jl\r\nfunction (\r\n        ::A\r\n        )()\r\nend\r\n\r\njulia> node = JuliaSyntax.parseall(JuliaSyntax.GreenNode, read(\"bug.jl\", String))\r\n     1:39     │[toplevel]\r\n     1:38     │  [function]\r\n     1:8      │    function\r\n     9:9      │    Whitespace\r\n    10:32     │    [tuple]\r\n    10:10     │      (\r\n    11:19     │      NewlineWs\r\n    20:22     │      [::]\r\n    20:21     │        ::\r\n    22:22     │        Identifier       ✔\r\n    23:31     │      NewlineWs\r\n    32:32     │      )\r\n    33:35     │    [block]\r\n    33:34     │      [tuple]\r\n    33:33     │        (\r\n    34:34     │        )\r\n    35:35     │      NewlineWs\r\n    36:38     │    end\r\n    39:39     │  NewlineWs\r\n```\r\n\r\nI let Claude lose on it and occording to it the issue was that with newlines the `peek(ps, 2)` check didn't function properly. \r\n\r\nThis is a bit AI slop so it might not make sense to merge but it might point to where the issue is at least.\r\n\r\n----------------\r\n\r\n🤖 \r\n\r\nMultiline function signatures with type annotations were incorrectly\r\nparsed as tuples instead of calls when newlines appeared between\r\nparentheses. For example:\r\n\r\n```julia\r\nfunction (\r\n    ::A\r\n)()\r\nend\r\n```\r\n\r\nwas parsed as `(function (tuple ...) (block))` instead of the correct\r\n`(function (call (parens ...)) (block))`, inconsistent with the\r\nsingle-line version `function (::A)() end`.\r\n\r\nThe issue was in parse_function_signature where `peek(ps, 2)` was used\r\nto detect if a call pattern follows the closing parenthesis, but this\r\ndidn't skip newlines. \r\n\r\n🤖 Generated with [Claude Code](https://claude.ai/code)\r\n\r\nCo-Authored-By: Claude <noreply@anthropic.com>\r\n",
+    "labels": [],
+    "defect_evidence": true,
+    "commit_associated": true
+  }
+}

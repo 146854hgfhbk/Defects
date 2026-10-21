@@ -1,0 +1,69 @@
+diff --git a/src/luacheck/core_utils.lua b/src/luacheck/core_utils.lua
+--- a/src/luacheck/core_utils.lua
++++ b/src/luacheck/core_utils.lua
+@@ -58,16 +58,28 @@ function core_utils.is_definition(opts, warning)
+    return opts.allow_defined or (opts.allow_defined_top and warning.top)
+ end
+ 
+-local function location_comparator(event1, event2)
+-   -- If two events share location, neither can be an invalid comment event.
+-   -- However, they can be equal by identity due to the way table.sort is implemented.
+-   return event1.line < event2.line or
+-      event1.line == event2.line and (event1.column < event2.column or
+-      event1.column == event2.column and event1.code and event1.code < event2.code)
++local function event_priority(event)
++   if event.push or event.pop then
++      return -2
++   elseif event.options then
++      return -1
++   else
++      return tonumber(event.code)
++   end
++end
++
++local function event_comparator(event1, event2)
++   if event1.line ~= event2.line then
++      return event1.line < event2.line
++   elseif event1.column ~= event2.column then
++      return event1.column < event2.column
++   else
++      return event_priority(event1) < event_priority(event2)
++   end
+ end
+ 
+ function core_utils.sort_by_location(array)
+-   table.sort(array, location_comparator)
++   table.sort(array, event_comparator)
+ end
+ 
+ return core_utils
+diff --git a/src/luacheck/inline_options.lua b/src/luacheck/inline_options.lua
+--- a/src/luacheck/inline_options.lua
++++ b/src/luacheck/inline_options.lua
+@@ -98,7 +98,7 @@ local function add_inline_option(events, per_line_opts, body, location, end_colu
+    end
+ 
+    if body == "push" or body == "pop" then
+-      table.insert(events, {code = 1, [body] = true, line = location.line, column = location.column, end_column = end_column})
++      table.insert(events, {[body] = true, line = location.line, column = location.column, end_column = end_column})
+ 
+       if after_push then
+          body = after_push
+@@ -120,7 +120,7 @@ local function add_inline_option(events, per_line_opts, body, location, end_colu
+ 
+       table.insert(per_line_opts[location.line], opts)
+    else
+-      table.insert(events, {code = 2, options = opts, line = location.line, column = location.column, end_column = end_column})
++      table.insert(events, {options = opts, line = location.line, column = location.column, end_column = end_column})
+    end
+ 
+    return true
+@@ -216,7 +216,7 @@ local function handle_events(events, per_line_opts)
+ 
+    -- Go through all events.
+    for _, event in ipairs(events) do
+-      if type(event.code) == "string" then
++      if event.code then
+          -- It's a warning, put it into list of not handled warnings.
+          table.insert(unfiltered_warnings, event)
+       elseif event.options then

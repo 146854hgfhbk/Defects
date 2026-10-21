@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-1720",
+  "technical_evidence_sha256": "db97548092b893c6aeac822aaf5c61a2e54fb7dd7c2b27937847ffde08713ffc",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v2",
+  "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+  "input_sha256": "75bb2f1521cb2cc4f79b3490876be22373050765e56232830d386ea3522cb49f",
+  "reviewed_at": "2026-09-09T16:48:59.244628+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "orlandos-nl/swift-json#56",
+  "rationale": "Issue #56 reports that IkigaJSONDecoder throws 'Unexpected End of File' when decoding a bare root-level `null` into an optional, while Foundation's JSONDecoder succeeds. The minimized production patch touches only Sources/_JSONCore/Parser/JSONParser+Parsing.swift and consists of three one-line boundary corrections in the literal-scanning switch: `count > 5` -> `count >= 5` (false), `count > 4` -> `count >= 4` (true), `count > 4` -> `count >= 4` (null). The literal byte lengths (false=5, true/null=4) match the guards, so the change is an off-by-one boundary fix, not a behavior extension; the `true`/`false` branches are the identical defect in adjacent cases of the same switch, so they belong to the same root cause rather than being an unrelated refactor. No formatting, documentation, configuration, or dependency changes appear (other_file_count=0; production_files lists a single file). The trigger `testRootLevelPrimitiveDecoding` is the unmodified upstream test from the same fixing commit and uses only the pre-existing public surface `IkigaJSONDecoder().decode(_:from:)` with in-memory Data, so no fix-only symbol is referenced and it compiles on both revisions. Machine-generated strict evidence passes on both the original and post-minimization runs: build.both_versions PASS, selectors.present_and_unique (1 valid, unique), trigger.buggy_differential reproduced on Tests/IkigaJSONTests/JSONTests.swift::testRootLevelPrimitiveDecoding, trigger.fixed_clean PASS, trigger.deterministic with 3 repetitions across a complete 32-run matrix, full_suite.buggy_reproduces_only_triggers PASS, full_suite.fixed_all_green PASS, failed_checks empty. Traceability is fix_commit_to_merged_pr_to_issue via merged PR #57 ('Fixes #56'), and verified_fix_issue_numbers=[56] matches the allowed root cause id. active_same_project_root_causes is empty, so this root cause is not a duplicate.\n\nIssue #56 reports IkigaJSONDecoder throwing 'Unexpected End of File' when decoding a bare root-level `null` into an optional, with Foundation's JSONDecoder as the correct-behavior baseline. The minimized production patch is confined to Sources/_JSONCore/Parser/JSONParser+Parsing.swift and consists of exactly three boundary-operator corrections in the literal-scanning guards: `count > 5` -> `count >= 5` for `false` (5 bytes) and `count > 4` -> `count >= 4` for `true` and `null` (4 bytes each). Literal lengths line up with the guard constants, so this is a boundary off-by-one in pre-existing behavior, not a feature extension. No formatting, doc, config, or test edits remain in the production patch (all 3 original hunks retained, 0 removed, post_minimization_validation PASS, other_file_count 0). The trigger is the unchanged upstream test testRootLevelPrimitiveDecoding, which uses only the already-existing public `IkigaJSONDecoder().decode(_:from:)` surface with in-memory Data literals, so it compiles and runs on both revisions; no fix-only API is referenced. Strict evidence on both the original and post-minimization runs shows build.both_versions PASS, a unique declared selector, trigger.buggy_differential reproducing exactly Tests/IkigaJSONTests/JSONTests.swift::testRootLevelPrimitiveDecoding, trigger.fixed_clean and full_suite.fixed_all_green PASS, deterministic across 3 repetitions with a complete 32-run matrix. Traceability is fix_commit_to_merged_pr_to_issue via merged PR #57 ('Fixes #56'), and verified_fix_issue_numbers is [56], matching allowed_root_cause_ids. active_same_project_root_causes is empty, so this root cause is not a duplicate.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T16:48:37.798108+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "75bb2f1521cb2cc4f79b3490876be22373050765e56232830d386ea3522cb49f",
+      "response_sha256": "8a212c8fc994b56164f9fab29b16f36ea3820ecde65bbd52fac2fe1e7862aa59",
+      "response_id": "msg_bd866987b8714c37aa95bf6ac53aa187",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5437299843117744,
+        "input_tokens": 18194,
+        "output_tokens": 798
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "orlandos-nl/swift-json#56",
+      "rationale": "Issue #56 reports that IkigaJSONDecoder throws 'Unexpected End of File' when decoding a bare root-level `null` into an optional, while Foundation's JSONDecoder succeeds. The minimized production patch touches only Sources/_JSONCore/Parser/JSONParser+Parsing.swift and consists of three one-line boundary corrections in the literal-scanning switch: `count > 5` -> `count >= 5` (false), `count > 4` -> `count >= 4` (true), `count > 4` -> `count >= 4` (null). The literal byte lengths (false=5, true/null=4) match the guards, so the change is an off-by-one boundary fix, not a behavior extension; the `true`/`false` branches are the identical defect in adjacent cases of the same switch, so they belong to the same root cause rather than being an unrelated refactor. No formatting, documentation, configuration, or dependency changes appear (other_file_count=0; production_files lists a single file). The trigger `testRootLevelPrimitiveDecoding` is the unmodified upstream test from the same fixing commit and uses only the pre-existing public surface `IkigaJSONDecoder().decode(_:from:)` with in-memory Data, so no fix-only symbol is referenced and it compiles on both revisions. Machine-generated strict evidence passes on both the original and post-minimization runs: build.both_versions PASS, selectors.present_and_unique (1 valid, unique), trigger.buggy_differential reproduced on Tests/IkigaJSONTests/JSONTests.swift::testRootLevelPrimitiveDecoding, trigger.fixed_clean PASS, trigger.deterministic with 3 repetitions across a complete 32-run matrix, full_suite.buggy_reproduces_only_triggers PASS, full_suite.fixed_all_green PASS, failed_checks empty. Traceability is fix_commit_to_merged_pr_to_issue via merged PR #57 ('Fixes #56'), and verified_fix_issue_numbers=[56] matches the allowed root cause id. active_same_project_root_causes is empty, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:traceability.paths",
+        "case.json:trigger_tests",
+        "case.json:production_files",
+        "case.json:minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "The trigger method bundles five assertions; only the null/true/false ones are expected to be fail-to-pass, so the differential signal is a subset of the test body and the Int/String assertions add no discriminating power.",
+        "The patch also relaxes the `true` and `false` guards, which the reported symptom (root-level null) does not directly exercise; these are covered by the same trigger test but were not independently reported in issue #56.",
+        "Semantics of `count` (remaining bytes from current offset vs. total buffer length) are not visible in the diff context; over-relaxed bounds on truncated inputs such as `nul` or `fals` are only implicitly covered by the existing suite, which the full-suite green gate on the fixed revision supports but does not target."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-09T16:48:59.243851+00:00",
+      "prompt_version": "swift-defects-final-curation-v2",
+      "prompt_sha256": "349ede5e537f6da8d959079ea5812e03a8adf27b57d2de1ecca6de111a85bc25",
+      "input_sha256": "75bb2f1521cb2cc4f79b3490876be22373050765e56232830d386ea3522cb49f",
+      "response_sha256": "2eefefe29a07dd1b3a02da9e0ecef9586ede10deec74d8d31c69817dda2474be",
+      "response_id": "msg_9385a3ad0d994c489c992c692168afca",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4794440367827529,
+        "input_tokens": 18240,
+        "output_tokens": 819
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "orlandos-nl/swift-json#56",
+      "rationale": "Issue #56 reports IkigaJSONDecoder throwing 'Unexpected End of File' when decoding a bare root-level `null` into an optional, with Foundation's JSONDecoder as the correct-behavior baseline. The minimized production patch is confined to Sources/_JSONCore/Parser/JSONParser+Parsing.swift and consists of exactly three boundary-operator corrections in the literal-scanning guards: `count > 5` -> `count >= 5` for `false` (5 bytes) and `count > 4` -> `count >= 4` for `true` and `null` (4 bytes each). Literal lengths line up with the guard constants, so this is a boundary off-by-one in pre-existing behavior, not a feature extension. No formatting, doc, config, or test edits remain in the production patch (all 3 original hunks retained, 0 removed, post_minimization_validation PASS, other_file_count 0). The trigger is the unchanged upstream test testRootLevelPrimitiveDecoding, which uses only the already-existing public `IkigaJSONDecoder().decode(_:from:)` surface with in-memory Data literals, so it compiles and runs on both revisions; no fix-only API is referenced. Strict evidence on both the original and post-minimization runs shows build.both_versions PASS, a unique declared selector, trigger.buggy_differential reproducing exactly Tests/IkigaJSONTests/JSONTests.swift::testRootLevelPrimitiveDecoding, trigger.fixed_clean and full_suite.fixed_all_green PASS, deterministic across 3 repetitions with a complete 32-run matrix. Traceability is fix_commit_to_merged_pr_to_issue via merged PR #57 ('Fixes #56'), and verified_fix_issue_numbers is [56], matching allowed_root_cause_ids. active_same_project_root_causes is empty, so this root cause is not a duplicate.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.body",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.build.both_versions",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "traceability.verified_fix_issue_numbers",
+        "minimized_patch_reference.post_minimization_validation"
+      ],
+      "risks": [
+        "The trigger method bundles five assertions; only the null/true/false ones exercise the patched guards, so the int (`42`) and string (`\"hello\"`) assertions likely passed on the buggy revision and are inert padding rather than part of the differential.",
+        "The issue's secondary reproducer (OptionalWrapper using singleValueContainer().decodeNil()) is not covered by the trigger, so decoder-side single-value paths mentioned in the report are only indirectly validated.",
+        "Relaxing the guards to `>=` depends on `count` being remaining bytes from the current offset; that invariant is not visible in the diff context and is only implicitly confirmed by the green full suite on the fixed revision, with no dedicated truncated-literal assertion (`nul`, `fals`) in the trigger.",
+        "Full-suite evidence is a single repetition (full_suite_repetitions=1), and the static analyzer gate was diagnostic only (require_analyze_clean=false).",
+        "issue_evidence and semantic_justification are null in the case record; issue text was read from the embedded source_candidate payload, which is untrusted repository/issue data treated as evidence rather than instruction."
+      ]
+    }
+  ]
+}

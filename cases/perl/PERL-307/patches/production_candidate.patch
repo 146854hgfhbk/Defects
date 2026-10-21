@@ -1,0 +1,108 @@
+diff --git a/lib/Test/Builder.pm b/lib/Test/Builder.pm
+index 55279cba9..19e9b896b 100644
+--- a/lib/Test/Builder.pm
++++ b/lib/Test/Builder.pm
+@@ -962,9 +962,11 @@ sub cmp_ok {
+         local( $@, $!, $SIG{__DIE__} );    # isolate eval
+ 
+         my($pack, $file, $line) = $ctx->trace->call();
++        my $warning_bits = $ctx->trace->warning_bits;
+ 
+         # This is so that warnings come out at the caller's level
+         $succ = eval qq[
++BEGIN {\${^WARNING_BITS} = \$warning_bits};
+ #line $line "(eval in cmp_ok) $file"
+ \$test = (\$got $type \$expect);
+ 1;
+diff --git a/lib/Test2/API.pm b/lib/Test2/API.pm
+index 3277acaa1..c745e06b9 100644
+--- a/lib/Test2/API.pm
++++ b/lib/Test2/API.pm
+@@ -404,10 +404,10 @@ sub context {
+     my $end_phase = $ENDING || $phase eq 'END' || $phase eq 'DESTRUCT';
+ 
+     my $level = 1 + $params{level};
+-    my ($pkg, $file, $line, $sub) = $end_phase ? caller(0) : caller($level);
++    my ($pkg, $file, $line, $sub, @other) = $end_phase ? caller(0) : caller($level);
+     unless ($pkg || $end_phase) {
+         confess "Could not find context at depth $level" unless $params{fudge};
+-        ($pkg, $file, $line, $sub) = caller(--$level) while ($level >= 0 && !$pkg);
++        ($pkg, $file, $line, $sub, @other) = caller(--$level) while ($level >= 0 && !$pkg);
+     }
+ 
+     my $depth = $level;
+@@ -460,6 +460,8 @@ sub context {
+             nested => $hub->{nested},
+             buffered => $hub->{buffered},
+ 
++            full_caller => [$pkg, $file, $line, $sub, @other],
++
+             $$UUID_VIA ? (
+                 huuid => $hub->{uuid},
+                 uuid  => ${$UUID_VIA}->('context'),
+diff --git a/lib/Test2/EventFacet/Trace.pm b/lib/Test2/EventFacet/Trace.pm
+index 46fe7be6f..f69c2d9cd 100644
+--- a/lib/Test2/EventFacet/Trace.pm
++++ b/lib/Test2/EventFacet/Trace.pm
+@@ -9,7 +9,7 @@ BEGIN { require Test2::EventFacet; our @ISA = qw(Test2::EventFacet) }
+ use Test2::Util qw/get_tid pkg_to_file gen_uid/;
+ use Carp qw/confess/;
+ 
+-use Test2::Util::HashBase qw{^frame ^pid ^tid ^cid -hid -nested details -buffered -uuid -huuid};
++use Test2::Util::HashBase qw{^frame ^pid ^tid ^cid -hid -nested details -buffered -uuid -huuid <full_caller};
+ 
+ {
+     no warnings 'once';
+@@ -70,11 +70,15 @@ sub throw {
+ 
+ sub call { @{$_[0]->{+FRAME}} }
+ 
++sub full_call { @{$_[0]->{+FULL_CALLER}} }
++
+ sub package { $_[0]->{+FRAME}->[0] }
+ sub file    { $_[0]->{+FRAME}->[1] }
+ sub line    { $_[0]->{+FRAME}->[2] }
+ sub subname { $_[0]->{+FRAME}->[3] }
+ 
++sub warning_bits { $_[0]->{+FULL_CALLER} ? $_[0]->{+FULL_CALLER}->[9] : undef }
++
+ 1;
+ 
+ __END__
+@@ -118,6 +122,8 @@ C<< at <FILE> line <LINE> >> when calling C<< $trace->debug >>.
+ 
+ Get the call frame arrayref.
+ 
++    [$package, $file, $line, $subname]
++
+ =item $int = $trace->{pid}
+ 
+ =item $int = $trace->pid()
+@@ -143,6 +149,27 @@ The ID of the context that was used to create the event.
+ The UUID of the context that was used to create the event. (If uuid tagging was
+ enabled)
+ 
++=item ($pkg, $file, $line, $subname) = $trace->call
++
++Get the basic call info as a list.
++
++=item @caller = $trace->full_call
++
++Get the full caller(N) results.
++
++=item $warning_bits = $trace->warning_bits
++
++Get index 9 from the full caller info. This is the warnings_bits field.
++
++The value of this is not portable across perl versions or even processes.
++However it can be used in the process that generated it to reproduce the
++warnings settings in a new scope.
++
++    eval <<EOT;
++    BEGIN { ${^WARNING_BITS} = $trace->warning_bits };
++    ... context's warning settings apply here ...
++    EOT
++
+ =back
+ 
+ =head2 DISCOURAGED HUB RELATED FIELDS

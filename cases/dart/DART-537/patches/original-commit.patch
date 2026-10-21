@@ -1,0 +1,124 @@
+diff --git a/lib/src/widgets/tree_view/tree_view.dart b/lib/src/widgets/tree_view/tree_view.dart
+index d16ef3c..fca3473 100644
+--- a/lib/src/widgets/tree_view/tree_view.dart
++++ b/lib/src/widgets/tree_view/tree_view.dart
+@@ -159,7 +159,7 @@ class AnsiTreeView {
+     }
+ 
+     String text = value.toString();
+-    final List<String> lines = text.split(AnsiEscapeCodes.newLine);
++    List<String> lines = text.split(AnsiEscapeCodes.newLine);
+     bool isMultiline = lines.length > 1;
+     final int chunkSize = theme.valueTheme.wrapLength ?? AnsiX.size.columns;
+     final int bufferLength = buffer.toString().unformattedLength;
+@@ -177,7 +177,29 @@ class AnsiTreeView {
+     if (isMultiline) {
+       final int newTabSize = bufferLength - prefix.length + 1;
+       final String separator = isLast ? _getTab(newTabSize) : '$_verticalLine${_getTab(newTabSize - 1)}';
+-      text = text.replaceAll(AnsiEscapeCodes.newLine, '${AnsiEscapeCodes.newLine}$prefix$separator');
++      buffer.write(' ');
++      lines = text.split(AnsiEscapeCodes.newLine);
++      for (int i = 0; i < lines.length; i++) {
++        final String line = lines[i];
++        if (i == 0) {
++          buffer
++            ..writeStyled(
++              line,
++              textStyle: theme.valueTheme.textStyle,
++              foregroundColor: theme.valueTheme.color,
++            )
++            ..writeln();
++          continue;
++        }
++        buffer
++          ..write(prefix)
++          ..write(separator)
++          ..writeln(line.styled(
++            theme.valueTheme.textStyle,
++            theme.valueTheme.color,
++          ));
++      }
++      return buffer.toString();
+     }
+ 
+     buffer
+diff --git a/test/widgets/tree_view/mocks.dart b/test/widgets/tree_view/mocks.dart
+index 9320edd..9a1c57e 100644
+--- a/test/widgets/tree_view/mocks.dart
++++ b/test/widgets/tree_view/mocks.dart
+@@ -171,6 +171,31 @@ _Map<String, dynamic>
+                    laborum.
+ ''';
+ 
++const String treeviewLongTextWithColorsMock = '''
++_Map<String, dynamic>
++         ├── \x1B[1mid\x1B[22m: \x1B[38;5;72m123\x1B[0m
++         ├── \x1B[1mtitle\x1B[22m: \x1B[38;5;72mLorem ipsum dolor sit amet\x1B[0m
++         ├── \x1B[1mdescription\x1B[22m: \x1B[38;5;72mLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut\x1B[0m
++         │                \x1B[38;5;72mlabore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco\x1B[0m
++         │                \x1B[38;5;72mlaboris nisi ut aliquip ex ea commodo consequat.Excepteur sint occaecat cupidatat non\x1B[0m
++         │                \x1B[38;5;72mproident, sunt in culpa qui officia deserunt mollit anim id est laborum.\x1B[0m
++         ├── \x1B[1mpostedOn\x1B[22m: \x1B[38;5;72m2023-06-02T13:01:43.597697\x1B[0m
++         └── \x1B[1mbody\x1B[22m: \x1B[38;5;72mLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod temporincididunt ut labore et\x1B[0m
++                   \x1B[38;5;72mdolore magna aliqua.\x1B[0m
++                   \x1B[38;5;72mUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo\x1B[0m
++                   \x1B[38;5;72mconsequat.\x1B[0m
++                   \x1B[38;5;72mDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.\x1B[0m
++                   \x1B[38;5;72mExcepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est\x1B[0m
++                   \x1B[38;5;72mlaborum.\x1B[0m
++                   \x1B[38;5;72mLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et\x1B[0m
++                   \x1B[38;5;72mdolore magna aliqua.\x1B[0m
++                   \x1B[38;5;72mUt enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo\x1B[0m
++                   \x1B[38;5;72mconsequat.\x1B[0m
++                   \x1B[38;5;72mDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.\x1B[0m
++                   \x1B[38;5;72mExcepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est\x1B[0m
++                   \x1B[38;5;72mlaborum.\x1B[0m
++''';
++
+ const String treeviewMixedMock = '''
+ _Map<dynamic, dynamic>
+            ├── id: 123
+diff --git a/test/widgets/tree_view/tree_view_test.dart b/test/widgets/tree_view/tree_view_test.dart
+index d0ed98c..e5bbb29 100644
+--- a/test/widgets/tree_view/tree_view_test.dart
++++ b/test/widgets/tree_view/tree_view_test.dart
+@@ -200,6 +200,39 @@ Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+     });
+   });
+ 
++  test('long text with colors', () {
++    final Map<String, dynamic> map = <String, dynamic>{
++      'id': 123,
++      'title': 'Lorem ipsum dolor sit amet',
++      'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, '
++          'sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. '
++          'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris '
++          'nisi ut aliquip ex ea commodo consequat.'
++          'Excepteur sint occaecat cupidatat non proident, '
++          'sunt in culpa qui officia deserunt mollit anim id est laborum.',
++      'postedOn': '2023-06-02T13:01:43.597697',
++      'body': '''
++Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod temporincididunt ut labore et dolore magna aliqua. 
++Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
++Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
++Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
++Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
++Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.''',
++    };
++
++    final String actual = AnsiTreeView(
++      theme: const AnsiTreeViewTheme(
++        headerTheme: AnsiTreeHeaderTheme(showHash: false),
++        valueTheme: AnsiTreeNodeValueTheme(
++          wrapText: true,
++          wrapLength: 120,
++          color: AnsiColor.cadetBlue,
++        ),
++      ),
++    ).format(map);
++    expect(actual, treeviewLongTextWithColorsMock);
++  });
++
+   test('mixed', () {
+     final Map<dynamic, dynamic> map = <dynamic, dynamic>{
+       'id': 123,

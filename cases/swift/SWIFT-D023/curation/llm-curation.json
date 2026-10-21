@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "case_id": "SWIFT-770",
+  "technical_evidence_sha256": "97e6b4576c9172ab9e16a4ed696582e6dd06511cb0ad7f5d37c969bc7a0b0981",
+  "review_method": "llm_api_consensus",
+  "prompt_version": "swift-defects-final-curation-v1",
+  "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+  "input_sha256": "464a40187d0fc7bec62face6624e5cfdb3e53c64b4034f9080d6f42d93cfac3d",
+  "reviewed_at": "2026-09-06T06:15:59.925824+00:00",
+  "decision": "ACCEPT",
+  "decisions": {
+    "issue_trigger_fix_same_defect": true,
+    "patch_contains_no_unrelated_change": true,
+    "trigger_semantically_equivalent": true,
+    "root_cause_duplicate_checked": true
+  },
+  "root_cause_id": "swiftlang/swift-testing#1693",
+  "rationale": "Issue #1693 (labels bug/exit-tests, closed by this fix) reports that the 32-byte barrier sequence leaks into `standardErrorContent` when the exit test child produces no other output. The minimized production patch is exactly that boundary condition: `guard buffer.count > barrierValue.count` becomes `guard buffer.count >= barrierValue.count` in ExitTest.trimming logic, so a buffer whose length equals the barrier length is no longer returned untrimmed. The commit message states the same defect ('If the _only_ thing in the stdout or stderr stream ... is the barrier sequence ... we fail to trim it off'), giving a coherent issue/fix/test story about a pre-existing behavior, not a feature or diagnostic change. The patch is one hunk, one changed comparison operator, no formatting, refactor, docs, or config edits; the test hunk is carried separately in patches/trigger-tests.patch. The trigger `exitTestEmptyStreamIsActuallyEmpty` is the unchanged upstream test from the same fixing commit and exercises the reported symptom via `#require(processExitsWith: .success, observing: [\\.standardErrorContent])`, `_Exit`, and `.isEmpty`; the fix adds no public API, and adjacent pre-existing tests already reference `ExitTest.barrierValue` and the same observing overload, so the trigger does not depend on anything introduced by the patch. Machine-generated strict evidence passes on both the original and post-minimization runs: build on both revisions, unique selector, buggy differential reproducing only the declared trigger, deterministic fingerprints over 3 repetitions, 32-run matrix complete, fixed-revision isolated/suite/reversed runs clean, and buggy full-suite failures limited to the declared trigger with one resolved pre-existing baseline exclusion (attachContentsOfDirectoryURL). `active_same_project_root_causes` is empty, so swiftlang/swift-testing#1693 is not a duplicate of any active registry entry, and it is the sole allowed root cause id.\n\nIssue #1693 reports that the 32-byte exit-test barrier sequence leaks into `standardErrorContent` when the child process produces no other output. The minimized production patch is exactly the boundary condition that causes this: `guard buffer.count > barrierValue.count` becomes `guard buffer.count >= barrierValue.count` in ExitTest.swift, so a buffer whose length equals the barrier length is no longer returned untrimmed. The commit message for the fix states the same failure mode (stream containing exactly the barrier bytes and nothing else) and resolves #1693, giving a fix_commit_to_issue traceability path. The patch is one hunk, one line, in one production file, with no refactor, formatting, docs, config, or behavioral extension; the retained-hunk count equals the original production hunk count, and post-minimization validation passed. The trigger `Tests/TestingTests/ExitTestTests.swift::exitTestEmptyStreamIsActuallyEmpty` is the unchanged upstream test from the same fixing commit and asserts `result.standardErrorContent.isEmpty` for a child that immediately calls `_Exit(EXIT_SUCCESS)` — the empty-output case described in the issue. It uses only pre-existing APIs (`#require(processExitsWith:observing:)`, `_Exit`); the fix introduces no new production symbol, so there is no dependency on post-fix API. Strict machine evidence passes on both the original and post-minimization runs: build on both revisions, unique declared selector, buggy differential reproduction of the single trigger, deterministic fingerprints over 3 repetitions across a complete 32-run matrix, fixed-revision isolated/suite/reversed runs clean, and fixed full suite green. `active_same_project_root_causes` is empty, so this root cause is not a duplicate, and swiftlang/swift-testing#1693 is the sole allowed verified issue key.",
+  "reviews": [
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T06:15:37.910826+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "464a40187d0fc7bec62face6624e5cfdb3e53c64b4034f9080d6f42d93cfac3d",
+      "response_sha256": "ec95a9bf73c04176c3b3d11af262b949e96469a1e8e53ed85dbfa133ae6fa439",
+      "response_id": "msg_62cc629efbe54133a7caab6962d7baf5",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.5795037899170813,
+        "input_tokens": 15962,
+        "output_tokens": 813
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-testing#1693",
+      "rationale": "Issue #1693 (labels bug/exit-tests, closed by this fix) reports that the 32-byte barrier sequence leaks into `standardErrorContent` when the exit test child produces no other output. The minimized production patch is exactly that boundary condition: `guard buffer.count > barrierValue.count` becomes `guard buffer.count >= barrierValue.count` in ExitTest.trimming logic, so a buffer whose length equals the barrier length is no longer returned untrimmed. The commit message states the same defect ('If the _only_ thing in the stdout or stderr stream ... is the barrier sequence ... we fail to trim it off'), giving a coherent issue/fix/test story about a pre-existing behavior, not a feature or diagnostic change. The patch is one hunk, one changed comparison operator, no formatting, refactor, docs, or config edits; the test hunk is carried separately in patches/trigger-tests.patch. The trigger `exitTestEmptyStreamIsActuallyEmpty` is the unchanged upstream test from the same fixing commit and exercises the reported symptom via `#require(processExitsWith: .success, observing: [\\.standardErrorContent])`, `_Exit`, and `.isEmpty`; the fix adds no public API, and adjacent pre-existing tests already reference `ExitTest.barrierValue` and the same observing overload, so the trigger does not depend on anything introduced by the patch. Machine-generated strict evidence passes on both the original and post-minimization runs: build on both revisions, unique selector, buggy differential reproducing only the declared trigger, deterministic fingerprints over 3 repetitions, 32-run matrix complete, fixed-revision isolated/suite/reversed runs clean, and buggy full-suite failures limited to the declared trigger with one resolved pre-existing baseline exclusion (attachContentsOfDirectoryURL). `active_same_project_root_causes` is empty, so swiftlang/swift-testing#1693 is not a duplicate of any active registry entry, and it is the sole allowed root cause id.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/trigger-tests.patch",
+        "case.json:source_candidate.issue_check.linked_issues[0].body",
+        "case.json:source_candidate.commit_stats",
+        "case.json:strict_original.checks",
+        "case.json:strict_post_minimization.checks",
+        "case.json:traceability.verified_fix_issue_numbers",
+        "case.json:minimized_patch_reference.post_minimization_validation",
+        "case.json:active_same_project_root_causes"
+      ],
+      "risks": [
+        "issue_evidence is null; the issue body is only available second-hand through source_candidate.issue_check.linked_issues, not as an independently fetched artifact.",
+        "The trigger depends on exit-test support being compiled in; on platforms where exit tests are gated out (SWT_NO_EXIT_TESTS or no process spawning) the test would become silently non-triggering rather than failing. Strict evidence confirms reproduction only on the validation platform.",
+        "The original report distinguished debug from release behavior; the accepted trigger is a different, configuration-independent manifestation of the same boundary condition rather than a literal replay of the reporter's release-mode preconditionFailure scenario.",
+        "Minimization was a no-op (single hunk retained; automatic minimal subset failed post-minimization validation), so there is no independent confirmation that a smaller production change would suffice - acceptable here since the patch is already a single operator.",
+        "No regression test in this case asserts the complementary direction, that legitimate output exactly barrier-length is preserved and not over-trimmed by the `>=` relaxation."
+      ]
+    },
+    {
+      "provider": "claude",
+      "model": "claude-opus-5",
+      "api_version": "2023-06-01",
+      "reviewed_at": "2026-09-06T06:15:59.925597+00:00",
+      "prompt_version": "swift-defects-final-curation-v1",
+      "prompt_sha256": "823bc57973137f0336aebfc20a8452947d07da77080f09f18db088b1263ea894",
+      "input_sha256": "464a40187d0fc7bec62face6624e5cfdb3e53c64b4034f9080d6f42d93cfac3d",
+      "response_sha256": "e539b6f41ad79f74500041947263a7901abe2232ba83d760545e6350e7c350e0",
+      "response_id": "msg_c8f7c8871a0f44708ccf256bf2011b5e",
+      "attempts": 1,
+      "usage": {
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "credit_unit": "credit",
+        "credit_unit_plural": "credits",
+        "credit_usage": 0.4887419646434495,
+        "input_tokens": 15866,
+        "output_tokens": 783
+      },
+      "decision": "ACCEPT",
+      "decisions": {
+        "issue_trigger_fix_same_defect": true,
+        "patch_contains_no_unrelated_change": true,
+        "trigger_semantically_equivalent": true,
+        "root_cause_duplicate_checked": true
+      },
+      "root_cause_id": "swiftlang/swift-testing#1693",
+      "rationale": "Issue #1693 reports that the 32-byte exit-test barrier sequence leaks into `standardErrorContent` when the child process produces no other output. The minimized production patch is exactly the boundary condition that causes this: `guard buffer.count > barrierValue.count` becomes `guard buffer.count >= barrierValue.count` in ExitTest.swift, so a buffer whose length equals the barrier length is no longer returned untrimmed. The commit message for the fix states the same failure mode (stream containing exactly the barrier bytes and nothing else) and resolves #1693, giving a fix_commit_to_issue traceability path. The patch is one hunk, one line, in one production file, with no refactor, formatting, docs, config, or behavioral extension; the retained-hunk count equals the original production hunk count, and post-minimization validation passed. The trigger `Tests/TestingTests/ExitTestTests.swift::exitTestEmptyStreamIsActuallyEmpty` is the unchanged upstream test from the same fixing commit and asserts `result.standardErrorContent.isEmpty` for a child that immediately calls `_Exit(EXIT_SUCCESS)` — the empty-output case described in the issue. It uses only pre-existing APIs (`#require(processExitsWith:observing:)`, `_Exit`); the fix introduces no new production symbol, so there is no dependency on post-fix API. Strict machine evidence passes on both the original and post-minimization runs: build on both revisions, unique declared selector, buggy differential reproduction of the single trigger, deterministic fingerprints over 3 repetitions across a complete 32-run matrix, fixed-revision isolated/suite/reversed runs clean, and fixed full suite green. `active_same_project_root_causes` is empty, so this root cause is not a duplicate, and swiftlang/swift-testing#1693 is the sole allowed verified issue key.",
+      "evidence_paths": [
+        "patches/minimized-production.patch",
+        "patches/production-fix.patch",
+        "patches/trigger-tests.patch",
+        "source_candidate.issue_check.linked_issues[0].body",
+        "source_candidate.origin_pull_request.commits[0].message",
+        "strict_original.checks.trigger.buggy_differential",
+        "strict_post_minimization.checks.full_suite.fixed_all_green",
+        "traceability.paths[0]",
+        "trigger_tests[0]",
+        "active_same_project_root_causes"
+      ],
+      "risks": [
+        "Top-level `issue_evidence` is null; the issue body relied upon is the copy embedded in source_candidate.issue_check.linked_issues rather than an independently supplied issue artifact.",
+        "The trigger depends on exit-test support being compiled in; on platforms where exit tests are gated out (e.g. SWT_NO_EXIT_TESTS) the test would silently stop triggering rather than fail, so portability of the trigger beyond the validated environment is unconfirmed.",
+        "Strict evidence includes a resolved baseline full-suite exclusion (AttachmentTests::attachContentsOfDirectoryURL) that is pre-existing and unrelated to this defect but means the buggy full suite is not clean apart from the trigger.",
+        "The original report distinguished debug vs release configuration; the accepted trigger exercises the empty-stream boundary directly and does not cover the release-mode precondition scenario from the issue reproduction.",
+        "Full-suite validation used only one repetition (full_suite_repetitions=1), so flakiness at the suite level is less thoroughly sampled than the 3-repetition trigger matrix."
+      ]
+    }
+  ]
+}

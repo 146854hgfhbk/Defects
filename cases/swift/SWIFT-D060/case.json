@@ -1,0 +1,343 @@
+{
+  "schema_version": 3,
+  "case_id": "SWIFT-008",
+  "bug_id": 1,
+  "language": "Swift",
+  "project": "pointfreeco/swift-case-paths",
+  "repository_url": "https://github.com/pointfreeco/swift-case-paths.git",
+  "issue_id": 67,
+  "issue_url": "https://github.com/pointfreeco/swift-case-paths/issues/67",
+  "issue_title": "`..` operator associativity",
+  "buggy_revision": "ce9c0d897db8a840c39de64caaa9b60119cf4be8",
+  "fixed_revision": "3625e5d17ac481d655e5b6af8be4c09a9b68c1e3",
+  "revision_mode": "direct_parent_to_upstream_fix",
+  "patch": "patches/minimized-source.patch",
+  "patch_sha256": "8c29096d69c9a361dff3120e0c5635deef39827e153d76c35932a5251096f1ae",
+  "patch_minimization": {
+    "status": "minimized",
+    "strategy": "single_hunk_identity",
+    "original_patch_path": "patches/original-source.patch",
+    "minimized_patch_path": "patches/minimized-source.patch",
+    "original_patch_sha256": "8c29096d69c9a361dff3120e0c5635deef39827e153d76c35932a5251096f1ae",
+    "minimized_patch_sha256": "8c29096d69c9a361dff3120e0c5635deef39827e153d76c35932a5251096f1ae",
+    "original_hunk_count": 1,
+    "retained_hunks": [
+      1
+    ],
+    "removed_hunk_count": 0,
+    "minimality_guarantee": "hunk-level: the only non-empty subset is the validated source patch",
+    "evidence": "validation/minimization-audit.json",
+    "human_signoff": "PENDING"
+  },
+  "triggering_test": "compile::Tests/CasePathsTests/CasePathsTests.swift:776:62",
+  "trigger_tests": [
+    "compile::Tests/CasePathsTests/CasePathsTests.swift:776:62"
+  ],
+  "trigger_kind": "test_target_compile_failure",
+  "expected_failure": {
+    "kind": "stable fixed test-target compile/pass versus buggy test-target compile failure",
+    "diagnostic_location": "Tests/CasePathsTests/CasePathsTests.swift:776:62",
+    "diagnostic_message": "cannot convert value of type 'CasePath<Case, Int>' to expected argument type '(Case) throws -> Int?'"
+  },
+  "changed_production_files": [
+    "Sources/CasePaths/Operators.swift"
+  ],
+  "changed_test_files": [
+    "Tests/CasePathsTests/CasePathsTests.swift"
+  ],
+  "commit_message": "Issue #67 Change CasePathCompositionPrecedence associativity (#69)\n\nChange `associativity` from `right` to `left`, which improves the ergonomics of the `..` operator in case of the nested enums.",
+  "commit_url": "https://github.com/pointfreeco/swift-case-paths/commit/3625e5d17ac481d655e5b6af8be4c09a9b68c1e3",
+  "build_command": [
+    "swift",
+    "build"
+  ],
+  "test_command": [
+    "swift",
+    "test",
+    "--parallel",
+    "--num-workers",
+    "1"
+  ],
+  "language_version": "5.10.1",
+  "dependency_versions": {
+    "swift-argument-parser": {
+      "version": "0.4.3",
+      "revision": "986d191f94cec88f6350056da59c2e59e83d1229",
+      "location": "https://github.com/apple/swift-argument-parser"
+    },
+    "Benchmark": {
+      "version": "0.1.0",
+      "revision": "8e0ef8bb7482ab97dcd2cd1d6855bd38921c345d",
+      "location": "https://github.com/google/swift-benchmark"
+    }
+  },
+  "operating_system_or_container": "Linux/x86_64 (Ubuntu 26.04 LTS)",
+  "architecture": "x86_64",
+  "verification": {
+    "source": "defects4x_swift_elixir_linux_fast (zhjia)",
+    "protocol": "defects4x-policy-v3-test-target-compile",
+    "accepted": true,
+    "verified_at": "2026-09-01T17:52:48.478774+00:00",
+    "buggy_runs": 3,
+    "fixed_runs": 3,
+    "expected_failure": "stable fixed test-target compile/pass versus buggy test-target compile failure",
+    "reason": "verified_test_target_compile_failure",
+    "transition": {
+      "accepted": true,
+      "buggy_repetitions": 3,
+      "diagnostic": {
+        "buggy_runs": 3,
+        "fixed_runs": 3,
+        "location": "Tests/CasePathsTests/CasePathsTests.swift:776:62",
+        "message": "cannot convert value of type 'CasePath<Case, Int>' to expected argument type '(Case) throws -> Int?'",
+        "test_id": "compile::Tests/CasePathsTests/CasePathsTests.swift:776:62",
+        "trigger_kind": "test_target_compile_failure"
+      },
+      "fixed_repetitions": 3,
+      "reason": "stable_buggy_test_target_compile_failure"
+    },
+    "evidence_source": "source-evidence/logs"
+  },
+  "validation": {
+    "status": "defects4j_semantic_verification",
+    "protocol": "defects4x-policy-v3-test-target-compile",
+    "accepted": true,
+    "accepted_at": "2026-09-01T17:52:48.478774+00:00",
+    "evidence_path": "validation/source-evidence/logs",
+    "revision_mode": "direct_parent_revision",
+    "historical_revision_mode": "base_plus_gold_patch",
+    "revision_mode_evidence": "repair/boundary-verification.json",
+    "revision_mode_metadata_repaired_at": "2026-09-12",
+    "historical_validation_not_rewritten": true,
+    "execution_evidence_revision_mode": "base_plus_gold_patch",
+    "upstream_boundary_mode": "direct_parent_revision"
+  },
+  "source_index_collected_at": "2026-09-07 (wechat index.jsonl)",
+  "trigger_source": "zhjia defects4x dataset trigger_tests/<id> (compile::file:line:col or test-name list)",
+  "timezone": "UTC",
+  "reproducibility_status": "direct_parent_compile_diagnostic_historical_evidence_current_protocol_deferred",
+  "deprecation_reason": null,
+  "metadata_repaired_at": "2026-09-10",
+  "dataset_id": "SWIFT-D060",
+  "buggy_commit": "ce9c0d897db8a840c39de64caaa9b60119cf4be8",
+  "fixed_commit": "3625e5d17ac481d655e5b6af8be4c09a9b68c1e3",
+  "changed_source_files": [
+    "Sources/CasePaths/Operators.swift"
+  ],
+  "revision_alias_semantics": "buggy_commit/fixed_commit identify upstream provenance; experimental b/f identities are in artifacts",
+  "upstream_fix": {
+    "commit": "3625e5d17ac481d655e5b6af8be4c09a9b68c1e3",
+    "parents": [
+      "ce9c0d897db8a840c39de64caaa9b60119cf4be8"
+    ],
+    "buggy_baseline_is_parent": true,
+    "single_parent_matches_baseline": true,
+    "commit_message": "Issue #67 Change CasePathCompositionPrecedence associativity (#69)\n\nChange `associativity` from `right` to `left`, which improves the ergonomics of the `..` operator in case of the nested enums.",
+    "boundary_evidence": "repair/boundary-verification.json",
+    "boundary_evidence_sha256": "dbfe17305f03e6aff2562f47ec7edcda2a698d496fb23d3a884cf1b8b51d77e7"
+  },
+  "fixed_revision_kind": "upstream_provenance_use_artifacts_for_experiment",
+  "artifacts": {
+    "buggy": {
+      "commit": "2e44968c2e9960da8b784027ecc9cc3e74da0eff",
+      "tree": "704147861d6e05042aa50b6058b9018c9e123713"
+    },
+    "fixed": {
+      "commit": "1361bf83322f3f8de15dc4f4a42e424cb2c9a571",
+      "tree": "0a1c5ea69122aac38e0d7ccf4e3b43ceabff18bc",
+      "equals_upstream_tree": true
+    },
+    "construction": "base + compatibility(if present) + trigger; fixed adds production patch",
+    "synthetic_commit_identity_disclosed": true,
+    "upstream_history_not_rewritten": true
+  },
+  "traceability": {
+    "reference_mode": "DIRECT_COMMIT_ISSUE_REF",
+    "direct_commit_issue_reference": true,
+    "source": "authentic_local_git_commit_object",
+    "strict_direct_reference_satisfied": true,
+    "traceability_closed": true,
+    "publication_profile_satisfied": true,
+    "strict_direct_profile_satisfied": true,
+    "pr_mediated_chain_verified": false
+  },
+  "patches": {
+    "trigger_tests": {
+      "path": "patches/trigger-tests.patch",
+      "sha256": "879666674d28a9d5fece9dbb05c7d84525636cd5ca36074cd0f4cef2e9c47817",
+      "bytes": 670
+    },
+    "production_fix": {
+      "path": "patches/original-source.patch",
+      "sha256": "8c29096d69c9a361dff3120e0c5635deef39827e153d76c35932a5251096f1ae"
+    }
+  },
+  "minimized_patch": {
+    "path": "patches/minimized-source.patch",
+    "sha256": "8c29096d69c9a361dff3120e0c5635deef39827e153d76c35932a5251096f1ae"
+  },
+  "cohort": "compile_diagnostic",
+  "build": {
+    "directory": ".",
+    "analyze_command": [
+      "swift",
+      "build"
+    ],
+    "test_command": [
+      "swift",
+      "test",
+      "--parallel",
+      "--num-workers",
+      "1"
+    ],
+    "dependency_command": [
+      "swift",
+      "package",
+      "resolve",
+      "--skip-update"
+    ],
+    "require_analyze_clean": true
+  },
+  "language_metadata": {
+    "compiler_version": "5.10.1",
+    "package_tools_version": "5.2",
+    "note": "Compiler version is distinct from Package.swift tools/language mode; recovered manifest records may fill package_tools_version"
+  },
+  "auto_baseline_full_suite": false,
+  "test_suite_policy": {
+    "name": "explicitly_filtered_regression_suite",
+    "excluded_selectors": [],
+    "exclusions": [],
+    "failed_process_may_be_waived": false,
+    "fresh_filtered_suite_validation_required": false,
+    "trigger_exclusion_forbidden": true
+  },
+  "fixed_test_result": {
+    "status": "HISTORICAL_RESULTS_RETAINED",
+    "historical_full_suite_exit_codes": [
+      0
+    ],
+    "current_suite_success_required": {
+      "exit_code": 0,
+      "failed_tests": 0,
+      "repetitions": 3
+    },
+    "current_protocol_rerun_performed": false
+  },
+  "current_validation": {
+    "protocol": "explicit-isolated-order-and-filtered-full-suite-v1",
+    "required_repetitions": 3,
+    "full_suite_repetitions": 3,
+    "historical_logs_preserved": true,
+    "historical_reverse_runs_are_order_evidence": false,
+    "same_process_permutation_claimed": false,
+    "new_full_validation_performed": false,
+    "status": "PENDING_CURRENT_PROTOCOL_RERUN",
+    "bound_delivery_reports": [
+      {
+        "path": "delivery-evidence/offline/offline-reproduction.json",
+        "sha256": "917ebabf39de72a1755b87105de4ce258737a464763433fe59f3094a070b4512",
+        "production_patch_matches": true,
+        "trigger_patch_matches": true,
+        "used_as_current_execution_evidence": false,
+        "trigger_binding": "BYTE_IDENTICAL"
+      }
+    ],
+    "raw_log_recovery_waived_by_user": true,
+    "waiver_scope": "historical raw-log recovery only; no metadata upgrade to PASS"
+  },
+  "runtime_release": {
+    "asset_manifest": "../../../runtime-assets.manifest.json",
+    "entrypoint": "../../../benchmark.py",
+    "image_id": "sha256:c45a517d97b7491cf1281f04324684ca1957d5344ea8cecd6aef9c4616314f69",
+    "swift_executable": "/opt/swift510/usr/bin/swift",
+    "external_assets_are_required": true,
+    "artifact_tree_verified": true,
+    "historical_workspace": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/h60-completion-20260908T1405-compile/SWIFT-008/fixed",
+    "assets": [
+      {
+        "kind": "experiment_bundle",
+        "case_relative_path": "sources/experiment.bundle",
+        "sha256": "ef84966686229d4ee6c8d388a8384e2823f900b2b5127fdfdf057973f10cce8f",
+        "bytes": 108508,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/ef84966686229d4ee6c8d388a8384e2823f900b2b5127fdfdf057973f10cce8f"
+      },
+      {
+        "kind": "dependency_snapshot",
+        "case_relative_path": "environment/dependencies.tar.gz",
+        "sha256": "58237989f916e7f6e6a1fa64a4eeaef05f7e92f047d8a18013afcba81f5acb09",
+        "bytes": 7024706,
+        "remote_path": "__REFERENCE_USER_HOME__/swift-defects-miner-review/output/swift-audit-remediation-20260910/runtime-assets/58237989f916e7f6e6a1fa64a4eeaef05f7e92f047d8a18013afcba81f5acb09"
+      }
+    ],
+    "wrapper_evidence": [
+      {
+        "path": "environment/wrappers/08b77662f21dfb395bfecc48eb491fd1b5c4d6bf47e80c9e2f41609641a8ad30",
+        "sha256": "08b77662f21dfb395bfecc48eb491fd1b5c4d6bf47e80c9e2f41609641a8ad30",
+        "matches_recorded": true
+      }
+    ]
+  },
+  "human_curation": {
+    "status": "PENDING",
+    "approval_template": "repair/human-review.json",
+    "agent_cannot_sign_as_human": true
+  },
+  "acceptance": {
+    "human_curation": "PENDING",
+    "release_eligible": false,
+    "current_protocol_validation": "PENDING"
+  },
+  "status": "release_candidate",
+  "release": {
+    "state": "RC",
+    "strict_active": false,
+    "blockers": [
+      "separate_compile_diagnostic_cohort"
+    ],
+    "deprecation_reason": null,
+    "deferred_gates": [
+      "human_signoff_pending",
+      "current_protocol_validation_pending"
+    ],
+    "structural_boundary_status": "DIRECT",
+    "publication_profile_traceability": "PASS",
+    "strict_direct_traceability": "PASS",
+    "execution_evidence_policy": "HISTORICAL_EVIDENCE_PRESERVED_CURRENT_PROTOCOL_DEFERRED",
+    "human_signoff_policy": "PENDING_NOT_FABRICATED",
+    "classic_runtime_profile": "EXTENSION_COMPILE_DIAGNOSTIC",
+    "publication_profile_cohort": "VALID_DISCLOSED_EXTENSION",
+    "defects4j_core_validation": "EXTENSION_NOT_RUNTIME_CORE"
+  },
+  "repair": {
+    "date": "2026-09-10",
+    "base_archive_sha256": "21599edfd4c0c560677f781fdd84da40fa22fb14472aaaf7174b7dec81d9df21",
+    "previous_metadata": "repair-history/case.before-repair.json",
+    "code_history": null,
+    "historical_reports_not_rewritten": true,
+    "raw_log_recovery_out_of_scope": true,
+    "stage1_metadata_hardening": {
+      "performed_at": "2026-09-12",
+      "authoritative_boundary": "repair/boundary-verification.json",
+      "historical_execution_evidence_preserved": true,
+      "no_execution_result_invented": true
+    }
+  },
+  "dependency_snapshot": {
+    "lock": "environment/runtime-Package.resolved",
+    "sha256": "a2a8f070af5eb9c240a0816ff71071596813b7d7717c81a3df2447a522fe17b4",
+    "source": "historical SwiftPM workspace",
+    "source_workspace": "__REFERENCE_USER_HOME__/swift-defects-miner-review/workspaces/h60-completion-20260908T1405-compile/SWIFT-008/fixed",
+    "graph_identity_sha256": "9f08a1285c682d54a56b1e8525db1a4886ba67d8ce3902e4ba5c83a1e8282368",
+    "archive_format": "build-checkouts-repositories-v1"
+  },
+  "historical_execution_revision_mode": "base_plus_gold_patch",
+  "defects4j_core_validation": {
+    "status": "EXTENSION_NOT_RUNTIME_CORE",
+    "classification": "COMPILE_DIAGNOSTIC_EXTENSION",
+    "report": "validation/defects4j-core-reacceptance.json",
+    "report_sha256": "1c9456d415686f54d9f5f94d069b6907687fd25113f3d4af1b1c9c270c7fed71",
+    "generated_at": "2026-09-12",
+    "does_not_claim_current_protocol_rerun": true
+  }
+}

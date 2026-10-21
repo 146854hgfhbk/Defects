@@ -1,0 +1,56 @@
+diff --git a/test/test_gpmr.jl b/test/test_gpmr.jl
+index 0a26985a6..090bec890 100644
+--- a/test/test_gpmr.jl
++++ b/test/test_gpmr.jl
+@@ -41,6 +41,30 @@
+     @test_throws ErrorException("c must be nonzero") gpmr(A, B, b, c)
+     b .= 0
+     @test_throws ErrorException("b must be nonzero") gpmr(A, B, b, c)
++
++    # Test breakdowns
++    A, b, c = ssy_mo_breakdown(transpose)
++    λ = 1.0
++    μ = -1.0
++    K = [I A; A' -I]
++    d = [b; c]
++    x, y, stats = gpmr(A, A', b, c, λ=λ, μ=μ)
++    r =  d - K * [x; y]
++    resid = norm(r) / norm(d)
++    @test(resid ≤ gpmr_tol)
++
++    # Test inconsistent linear systems
++    A, b, c = ssy_mo_breakdown(transpose)
++    K = [I A; A' I]
++    d = [b; c]
++    n, m = size(K)
++    p = rank(K)
++    @test(p < n)
++    x, y, stats = gpmr(A, A', b, c)
++    r =  d - K * [x; y]
++    Aresid = norm(K' * r) / norm(K' * d)
++    @test(Aresid ≤ gpmr_tol)
++    @test(stats.inconsistent)
+   end
+ 
+   # Test underdetermined adjoint systems.
+diff --git a/test/test_utils.jl b/test/test_utils.jl
+index 0c864b1b3..540c9c63e 100644
+--- a/test/test_utils.jl
++++ b/test/test_utils.jl
+@@ -331,3 +331,16 @@ function jacobi(A; T=Float64, pd=true)
+   P⁻¹ = Diagonal(J)
+   return P⁻¹
+ end
++
++# Generate a breakdown in the orthogonal tridiagonalization process and the orthogonal Hessenberg reduction process.
++function ssy_mo_breakdown(transpose :: Bool=false)
++  if transpose
++    A = [1.0 -1.0; 0.0 1.0; -1.0 0.0]
++  else
++    A = [1.0 0.0 -1.0; -1.0 1.0 0.0]
++  end
++  n, m = size(A)
++  b = ones(n)
++  c = ones(m)
++  return A, b, c
++end

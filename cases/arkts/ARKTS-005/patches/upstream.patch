@@ -1,0 +1,38 @@
+diff --git a/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/main/ets/MainAbility/MainAbility.ts b/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/main/ets/MainAbility/MainAbility.ts
+index 8abf8327a2..172e8ed8ad 100644
+--- a/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/main/ets/MainAbility/MainAbility.ts
++++ b/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/main/ets/MainAbility/MainAbility.ts
+@@ -19,6 +19,7 @@ const TAG: string = 'MainAbility'
+ 
+ export default class MainAbility extends UIAbility {
+   onCreate(want, launchParam) {
++    AppStorage.setOrCreate('UIAbilityContext', this.context)
+     let isRemote = want.parameters.isRemote
+     if (isRemote) {
+       AppStorage.SetOrCreate('isRemote', isRemote)
+diff --git a/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/main/ets/common/TitleBarComponent.ets b/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/main/ets/common/TitleBarComponent.ets
+index 708ace1cda..c7b7128467 100644
+--- a/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/main/ets/common/TitleBarComponent.ets
++++ b/code/SuperFeature/DistributedAppDev/ArkTSDistributedCalc/entry/src/main/ets/common/TitleBarComponent.ets
+@@ -116,12 +116,15 @@ export struct TitleBarComponent {
+     this.remoteDeviceModel.registerDeviceListCallback(() => {
+       this.deviceList = []
+       Logger.info(TAG, `registerDeviceListCallback, callback entered`)
+-      this.deviceList.push({
+-        deviceId: '0',
+-        deviceName: getContext(this).resourceManager.getStringSync($r('app.string.localhost').id),
+-        deviceType: '0',
+-        networkId: ''
+-      })
++      let context: common.UIAbilityContext | undefined = AppStorage.get('UIAbilityContext')
++      if (context !== undefined) {
++        this.deviceList.push({
++          deviceId: '0',
++          deviceName: context.resourceManager.getStringSync($r('app.string.localhost').id),
++          deviceType: '0',
++          networkId: ''
++        })
++      }
+       let deviceTempList = this.remoteDeviceModel.discoverList.length > 0 ? this.remoteDeviceModel.discoverList : this.remoteDeviceModel.deviceList;
+       if (deviceTempList !== null) {
+         for (let i = 0; i < deviceTempList!.length; i++) {
