@@ -14,6 +14,8 @@ Defects4X is deliberately **per-case pinned**. Do not assume one global version 
 | Swift | 100 | container / Swift toolchain | Swift 5.10.1, 6.1, 6.2.3 |
 | ArkTS | 50 | device | SDK + authorized device + signing |
 
+Per-case table: [case-matrix.tsv](case-matrix.tsv).
+
 The authoritative version for a case is:
 
 ```bash

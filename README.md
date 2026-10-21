@@ -26,7 +26,7 @@ This repository is the **source-level distribution** of Defects4X. It contains:
 | R | 100 | native R 4.4.3 | [env/r.md](env/r.md) |
 | Swift | 100 | container / Swift toolchain | [env/container.md](env/container.md) |
 
-The **600 source-guide cases** are Dart, Julia, Kotlin, Lua, Perl, and R. The remaining 250 are:
+The **600 source-guide cases** are Dart, Julia, Kotlin, Lua, Perl, and R. A per-case toolchain table is in [env/case-matrix.tsv](env/case-matrix.tsv). The remaining 250 are:
 
 - **200 container-oriented cases**: Elixir 100 + Swift 100
 - **50 device-oriented cases**: ArkTS 50
