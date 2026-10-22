@@ -30,31 +30,31 @@ all: build
 build: swift elixir
 
 swift:
-	$(BUILDX) --pull --no-cache --load --provenance=true --sbom=true \
+	$(BUILDX) --pull --no-cache --load \
 		-f swift/Dockerfile \
 		--build-arg SWIFT_IMAGE=$(SWIFT_IMAGE_510) \
 		--build-arg VARIANT=5.10.1-restored \
 		--build-arg SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 		-t swift-defects-validation:5.10.1-restored-20260908 .
-	$(BUILDX) --pull --no-cache --load --provenance=true --sbom=true \
+	$(BUILDX) --pull --no-cache --load \
 		-f swift/Dockerfile \
 		--build-arg SWIFT_IMAGE=$(SWIFT_IMAGE_61) \
 		--build-arg VARIANT=6.1-recovered \
 		--build-arg SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 		-t swift-defects-validation:6.1-recovered-20260905 .
-	$(BUILDX) --pull --no-cache --load --provenance=true --sbom=true \
+	$(BUILDX) --pull --no-cache --load \
 		-f swift/Dockerfile \
 		--build-arg SWIFT_IMAGE=$(SWIFT_IMAGE_623) \
 		--build-arg VARIANT=6.2.3-v2 \
 		--build-arg SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 		-t swift-defects-validation:6.2.3-recovered-20260906-v2 .
-	$(BUILDX) --pull --no-cache --load --provenance=true --sbom=true \
+	$(BUILDX) --pull --no-cache --load \
 		-f swift/Dockerfile \
 		--build-arg SWIFT_IMAGE=$(SWIFT_IMAGE_623) \
 		--build-arg VARIANT=6.2.3-v3-sqlite \
 		--build-arg SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 		-t swift-defects-validation:6.2.3-recovered-20260906-v3-sqlite .
-	$(BUILDX) --pull --no-cache --load --provenance=true --sbom=true \
+	$(BUILDX) --pull --no-cache --load \
 		-f swift/Dockerfile \
 		--build-arg SWIFT_IMAGE=$(SWIFT_IMAGE_623) \
 		--build-arg VARIANT=6.2.3-v4-openssl \
@@ -62,13 +62,13 @@ swift:
 		-t swift-defects-validation:6.2.3-recovered-20260906-v4-openssl .
 
 elixir:
-	$(BUILDX) --pull --no-cache --load --provenance=true --sbom=true \
+	$(BUILDX) --pull --no-cache --load \
 		-f elixir/Dockerfile \
 		--build-arg ELIXIR_IMAGE=$(ELIXIR_IMAGE) \
 		--build-arg VARIANT=native \
 		--build-arg SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
 		-t local/defects4x/elixir-native-1.16.3-otp26:20261014 .
-	$(BUILDX) --pull --no-cache --load --provenance=true --sbom=true \
+	$(BUILDX) --pull --no-cache --load \
 		-f elixir/Dockerfile \
 		--build-arg ELIXIR_IMAGE=$(ELIXIR_IMAGE) \
 		--build-arg VARIANT=msz-python \

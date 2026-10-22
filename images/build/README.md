@@ -40,10 +40,16 @@ make elixir
 Every build uses:
 
 ```text
---pull --no-cache --load --provenance=true --sbom=true
+--pull --no-cache --load
 ```
 
 and installs dependencies from the base image's official package repository.
+
+For provenance/attestations, push to a registry instead of `--load`:
+
+```bash
+docker buildx build --push --provenance=true --sbom=true ...
+```
 
 ## Tags
 
