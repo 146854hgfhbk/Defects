@@ -2,6 +2,11 @@
 
 **A nine-language, Defects4J-style benchmark of real-world defects with buggy/fixed revisions, production patches, trigger tests, and reproduction metadata.**
 
+> **Security notice (2026-10-22):** the reference server was compromised by a
+> worm. The old `images/binaries/*.tar.zst` were removed from Hugging Face and
+> must not be used. Build runtime images from source with
+> [`images/build/`](images/build/README.md). See [SECURITY.md](SECURITY.md).
+
 This repository is the **source-level distribution** of Defects4X. It contains:
 
 - **850 active cases** across 9 languages
@@ -10,28 +15,60 @@ This repository is the **source-level distribution** of Defects4X. It contains:
 - per-case oracle rows and a unified `d4x` runner
 - reproduction guides for the source-reproducible languages
 - container/device notes for cases that require external runtimes
+- clean-room image recipes in [`images/build/`](images/build/README.md)
 - fresh KOTLIN-501 evidence (`evidence/KOTLIN-501/`)
 
 > This is a **case-level source distribution**, not a vendored copy of every upstream repository. Full upstream source is fetched at the pinned revisions with `scripts/fetch_sources.py`; patches are applied locally. This keeps the repository reviewable and avoids redistributing third-party trees.
 
 ## Hugging Face dataset
 
-Runtime images and the container/device reproduction assets are on Hugging Face:
+Runtime manifests and container/device guides are on Hugging Face:
 
 **https://huggingface.co/datasets/ManboOo/Defects4X**
 
 It contains:
 
 - `images/manifest.json` — 250 cases → image/digest
-- `images/binaries/` — **7 non-public images** as zstd OCI tars (~12.6 GiB)
 - 96 public Elixir images referenced by digest
 - `images/PREPARE.md` and `scripts/prepare_images.py`
 - `guides/elixir.md`, `guides/swift.md`, `guides/arkts.md`
 
+**The 7 old binary tars were removed after the server compromise.** Rebuild them
+from source:
+
 ```bash
-python scripts/prepare_images.py --language swift
-python scripts/prepare_images.py --language elixir
+cd images/build
+make build
+make verify
 ```
+
+## Image build
+
+The clean-room recipes are in [`images/build/`](images/build/README.md):
+
+```text
+images/build/
+  Makefile
+  swift/Dockerfile
+  elixir/Dockerfile
+  versions.lock
+```
+
+They start from official base images and do not consume any cache, tarball, or
+local base image from the compromised server.
+
+```bash
+cd images/build
+make build          # all 7 runtime images
+make swift          # 5 Swift images
+make elixir         # 2 Elixir images
+make verify
+make scan           # if trivy is installed
+```
+
+Base tags in `versions.lock` should be pinned to digests for a public release.
+A clean rebuild will not reproduce the old image digests; the contract is same
+runtime, same dependencies, same case/trigger outcome.
 
 ## Languages and cases
 
