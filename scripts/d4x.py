@@ -213,7 +213,16 @@ def test_command(case: dict, lang: str):
 def container_image(case: dict, lang: str):
     if lang == "swift":
         r = case.get("runtime_release") or {}
-        return r.get("image_name") or r.get("image_id")
+        if r.get("image_name"):
+            return r["image_name"]
+        img_id = r.get("image_id")
+        if img_id:
+            p = ROOT / "metadata" / "image-tags.json"
+            if p.is_file():
+                tags = json.loads(p.read_text(encoding="utf-8")).get("swift", {})
+                if img_id in tags:
+                    return tags[img_id]
+            return img_id
     if lang == "elixir":
         return (case.get("environment") or {}).get("image")
     return None
