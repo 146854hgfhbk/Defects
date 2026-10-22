@@ -22,20 +22,30 @@ Important fields vary slightly by language:
 
 Use the **case's own roles**, not a blanket "apply the fix commit".
 
-## 2. Fetch the upstream source at the pinned revisions
+## 2. Fetch and patch the upstream source
 
 ```bash
-python scripts/fetch_sources.py DART-101 --out /tmp/d4x-src
+python scripts/d4x.py checkout DART-101 --work /tmp/d4x
 ```
 
-The script:
+This:
 
 - reads the repository URL and revisions from `case.json`
 - clones with `--filter=blob:none`
-- checks out `buggy` and `fixed` into separate worktrees
+- creates `buggy` and `fixed` worktrees
+- applies the declared trigger/production patches
 - never modifies the upstream remote
 
 For offline/air-gapped runs, mirror the repository bundles and set `D4X_SOURCE_CACHE`.
+
+To run the whole protocol:
+
+```bash
+python scripts/d4x.py run DART-101 --work /tmp/d4x --dry-run
+python scripts/d4x.py run DART-101 --work /tmp/d4x
+```
+
+`run` writes `result.json` with compile/test exit codes and the PASS/FAIL verdict.
 
 ## 3. Install the toolchain
 
@@ -66,7 +76,8 @@ If the case has `environment.lock.json`, its versions take precedence over the l
 
 ## 4. Apply patches
 
-Typical order:
+`d4x checkout` already applies the selected trigger/production patches. If you
+need to do it manually, the typical order is:
 
 1. Check out the buggy revision.
 2. Apply the **trigger/test patch** (the test that exposes the defect).
@@ -90,6 +101,16 @@ The expected differential is:
 
 - buggy: trigger **fails**
 - fixed: trigger **passes**
+
+Use the CLI:
+
+```bash
+python scripts/d4x.py run DART-101 --work /tmp/d4x --dry-run
+python scripts/d4x.py run DART-101 --work /tmp/d4x
+```
+
+`run` writes `<work>/<CASE>/result.json` with per-side compile/test rc and
+`FAIL_AS_EXPECTED` / `PASS` / `COMPILE_ERROR` / `BLOCKED` outcomes.
 
 Record:
 

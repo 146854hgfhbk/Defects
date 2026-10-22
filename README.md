@@ -58,7 +58,7 @@ env/                          # per-language environment guides
 docs/REPRODUCTION_GUIDE.md    # generic replay protocol
 docs/REPRODUCIBILITY.md       # L0-L5 status and CI scope
 scripts/fetch_sources.py      # fetch upstream source at pinned revisions
-scripts/d4x.py                # unified runner: list/show/fetch/patch/plan/verify
+scripts/d4x.py                # Defects4J-like CLI: checkout/compile/test/run/info/...
 ```
 
 Each case directory is self-contained for metadata inspection. Large upstream source trees and repository bundles are intentionally not committed; they are fetched from the recorded revisions.
@@ -69,21 +69,21 @@ Each case directory is self-contained for metadata inspection. Large upstream so
 git clone https://github.com/146854hgfhbk/Defects.git
 cd Defects
 
-python scripts/d4x.py list --language dart
-python scripts/d4x.py show DART-101
+python scripts/d4x.py info DART-101
 python scripts/d4x.py oracle DART-101
 
-# fetch both pinned revisions
-python scripts/d4x.py fetch DART-101 --out /tmp/d4x
+# fetch both pinned revisions + apply declared patches
+python scripts/d4x.py checkout DART-101 --work /tmp/d4x
 
-# apply the declared trigger/production patches
-python scripts/d4x.py patch DART-101 --work /tmp/d4x/DART-101 --side buggy
-python scripts/d4x.py patch DART-101 --work /tmp/d4x/DART-101 --side fixed
+# install the toolchain from env/dart.md, then:
+python scripts/d4x.py compile DART-101 --work /tmp/d4x --side buggy
+python scripts/d4x.py test DART-101 --work /tmp/d4x --side buggy
+python scripts/d4x.py compile DART-101 --work /tmp/d4x --side fixed
+python scripts/d4x.py test DART-101 --work /tmp/d4x --side fixed
 
-# print the exact replay plan
-python scripts/d4x.py plan DART-101
-
-# install the toolchain from env/dart.md, then run the trigger
+# or run both sides and compare with the oracle
+python scripts/d4x.py run DART-101 --work /tmp/d4x --dry-run
+python scripts/d4x.py run DART-101 --work /tmp/d4x
 ```
 
 ## Unified runner
@@ -92,15 +92,30 @@ python scripts/d4x.py plan DART-101
 
 | Command | Purpose |
 |---|---|
-| `list` | list cases by language |
-| `show` | show revisions, patches, guide, oracle |
+| `info` / `show` | show revisions, patches, guide, oracle |
+| `bids` | list case IDs |
+| `query` | filter by language/status |
+| `checkout` | fetch both revisions and apply declared patches |
+| `compile` | run the language compile step for one side |
+| `test` | run the trigger/test command for one side |
+| `run` | checkout + compile + test both sides; compare with oracle |
 | `oracle` | print the per-case expected outcome/trigger |
-| `fetch` | clone both pinned revisions |
-| `patch` | apply the selected trigger/production patches |
-| `plan` | print the complete replay steps |
+| `export` | export case metadata + oracle + patches |
+| `plan` | print the complete replay steps (no execution) |
 | `verify` | static validation of all 850 cases |
 
-It does **not** install language toolchains or run Docker for you; it resolves the case and produces a deterministic sequence that the language guide explains.
+`run` writes:
+
+```text
+<work>/<CASE>/
+  buggy/ fixed/       # patched source trees
+  logs/               # compile/test logs
+  result.json         # rc + outcome + oracle + verdict
+```
+
+It does **not** install language toolchains, pull Docker images, or provide an
+ArkTS device. Prepare those with `env/` and `prepare_images.py` first. Use
+`--dry-run` to print the exact commands without running them.
 
 ## Patch semantics
 

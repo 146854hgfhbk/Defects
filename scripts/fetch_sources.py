@@ -117,7 +117,10 @@ def main() -> int:
 
     case_path = find_case(args.case)
     case = json.loads(case_path.read_text(encoding="utf-8"))
-    case_id = case.get("case_id") or case.get("bug_id") or case.get("id") or case_path.parent.name
+    # Use the release directory name as the workdir ID. This matters for Swift,
+    # where the release ID (SWIFT-Dxxx) differs from the package-internal ID.
+    case_id = case_path.parent.name
+    internal_id = case.get("case_id") or case.get("bug_id") or case.get("id")
     url = repo_url(case)
     buggy, fixed = revisions(case)
     if not url:
@@ -150,6 +153,7 @@ def main() -> int:
 
     meta = {
         "case_id": case_id,
+        "internal_case_id": internal_id,
         "repository": normalize_repo(url),
         "buggy_revision": buggy,
         "fixed_revision": fixed,

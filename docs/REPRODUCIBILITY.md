@@ -7,7 +7,7 @@ Defects4X distinguishes five levels. A claim should name the level.
 | L0 | metadata, patches, locks are readable | 850/850 |
 | L1 | upstream source can be fetched at pinned revisions | 850/850 by script design; Lua fixed and smoke-tested |
 | L2 | correct toolchain can be installed from a guide | 600 language guides + 250 container/device notes |
-| L3 | buggy FAIL / fixed PASS replay | partially evidenced; not independently re-run for 850 |
+| L3 | buggy FAIL / fixed PASS replay | `d4x run` implemented; KOTLIN-501 evidenced; full matrix not yet run |
 | L4 | clean-room, offline, evidence-hash match | not yet |
 | L5 | third party succeeds first try | not yet |
 
