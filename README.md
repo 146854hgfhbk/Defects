@@ -14,6 +14,25 @@ This repository is the **source-level distribution** of Defects4X. It contains:
 
 > This is a **case-level source distribution**, not a vendored copy of every upstream repository. Full upstream source is fetched at the pinned revisions with `scripts/fetch_sources.py`; patches are applied locally. This keeps the repository reviewable and avoids redistributing third-party trees.
 
+## Hugging Face dataset
+
+Runtime images and the container/device reproduction assets are on Hugging Face:
+
+**https://huggingface.co/datasets/ManboOo/Defects4X**
+
+It contains:
+
+- `images/manifest.json` — 250 cases → image/digest
+- `images/binaries/` — **7 non-public images** as zstd OCI tars (~12.6 GiB)
+- 96 public Elixir images referenced by digest
+- `images/PREPARE.md` and `scripts/prepare_images.py`
+- `guides/elixir.md`, `guides/swift.md`, `guides/arkts.md`
+
+```bash
+python scripts/prepare_images.py --language swift
+python scripts/prepare_images.py --language elixir
+```
+
 ## Languages and cases
 
 | Language | Cases | Reproduction path | Guide |
