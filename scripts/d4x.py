@@ -433,6 +433,34 @@ def stage_case_files(case_dir: Path, side: str, wt: Path):
                 _sh.copy2(envd / name, wt / name)
 
 
+def elixir_failed_names(log: Path):
+    """Names of failed ExUnit tests/doctests in a `mix test` log."""
+    import re as _re
+    if not log.is_file():
+        return []
+    out = []
+    for ln in log.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = _re.match(r"\s*\d+\) (test|doctest) (.*)$", ln)
+        if m:
+            out.append(m.group(2).strip() if m.group(1) == "test" else (m.group(1) + " " + m.group(2).strip()))
+    return out
+
+
+def elixir_unlisted_failures(log: Path, excluded_path: Path):
+    """Return (checked, unlisted). `checked` is False when the case ships no
+    validation/excluded-tests.json, in which case nothing can be verified."""
+    if not excluded_path.is_file():
+        return False, []
+    d = json.loads(excluded_path.read_text(encoding="utf-8"))
+    allowed = set()
+    for e in d.get("excluded_tests", []):
+        t = e.get("test") if isinstance(e, dict) else e
+        if isinstance(t, str):
+            allowed.add(t.strip())
+            allowed.add(t.strip()[5:] if t.strip().startswith("test ") else t.strip())
+    return True, [n for n in elixir_failed_names(log) if n not in allowed]
+
+
 def elixir_verdict(side: str, log: Path, names: list):
     """Judge an Elixir run by trigger-test identity, not by the suite exit code.
 
@@ -541,6 +569,15 @@ def _run_side(args, p, c, side, work, lang, mode, image):
     if lang == "elixir" and names:
         outcome, hit, other = elixir_verdict(side, logdir / f"{side}-test.log", names)
         extra = {"trigger_failed": hit, "other_failures": other}
+        if side == "fixed" and outcome == "PASS":
+            # canonical_test_policy: every remaining failure must be listed in
+            # validation/excluded-tests.json and reproduced in upstream GOLD.
+            checked, unlisted = elixir_unlisted_failures(
+                logdir / f"{side}-test.log", p.parent / "validation" / "excluded-tests.json")
+            extra["exclusions_checked"] = checked
+            if checked and unlisted:
+                outcome = "UNEXPECTED_FAIL"
+                extra["unlisted_failures"] = unlisted[:20]
     elif side == "buggy":
         outcome = "FAIL_AS_EXPECTED" if test_rc != 0 else "UNEXPECTED_PASS"
     else:

@@ -71,11 +71,37 @@ originally recorded dependency versions reproduce.
   `D4X_CLONE_RETRIES`) and removes the partial `repo.git` between attempts.
   Without that cleanup a half-cloned directory is later treated as present.
 
+## Files added from the earlier validation tree
+
+* `cases/elixir/*/validation/excluded-tests.json` (100 files) and
+  `metadata/excluded-tests-manifest.json`. Copied unchanged from the v1.1.3
+  Elixir package that the earlier validation produced; the repository `case.json`
+  files are byte-identical to that package's. The manifest total (1834 test
+  identities, 44 cases with exclusions) equals the sum of the per-case files. For
+  ELIXIR-001 the list equals the 14 failures seen in the fresh-host fixed run. The
+  other cases were not compared that way: ELIXIR-036 and ELIXIR-084 were replayed
+  with the check on and passed, the rest were not run.
+* `d4x` now fails an Elixir fixed side if a failing test is not in that list, and
+  records `exclusions_checked` in `result.json`. A case without the file is still
+  judged by its trigger tests only.
+* `metadata/r-environment-lock.json`. All 106 R environment files in the earlier
+  tree have identical content, so one file serves every R case; the per-case
+  `environment_file` paths in `case.json` still point at
+  `framework/projects/*/environments/...`, which are not in this repository. Six
+  absolute paths on the earlier server (`tools.*.path`) were removed. It lists 293
+  entries for 288 package names: five base-R recommended packages (`codetools`,
+  `lattice`, `MASS`, `rpart`, `survival`) appear twice with different versions.
+  This is the lock as recorded; it was not re-derived.
+* BENCH-1 was re-run after installing `glue 1.8.0` and `withr 3.0.2` to match the
+  lock (the other direct dependencies already matched): buggy fails, fixed passes.
+  Only BENCH-1's direct dependencies were compared; 206 of the 288 locked packages
+  are not installed on the test host and were not needed for that case.
+
 ## Limits of these checks
 
-* The Elixir verdict is looser than `canonical_test_policy`. That policy also
-  requires every other failure to be listed in `validation/excluded-tests.json`,
-  and that file is not in this repository, so it was not checked.
+* The Elixir verdict now also checks remaining failures against
+  `validation/excluded-tests.json`. Only ELIXIR-001, 036 and 084 were run with that
+  check; the listed failures were reproduced in the earlier validation, not re-derived here.
 * The Swift images are rebuilt, so their digests differ from the originals. The
   runtime versions match, but that does not show the images are equivalent.
 * SWIFT-D052 and D059 need `D4X_ENABLE_XCTEST=1`, and D074/D075 need
@@ -86,9 +112,9 @@ originally recorded dependency versions reproduce.
   `No matching test cases were run`. The runner still judges by exit code and
   does not check that the buggy-side error is at the expected location.
 * `env/r.md` refers to `framework/projects/Bench/environments/*.json`, which is
-  not in the repository, so the 14 pinned R package versions cannot be read.
-  BENCH-1 passed on the latest packages, which does not show it passes on the
-  pinned ones.
+  still not in the repository; `metadata/r-environment-lock.json` is the same
+  content in one file. BENCH-1 passes with its direct dependencies at the locked
+  versions; no other R case was run.
 * `oracle.jsonl` marks these cases `DECLARED`. These runs are a first
   independent replay of one case per language, not a clean-room release gate.
 
