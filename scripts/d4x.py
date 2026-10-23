@@ -74,6 +74,10 @@ def guide_for(lang: str) -> str:
 
 def patch_files(case_dir: Path):
     out = []
+    # Kotlin (and others) ship trigger-tests.patch at the case root; scanning
+    # only the subdirectories silently skipped it, so the buggy side had no
+    # failing test (KOTLIN-001: UNEXPECTED_PASS).
+    out.extend(sorted(case_dir.glob("*.patch")))
     for d in (case_dir / "patches", case_dir / "trigger", case_dir / "evidence"):
         if d.is_dir():
             out.extend(sorted(d.glob("*.patch")))
@@ -109,6 +113,17 @@ def select_patches(case_dir: Path, side: str):
             if classify_patch(q) == kind:
                 return q
         return None
+
+    try:
+        mode = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig")).get("revision_mode")
+    except Exception:
+        mode = None
+    if mode == FIXED_MINUS_PATCH:
+        # fixed side = fixed revision untouched; buggy side = fixed revision + patch
+        if side == "fixed":
+            return []
+        p = pick(prod_pref, "production")
+        return [p] if p else []
 
     chosen = []
     t = pick(trigger_pref, "trigger")
@@ -148,9 +163,21 @@ def compile_command(case: dict, lang: str):
         dep = b.get("dependency_command") or ["dart", "pub", "get"]
         ana = b.get("analyze_command") or ["dart", "analyze"]
         fmt = lambda c: " ".join(shlex.quote(str(x)) for x in c)
+        # Analyze only the package's own code. A bare `dart analyze` also scans
+        # nested sub-packages (e.g. tool/*) whose deps were never resolved and
+        # fails both sides with unrelated errors (DART-101: 19 errors in
+        # tool/export_docs).
+        if ana == ["dart", "analyze"]:
+            return (f"{fmt(dep)} && dirs=$(ls -d lib bin test 2>/dev/null); "
+                    f"dart analyze $dirs")
         return f"{fmt(dep)} && {fmt(ana)}"
     if lang == "julia":
-        return "julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'"
+        # No eager precompile: on some locked Manifests (JULIA-002 buggy) the
+        # extension-precompile step errors with "failed to find source of parent
+        # package" although the trigger itself runs fine. Precompilation happens
+        # lazily on first `using`.
+        return ("julia --project=. -e "
+                "'using Pkg; Pkg.instantiate(; allow_autoprecomp=false)'")
     if lang == "kotlin":
         return b.get("build_command") or ("./gradlew " + b.get("compile_task", "")).strip()
     if lang == "lua":
@@ -198,7 +225,14 @@ def test_command(case: dict, lang: str):
     if lang == "perl":
         return (case.get("commands") or {}).get("trigger_test")
     if lang == "r":
-        return "Rscript -e 'testthat::test_dir(\"tests/testthat\")'"
+        # test_dir() alone does not attach the package under test, so every
+        # test died with `could not find function ...` on both sides (BENCH-1).
+        # Load the installed package (compile step ran R CMD INSTALL) and lift
+        # testthat's default 10-failure cap so the full result is recorded.
+        return ("Rscript -e 'pkg <- read.dcf(\"DESCRIPTION\")[1, \"Package\"]; "
+                "testthat::set_max_fails(Inf); "
+                "testthat::test_dir(\"tests/testthat\", package = pkg, "
+                "load_package = \"installed\", stop_on_failure = TRUE)'")
     if lang == "swift":
         cmd = b.get("test_command") or ["swift", "test"]
         name = first_trigger_name(case)
@@ -242,7 +276,15 @@ def side_dir(work: Path, case_id: str, side: str) -> Path:
     return work / case_id / side
 
 
+FIXED_MINUS_PATCH = "fixed_minus_minimized_patch"
+
+
 def case_rev(case: dict, side: str):
+    # R cases: the buggy tree is the FIXED revision with the minimized source
+    # patch applied (the patch re-introduces the bug). The parent commit has no
+    # trigger test, so checking it out gives UNEXPECTED_PASS (BENCH-1).
+    if side == "buggy" and case.get("revision_mode") == FIXED_MINUS_PATCH:
+        side = "fixed"
     names = (("buggy_revision", "buggy_sha", "revision.id.buggy", "commits.buggy")
              if side == "buggy" else
              ("fixed_revision", "fixed_sha", "revision.id.fixed", "commits.fixed"))
@@ -364,12 +406,56 @@ def cmd_checkout(args):
             print("  applied:", ", ".join(applied))
 
 
+def stage_case_files(case_dir: Path, side: str, wt: Path):
+    """Copy case-shipped files that live outside the upstream repo into the worktree.
+
+    Julia cases ship a dedicated trigger script (trigger/trigger.jl) and per-side
+    locked Project/Manifest (environment/<side>/). Without this the test command
+    fails on both sides with "No such file" (JULIA-002).
+    """
+    import shutil as _sh
+    for name in ("trigger.jl",):
+        src = case_dir / "trigger" / name
+        if src.is_file():
+            (wt / "trigger").mkdir(exist_ok=True)
+            _sh.copy2(src, wt / "trigger" / name)
+    envd = case_dir / "environment" / side
+    if envd.is_dir():
+        for name in ("Project.toml", "Manifest.toml"):
+            if (envd / name).is_file():
+                _sh.copy2(envd / name, wt / name)
+
+
+def elixir_verdict(side: str, log: Path, names: list):
+    """Judge an Elixir run by trigger-test identity, not by the suite exit code.
+
+    `mix test` exits non-zero if ANY test fails. Absinthe (ELIXIR-001) has 14
+    baseline failures on both sides that are unrelated to the defect, so the
+    raw exit code marks the fixed side UNEXPECTED_FAIL. Per the case's
+    canonical_test_policy, the verdict must come from named trigger tests and
+    a valid ExUnit summary.
+    """
+    import re as _re
+    text = log.read_text(encoding="utf-8", errors="replace") if log.is_file() else ""
+    m = _re.search(r"(\d+) tests?, (\d+) failures?", text)
+    failed = [ln.strip() for ln in text.splitlines()
+              if _re.match(r"\s*\d+\) test ", ln)]
+    hit = [n for n in names if any(n in f for f in failed)]
+    other = len(failed) - len(hit)
+    if not m:
+        return "BLOCKED", hit, other
+    if side == "buggy":
+        return ("FAIL_AS_EXPECTED" if hit else "UNEXPECTED_PASS"), hit, other
+    return ("PASS" if not hit else "UNEXPECTED_FAIL"), hit, other
+
+
 def _run_side(args, p, c, side, work, lang, mode, image):
     cid = p.parent.name
     wt = fetch_side(p, work, side, args.force)
     applied = apply_patches(p, side, wt, args.force)
     logdir = work / cid / "logs"
     logdir.mkdir(parents=True, exist_ok=True)
+    stage_case_files(p.parent, side, wt)
     timeout = args.timeout or 1800
     ccmd = compile_command(c, lang)
     tcmd = test_command(c, lang)
@@ -392,12 +478,18 @@ def _run_side(args, p, c, side, work, lang, mode, image):
         return {"side": side, "compile_rc": 0, "test_rc": None,
                 "outcome": "BLOCKED", "applied": applied}
     test_rc, _ = run_command(tcmd, wt, timeout, logdir / f"{side}-test.log")
-    if side == "buggy":
+    extra = {}
+    names = [n for n in (c.get("triggering_tests") or c.get("trigger_tests") or [])
+             if isinstance(n, str)]
+    if lang == "elixir" and names:
+        outcome, hit, other = elixir_verdict(side, logdir / f"{side}-test.log", names)
+        extra = {"trigger_failed": hit, "other_failures": other}
+    elif side == "buggy":
         outcome = "FAIL_AS_EXPECTED" if test_rc != 0 else "UNEXPECTED_PASS"
     else:
         outcome = "PASS" if test_rc == 0 else "UNEXPECTED_FAIL"
     return {"side": side, "compile_rc": compile_rc, "test_rc": test_rc,
-            "outcome": outcome, "applied": applied}
+            "outcome": outcome, "applied": applied, **extra}
 
 
 def cmd_run(args):
