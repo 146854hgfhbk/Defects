@@ -283,6 +283,13 @@ def case_rev(case: dict, side: str):
     # R cases: the buggy tree is the FIXED revision with the minimized source
     # patch applied (the patch re-introduces the bug). The parent commit has no
     # trigger test, so checking it out gives UNEXPECTED_PASS (BENCH-1).
+    # Cases whose experiment fix tree is NOT the upstream fix commit
+    # (artifacts.fixed.equals_upstream_tree == false): the production patch does
+    # not apply to the upstream fix commit, so the fixed tree is built from the
+    # base revision + trigger + production patch (SWIFT-D074, SWIFT-D095).
+    if side == "fixed" and (((case.get("artifacts") or {}).get("fixed") or {})
+                            .get("equals_upstream_tree") is False):
+        side = "buggy"
     if side == "buggy" and case.get("revision_mode") == FIXED_MINUS_PATCH:
         side = "fixed"
     names = (("buggy_revision", "buggy_sha", "revision.id.buggy", "commits.buggy")
@@ -449,6 +456,25 @@ def elixir_verdict(side: str, log: Path, names: list):
     return ("PASS" if not hit else "UNEXPECTED_FAIL"), hit, other
 
 
+def swift_needs_test_discovery(root: Path) -> bool:
+    """True when LinuxMain.swift is only a stub telling the user to pass
+    --enable-test-discovery, or is an empty XCTMain. Without the flag
+    `swift test` runs the stub and aborts on both sides (SWIFT-D080/D081)."""
+    import re as _re
+    for lm in (root / "Tests" / "LinuxMain.swift", root / "LinuxMain.swift"):
+        if not lm.is_file():
+            continue
+        try:
+            text = lm.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if "swift test --enable-test-discovery" in text:
+            return True
+        if lm.parent == root and _re.search(r"XCTMain\(\s*\[\s*\]\s*\)", text):
+            return True
+    return False
+
+
 def _run_side(args, p, c, side, work, lang, mode, image):
     cid = p.parent.name
     wt = fetch_side(p, work, side, args.force)
@@ -459,8 +485,24 @@ def _run_side(args, p, c, side, work, lang, mode, image):
     timeout = args.timeout or 1800
     ccmd = compile_command(c, lang)
     tcmd = test_command(c, lang)
+    if (lang == "swift" and isinstance(tcmd, list)
+            and "--enable-test-discovery" not in tcmd
+            and swift_needs_test_discovery(wt)):
+        at = tcmd.index("test") + 1 if "test" in tcmd else len(tcmd)
+        tcmd = tcmd[:at] + ["--enable-test-discovery"] + tcmd[at:]
     if mode == "container":
         img = image or container_image(c, lang)
+        # Some Swift cases hard-code the toolchain at /opt/swiftNNN/usr/bin/swift
+        # (the reference image layout). Rebuilt images ship swift at /usr/bin/swift,
+        # so use the one on PATH instead (SWIFT-D070/D086/D089/D093/D097).
+        if lang == "swift":
+            import re as _re
+            def _norm(cmd):
+                pat = _re.compile(r"/opt/swift\d+/usr/bin/swift")
+                if isinstance(cmd, list):
+                    return [pat.sub("swift", x) if isinstance(x, str) else x for x in cmd]
+                return pat.sub("swift", cmd) if isinstance(cmd, str) else cmd
+            ccmd, tcmd = _norm(ccmd), _norm(tcmd)
         ccmd = wrap_container(ccmd, img, wt) if ccmd else None
         tcmd = wrap_container(tcmd, img, wt) if tcmd else None
     if args.dry_run:
@@ -471,6 +513,21 @@ def _run_side(args, p, c, side, work, lang, mode, image):
     compile_rc = 0
     if ccmd:
         compile_rc, _ = run_command(ccmd, wt, timeout, logdir / f"{side}-compile.log")
+        # Old SwiftPM packages whose LinuxMain.swift lists test cases that no longer
+        # exist fail to build unless test discovery is on (SWIFT-D085). Retry once.
+        if (compile_rc != 0 and lang == "swift"
+                and ((wt / "Tests" / "LinuxMain.swift").is_file() or (wt / "LinuxMain.swift").is_file())
+                and "--enable-test-discovery" not in str(ccmd)):
+            retry = list(ccmd) if isinstance(ccmd, list) else ccmd
+            if isinstance(retry, list):
+                # ccmd is the docker wrapper: ["docker", ..., "bash", "-lc", "<cmd>"]
+                retry[-1] = retry[-1] + " --enable-test-discovery"
+                rc2, _ = run_command(retry, wt, timeout, logdir / f"{side}-compile-discovery.log")
+                if rc2 == 0:
+                    compile_rc = 0
+                    if isinstance(tcmd, list) and tcmd and "--enable-test-discovery" not in str(tcmd):
+                        tcmd = list(tcmd)
+                        tcmd[-1] = tcmd[-1].replace("swift test", "swift test --enable-test-discovery", 1)
     if compile_rc != 0:
         return {"side": side, "compile_rc": compile_rc, "test_rc": None,
                 "outcome": "COMPILE_ERROR", "applied": applied}
