@@ -127,6 +127,15 @@ def main() -> int:
     internal_id = case.get("case_id") or case.get("bug_id") or case.get("id")
     url = repo_url(case)
     buggy, fixed = revisions(case)
+    # Lua: the top-level repository.url / revision.id.* disagree with
+    # manifest.{repository,buggy_sha,fixed_sha} in 53/100 cases (39 point at a
+    # different repository, so minimized.patch touches files that do not exist).
+    # The manifest triple is the self-consistent one (commit.txt and the patched
+    # files match it), so use it when present.
+    _m = case.get("manifest") if isinstance(case.get("manifest"), dict) else {}
+    if str(case.get("language")).lower() == "lua" and _m.get("repository") and _m.get("buggy_sha") and _m.get("fixed_sha"):
+        url = "https://github.com/" + _m["repository"] + ".git"
+        buggy, fixed = _m["buggy_sha"], _m["fixed_sha"]
     if (((case.get("artifacts") or {}).get("fixed") or {})
             .get("equals_upstream_tree") is False):
         fixed = buggy  # fixed tree = base + trigger + production patch (see d4x.py)
