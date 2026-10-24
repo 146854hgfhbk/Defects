@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -444,6 +446,15 @@ def fetch_side(case_path: Path, work: Path, side: str, force: bool):
     return wt
 
 
+def _reverse_buggy(case_dir: Path) -> bool:
+    try:
+        c = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig"))
+    except Exception:
+        return False
+    cons = c.get("construction")
+    return isinstance(cons, dict) and cons.get("buggy_state") == "reverse_apply_canonical_minimized_patch"
+
+
 def apply_patches(case_path: Path, side: str, wt: Path, force: bool):
     case_dir = case_path.parent
     if force:
@@ -494,6 +505,19 @@ def apply_patches(case_path: Path, side: str, wt: Path, force: bool):
             if not any(t in _touched for t in _lua_tf):
                 print(f"WARNING: LUA_STALE_TRIGGER_PATCH_SKIPPED {case_dir.name}: touches {_touched[:2]}")
                 continue
+        # Julia (47 cases): construction.buggy_state is
+        # "reverse_apply_canonical_minimized_patch": the patch is the FIX, and the
+        # buggy tree is the fixed commit with it reverse-applied. The generic
+        # "already applied" shortcut below would skip it and leave buggy == fixed
+        # (UNEXPECTED_PASS on the buggy side).
+        if side == "buggy" and _reverse_buggy(case_dir):
+            _rv = subprocess.run(["git", "-C", str(wt), "apply", "--reverse", "--check", str(q)],
+                                 text=True, capture_output=True)
+            if _rv.returncode != 0:
+                raise SystemExit(f"patch does not reverse-apply: {q.name}\n{_rv.stderr}")
+            subprocess.run(["git", "-C", str(wt), "apply", "--reverse", str(q)], check=True)
+            applied.append(q.name + "[reversed]")
+            continue
         rev = subprocess.run(["git", "-C", str(wt), "apply", "--reverse", "--check", str(q)],
                              text=True, capture_output=True)
         if rev.returncode == 0:
@@ -704,6 +728,16 @@ def _run_side(args, p, c, side, work, lang, mode, image):
         _bd = (c.get("build") or {}).get("directory")
         if isinstance(_bd, str) and _bd not in ("", ".") and (wt / _bd).is_dir():
             run_cwd = wt / _bd
+    # Julia: each case pins its own Julia (case.json language_version, e.g.
+    # "Julia 1.12.7"); a Manifest resolved by another minor version fails with
+    # "Could not locate the source code for the X_jll package". Use ~/d4x/julia-<ver>
+    # when it exists, else fall back to whatever `julia` is on PATH.
+    if lang == "julia" and mode != "container":
+        _jv = re.search(r"(\d+\.\d+\.\d+)", str(c.get("language_version") or ""))
+        if _jv:
+            _jd = Path(os.environ.get("D4X_HOME") or Path.home() / "d4x") / f"julia-{_jv.group(1)}" / "bin"
+            if (_jd / "julia").is_file():
+                os.environ["PATH"] = f"{_jd}{os.pathsep}{os.environ.get('PATH', '')}"
     compile_rc = 0
     if ccmd:
         compile_rc, _ = run_command(ccmd, run_cwd, timeout, logdir / f"{side}-compile.log")
