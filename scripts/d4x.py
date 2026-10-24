@@ -95,6 +95,27 @@ def classify_patch(p: Path) -> str:
     return "other"
 
 
+def declared_trigger_patch(case_dir: Path):
+    """The trigger patch that case.json declares (patches.trigger_tests.path).
+
+    Some cases ship several candidates (trigger-tests.patch, ...-compatible.patch,
+    ...-stable.patch). Picking by file name applied the wrong one for 8 Swift cases;
+    the declared one is the one the case was validated with.
+    """
+    try:
+        c = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig"))
+    except Exception:
+        return None
+    pt = c.get("patches")
+    if isinstance(pt, dict):
+        tt = pt.get("trigger_tests")
+        if isinstance(tt, dict) and isinstance(tt.get("path"), str):
+            q = case_dir / tt["path"]
+            if q.is_file():
+                return q
+    return None
+
+
 def select_patches(case_dir: Path, side: str):
     """Pick one trigger patch and, for fixed, one production patch."""
     files = patch_files(case_dir)
@@ -126,7 +147,18 @@ def select_patches(case_dir: Path, side: str):
         return [p] if p else []
 
     chosen = []
-    t = pick(trigger_pref, "trigger")
+    # case.json: artifacts.construction = "base + compatibility(if present) + trigger;
+    # fixed adds production patch". The compatibility patch (patches.build_compatibility)
+    # lets old sources build on the pinned toolchain (e.g. EVP_MD_type -> EVP_MD_get_type
+    # for OpenSSL 3, SWIFT-D003); it goes on BOTH sides, before the trigger patch.
+    try:
+        _c = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig"))
+        _bc = ((_c.get("patches") or {}).get("build_compatibility") or {}).get("path")
+        if isinstance(_bc, str) and (case_dir / _bc).is_file():
+            chosen.append(case_dir / _bc)
+    except Exception:
+        pass
+    t = declared_trigger_patch(case_dir) or pick(trigger_pref, "trigger")
     if t:
         chosen.append(t)
     if side == "fixed":
@@ -193,6 +225,26 @@ def compile_command(case: dict, lang: str):
     return None
 
 
+def trigger_names(case: dict):
+    """All distinct trigger test names of a case, in order.
+
+    Swift cases can list several trigger tests; the defect may only show in a later
+    one (SWIFT-D046: the first passes on the buggy side, the second fails). Filtering
+    on the first name alone made such cases UNEXPECTED_PASS or under-tested.
+    """
+    out = []
+    for key in ("triggering_tests", "trigger_tests", "triggering_test", "trigger_test"):
+        v = case.get(key)
+        items = v if isinstance(v, list) else ([v] if v else [])
+        for x in items:
+            n = x.get("name") if isinstance(x, dict) else x
+            if isinstance(n, str) and n and n not in out:
+                out.append(n)
+        if out:
+            break
+    return out
+
+
 def first_trigger_name(case: dict):
     t = case.get("triggering_test") or case.get("trigger_test")
     if isinstance(t, dict):
@@ -235,9 +287,13 @@ def test_command(case: dict, lang: str):
                 "load_package = \"installed\", stop_on_failure = TRUE)'")
     if lang == "swift":
         cmd = b.get("test_command") or ["swift", "test"]
-        name = first_trigger_name(case)
-        if isinstance(cmd, list) and name:
-            cmd = cmd + ["--filter", str(name)]
+        names = trigger_names(case)
+        if isinstance(cmd, list) and names:
+            if any(n.startswith("compile::") for n in names):
+                cmd = cmd + ["--filter", names[0]]   # compile diagnostics: one selector
+            else:
+                for n in names:                       # several --filter flags are OR-ed
+                    cmd = cmd + ["--filter", n[:-2] if n.endswith("()") else n]
         return cmd
     if lang == "elixir":
         return (case.get("commands") or {}).get("test")
@@ -500,6 +556,16 @@ def swift_needs_test_discovery(root: Path) -> bool:
             return True
         if lm.parent == root and _re.search(r"XCTMain\(\s*\[\s*\]\s*\)", text):
             return True
+        # `var tests = [XCTestCaseEntry]()` passed to XCTMain without ever being
+        # filled: modern SwiftPM accepts it as the entry point and runs 0 tests
+        # (SWIFT-D042).
+        if lm.parent == root:
+            decl = _re.search(r"var\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\[XCTestCaseEntry\]\(\)", text)
+            if decl:
+                v = _re.escape(decl.group(1))
+                if (_re.search(rf"XCTMain\(\s*{v}\s*\)", text)
+                        and not _re.search(rf"\b{v}\s*(?:\+=|\.append\s*\()", text)):
+                    return True
     return False
 
 
