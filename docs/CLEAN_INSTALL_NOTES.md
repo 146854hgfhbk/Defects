@@ -16,22 +16,35 @@ per language does not show that the other cases in that language reproduce.
 | Kotlin | KOTLIN-001 | PASS | JDK 17; first Gradle build about 8 minutes, about 6 GB RAM |
 | R | BENCH-1 | PASS | R 4.4.3; packages were the latest at install time, not the case lock |
 | Elixir | ELIXIR-001 | PASS | public `swerebenchv2` image; 14 unrelated baseline failures on both sides |
-| Swift | 41 cases on the 5.10.1 image | 41 PASS | image rebuilt with `images/build`; 32 of them needed the runner fixes or an online dependency-resolve step, see below |
+| Swift | all 100 cases | 100 PASS in the latest run of each case | five rebuilt images; 36 cases are being re-run with every trigger test name (see below) |
 | ArkTS | - | not run | needs a device or emulator |
 
-Swift: all 41 cases that use `swift-defects-validation:5.10.1-restored-20260908`
-were run (buggy fails, fixed passes). The other 59 Swift cases use the other four
-image tags, which were built and show the right `swift --version` (6.1.3 and
-6.2.3) but were not used to run any case. The 56 cases that ship a
-`dependency_cache` (the largest group totals about 30 GB of external assets) were
-not run. Each case was run once for the final verdict (a few were re-run after runner fixes); no case was repeated to check stability.
+Swift: all 100 cases were run on the five rebuilt images (5.10.1: 41, 6.1: 13,
+6.2.3 v2: 16, v3-sqlite: 18, v4-openssl: 12) and the latest run of every case fails
+on the buggy side and passes on the fixed side. The runs were made with several
+versions of `d4x` while it was being fixed, so the 100 results do not all come from
+the final code. Each case was run once for its latest verdict, apart from the
+re-runs described below.
 
-Swift replay path that worked without any uploaded cache or image: resolve the
-dependencies once with network (`swift package resolve` inside the image), then
-replay with `--network none`. The resolved versions are whatever SwiftPM picks
-at that time; they were not compared against the versions recorded in each
-case's `dependency-cache-manifest.json`, so a pass does not show that the
-originally recorded dependency versions reproduce.
+* 98 of the 100 are runtime tests; for each, the fixed-side log shows the named
+  trigger test actually ran and passed. The other 2 (SWIFT-D058 and SWIFT-D060) have a
+  compile error as their trigger.
+* Still in progress: `d4x` now passes every distinct trigger test name to
+  `swift test` (several `--filter` flags) instead of only the first. That touches 36
+  cases. SWIFT-D046 was the one where it mattered (the first test passes on the buggy
+  side, the second fails) and it passes with the new filter. The other 35 already
+  fail on the buggy side with the first name, so their verdict stands; the re-run
+  with all names is a stricter check and was not finished when this was written.
+* 56 of the cases ship a `dependency_cache`; none of it was used. Dependencies were
+  resolved with network once (`swift package resolve` inside the image) and the replay
+  ran with `--network none`. For the cases that were re-run after the runner fixes and
+  have a recorded `Package.resolved` with at least one pin, that file was put in place
+  before resolving, so the pins were kept; cases with no recorded pins (for example
+  SWIFT-D059, D007) had nothing to keep. For the rest SwiftPM picked versions: an audit before those re-runs found 15
+  passing cases whose resolved versions differed from the recorded ones; two (D022,
+  D027) were re-run with the recorded pins and still pass, the other 13 were not
+  re-run. A pass therefore does not show that the originally recorded dependency
+  versions reproduce.
 
 ## Fixes made to the runner while replaying
 
@@ -67,6 +80,20 @@ originally recorded dependency versions reproduce.
 * Swift: five cases hard-code `/opt/swift510/usr/bin/swift` in their build
   commands. Rebuilt images have swift at `/usr/bin/swift`, so the path is rewritten
   to `swift` in container mode (SWIFT-D070, D086, D089, D093, D097).
+* Swift: use the trigger patch that `case.json` declares (`patches.trigger_tests.path`).
+  Eight cases ship several candidates (`...-compatible`, `...-stable`, ...) and picking
+  by file name applied the wrong one (SWIFT-D014, D019, D021, D022, D027, D029, D003,
+  D007).
+* Swift: apply `patches.build_compatibility` on both sides before the trigger patch.
+  Six Swift cases declare one (SWIFT-D003, D005, D015, D024, D025, D041); without it
+  they fail to build on the pinned toolchain, for example the OpenSSL 3 macro alias
+  `EVP_MD_type` in D003. Two Dart cases also declare one.
+* Swift: a root `LinuxMain.swift` that passes an empty, never-filled
+  `[XCTestCaseEntry]` to `XCTMain` makes modern SwiftPM run zero tests; the runner now
+  adds `--enable-test-discovery` (SWIFT-D042).
+* SWIFT-D059: `validation/minimization-evidence/trigger.patch` was declared in
+  `case.json` but missing from the repository. It was copied as text from the earlier
+  validation tree and its sha256 matches the one recorded in `case.json`.
 * `fetch_sources.py` retries a failed clone (default 5 attempts, set
   `D4X_CLONE_RETRIES`) and removes the partial `repo.git` between attempts.
   Without that cleanup a half-cloned directory is later treated as present.
@@ -104,9 +131,9 @@ originally recorded dependency versions reproduce.
   check; the listed failures were reproduced in the earlier validation, not re-derived here.
 * The Swift images are rebuilt, so their digests differ from the originals. The
   runtime versions match, but that does not show the images are equivalent.
-* SWIFT-D052 and D059 need `D4X_ENABLE_XCTEST=1`, and D074/D075 need
-  `-Xlinker -Bsymbolic` according to the case files. D074 passed; the others
-  were not checked separately.
+* The earlier validation tree sets `D4X_ENABLE_XCTEST=1` for SWIFT-D052 and D059 and
+  `-Xlinker -Bsymbolic` for D074/D075. This runner does not set the first; both D052 and
+  D059 pass without it.
 * SWIFT-D058's trigger is a compile error (`compile::Tests/...:151:13`). The
   fixed side passes when the test target compiles, and the log shows
   `No matching test cases were run`. The runner still judges by exit code and
