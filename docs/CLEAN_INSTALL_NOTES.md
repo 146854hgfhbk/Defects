@@ -29,12 +29,13 @@ re-runs described below.
 * 98 of the 100 are runtime tests; for each, the fixed-side log shows the named
   trigger test actually ran and passed. The other 2 (SWIFT-D058 and SWIFT-D060) have a
   compile error as their trigger.
-* Still in progress: `d4x` now passes every distinct trigger test name to
-  `swift test` (several `--filter` flags) instead of only the first. That touches 36
-  cases. SWIFT-D046 was the one where it mattered (the first test passes on the buggy
-  side, the second fails) and it passes with the new filter. The other 35 already
-  fail on the buggy side with the first name, so their verdict stands; the re-run
-  with all names is a stricter check and was not finished when this was written.
+* Not finished: `d4x` now passes every distinct trigger test name to `swift test`
+  (several `--filter` flags) instead of only the first. That touches 36 cases. Only
+  SWIFT-D046 has been re-run with it so far, and it passes (its first test passes on the
+  buggy side, the second fails). For the other 35, the buggy side already failed with
+  the first name, and more names cannot undo that. The fixed side has NOT been checked
+  with all names: one of the other trigger tests could still fail there. Until that
+  re-run finishes, the 35 results only cover the first trigger test.
 * 56 of the cases ship a `dependency_cache`; none of it was used. Dependencies were
   resolved with network once (`swift package resolve` inside the image) and the replay
   ran with `--network none`. For the cases that were re-run after the runner fixes and
