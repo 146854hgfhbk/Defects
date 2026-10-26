@@ -62,6 +62,10 @@ def get_field(case: dict, *names):
 def repo_url(case: dict) -> str | None:
     v = get_field(case, "repository_url", "repo_url", "repository", "repo", "repository.url")
     if isinstance(v, str) and v:
+        # Elixir cases carry `"repo": "owner/name"` with no scheme or host.
+        # Passing that to `git clone` fails with "repository does not exist".
+        if "://" not in v and not v.startswith("git@") and re.fullmatch(r"[\w.-]+/[\w.-]+", v):
+            return f"https://github.com/{v}.git"
         return v
     if isinstance(v, dict):
         for k in ("url", "html_url", "clone_url"):
@@ -123,6 +127,11 @@ def main() -> int:
     internal_id = case.get("case_id") or case.get("bug_id") or case.get("id")
     url = repo_url(case)
     buggy, fixed = revisions(case)
+    if (((case.get("artifacts") or {}).get("fixed") or {})
+            .get("equals_upstream_tree") is False):
+        fixed = buggy  # fixed tree = base + trigger + production patch (see d4x.py)
+    if case.get("revision_mode") == "fixed_minus_minimized_patch":
+        buggy = fixed  # buggy tree = fixed revision + minimized patch (see d4x.py)
     if not url:
         raise SystemExit(f"{case_id}: no repository URL in {case_path}")
     if not buggy and not fixed:
@@ -136,8 +145,23 @@ def main() -> int:
         cmd = ["clone", "--bare", "--filter=blob:none", "--no-checkout", normalize_repo(url), str(repo)]
         if args.depth:
             cmd.insert(1, f"--depth={args.depth}")
-        print("+", "git", " ".join(cmd))
-        git(*cmd)
+        # github.com from some networks (e.g. mainland-China cloud hosts) drops
+        # large clones with TLS/low-speed errors. Retry, clean the partial bare
+        # repo between attempts, and force HTTP/1.1 with a low-speed timeout.
+        import shutil, time
+        tries = int(os.environ.get("D4X_CLONE_RETRIES", "5"))
+        pre = ["-c", "http.version=HTTP/1.1", "-c", "http.lowSpeedLimit=1000",
+               "-c", "http.lowSpeedTime=60"]
+        for attempt in range(1, tries + 1):
+            print("+", "git", " ".join(pre + cmd), f"(attempt {attempt}/{tries})")
+            proc = git(*pre, *cmd, check=False)
+            if proc.returncode == 0:
+                break
+            print(proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() else "clone failed")
+            shutil.rmtree(repo, ignore_errors=True)
+            if attempt == tries:
+                raise SystemExit(f"git clone failed after {tries} attempts:\n{proc.stdout}")
+            time.sleep(5 * attempt)
     else:
         print("using existing", repo)
 

@@ -74,6 +74,10 @@ def guide_for(lang: str) -> str:
 
 def patch_files(case_dir: Path):
     out = []
+    # Kotlin (and others) ship trigger-tests.patch at the case root; scanning
+    # only the subdirectories silently skipped it, so the buggy side had no
+    # failing test (KOTLIN-001: UNEXPECTED_PASS).
+    out.extend(sorted(case_dir.glob("*.patch")))
     for d in (case_dir / "patches", case_dir / "trigger", case_dir / "evidence"):
         if d.is_dir():
             out.extend(sorted(d.glob("*.patch")))
@@ -89,6 +93,27 @@ def classify_patch(p: Path) -> str:
     if "upstream" in n or "original" in n:
         return "upstream"
     return "other"
+
+
+def declared_trigger_patch(case_dir: Path):
+    """The trigger patch that case.json declares (patches.trigger_tests.path).
+
+    Some cases ship several candidates (trigger-tests.patch, ...-compatible.patch,
+    ...-stable.patch). Picking by file name applied the wrong one for 8 Swift cases;
+    the declared one is the one the case was validated with.
+    """
+    try:
+        c = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig"))
+    except Exception:
+        return None
+    pt = c.get("patches")
+    if isinstance(pt, dict):
+        tt = pt.get("trigger_tests")
+        if isinstance(tt, dict) and isinstance(tt.get("path"), str):
+            q = case_dir / tt["path"]
+            if q.is_file():
+                return q
+    return None
 
 
 def select_patches(case_dir: Path, side: str):
@@ -110,8 +135,30 @@ def select_patches(case_dir: Path, side: str):
                 return q
         return None
 
+    try:
+        mode = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig")).get("revision_mode")
+    except Exception:
+        mode = None
+    if mode == FIXED_MINUS_PATCH:
+        # fixed side = fixed revision untouched; buggy side = fixed revision + patch
+        if side == "fixed":
+            return []
+        p = pick(prod_pref, "production")
+        return [p] if p else []
+
     chosen = []
-    t = pick(trigger_pref, "trigger")
+    # case.json: artifacts.construction = "base + compatibility(if present) + trigger;
+    # fixed adds production patch". The compatibility patch (patches.build_compatibility)
+    # lets old sources build on the pinned toolchain (e.g. EVP_MD_type -> EVP_MD_get_type
+    # for OpenSSL 3, SWIFT-D003); it goes on BOTH sides, before the trigger patch.
+    try:
+        _c = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig"))
+        _bc = ((_c.get("patches") or {}).get("build_compatibility") or {}).get("path")
+        if isinstance(_bc, str) and (case_dir / _bc).is_file():
+            chosen.append(case_dir / _bc)
+    except Exception:
+        pass
+    t = declared_trigger_patch(case_dir) or pick(trigger_pref, "trigger")
     if t:
         chosen.append(t)
     if side == "fixed":
@@ -148,9 +195,21 @@ def compile_command(case: dict, lang: str):
         dep = b.get("dependency_command") or ["dart", "pub", "get"]
         ana = b.get("analyze_command") or ["dart", "analyze"]
         fmt = lambda c: " ".join(shlex.quote(str(x)) for x in c)
+        # Analyze only the package's own code. A bare `dart analyze` also scans
+        # nested sub-packages (e.g. tool/*) whose deps were never resolved and
+        # fails both sides with unrelated errors (DART-101: 19 errors in
+        # tool/export_docs).
+        if ana == ["dart", "analyze"]:
+            return (f"{fmt(dep)} && dirs=$(ls -d lib bin test 2>/dev/null); "
+                    f"dart analyze $dirs")
         return f"{fmt(dep)} && {fmt(ana)}"
     if lang == "julia":
-        return "julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'"
+        # No eager precompile: on some locked Manifests (JULIA-002 buggy) the
+        # extension-precompile step errors with "failed to find source of parent
+        # package" although the trigger itself runs fine. Precompilation happens
+        # lazily on first `using`.
+        return ("julia --project=. -e "
+                "'using Pkg; Pkg.instantiate(; allow_autoprecomp=false)'")
     if lang == "kotlin":
         return b.get("build_command") or ("./gradlew " + b.get("compile_task", "")).strip()
     if lang == "lua":
@@ -164,6 +223,26 @@ def compile_command(case: dict, lang: str):
     if lang == "elixir":
         return "mix deps.get && mix compile"
     return None
+
+
+def trigger_names(case: dict):
+    """All distinct trigger test names of a case, in order.
+
+    Swift cases can list several trigger tests; the defect may only show in a later
+    one (SWIFT-D046: the first passes on the buggy side, the second fails). Filtering
+    on the first name alone made such cases UNEXPECTED_PASS or under-tested.
+    """
+    out = []
+    for key in ("triggering_tests", "trigger_tests", "triggering_test", "trigger_test"):
+        v = case.get(key)
+        items = v if isinstance(v, list) else ([v] if v else [])
+        for x in items:
+            n = x.get("name") if isinstance(x, dict) else x
+            if isinstance(n, str) and n and n not in out:
+                out.append(n)
+        if out:
+            break
+    return out
 
 
 def first_trigger_name(case: dict):
@@ -198,12 +277,23 @@ def test_command(case: dict, lang: str):
     if lang == "perl":
         return (case.get("commands") or {}).get("trigger_test")
     if lang == "r":
-        return "Rscript -e 'testthat::test_dir(\"tests/testthat\")'"
+        # test_dir() alone does not attach the package under test, so every
+        # test died with `could not find function ...` on both sides (BENCH-1).
+        # Load the installed package (compile step ran R CMD INSTALL) and lift
+        # testthat's default 10-failure cap so the full result is recorded.
+        return ("Rscript -e 'pkg <- read.dcf(\"DESCRIPTION\")[1, \"Package\"]; "
+                "testthat::set_max_fails(Inf); "
+                "testthat::test_dir(\"tests/testthat\", package = pkg, "
+                "load_package = \"installed\", stop_on_failure = TRUE)'")
     if lang == "swift":
         cmd = b.get("test_command") or ["swift", "test"]
-        name = first_trigger_name(case)
-        if isinstance(cmd, list) and name:
-            cmd = cmd + ["--filter", str(name)]
+        names = trigger_names(case)
+        if isinstance(cmd, list) and names:
+            if any(n.startswith("compile::") for n in names):
+                cmd = cmd + ["--filter", names[0]]   # compile diagnostics: one selector
+            else:
+                for n in names:                       # several --filter flags are OR-ed
+                    cmd = cmd + ["--filter", n[:-2] if n.endswith("()") else n]
         return cmd
     if lang == "elixir":
         return (case.get("commands") or {}).get("test")
@@ -242,7 +332,22 @@ def side_dir(work: Path, case_id: str, side: str) -> Path:
     return work / case_id / side
 
 
+FIXED_MINUS_PATCH = "fixed_minus_minimized_patch"
+
+
 def case_rev(case: dict, side: str):
+    # R cases: the buggy tree is the FIXED revision with the minimized source
+    # patch applied (the patch re-introduces the bug). The parent commit has no
+    # trigger test, so checking it out gives UNEXPECTED_PASS (BENCH-1).
+    # Cases whose experiment fix tree is NOT the upstream fix commit
+    # (artifacts.fixed.equals_upstream_tree == false): the production patch does
+    # not apply to the upstream fix commit, so the fixed tree is built from the
+    # base revision + trigger + production patch (SWIFT-D074, SWIFT-D095).
+    if side == "fixed" and (((case.get("artifacts") or {}).get("fixed") or {})
+                            .get("equals_upstream_tree") is False):
+        side = "buggy"
+    if side == "buggy" and case.get("revision_mode") == FIXED_MINUS_PATCH:
+        side = "fixed"
     names = (("buggy_revision", "buggy_sha", "revision.id.buggy", "commits.buggy")
              if side == "buggy" else
              ("fixed_revision", "fixed_sha", "revision.id.fixed", "commits.fixed"))
@@ -364,17 +469,134 @@ def cmd_checkout(args):
             print("  applied:", ", ".join(applied))
 
 
+def stage_case_files(case_dir: Path, side: str, wt: Path):
+    """Copy case-shipped files that live outside the upstream repo into the worktree.
+
+    Julia cases ship a dedicated trigger script (trigger/trigger.jl) and per-side
+    locked Project/Manifest (environment/<side>/). Without this the test command
+    fails on both sides with "No such file" (JULIA-002).
+    """
+    import shutil as _sh
+    for name in ("trigger.jl",):
+        src = case_dir / "trigger" / name
+        if src.is_file():
+            (wt / "trigger").mkdir(exist_ok=True)
+            _sh.copy2(src, wt / "trigger" / name)
+    envd = case_dir / "environment" / side
+    if envd.is_dir():
+        for name in ("Project.toml", "Manifest.toml"):
+            if (envd / name).is_file():
+                _sh.copy2(envd / name, wt / name)
+
+
+def elixir_failed_names(log: Path):
+    """Names of failed ExUnit tests/doctests in a `mix test` log."""
+    import re as _re
+    if not log.is_file():
+        return []
+    out = []
+    for ln in log.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = _re.match(r"\s*\d+\) (test|doctest) (.*)$", ln)
+        if m:
+            out.append(m.group(2).strip() if m.group(1) == "test" else (m.group(1) + " " + m.group(2).strip()))
+    return out
+
+
+def elixir_unlisted_failures(log: Path, excluded_path: Path):
+    """Return (checked, unlisted). `checked` is False when the case ships no
+    validation/excluded-tests.json, in which case nothing can be verified."""
+    if not excluded_path.is_file():
+        return False, []
+    d = json.loads(excluded_path.read_text(encoding="utf-8"))
+    allowed = set()
+    for e in d.get("excluded_tests", []):
+        t = e.get("test") if isinstance(e, dict) else e
+        if isinstance(t, str):
+            allowed.add(t.strip())
+            allowed.add(t.strip()[5:] if t.strip().startswith("test ") else t.strip())
+    return True, [n for n in elixir_failed_names(log) if n not in allowed]
+
+
+def elixir_verdict(side: str, log: Path, names: list):
+    """Judge an Elixir run by trigger-test identity, not by the suite exit code.
+
+    `mix test` exits non-zero if ANY test fails. Absinthe (ELIXIR-001) has 14
+    baseline failures on both sides that are unrelated to the defect, so the
+    raw exit code marks the fixed side UNEXPECTED_FAIL. Per the case's
+    canonical_test_policy, the verdict must come from named trigger tests and
+    a valid ExUnit summary.
+    """
+    import re as _re
+    text = log.read_text(encoding="utf-8", errors="replace") if log.is_file() else ""
+    m = _re.search(r"(\d+) tests?, (\d+) failures?", text)
+    failed = [ln.strip() for ln in text.splitlines()
+              if _re.match(r"\s*\d+\) test ", ln)]
+    hit = [n for n in names if any(n in f for f in failed)]
+    other = len(failed) - len(hit)
+    if not m:
+        return "BLOCKED", hit, other
+    if side == "buggy":
+        return ("FAIL_AS_EXPECTED" if hit else "UNEXPECTED_PASS"), hit, other
+    return ("PASS" if not hit else "UNEXPECTED_FAIL"), hit, other
+
+
+def swift_needs_test_discovery(root: Path) -> bool:
+    """True when LinuxMain.swift is only a stub telling the user to pass
+    --enable-test-discovery, or is an empty XCTMain. Without the flag
+    `swift test` runs the stub and aborts on both sides (SWIFT-D080/D081)."""
+    import re as _re
+    for lm in (root / "Tests" / "LinuxMain.swift", root / "LinuxMain.swift"):
+        if not lm.is_file():
+            continue
+        try:
+            text = lm.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if "swift test --enable-test-discovery" in text:
+            return True
+        if lm.parent == root and _re.search(r"XCTMain\(\s*\[\s*\]\s*\)", text):
+            return True
+        # `var tests = [XCTestCaseEntry]()` passed to XCTMain without ever being
+        # filled: modern SwiftPM accepts it as the entry point and runs 0 tests
+        # (SWIFT-D042).
+        if lm.parent == root:
+            decl = _re.search(r"var\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\[XCTestCaseEntry\]\(\)", text)
+            if decl:
+                v = _re.escape(decl.group(1))
+                if (_re.search(rf"XCTMain\(\s*{v}\s*\)", text)
+                        and not _re.search(rf"\b{v}\s*(?:\+=|\.append\s*\()", text)):
+                    return True
+    return False
+
+
 def _run_side(args, p, c, side, work, lang, mode, image):
     cid = p.parent.name
     wt = fetch_side(p, work, side, args.force)
     applied = apply_patches(p, side, wt, args.force)
     logdir = work / cid / "logs"
     logdir.mkdir(parents=True, exist_ok=True)
+    stage_case_files(p.parent, side, wt)
     timeout = args.timeout or 1800
     ccmd = compile_command(c, lang)
     tcmd = test_command(c, lang)
+    if (lang == "swift" and isinstance(tcmd, list)
+            and "--enable-test-discovery" not in tcmd
+            and swift_needs_test_discovery(wt)):
+        at = tcmd.index("test") + 1 if "test" in tcmd else len(tcmd)
+        tcmd = tcmd[:at] + ["--enable-test-discovery"] + tcmd[at:]
     if mode == "container":
         img = image or container_image(c, lang)
+        # Some Swift cases hard-code the toolchain at /opt/swiftNNN/usr/bin/swift
+        # (the reference image layout). Rebuilt images ship swift at /usr/bin/swift,
+        # so use the one on PATH instead (SWIFT-D070/D086/D089/D093/D097).
+        if lang == "swift":
+            import re as _re
+            def _norm(cmd):
+                pat = _re.compile(r"/opt/swift\d+/usr/bin/swift")
+                if isinstance(cmd, list):
+                    return [pat.sub("swift", x) if isinstance(x, str) else x for x in cmd]
+                return pat.sub("swift", cmd) if isinstance(cmd, str) else cmd
+            ccmd, tcmd = _norm(ccmd), _norm(tcmd)
         ccmd = wrap_container(ccmd, img, wt) if ccmd else None
         tcmd = wrap_container(tcmd, img, wt) if tcmd else None
     if args.dry_run:
@@ -385,6 +607,21 @@ def _run_side(args, p, c, side, work, lang, mode, image):
     compile_rc = 0
     if ccmd:
         compile_rc, _ = run_command(ccmd, wt, timeout, logdir / f"{side}-compile.log")
+        # Old SwiftPM packages whose LinuxMain.swift lists test cases that no longer
+        # exist fail to build unless test discovery is on (SWIFT-D085). Retry once.
+        if (compile_rc != 0 and lang == "swift"
+                and ((wt / "Tests" / "LinuxMain.swift").is_file() or (wt / "LinuxMain.swift").is_file())
+                and "--enable-test-discovery" not in str(ccmd)):
+            retry = list(ccmd) if isinstance(ccmd, list) else ccmd
+            if isinstance(retry, list):
+                # ccmd is the docker wrapper: ["docker", ..., "bash", "-lc", "<cmd>"]
+                retry[-1] = retry[-1] + " --enable-test-discovery"
+                rc2, _ = run_command(retry, wt, timeout, logdir / f"{side}-compile-discovery.log")
+                if rc2 == 0:
+                    compile_rc = 0
+                    if isinstance(tcmd, list) and tcmd and "--enable-test-discovery" not in str(tcmd):
+                        tcmd = list(tcmd)
+                        tcmd[-1] = tcmd[-1].replace("swift test", "swift test --enable-test-discovery", 1)
     if compile_rc != 0:
         return {"side": side, "compile_rc": compile_rc, "test_rc": None,
                 "outcome": "COMPILE_ERROR", "applied": applied}
@@ -392,12 +629,27 @@ def _run_side(args, p, c, side, work, lang, mode, image):
         return {"side": side, "compile_rc": 0, "test_rc": None,
                 "outcome": "BLOCKED", "applied": applied}
     test_rc, _ = run_command(tcmd, wt, timeout, logdir / f"{side}-test.log")
-    if side == "buggy":
+    extra = {}
+    names = [n for n in (c.get("triggering_tests") or c.get("trigger_tests") or [])
+             if isinstance(n, str)]
+    if lang == "elixir" and names:
+        outcome, hit, other = elixir_verdict(side, logdir / f"{side}-test.log", names)
+        extra = {"trigger_failed": hit, "other_failures": other}
+        if side == "fixed" and outcome == "PASS":
+            # canonical_test_policy: every remaining failure must be listed in
+            # validation/excluded-tests.json and reproduced in upstream GOLD.
+            checked, unlisted = elixir_unlisted_failures(
+                logdir / f"{side}-test.log", p.parent / "validation" / "excluded-tests.json")
+            extra["exclusions_checked"] = checked
+            if checked and unlisted:
+                outcome = "UNEXPECTED_FAIL"
+                extra["unlisted_failures"] = unlisted[:20]
+    elif side == "buggy":
         outcome = "FAIL_AS_EXPECTED" if test_rc != 0 else "UNEXPECTED_PASS"
     else:
         outcome = "PASS" if test_rc == 0 else "UNEXPECTED_FAIL"
     return {"side": side, "compile_rc": compile_rc, "test_rc": test_rc,
-            "outcome": outcome, "applied": applied}
+            "outcome": outcome, "applied": applied, **extra}
 
 
 def cmd_run(args):
