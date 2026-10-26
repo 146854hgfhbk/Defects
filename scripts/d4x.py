@@ -195,13 +195,27 @@ def compile_command(case: dict, lang: str):
         dep = b.get("dependency_command") or ["dart", "pub", "get"]
         ana = b.get("analyze_command") or ["dart", "analyze"]
         fmt = lambda c: " ".join(shlex.quote(str(x)) for x in c)
+        if b.get("refresh_dependency_lock"):
+            # Case-declared (build.refresh_dependency_lock_reason): the revision's
+            # pubspec.lock pins a test chain that crashes the Dart 3.x test runner
+            # ("Failed to load ..." for every file), so re-resolve from pubspec.yaml.
+            _dep = "rm -f pubspec.lock && " + " ".join(shlex.quote(str(x)) for x in dep)
+            fmt = lambda c, _d=_dep, _f=fmt: _d if c is dep else _f(c)
         # Analyze only the package's own code. A bare `dart analyze` also scans
         # nested sub-packages (e.g. tool/*) whose deps were never resolved and
         # fails both sides with unrelated errors (DART-101: 19 errors in
         # tool/export_docs).
         if ana == ["dart", "analyze"]:
-            return (f"{fmt(dep)} && dirs=$(ls -d lib bin test 2>/dev/null); "
-                    f"dart analyze $dirs")
+            # `dart analyze` is fatal on warnings by default (Dart 2.19: DART-100 has
+            # 3 non_nullable_equals_parameter warnings in test/ and failed both sides
+            # at the compile gate). Only errors should block. SDKs before 2.10 have
+            # no `dart pub` / `dart analyze`: fall back to `pub get` / `dartanalyzer`.
+            return ("if dart pub --help >/dev/null 2>&1; then "
+                    f"{fmt(dep)} && dirs=$(ls -d lib bin test 2>/dev/null); "
+                    "dart analyze --no-fatal-warnings $dirs; "
+                    "else pub get && dirs=$(ls -d lib bin test 2>/dev/null); "
+                    "dartanalyzer --no-hints $dirs | tee /dev/stderr | "
+                    "grep -qE '^ *error' && exit 1 || exit 0; fi")
         return f"{fmt(dep)} && {fmt(ana)}"
     if lang == "julia":
         # No eager precompile: on some locked Manifests (JULIA-002 buggy) the
@@ -263,7 +277,20 @@ def first_trigger_name(case: dict):
 def test_command(case: dict, lang: str):
     b = case.get("build") or {}
     if lang == "dart":
-        return b.get("test_command") or ["dart", "test", "--reporter=json"]
+        _tc = b.get("test_command") or ["dart", "test", "--reporter=json"]
+        if _tc == ["dart", "test", "--reporter=json"]:
+            # SDKs before 2.10 have no `dart test`; use `pub run test` there.
+            # Some packages list `chrome` in dart_test.yaml platforms. Without a
+            # browser every chrome suite fails to load on BOTH sides (fixed side then
+            # shows UNEXPECTED_FAIL), so restrict to the VM platform when no Chrome
+            # is installed. This narrows the run to VM-testable suites; recorded as a
+            # deviation, not the case's declared command.
+            return ["sh", "-c", "if dart pub --help >/dev/null 2>&1; then "
+                    "if command -v google-chrome chromium chromium-browser >/dev/null 2>&1; "
+                    "then dart test --reporter=json; "
+                    "else dart test -p vm --reporter=json; fi; "
+                    "else pub run test --reporter=json; fi"]
+        return _tc
     if lang == "julia":
         tr = case.get("trigger") or {}
         if tr.get("path"):
@@ -273,7 +300,20 @@ def test_command(case: dict, lang: str):
         return b.get("test_command")
     if lang == "lua":
         sel = (case.get("manifest") or {}).get("trigger_selector") or {}
-        return sel.get("command")
+        cmd = sel.get("command")
+        # busted loads the system-installed Penlight (pl.*) itself before any spec
+        # runs, so `require "pl.utils"` in a Penlight checkout silently resolved to
+        # the installed library: the buggy side then PASSED (UNEXPECTED_PASS).
+        # The helper drops the preloaded pl.* modules so the checkout is what is tested.
+        if isinstance(cmd, list) and cmd and cmd[0] == "busted":
+            helper = str(Path(__file__).resolve().parent / "lua_isolate.lua")
+            cmd = [cmd[0], "--helper=" + helper] + cmd[1:]
+        elif isinstance(cmd, list) and cmd:
+            # Plain `lua tests/x.lua` / `sh -lc ...` triggers: same problem, the default
+            # package.path misses the checkout's lua/ tree and falls back to the
+            # system Penlight. Put the checkout first.
+            cmd = ["env", "LUA_PATH=./lua/?.lua;./lua/?/init.lua;./src/?.lua;./src/?/init.lua;;"] + cmd
+        return cmd
     if lang == "perl":
         return (case.get("commands") or {}).get("trigger_test")
     if lang == "r":
@@ -348,6 +388,14 @@ def case_rev(case: dict, side: str):
         side = "buggy"
     if side == "buggy" and case.get("revision_mode") == FIXED_MINUS_PATCH:
         side = "fixed"
+    # Lua: top-level revision.id.* disagree with manifest.*_sha in 53/100 cases
+    # (and 39 name a different repository); the manifest triple is the consistent
+    # one. Keep in sync with scripts/fetch_sources.py.
+    _m = case.get("manifest") if isinstance(case.get("manifest"), dict) else {}
+    if str(case.get("language")).lower() == "lua" and _m.get("repository"):
+        _v = _m.get("buggy_sha" if side == "buggy" else "fixed_sha")
+        if _v:
+            return _v
     names = (("buggy_revision", "buggy_sha", "revision.id.buggy", "commits.buggy")
              if side == "buggy" else
              ("fixed_revision", "fixed_sha", "revision.id.fixed", "commits.fixed"))
@@ -402,7 +450,50 @@ def apply_patches(case_path: Path, side: str, wt: Path, force: bool):
         subprocess.run(["git", "-C", str(wt), "reset", "--hard"], text=True,
                        capture_output=True)
     applied = []
+    # Lua: reproduction_mode "fixed-test-overlay-on-buggy". The buggy side is the
+    # buggy revision plus the test-file hunks of the upstream fix commit; without
+    # them the busted filter matches nothing and exits 0 (UNEXPECTED_PASS).
+    # Several cases also ship an EMPTY upstream_trigger.patch, which git rejects.
+    if case_dir.parent.name == "lua" and side == "buggy":
+        try:
+            _m = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig")).get("manifest") or {}
+        except Exception:
+            _m = {}
+        _tf = [f for f in (_m.get("regression_test_file") or "").split(";") if f]
+        _up = case_dir / "evidence" / "upstream.patch"
+        if _tf and _up.is_file():
+            _inc = ["--include=" + f for f in _tf]
+            _r = subprocess.run(["git", "-C", str(wt), "apply", "--reverse", "--check", *_inc, str(_up)],
+                                text=True, capture_output=True)
+            if _r.returncode != 0:
+                _c = subprocess.run(["git", "-C", str(wt), "apply", "--check", *_inc, str(_up)],
+                                    text=True, capture_output=True)
+                if _c.returncode != 0:
+                    # evidence/upstream.patch does not belong to this case's revisions
+                    # (19 Lua cases: commit.txt fixed_sha != case fixed revision).
+                    print(f"WARNING: LUA_OVERLAY_SKIPPED {case_dir.name}: {_c.stderr.strip()}")
+                else:
+                    subprocess.run(["git", "-C", str(wt), "apply", *_inc, str(_up)], check=True)
+                    applied.append("upstream.patch[tests-only]")
+    _lua_tf = []
+    if case_dir.parent.name == "lua":
+        try:
+            _lm = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig")).get("manifest") or {}
+        except Exception:
+            _lm = {}
+        _lua_tf = [f for f in (_lm.get("regression_test_file") or "").split(";") if f]
     for q in select_patches(case_dir, side):
+        if q.stat().st_size == 0:
+            continue
+        if _lua_tf and q.name == "upstream_trigger.patch":
+            # Stale artifact in part of the Lua cases: it patches test files of a
+            # different project than manifest.regression_test_file. The tests-only
+            # overlay from evidence/upstream.patch (above) already supplies the test.
+            import re as _re2
+            _touched = _re2.findall(r"^diff --git a/(\S+)", q.read_text(encoding="utf-8", errors="replace"), _re2.M)
+            if not any(t in _touched for t in _lua_tf):
+                print(f"WARNING: LUA_STALE_TRIGGER_PATCH_SKIPPED {case_dir.name}: touches {_touched[:2]}")
+                continue
         rev = subprocess.run(["git", "-C", str(wt), "apply", "--reverse", "--check", str(q)],
                              text=True, capture_output=True)
         if rev.returncode == 0:
@@ -604,9 +695,18 @@ def _run_side(args, p, c, side, work, lang, mode, image):
         print(f"{side}: test={tcmd}")
         return {"side": side, "compile_rc": None, "test_rc": None,
                 "outcome": "DRY_RUN", "applied": applied}
+    # Monorepo cases declare build.directory (e.g. pkgs/args, sembast). Running the
+    # analyzer/tests from the repo root analyzed the whole monorepo (DART-1123:
+    # 17888 issues) and failed both sides at the compile gate. Patches still apply
+    # at the repo root; only the commands run in the package directory.
+    run_cwd = wt
+    if mode != "container":
+        _bd = (c.get("build") or {}).get("directory")
+        if isinstance(_bd, str) and _bd not in ("", ".") and (wt / _bd).is_dir():
+            run_cwd = wt / _bd
     compile_rc = 0
     if ccmd:
-        compile_rc, _ = run_command(ccmd, wt, timeout, logdir / f"{side}-compile.log")
+        compile_rc, _ = run_command(ccmd, run_cwd, timeout, logdir / f"{side}-compile.log")
         # Old SwiftPM packages whose LinuxMain.swift lists test cases that no longer
         # exist fail to build unless test discovery is on (SWIFT-D085). Retry once.
         if (compile_rc != 0 and lang == "swift"
@@ -628,7 +728,7 @@ def _run_side(args, p, c, side, work, lang, mode, image):
     if not tcmd:
         return {"side": side, "compile_rc": 0, "test_rc": None,
                 "outcome": "BLOCKED", "applied": applied}
-    test_rc, _ = run_command(tcmd, wt, timeout, logdir / f"{side}-test.log")
+    test_rc, _ = run_command(tcmd, run_cwd, timeout, logdir / f"{side}-test.log")
     extra = {}
     names = [n for n in (c.get("triggering_tests") or c.get("trigger_tests") or [])
              if isinstance(n, str)]
