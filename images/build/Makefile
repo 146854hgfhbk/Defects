@@ -1,6 +1,6 @@
 # Clean-room image builds for Defects4X.
 #
-# No prebuilt image, cache, or toolchain tarball from the reference server is
+# No prebuilt image, cache, or toolchain tarball is
 # used. Every image starts from an official base image and installs its
 # dependencies from the distribution's package repository.
 

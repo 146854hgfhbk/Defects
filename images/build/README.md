@@ -1,9 +1,5 @@
 # Clean-room image builds
 
-> **Security notice:** the reference server that produced the original
-> `docker save` tars was compromised. Those tars are **not trusted**. This
-> directory rebuilds the runtime images from official base images.
-
 ## What is here
 
 ```text
@@ -14,8 +10,7 @@ images/build/
   versions.lock
 ```
 
-There are **no binaries**, no caches, and no toolchain tarballs from the
-reference server.
+There are **no binaries**, no caches, and no toolchain tarballs.
 
 ## Build
 
@@ -83,9 +78,8 @@ Uses Trivy if installed. The build does not claim the images are CVE-free.
 
 ## Important: image IDs will differ
 
-The original image IDs (for example the D101 `sha256:da8756...` ID) were built
-from the compromised server's local base images and toolchain tarballs.
-A clean rebuild **will not be byte-identical**.
+The original image IDs (for example the D101 `sha256:da8756...` ID) are not
+reproduced by a rebuild. A clean rebuild **will not be byte-identical**.
 
 That is expected. The reproduction contract is:
 
@@ -96,8 +90,7 @@ That is expected. The reproduction contract is:
 
 not the same image digest.
 
-If you need a byte-identical image, you must first rebuild the exact original
-base/toolchain from trusted sources and pin every layer by digest.
+If you need a byte-identical image, pin the base and every layer by digest.
 
 ## Pinning base images
 
@@ -118,7 +111,4 @@ Do not use `latest`.
 
 ## Do not
 
-- `docker load` old tars from the reference server
-- copy `.gradle`, Julia depot, CPAN, LuaRocks, or R libraries from the server
-- use `ADD`/`COPY` from `/data/users/...`
 - build with a warm cache and call it clean

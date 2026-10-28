@@ -165,6 +165,14 @@ def select_patches(case_dir: Path, side: str):
         chosen.append(t)
     if side == "fixed":
         p = pick(prod_pref, "production")
+        # Opt-in D4X_KOTLIN_ORIGINAL_SOURCE=1: for Kotlin cases whose minimized-source.patch lost the
+        # `import` lines the minimized code still uses (KOTLIN-133/144/146/149/150/151: fixed side
+        # "Unresolved reference"), use the case's own patches/original-source.patch instead.
+        # d4x-derived, not the dataset's declared fix patch: report such PASSes separately.
+        if os.environ.get("D4X_KOTLIN_ORIGINAL_SOURCE") == "1" and case_dir.parent.name == "kotlin":
+            _op = case_dir / "patches" / "original-source.patch"
+            if _op.is_file():
+                p = _op
         if p and p not in chosen:
             chosen.append(p)
     return chosen
@@ -189,6 +197,14 @@ def run_command(cmd, cwd: Path, timeout: int, log: Path):
         except FileNotFoundError as e:
             f.write(f"\nNOT FOUND: {e}\n")
             return 127, printable
+
+
+def _kt_posix(cmd):
+    """88 Kotlin cases declare Windows wrapper commands (`.\\gradlew.bat ...`); on Linux the
+    same wrapper is `./gradlew`. Only the launcher spelling is changed, never the tasks."""
+    if isinstance(cmd, str) and cmd.startswith(".\\gradlew.bat"):
+        return "./gradlew" + cmd[len(".\\gradlew.bat"):]
+    return cmd
 
 
 def compile_command(case: dict, lang: str):
@@ -234,7 +250,13 @@ def compile_command(case: dict, lang: str):
         return ("julia --project=. -e "
                 "'using Pkg; Pkg.instantiate(; allow_autoprecomp=false)'")
     if lang == "kotlin":
-        return b.get("build_command") or ("./gradlew " + b.get("compile_task", "")).strip()
+        if b.get("android_sdk_required") and b.get("compile_task"):
+            # Android modules have no `testClasses` task (KOTLIN-120..123: "task 'testClasses' not
+            # found in project ':AnkiDroid'"); the case's own declared compile_task is the real one.
+            return "./gradlew " + b["compile_task"]
+        if os.environ.get("D4X_KOTLIN_DECLARED_TASKS") == "1" and b.get("compile_task"):
+            return "./gradlew " + b["compile_task"]  # declared task, not a build_command naming another module
+        return _kt_posix(b.get("build_command") or ("./gradlew " + b.get("compile_task", "")).strip())
     if lang == "lua":
         return None  # interpreted
     if lang == "perl":
@@ -356,7 +378,14 @@ def test_command(case: dict, lang: str):
             return f"julia --project=. {tr['path']}"
         return b.get("test_command")
     if lang == "kotlin":
-        return b.get("test_command")
+        if b.get("android_sdk_required") and b.get("test_task"):
+            return "./gradlew " + b["test_task"]  # declared test_task, not the aggregate `test`
+        if os.environ.get("D4X_KOTLIN_DECLARED_TASKS") == "1" and b.get("test_task"):
+            return "./gradlew " + b["test_task"]
+        _kc = _kt_posix(b.get("test_command"))
+        if os.environ.get("D4X_KOTLIN_CONTINUE") == "1" and isinstance(_kc, str) and "--continue" not in _kc:
+            _kc += " --continue"  # run every module so trigger tests are not skipped by an earlier failure
+        return _kc
     if lang == "lua":
         sel = (case.get("manifest") or {}).get("trigger_selector") or {}
         cmd = sel.get("command")
@@ -418,7 +447,23 @@ def test_command(case: dict, lang: str):
                     cmd = cmd + ["--filter", n[:-2] if n.endswith("()") else n]
         return cmd
     if lang == "elixir":
-        return (case.get("commands") or {}).get("test")
+        _tc = (case.get("commands") or {}).get("test")
+        # Opt-in D4X_ELIXIR_SEED=<n>: append `--seed n` to the declared `mix test`. ExUnit shuffles
+        # test order with a fresh seed on every run, and some Phoenix/Gettext suites depend on
+        # order (ELIXIR-042: the same code passed with seeds 355350 and 361039 and failed with
+        # 191303). Seed 0 turns shuffling off, so a run is repeatable. d4x-added, not declared
+        # by the dataset: report results obtained this way as such.
+        _sd = os.environ.get("D4X_ELIXIR_SEED")
+        if isinstance(_tc, str) and _sd not in (None, "") and "--seed" not in _tc:
+            _tc = _tc + f" --seed {int(_sd)}"
+        # Opt-in D4X_ELIXIR_MAX_CASES=<n>: append `--max-cases n` to `mix test`. Phoenix integration suites bind a
+        # fixed port per test and fail at random with :eaddrinuse when async modules overlap
+        # (ELIXIR-051: a different WebSocketChannelsTest case failed in each of 6 runs). n=1 runs
+        # modules one at a time. d4x-added, not declared by the dataset: report results as such.
+        _mc = os.environ.get("D4X_ELIXIR_MAX_CASES")
+        if isinstance(_tc, str) and _mc not in (None, "") and "--max-cases" not in _tc:
+            _tc = _tc + f" --max-cases {int(_mc)}"
+        return _tc
     return None
 
 
@@ -477,6 +522,11 @@ def case_rev(case: dict, side: str):
     # base revision + trigger + production patch (SWIFT-D074, SWIFT-D095).
     if side == "fixed" and (((case.get("artifacts") or {}).get("fixed") or {})
                             .get("equals_upstream_tree") is False):
+        side = "buggy"
+    # Kotlin (68 cases): revision_mode "base_plus_gold_patch" -- the dataset's fixed state is
+    # the pinned base plus the production patch (environment.lock.json: "Synthetic fixed is the
+    # pinned base plus the bound SWE-bench gold patch"); fixed_revision does not exist upstream.
+    if side == "fixed" and case.get("revision_mode") == "base_plus_gold_patch":
         side = "buggy"
     if side == "buggy" and case.get("revision_mode") == FIXED_MINUS_PATCH:
         side = "fixed"
@@ -686,6 +736,26 @@ def apply_patches(case_path: Path, side: str, wt: Path, force: bool):
             continue
         chk = subprocess.run(["git", "-C", str(wt), "apply", "--check", str(q)],
                              text=True, capture_output=True)
+        if chk.returncode != 0 and b"\r\n" in q.read_bytes():
+            # Patch shipped with CRLF line endings (7 Kotlin trigger patches, case.json
+            # line_endings_normalized_for_git) while the checkout is LF: normalise the patch only.
+            import tempfile as _tf2
+            _nb = q.read_bytes().replace(b"\r\n", b"\n")
+            with _tf2.NamedTemporaryFile("wb", suffix=".patch", delete=False) as _t2:
+                _t2.write(_nb)
+            _rk = subprocess.run(["git", "-C", str(wt), "apply", "--reverse", "--check", _t2.name],
+                                 text=True, capture_output=True)
+            if _rk.returncode == 0:
+                # trigger tests already present in this revision (fixed side of real_upstream_commit)
+                print(f"WARNING: PATCH_CRLF_ALREADY_APPLIED {case_dir.name}: {q.name}")
+                continue
+            _ck = subprocess.run(["git", "-C", str(wt), "apply", "--check", _t2.name],
+                                 text=True, capture_output=True)
+            if _ck.returncode == 0:
+                subprocess.run(["git", "-C", str(wt), "apply", _t2.name], check=True)
+                applied.append(q.name + "[crlf-normalized]")
+                print(f"WARNING: PATCH_CRLF_NORMALIZED {case_dir.name}: {q.name}")
+                continue
         if chk.returncode != 0:
             # Fixed side only: a trigger-test patch carved out of the fix commit may
             # be neither forward- nor reverse-applicable because the fixed revision
@@ -698,6 +768,26 @@ def apply_patches(case_path: Path, side: str, wt: Path, force: bool):
             raise SystemExit(f"patch does not apply: {q.name}\n{chk.stderr}")
         subprocess.run(["git", "-C", str(wt), "apply", str(q)], check=True)
         applied.append(q.name)
+    # Kotlin, opt-in (D4X_KOTLIN_RETAIN_API=1): the trigger tests of a few cases call API that the
+    # fix introduces (KOTLIN-189 hasModifier, KOTLIN-194 lineLength), so the buggy tree cannot
+    # compile them. patches/buggy-retained-api.json lists files whose diff from the fix is
+    # purely additive declarations; that file-level diff is forward-applied to the buggy side only.
+    if (side == "buggy" and case_dir.parent.name == "kotlin"
+            and os.environ.get("D4X_KOTLIN_RETAIN_API") == "1"
+            and (case_dir / "patches" / "buggy-retained-api.json").is_file()):
+        _spec = json.loads((case_dir / "patches" / "buggy-retained-api.json").read_text(encoding="utf-8"))
+        _src = case_dir / "patches" / _spec.get("source_patch", "original-source.patch")
+        _txt = _src.read_text(encoding="utf-8", errors="replace")
+        _parts = re.split(r"(?m)^(?=diff --git )", _txt)
+        _keep = [x for x in _parts if any(x.startswith(f"diff --git a/{f} ") for f in _spec["files"])]
+        if len(_keep) != len(_spec["files"]):
+            raise SystemExit(f"retained-api files not found in {_src.name}")
+        import tempfile as _tf3
+        with _tf3.NamedTemporaryFile("w", suffix=".patch", delete=False, encoding="utf-8", newline="\n") as _t3:
+            _t3.write("".join(_keep))
+        subprocess.run(["git", "-C", str(wt), "apply", "--check", _t3.name], check=True)
+        subprocess.run(["git", "-C", str(wt), "apply", _t3.name], check=True)
+        applied.append("buggy-retained-api:" + ",".join(Path(f).name for f in _spec["files"]))
     return applied
 
 
@@ -828,6 +918,48 @@ def elixir_unlisted_failures(log: Path, excluded_path: Path):
             allowed.add(t.strip())
             allowed.add(t.strip()[5:] if t.strip().startswith("test ") else t.strip())
     return True, [n for n in elixir_failed_names(log) if n not in allowed]
+
+
+def _kt_norm_test(name):
+    # Gradle prints either "pkg.Class > test" or "Class > test"; compare on the simple class name.
+    return re.sub(r"^(?:[\w$]+\.)+(?=[\w$]+ > )", "", name.strip())
+
+
+def kotlin_failed_tests(log):
+    """(names, reported): tests printed as '<test> FAILED' in a Gradle log, and the count from
+    the 'N tests completed, M failed' summary line (None if absent)."""
+    names, reported = [], None
+    if not log.is_file():
+        return names, reported
+    for ln in log.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = re.match(r"^(\S.* > .*\S) FAILED\s*$", ln)
+        if m and not ln.startswith("> Task"):
+            names.append(_kt_norm_test(m.group(1)))
+        m = re.search(r"(\d+) tests completed, (\d+) failed", ln)
+        if m:
+            reported = (reported or 0) + int(m.group(2))
+    return names, reported
+
+
+def kotlin_excluded_verdict(log, excluded_path, trig_classes=()):
+    """Fixed side with a non-zero Gradle exit: OK only if every failed test is listed in
+    validation/excluded-tests.json and the parsed failures account for the reported count."""
+    d = json.loads(excluded_path.read_text(encoding="utf-8"))
+    allowed = set()
+    for e in d.get("excluded_tests", []):
+        t = e.get("test") if isinstance(e, dict) else e
+        if isinstance(t, str):
+            allowed.add(_kt_norm_test(t))
+    names, reported = kotlin_failed_tests(log)
+    unlisted = [n for n in names if n not in allowed]
+    ok = bool(names) and not unlisted and reported == len(names)
+    if ok and trig_classes:
+        text = log.read_text(encoding="utf-8", errors="replace")
+        for cls in trig_classes:
+            if not re.search(r"(?m)^(?:[\w$.]+\.)?" + re.escape(cls) + r" > .* PASSED\s*$", text):
+                ok = False
+                unlisted.append("TRIGGER NOT SEEN PASSED: " + cls)
+    return ok, names, unlisted
 
 
 def dart_verdict(side: str, log: Path, trig: list):
@@ -996,6 +1128,11 @@ def swift_needs_test_discovery(root: Path) -> bool:
 
 
 def _run_side(args, p, c, side, work, lang, mode, image):
+    if lang == "kotlin":
+        _sdk = os.path.expanduser("~/d4x/android-sdk")
+        if os.path.isdir(_sdk):
+            os.environ.setdefault("ANDROID_HOME", _sdk)
+            os.environ.setdefault("ANDROID_SDK_ROOT", _sdk)
     cid = p.parent.name
     wt = fetch_side(p, work, side, args.force)
     applied = apply_patches(p, side, wt, args.force)
@@ -1074,6 +1211,32 @@ def _run_side(args, p, c, side, work, lang, mode, image):
         return {"side": side, "compile_rc": 0, "test_rc": None,
                 "outcome": "BLOCKED", "applied": applied}
     test_rc, _ = run_command(tcmd, run_cwd, timeout, logdir / f"{side}-test.log")
+    # Opt-in D4X_ELIXIR_RERUN_FAILED=<n>: after a failing fixed-side `mix test`, rerun only the
+    # failed tests with `mix test --failed` (up to n times). Phoenix's WebSocketChannelsTest
+    # restarts one endpoint on fixed port 5807 in every test; the previous listener is not always
+    # released yet, so a random test dies with :eaddrinuse (ELIXIR-051: a different test in each of
+    # 9 runs, also with --max-cases 1 and --seed 0). A test that fails again in every rerun stays
+    # a failure. The first run's log is kept as is; reruns go to <side>-test-rerun<i>.log.
+    _rerun_final, _rerun_info = None, {}
+    _rr = os.environ.get("D4X_ELIXIR_RERUN_FAILED")
+    if (lang == "elixir" and side == "fixed" and _rr and test_rc != 0
+            and isinstance(tcmd, list) and tcmd and "mix test" in str(tcmd[-1])):
+        _cur = set(elixir_failed_names(logdir / f"{side}-test.log"))
+        for _i in range(1, int(_rr) + 1):
+            if not _cur:
+                break
+            _rcmd = list(tcmd)
+            _rcmd[-1] = _rcmd[-1].replace("mix test", "mix test --failed", 1)
+            _rlog = logdir / f"{side}-test-rerun{_i}.log"
+            run_command(_rcmd, run_cwd, timeout, _rlog)
+            _rtxt = _rlog.read_text(encoding="utf-8", errors="replace") if _rlog.is_file() else ""
+            if not re.search(r"\d+ tests?, \d+ failures?", _rtxt):
+                _rerun_info["rerun%d" % _i] = "no ExUnit summary; rerun ignored"
+                _cur = None
+                break
+            _cur = set(elixir_failed_names(_rlog))
+            _rerun_info["rerun%d" % _i] = sorted(_cur)
+        _rerun_final = _cur
     extra = {}
     names = [n for n in (c.get("triggering_tests") or c.get("trigger_tests") or [])
              if isinstance(n, str)]
@@ -1093,6 +1256,10 @@ def _run_side(args, p, c, side, work, lang, mode, image):
             checked, unlisted = elixir_unlisted_failures(
                 logdir / f"{side}-test.log", p.parent / "validation" / "excluded-tests.json")
             extra["exclusions_checked"] = checked
+            if checked and unlisted and _rerun_final is not None:
+                extra["flaky_recovered"] = [n for n in unlisted if n not in _rerun_final][:20]
+                extra["reruns"] = _rerun_info
+                unlisted = [n for n in unlisted if n in _rerun_final]
             if checked and unlisted:
                 outcome = "UNEXPECTED_FAIL"
                 extra["unlisted_failures"] = unlisted[:20]
@@ -1104,6 +1271,14 @@ def _run_side(args, p, c, side, work, lang, mode, image):
         outcome, hit, other = dart_verdict(side, logdir / f"{side}-test.log", dtrig)
         extra = {"verdict_basis": "trigger_tests", "trigger_failed": hit,
                  "other_failures": other}
+    elif (lang == "kotlin" and side == "fixed" and test_rc != 0
+          and (p.parent / "validation" / "excluded-tests.json").is_file()):
+        _tc = [str(n).split("#")[0].split(".")[-1] for n in names if "." in str(n) or str(n)]
+        _ok, _names, _unl = kotlin_excluded_verdict(
+            logdir / f"{side}-test.log", p.parent / "validation" / "excluded-tests.json", _tc)
+        outcome = "PASS" if _ok else "UNEXPECTED_FAIL"
+        extra = {"verdict_basis": "excluded_tests", "excluded_failures": _names,
+                 "unlisted_failures": _unl[:20]}
     elif side == "buggy":
         outcome = "FAIL_AS_EXPECTED" if test_rc != 0 else "UNEXPECTED_PASS"
     else:
