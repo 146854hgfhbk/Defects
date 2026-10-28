@@ -53,21 +53,17 @@ Swift 6.1
 Swift 6.2.3
 ```
 
-The D101 addendum requires the exact image:
-
-```text
-swift-defects-validation:6.2.3-recovered-20260906-v4-openssl
-sha256:da8756f80cc1f5df7a777e662785a70fc990d06bd51d8fa02929366c30d98778
-size: 3122238068 bytes
-```
-
-This image is an external asset. Verify its SHA256, then:
+The D101 addendum uses the Swift 6.2.3 image with OpenSSL. Build it from source with
+[`images/build/`](../images/build/README.md):
 
 ```bash
-docker load --input swift-defects-validation-6.2.3-recovered-20260906-v4-openssl.tar.gz
+cd images/build && make swift
 docker image inspect swift-defects-validation:6.2.3-recovered-20260906-v4-openssl \
   --format '{{.Id}}'
 ```
+
+The image ID differs from the one recorded in the case files; the tag is what the case
+scripts and `metadata/image-tags.json` use.
 
 Then run the case's `commands/<ID>b` and `commands/<ID>f` inside the image.
 

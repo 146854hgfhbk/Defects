@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# d4x clean-room wrapper: runs the Swift toolchain of a locally rebuilt image (images/build)
+set -euo pipefail
+root=${D4X_SWIFT_ROOT:-$(pwd -P)}
+cwd=$(pwd -P)
+case "$cwd/" in
+  "$root/"*) ;;
+  *) printf 'Swift workspace must be inside %s\n' "$root" >&2; exit 2 ;;
+esac
+image=${D4X_SWIFT_IMAGE:-swift-defects-validation:6.2.3-recovered-20260906-v4-openssl}
+swift=${D4X_SWIFT_BIN:-/usr/bin/swift}
+case "$PWD" in
+  */SWIFT-028/*) set -- "$@" -Xlinker -Bsymbolic ;;
+esac
+mkdir -p "${D4X_SPM_CACHE:-$HOME/.cache/d4x-swiftpm}"
+exec docker run --rm --init --network none --cpus ${D4X_SWIFT_CPUS:-$(nproc)} \
+  --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp/home -e TMPDIR=/tmp \
+  -e CLANG_MODULE_CACHE_PATH=/tmp/clang-module-cache \
+  -e SWIFTPM_MODULECACHE_OVERRIDE=/tmp/swiftpm-module-cache \
+  -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e 'GIT_CONFIG_VALUE_0=*' \
+  -e GIT_NO_LAZY_FETCH=1 \
+  --tmpfs /tmp/home:rw,mode=1777 \
+  --volume "$root:$root" \
+  --volume "${D4X_SPM_CACHE:-$HOME/.cache/d4x-swiftpm}:/tmp/home/.cache/org.swift.swiftpm" \
+  --workdir "$cwd" \
+  "$image" "$swift" "$@"

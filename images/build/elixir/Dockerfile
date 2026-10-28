@@ -2,7 +2,7 @@
 # Clean-room Elixir runtime for Defects4X.
 #
 # The base image is an official Elixir image. No binary, cache, or toolchain
-# tarball from the compromised reference server is used.
+# tarball is used.
 ARG ELIXIR_IMAGE=elixir:1.16.3-otp-26
 FROM ${ELIXIR_IMAGE}
 

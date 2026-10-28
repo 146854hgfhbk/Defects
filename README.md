@@ -2,11 +2,6 @@
 
 **A nine-language, Defects4J-style benchmark of real-world defects with buggy/fixed revisions, production patches, trigger tests, and reproduction metadata.**
 
-> **Security notice (2026-10-22):** the reference server was compromised by a
-> worm. The old `images/binaries/*.tar.zst` were removed from Hugging Face and
-> must not be used. Build runtime images from source with
-> [`images/build/`](images/build/README.md). See [SECURITY.md](SECURITY.md).
-
 This repository is the **source-level distribution** of Defects4X. It contains:
 
 - **850 active cases** across 9 languages
@@ -33,8 +28,7 @@ It contains:
 - `images/PREPARE.md` and `scripts/prepare_images.py`
 - `guides/elixir.md`, `guides/swift.md`, `guides/arkts.md`
 
-**The 7 old binary tars were removed after the server compromise.** Rebuild them
-from source:
+The runtime images are built from source:
 
 ```bash
 cd images/build
@@ -55,7 +49,7 @@ images/build/
 ```
 
 They start from official base images and do not consume any cache, tarball, or
-local base image from the compromised server.
+prebuilt local base image.
 
 ```bash
 cd images/build

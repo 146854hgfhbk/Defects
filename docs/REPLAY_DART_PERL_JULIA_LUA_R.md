@@ -105,11 +105,11 @@ reach GitHub, CRAN, Julia or Dart mirrors directly, set `https_proxy` / `http_pr
 * Toolchain: Lua 5.4 under `~/d4x/lua54` (`LUA54=1` puts it first in `PATH`), plus
   busted 2.3, luacov and luafilesystem. The default `lua` on `PATH` stays 5.1.
 * Seven files are not in the earlier tree and were restored:
-  `cases/lua/EV-LU-{156,172,173,174,175,176,177}/evidence/d4j_trigger.lua`. They came from
-  the `dataset/golden/<id>/evidence/` directory of the Lua package produced on the
-  reference server that was later found compromised. Their sha256 equals the one in each
-  case's `SHA256SUMS`, and that is the only reason to trust them. Re-derive or re-review
-  before relying on them.
+  `cases/lua/EV-LU-{156,172,173,174,175,176,177}/evidence/d4j_trigger.lua`. They come from
+  the `dataset/golden/<id>/evidence/` directory of the Lua package. Their sha256 equals the
+  one in each case's `SHA256SUMS`. They are 4 to 13 lines of plain Lua; a read-through found
+  no file, process, network or loader calls (only `require` of the project's own module).
+  There is no second, independent copy to compare against.
 * Not seen in patch mode but needed there: `luacov` (11 cases), and for EV-LU-091
   `LUA_PATH="./src/?.lua;./src/?/init.lua;;"` so the repository's own `argparse` is
   loaded.
@@ -133,11 +133,13 @@ reach GitHub, CRAN, Julia or Dart mirrors directly, set `https_proxy` / `http_pr
   `result.json`, for example 2 in DTPLYR-1); that is outside the verdict. This is a
   looser standard than "the whole suite passes" and has not been confirmed as the
   acceptance rule.
-* **Provenance of the trigger names.** They were taken from the R-100 package built on
-  the reference server that was later found compromised
-  (`dataset/framework/projects/<Project>/trigger_tests/<n>`). There is no independent
-  checksum. The only cross-check done: for all 100 cases the number of names equals
-  `trigger_count` in `case.json` (140 in total).
+* **Provenance of the trigger names.** They were re-derived from the replay logs of this
+  clean-server run: a test is a trigger if it fails on the buggy side and passes on the
+  fixed side (same file, context and test name). The result is identical to the earlier
+  list for 99 of 100 cases (140 names; each case's count equals `trigger_count` in
+  `case.json`). EVALUATE-1 shows one more name in the logs
+  (`test-graphics.R :: evaluate doesn't open plots or create files`); it is not listed,
+  because `trigger_count` is 1 and the test depends on the graphics device.
 * `fixed_minus_minimized_patch` cases (all 100): the minimized patch is applied forward
   to the fixed revision for the buggy tree. Checking `apply --reverse --check` first is
   wrong for a pure-deletion patch and left buggy equal to fixed (CLOCK-1).

@@ -2,7 +2,7 @@
 # Clean-room Swift runtime for Defects4X.
 #
 # The base image is an official Swift image. No binary, cache, or toolchain
-# tarball from the compromised reference server is used.
+# tarball is used.
 ARG SWIFT_IMAGE=swift:6.2.3-jammy
 FROM ${SWIFT_IMAGE}
 

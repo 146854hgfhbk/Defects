@@ -139,6 +139,8 @@ def main() -> int:
     if (((case.get("artifacts") or {}).get("fixed") or {})
             .get("equals_upstream_tree") is False):
         fixed = buggy  # fixed tree = base + trigger + production patch (see d4x.py)
+    if case.get("revision_mode") == "base_plus_gold_patch":
+        fixed = buggy  # Kotlin: fixed_revision is synthetic (base + gold patch), see d4x.py
     if case.get("revision_mode") == "fixed_minus_minimized_patch":
         buggy = fixed  # buggy tree = fixed revision + minimized patch (see d4x.py)
     if not url:
