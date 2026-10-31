@@ -6,7 +6,7 @@ Defects4X is deliberately **per-case pinned**. Do not assume one global version 
 |---|---:|---|---|
 | Dart | 100 | native SDK | 2.0.0, 2.5.2, 2.7.2, 2.9.3, 2.10.5, 2.12.4, 2.13.4, 2.14.4, 2.18.6, 2.19.6, 3.5.4, 3.10.0, 3.12.2 |
 | Julia | 100 | native Julia | 1.6.7, 1.8.5, 1.9.1, 1.10.12, 1.12.7 |
-| Kotlin | 100 | native JDK + Gradle | JDK 17/21/25; Gradle 7.2–9.5; Kotlin 2.1–2.4 |
+| Kotlin | 100 | native JDK + Gradle | JDK 8/11/17/21/25; Gradle 7.2–9.5; Kotlin 2.1–2.4 |
 | Lua | 100 | native Lua + LuaRocks | Lua 5.4.8, LuaRocks 3.11.1, Busted 2.2.0-1 |
 | Perl | 100 | native Perl or container | Perl 5.24 / 5.36 |
 | R | 100 | native R | R 4.4.3 |

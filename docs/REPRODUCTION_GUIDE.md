@@ -58,6 +58,9 @@ Follow the language guide:
 - Perl: `env/perl.md`
 - R: `env/r.md`
 - Elixir/Swift: `env/container.md`
+
+Replay notes with the options each case needed: `docs/REPLAY_DART_PERL_JULIA_LUA_R.md`,
+`docs/REPLAY_KOTLIN_ELIXIR.md`, `docs/REPLAY_SWIFT.md`.
 - ArkTS: `env/device-arkts.md`
 
 Before running a case, check versions:

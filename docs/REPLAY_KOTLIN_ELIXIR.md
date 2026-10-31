@@ -12,6 +12,28 @@ switch is a d4x-derived result, not the dataset's own declared command.
 
 ## Kotlin
 
+### Setup
+
+* JDK 8, 11, 17, 21 and 25 side by side; set `JAVA_HOME` and `PATH` per case from
+  `build.java_version` before `d4x run` (`d4x` does not choose it). Gradle comes from each
+  checkout's wrapper.
+* Android SDK 34 (build-tools 34.0.0) in `$HOME/d4x/android-sdk` for KOTLIN-001 and 120 to 123.
+* Proxy settings go in `gradle.properties`, not `JAVA_TOOL_OPTIONS` (see `env/kotlin.md`).
+* Memory: the first Gradle build used about 6 of 7 GB. Run Kotlin cases one at a time. The large
+  builds (TeXiFy-IDEA, KOTLIN-155) pushed the load average to 62 and made SSH unresponsive for
+  about 40 minutes; limit them with `org.gradle.workers.max=1`, `-Xmx2g` and `nice`.
+* Single cases take about 2 to 9 minutes; the large ones take far longer (see the timeout row below).
+
+### Handled by `d4x` without an option
+
+* 68 cases have `revision_mode = base_plus_gold_patch`: `fixed_revision` does not exist upstream, so
+  the fixed side is `buggy_revision` plus the trigger and production patches.
+* 7 trigger patches with CRLF line endings are normalised before they are applied.
+* `.\gradlew.bat` in 88 cases is run as `./gradlew`.
+* Android modules use their own `compile_task` / `test_task`.
+
+### Causes and options
+
 Causes found in the logs, and what fixed each:
 
 | Cause | Cases | Fix |
@@ -38,6 +60,22 @@ test is on the list, the failure count matches Gradle's summary, and every trigg
 seen passing.
 
 ## Elixir
+
+### Setup
+
+* Docker, with the case images pulled by digest from `images/manifest.json`, or built from
+  `images/build/`. Each image is 1.2 to 1.5 GB and Docker Hub pulls can fail midway; retry.
+* `D4X_CONTAINER_NET=1`: the compile and `mix deps.get` step runs on the host network (set
+  `https_proxy` if needed); the test step always runs with `--network none`.
+* ELIXIR-036 needs a network `mix deps.get` before the offline run (about 335 MB of git
+  dependencies).
+* `D4X_ELIXIR_COMPILE_ENV=test` compiles in `MIX_ENV=test`. ELIXIR-086 needs it: the default `dev`
+  compile also builds `only: :dev` dependencies, and `earmark` 1.2.2 does not compile on
+  Elixir 1.16.
+* The verdict comes from the named trigger tests and the case's `validation/excluded-tests.json`.
+  A trigger written as `path:line` (ELIXIR-027, 030, 061, 099) is matched by `d4x`.
+
+### Flaky suites
 
 ELIXIR-051: `WebSocketChannelsTest` restarts its endpoint on the fixed port 5807 in every test.
 When the previous listener is not yet released, a different test dies with `:eaddrinuse` in each
