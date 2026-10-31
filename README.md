@@ -83,6 +83,10 @@ The **600 source-guide cases** are Dart, Julia, Kotlin, Lua, Perl, and R. A per-
 - **200 container-oriented cases**: Elixir 100 + Swift 100
 - **50 device-oriented cases**: ArkTS 50
 
+Replay notes for what was actually run, with the `d4x` options each case needed:
+[Dart, Perl, Julia, Lua, R](docs/REPLAY_DART_PERL_JULIA_LUA_R.md),
+[Kotlin and Elixir](docs/REPLAY_KOTLIN_ELIXIR.md), [Swift](docs/REPLAY_SWIFT.md).
+
 Reproduction guides do not by themselves imply that a case passed; always check the case's `status`, `validation`, and `environment` fields.
 
 ## Repository layout

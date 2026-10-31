@@ -33,6 +33,13 @@ Erlang/OTP 26
 Hex/Rebar (offline cache for CI)
 ```
 
+With `scripts/d4x.py` the compile and `mix deps.get` step needs network access and the test step
+runs with `--network none`. Set `D4X_CONTAINER_NET=1` so that only the first step uses the host
+network (and `https_proxy` if you need one). Each case image is 1.2 to 1.5 GB; pulls from Docker
+Hub can fail midway and need several retries. ELIXIR-036 needs a network `mix deps.get` first
+(about 335 MB of git dependencies). Options for cases that do not pass with the plain command are
+in [docs/REPLAY_KOTLIN_ELIXIR.md](../docs/REPLAY_KOTLIN_ELIXIR.md).
+
 ## Swift (100)
 
 Swift cases record a runtime release and image digest:
@@ -66,6 +73,10 @@ The image ID differs from the one recorded in the case files; the tag is what th
 scripts and `metadata/image-tags.json` use.
 
 Then run the case's `commands/<ID>b` and `commands/<ID>f` inside the image.
+
+The case files do not contain the SwiftPM dependencies, so resolve them once with network before
+the offline replay. The steps, the cases that need special handling, and the results are in
+[docs/REPLAY_SWIFT.md](../docs/REPLAY_SWIFT.md).
 
 ## Important
 
