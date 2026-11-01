@@ -134,46 +134,46 @@ Each case was run once with `scripts/d4x.py` from commit `2f0f15e`, unchanged. T
 `--timeout 5400` (the default is 1800 s), the JDK named in `build.java_version`, and the Gradle proxy settings in
 `gradle.properties`. ARKTS cases are not listed (no device).
 
-12 of 39 cases were re-run; 27 were not.
+39 of 39 cases were re-run; 0 were not.
 
 | Case | Audit result | Clean host, this re-run | Options | Time |
 |---|---|---|---|---:|
 | ELIXIR-017 | FAIL | PASS | D4X_CONTAINER_NET=1, D4X_ELIXIR_RERUN_FAILED=3 | 874s |
 | ELIXIR-081 | FAIL | PASS | D4X_CONTAINER_NET=1, D4X_ELIXIR_RERUN_FAILED=3 | 283s |
 | ELIXIR-100 | BLOCKED first, then PASS | PASS | D4X_CONTAINER_NET=1, D4X_ELIXIR_RERUN_FAILED=3 | 246s |
-| KOTLIN-107 | BLOCKED | not re-run | | |
-| KOTLIN-124 | BLOCKED | not re-run | | |
-| KOTLIN-141 | BLOCKED | not re-run | | |
-| KOTLIN-142 | BLOCKED | not re-run | | |
-| KOTLIN-145 | BLOCKED | not re-run | | |
-| KOTLIN-146 | BLOCKED | not re-run | | |
-| KOTLIN-147 | BLOCKED | not re-run | | |
-| KOTLIN-149 | BLOCKED | not re-run | | |
-| KOTLIN-151 | BLOCKED | not re-run | | |
+| KOTLIN-107 | BLOCKED | PASS | none | 184s |
+| KOTLIN-124 | BLOCKED | PASS | none | 363s |
+| KOTLIN-141 | BLOCKED | PASS | none | 189s |
+| KOTLIN-142 | BLOCKED | PASS | none | 182s |
+| KOTLIN-145 | BLOCKED | PASS | none | 223s |
+| KOTLIN-146 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 172s |
+| KOTLIN-147 | BLOCKED | PASS | none | 165s |
+| KOTLIN-149 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 185s |
+| KOTLIN-151 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 101s |
 | KOTLIN-152 | FAIL | PASS | none | 669s |
 | KOTLIN-153 | FAIL | PASS | none | 708s |
 | KOTLIN-155 | FAIL | PASS | none | 819s |
 | KOTLIN-158 | FAIL | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 1032s |
 | KOTLIN-159 | FAIL | PASS | none | 1480s |
-| KOTLIN-160 | BLOCKED | not re-run | | |
-| KOTLIN-161 | BLOCKED | not re-run | | |
-| KOTLIN-162 | BLOCKED | not re-run | | |
-| KOTLIN-164 | BLOCKED | not re-run | | |
-| KOTLIN-167 | BLOCKED | not re-run | | |
+| KOTLIN-160 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 1324s |
+| KOTLIN-161 | BLOCKED | PASS | none | 698s |
+| KOTLIN-162 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 683s |
+| KOTLIN-164 | BLOCKED | PASS | D4X_KOTLIN_CONTINUE=1 | 1695s |
+| KOTLIN-167 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1, D4X_KOTLIN_CONTINUE=1 | 1382s |
 | KOTLIN-170 | FAIL | PASS | none | 269s |
-| KOTLIN-173 | BLOCKED | not re-run | | |
-| KOTLIN-176 | BLOCKED | not re-run | | |
-| KOTLIN-177 | BLOCKED | not re-run | | |
-| KOTLIN-186 | BLOCKED | not re-run | | |
-| KOTLIN-196 | BLOCKED | not re-run | | |
-| KOTLIN-197 | BLOCKED | not re-run | | |
-| KOTLIN-198 | BLOCKED | not re-run | | |
-| KOTLIN-200 | BLOCKED | not re-run | | |
-| KOTLIN-204 | BLOCKED | not re-run | | |
-| KOTLIN-205 | BLOCKED | not re-run | | |
-| KOTLIN-207 | BLOCKED | not re-run | | |
-| KOTLIN-208 | BLOCKED | not re-run | | |
-| KOTLIN-227 | BLOCKED | not re-run | | |
+| KOTLIN-173 | BLOCKED | PASS | none | 108s |
+| KOTLIN-176 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 113s |
+| KOTLIN-177 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 97s |
+| KOTLIN-186 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 106s |
+| KOTLIN-196 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 98s |
+| KOTLIN-197 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 93s |
+| KOTLIN-198 | BLOCKED | PASS | none | 111s |
+| KOTLIN-200 | BLOCKED | PASS | none | 151s |
+| KOTLIN-204 | BLOCKED | PASS | none | 129s |
+| KOTLIN-205 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 111s |
+| KOTLIN-207 | BLOCKED | PASS | none | 139s |
+| KOTLIN-208 | BLOCKED | PASS | none | 297s |
+| KOTLIN-227 | BLOCKED | PASS | no Gradle proxy; fallback `jcenter` repository init script during the run | 284s |
 | KOTLIN-501 | FAIL | PASS | none; Node 20 on PATH, Puppeteer not pre-installed, Chrome via a `--no-sandbox` wrapper | 1010s |
 | SWIFT-D018 | FAIL first, then PASS | PASS | recorded Package.resolved, then offline |  |
 | SWIFT-D031 | BLOCKED | PASS | recorded Package.resolved, then offline |  |
@@ -187,9 +187,15 @@ Each case was run once with `scripts/d4x.py` from commit `2f0f15e`, unchanged. T
 * **SWIFT-D031 passes** on the 6.1 image when the recorded `Package.resolved` is in place before the
   resolve. **SWIFT-D018 passes** without raising the file-descriptor limit.
 * **ELIXIR-100 passes** when the dependency step has network access.
-* **The BLOCKED Kotlin cases** are the ones that depend on the host reaching the Gradle download site.
-  Their re-run was still in progress when this note was written; a row that says "not re-run" has no
-  result from this re-check, in either direction.
+* **All 27 BLOCKED Kotlin cases pass** on the clean host, which can reach the Gradle download site.
+  This includes KOTLIN-208, where the audit's Gradle daemon had died, and KOTLIN-162 and 186, where the
+  audit log does not show why a Gradle task failed. 162 and 186 passed with
+  `D4X_KOTLIN_ORIGINAL_SOURCE=1`; whether the audit run lacked that option is not known.
+* **Some cases need an option or a special setup even with network access**, as the options column
+  shows: `D4X_KOTLIN_ORIGINAL_SOURCE=1` for 11 of the 27 re-run Kotlin cases (and 158), `--continue` for
+  164 and 167, and for KOTLIN-227 a Gradle run without the proxy plus a fallback repository for
+  `jcenter`-era artifacts that no longer exist in the public repositories. A reader who only fixes the
+  network will still need these.
 
 ## What a reader needs to reproduce these cases
 
@@ -209,8 +215,7 @@ Each case was run once with `scripts/d4x.py` from commit `2f0f15e`, unchanged. T
 
 ## What this note does not show
 
-* It does not show that every BLOCKED result would pass: only the cases listed in the table above were
-  re-run on the clean host.
+* It does not cover the 50 ArkTS cases: they need a device.
 * It does not show that the unrelated failing tests are harmless for every use of the dataset. They are
   failures in the upstream project's own suite on the fixed revision.
 * The audit and the re-check are single runs of each case.
