@@ -29,6 +29,11 @@ not been done.
   SwiftPM resolves from, **during the dependency step only**. The test run itself uses
   `--network none`.
 * `docker` must be callable by the user running `d4x` (the runs here used `sudo -E`).
+* The container needs a high open-file limit. On a host with a low default, `swift test` dies with
+  `epoll_create(size:): Too many open files (errno: 24)` (SWIFT-D018 in the second-host audit). `d4x`
+  starts the container itself and sets no limit, so raise the Docker default (for example
+  `default-ulimits` in `/etc/docker/daemon.json`). The audit passed `--ulimit nofile=65536:65536` when
+  it ran the container by hand. The clean replay host needed no change.
 
 ## Step 1: resolve dependencies once, with network
 
@@ -121,6 +126,11 @@ These are handled by the runner and need no option:
   only for SWIFT-D046. For the other 35 the buggy side already fails with the first name,
   and more names cannot change that, but one of the other trigger tests could still fail on
   the fixed side.
+* SWIFT-D031 pins `swift-syntax` to a commit on `main` (`d769922`) in its recorded `Package.resolved`.
+  Put the recorded file in place before resolving (step 1). In the second-host audit a dependency
+  required `swift-tools-version: 6.2` and the case was BLOCKED on Swift 6.1.3; a resolve that starts
+  from the current tip of `main` may be the cause, but that was not reproduced. With the recorded
+  file the case passes on the 6.1 image.
 * The images are rebuilt, so their digests differ from the originals. The runtime versions
   match; that alone does not show the images are equivalent.
 * `D4X_ENABLE_XCTEST=1` (used in the earlier validation tree for SWIFT-D052 and D059) is not

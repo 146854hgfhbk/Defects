@@ -98,3 +98,11 @@ Three `Mix.Tasks.Phx.Gen.ReleaseTest` tests call `hub.docker.com`; they fail und
 available. They are d4x options, not part of the dataset. ELIXIR-053, 059, 064, 065 and 066
 passed in their latest run with `D4X_ELIXIR_SEED=0` (order-dependent suites); they have not been
 rechecked with the rerun option.
+
+## Second-host replay
+
+A replay on another host (350 Kotlin, Elixir, Swift and ArkTS cases, strict gate) ended with 263 PASS,
+9 FAIL and 78 BLOCKED. The causes, which of them lie in the host and which in the project's own
+tests, and what was re-checked on the clean replay host are in
+[REPLAY_SECOND_HOST_AUDIT.md](REPLAY_SECOND_HOST_AUDIT.md). Before replaying Kotlin, make sure the
+host can reach `services.gradle.org` or has `GRADLE_USER_HOME` pre-populated.
