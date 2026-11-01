@@ -61,6 +61,7 @@ Follow the language guide:
 
 Replay notes with the options each case needed: `docs/REPLAY_DART_PERL_JULIA_LUA_R.md`,
 `docs/REPLAY_KOTLIN_ELIXIR.md`, `docs/REPLAY_SWIFT.md`.
+Why a replay on another host can end BLOCKED or FAIL: `docs/REPLAY_SECOND_HOST_AUDIT.md`.
 - ArkTS: `env/device-arkts.md`
 
 Before running a case, check versions:

@@ -85,7 +85,8 @@ The **600 source-guide cases** are Dart, Julia, Kotlin, Lua, Perl, and R. A per-
 
 Replay notes for what was actually run, with the `d4x` options each case needed:
 [Dart, Perl, Julia, Lua, R](docs/REPLAY_DART_PERL_JULIA_LUA_R.md),
-[Kotlin and Elixir](docs/REPLAY_KOTLIN_ELIXIR.md), [Swift](docs/REPLAY_SWIFT.md).
+[Kotlin and Elixir](docs/REPLAY_KOTLIN_ELIXIR.md), [Swift](docs/REPLAY_SWIFT.md),
+[why a replay on another host can end BLOCKED or FAIL](docs/REPLAY_SECOND_HOST_AUDIT.md).
 
 Reproduction guides do not by themselves imply that a case passed; always check the case's `status`, `validation`, and `environment` fields.
 

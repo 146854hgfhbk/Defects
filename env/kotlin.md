@@ -109,7 +109,9 @@ Use the case's `build.compile_task` / `build.test_task`; do not run the whole mu
 
 - `Unsupported class file major version` — JDK too new/old.
 - `Could not resolve ...` — Gradle cache missing; prepare online, then `--offline`.
-- Wrapper tries to download Gradle — pre-populate `GRADLE_USER_HOME/wrapper/dists`.
+- Wrapper tries to download Gradle — pre-populate `GRADLE_USER_HOME/wrapper/dists`. If the host cannot
+  reach `services.gradle.org`, the case ends as BLOCKED (24 Kotlin cases in the second-host audit,
+  see [docs/REPLAY_SECOND_HOST_AUDIT.md](../docs/REPLAY_SECOND_HOST_AUDIT.md)).
 - Android SDK required — check `build.android_sdk_required` and install the matching SDK.
 - KOTLIN-501 PDF test hangs — Chrome/Puppeteer missing or wrong version.
 - `.\gradlew.bat: not found`: 88 cases record the Windows launcher in `build_command` /
