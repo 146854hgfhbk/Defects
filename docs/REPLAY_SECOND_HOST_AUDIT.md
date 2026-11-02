@@ -219,9 +219,16 @@ clean host in one full run: the buggy side failed only the trigger
 (`DeckPickerNoExternalFilesDirTest`), the fixed side failed `CardBrowserTest > FindReplace - replaces
 text based on regular expression`, a UI assertion that looks for the text "1 note updated." and finds
 no matching view. That test passes on the buggy side of the same run. Run alone on the unchanged fixed
-tree, `CardBrowserTest` exited 0 in three of three repeats. So the failure is intermittent inside the
-full suite and KOTLIN-120 cannot be called stably PASS under the strict gate. Whether it belongs on an
-exclusion list is a decision for the dataset owner; nothing was added.
+tree, `CardBrowserTest` exited 0 in three of three repeats, and the trigger class run alone on the fixed
+tree passes. The failure is therefore intermittent inside the full suite.
+
+Decision: the test is recorded in `cases/kotlin/KOTLIN-120/validation/excluded-tests.json`, with the
+classification `OBSERVED_NOT_GOLD_VERIFIED` (observed on the clean host, not run against the upstream
+fix), like the lists for KOTLIN-164, 165 and 167. KOTLIN-120 meets the strict gate only through that list.
+
+The list alone was not enough. `d4x` required the Gradle log to show the trigger class as `PASSED`, and
+AnkiDroid's log prints no passed tests; the class name was also taken as the text after the last dot of
+the trigger name, which for a test with a display name is the whole sentence. See "Runner changes".
 
 ## Runner changes
 
@@ -237,7 +244,14 @@ this note:
   side fails 1 test, and the fixed side passes 265 doctests and 655 tests.
 * **Open-file limit.** Every container is now started with `--ulimit nofile=65536:65536`.
 
-The change touches 21 lines. Other languages do not use containers, so their runs are not affected.
+* **Exclusion check for Kotlin.** When the fixed side exits non-zero and the case has an exclusion list, the
+  runner needs evidence that the trigger test passed. It looked only for `PASSED` lines in the Gradle log.
+  It now also accepts the JUnit XML named by `build.test_results_glob`: every trigger test must have a
+  `<testcase>` with no `<failure>`, `<error>` or `<skipped>`. The XML is used only when it shows the trigger
+  passing; otherwise the old check applies, so KOTLIN-164 and 167 are judged as before. This is what lets
+  the KOTLIN-120 list take effect.
+
+The first three changes touch 21 lines. Other languages do not use containers, so their runs are not affected.
 ELIXIR-001 and 081 were re-run with the new runner and still pass.
 
 ## What a reader needs to reproduce these cases

@@ -53,11 +53,14 @@ Unrelated failing tests on the fixed side (`validation/excluded-tests.json`):
 * KOTLIN-165: 2 tests (same, and `SpringPackageCurationProviderTest`)
 * KOTLIN-167: 8 tests (4 `CarthageTest`, 2 `VersionControlSystemTest`, `ExtensionsTest`, and a
   `ClearlyDefinedPackageCurationProviderTest` that calls an online service)
+* KOTLIN-120: 1 test (`CardBrowserTest > FindReplace - replaces text based on regular expression`, a UI
+  assertion that failed once in a full run and passed in 3 of 3 repeats when run alone)
 
 These were observed on the clean server. They were not run against the upstream GOLD fix.
 With a list present, `d4x` accepts a non-zero Gradle exit on the fixed side only if every failed
-test is on the list, the failure count matches Gradle's summary, and every trigger test class was
-seen passing.
+test is on the list, the failure count matches Gradle's summary, and every trigger test is seen passing,
+either as a `PASSED` line in the Gradle log or as a `<testcase>` without `<failure>`, `<error>` or
+`<skipped>` in the JUnit XML named by `build.test_results_glob` (KOTLIN-120's log prints no passed tests).
 
 ## Elixir
 

@@ -952,9 +952,39 @@ def kotlin_failed_tests(log):
     return names, reported
 
 
-def kotlin_excluded_verdict(log, excluded_path, trig_classes=()):
+def kotlin_triggers_passed_junit(root, glob_pat, trigger_names):
+    """True if every trigger test has a <testcase> in the JUnit XML under `root` (build.test_results_glob)
+    with no <failure>, <error> or <skipped>. A trigger name is `<classname>.<test name>`; the test name may
+    contain spaces and dots, so compare whole strings, not the text after the last dot."""
+    import glob as _glob
+    import xml.etree.ElementTree as _ET
+    if not glob_pat or not trigger_names:
+        return False
+
+    def norm(s):
+        return str(s).replace("#", ".").replace("()", "").strip()
+
+    want = {norm(n) for n in trigger_names}
+    seen_ok = set()
+    for f in _glob.glob(str(Path(root) / glob_pat), recursive=True):
+        try:
+            suite = _ET.parse(f).getroot()
+        except Exception:
+            continue
+        for tc in suite.iter("testcase"):
+            full = norm(f"{tc.get('classname', '')}.{tc.get('name', '')}")
+            if full not in want:
+                continue
+            if tc.find("failure") is not None or tc.find("error") is not None or tc.find("skipped") is not None:
+                return False
+            seen_ok.add(full)
+    return seen_ok == want
+
+
+def kotlin_excluded_verdict(log, excluded_path, trig_classes=(), junit_ok=False):
     """Fixed side with a non-zero Gradle exit: OK only if every failed test is listed in
-    validation/excluded-tests.json and the parsed failures account for the reported count."""
+    validation/excluded-tests.json and the parsed failures account for the reported count.
+    `junit_ok`: the JUnit XML shows every trigger test passing; it replaces the PASSED-line check."""
     d = json.loads(excluded_path.read_text(encoding="utf-8"))
     allowed = set()
     for e in d.get("excluded_tests", []):
@@ -964,7 +994,7 @@ def kotlin_excluded_verdict(log, excluded_path, trig_classes=()):
     names, reported = kotlin_failed_tests(log)
     unlisted = [n for n in names if n not in allowed]
     ok = bool(names) and not unlisted and reported == len(names)
-    if ok and trig_classes:
+    if ok and trig_classes and not junit_ok:
         text = log.read_text(encoding="utf-8", errors="replace")
         for cls in trig_classes:
             if not re.search(r"(?m)^(?:[\w$.]+\.)?" + re.escape(cls) + r" > .* PASSED\s*$", text):
@@ -1285,11 +1315,13 @@ def _run_side(args, p, c, side, work, lang, mode, image):
     elif (lang == "kotlin" and side == "fixed" and test_rc != 0
           and (p.parent / "validation" / "excluded-tests.json").is_file()):
         _tc = [str(n).split("#")[0].split(".")[-1] for n in names if "." in str(n) or str(n)]
+        _junit_ok = kotlin_triggers_passed_junit(
+            run_cwd, (c.get("build") or {}).get("test_results_glob"), names)
         _ok, _names, _unl = kotlin_excluded_verdict(
-            logdir / f"{side}-test.log", p.parent / "validation" / "excluded-tests.json", _tc)
+            logdir / f"{side}-test.log", p.parent / "validation" / "excluded-tests.json", _tc, _junit_ok)
         outcome = "PASS" if _ok else "UNEXPECTED_FAIL"
         extra = {"verdict_basis": "excluded_tests", "excluded_failures": _names,
-                 "unlisted_failures": _unl[:20]}
+                 "unlisted_failures": _unl[:20], "trigger_confirmed_by_junit": _junit_ok}
     elif side == "buggy":
         outcome = "FAIL_AS_EXPECTED" if test_rc != 0 else "UNEXPECTED_PASS"
     else:
