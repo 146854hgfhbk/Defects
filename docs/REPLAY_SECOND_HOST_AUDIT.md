@@ -96,7 +96,8 @@ clean replay host.
 
 * SWIFT-D018: the fixed run died in `swift test` with `epoll_create(size:): Too many open files
   (errno: 24)`. The audit repeated it with the container's `nofile` limit raised to 65536 and it
-  passed. A host or Docker default that is lower than the image needs causes this.
+  passed. A host or Docker default that is lower than the image needs causes this. The runner now sets
+  the limit itself (see "Runner changes" below).
 * SWIFT-D031: a dependency declared `swift-tools-version: 6.2` and the host had Swift 6.1.3. The case
   declares the 6.1 image. The recorded `Package.resolved` pins `swift-syntax` to a commit on `main`,
   `d769922`. A resolve that does not start from the recorded file would take the current tip of
@@ -114,18 +115,17 @@ All 50 cases need an OpenHarmony SDK, `hvigor`, `hdc`, an authorized device or e
 material. None of these is available on the audit host or the clean replay host (no KVM). They stay
 `DEVICE_REQUIRED/NOT_RUN`; no result is claimed.
 
-## Two criteria
+## The criterion
 
-`scripts/d4x.py` judges a case by its declared trigger tests, and for some cases it also checks the
-remaining failures against `validation/excluded-tests.json`. The audit's strict gate additionally
-requires every test on the fixed side to pass. The two are not the same, and the difference is
-what turns the eight cases above into FAIL: under the `d4x` criterion their trigger differential is
-already the declared one.
+The audit's gate is strict: **the declared trigger fails on the buggy side, and the whole test suite
+passes on the fixed side.** `scripts/d4x.py` is looser in two ways: it judges most languages by the
+declared trigger tests, and for some cases it accepts fixed-side failures that are listed in
+`validation/excluded-tests.json`. Under the strict gate the eight cases above are FAIL, because the
+fixed side's suite has failures that are not on any list.
 
-Neither criterion is wrong. They answer different questions: "does the declared trigger separate
-the two sides" and "is the fixed side clean". A case that passes the first and not the second has
-unrelated or unstable tests in its project, and the exclusion list is the place where those are
-recorded.
+A case that passes the trigger check and not the strict one has unrelated or unstable tests in its
+project. The exclusion list is where those are recorded; it is a judgement made case by case, not
+something the runner should add on its own.
 
 ## Re-check on the clean replay host
 
@@ -158,8 +158,8 @@ Each case was run once with `scripts/d4x.py` from commit `2f0f15e`, unchanged. T
 | KOTLIN-160 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 1324s |
 | KOTLIN-161 | BLOCKED | PASS | none | 698s |
 | KOTLIN-162 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 683s |
-| KOTLIN-164 | BLOCKED | PASS | D4X_KOTLIN_CONTINUE=1 | 1695s |
-| KOTLIN-167 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1, D4X_KOTLIN_CONTINUE=1 | 1382s |
+| KOTLIN-164 | BLOCKED | PASS | D4X_KOTLIN_CONTINUE=1; fixed suite exits 1, accepted through validation/excluded-tests.json | 1695s |
+| KOTLIN-167 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1, D4X_KOTLIN_CONTINUE=1; fixed suite exits 1, accepted through validation/excluded-tests.json | 1382s |
 | KOTLIN-170 | FAIL | PASS | none | 269s |
 | KOTLIN-173 | BLOCKED | PASS | none | 108s |
 | KOTLIN-176 | BLOCKED | PASS | D4X_KOTLIN_ORIGINAL_SOURCE=1 | 113s |
@@ -175,8 +175,8 @@ Each case was run once with `scripts/d4x.py` from commit `2f0f15e`, unchanged. T
 | KOTLIN-208 | BLOCKED | PASS | none | 297s |
 | KOTLIN-227 | BLOCKED | PASS | no Gradle proxy; fallback `jcenter` repository init script during the run | 284s |
 | KOTLIN-501 | FAIL | PASS | none; Node 20 on PATH, Puppeteer not pre-installed, Chrome via a `--no-sandbox` wrapper | 1010s |
-| SWIFT-D018 | FAIL first, then PASS | PASS | recorded Package.resolved, then offline |  |
-| SWIFT-D031 | BLOCKED | PASS | recorded Package.resolved, then offline |  |
+| SWIFT-D018 | FAIL first, then PASS | PASS | recorded Package.resolved, then offline; whole fixed suite also run without --filter: exit 0 |  |
+| SWIFT-D031 | BLOCKED | PASS | recorded Package.resolved, then offline; whole fixed suite also run without --filter: exit 0 |  |
 
 ### Reading of the re-check
 
@@ -197,6 +197,49 @@ Each case was run once with `scripts/d4x.py` from commit `2f0f15e`, unchanged. T
   `jcenter`-era artifacts that no longer exist in the public repositories. A reader who only fixes the
   network will still need these.
 
+## The re-run checked against the strict gate
+
+The `d4x` verdict in the table above is not the strict gate, so each of the 39 re-runs was checked
+against it separately, from the stored `result.json` and the test logs.
+
+* **37 of 39**: the fixed side's test command exited 0, with no exclusion list and no re-run of failed
+  tests. For the three Elixir cases the logs show the whole suite: ELIXIR-017 189 tests, 081 106 tests,
+  100 265 doctests and 655 tests, all with 0 failures.
+* **KOTLIN-164 and 167**: the fixed side's command exits 1. They pass only through the case's
+  `validation/excluded-tests.json` (1 and 7 listed failures, all observed on the clean host and not run
+  against the upstream fix). They meet the strict gate only if you accept those lists.
+* **SWIFT-D018 and D031**: the `d4x` run uses `swift test --filter <trigger>`, which is not the whole
+  suite. The whole suite was therefore run separately on the fixed tree with no filter, offline, in the
+  case's image. D018 ran 73 tests and D031 ran 63 (Swift Testing); both exited 0.
+
+### KOTLIN-120
+
+The second-host follow-up reported an unrelated failing test on the fixed side. It reproduced on the
+clean host in one full run: the buggy side failed only the trigger
+(`DeckPickerNoExternalFilesDirTest`), the fixed side failed `CardBrowserTest > FindReplace - replaces
+text based on regular expression`, a UI assertion that looks for the text "1 note updated." and finds
+no matching view. That test passes on the buggy side of the same run. Run alone on the unchanged fixed
+tree, `CardBrowserTest` exited 0 in three of three repeats. So the failure is intermittent inside the
+full suite and KOTLIN-120 cannot be called stably PASS under the strict gate. Whether it belongs on an
+exclusion list is a decision for the dataset owner; nothing was added.
+
+## Runner changes
+
+`scripts/d4x.py` had three gaps that the second-host replay ran into. All three are fixed together with
+this note:
+
+* **Container proxy.** With `D4X_CONTAINER_NET=1` the proxy was hard-coded to `http://127.0.0.1:7890`
+  and `https_proxy` was ignored. It is now taken from `D4X_PROXY` if that is set (an empty value means no
+  proxy), else from `https_proxy` / `http_proxy` in the environment, else none.
+* **`build_compatibility`.** The runner read only `patches.build_compatibility`. ELIXIR-100 declares it
+  at the top level of `case.json`, so `patches/compat.patch` was not applied. The runner now reads both
+  forms. ELIXIR-100 was re-run with the new runner: `compat.patch` is applied on both sides, the buggy
+  side fails 1 test, and the fixed side passes 265 doctests and 655 tests.
+* **Open-file limit.** Every container is now started with `--ulimit nofile=65536:65536`.
+
+The change touches 21 lines. Other languages do not use containers, so their runs are not affected.
+ELIXIR-001 and 081 were re-run with the new runner and still pass.
+
 ## What a reader needs to reproduce these cases
 
 * **Network.** The host must reach `services.gradle.org` (or have `GRADLE_USER_HOME` pre-populated),
@@ -205,8 +248,9 @@ Each case was run once with `scripts/d4x.py` from commit `2f0f15e`, unchanged. T
   not as a result about the case.
 * **Memory.** Gradle builds of the large projects (TeXiFy, ORT, KOTLIN-155, 170) need several GB; one
   Gradle daemon was killed during the audit (KOTLIN-208). Run them one at a time.
-* **File descriptors.** If `swift test` dies with `Too many open files`, start the container with
-  `--ulimit nofile=65536:65536`.
+* **File descriptors.** `scripts/d4x.py` now starts every container with `--ulimit nofile=65536:65536`
+  (a low default made `swift test` die with `Too many open files` on the audit host). A runner older than
+  that change does not, and a host with a low Docker default then needs the limit raised by hand.
 * **Options.** Several Kotlin and Elixir cases need `D4X_*` options; they are listed in
   `docs/REPLAY_KOTLIN_ELIXIR.md`. A run without them is not a failed case.
 * **Online tests.** Some tests in the upstream projects reach the network (Grazie, the version lookup in
