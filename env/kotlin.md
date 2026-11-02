@@ -109,9 +109,17 @@ Use the case's `build.compile_task` / `build.test_task`; do not run the whole mu
 
 - `Unsupported class file major version` — JDK too new/old.
 - `Could not resolve ...` — Gradle cache missing; prepare online, then `--offline`.
-- Wrapper tries to download Gradle — pre-populate `GRADLE_USER_HOME/wrapper/dists`. If the host cannot
-  reach `services.gradle.org`, the case ends as BLOCKED (24 Kotlin cases in the second-host audit,
-  see [docs/REPLAY_SECOND_HOST_AUDIT.md](../docs/REPLAY_SECOND_HOST_AUDIT.md)).
+- Wrapper tries to download Gradle (`Downloading https://services.gradle.org/...` then `Connect timed out`).
+  The download is redirected through `github.com` to `release-assets.githubusercontent.com`, so the host
+  must reach those too; check with `curl -sSIL <distributionUrl>`, not with the `.sha256` file or the
+  directory page, which `services.gradle.org` answers itself. Alternatively pre-populate
+  `GRADLE_USER_HOME/wrapper/dists`, and then stop Gradle from cleaning it up: Gradle deletes a
+  distribution that has no `caches/<version>/` directory. Put the init script from
+  [docs/REPLAY_SECOND_HOST_AUDIT.md](../docs/REPLAY_SECOND_HOST_AUDIT.md) in `GRADLE_USER_HOME/init.d`
+  (it cannot be set in `gradle.properties`) and create an empty `caches/<version>/` for each kept
+  distribution. 24 Kotlin cases ended BLOCKED on the second host for this reason.
+- Build fails with `Error while reading dataframe from data at https://raw.githubusercontent.com/...`
+  (KOTLIN-160, 161, 162): the build reads a file from `raw.githubusercontent.com`; the host must reach it.
 - Android SDK required — check `build.android_sdk_required` and install the matching SDK.
 - KOTLIN-501 PDF test hangs — Chrome/Puppeteer missing or wrong version.
 - `.\gradlew.bat: not found`: 88 cases record the Windows launcher in `build_command` /
