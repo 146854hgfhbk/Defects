@@ -30,10 +30,10 @@ not been done.
   `--network none`.
 * `docker` must be callable by the user running `d4x` (the runs here used `sudo -E`).
 * The container needs a high open-file limit. On a host with a low default, `swift test` dies with
-  `epoll_create(size:): Too many open files (errno: 24)` (SWIFT-D018 in the second-host audit). `d4x`
-  starts the container itself and sets no limit, so raise the Docker default (for example
-  `default-ulimits` in `/etc/docker/daemon.json`). The audit passed `--ulimit nofile=65536:65536` when
-  it ran the container by hand. The clean replay host needed no change.
+  `epoll_create(size:): Too many open files (errno: 24)` (SWIFT-D018 in the second-host audit). `d4x` now
+  starts every container with `--ulimit nofile=65536:65536`. A runner older than that change sets no
+  limit, and a host with a low Docker default then needs it raised (for example `default-ulimits` in
+  `/etc/docker/daemon.json`).
 
 ## Step 1: resolve dependencies once, with network
 
@@ -126,6 +126,10 @@ These are handled by the runner and need no option:
   only for SWIFT-D046. For the other 35 the buggy side already fails with the first name,
   and more names cannot change that, but one of the other trigger tests could still fail on
   the fixed side.
+* The `d4x` run executes the trigger test only (`swift test --filter <name>`), not the whole suite. For
+  the second-host audit's strict gate (whole fixed suite passes), SWIFT-D018 and D031 were also run on
+  the fixed tree with no filter, offline: 73 tests and 63 tests, both exit 0. The other Swift cases were
+  not run that way.
 * SWIFT-D031 pins `swift-syntax` to a commit on `main` (`d769922`) in its recorded `Package.resolved`.
   Put the recorded file in place before resolving (step 1). In the second-host audit a dependency
   required `swift-tools-version: 6.2` and the case was BLOCKED on Swift 6.1.3; a resolve that starts

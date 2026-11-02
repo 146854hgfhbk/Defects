@@ -155,7 +155,9 @@ def select_patches(case_dir: Path, side: str):
     # for OpenSSL 3, SWIFT-D003); it goes on BOTH sides, before the trigger patch.
     try:
         _c = json.loads((case_dir / "case.json").read_text(encoding="utf-8-sig"))
-        _bc = ((_c.get("patches") or {}).get("build_compatibility") or {}).get("path")
+        # Most cases declare it under patches.; ELIXIR-100 declares it at the top level of case.json.
+        _bcd = (_c.get("patches") or {}).get("build_compatibility") or _c.get("build_compatibility") or {}
+        _bc = _bcd.get("path") if isinstance(_bcd, dict) else _bcd
         if isinstance(_bc, str) and (case_dir / _bc).is_file():
             chosen.append(case_dir / _bc)
     except Exception:
@@ -492,15 +494,24 @@ def wrap_container(cmd, image: str, workdir: Path, net: bool = False):
         cmd = " ".join(shlex.quote(str(x)) for x in cmd)
     if net:
         # Compile/dependency step only (opt-in D4X_CONTAINER_NET=1): `mix deps.get`
-        # must reach hex.pm / github.com. Host network so the host proxy at
+        # must reach hex.pm / github.com. Host network so a proxy on the host at
         # 127.0.0.1 is reachable. The TEST step always stays on --network none.
-        px = os.environ.get("D4X_PROXY", "http://127.0.0.1:7890")
+        # Proxy: D4X_PROXY if set (an empty value means none), else the standard
+        # https_proxy / http_proxy of the calling environment, else none.
+        px = os.environ.get("D4X_PROXY")
+        if px is None:
+            px = (os.environ.get("https_proxy") or os.environ.get("HTTPS_PROXY")
+                  or os.environ.get("http_proxy") or os.environ.get("HTTP_PROXY") or "")
+        penv = ["-e", f"http_proxy={px}", "-e", f"https_proxy={px}",
+                "-e", "no_proxy=localhost,127.0.0.1"] if px else []
         return ["docker", "run", "--rm", "--network", "host",
-                "-e", f"http_proxy={px}", "-e", f"https_proxy={px}",
-                "-e", "no_proxy=localhost,127.0.0.1",
+                "--ulimit", "nofile=65536:65536"] + penv + [
                 "-v", f"{workdir}:/work", "-w", "/work", image,
                 "bash", "-lc", cmd]
+    # --ulimit: a low default open-file limit makes `swift test` die with
+    # `epoll_create(size:): Too many open files` (SWIFT-D018).
     return ["docker", "run", "--rm", "--network", "none",
+            "--ulimit", "nofile=65536:65536",
             "-v", f"{workdir}:/work", "-w", "/work", image,
             "bash", "-lc", cmd]
 

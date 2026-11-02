@@ -65,9 +65,9 @@ seen passing.
 
 * Docker, with the case images pulled by digest from `images/manifest.json`, or built from
   `images/build/`. Each image is 1.2 to 1.5 GB and Docker Hub pulls can fail midway; retry.
-* `D4X_CONTAINER_NET=1`: the compile and `mix deps.get` step runs on the host network (its proxy comes from
-  `D4X_PROXY`, default `http://127.0.0.1:7890`; `https_proxy` is not read, so set `D4X_PROXY=` on a host
-  without a proxy); the test step always runs with `--network none`.
+* `D4X_CONTAINER_NET=1`: the compile and `mix deps.get` step runs on the host network (its proxy is
+  `D4X_PROXY` if set, else `https_proxy` / `http_proxy`, else none; a runner older than the second-host
+  audit change hard-codes `http://127.0.0.1:7890`, so set `D4X_PROXY=` there); the test step always runs with `--network none`.
 * ELIXIR-036 needs a network `mix deps.get` before the offline run (about 335 MB of git
   dependencies).
 * `D4X_ELIXIR_COMPILE_ENV=test` compiles in `MIX_ENV=test`. ELIXIR-086 needs it: the default `dev`
@@ -77,11 +77,11 @@ seen passing.
   A trigger written as `path:line` (ELIXIR-027, 030, 061, 099) is matched by `d4x`.
 
 * ELIXIR-100 declares `build_compatibility` at the top level of `case.json` (`patches/compat.patch`,
-  which removes the test-only `exla` dependency). `scripts/d4x.py` reads only
-  `patches.build_compatibility`, so it does not apply this patch (the other cases that declare one,
-  in Dart and Swift, use the `patches.` form). On the second host the case needed the patch applied by
-  hand. On the clean host it passed without it, with network access for the dependency step; the log of
-  that run mentions `exla`, and whether network access is what made the difference was not checked.
+  which removes the test-only `exla` dependency); the other cases that declare one, in Dart and Swift,
+  use the `patches.` form. An older runner read only `patches.build_compatibility` and did not apply it.
+  The current runner reads both forms and applies it on both sides: the fixed side then passes 265
+  doctests and 655 tests. On the second host, with the older runner, the case needed the patch applied
+  by hand; on the clean host the older runner passed without it, and why was not checked.
 
 ### Flaky suites
 

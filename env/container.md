@@ -35,8 +35,11 @@ Hex/Rebar (offline cache for CI)
 
 With `scripts/d4x.py` the compile and `mix deps.get` step needs network access and the test step
 runs with `--network none`. Set `D4X_CONTAINER_NET=1` so that only the first step uses the host
-network. The proxy for that step comes from `D4X_PROXY`, which defaults to `http://127.0.0.1:7890`;
-`https_proxy` is not read. On a host with no proxy at that address, set `D4X_PROXY=` (empty). Each case image is 1.2 to 1.5 GB; pulls from Docker
+network. The proxy for that step is `D4X_PROXY` if set (an empty value means none), else `https_proxy` /
+`http_proxy` from the environment, else none. A runner older than the change described in
+[docs/REPLAY_SECOND_HOST_AUDIT.md](../docs/REPLAY_SECOND_HOST_AUDIT.md) hard-codes `http://127.0.0.1:7890`
+and ignores `https_proxy`; on such a runner set `D4X_PROXY=` when there is no proxy at that address.
+Each case image is 1.2 to 1.5 GB; pulls from Docker
 Hub can fail midway and need several retries. ELIXIR-036 needs a network `mix deps.get` first
 (about 335 MB of git dependencies). Options for cases that do not pass with the plain command are
 in [docs/REPLAY_KOTLIN_ELIXIR.md](../docs/REPLAY_KOTLIN_ELIXIR.md).
