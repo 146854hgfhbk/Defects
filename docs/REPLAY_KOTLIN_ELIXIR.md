@@ -19,6 +19,10 @@ switch is a d4x-derived result, not the dataset's own declared command.
   checkout's wrapper.
 * Android SDK 34 (build-tools 34.0.0) in `$HOME/d4x/android-sdk` for KOTLIN-001 and 120 to 123.
 * Proxy settings go in `gradle.properties`, not `JAVA_TOOL_OPTIONS` (see `env/kotlin.md`).
+* Gradle distributions: the wrapper's download is redirected to `release-assets.githubusercontent.com`.
+  If the host cannot reach it, copy the distributions you need into `GRADLE_USER_HOME/wrapper/dists` and
+  keep Gradle's cache cleanup from deleting them (init script and `caches/<version>/` directories; see
+  [REPLAY_SECOND_HOST_AUDIT.md](REPLAY_SECOND_HOST_AUDIT.md), "The Gradle cache on the audit host").
 * Memory: the first Gradle build used about 6 of 7 GB. Run Kotlin cases one at a time. The large
   builds (TeXiFy-IDEA, KOTLIN-155) pushed the load average to 62 and made SSH unresponsive for
   about 40 minutes; limit them with `org.gradle.workers.max=1`, `-Xmx2g` and `nice`.
@@ -53,11 +57,29 @@ Unrelated failing tests on the fixed side (`validation/excluded-tests.json`):
 * KOTLIN-165: 2 tests (same, and `SpringPackageCurationProviderTest`)
 * KOTLIN-167: 8 tests (4 `CarthageTest`, 2 `VersionControlSystemTest`, `ExtensionsTest`, and a
   `ClearlyDefinedPackageCurationProviderTest` that calls an online service)
+* KOTLIN-120: 1 test (`CardBrowserTest > FindReplace - replaces text based on regular expression`, a UI
+  assertion that failed once in a full run and passed in 3 of 3 repeats when run alone)
 
 These were observed on the clean server. They were not run against the upstream GOLD fix.
 With a list present, `d4x` accepts a non-zero Gradle exit on the fixed side only if every failed
-test is on the list, the failure count matches Gradle's summary, and every trigger test class was
-seen passing.
+test is on the list, the failure count matches Gradle's summary, and every trigger test is seen passing,
+either as a `PASSED` line in the Gradle log or as a `<testcase>` without `<failure>`, `<error>` or
+`<skipped>` in the JUnit XML named by `build.test_results_glob` (KOTLIN-120's log prints no passed tests).
+
+### Cases that need hosts beyond the Maven and Gradle repositories
+
+On a host that cannot reach `*.githubusercontent.com` these end BLOCKED or FAIL, and nothing in the case
+data is at fault:
+
+| Cases | What reaches the network | Seen as |
+|---|---|---|
+| 160, 161, 162 | `:core:generateDataFrameRepository` reads `raw.githubusercontent.com/Kotlin/dataframe/master/data/jetbrains_repositories.csv` | BLOCKED, `Error while reading dataframe from data` |
+| 164, 167, 170 | the repository-configuration schema that `JsonSchemaTest` loads has `$ref` entries to `raw.githubusercontent.com/oss-review-toolkit/ort/...` (likely cause; the validator's error text was not captured) | FAIL, `JsonSchemaTest` on the fixed side |
+| 152, 153 | `LatestTexifyVersionTest` calls the JetBrains repository with a 1 s timeout; a timeout leaves the version blank | FAIL, one fixed-side test |
+| 159 | Grazie inspection tests download language bundles at run time | FAIL, five `GrazieInspectionTest` tests on the fixed side |
+
+These tests are not stable on one host. KOTLIN-155 and 158 had failures of this kind in the second-host audit
+(`GrazieInspectionTest`, `LatestTexifyVersionTest`) and passed when re-run on the same host.
 
 ## Elixir
 

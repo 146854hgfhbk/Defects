@@ -50,13 +50,18 @@ pass and are counted as PASS in the table above because the audit repeated them:
 The first Gradle call in each case uses the project's wrapper, which fetches
 `https://services.gradle.org/distributions/gradle-<version>-all.zip`. On the audit host that
 download timed out on at least one side of each of these cases. The case data is not involved: the
-failure happens before any project code is compiled. Pre-populating
-`GRADLE_USER_HOME/wrapper/dists` or giving the host a route to the download site removes it.
+failure happens before any project code is compiled.
 
-In 8 of the 24 (KOTLIN-124, 147, 149, 151, 173, 197, 198, 207) the fixed side compiled and the buggy
-side did not. The same host therefore completed the download once and failed it another time, which
-points to unstable connectivity and not to a permanent block. Neither side can be judged when the
-download fails, so the case is BLOCKED and not FAIL.
+The request does not end at `services.gradle.org`. It is redirected through `github.com` to
+`release-assets.githubusercontent.com`, and that host did not answer from the audit host when it was
+checked later (see "Re-run on the audit host"). Making `services.gradle.org` reachable is therefore not
+enough, and neither is a pre-populated `GRADLE_USER_HOME/wrapper/dists` unless it survives Gradle's cache
+cleanup (same section).
+
+In 8 of the 24 (KOTLIN-124, 147, 149, 151, 173, 197, 198, 207) the fixed side compiled and the buggy side did
+not. Both sides use the same distribution, so something changed between the two downloads. The audit report
+says that Gradle wrappers were installed for the blocked cases, which would explain it; that was not checked.
+Neither side can be judged when the download fails, so the case is BLOCKED and not FAIL.
 
 ### Tests that are not the trigger: 8 cases
 
@@ -197,6 +202,88 @@ Each case was run once with `scripts/d4x.py` from commit `2f0f15e`, unchanged. T
   `jcenter`-era artifacts that no longer exist in the public repositories. A reader who only fixes the
   network will still need these.
 
+## Re-run on the audit host
+
+The audit host was used again, after the changes described under "Runner changes", with a fresh checkout of
+this repository, JDK 8, 11, 17, 21 and 25, and no proxy. 32 of the 34 Kotlin cases that were not PASS in the
+audit were re-run on it; KOTLIN-227 and 501 were not. KOTLIN-120 was not in the audit and was not run on it
+either.
+
+| Result on the audit host | Cases | Count |
+|---|---|---:|
+| PASS, fixed-side test command exits 0 | 107, 124, 141, 142, 145, 146, 147, 149, 151, 155, 158, 173, 176, 177, 186, 196, 197, 198, 200, 204, 205, 207, 208 | 23 |
+| BLOCKED: the build reads `raw.githubusercontent.com` | 160, 161, 162 | 3 |
+| FAIL: `JsonSchemaTest` on the fixed side | 164, 167, 170 | 3 |
+| FAIL: `LatestTexifyVersionTest` on the fixed side | 152, 153 | 2 |
+| FAIL: Grazie language-bundle tests on the fixed side | 159 | 1 |
+
+On the same host and the same checkout, ELIXIR-017, 081 and 100 and SWIFT-D018 and D031 also pass. For
+Elixir the proxy variables were unset and `D4X_CONTAINER_NET=1` was set, and the fixed-side suites had 189,
+106 and 265 doctests plus 655 tests, all with 0 failures. ELIXIR-100 had `patches/compat.patch` applied on
+both sides by the runner. For Swift the whole fixed suite was run offline in the case's image: D018 exits 1
+with `epoll_create(size:): Too many open files` under the host's default limit of 1024 and exits 0 with
+`--ulimit nofile=65536:65536`; D031 exits 0 in both.
+
+For the 9 results that are not PASS, the evidence points at the host's network in every case, and at nothing
+in the case data. For 6 of them the cause was read from the logs or the source; for the 3 ORT cases it is the
+likely cause and not a confirmed one:
+
+* **`*.githubusercontent.com` is unreachable from this host** (`raw`, `release-assets` and `objects` all time
+  out), while `github.com`, `codeload.github.com` and the directory pages of `services.gradle.org` answer.
+  A Gradle distribution is not served by `services.gradle.org`: the request is redirected
+  (`307`, then `302`) through `github.com` to `release-assets.githubusercontent.com`. Probing the small
+  `.sha256` file or the directory page therefore looks healthy while the real download times out. Probe the
+  distribution URL itself, for example `curl -sSIL https://services.gradle.org/distributions/gradle-8.6-all.zip`.
+* **DataFrame (160, 161, 162)**: `:core:generateDataFrameRepository` reads
+  `https://raw.githubusercontent.com/Kotlin/dataframe/master/data/jetbrains_repositories.csv` while it
+  builds. The build fails with `Error while reading dataframe from data at ...` on both sides.
+* **ORT (164, 167, 170)**: the repository-configuration schema that `JsonSchemaTest` loads contains `$ref`
+  entries that point at `https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/`.
+  The failures are consistent with that. The validator's error text was not captured, so this is the likely
+  cause and not a confirmed one.
+* **TeXiFy (152, 153)**: the only fixed-side failure is `LatestTexifyVersionTest > testVersion`. The test
+  calls `LatexErrorReportSubmitter.getLatestVersion()`, which does an HTTP GET with a connect and read timeout
+  of 1000 ms and, on a timeout, returns an empty object, so the assertion that the version is not blank fails.
+* **TeXiFy (159)**: the fixed-side failures are `GrazieInspectionTest` tests; the stack shows
+  `LangDownloader.promptToSelectLanguageBundleManually`, that is, the test tried to download a language bundle.
+
+All of these cases passed on the clean replay host, with 164 and 167 passing only through their exclusion
+lists. The audit host and the clean host differ in whether they can reach the hosts above, and in nothing
+the dataset controls.
+
+### The Gradle cache on the audit host
+
+The first re-run ended mostly BLOCKED because each case tried to download its distribution. The
+distributions were then copied into a private `GRADLE_USER_HOME/wrapper/dists`. During the run, four of the
+copies lost their contents (an empty `.lck` and `.part` file were left) and the cases that needed them
+timed out again. The Gradle documentation names the cause: cache cleanup checks the distributions in `wrapper/dists/` for
+whether there is a corresponding `caches/<version>/` directory, and deletes the ones without. By default it
+runs periodically (once every 24 hours), and with `--no-daemon` it runs in the foreground after the build
+session. Every distribution that had a `caches/<version>/` directory survived; the four that were emptied
+did not have one.
+
+* The setting is not a property. It can only be set in an init script in `GRADLE_USER_HOME/init.d`, and the
+  `caches { }` block exists only from Gradle 8.0, so the script must check the version:
+
+```groovy
+// GRADLE_USER_HOME/init.d/no-cache-cleanup.init.gradle
+if (org.gradle.util.GradleVersion.current() >= org.gradle.util.GradleVersion.version("8.0")) {
+    beforeSettings { settings ->
+        settings.caches {
+            cleanup = Cleanup.DISABLED
+        }
+    }
+}
+```
+
+* After the script was in place, three distributions that no case uses (7.3, 7.4 and 7.4.2) were deleted
+  again. Gradle 7.x builds were running at the time and cannot read the block above, so they are the likely
+  cause; that was not confirmed. As a precaution, create an empty `caches/<version>/` directory for every
+  distribution you keep, and restore a missing distribution before each case. With both in place no
+  distribution was lost for the rest of the run.
+* A complete entry holds `<name>.zip.ok` and the unpacked `gradle-<version>/`. The emptied entries held only
+  `.lck` and `.part` files.
+
 ## The re-run checked against the strict gate
 
 The `d4x` verdict in the table above is not the strict gate, so each of the 39 re-runs was checked
@@ -219,9 +306,16 @@ clean host in one full run: the buggy side failed only the trigger
 (`DeckPickerNoExternalFilesDirTest`), the fixed side failed `CardBrowserTest > FindReplace - replaces
 text based on regular expression`, a UI assertion that looks for the text "1 note updated." and finds
 no matching view. That test passes on the buggy side of the same run. Run alone on the unchanged fixed
-tree, `CardBrowserTest` exited 0 in three of three repeats. So the failure is intermittent inside the
-full suite and KOTLIN-120 cannot be called stably PASS under the strict gate. Whether it belongs on an
-exclusion list is a decision for the dataset owner; nothing was added.
+tree, `CardBrowserTest` exited 0 in three of three repeats, and the trigger class run alone on the fixed
+tree passes. The failure is therefore intermittent inside the full suite.
+
+Decision: the test is recorded in `cases/kotlin/KOTLIN-120/validation/excluded-tests.json`, with the
+classification `OBSERVED_NOT_GOLD_VERIFIED` (observed on the clean host, not run against the upstream
+fix), like the lists for KOTLIN-164, 165 and 167. KOTLIN-120 meets the strict gate only through that list.
+
+The list alone was not enough. `d4x` required the Gradle log to show the trigger class as `PASSED`, and
+AnkiDroid's log prints no passed tests; the class name was also taken as the text after the last dot of
+the trigger name, which for a test with a display name is the whole sentence. See "Runner changes".
 
 ## Runner changes
 
@@ -237,14 +331,23 @@ this note:
   side fails 1 test, and the fixed side passes 265 doctests and 655 tests.
 * **Open-file limit.** Every container is now started with `--ulimit nofile=65536:65536`.
 
-The change touches 21 lines. Other languages do not use containers, so their runs are not affected.
+* **Exclusion check for Kotlin.** When the fixed side exits non-zero and the case has an exclusion list, the
+  runner needs evidence that the trigger test passed. It looked only for `PASSED` lines in the Gradle log.
+  It now also accepts the JUnit XML named by `build.test_results_glob`: every trigger test must have a
+  `<testcase>` with no `<failure>`, `<error>` or `<skipped>`. The XML is used only when it shows the trigger
+  passing; otherwise the old check applies, so KOTLIN-164 and 167 are judged as before. This is what lets
+  the KOTLIN-120 list take effect.
+
+The first three changes touch 21 lines. Other languages do not use containers, so their runs are not affected.
 ELIXIR-001 and 081 were re-run with the new runner and still pass.
 
 ## What a reader needs to reproduce these cases
 
-* **Network.** The host must reach `services.gradle.org` (or have `GRADLE_USER_HOME` pre-populated),
-  the Maven and Gradle plugin repositories, `github.com`, a Docker registry, `builds.hex.pm` and
-  `repo.hex.pm`, and the SwiftPM package hosts. A dependency step that times out ends as BLOCKED,
+* **Network.** The host must reach `services.gradle.org` and the GitHub hosts that Gradle distributions are
+  redirected to (`github.com` and `release-assets.githubusercontent.com`), and `raw.githubusercontent.com`
+  (DataFrame and ORT read files from it), or have `GRADLE_USER_HOME` pre-populated as described above. It must
+  also reach the Maven and Gradle plugin repositories, a Docker registry, `builds.hex.pm` and `repo.hex.pm`,
+  and the SwiftPM package hosts. A dependency step that times out ends as BLOCKED,
   not as a result about the case.
 * **Memory.** Gradle builds of the large projects (TeXiFy, ORT, KOTLIN-155, 170) need several GB; one
   Gradle daemon was killed during the audit (KOTLIN-208). Run them one at a time.
