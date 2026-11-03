@@ -75,6 +75,33 @@
         "gold_full_suite": false
       },
       "rationale": "Non-target CarthageTest cases fail with 'this and base files have different roots' (relative vs absolute path); not trigger tests (PathExcludeTest, ExcludesTest). Also VersionControlSystemTest (initializationError) and ExtensionsTest searchUpwardsForSubdirectory (root Git directory), which look for a .git directory above the checkout. Causes not fully established; not run against upstream GOLD."
+    },
+    {
+      "test": "ClearlyDefinedPackageCurationProviderTest > The production server should > org.ossreviewtoolkit.analyzer.curation.ClearlyDefinedPackageCurationProviderTest.return an existing curation for the javax.servlet-api Maven package",
+      "classification": "OBSERVED_NOT_GOLD_VERIFIED",
+      "evidence": {
+        "fixed_full_suite": true,
+        "gold_full_suite": false
+      },
+      "rationale": "Non-target test. It queries the ClearlyDefined production server over the network. Failed on the fixed side on the second host in the replay of 2026-11-03; the error text was not captured."
+    },
+    {
+      "test": "JsonSchemaTest > .ort.yml validates successfully",
+      "classification": "OBSERVED_NOT_GOLD_VERIFIED",
+      "evidence": {
+        "fixed_full_suite": true,
+        "gold_full_suite": false
+      },
+      "rationale": "Non-target test. The repository-configuration schema it loads has $ref entries to https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/; on a host that cannot reach raw.githubusercontent.com the test report says 'Failed to load json schema from https://raw.githubusercontent.com/...'. Seen on the fixed side on the second host in the replay of 2026-11-03."
+    },
+    {
+      "test": "JsonSchemaTest > .ort.yml examples validate successfully",
+      "classification": "OBSERVED_NOT_GOLD_VERIFIED",
+      "evidence": {
+        "fixed_full_suite": true,
+        "gold_full_suite": false
+      },
+      "rationale": "Non-target test. Same cause as the entry above: some of the example files could not load their schema from raw.githubusercontent.com (13 of 16 example files validated in the sibling KOTLIN-170 test of the same class)."
     }
   ]
 }
