@@ -130,6 +130,9 @@ These are handled by the runner and need no option:
   the second-host audit's strict gate (whole fixed suite passes), SWIFT-D018 and D031 were also run on
   the fixed tree with no filter, offline: 73 tests and 63 tests, both exit 0. The other Swift cases were
   not run that way.
+* SWIFT-D027 and SWIFT-D031 were reported BLOCKED in a replay that did not follow step 1 (D027: missing
+  `CNIOBoringSSL_*` symbols; D031: `swift-tools-version: 6.2` against Swift 6.1.3). Both PASS on that host when
+  step 1 is followed. The failures themselves were not reproduced without step 1.
 * SWIFT-D031 pins `swift-syntax` to a commit on `main` (`d769922`) in its recorded `Package.resolved`.
   Put the recorded file in place before resolving (step 1). In the second-host audit a dependency
   required `swift-tools-version: 6.2` and the case was BLOCKED on Swift 6.1.3; a resolve that starts

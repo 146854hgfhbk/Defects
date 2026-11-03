@@ -74,8 +74,9 @@ data is at fault:
 | Cases | What reaches the network | Seen as |
 |---|---|---|
 | 160, 161, 162 | `:core:generateDataFrameRepository` reads `raw.githubusercontent.com/Kotlin/dataframe/master/data/jetbrains_repositories.csv` | BLOCKED, `Error while reading dataframe from data` |
-| 164, 167, 170 | the repository-configuration schema that `JsonSchemaTest` loads has `$ref` entries to `raw.githubusercontent.com/oss-review-toolkit/ort/...` (likely cause; the validator's error text was not captured) | FAIL, `JsonSchemaTest` on the fixed side |
-| 152, 153 | `LatestTexifyVersionTest` calls the JetBrains repository with a 1 s timeout; a timeout leaves the version blank | FAIL, one fixed-side test |
+| 164, 167, 170 | the repository-configuration schema that `JsonSchemaTest` loads has `$ref` entries to `raw.githubusercontent.com/oss-review-toolkit/ort/...` | FAIL, `JsonSchemaTest` on the fixed side: `Failed to load json schema from https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/resolutions-schema.json` |
+| 152, 153 | `LatestTexifyVersionTest` calls the JetBrains repository with a 1 s timeout (a timeout leaves the version blank); `GrazieInspectionTest` downloads a language bundle from `resources.jetbrains.com` | FAIL, one fixed-side test; which of the two fails varies between runs |
+| 501 | `MediaStorageTest > media storage()` downloads images from `raw.githubusercontent.com` | FAIL on the fixed side, `Connection reset` (needs a working Chrome too, see `env/kotlin.md`) |
 | 159 | Grazie inspection tests download language bundles at run time | FAIL, five `GrazieInspectionTest` tests on the fixed side |
 
 These tests are not stable on one host. KOTLIN-155 and 158 had failures of this kind in the second-host audit
@@ -106,6 +107,11 @@ These tests are not stable on one host. KOTLIN-155 and 158 had failures of this 
   by hand; on the clean host the older runner passed without it, and why was not checked.
 
 ### Flaky suites
+
+ELIXIR-086: its fixed side runs StreamData property tests with a random seed. In 10 runs with different
+seeds, 9 passed (61 properties, 21 tests, 0 failures) and one failed with
+`StreamData.FilterTooNarrowError` (seed 62646). `D4X_ELIXIR_RERUN_FAILED` is the option meant for this kind
+of failure; it was not tried on this case. ELIXIR-012 passed in 5 of 5 runs.
 
 ELIXIR-051: `WebSocketChannelsTest` restarts its endpoint on the fixed port 5807 in every test.
 When the previous listener is not yet released, a different test dies with `:eaddrinuse` in each

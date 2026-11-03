@@ -93,9 +93,9 @@ The PDF tests need Node, Puppeteer and Chrome. In the audit's trigger-only run, 
 differential was observed. In the full run the buggy side failed as expected and the fixed side
 failed `MediaStorageTest.media storage` with a network timeout. The audit host installed a separate
 Node 20.20.2, Puppeteer 24.43.1 and Chrome for Testing 151 sidecar for this case.
-`NodeNpmWrapperTest` asserts that Puppeteer is *not* linked, so a pre-installed copy can fail that
-test; whether it did here was not checked. See `env/kotlin.md` for the setup that was used on the
-clean replay host.
+`NodeNpmWrapperTest` asserts that Puppeteer is *not* linked; in the later pass on this host a global
+Puppeteer did not make it fail. See `env/kotlin.md` for the setup and for what stops Chrome from
+starting.
 
 ### Swift
 
@@ -239,8 +239,10 @@ likely cause and not a confirmed one:
   builds. The build fails with `Error while reading dataframe from data at ...` on both sides.
 * **ORT (164, 167, 170)**: the repository-configuration schema that `JsonSchemaTest` loads contains `$ref`
   entries that point at `https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/`.
-  The failures are consistent with that. The validator's error text was not captured, so this is the likely
-  cause and not a confirmed one.
+  Confirmed in a later pass: the test report says `Failed to load json schema from
+  https://raw.githubusercontent.com/oss-review-toolkit/ort/main/integrations/schemas/resolutions-schema.json`
+  (and the same for `package-configurations`); 13 of the 16 example files validated, the other 3 could not
+  load their schema.
 * **TeXiFy (152, 153)**: the only fixed-side failure is `LatestTexifyVersionTest > testVersion`. The test
   calls `LatexErrorReportSubmitter.getLatestVersion()`, which does an HTTP GET with a connect and read timeout
   of 1000 ms and, on a timeout, returns an empty object, so the assertion that the version is not blank fails.
@@ -250,6 +252,39 @@ likely cause and not a confirmed one:
 All of these cases passed on the clean replay host, with 164 and 167 passing only through their exclusion
 lists. The audit host and the clean host differ in whether they can reach the hosts above, and in nothing
 the dataset controls.
+
+### Third pass on the audit host
+
+A third pass used the repository at the commit that contains the runner changes (`9f75cdf`), run from a
+private directory with its own Gradle home. It covers the cases listed in a later report from the same host.
+
+| Case | Result | Note |
+|---|---|---|
+| KOTLIN-153, 155, 157, 158 | PASS, fixed-side test command exits 0 | 158 with `D4X_KOTLIN_ORIGINAL_SOURCE=1` |
+| KOTLIN-227 | PASS, exits 0 | needs Gradle 6.3, see below |
+| KOTLIN-152 | FAIL on the fixed side | `GrazieInspectionTest > testGerman`: `Failed to download 'https://resources.jetbrains.com/grazie/model/language-tool/5.7/de-5.7.jar': Connect timed out` |
+| KOTLIN-170 | FAIL on the fixed side | `JsonSchemaTest`, 3 tests: schema loaded from `raw.githubusercontent.com` |
+| KOTLIN-167 | FAIL under the exclusion list | 3 failures not on the list: two `JsonSchemaTest` tests and one `ClearlyDefinedPackageCurationProviderTest` (an online service) |
+| KOTLIN-501 | FAIL on the fixed side | `MediaStorageTest > media storage()`, `Connection reset`; buggy side fails the trigger as expected |
+| ELIXIR-012 | PASS in 5 of 5 runs | the failures reported earlier did not appear |
+| ELIXIR-086 | PASS in 9 of 10 runs | the 10th run failed with `StreamData.FilterTooNarrowError` (seed 62646) in a property test |
+| SWIFT-D027, D031 | PASS | with step 1 of `REPLAY_SWIFT.md` (resolve with network, recorded `Package.resolved`) |
+
+KOTLIN-152 failed a different network test here than on the clean host (`LatestTexifyVersionTest` there,
+`GrazieInspectionTest` here): which network-dependent test fails varies from run to run.
+
+**KOTLIN-501 without a working Chrome.** With the Chrome path pointing at a missing file, and with a real
+Chrome that had no shared libraries and no `--no-sandbox`, the four PDF tests of `CompileCommandTest` failed on
+the buggy and the fixed side alike, so the trigger could not separate them.
+
+**KOTLIN-227 needs Gradle 6.3.** The case's wrapper asks for `gradle-6.3-all.zip`, which was not among the
+distributions already cached on that host, and the download is the redirected one that the host cannot reach
+(see "Network" above). The file was fetched from a mirror (`mirrors.cloud.tencent.com/gradle/`), its sha256
+`0f316a67b971b7b571dac7215dcf2591a30994b3450e0629925ffcfe2c68cc5c` was compared with the value that
+`services.gradle.org` publishes in `gradle-6.3-all.zip.sha256`, and it was unpacked into
+`GRADLE_USER_HOME/wrapper/dists/gradle-6.3-all/<hash>/` with a `.ok` marker. The directory name is the
+base-36 form of the MD5 of the distribution URL (`b4awcolw9l59x95tu1obfh9i8` for this URL). The case also
+needs the `jcenter` fallback described in `docs/REPLAY_KOTLIN_ELIXIR.md`.
 
 ### The Gradle cache on the audit host
 

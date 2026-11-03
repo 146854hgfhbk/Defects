@@ -82,12 +82,28 @@ npm --version
 
 The exact profile is in `cases/kotlin/KOTLIN-501/case.json` under `runtime_prerequisites`.
 
-Install Node only. Do **not** pre-install Puppeteer: `NodeNpmWrapperTest` asserts that it is not
-linked, so a pre-installed copy fails the test on both sides. The test installs Puppeteer itself
-through `npm` (set `npm_config_registry=https://registry.npmjs.org` if your npm default is a mirror).
-The replay host launched Chrome for Testing 148 rather than 151; on Ubuntu 24.04 AppArmor blocks
-unprivileged user namespaces, so Chrome needs a `--no-sandbox` wrapper (point
-`PUPPETEER_EXECUTABLE_PATH` at it).
+Two setups were run on the second host: the sidecar the case declares (Node 20.20.2 with Puppeteer
+24.43.1 installed globally, Chrome for Testing 151) and the same Node with the global Puppeteer
+removed. With both, the buggy side fails the trigger as expected and `NodeNpmWrapperTest` passes. An earlier
+version of this note said that a pre-installed Puppeteer makes `NodeNpmWrapperTest` fail; that was seen
+on the clean host and was not reproduced on the second host, so it is not a rule. Set
+`npm_config_registry=https://registry.npmjs.org` if your npm default is a mirror.
+
+Chrome must be able to start, or the four PDF tests in `CompileCommandTest` fail on **both** sides and the
+trigger cannot tell them apart (seen with a missing Chrome path and with a Chrome that had no shared
+libraries). Two things stop it on a stock host:
+
+* Ubuntu 24.04 restricts unprivileged user namespaces, so Chrome needs `--no-sandbox`. Point
+  `PUPPETEER_EXECUTABLE_PATH` at a wrapper script that adds it.
+* Missing shared libraries (`libasound.so.2` on the second host). Add the directory that holds them to
+  `LD_LIBRARY_PATH` in the same wrapper.
+
+Check it before the run: `chrome-wrapper --headless=new --disable-gpu --print-to-pdf=/tmp/x.pdf "data:text/html,<h1>ok</h1>"`
+must write a PDF.
+
+Even with a working Chrome the fixed side fails `MediaStorageTest > media storage()` on a host that cannot
+reach `raw.githubusercontent.com`: the test downloads images from it and ends with
+`java.net.SocketException: Connection reset`.
 
 ## Android cases
 
