@@ -348,6 +348,24 @@ Decision: the test is recorded in `cases/kotlin/KOTLIN-120/validation/excluded-t
 classification `OBSERVED_NOT_GOLD_VERIFIED` (observed on the clean host, not run against the upstream
 fix), like the lists for KOTLIN-164, 165 and 167. KOTLIN-120 meets the strict gate only through that list.
 
+The same was done for the tests that need a network that the second host does not have: KOTLIN-501
+(`MediaStorageTest`), KOTLIN-167 (three more entries and, after a second run, a fourth: the two ClearlyDefined
+"existing curation" tests, two `JsonSchemaTest` tests) and KOTLIN-152 and 153 (`GrazieInspectionTest >
+testGerman`, `LatestTexifyVersionTest > testVersion`). With the lists, real `d4x run`s on that host gave:
+KOTLIN-501 PASS (buggy fails the trigger; the fixed side's only failure is the listed `MediaStorageTest`;
+trigger confirmed by JUnit), KOTLIN-167 PASS (11 listed failures seen, none unlisted), KOTLIN-152 and 153
+PASS (fixed suite exit 0, the network tests did not fail in that run). These pass the strict gate only
+through the lists, or because the network happened to answer. KOTLIN-164 and 170 fail `JsonSchemaTest` for
+the same reason and have no such entries.
+
+A run of KOTLIN-501 made while four other cases were running failed the trigger itself
+(`CompileCommandTest > pdf with toc and id starting with digit`, 33 s, `Expected value to be true`), where
+the same case alone passes it in under 30 s for the whole class. Run the PDF case on an idle machine; a
+trigger that fails because of load is not a candidate for an exclusion list.
+
+On that host a connection to `raw.githubusercontent.com` either fails at once (`Connection reset`) or hangs in
+`SYN-SENT` until the TCP connect times out, so the time a network test takes there varies by minutes.
+
 The list alone was not enough. `d4x` required the Gradle log to show the trigger class as `PASSED`, and
 AnkiDroid's log prints no passed tests; the class name was also taken as the text after the last dot of
 the trigger name, which for a test with a display name is the whole sentence. See "Runner changes".
