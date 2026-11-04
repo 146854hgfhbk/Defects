@@ -68,7 +68,7 @@ runtime, same dependencies, same case/trigger outcome.
 
 | Language | Cases | Reproduction path | Guide |
 |---|---:|---|---|
-| ArkTS | 50 | authorized device or emulator + SDK | [env/device-arkts.md](env/device-arkts.md) |
+| ArkTS | 50 | OpenHarmony emulator (KVM) + SDK; replayed, see the ArkTS notes | [docs/REPLAY_ARKTS.md](docs/REPLAY_ARKTS.md), [env/device-arkts.md](env/device-arkts.md) |
 | Dart | 100 | native Dart SDK | [env/dart.md](env/dart.md) |
 | Elixir | 100 | container / native OTP | [env/container.md](env/container.md) |
 | Julia | 100 | native Julia | [env/julia.md](env/julia.md) |
@@ -85,8 +85,14 @@ The **600 source-guide cases** are Dart, Julia, Kotlin, Lua, Perl, and R. A per-
 
 Replay notes for what was actually run, with the `d4x` options each case needed:
 [Dart, Perl, Julia, Lua, R](docs/REPLAY_DART_PERL_JULIA_LUA_R.md),
-[Kotlin and Elixir](docs/REPLAY_KOTLIN_ELIXIR.md), [Swift](docs/REPLAY_SWIFT.md),
+[Kotlin and Elixir](docs/REPLAY_KOTLIN_ELIXIR.md), [Swift](docs/REPLAY_SWIFT.md), [ArkTS](docs/REPLAY_ARKTS.md),
 [why a replay on another host can end BLOCKED or FAIL](docs/REPLAY_SECOND_HOST_AUDIT.md).
+
+ArkTS status in those notes: 42 of the 50 cases have a stable two-state result (the buggy trigger fails, the fixed
+side passes) on a KVM-backed OpenHarmony 6.1 emulator. The other 8 (ARKTS-010, 012, 032, 035, 039, 042, 043, 050)
+passed once, and only with the test waits multiplied by 3; they are not counted as PASS. ARKTS-030 and ARKTS-033
+were replaced by two ImageKnife cases (PR #423 and #227); these need the HarmonyOS command-line-tools package
+(a third-party re-upload, checksum not compared with a Huawei value) and four environment shims, all listed in the notes.
 
 Reproduction guides do not by themselves imply that a case passed; always check the case's `status`, `validation`, and `environment` fields.
 

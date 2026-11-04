@@ -1,127 +1,105 @@
-diff --git a/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/AdaptiveTitleOcclusion.test.ets b/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/AdaptiveTitleOcclusion.test.ets
+diff --git a/entry/src/ohosTest/ets/test/DispatchProgressQueue.test.ets b/entry/src/ohosTest/ets/test/DispatchProgressQueue.test.ets
 new file mode 100644
-index 0000000000..5b13920431
+index 0000000..31d50d1
 --- /dev/null
-+++ b/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/AdaptiveTitleOcclusion.test.ets
-@@ -0,0 +1,106 @@
-+/*
-+ * Copyright (c) 2026 Huawei Device Co., Ltd.
-+ * Licensed under the Apache License, Version 2.0 (the "License");
-+ * you may not use this file except in compliance with the License.
-+ * You may obtain a copy of the License at
-+ *
-+ *     http://www.apache.org/licenses/LICENSE-2.0
-+ *
-+ * Unless required by applicable law or agreed to in writing, software
-+ * distributed under the License is distributed on an "AS IS" BASIS,
-+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+ * See the License for the specific language governing permissions and
-+ * limitations under the License.
-+ */
-+
++++ b/entry/src/ohosTest/ets/test/DispatchProgressQueue.test.ets
+@@ -0,0 +1,81 @@
 +import { describe, it, expect } from '@ohos/hypium';
-+import AbilityDelegatorRegistry from '@ohos.app.ability.abilityDelegatorRegistry';
-+import { Driver, ON, Component } from '@ohos.UiTest';
++import common from '@ohos.app.ability.common';
++import List from '@ohos.util.List';
++import taskpool from '@ohos.taskpool';
++import { ImageKnifeDispatcher, ImageKnifeRequestSource, ImageKnifeRequestWithSource } from '@ohos/imageknife/src/main/ets/ImageKnifeDispatcher';
++import { ImageKnifeOption, ImageKnifeRequest } from '@ohos/imageknife/Index';
++import { ImageKnifeRequestState } from '@ohos/imageknife/src/main/ets/ImageKnifeRequest';
++import { DefaultJobQueue } from '@ohos/imageknife/src/main/ets/utils/DefaultJobQueue';
 +
-+const BUNDLE_NAME: string = 'ohos.samples.AdaptiveCapabilities';
-+const WAIT_START: number = 2000;
-+const WAIT_PAGE: number = 1200;
-+const TITLE_TOP_LIMIT: number = 150;
-+const SUBTITLE_BOTTOM_LIMIT: number = 210;
++class RecordingDispatcher extends ImageKnifeDispatcher {
++  executedSources: Array<string> = new Array<string>();
++  executedStates: Array<ImageKnifeRequestState> = new Array<ImageKnifeRequestState>();
 +
-+let delegator: AbilityDelegatorRegistry.AbilityDelegator =
-+  AbilityDelegatorRegistry.getAbilityDelegator();
++  executeJob(request: ImageKnifeRequest): void {
++    this.executedStates.push(request.requestState);
++    this.executedSources.push(request.ImageKnifeOption.loadSrc as string);
++  }
++}
 +
-+function startMainAbility(): Promise<void> {
-+  return new Promise<void>((resolve: () => void) => {
-+    delegator.executeShellCommand(
-+      'aa start -d 0 -a MainAbility -b ohos.samples.AdaptiveCapabilities -m entry',
-+      () => {
-+        resolve();
++function createRequest(loadSrc: string, priority?: taskpool.Priority): ImageKnifeRequest {
++  let option: ImageKnifeOption = {
++    loadSrc: loadSrc,
++    priority: priority
++  };
++  return new ImageKnifeRequest(
++    option,
++    getContext() as common.UIAbilityContext,
++    12,
++    12,
++    1,
++    {
++      showPixelMap: () => {
 +      }
-+    );
++    }
++  );
++}
++
++function addExecutingSlot(dispatcher: ImageKnifeDispatcher, key: string): void {
++  let requestList = new List<ImageKnifeRequestWithSource>();
++  requestList.add({
++    request: createRequest('busy-' + key),
++    source: ImageKnifeRequestSource.SRC
 +  });
++  dispatcher.executingJobMap.set(key, requestList);
 +}
 +
-+async function findById(driver: Driver, id: string): Promise<Component | null> {
-+  try {
-+    let component = await driver.findComponent(ON.id(id));
-+    if (component !== undefined && component !== null) {
-+      return component;
-+    }
-+  } catch (error) {
-+  }
-+  return null;
-+}
++export default function DispatchProgressQueueTest() {
++  describe('DispatchProgressQueueTest', () => {
++    it('dispatchNextJobSkipsDestroyedRequestsUntilProgressRequest', 0, () => {
++      let dispatcher = new RecordingDispatcher();
++      dispatcher.setMaxRequests(1);
++      addExecutingSlot(dispatcher, 'one');
++      addExecutingSlot(dispatcher, 'two');
 +
-+async function findText(driver: Driver, text: string): Promise<Component | null> {
-+  try {
-+    let component = await driver.findComponent(ON.text(text));
-+    if (component !== undefined && component !== null) {
-+      return component;
-+    }
-+  } catch (error) {
-+  }
-+  return null;
-+}
++      let destroyedRequest = createRequest('destroyed-src', taskpool.Priority.HIGH);
++      destroyedRequest.requestState = ImageKnifeRequestState.DESTROY;
++      let progressRequest = createRequest('progress-src', taskpool.Priority.LOW);
 +
-+export default function adaptiveTitleOcclusionTest() {
-+  describe('AdaptiveTitleOcclusionTestSuite', () => {
-+    it('AdaptiveTitle_HeaderStaysInTopBand', 0, async () => {
-+      const driver: Driver = Driver.create();
-+      await startMainAbility();
-+      await driver.delayMs(WAIT_START);
++      dispatcher.enqueue(destroyedRequest);
++      dispatcher.enqueue(progressRequest);
++      dispatcher.dispatchNextJob();
 +
-+      let manager = delegator.getAppContext().resourceManager;
-+      let titleText: string = await manager.getStringByName('multiScene_header_title');
-+      let subtitleText: string = await manager.getStringByName('multiScene_header_subtitle');
++      expect(dispatcher.executedSources.length).assertEqual(1);
++      expect(dispatcher.executedSources[0]).assertEqual('progress-src');
++      expect(dispatcher.executedStates[0]).assertEqual(ImageKnifeRequestState.PROGRESS);
++    });
 +
-+      let entry = await findById(driver, 'TypicalSceneIndex');
-+      if (entry !== null) {
-+        await entry.click();
-+      }
-+      await driver.delayMs(WAIT_PAGE);
-+      let scene = await findById(driver, 'multiScene');
-+      if (scene !== null) {
-+        await scene.click();
-+      }
-+      await driver.delayMs(WAIT_PAGE * 2);
++    it('defaultJobQueueKeepsPriorityOrdering', 1, () => {
++      let queue = new DefaultJobQueue();
++      queue.add(createRequest('normal-src', taskpool.Priority.MEDIUM));
++      queue.add(createRequest('low-src', taskpool.Priority.LOW));
++      queue.add(createRequest('high-src', taskpool.Priority.HIGH));
 +
-+      let title = await findText(driver, titleText);
-+      let subtitle = await findText(driver, subtitleText);
-+      let titleTop: number = -1;
-+      let subtitleBottom: number = -1;
-+      if (title !== null) {
-+        titleTop = (await title.getBounds()).top;
-+      }
-+      if (subtitle !== null) {
-+        subtitleBottom = (await subtitle.getBounds()).bottom;
-+      }
-+
-+      let display = await driver.getDisplaySize();
-+      let probe: string = 'titleTop=' + titleTop + ';subtitleBottom=' + subtitleBottom +
-+        ';display=' + display.x + 'x' + display.y;
-+      console.info('AdaptiveTitleProbe ' + probe);
-+      let headerInTopBand: boolean = title !== null && subtitle !== null &&
-+        titleTop >= 0 && titleTop <= TITLE_TOP_LIMIT &&
-+        subtitleBottom > 0 && subtitleBottom <= SUBTITLE_BOTTOM_LIMIT;
-+      expect(headerInTopBand ? 'HEADER_INSET' : ('HEADER_DISPLACED:' + probe))
-+        .assertEqual('HEADER_INSET');
++      expect(queue.getQueueLength()).assertEqual(3);
++      expect(queue.pop()?.ImageKnifeOption.loadSrc).assertEqual('high-src');
++      expect(queue.pop()?.ImageKnifeOption.loadSrc).assertEqual('normal-src');
++      expect(queue.pop()?.ImageKnifeOption.loadSrc).assertEqual('low-src');
++      expect(queue.pop()).assertUndefined();
 +    });
 +  });
 +}
-diff --git a/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/List.test.ets b/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/List.test.ets
-index 27c07a1a17..ea9a5eb4eb 100644
---- a/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/List.test.ets
-+++ b/code/SuperFeature/MultiDeviceAppDev/AdaptiveCapabilities/entry/src/ohosTest/ets/test/List.test.ets
-@@ -14,7 +14,9 @@
-  */
- 
- import abilityTest from './Ability.test'
-+import adaptiveTitleOcclusionTest from './AdaptiveTitleOcclusion.test'
+diff --git a/entry/src/ohosTest/ets/test/List.test.ets b/entry/src/ohosTest/ets/test/List.test.ets
+index 878bde1..05b8f52 100644
+--- a/entry/src/ohosTest/ets/test/List.test.ets
++++ b/entry/src/ohosTest/ets/test/List.test.ets
+@@ -15,9 +15,11 @@
+ import DefaultJobQueueTest from './DefaultJobQueueTest.test';
+ import FileLruCacheTest from './FileLruCache.test';
+ import MemoryLruCacheTest from './MemoryLruCache.test';
++import DispatchProgressQueueTest from './DispatchProgressQueue.test';
  
  export default function testsuite() {
-   abilityTest()
-+  adaptiveTitleOcclusionTest()
- }
+   MemoryLruCacheTest();
+   FileLruCacheTest();
+   DefaultJobQueueTest();
+-}
 \ No newline at end of file
++  DispatchProgressQueueTest();
++}
