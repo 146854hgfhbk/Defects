@@ -10,10 +10,12 @@ PASS means: the declared trigger test fails on the buggy side and passes on the 
 
 | | Cases |
 |---|---:|
-| PASS (buggy `FAIL_AS_EXPECTED`, fixed `PASS`) | 48 |
-| not PASS | 2 |
+| PASS, stable two-state (40 original + 2 replacements) | 42 |
+| timing-dependent: pass under `D4X_ARKTS_DELAY_SCALE=3`, not stable | 8 |
+| not discriminating | 0 (030 and 033 were replaced on 2026-11-04) |
 
-PASS: 001 002 003 004 005 006 007 008 009 010 011 012 013 014 015 016 017 018 019 020 021 022 023 024 025 026 027 028 029 031 032 034 035 036 037 038 039 040 041 042 043 044 045 046 047 048 049 050.
+PASS: 001 002 003 004 005 006 007 008 009 011 013 014 015 016 017 018 019 020 021 022 023 024 025 026 027 028 029 030 031 033 034 036 037 038 040 041 044 045 046 047 048 049 (030 and 033 are the 2026-11-04 replacements).
+Timing-dependent, not counted as PASS: 010 012 032 035 039 042 043 050.
 
 28 of the PASS results (001 002 003 005 007 008 011 013 015 017 019 020 021 022 023 024 027 029 031 036 037 038 040 041 044 045 047 048) were obtained on the TCG emulator before the KVM emulator existed;
 20 (004 006 009 010 012 014 016 018 025 026 028 032 034 035 039 042 043 046 049 050) on the KVM emulator. 8 of the KVM
@@ -116,24 +118,111 @@ steps that ArkTS needs:
 * The runner stops when less than 8 GB is free, and deletes both checkouts after each case. A full
   disk turned 27 later cases into BLOCKED in one run before this was added.
 
-## Cases that did not reach PASS
+## Replacement of ARKTS-030 and ARKTS-033 (2026-11-04)
 
-| Case | buggy | fixed | what was seen |
+Both cases were replaced, not repaired: their triggers could not separate the two revisions on this emulator
+(030's assertion compares dialog bounds with the display size, which cannot see an in-screen overlap with the
+home-indicator strip; 033 never found the header at 360x720 and passed on both sides at 360x1280).
+
+The two replacements are ImageKnife cases, both replayed two-state on the same emulator:
+
+| New case | Upstream | Fix | Trigger |
 |---|---|---|---|
-| ARKTS-030 | UNEXPECTED_PASS | PASS | the buggy side passes the declared trigger |
-| ARKTS-033 | UNEXPECTED_PASS | PASS | on a 360x1280 screen the buggy side passes; on 360x720 the fixed side fails (see below) |
+| ARKTS-030 | `openharmony-tpc/ImageKnife` PR #423, base `95ffcb9e` | `MemoryLruCache.put`: `size <= 0 && ...` -> `\|\|` | `MemoryLruCacheOversizeTest#rejectsSingleItemAtMemoryLimit` |
+| ARKTS-033 | `openharmony-tpc/ImageKnife` PR #227, base `d1527135` | `ImageKnifeDispatcher.dispatchNextJob` only dispatches progress-state requests | `DispatchProgressQueueTest#dispatchNextJobSkipsDestroyedRequestsUntilProgressRequest` |
 
-### ARKTS-030 and 033
+Both are unit-level hypium tests (no UiTest, no screen geometry). Evidence: `evidence/ARKTS-030/`,
+`evidence/ARKTS-033/` (result.json plus the buggy/fixed test logs).
 
-* ARKTS-030: the test asks whether the two dialog buttons lie inside the screen. The buggy side passes it on the
-  360x720 emulator, with the shipped waits and with the waits multiplied by 3. The probe values of the buggy run
-  were not looked at, so the reason is not known.
-* ARKTS-033: the trigger checks that the page title is not covered. On a 360x720 screen the fixed side reports
-  `HEADER_DISPLACED:titleTop=-1;subtitleBottom=-1` (the title text is not found), the buggy side the same. On a
-  360x1280 screen (`XRES=360 YRES=1280 arkts_emulator_kvm.sh`) the fixed side passes, and so does the buggy side.
-  Neither screen size gave the expected pair.
-* In both cases the test file was left as the dataset ships it. Changing a screen size or a threshold would make
-  the result a different test.
+These two need a different toolchain from the rest of the suite: HarmonyOS command-line-tools
+`5.0.3.906` (SDK 5.0.0(12), hvigor 5.8.9, ohpm), not the assembled `arkts-sdk-full`. The per-case
+`environment.lock.json` records the toolchain and the four environment shims that were applied
+identically to both sides:
+
+* S1 `library/Index.ets -> index.ets` (the test imports `@ohos/imageknife/Index`; the file is `index.ets`);
+* S2 after packaging, `module.json` gets `compileSdkType=OpenHarmony` and `targetAPIVersion=12`, because the
+  emulator image enforces code-signature only for HarmonyOS-typed packages and has no fs-verity;
+* S3 `aa test ... /ets/testrunner/OpenHarmonyTestRunner -s timeout 60000`;
+* S4 (ARKTS-033 only) the baseline pins hvigor 4.0.2 / API 11; its build files were upgraded to
+  modelVersion 5.0.0 / SDK 5.0.0(12) identically on both sides.
+
+### Getting the toolchain and building the two cases
+
+The HarmonyOS command-line-tools package is not on `repo.huaweicloud.com` (`harmonyos/sdk`, `ohpm`, `os` and
+`develop_tools` were checked) and the official download needs a Huawei account. The replay used a third-party
+re-upload, `csukuangfj/harmonyos-commandline-tools` on Hugging Face, file
+`commandline-tools-linux-x64-5.0.3.906.zip` (3,225,154,486 bytes, sha256
+`c6fe61299e1b05e4023e643a319ee74c3eb369af7edecd5c3f1795b16f9db6af`). The sha256 equals the LFS hash that
+repository lists; it was **not** compared with a checksum published by Huawei. `huggingface.co` was not
+reachable from the replay host, `https://hf-mirror.com/csukuangfj/harmonyos-commandline-tools/resolve/main/<file>`
+was.
+
+Unpack it with an extractor that keeps symlinks and file modes and rejects paths outside the target
+(`scripts/arkts/imageknife/extract_zip.py`; the host had no `unzip`). The package carries
+`sdk/default/hms/ets/api/device-define/phone.json` and `2in1.json`. The OpenHarmony SDK used for the other 48
+cases has no such files, and without them `SyscapTransform` stops with "The intersection of the system
+capability sets configured for multiple devices is empty" for any module that declares both `phone` and `2in1`.
+
+Build environment:
+
+* `DEVECO_SDK_HOME=<unpacked>/command-line-tools/sdk`; `command-line-tools/bin` and `command-line-tools/tool/node/bin`
+  on `PATH`.
+* `JAVA_HOME` must point to a JDK (21 was used). The package has none, and `PackageHap` fails with
+  `spawn java ENOENT` without it.
+* `HOME` set to a scratch directory, so hvigor and ohpm caches do not leak into other cases.
+* ohpm registry `https://ohpm.openharmony.cn/ohpm/`.
+
+Steps per side: `ohpm install --all`; `hvigorw --mode module -p module=entry@default -p product=default
+--no-daemon assembleHap`; the same with `module=entry@ohosTest`; when the project has a `sharedlibrary` module
+(ARKTS-030), `-p module=sharedlibrary@default assembleHsp`. Then apply S2 to the built packages, install the
+HSP and HAP with `hdc`, and run the `aa test` command (S3).
+
+The scripts are in `scripts/arkts/imageknife/` (`build.sh`, `hsp.sh`, `case_run.sh`, `sdkfix.py` = S4,
+`t03_shim.py` = S2, `extract_zip.py`). They were written under the staging names T03 (= ARKTS-030) and T04
+(= ARKTS-033), hard-code `$HOME/d4x` and the emulator at `127.0.0.1:55557`, and have not been run on another
+host. `case_run.sh` stops with `BLOCKED:BUILD` when either build fails; an earlier version went on to install
+and test, which produced a failure that did not come from the case.
+
+Routes that were tried and did not work (package signing, dropping the native libraries, turning the HSP into
+a HAR, `runtimeOS: OpenHarmony`) and one rejected candidate, ImageKnife PR #319, are in
+`evidence/NEGATIVE_RESULTS_ARKTS_030_033.md`. Each replacement was run three times per side with the same
+result.
+
+Limits to keep in mind: S2 rewrites package metadata after the build, so the replay shows the same ArkTS
+logic failing and passing on an OpenHarmony API-12 package, not on a HarmonyOS-typed package. The 48 original
+cases were not re-run with this toolchain; they use the older runner and SDK, which were left unchanged.
+
+## Timing-dependent cases
+
+010, 012, 032, 035, 039, 042, 043 and 050 do not have a stable pass. With `D4X_ARKTS_DELAY_SCALE=3` each
+produced `FAIL_AS_EXPECTED` + `PASS` once (07:00-07:30 on 2026-11-04), but repeats are not reliable: the
+fixed side intermittently reports `Component not exist`, because the `aa test` TestAbility window and the
+application window compete for focus while UiTest is querying the component tree. Scaling the waits makes the
+window the test wants more likely to be current, not guaranteed; 043 is the mirror image (with the shipped
+waits both sides pass, with x3 the buggy side fails), so its differential may also be a timing artefact.
+
+They are therefore excluded from the PASS list above until the focus race is fixed.
+
+### What the one passing run shows for each of the eight
+
+Read from the saved buggy and fixed test logs of the passing run (v15 for seven, v16 for 050). Each case was
+run once in this configuration and, by decision on 2026-11-04, was not repeated.
+
+| Case | buggy side | relation to the fix |
+|---|---|---|
+| 010 | assertion `expect 1 equals 0` | value assertion, fixed side clean |
+| 012 | assertion `expect 3 equals 0` | value assertion, fixed side clean |
+| 032 | assertion `expect false, actualValue is true` | value assertion, fixed side clean |
+| 042 | assertion `expect true, actualValue is false` | value assertion, fixed side clean |
+| 043 | assertion `expect true, actualValue is false` | value assertion; with the shipped waits the buggy side passed in v3, v5, v8 and v14 |
+| 039 | `Component not exist`, text `-40` | the fix adds `OFFSET_MIN = -40`, so the text cannot exist before it |
+| 050 | `Component not exist`, text `2026/11/04` | the fix multiplies `dateAdded` by 1000, so the date is wrong before it |
+| 035 | `App died`, no assertion | the fix title is a crash fix and changes the emitter data to a plain object; the crash reason is not in the saved logs |
+
+For 039 and 050 the message is the same one the focus race produces, so one buggy-side log cannot tell the
+defect from the race; the direction of the evidence agrees with the defect. For 043 the explanation that the
+x3 wait gives `terminateSelf` in `onBackground` enough time to take effect (the test waits 1500 ms after
+`doAbilityBackground`) fits the code but was not tested.
 
 ## Test waits: the cause of eight cases
 
