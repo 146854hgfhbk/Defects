@@ -55,8 +55,15 @@ Unrelated failing tests on the fixed side (`validation/excluded-tests.json`):
 
 * KOTLIN-164: 1 test (`FileUtilsTest searchUpwardFor`)
 * KOTLIN-165: 2 tests (same, and `SpringPackageCurationProviderTest`)
-* KOTLIN-167: 8 tests (4 `CarthageTest`, 2 `VersionControlSystemTest`, `ExtensionsTest`, and a
-  `ClearlyDefinedPackageCurationProviderTest` that calls an online service)
+* KOTLIN-167: 12 tests (4 `CarthageTest`, 2 `VersionControlSystemTest`, `ExtensionsTest`, 2 `JsonSchemaTest`
+  that load their schema from `raw.githubusercontent.com`, and 3 `ClearlyDefinedPackageCurationProviderTest`
+  that call an online service; of the two "return an existing curation" tests only one failed in each run,
+  so both are listed)
+* KOTLIN-152 and 153: 2 tests each (`GrazieInspectionTest > testGerman`, which downloads a language bundle,
+  and `LatestTexifyVersionTest > testVersion`, which calls the JetBrains repository with a 1 s timeout); at
+  most one of them failed per run
+* KOTLIN-501: 1 test (`MediaStorageTest > media storage()`, which downloads images from
+  `raw.githubusercontent.com`)
 * KOTLIN-120: 1 test (`CardBrowserTest > FindReplace - replaces text based on regular expression`, a UI
   assertion that failed once in a full run and passed in 3 of 3 repeats when run alone)
 
