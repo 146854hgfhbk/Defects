@@ -96,7 +96,24 @@ with QEMU 8.2 in a container. The image needs a `virtio-gpu-pci` device. Without
 
 `scripts/arkts/arkts_bulk_runner.py` is the ArkTS runner used here. It reads the case files of the repository
 and writes `result.json` and a `cases.tsv`. It does what `d4x.py` does for the other languages and adds the
-steps that ArkTS needs:
+steps that ArkTS needs.
+
+For the timing-dependent cases on the recorded emulator, set the delay scale explicitly when reproducing:
+
+```bash
+export D4X_ARKTS_DELAY_SCALE=3
+python3 scripts/arkts/arkts_bulk_runner.py \
+  --case ARKTS-010 --case ARKTS-012 --case ARKTS-032 --case ARKTS-035 \
+  --case ARKTS-039 --case ARKTS-042 --case ARKTS-043 --case ARKTS-050
+```
+
+Run this after the SDK and emulator preparation above and after adapting the runner's host-specific paths.
+The runner records the factor and changed files for each side in `result.json` under `delay_scale`.
+This setting modifies waits in the test sources on both sides; it does not guarantee a stable result.
+Check both sides and repeat runs as described in "Timing-dependent cases" before counting a case as PASS.
+The ImageKnife replacements ARKTS-030 and ARKTS-033 use the separate procedure below.
+
+The runner also performs these steps:
 
 * builds the app and the `ohosTest` HAP with the case's hvigor, installs both, runs the recorded
   `aa test` command, and parses `OHOS_REPORT_RESULT`.
