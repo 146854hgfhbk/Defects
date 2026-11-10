@@ -98,20 +98,42 @@ with QEMU 8.2 in a container. The image needs a `virtio-gpu-pci` device. Without
 and writes `result.json` and a `cases.tsv`. It does what `d4x.py` does for the other languages and adds the
 steps that ArkTS needs.
 
-For the timing-dependent cases on the recorded emulator, set the delay scale explicitly when reproducing:
+For the seven timing-dependent cases other than ARKTS-050 on the 360x720 emulator, use:
 
 ```bash
-export D4X_ARKTS_DELAY_SCALE=3
+export D4X_ARKTS_DELAY_SCALE=6
+export D4X_ARKTS_TEST_TIMEOUT_MS=180000
+export D4X_ARKTS_ATTEMPTS=1
 python3 scripts/arkts/arkts_bulk_runner.py \
   --case ARKTS-010 --case ARKTS-012 --case ARKTS-032 --case ARKTS-035 \
-  --case ARKTS-039 --case ARKTS-042 --case ARKTS-043 --case ARKTS-050
+  --case ARKTS-039 --case ARKTS-042 --case ARKTS-043
 ```
 
 Run this after the SDK and emulator preparation above and after adapting the runner's host-specific paths.
 The runner records the factor and changed files for each side in `result.json` under `delay_scale`.
-This setting modifies waits in the test sources on both sides; it does not guarantee a stable result.
+The scale modifies waits in the test sources on both sides; the longer timeout prevents the scaled test from
+timing out at the default 60 seconds. Neither setting guarantees a stable result.
 Check both sides and repeat runs as described in "Timing-dependent cases" before counting a case as PASS.
 The ImageKnife replacements ARKTS-030 and ARKTS-033 use the separate procedure below.
+
+For ARKTS-050, a 360x720 emulator produced a fixed-side missing-date error in three runs on
+2026-11-11, even with these settings. A separate 360x1280 KVM emulator produced the declared
+buggy-fail/fixed-pass result in three runs with the same scale and timeout. To try that geometry,
+start an isolated image directory and unused port, prepare the device as in Step 2, and target it:
+
+```bash
+XRES=360 YRES=1280 scripts/arkts/arkts_emulator_kvm.sh 55561 /path/to/isolated-emulator-image
+# In another shell, after preparing and connecting the device:
+export D4X_ARKTS_TARGET=127.0.0.1:55561
+export D4X_ARKTS_DELAY_SCALE=6 D4X_ARKTS_TEST_TIMEOUT_MS=180000 D4X_ARKTS_ATTEMPTS=1
+python3 scripts/arkts/arkts_bulk_runner.py --case ARKTS-050
+```
+
+The emulator script removes a container named `d4x-ohos-emu-<port>` before starting; choose a
+port and name not used by another run. Use a separate writable image directory. These were
+separate emulator instances and their state may differ; this comparison does not isolate screen
+height as the cause. On the buggy side the missing-date error can also result from the UI focus
+race, so three runner PASS results are not independent proof of the defect or a stability guarantee.
 
 The runner also performs these steps:
 
@@ -208,6 +230,27 @@ result.
 Limits to keep in mind: S2 rewrites package metadata after the build, so the replay shows the same ArkTS
 logic failing and passing on an OpenHarmony API-12 package, not on a HarmonyOS-typed package. The 48 original
 cases were not re-run with this toolchain; they use the older runner and SDK, which were left unchanged.
+
+## Follow-up replay (2026-11-11, Asia/Shanghai)
+
+On the 109 host, with KVM, a preconfigured phone image, `D4X_ARKTS_DELAY_SCALE=6`,
+`D4X_ARKTS_TEST_TIMEOUT_MS=180000`, `D4X_ARKTS_ATTEMPTS=1`, and the default 40-second
+warm-up, the runner returned the following outcomes. Each entry represents a separate run;
+no result was selected from retries. The same emulator state was reused across runs.
+
+| Case | 360x720 runs 1 / 2 / 3 | 360x1280 runs 1 / 2 / 3 |
+|---|---|---|
+| 010, 012, 032, 035, 039, 042, 043 | PASS / PASS / PASS for each case | not run |
+| 050 | FAIL / FAIL / FAIL | PASS / PASS / PASS |
+
+On 050 at 360x720, both sides reported the expected date component missing in all three runs.
+At 360x1280, the fixed side passed and the buggy side reported that component missing in all
+three runs. The high-screen runs used a separate emulator image copy, and may have retained
+media state across repetitions. They cannot establish whether height alone caused the difference.
+For 039 and 050, a missing component may be caused by focus rather than the defect. For 035,
+the buggy app died without a recorded crash reason. The 043 differential may depend on timing.
+The tests exercise declared triggers only; three repetitions on one host do not establish general
+stability. The following sections describe the November 4 runs and their historical outcomes.
 
 ## Timing-dependent cases
 
