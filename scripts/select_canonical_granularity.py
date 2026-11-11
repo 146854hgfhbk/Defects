@@ -19,6 +19,17 @@ SELECTION_ORDER = (
     ("upstream", "upstream_patch"),
 )
 
+# The source mapper did not recover function ranges for these rows. Manual
+# context review confirmed the outer function/method and the nested label.
+MANUAL_OVERRIDES = {
+    "PERL-059": {"classification": "SH", "reason": "inside sub filename; nested anonymous callback kept under outer function", "confidence": "reviewed"},
+    "PERL-063": {"classification": "SL", "reason": "single changed line inside sub is_bool", "confidence": "reviewed"},
+    "PERL-064": {"classification": "SH", "reason": "changed branch inside decode_prefix body", "confidence": "reviewed"},
+    "PERL-156": {"classification": "SH", "reason": "changed branch inside decode_prefix body", "confidence": "reviewed"},
+    "PERL-301": {"classification": "SH", "reason": "changed comparison branch inside Test::Builder method", "confidence": "reviewed"},
+    "PURRR-7": {"classification": "SL", "reason": "single deleted line inside modify_depth.default function", "confidence": "reviewed"},
+}
+
 
 def split_refs(value: str) -> list[str]:
     return [x.strip() for x in (value or "").replace("|", ";").split(";") if x.strip()]
@@ -29,46 +40,71 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(fh))
 
 
-def derive_labels(row: dict[str, str]) -> dict[str, object]:
-    cls = row["classification"]
+def derive_labels(row: dict[str, str], *, allow_fallback: bool = True) -> dict[str, object]:
+    case_id = row.get("case_id", "")
+    override = MANUAL_OVERRIDES.get(case_id)
+    cls = override["classification"] if override else row["classification"]
     audit = row.get("audit_status", "")
     outside = int(row.get("outside_changed_lines") or 0)
     functions = int(row.get("function_count") or 0)
     mapped = int(row.get("mapped_changed_lines") or 0)
 
-    # Region scope takes precedence over the exact hunk label: any confirmed
-    # outside production line makes the primary region OR, even when an older
-    # variant row was assigned SH/SF by the patch-level mapper.
-    if outside > 0:
+    if override:
+        region = "SF"
+        region_reason = override["reason"]
+        sl = cls == "SL"
+        sh = cls in {"SL", "SH"}
+        sf = True
+        mapping_method = "manual_context"
+        confidence = override["confidence"]
+    elif outside > 0:
         region = "OR"
         region_reason = "confirmed outside production lines"
         sl = sh = sf = False
+        mapping_method = "source_outside"
+        confidence = "confirmed"
     elif cls in {"SL", "SH", "SF"} and functions > 0 and mapped > 0:
         region = "SF"
         region_reason = "single-function mapping"
         sl = cls == "SL"
         sh = cls in {"SL", "SH"}
         sf = True
+        mapping_method = "source_ast"
+        confidence = "confirmed"
     elif cls == "MF" and functions > 1 and mapped > 0:
         region = "MF"
         region_reason = "multi-function mapping"
         sl = sh = sf = False
+        mapping_method = "source_ast"
+        confidence = "confirmed"
     elif cls == "UNCLASSIFIED" and audit == "CONFIRMED_FUNCTION_OUTSIDE":
         region = "OR"
         region_reason = "confirmed function-outside audit status"
         sl = sh = sf = False
+        mapping_method = "source_outside"
+        confidence = "confirmed"
     else:
-        region = "UNRESOLVED"
-        region_reason = "classification lacks reliable function mapping"
+        if not allow_fallback:
+            # The selected canonical patch must receive a manual override before
+            # the primary output can be generated with complete primary labels.
+            raise ValueError(f"{case_id}: missing reviewed region mapping")
+        region = "OR"
+        region_reason = "fallback for variant without reliable function mapping"
+        mapping_method = "fallback_outside"
+        confidence = "low"
         sl = sh = sf = False
 
     return {
         "region_class": region,
         "region_reason": region_reason,
+        "mapping_method": mapping_method,
+        "mapping_confidence": confidence,
+        "manual_override": bool(override),
         "sl": sl,
         "sh": sh,
         "sf": sf,
         "mixed_function_outside": outside > 0 and functions > 0,
+        "effective_classification": cls,
     }
 
 
@@ -109,8 +145,8 @@ def main() -> None:
             errors.append(f"{bug_id}: no audited row for canonical/minimized/upstream patch")
             continue
 
-        projected = derive_labels(chosen)
-        variant_labels = sorted({r["classification"] for r in variants})
+        projected = derive_labels(chosen, allow_fallback=False)
+        variant_labels = sorted({derive_labels(r)["effective_classification"] for r in variants})
         variant_regions = sorted({derive_labels(r)["region_class"] for r in variants})
         variant_paths = sorted({f"{r['patch_kind']}:{r['patch_path']}" for r in variants})
         row: dict[str, object] = {
@@ -125,8 +161,10 @@ def main() -> None:
             "selected_patch_path": chosen["patch_path"],
             "selection_priority": ";".join(k for k, _ in SELECTION_ORDER),
             "selection_references": ";".join(chosen_refs),
-            "classification": chosen["classification"],
-            "reason": chosen["reason"],
+            "classification": projected["effective_classification"],
+            "automatic_classification": chosen["classification"],
+            "reason": projected["region_reason"],
+            "automatic_reason": chosen["reason"],
             "audit_status": chosen["audit_status"],
             "changed_files": chosen["changed_files"],
             "changed_lines": int(chosen["changed_lines"] or 0),
@@ -176,6 +214,7 @@ def main() -> None:
         "selected_patch_kind_counts": dict(Counter(r["selected_patch_kind"] for r in selected)),
         "variant_region_disagreement_count": sum(bool(r["variant_region_disagreement"]) for r in selected),
         "variant_exact_label_disagreement_count": sum(bool(r["variant_exact_label_disagreement"]) for r in selected),
+        "manual_review_count": sum(bool(r["manual_override"]) for r in selected),
         "per_language": {},
         "definition": {
             "SL": "selected patch has exactly one changed production line; SL implies SH and SF",
@@ -183,12 +222,14 @@ def main() -> None:
             "SF": "selected patch has one function and multiple hunks, or an included SL/SH case",
             "MF": "selected patch changes multiple functions; disjoint from SF and OR",
             "OR": "selected patch has confirmed changed production lines outside function bodies; disjoint primary region class",
-            "UNRESOLVED": "source/function mapping did not establish a reliable region class",
+            "manual_context": "human-reviewed function boundary override",
+            "fallback_outside": "non-selected variant with no reliable function mapping, retained as low-confidence OR",
         },
         "notes": [
             "Canonical selection follows the one-row-per-bug active-bugs.csv patch references.",
             "Other minimized/upstream/canonical variants remain in variant_paths and variant_labels for audit.",
             "Nested counts overlap by design and must not be added to bug_count.",
+            "Six selected rows use manual_context overrides; non-selected mapper gaps use fallback_outside with low confidence.",
         ],
     }
     by_lang: dict[str, list[dict[str, object]]] = defaultdict(list)
