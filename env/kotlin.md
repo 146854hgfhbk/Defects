@@ -62,6 +62,60 @@ If the wrapper distribution is not available offline, download the exact distrib
 
 Do not upgrade Gradle. Old projects often fail on newer Gradle/JDK combinations.
 
+
+### KOTLIN-100: prepare the wrapper before replay
+
+KOTLIN-100 uses `projects/gradle/wrapper/gradle-wrapper.properties`, Gradle
+**8.14.3-bin** and JDK 17. Its wrapper URL redirects to GitHub release assets;
+on a host where that download stalls, the failure occurs before compilation or
+any test. A timed-out wrapper can keep the default `~/.gradle` lock until its
+child process exits, blocking a later side as well. Treat that as `BLOCKED`, not
+a bug failure. Check the process and the lock owner before retrying; do not delete
+a lock file while another process holds it.
+
+Choose the JDK and a Gradle home explicitly. For a fresh cache, pre-stage the
+exact distribution with the included helper. It accepts the official URL by
+default or a local archive / reachable mirror as the first argument. The helper
+verifies the pinned SHA-256 from Gradle's official checksum, preserves the
+wrapper URL's cache key, and refuses to overwrite an existing or partial entry.
+It needs `bash`, `python3`, `sha256sum` and `curl` (for a URL).
+
+```bash
+export JAVA_HOME="$HOME/d4x/jdk-17"
+export PATH="$JAVA_HOME/bin:$PATH"
+export GRADLE_USER_HOME="$HOME/d4x/kotlin100-gradle-home"
+
+# Default source: https://services.gradle.org/distributions/gradle-8.14.3-bin.zip
+scripts/prepare_kotlin100_gradle.sh
+# If the official download route stalls, use a reachable mirror or a local ZIP:
+# scripts/prepare_kotlin100_gradle.sh https://mirrors.cloud.tencent.com/gradle/gradle-8.14.3-bin.zip
+# scripts/prepare_kotlin100_gradle.sh /path/to/gradle-8.14.3-bin.zip
+
+python3 scripts/d4x.py run KOTLIN-100 --work "$HOME/d4x/kotlin100-replay" \
+  --side both --mode local --timeout 1800
+```
+
+The helper pins `bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531`;
+the official checksum can be checked independently at
+`https://services.gradle.org/distributions/gradle-8.14.3-bin.zip.sha256`.
+The helper creates `caches/8.14.3` so Gradle's distribution cleanup sees a
+matching version. It prepares only Gradle itself: project plugins and dependencies
+must also be available from the configured repositories or a prepared dependency
+cache. Set proxy properties only when the proxy is running and needed; do not copy
+another host's proxy endpoint blindly. See the cache-cleanup details in
+[the second-host audit](../docs/REPLAY_SECOND_HOST_AUDIT.md).
+
+**Verified on 2026-11-11:** with an existing prepared Gradle home and its
+previously populated dependency cache, Temurin 17.0.21, Gradle 8.14.3 and the
+command above, the buggy side compiled (39 s) and its trigger failed as expected
+(1 failure in 294 tests, 2 skipped); the fixed side compiled and the full declared
+`jvmTest` task exited 0. `result.json` reported `PASS`. JUnit XML identifies the
+buggy trigger as `java.lang.ClassCastException` at `PropertyRegistryExt.kt:59`;
+the fixed trigger XML has zero failures. This was one replay using a warm cache,
+not an offline clean-install or stability claim. The case records Temurin 17.0.19;
+17.0.21 is the observed host version for this run.
+
+
 ## KOTLIN-501 sidecar
 
 One case additionally needs a browser/PDF stack:
