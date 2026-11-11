@@ -31,7 +31,8 @@ The labels preserve the hierarchy requested for single-function changes:
 - `SF`: one function with multiple hunks, or an included `SL`/`SH` patch.
 - `MF`: multiple changed functions; disjoint region class from `SF` and `OR`.
 - `OR`: a confirmed changed production line outside function bodies; disjoint primary region class.
-- `UNRESOLVED`: the source mapping does not establish a reliable region class; these rows are excluded from the SF/MF/OR region partition.
+- `mapping_method=manual_context`: a human-reviewed function boundary override for a selected canonical patch.
+- Variant-only mapping gaps use `mapping_method=fallback_outside` with `mapping_confidence=low`; they never create a missing primary bug label.
 
 The CSV stores `region_class` as the disjoint primary class (`SF`, `MF`, or `OR`) and
 stores `sl`, `sh`, and `sf` as overlapping Boolean properties. A patch containing both
@@ -44,17 +45,16 @@ The selected patch distribution is:
 
 | Region class | Bugs |
 |---|---:|
-| `SF` | 394 |
+| `SF` | 400 |
 | `MF` | 159 |
 | `OR` | 291 |
-| `UNRESOLVED` | 6 |
 | **Total** | **850** |
 
-The nested membership counts are `SL=26`, `SH=327`, and `SF=394`; these overlap by
+The nested membership counts are `SL=28`, `SH=333`, and `SF=400`; these overlap by
 design and must not be added. The selected patch kinds are `canonical=108` and
 `minimized=742`; no bug required the upstream fallback. The report separately records exact-label variation and region-class variation across retained variants;
 `variant_region_disagreement` is the condition that changes the disjoint SF/MF/OR region interpretation.
-In this output, 74 bugs have exact-label variation and 49 have region-class variation.
+In this output, 74 bugs have exact-label variation and 49 have region-class variation. Six selected rows use manual context review.
 
 These are bug-level counts. They must not be combined with the 2,191 patch-variant rows
 in `metadata/defects4j-granularity-summary.json`.
